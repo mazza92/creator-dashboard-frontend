@@ -1,6 +1,11 @@
 {
   "version": 2,
   "framework": "create-react-app",
+  "build": {
+    "env": {
+      "CI": "false"
+    }
+  },
   "builds": [
     {
       "src": "package.json",
