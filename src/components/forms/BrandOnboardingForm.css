@@ -1,0 +1,40 @@
+/* BrandOnboardingForm.css */
+.onboarding-form-container {
+    /* Remove or keep minimal styles if needed */
+  }
+
+
+  /* BrandOnboardingForm.css */
+.react-tel-input .form-control {
+  width: 100% !important;
+  height: 44px !important;
+  border-radius: 24px !important;
+  border: 1px solid #d1d5db !important;
+  padding: 10px 16px 10px 48px !important; /* Space for flag */
+  font-size: 14px !important;
+  font-family: 'Inter, sans-serif' !important;
+}
+
+.react-tel-input .form-control:focus {
+  border-color: #26A69A !important;
+  box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.2) !important;
+}
+
+.react-tel-input .flag-dropdown {
+  border-radius: 24px 0 0 24px !important;
+  border: 1px solid #d1d5db !important;
+  border-right: none !important;
+  background: #fff !important;
+  width: 48px !important;
+  padding: 0 8px !important;
+}
+
+.react-tel-input .selected-flag {
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+.react-tel-input .country-list {
+  border-radius: 16px !important;
+  font-family: 'Inter, sans-serif' !important;
+}

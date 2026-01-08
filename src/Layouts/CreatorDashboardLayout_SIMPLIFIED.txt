@@ -1,0 +1,54 @@
+// Simplified Menu Items for PR CRM Pivot
+// Replace lines 707-748 in CreatorDashboardLayout.js with this:
+
+  const menuItems = [
+    // ============================================
+    // PR CRM FEATURES (NEW PIVOT STRATEGY)
+    // Focus: Help creators get their first PR package
+    // ============================================
+    {
+      key: '/creator/dashboard/pr-brands',
+      icon: <RiSearchLine />,
+      label: <Link to="/creator/dashboard/pr-brands">Discover Brands</Link>,
+    },
+    {
+      key: '/creator/dashboard/pr-pipeline',
+      icon: <RiListCheck2 />,
+      label: <Link to="/creator/dashboard/pr-pipeline">My Pipeline</Link>,
+    },
+
+    // ============================================
+    // HIDDEN FEATURES (Temporarily disabled for pivot validation)
+    // These will be re-enabled after validating PR CRM strategy
+    // ============================================
+    // {
+    //   key: '/creator/dashboard/overview',
+    //   icon: <RiDashboardLine />,
+    //   label: <Link to="/creator/dashboard/overview">Overview</Link>,
+    // },
+    // {
+    //   key: '/creator/dashboard/bookings',
+    //   icon: <RiCalendarCheckLine />,
+    //   label: <Link to="/creator/dashboard/bookings">Bookings</Link>,
+    // },
+    // {
+    //   key: '/creator/dashboard/pr-offers',
+    //   icon: <FaGift />,
+    //   label: <Link to="/creator/dashboard/pr-offers">PR Offers</Link>,
+    // },
+    // {
+    //   key: '/creator/dashboard/payments',
+    //   icon: <RiMoneyDollarCircleLine />,
+    //   label: <Link to="/creator/dashboard/payments">Payments</Link>,
+    // },
+    // {
+    //   key: '/creator/dashboard/branded-content',
+    //   icon: <RiVolumeUpLine />,
+    //   label: <Link to="/creator/dashboard/branded-content">Content Bids</Link>,
+    // },
+    // {
+    //   key: '/creator/dashboard/campaign-invites',
+    //   icon: <RiMailLine />,
+    //   label: <Link to="/creator/dashboard/campaign-invites">Campaign Invites</Link>,
+    // },
+  ];

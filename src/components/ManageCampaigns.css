@@ -1,0 +1,124 @@
+/* ManageCampaigns.css */
+
+/* Container for the entire page */
+.manage-campaigns-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.loading-spinner {
+    text-align: center;
+    margin: 50px 0;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* List items */
+.ant-list-item {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.ant-list-item:hover {
+    transform: translateY(-5px);
+}
+
+.ant-list-item-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Titles for campaigns */
+.ant-list-item-meta-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Buttons in actions */
+.ant-list-item-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ant-btn {
+    margin-left: 8px;
+}
+
+.ant-btn-danger {
+    background-color: #ff4d4f;
+    border: none;
+    color: white;
+}
+
+.ant-btn-danger:hover {
+    background-color: #ff7875;
+    border: none;
+    color: white;
+}
+
+.ant-btn-primary {
+    background-color: #1890ff;
+    border: none;
+    color: white;
+}
+
+.ant-btn-primary:hover {
+    background-color: #40a9ff;
+    border: none;
+    color: white;
+}
+
+/* Status Badge Styles */
+.campaign-status {
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 8px;
+}
+
+.campaign-status-active {
+    background-color: #52c41a;
+    color: white;
+}
+
+.campaign-status-paused {
+    background-color: #faad14;
+    color: white;
+}
+
+.campaign-status-inactive {
+    background-color: #ff4d4f;
+    color: white;
+}
+
+.ant-card {
+    background-color: #f9f9f9;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.ant-select {
+    margin-top: 10px;
+}
+
+.active-campaigns-overview {
+    margin-top: 20px;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.active-campaigns-overview h2 {
+    margin-bottom: 15px;
+}

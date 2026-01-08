@@ -1,0 +1,85 @@
+/* src/layouts/DashboardLayout.css */
+
+/* Logo styling */
+.logo {
+    color: #1890ff; /* Primary color for the logo text */
+    text-align: center;
+    margin: 16px 0;
+    padding: 16px;
+    font-size: 20px;
+    background: #ffffff; /* Light background for the sidebar */
+}
+
+/* Sidebar background */
+.ant-layout-sider {
+    width: 250px !important;
+    background: #ffffff; /* Ensure sidebar background is light */
+}
+
+/* Header styling for light theme */
+.header-content {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 20px;
+    height: 100%;
+    background: #ffffff; /* Light background */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.header-icon {
+    font-size: 20px;
+    cursor: pointer;
+    margin-right: 20px;
+    color: #595959; /* Neutral color for header icons */
+}
+
+/* Menu item styling */
+.ant-menu-light .ant-menu-item {
+    color: #595959; /* Darker color for readability in light theme */
+}
+
+.ant-menu-light .ant-menu-item:hover {
+    color: #1890ff; /* Primary color on hover */
+}
+
+.ant-menu-item {
+    white-space: normal; /* Allow text to wrap */
+    padding: 0 20px; /* Add padding for readability */
+}
+
+.ant-menu-item-selected {
+    background-color: #f0f5ff !important; /* Light blue background for selected item */
+    color: #1890ff !important; /* Primary color for selected item text */
+    font-weight: bold;
+}
+
+/* Content area background */
+.site-layout-sub-header-background {
+    background: #ffffff;
+    padding: 0 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Add subtle shadow for header separation */
+}
+
+.site-layout-background {
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Soft shadow for content */
+}
+
+/* Footer styling */
+.ant-layout-footer {
+    background: #fafafa;
+    color: #595959;
+    text-align: center;
+}
+
+/* Responsive styling for smaller screens */
+@media (max-width: 768px) {
+    .header-content {
+        justify-content: space-between;
+    }
+}

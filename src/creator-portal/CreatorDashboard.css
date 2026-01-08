@@ -1,0 +1,147 @@
+.creator-dashboard {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: 'Arial', sans-serif;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.profile-section {
+    text-align: center;
+}
+
+.profile-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.profile-details {
+    margin-top: 10px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.metrics-section .ant-card {
+    text-align: center;
+    background-color: #f5f7fa;
+    border-radius: 8px;
+}
+
+.ant-statistic-title {
+    font-size: 16px;
+    color: #595959;
+}
+
+.ant-statistic-content-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.ant-card-meta-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
+.ant-card-meta-description {
+    font-size: 14px;
+    color: #595959;
+}
+
+.recent-requests-section .ant-list-item-meta-title {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.recent-requests-section .ant-list-item-meta-description {
+    font-size: 14px;
+    color: #595959;
+}
+
+.recent-requests-section .ant-list-item {
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    margin-bottom: 10px;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ant-btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+.ant-btn-primary:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+h1 {
+    font-size: 32px;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+
+.submission-history {
+    padding: 20px;
+}
+
+.submission-history .ant-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.ant-card-cover img {
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.campaigns-section {
+    margin-top: 30px;
+}
+
+.primary-btn {
+    background-color: #1890ff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.primary-btn:hover {
+    background-color: #40a9ff;
+}
+
+/* Remove shadow on ant-list-item */
+.ant-list-item {
+    box-shadow: none !important;
+}
+

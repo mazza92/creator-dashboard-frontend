@@ -1,0 +1,112 @@
+.onboarding-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.form-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.button-primary {
+    background-color: #1890ff;
+    color: #fff;
+    border-radius: 4px;
+    padding: 10px 20px;
+    border: none;
+}
+
+.button-primary:hover {
+    background-color: #40a9ff;
+}
+
+.back-button {
+    background-color: #f5f5f5;
+    color: #000;
+    border: 1px solid #d9d9d9;
+}
+
+.ant-form-item {
+    margin-bottom: 16px;
+}
+
+.ant-form-item-label {
+    font-weight: 500;
+}
+
+.upload-button {
+    width: 100%;
+    display: block;
+    text-align: center;
+    padding: 10px;
+    border: 1px dashed #d9d9d9;
+    border-radius: 4px;
+}
+
+.upload-button:hover {
+    border-color: #1890ff;
+}
+
+.social-links-container {
+    margin-bottom: 16px;
+}
+
+.social-links-container .social-link-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.social-links-container .ant-select,
+.social-links-container .ant-input {
+    margin-right: 8px;
+}
+
+.social-links-container .ant-btn-dangerous {
+    margin-left: auto;
+}
+
+.react-tel-input .form-control {
+    width: 100% !important;
+    height: 44px !important;
+    border-radius: 24px !important;
+    border: 1px solid #d1d5db !important;
+    padding: 10px 16px 10px 48px !important;
+    font-size: 14px !important;
+    font-family: 'Inter', sans-serif !important;
+  }
+  
+  .react-tel-input .form-control:focus {
+    border-color: #26A69A !important;
+    box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.2) !important;
+  }
+  
+  .react-tel-input .flag-dropdown {
+    border-radius: 24px 0 0 24px !important;
+    border: 1px solid #d1d5db !important;
+    border-right: none !important;
+    background: #fff !important;
+    width: 48px !important;
+    padding: 0 8px !important;
+  }
+  
+  .react-tel-input .selected-flag {
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  .react-tel-input .country-list {
+    border-radius: 16px !important;
+    font-family: 'Inter', sans-serif !important;
+  }

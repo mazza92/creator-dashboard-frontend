@@ -1,0 +1,5 @@
+/* Signup.css */
+/* Remove outdated styles */
+.signup-container, .role-selection, .role-card, .form-container, .back-button {
+    /* No styles needed; handled by styled-components */
+  }

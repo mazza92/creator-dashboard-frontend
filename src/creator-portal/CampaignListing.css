@@ -1,0 +1,17 @@
+.campaign-listing-container {
+    padding: 20px;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 576px) {
+    .card-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

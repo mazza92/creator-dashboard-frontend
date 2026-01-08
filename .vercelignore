@@ -1,0 +1,11 @@
+requirements.txt
+migrations
+back2
+*.py
+*.md
+.env
+.env.*
+scripts/
+test-*.js
+public/Pages.csv
+public/Queries.csv

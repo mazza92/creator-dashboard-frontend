@@ -1,0 +1,143 @@
+/* Platform container for social icons */
+.platforms-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.platform-item {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.followers-count {
+  margin-left: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.social-icon {
+  font-size: 1.5em;
+  color: #0077b5;
+}
+
+/* Creator information container */
+.creator-info {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Space between avatar and details */
+  flex-wrap: nowrap;
+}
+
+/* Creator avatar styling */
+.responsive-avatar {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Creator details next to avatar */
+.creator-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 5px;
+}
+
+/* Container styling for the listing */
+.listing-container {
+  background-color: #f9f9f9;
+  padding: 40px;
+}
+
+/* Hover effect on offer cards */
+.offer-card {
+  transition: all 0.3s ease;
+}
+
+.offer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.offer-card .ant-card-body {
+  padding: 20px;
+}
+
+.social-icons {
+  margin-top: 10px;
+}
+
+/* Avatar responsive styling */
+.ant-avatar {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .creator-info {
+      gap: 10px; /* Reduce gap for tablets */
+      flex-wrap: wrap;
+      align-items: flex-start;
+  }
+
+  .responsive-avatar {
+      width: 80px;
+      height: 80px;
+  }
+
+  .creator-details {
+      margin-left: 0;
+      text-align: center; /* Center details on smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .creator-info {
+      flex-direction: column; /* Stack avatar on top of details */
+      align-items: center;
+      gap: 5px;
+  }
+
+  .responsive-avatar {
+      width: 60px;
+      height: 60px;
+  }
+
+  .creator-details {
+      margin-left: 0;
+      text-align: center;
+  }
+}
+
+.offer-card .ant-btn {
+  flex: 1; /* Equal widths for buttons */
+  margin: 0 4px; /* Add spacing between buttons */
+}
+
+.offer-card .ant-btn-primary {
+  background: linear-gradient(135deg, #6253e1, #04befe); /* Gradient style */
+  border: none;
+  color: white;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Ensure no overflow */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+}
+
+@media (max-width: 576px) {
+  .offer-card .ant-btn {
+    flex: 100%; /* Buttons stack fully on smaller screens */
+    margin: 5px 0;
+  }
+}
+
+* {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.ant-select-selector, .ant-input, .ant-btn {
+  border-radius: 8px !important;
+}

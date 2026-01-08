@@ -1,0 +1,71 @@
+/* General container styling */
+.overview-container {
+  padding: 20px;
+}
+
+/* Section headers */
+h2 {
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+/* Slick carousel adjustments */
+.slick-slide {
+  padding: 10px;
+}
+
+/* Centering card wrapper for creator spotlight */
+.creator-card-wrapper {
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Modern styling for creator card */
+.creator-card {
+  text-align: center;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Reduce card size on wider screens */
+@media (min-width: 1200px) {
+  .creator-card {
+    width: 250px; /* Set a max width */
+  }
+}
+
+.creator-card-wrapper {
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Minor alignment for the avatar */
+.creator-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.creator-avatar-image {
+  border-radius: 50%;
+  border: 3px solid #e0e0e0;
+  padding: 5px;
+  width: 100px; /* Fixed size for consistent circular shape */
+  height: 100px; /* Fixed size for consistent circular shape */
+  object-fit: cover; /* Ensures the image fits within the circular frame */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .overview-container {
+    padding: 10px;
+  }
+  .creator-card-wrapper {
+    padding: 5px;
+  }
+}

@@ -1,0 +1,23 @@
+/* ManagePackages.css */
+.manage-packages-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .deliverable-card-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .deliverable-icon {
+    font-size: 20px;
+    color: #595959;
+  }
+  
+  .deliverable-text {
+    font-size: 14px;
+  }
+  
+  .selected {
+    border: 2px solid #1890ff;
+  }

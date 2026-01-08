@@ -1,0 +1,84 @@
+.collaboration-requests {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.request-card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.request-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.request-card p {
+    margin: 5px 0;
+    color: #555;
+}
+
+.request-card .request-info {
+    flex: 1;
+}
+
+.request-card .request-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.request-card button {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.request-card .accept-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.request-card .decline-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.request-card .inquire-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.request-card button:hover {
+    opacity: 0.9;
+}
+
+.view-all-btn {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.view-all-btn:hover {
+    background-color: #0056b3;
+    color: white;
+    text-decoration: none;
+}

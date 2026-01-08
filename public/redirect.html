@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+        // Redirect www to non-www
+        if (window.location.hostname.startsWith('www.')) {
+            const newHostname = window.location.hostname.replace('www.', '');
+            const newUrl = window.location.protocol + '//' + newHostname + window.location.pathname + window.location.search + window.location.hash;
+            window.location.replace(newUrl);
+        }
+    </script>
+    <meta http-equiv="refresh" content="0;url=https://newcollab.co">
+</head>
+<body>
+    <p>Redirecting to <a href="https://newcollab.co">newcollab.co</a>...</p>
+</body>
+</html> 

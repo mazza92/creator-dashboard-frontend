@@ -1,0 +1,863 @@
+import React, { useState, useContext, useEffect, useRef } from 'react';
+import { UserContext } from '../contexts/UserContext';
+import { Avatar, Dropdown, Menu, message, Grid, Badge, Typography, Button, Layout } from 'antd';
+import {
+  UserOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  ArrowLeftOutlined,
+  CheckCircleOutlined,
+  DollarOutlined,
+  // eslint-disable-next-line no-unused-vars
+  BellOutlined,
+} from '@ant-design/icons';
+import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+import axios from 'axios';
+import moment from 'moment';
+import { Drawer, Breadcrumb } from 'antd';
+import { motion } from 'framer-motion';
+import { useNotification } from '../contexts/NotificationContext';
+import styled from 'styled-components';
+import { 
+  RiDashboardLine, 
+  RiCalendarCheckLine,
+  // eslint-disable-next-line no-unused-vars
+  RiUserSettingsLine,
+  // eslint-disable-next-line no-unused-vars
+  RiLogoutBoxLine,
+  RiNotification3Line,
+  RiVolumeUpLine,
+  RiMailLine,
+  RiMoneyDollarCircleLine,
+  RiSearchLine,
+  RiListCheck2
+} from 'react-icons/ri';
+import { FaGift } from 'react-icons/fa';
+import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../config/api';
+
+const { useBreakpoint } = Grid;
+// eslint-disable-next-line no-unused-vars
+const { Text } = Typography;
+const { Header, Sider, Content, Footer } = Layout;
+
+const StyledLayout = styled(Layout)`
+  min-height: 100vh;
+  background: #f8fafc;
+`;
+
+const LogoImage = styled.img`
+  height: 128px;
+  width: auto;
+  object-fit: contain;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+const LogoContainer = styled.div`
+  height: 160px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 8px;
+  background: transparent;
+`;
+
+const StyledSider = styled(Sider)`
+  background: transparent;
+  box-shadow: none;
+  z-index: 10;
+
+  .ant-menu {
+    border-right: none;
+    padding: 8px;
+    background: transparent;
+  }
+
+  .ant-menu-item {
+    height: 48px;
+    line-height: 48px;
+    margin: 4px 0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background: transparent;
+
+    &:hover {
+      background: #f1f5f9;
+    }
+
+    &.ant-menu-item-selected {
+      background: #26A69A;
+      color: #fff;
+
+      a {
+        color: #fff;
+      }
+
+      .anticon {
+        color: #fff;
+      }
+    }
+
+    .anticon {
+      font-size: 18px;
+      margin-right: 12px;
+    }
+  }
+
+  .ant-layout-sider-children {
+    background: transparent;
+  }
+
+  .ant-layout-sider-trigger {
+    background: transparent;
+    border-top: 1px solid #f1f5f9;
+    color: rgb(114, 123, 136);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #26A69A;
+    }
+  }
+`;
+
+const StyledHeader = styled(Header)`
+  background: #fff;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  height: 64px;
+`;
+
+const StyledContent = styled(Content)`
+  margin: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-height: calc(100vh - 112px);
+`;
+
+const StyledFooter = styled(Footer)`
+  text-align: center;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  padding: 16px;
+`;
+
+const StyledDrawer = styled(Drawer)`
+  .ant-drawer-header {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .ant-drawer-body {
+    padding: 0;
+  }
+`;
+
+const StyledBreadcrumb = styled(Breadcrumb)`
+  .ant-breadcrumb-link {
+    color: #64748b;
+    font-size: 14px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #26A69A;
+    }
+
+    a {
+      color: inherit;
+    }
+  }
+
+  .ant-breadcrumb-separator {
+    color: #94a3b8;
+  }
+`;
+
+const MenuToggleButton = styled(Button)`
+  border: none;
+  padding: 0;
+  height: 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  .anticon {
+    font-size: 20px;
+    color: #1e293b;
+  }
+`;
+
+const ProfileDropdownButton = styled(Button)`
+  border: none;
+  padding: 0;
+  height: 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: transparent;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  .ant-avatar {
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const BackButton = styled(Button)`
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #26A69A;
+    color: #26A69A;
+  }
+
+  .anticon {
+    font-size: 16px;
+  }
+`;
+
+const NotificationButton = styled(Button)`
+  border: none;
+  padding: 0;
+  height: 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: transparent;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  .anticon {
+    font-size: 20px;
+    color: rgb(114, 123, 136);
+  }
+`;
+
+const NotificationItem = styled(Menu.Item)`
+  padding: 12px 16px !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #f8fafc !important;
+  }
+
+  .notification-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .notification-title {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .notification-message {
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  .notification-time {
+    color: #94a3b8;
+    font-size: 12px;
+  }
+
+  .mark-read-button {
+    padding: 4px 8px;
+    height: auto;
+    font-size: 12px;
+    border-radius: 4px;
+    color: #26A69A;
+    border-color: #26A69A;
+
+    &:hover {
+      background: #f0fdfa;
+    }
+  }
+`;
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const CreatorDashboardLayout = () => {
+  // eslint-disable-next-line no-unused-vars
+  const { user, handleLogout } = useContext(UserContext);
+  const { notifications, unreadCount, markAsRead, cleanupSocket } = useNotification();
+  const [collapsed, setCollapsed] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [creatorName, setCreatorName] = useState(null);
+  const [userData, setUserData] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [loadingCreator, setLoadingCreator] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState({ connected: false, onboardingComplete: false });
+  // eslint-disable-next-line no-unused-vars
+  const [stripeConnected, setStripeConnected] = useState(false);
+  const isFetching = useRef(false);
+  // eslint-disable-next-line no-unused-vars
+  const isRedirecting = useRef(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams();
+  const screens = useBreakpoint();
+  const previousPath = useRef('/creator/dashboard/overview');
+  // eslint-disable-next-line no-unused-vars
+  const notificationRef = useRef(null);
+  const userMenuRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
+  const [isNotificationDrawerVisible, setIsNotificationDrawerVisible] = useState(false);
+  const isSocketInitialized = useRef(false); // Track socket initialization
+
+  useEffect(() => {
+    if (!location.pathname.includes('/creator/profile')) {
+      previousPath.current = location.pathname;
+    }
+  }, [location]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (isFetching.current) return;
+      isFetching.current = true;
+      setIsLoading(true);
+
+      try {
+        const [profileResponse, stripeResponse] = await Promise.all([
+          api.get('/profile'),
+          api.get('/creator/stripe-account-status').catch(error => ({
+            data: { stripe_account_id: null, onboarding_complete: false },
+            error,
+          })),
+        ]);
+
+        const data = profileResponse.data;
+        const user_role = data.user_role || data.role;
+        const user_id = data.user_id || data.id;
+        const creator_id = data.creator_id;
+        const image_profile = data.image_profile || data.avatar_url || null;
+
+        if (user_role === 'brand') {
+          navigate('/brand/dashboard/overview', { replace: true });
+          return;
+        }
+
+        if (user_role === 'creator' && user_id && creator_id) {
+          const userData = { ...data, user_id, user_role, creator_id, image_profile };
+          setUserData(userData);
+          setCreatorName(data.name || 'Creator');
+          setStripeStatus({
+            connected: !!stripeResponse.data.stripe_account_id,
+            onboardingComplete: stripeResponse.data.onboarding_complete || false,
+          });
+
+          if (!isSocketInitialized.current) {
+            console.log('Initializing Pusher socket for user:', user_id);
+            // initializeSocket(user_id, 'creator'); // This line is removed as per the edit hint
+            isSocketInitialized.current = true;
+          }
+        }
+      } catch (error) {
+        console.error('🔥 Error fetching profile data:', error);
+        if (error.response?.status === 403 || error.response?.status === 401) {
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('userData');
+          message.error('Your session has expired. Please log in again.');
+          navigate('/login', { replace: true });
+        } else {
+          message.error('Failed to load profile. Please try again or contact support.');
+        }
+      } finally {
+        setIsLoading(false);
+        isFetching.current = false;
+      }
+    };
+
+    fetchUserData();
+    // Cleanup socket only on full unmount
+    return () => {
+      cleanupSocket();
+    };
+  }, [navigate, cleanupSocket]);
+
+  useEffect(() => {
+    if (location.pathname.includes('/creator/profile/') && id) {
+      const fetchCreatorName = async () => {
+        setLoadingCreator(true);
+        try {
+          const response = await api.get(`/creators/${id}`);
+          setCreatorName(response.data?.username || 'Unknown Creator');
+          setUserData(prev => ({
+            ...prev,
+            image_profile: response.data.image_profile || response.data.avatar_url || prev?.image_profile,
+          }));
+        } catch (error) {
+          console.error('🔥 Error fetching creator username:', error);
+          setCreatorName('Unknown Creator');
+        } finally {
+          setLoadingCreator(false);
+        }
+      };
+      fetchCreatorName();
+    } else {
+      setCreatorName(null);
+    }
+  }, [location.pathname, id]);
+
+  const handleStripeDashboard = async () => {
+    setStripeLoading(true);
+    try {
+      console.log(`🟢 Fetching Stripe dashboard from: ${API_URL}/creator/stripe-dashboard`);
+      const response = await api.get(`${API_URL}/creator/stripe-dashboard`, {
+        withCredentials: true,
+      });
+      console.log('📌 Stripe dashboard response:', {
+        status: response.status,
+        data: response.data,
+      });
+      if (response.data.onboarding_required) {
+        message.info('Please complete Stripe onboarding.');
+        window.location.href = response.data.onboarding_url;
+      } else if (response.data.url) {
+        window.location.href = response.data.url;
+      } else {
+        throw new Error('No dashboard URL received from server');
+      }
+    } catch (error) {
+      console.error('🔥 Error fetching Stripe dashboard:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      message.error(error.response?.data?.error || 'Failed to access Stripe dashboard');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  const handleConnectStripe = async () => {
+    setStripeLoading(true);
+    try {
+      console.log(`🟢 Connecting Stripe at: ${API_URL}/connect-stripe-account`);
+      // Don't try to detect country from browser - let user select during Stripe onboarding
+      const response = await api.post(
+        `${API_URL}/connect-stripe-account`,
+        { email: userData?.email },
+        { withCredentials: true }
+      );
+      console.log('📌 Stripe connect response:', {
+        status: response.status,
+        data: response.data,
+      });
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      } else if (response.data.message) {
+        message.success(response.data.message);
+        setStripeConnected(true);
+      }
+    } catch (error) {
+      console.error('🔥 Error connecting Stripe:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      message.error(error.response?.data?.error || 'Failed to connect Stripe account. Please try again.');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  const handleLogoutWithCleanup = async () => {
+    try {
+      console.log('Cleaning up Pusher socket on logout');
+      cleanupSocket();
+      await handleLogout();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('🔥 Logout error:', error);
+      message.error('An error occurred during logout.');
+    }
+  };
+
+  const userMenu = {
+    items: [
+      {
+        key: 'profile',
+        icon: <UserOutlined />,
+        label: <Link to={userData?.creator_id ? `/creator/profile/${userData.creator_id}` : '/creator/profile'}>Profile</Link>,
+      },
+      ...(stripeStatus.connected
+        ? stripeStatus.onboardingComplete
+          ? [
+              {
+                key: 'stripe-connected',
+                icon: <CheckCircleOutlined />,
+                label: <span style={{ color: '#52c41a' }}>Stripe Connected</span>,
+                onClick: handleStripeDashboard,
+              },
+            ]
+          : [
+              {
+                key: 'stripe-complete',
+                icon: <DollarOutlined />,
+                label: stripeLoading ? 'Processing...' : 'Complete Stripe Setup',
+                onClick: handleStripeDashboard,
+                disabled: stripeLoading,
+              },
+            ]
+        : [
+            {
+              key: 'stripe',
+              icon: <DollarOutlined />,
+              label: stripeLoading ? 'Connecting...' : 'Connect Stripe',
+              onClick: handleConnectStripe,
+              disabled: stripeLoading,
+            },
+          ]),
+      {
+        type: 'divider',
+      },
+      {
+        key: 'logout',
+        icon: <LogoutOutlined />,
+        label: 'Logout',
+        onClick: handleLogoutWithCleanup,
+      },
+    ],
+  };
+
+  const getSelectedKey = () => {
+    const path = location.pathname;
+    if (path.includes('/creator/dashboard/overview')) return '/creator/dashboard/overview';
+    if (path.includes('/creator/dashboard/bookings')) return '/creator/dashboard/bookings';
+    if (path.includes('/creator/dashboard/branded-content')) return '/creator/dashboard/branded-content';
+    if (path.includes('/creator/dashboard/my-offers')) return '/creator/dashboard/my-offers';
+    if (path.includes('/creator/dashboard/campaign-invites')) return '/creator/dashboard/campaign-invites';
+    if (path.includes('/creator/dashboard/payments')) return '/creator/dashboard/payments';
+    if (path.includes('/creator/dashboard/pr-offers')) return '/creator/dashboard/pr-offers';
+    if (path.includes('/creator/dashboard/pr-brands')) return '/creator/dashboard/pr-brands';
+    if (path.includes('/creator/dashboard/pr-pipeline')) return '/creator/dashboard/pr-pipeline';
+    return '/creator/dashboard/overview';
+  };
+
+  const generateBreadcrumbs = () => {
+    const pathSnippets = location.pathname
+      .split('/')
+      .filter(segment => segment && segment !== 'creator' && segment !== 'dashboard');
+    const breadcrumbItems = [
+      {
+        key: '/creator/dashboard/overview',
+        title: <Link to="/creator/dashboard/overview">Dashboard</Link>,
+      },
+    ];
+
+    let currentPath = '/creator';
+    for (let i = 0; i < pathSnippets.length; i++) {
+      const snippet = pathSnippets[i];
+      currentPath += `/${snippet}`;
+
+      const isProfile = snippet === 'profile' && id;
+      let displayName;
+
+      if (isProfile) {
+        displayName = creatorName || 'Creator Profile';
+      } else {
+        displayName = snippet
+          .replace(/-/g, ' ')
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        if (snippet === 'branded-content') displayName = 'Branded Content';
+        if (snippet === 'my-offers') displayName = 'My Subscriptions';
+        if (snippet === 'campaign-invites') displayName = 'Campaign Invites';
+        if (snippet === 'payments') displayName = 'Payments';
+        if (snippet === 'pr-brands') displayName = 'Discover Brands';
+        if (snippet === 'pr-pipeline') displayName = 'My Pipeline';
+        if (snippet === 'pr-offers') displayName = 'PR Offers';
+      }
+
+      breadcrumbItems.push({
+        key: currentPath,
+        title: isProfile ? displayName : <Link to={currentPath}>{displayName}</Link>,
+      });
+    }
+
+    return <StyledBreadcrumb items={breadcrumbItems} />;
+  };
+
+  const handleNotificationClick = (notification) => {
+    markAsRead(notification.id);
+    if (notification.data?.action_url) {
+      navigate(notification.data.action_url);
+    } else {
+      // Fallback for creator-specific events
+      const { event_type, data } = notification;
+      let route = '/creator/dashboard/bookings'; // Default route
+      if (event_type === 'NEW_CAMPAIGN_INVITE') {
+        route = '/creator/dashboard/campaign-invites';
+      } else if (event_type === 'NEW_MESSAGE') {
+        route = data?.booking_id ? `/creator/dashboard/bookings?booking_id=${data.booking_id}` : route;
+      }
+      navigate(route);
+    }
+  };
+
+  const notificationMenu = (
+    <Menu style={{ padding: '8px', minWidth: '320px' }}>
+      {notifications.length > 0 ? (
+        notifications.slice(0, 5).map((notification) => (
+          <NotificationItem
+            key={`notification-${notification.id}`}
+            onClick={() => handleNotificationClick(notification)}
+          >
+            <div className="notification-content">
+              <div className="notification-header">
+                <span className="notification-title">
+                  {notification.event_type?.replace('_', ' ').toLowerCase() || 'Notification'}
+                </span>
+                {!notification.is_read && (
+                  <Button
+                    type="link"
+                    className="mark-read-button"
+                    icon={<CheckCircleOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markAsRead(notification.id);
+                    }}
+                  >
+                    Mark as Read
+                  </Button>
+                )}
+              </div>
+              <span className="notification-message">
+                {notification.message}
+              </span>
+              <span className="notification-time">
+                {moment(notification.created_at).fromNow()}
+              </span>
+            </div>
+          </NotificationItem>
+        ))
+      ) : (
+        <Menu.Item key="no-notifications" disabled style={{ textAlign: 'center', color: '#94a3b8' }}>
+          No notifications
+        </Menu.Item>
+      )}
+    </Menu>
+  );
+
+  const handleLogoError = e => {
+    e.target.onerror = null;
+    e.target.src =
+      'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5ELnBuZyIsImlhdCI6MTc0NjgxMzgyNywiZXhwIjoxNzc4MzQ5ODI3fQ.CV154O5M8NHs--l6-0M6a_CIvQuXqDxlkva8MlQf-hY';
+  };
+
+  const menuItems = [
+    {
+      key: '/creator/dashboard/overview',
+      icon: <RiDashboardLine />,
+      label: <Link to="/creator/dashboard/overview">Overview</Link>,
+    },
+    {
+      key: '/creator/dashboard/bookings',
+      icon: <RiCalendarCheckLine />,
+      label: <Link to="/creator/dashboard/bookings">Bookings</Link>,
+    },
+    {
+      key: '/creator/dashboard/pr-offers',
+      icon: <FaGift />,
+      label: <Link to="/creator/dashboard/pr-offers">PR Offers</Link>,
+    },
+    {
+      key: '/creator/dashboard/pr-brands',
+      icon: <RiSearchLine />,
+      label: <Link to="/creator/dashboard/pr-brands">Discover Brands</Link>,
+    },
+    {
+      key: '/creator/dashboard/pr-pipeline',
+      icon: <RiListCheck2 />,
+      label: <Link to="/creator/dashboard/pr-pipeline">My Pipeline</Link>,
+    },
+    {
+      key: '/creator/dashboard/payments',
+      icon: <RiMoneyDollarCircleLine />,
+      label: <Link to="/creator/dashboard/payments">Payments</Link>,
+    },
+    {
+      key: '/creator/dashboard/branded-content',
+      icon: <RiVolumeUpLine />,
+      label: <Link to="/creator/dashboard/branded-content">Content Bids</Link>,
+    },
+    {
+      key: '/creator/dashboard/campaign-invites',
+      icon: <RiMailLine />,
+      label: <Link to="/creator/dashboard/campaign-invites">Campaign Invites</Link>,
+    },
+  ];
+
+  return (
+    <StyledLayout>
+      {isLoading ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            background: '#f8fafc',
+          }}
+        >
+          <LoadingSpinner text="Loading dashboard..." />
+        </div>
+      ) : (
+        <>
+          {screens.md ? (
+            <StyledSider collapsible collapsed={collapsed} onCollapse={value => setCollapsed(value)} width={250}>
+              <LogoContainer>
+                <LogoImage
+                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5ELnBuZyIsImlhdCI6MTc0NjgxMzgyNywiZXhwIjoxNzc4MzQ5ODI3fQ.CV154O5M8NHs--l6-0M6a_CIvQuXqDxlkva8MlQf-hY"
+                  alt="NewCollab Creator Logo"
+                  onError={handleLogoError}
+                />
+              </LogoContainer>
+              <Menu mode="inline" selectedKeys={[getSelectedKey()]}>
+                {menuItems.map(item => (
+                  <Menu.Item key={item.key} icon={item.icon}>
+                    {item.label}
+                  </Menu.Item>
+                ))}
+              </Menu>
+            </StyledSider>
+          ) : (
+            <StyledDrawer
+              title={
+                <LogoContainer>
+                  <LogoImage
+                    src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5ELnBuZyIsImlhdCI6MTc0NjgxMzgyNywiZXhwIjoxNzc4MzQ5ODI3fQ.CV154O5M8NHs--l6-0M6a_CIvQuXqDxlkva8MlQf-hY"
+                    alt="NewCollab Creator Logo"
+                    onError={handleLogoError}
+                  />
+                </LogoContainer>
+              }
+              placement="left"
+              onClose={() => setDrawerVisible(false)}
+              open={drawerVisible}
+            >
+              <Menu mode="inline" selectedKeys={[getSelectedKey()]} onClick={() => setDrawerVisible(false)}>
+                {menuItems.map(item => (
+                  <Menu.Item key={item.key} icon={item.icon}>
+                    {item.label}
+                  </Menu.Item>
+                ))}
+              </Menu>
+            </StyledDrawer>
+          )}
+
+          <StyledLayout>
+            <StyledHeader>
+              {!screens.md && <MenuToggleButton icon={<MenuOutlined />} onClick={() => setDrawerVisible(true)} />}
+              <div style={{ flex: 1 }}>{generateBreadcrumbs()}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Dropdown overlay={notificationMenu} placement="bottomRight" trigger={['click']}>
+                  <Badge count={unreadCount} offset={[-2, 2]} style={{ backgroundColor: '#26A69A' }}>
+                    <NotificationButton icon={<RiNotification3Line style={{ fontSize: '20px' }} />} />
+                  </Badge>
+                </Dropdown>
+                <Dropdown
+                  menu={userMenu}
+                  placement="bottomRight"
+                  trigger={['click']}
+                  getPopupContainer={triggerNode => triggerNode.parentNode}
+                >
+                  <ProfileDropdownButton ref={userMenuRef}>
+                    <Avatar
+                      src={userData?.image_profile}
+                      icon={!userData?.image_profile ? <UserOutlined /> : null}
+                    />
+                  </ProfileDropdownButton>
+                </Dropdown>
+              </div>
+            </StyledHeader>
+
+            <StyledContent>
+              <motion.div
+                className="site-layout-background"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {location.pathname.includes('/creator/profile/') && (
+                  <BackButton
+                    type="dashed"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate(previousPath.current)}
+                    style={{ marginBottom: '16px'}}
+                  >
+                    Back
+                  </BackButton>
+                )}
+                <Outlet context={{ userData, creatorName }} /> {/* Pass userData to child components */}
+              </motion.div>
+            </StyledContent>
+
+            <StyledFooter>©2025 Creator Dashboard</StyledFooter>
+          </StyledLayout>
+        </>
+      )}
+    </StyledLayout>
+  );
+};
+
+export default CreatorDashboardLayout;

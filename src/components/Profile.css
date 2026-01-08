@@ -1,0 +1,38 @@
+/* src/components/Profile.css */
+
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card .ant-typography {
+    margin-bottom: 10px;
+}
+
+.profile-card .ant-divider {
+    margin: 8px 0;
+}
+
+a {
+    color: #1890ff;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #40a9ff;
+}
+
+.profile-avatar-section {
+    text-align: center;
+}
+
+
+
+.profile-contact-info {
+    font-size: 1rem;
+}
