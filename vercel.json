@@ -10,23 +10,6 @@
       }
     }
   ],
-  "redirects": [
-    {
-      "source": "/blog/:slug/",
-      "destination": "/blog/:slug",
-      "permanent": true
-    },
-    {
-      "source": "/home",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/home/",
-      "destination": "/",
-      "permanent": true
-    }
-  ],
   "routes": [
     {
       "src": "/(robots.txt|favicon.ico|sitemap.xml|manifest.json)",
@@ -37,27 +20,29 @@
       "dest": "https://api.newcollab.co/$1"
     },
     {
+      "src": "/blog/([^/]+)/",
+      "dest": "/blog/$1",
+      "status": 301
+    },
+    {
+      "src": "/home/?",
+      "dest": "/",
+      "status": 301
+    },
+    {
       "src": "/marketplace",
       "dest": "/index.html",
       "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
       }
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "ignore": ["requirements.txt", "migrations", "back2"],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin-allow-popups"
-        }
-      ]
+      "dest": "/index.html",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
+      }
     }
   ]
 }
