@@ -271,7 +271,6 @@ function AppContent() {
             <IndexNowInitializer />
             <Routes>
             {/* Public routes always available */}
-            <Route path='/' element={<LandingPage />} />
             <Route path='/login' element={<Login />} />
             <Route path='/register' element={<Signup />} />
             <Route path='/register/brand' element={<BrandOnboardingForm />} />
@@ -303,7 +302,7 @@ function AppContent() {
             <Route path='/test-indexnow' element={<IndexNowTest />} />
             <Route path='/creator/dashboard/subscription/success' element={<SubscriptionSuccess />} />
             <Route path='/creator/dashboard/subscription/cancel' element={<SubscriptionCancel />} />
-            
+
             {/* Standalone routes for profiles, wrapped in a layout manager */}
             <Route element={<ProfileLayoutWrapper />}>
               <Route path='/creator/profile/:id' element={<ProfilePage />} />

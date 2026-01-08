@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "framework": "create-react-app",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(robots.txt|favicon.ico|sitemap.xml|manifest.json)",
+      "dest": "/$1"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "https://api.newcollab.co/$1"
+    },
+    {
+      "src": "/blog/([^/]+)/",
+      "dest": "/blog/$1",
+      "status": 301
+    },
+    {
+      "src": "/home/?",
+      "dest": "/",
+      "status": 301
+    },
+    {
+      "src": "/marketplace",
+      "dest": "/index.html",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
+      }
+    }
+  ]
+}
