@@ -1,44 +1,29 @@
 {
-  "version": 2,
-  "framework": "create-react-app",
-  "builds": [
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
+      "source": "/api/(.*)",
+      "destination": "https://api.newcollab.co/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
-  "routes": [
+  "redirects": [
     {
-      "src": "/(robots.txt|favicon.ico|sitemap.xml|manifest.json)",
-      "dest": "/$1"
+      "source": "/blog/:slug/",
+      "destination": "/blog/:slug",
+      "permanent": true
     },
     {
-      "src": "/api/(.*)",
-      "dest": "https://api.newcollab.co/$1"
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
     },
     {
-      "src": "/blog/([^/]+)/",
-      "dest": "/blog/$1",
-      "status": 301
-    },
-    {
-      "src": "/home/?",
-      "dest": "/",
-      "status": 301
-    },
-    {
-      "src": "/marketplace",
-      "dest": "/index.html",
-      "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/home/",
+      "destination": "/",
+      "permanent": true
     }
   ],
   "headers": [
@@ -50,7 +35,15 @@
           "value": "same-origin-allow-popups"
         }
       ]
+    },
+    {
+      "source": "/marketplace",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
   ]
 }
-
