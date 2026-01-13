@@ -127,7 +127,7 @@ const UnifiedBrandDirectory = () => {
       // Toggle save/unsave
       if (savedBrandIds.has(brand.id)) {
         // Unsave (doesn't count against quota)
-        await axios.delete(`${API_BASE}/api/pr-crm/pipeline/${brand.id}`, {
+        await axios.delete(`${API_BASE}/api/pr-crm/pipeline/brand/${brand.id}`, {
           withCredentials: true
         });
         setSavedBrandIds(prev => {
