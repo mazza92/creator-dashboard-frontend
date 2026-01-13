@@ -395,10 +395,15 @@ const UnifiedBrandDirectory = () => {
 // Styled Components
 const Container = styled.div`
   width: 100%;
-  max-width: 100%;
+  max-width: ${props => props.$isDashboard ? '100%' : '100%'};
   background: ${props => props.$isDashboard ? 'transparent' : '#FAFAFA'};
   min-height: ${props => props.$isDashboard ? 'auto' : '100vh'};
   padding-bottom: ${props => props.$isDashboard ? '40px' : '80px'};
+  ${props => props.$isDashboard && `
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0;
+  `}
 `;
 
 const Hero = styled.div`
