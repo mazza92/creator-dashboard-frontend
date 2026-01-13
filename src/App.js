@@ -64,13 +64,12 @@ import CreatorOnboarding from './components/forms/CreatorOnboarding';
 import ProfileLayoutWrapper from './Layouts/ProfileLayoutWrapper';
 import { AuthProvider } from './contexts/AuthContext';
 import Marketplace from './pages/Marketplace';
-import PRBrandDiscovery from './creator-portal/PRBrandDiscovery';
 import PRPipeline from './creator-portal/PRPipeline';
 import SubscriptionSuccess from './creator-portal/SubscriptionSuccess';
 import SubscriptionCancel from './creator-portal/SubscriptionCancel';
 import AccountSettings from './creator-portal/AccountSettings';
-import PublicDirectory from './pages/PublicDirectory';
 import PublicBrandPage from './pages/PublicBrandPage';
+import UnifiedBrandDirectory from './pages/UnifiedBrandDirectory';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -298,7 +297,7 @@ function AppContent() {
             <Route path='/stripe/success' element={<StripeSuccess />} />
             <Route path='/stripe/reauth' element={<StripeSuccess />} />
             <Route path='/marketplace' element={<Marketplace />} />
-            <Route path='/directory' element={<PublicDirectory />} />
+            <Route path='/directory' element={<UnifiedBrandDirectory />} />
             <Route path='/brand/:slug' element={<PublicBrandPage />} />
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             <Route path='/register-new' element={<CreatorSignup />} />
@@ -339,7 +338,7 @@ function AppContent() {
                 <Route path='dashboard/branded-content' element={<SponsorOffers />} />
                 <Route path='dashboard/my-offers' element={<ManagePackages />} />
                 <Route path='dashboard/profile' element={<Profile />} />
-                <Route path='dashboard/pr-brands' element={<PRBrandDiscovery />} />
+                <Route path='dashboard/pr-brands' element={<UnifiedBrandDirectory />} />
                 <Route path='dashboard/pr-pipeline' element={<PRPipeline />} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
                 <Route path='dashboard/pr-offers' element={<PROffers />} />
