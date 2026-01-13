@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
 import { Input, Select, Spin, Pagination, Button, Badge, Progress, message } from 'antd';
@@ -13,7 +13,11 @@ const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
 const UnifiedBrandDirectory = () => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Detect if we're inside dashboard or public route
+  const isDashboardView = location.pathname.startsWith('/creator/dashboard');
 
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -23,9 +27,9 @@ const UnifiedBrandDirectory = () => {
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [brandsSavedCount, setBrandsSavedCount] = useState(0);
+  const [dailyUnlocksUsed, setDailyUnlocksUsed] = useState(0);
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
-  const FREE_BRAND_LIMIT = 5;
+  const DAILY_UNLOCK_LIMIT = 5; // Free users get 5 unlocks per day
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -61,7 +65,7 @@ const UnifiedBrandDirectory = () => {
         withCredentials: true
       });
       setSubscriptionTier(response.data.tier || 'free');
-      setBrandsSavedCount(response.data.brands_saved_count || 0);
+      setDailyUnlocksUsed(response.data.daily_unlocks_used || 0);
     } catch (error) {
       console.error('Error fetching subscription:', error);
     }
@@ -113,8 +117,8 @@ const UnifiedBrandDirectory = () => {
       return;
     }
 
-    // Check free tier limit
-    if (subscriptionTier === 'free' && brandsSavedCount >= FREE_BRAND_LIMIT && !savedBrandIds.has(brand.id)) {
+    // Check daily unlock limit for FREE users (unsaving doesn't count)
+    if (subscriptionTier === 'free' && dailyUnlocksUsed >= DAILY_UNLOCK_LIMIT && !savedBrandIds.has(brand.id)) {
       setUpgradeModalVisible(true);
       return;
     }
@@ -122,7 +126,7 @@ const UnifiedBrandDirectory = () => {
     try {
       // Toggle save/unsave
       if (savedBrandIds.has(brand.id)) {
-        // Unsave
+        // Unsave (doesn't count against quota)
         await axios.delete(`${API_BASE}/api/pr-crm/pipeline/${brand.id}`, {
           withCredentials: true
         });
@@ -131,16 +135,20 @@ const UnifiedBrandDirectory = () => {
           newSet.delete(brand.id);
           return newSet;
         });
-        setBrandsSavedCount(prev => Math.max(0, prev - 1));
         message.success('Brand removed from pipeline');
       } else {
-        // Save
+        // Save (counts against daily quota for FREE users)
         await axios.post(`${API_BASE}/api/pr-crm/pipeline/save`,
           { brand_id: brand.id },
           { withCredentials: true }
         );
         setSavedBrandIds(prev => new Set([...prev, brand.id]));
-        setBrandsSavedCount(prev => prev + 1);
+
+        // Increment daily unlock count for free users
+        if (subscriptionTier === 'free') {
+          setDailyUnlocksUsed(prev => prev + 1);
+        }
+
         message.success(`${brand.name} saved to pipeline!`);
       }
     } catch (error) {
@@ -199,32 +207,41 @@ const UnifiedBrandDirectory = () => {
         <link rel="canonical" href="https://newcollab.co/directory" />
       </Helmet>
 
-      <Container>
-        {/* Hero Section */}
-        <Hero>
-          <HeroContent>
-            <h1>Find Brands That Want to Work With You</h1>
-            <p>Browse {pagination.total}+ brands actively seeking influencers for PR packages and paid collaborations</p>
-            {user && subscriptionTier === 'free' && (
-              <QuotaBanner>
-                <Progress
-                  percent={(brandsSavedCount / FREE_BRAND_LIMIT) * 100}
-                  showInfo={false}
-                  strokeColor="#EC4899"
-                />
-                <QuotaText>
-                  {brandsSavedCount}/{FREE_BRAND_LIMIT} free saves used
-                  <Button type="link" onClick={() => setUpgradeModalVisible(true)}>
-                    Upgrade for unlimited <CrownOutlined />
-                  </Button>
-                </QuotaText>
-              </QuotaBanner>
+      <Container $isDashboard={isDashboardView}>
+        {/* Hero Section - Only show on public /directory page */}
+        {!isDashboardView && (
+          <Hero>
+            <HeroContent>
+              <h1>Find Brands That Want to Work With You</h1>
+              <p>Browse {pagination.total}+ brands actively seeking influencers for PR packages and paid collaborations</p>
+            </HeroContent>
+          </Hero>
+        )}
+
+        {/* Daily Quota Tracker - Show for logged-in FREE users */}
+        {user && subscriptionTier === 'free' && (
+          <QuotaBanner $isDashboard={isDashboardView}>
+            <Progress
+              percent={(dailyUnlocksUsed / DAILY_UNLOCK_LIMIT) * 100}
+              showInfo={false}
+              strokeColor="#EC4899"
+            />
+            <QuotaText>
+              <span><strong>{dailyUnlocksUsed}/{DAILY_UNLOCK_LIMIT}</strong> applications used today</span>
+              <Button type="link" onClick={() => setUpgradeModalVisible(true)}>
+                Upgrade for unlimited <CrownOutlined />
+              </Button>
+            </QuotaText>
+            {dailyUnlocksUsed >= DAILY_UNLOCK_LIMIT && (
+              <QuotaWarning>
+                ⏰ Come back tomorrow for 5 more free applications, or upgrade now!
+              </QuotaWarning>
             )}
-          </HeroContent>
-        </Hero>
+          </QuotaBanner>
+        )}
 
         {/* Filters Section */}
-        <FiltersSection>
+        <FiltersSection $isDashboard={isDashboardView}>
           <SearchBar>
             <Input
               size="large"
@@ -366,7 +383,7 @@ const UnifiedBrandDirectory = () => {
         <UpgradeModal
           visible={upgradeModalVisible}
           onClose={() => setUpgradeModalVisible(false)}
-          reason="unlock_unlimited_saves"
+          reason="daily_unlock_limit"
           currentTier={subscriptionTier}
         />
       )}
@@ -378,9 +395,9 @@ const UnifiedBrandDirectory = () => {
 const Container = styled.div`
   width: 100%;
   max-width: 100%;
-  background: #FAFAFA;
-  min-height: 100vh;
-  padding-bottom: 80px;
+  background: ${props => props.$isDashboard ? 'transparent' : '#FAFAFA'};
+  min-height: ${props => props.$isDashboard ? 'auto' : '100vh'};
+  padding-bottom: ${props => props.$isDashboard ? '40px' : '80px'};
 `;
 
 const Hero = styled.div`
@@ -413,11 +430,13 @@ const HeroContent = styled.div`
 `;
 
 const QuotaBanner = styled.div`
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  background: ${props => props.$isDashboard ? 'white' : 'rgba(255, 255, 255, 0.15)'};
+  backdrop-filter: ${props => props.$isDashboard ? 'none' : 'blur(10px)'};
   padding: 16px 24px;
   border-radius: 12px;
-  margin-top: 24px;
+  margin: ${props => props.$isDashboard ? '0 24px 24px' : '24px 0 0'};
+  box-shadow: ${props => props.$isDashboard ? '0 2px 8px rgba(0, 0, 0, 0.06)' : 'none'};
+  color: ${props => props.$isDashboard ? '#111827' : 'white'};
 `;
 
 const QuotaText = styled.div`
@@ -428,7 +447,7 @@ const QuotaText = styled.div`
   font-size: 14px;
 
   button {
-    color: white;
+    color: ${props => props.theme?.isDashboard ? '#EC4899' : 'white'};
     padding: 0 8px;
 
     &:hover {
@@ -437,9 +456,16 @@ const QuotaText = styled.div`
   }
 `;
 
+const QuotaWarning = styled.div`
+  margin-top: 8px;
+  font-size: 13px;
+  color: #F59E0B;
+  font-weight: 500;
+`;
+
 const FiltersSection = styled.div`
   max-width: 1200px;
-  margin: -20px auto 32px;
+  margin: ${props => props.$isDashboard ? '0 auto 32px' : '-20px auto 32px'};
   padding: 0 24px;
 `;
 
