@@ -20,6 +20,16 @@
       "dest": "https://api.newcollab.co/$1"
     },
     {
+      "src": "/blog/([^/]+)/",
+      "dest": "/blog/$1",
+      "status": 301
+    },
+    {
+      "src": "/home/?",
+      "dest": "/",
+      "status": 301
+    },
+    {
       "src": "/marketplace",
       "dest": "/index.html",
       "headers": {
