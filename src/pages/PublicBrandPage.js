@@ -355,20 +355,20 @@ const PublicBrandPage = () => {
                 <SocialLinks>
                   {brand.instagram && (
                     <SocialLink
-                      href={`https://instagram.com/${brand.instagram}`}
+                      href={`https://instagram.com/${brand.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      📷 @{brand.instagram}
+                      📷 @{brand.instagram.replace('@', '')}
                     </SocialLink>
                   )}
                   {brand.tiktok && (
                     <SocialLink
-                      href={`https://tiktok.com/@${brand.tiktok}`}
+                      href={`https://tiktok.com/@${brand.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      🎵 @{brand.tiktok}
+                      🎵 @{brand.tiktok.replace('@', '')}
                     </SocialLink>
                   )}
                 </SocialLinks>
@@ -452,15 +452,17 @@ const BrandLogo = styled.div`
   border-radius: 16px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #f5f5f5;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid #e5e5e5;
 
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    padding: 8px;
   }
 `;
 
