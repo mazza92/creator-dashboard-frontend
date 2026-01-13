@@ -41,7 +41,6 @@
       "dest": "/index.html"
     }
   ],
-  "ignore": ["requirements.txt", "migrations", "back2"],
   "headers": [
     {
       "source": "/(.*)",
