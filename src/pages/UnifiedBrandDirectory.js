@@ -381,10 +381,11 @@ const UnifiedBrandDirectory = () => {
       {/* Upgrade Modal */}
       {upgradeModalVisible && (
         <UpgradeModal
-          visible={upgradeModalVisible}
+          isOpen={upgradeModalVisible}
           onClose={() => setUpgradeModalVisible(false)}
-          reason="daily_unlock_limit"
-          currentTier={subscriptionTier}
+          currentCount={dailyUnlocksUsed}
+          limit={DAILY_UNLOCK_LIMIT}
+          feature="brand applications"
         />
       )}
     </>

@@ -52,93 +52,65 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
             <Icon>
               <FiZap />
             </Icon>
-            <Title>Upgrade to Continue</Title>
+            <Title>You've Hit Your Daily Limit!</Title>
             <Subtitle>
-              You've reached your free tier limit for {feature}
+              You have used your {limit} free {feature} for today.
             </Subtitle>
+            <DailyResetNote>
+              ⏰ Come back tomorrow for {limit} more, or upgrade now for unlimited access!
+            </DailyResetNote>
           </Header>
 
           <LimitInfo>
             <LimitText>
-              {currentCount} / {limit} {feature} used
+              {currentCount} / {limit} {feature} used today
             </LimitText>
             <ProgressBar>
-              <ProgressFill width={(currentCount / limit) * 100} />
+              <ProgressFill width={100} />
             </ProgressBar>
           </LimitInfo>
 
           <PlansContainer>
-            <Plan>
+            <Plan featured>
+              <Badge>Impulse Buy Pricing</Badge>
               <PlanHeader>
                 <PlanName>Pro</PlanName>
                 <PlanPrice>
-                  $19<PlanPeriod>/month</PlanPeriod>
+                  $12<PlanPeriod>/month</PlanPeriod>
                 </PlanPrice>
+                <PriceNote>Less than a Spotify subscription!</PriceNote>
               </PlanHeader>
 
               <Features>
                 <Feature>
-                  <FiCheck /> <span>Verified brand emails</span>
+                  <FiCheck /> <span><strong>Unlimited Applications</strong> (No daily limits!)</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>20 brand contacts per month</span>
+                  <FiCheck /> <span>Direct PR Manager Emails (Skip the forms!)</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>Custom pitch templates</span>
+                  <FiCheck /> <span>Proven Pitch Templates</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>Unlimited brand saves</span>
+                  <FiCheck /> <span>Advanced CRM Pipeline</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>Basic analytics</span>
+                  <FiCheck /> <span>Priority Support</span>
                 </Feature>
               </Features>
 
+              <ValueProp>
+                💡 One PR package could get you $500 worth of free products. $12/month is a steal!
+              </ValueProp>
+
               <UpgradeButton
+                featured
                 onClick={() => handleUpgrade('pro')}
                 disabled={loading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {loading ? 'Processing...' : 'Upgrade to Pro'}
-              </UpgradeButton>
-            </Plan>
-
-            <Plan featured>
-              <Badge>Most Popular</Badge>
-              <PlanHeader>
-                <PlanName>Elite</PlanName>
-                <PlanPrice>
-                  $49<PlanPeriod>/month</PlanPeriod>
-                </PlanPrice>
-              </PlanHeader>
-
-              <Features>
-                <Feature>
-                  <FiCheck /> <span>Everything in Pro</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>Unlimited brand contacts</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>AI pitch generator</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>Guaranteed PR packages</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>Auto-follow up system</span>
-                </Feature>
-              </Features>
-
-              <UpgradeButton
-                featured
-                onClick={() => handleUpgrade('elite')}
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {loading ? 'Processing...' : 'Upgrade to Elite'}
+                {loading ? 'Processing...' : 'Upgrade Now for $12/month'}
               </UpgradeButton>
             </Plan>
           </PlansContainer>
@@ -269,14 +241,9 @@ const ProgressFill = styled.div`
 `;
 
 const PlansContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  display: flex;
+  justify-content: center;
   margin-bottom: 24px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const Plan = styled.div`
@@ -285,6 +252,8 @@ const Plan = styled.div`
   padding: 24px;
   position: relative;
   background: ${props => props.featured ? 'linear-gradient(135deg, #EFF6FF, #DBEAFE)' : 'white'};
+  max-width: 420px;
+  width: 100%;
 `;
 
 const Badge = styled.div`
@@ -379,6 +348,36 @@ const FooterText = styled.p`
   font-size: 13px;
   color: #6B7280;
   margin: 0;
+`;
+
+const DailyResetNote = styled.p`
+  font-size: 14px;
+  color: #F59E0B;
+  margin: 12px 0 0 0;
+  font-weight: 500;
+  padding: 8px 16px;
+  background: #FEF3C7;
+  border-radius: 8px;
+  display: inline-block;
+`;
+
+const PriceNote = styled.p`
+  font-size: 12px;
+  color: #10B981;
+  margin: 4px 0 0 0;
+  font-weight: 500;
+`;
+
+const ValueProp = styled.div`
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 16px 0;
+  font-size: 13px;
+  color: #15803D;
+  text-align: center;
+  font-weight: 500;
 `;
 
 export default UpgradeModal;
