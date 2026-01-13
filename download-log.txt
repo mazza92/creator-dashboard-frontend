@@ -1,0 +1,28 @@
+❌ VERCEL_TOKEN not provided
+
+Usage:
+  npx vercel-deploy-source-downloader [token] [options]
+
+Options:
+  --deployment <id|latest>    Deployment ID or 'latest' (default: latest)
+  --project <name>            Project name (default: auto-detect)
+  --team <id>                 Team ID (default: auto-detect)
+  --output <path>             Output directory path (default: ./out)
+  --verbose                   Show detailed progress
+
+Environment Variables (or use .env file):
+  VERCEL_TOKEN          Your Vercel API token (required)
+  VERCEL_DEPLOYMENT     Deployment ID or 'latest' (default: latest)
+  VERCEL_PROJECT        Project name (optional)
+  VERCEL_TEAM           Team ID (optional)
+  VERCEL_OUTPUT         Output directory path (optional, default: ./out)
+
+Examples:
+  # Using command line
+  npx vercel-deploy-source-downloader <token>
+  npx vercel-deploy-source-downloader <token> --deployment dpl_ABC123
+
+  # Using .env file (create .env with VERCEL_TOKEN=your_token)
+  npx vercel-deploy-source-downloader
+
+Get your token from: https://vercel.com/account/tokens
