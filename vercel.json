@@ -5,7 +5,7 @@
       "destination": "https://api.newcollab.co/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!static|.*\\.js$|.*\\.css$|.*\\.ico$|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.webp$|.*\\.woff2?$|.*\\.map$|manifest\\.json$|robots\\.txt$|sitemap\\.xml$).*)",
       "destination": "/index.html"
     }
   ],
