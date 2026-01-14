@@ -317,7 +317,7 @@ const UnifiedBrandDirectory = () => {
               {brands.map(brand => (
                 <BrandCard
                   key={brand.slug}
-                  to={!user && !isDashboardView ? '/register/creator' : `/brand/${brand.slug}`}
+                  to={`/brand/${brand.slug}`}
                 >
                   {brand.isFeatured && (
                     <FeaturedBadge>

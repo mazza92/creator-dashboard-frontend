@@ -190,7 +190,7 @@ const PublicBrandPage = () => {
           <UpgradePrompt>
             <p>Want the PR manager's email?</p>
             <Link to="/creator/dashboard/settings">
-              <Button type="link">Upgrade to Pro ($10/mo) →</Button>
+              <Button type="link">Upgrade to Pro ($12/mo) →</Button>
             </Link>
           </UpgradePrompt>
         )}
