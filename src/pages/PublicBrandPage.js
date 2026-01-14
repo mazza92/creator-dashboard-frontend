@@ -213,29 +213,49 @@ const PublicBrandPage = () => {
   return (
     <>
       <Helmet>
-        <title>{brand.seo.title}</title>
-        <meta name="description" content={brand.seo.description} />
-        <meta property="og:title" content={brand.seo.title} />
-        <meta property="og:description" content={brand.seo.description} />
-        {brand.logo && <meta property="og:image" content={brand.logo} />}
-        <link rel="canonical" href={`https://newcollab.co/brand/${slug}`} />
+        <title>{brand.seo?.title || `${brand.name} PR List Application | NewCollab`}</title>
+        <meta name="description" content={brand.seo?.description || `Apply for ${brand.name} PR packages and collaborations.`} />
+        <meta name="keywords" content={brand.seo?.keywords || `${brand.name}, PR, influencer, collaboration`} />
 
-        {/* Schema.org structured data */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": brand.name,
-            "url": brand.website,
-            "logo": brand.logo,
-            "description": brand.description,
-            "contactPoint": {
-              "@type": "ContactPoint",
-              "contactType": "PR Department",
-              "url": `https://newcollab.co/brand/${slug}`
-            }
-          })}
-        </script>
+        {/* Open Graph */}
+        <meta property="og:title" content={brand.seo?.ogTitle || brand.seo?.title || `${brand.name} PR List`} />
+        <meta property="og:description" content={brand.seo?.ogDescription || brand.seo?.description || `Apply for ${brand.name} PR packages`} />
+        <meta property="og:image" content={brand.seo?.ogImage || brand.logo || 'https://newcollab.co/og-default.png'} />
+        <meta property="og:url" content={`https://newcollab.co/brand/${slug}`} />
+        <meta property="og:type" content="website" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={brand.seo?.ogTitle || brand.seo?.title || `${brand.name} PR List`} />
+        <meta name="twitter:description" content={brand.seo?.ogDescription || brand.seo?.description} />
+        <meta name="twitter:image" content={brand.seo?.ogImage || brand.logo} />
+
+        <link rel="canonical" content={brand.seo?.canonical || `https://newcollab.co/brand/${slug}`} />
+
+        {/* JobPosting structured data for SEO/GEO */}
+        {brand.structuredData && (
+          <script type="application/ld+json">
+            {JSON.stringify(brand.structuredData)}
+          </script>
+        )}
+
+        {/* FAQ structured data for GEO */}
+        {brand.faqs && brand.faqs.length > 0 && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": brand.faqs.map(faq => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.answer
+                }
+              }))
+            })}
+          </script>
+        )}
       </Helmet>
 
       <Container>
@@ -274,6 +294,35 @@ const PublicBrandPage = () => {
 
         <Content>
           <MainColumn>
+            {/* Direct Answer Box for AI/SEO */}
+            <DirectAnswerBox>
+              <DirectAnswerTitle>Is {brand.name} accepting PR?</DirectAnswerTitle>
+              <DirectAnswerContent>
+                <StatusBadge accepting={brand.accepting_pr !== false}>
+                  {brand.accepting_pr !== false ? '✅ Open' : '⏸️ Paused'}
+                </StatusBadge>
+                <p>
+                  <strong>Yes</strong>, {brand.name} is {brand.accepting_pr !== false ? 'currently' : 'periodically'} accepting applications from creators
+                  {brand.min_followers && brand.min_followers > 0 && ` with ${brand.min_followers >= 1000 ? `${(brand.min_followers / 1000).toFixed(0)}K+` : brand.min_followers} followers`}.
+                  {brand.product_types && ` They typically send ${brand.product_types} packages.`}
+                </p>
+                {brand.application_url && (
+                  <DirectLink>
+                    <strong>Direct Link:</strong>{' '}
+                    {unlockedData ? (
+                      <a href={brand.application_url} target="_blank" rel="noopener noreferrer">
+                        Open Application Form →
+                      </a>
+                    ) : (
+                      <Button size="small" onClick={handleUnlock}>
+                        Unlock Application
+                      </Button>
+                    )}
+                  </DirectLink>
+                )}
+              </DirectAnswerContent>
+            </DirectAnswerBox>
+
             {brand.description && (
               <Section>
                 <SectionTitle>About {brand.name}</SectionTitle>
@@ -417,6 +466,55 @@ const PublicBrandPage = () => {
             </TrustSignals>
           </Sidebar>
         </Content>
+
+        {/* FAQ Section for GEO */}
+        {brand.faqs && brand.faqs.length > 0 && (
+          <FAQSection>
+            <FAQTitle>Frequently Asked Questions</FAQTitle>
+            <FAQList>
+              {brand.faqs.map((faq, index) => (
+                <FAQItem key={index}>
+                  <FAQQuestion>{faq.question}</FAQQuestion>
+                  <FAQAnswer>{faq.answer}</FAQAnswer>
+                </FAQItem>
+              ))}
+            </FAQList>
+          </FAQSection>
+        )}
+
+        {/* Similar Brands for Entity Linking */}
+        {brand.similarBrands && brand.similarBrands.length > 0 && (
+          <SimilarBrandsSection>
+            <SimilarBrandsTitle>Similar Brands Accepting PR</SimilarBrandsTitle>
+            <SimilarBrandsGrid>
+              {brand.similarBrands.map((similarBrand) => (
+                <SimilarBrandCard
+                  key={similarBrand.id}
+                  to={`/brand/${similarBrand.slug}`}
+                >
+                  {similarBrand.logo ? (
+                    <SimilarBrandLogo src={similarBrand.logo} alt={similarBrand.name} />
+                  ) : (
+                    <SimilarBrandPlaceholder>
+                      {similarBrand.name.charAt(0)}
+                    </SimilarBrandPlaceholder>
+                  )}
+                  <SimilarBrandName>{similarBrand.name}</SimilarBrandName>
+                  {similarBrand.min_followers && similarBrand.min_followers > 0 && (
+                    <SimilarBrandFollowers>
+                      {similarBrand.min_followers >= 1000
+                        ? `${(similarBrand.min_followers / 1000).toFixed(0)}K+ followers`
+                        : `${similarBrand.min_followers}+ followers`}
+                    </SimilarBrandFollowers>
+                  )}
+                </SimilarBrandCard>
+              ))}
+            </SimilarBrandsGrid>
+            <SimilarBrandsFooter>
+              <em>Similar to {brand.name} in accepting creator applications and partnership opportunities.</em>
+            </SimilarBrandsFooter>
+          </SimilarBrandsSection>
+        )}
 
         <RelatedSection>
           <h2>More Brands in {brand.category?.replace('_', ' ')}</h2>
@@ -849,6 +947,216 @@ const LoadingContainer = styled.div`
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+`;
+
+// Direct Answer Box Styles
+const DirectAnswerBox = styled.div`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 32px;
+  border-radius: 16px;
+  margin-bottom: 32px;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+`;
+
+const DirectAnswerTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: white;
+`;
+
+const DirectAnswerContent = styled.div`
+  font-size: 16px;
+  line-height: 1.6;
+
+  p {
+    margin: 16px 0;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  strong {
+    font-weight: 600;
+  }
+`;
+
+const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 8px 16px;
+  background: ${props => props.accepting ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)'};
+  border: 2px solid ${props => props.accepting ? '#4CAF50' : '#FF9800'};
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+`;
+
+const DirectLink = styled.div`
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+
+  a {
+    color: white;
+    text-decoration: underline;
+    font-weight: 600;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  button {
+    background: white;
+    color: #667eea;
+    font-weight: 600;
+    border: none;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.9);
+    }
+  }
+`;
+
+// FAQ Section Styles
+const FAQSection = styled.div`
+  max-width: 1200px;
+  margin: 60px auto;
+  background: white;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+`;
+
+const FAQTitle = styled.h2`
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 32px;
+  text-align: center;
+`;
+
+const FAQList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const FAQItem = styled.div`
+  padding: 24px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+`;
+
+const FAQQuestion = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+`;
+
+const FAQAnswer = styled.p`
+  font-size: 15px;
+  line-height: 1.6;
+  color: #666;
+  margin: 0;
+`;
+
+// Similar Brands Section Styles
+const SimilarBrandsSection = styled.div`
+  max-width: 1200px;
+  margin: 60px auto;
+  background: white;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+`;
+
+const SimilarBrandsTitle = styled.h2`
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 32px;
+  text-align: center;
+`;
+
+const SimilarBrandsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+  }
+`;
+
+const SimilarBrandCard = styled(Link)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+    border-color: #667eea;
+  }
+`;
+
+const SimilarBrandLogo = styled.img`
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 12px;
+  border-radius: 8px;
+`;
+
+const SimilarBrandPlaceholder = styled.div`
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #667eea;
+  background: linear-gradient(135deg, #667eea22, #764ba222);
+  border-radius: 8px;
+  margin-bottom: 12px;
+`;
+
+const SimilarBrandName = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin-bottom: 4px;
+`;
+
+const SimilarBrandFollowers = styled.div`
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+`;
+
+const SimilarBrandsFooter = styled.div`
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+
+  em {
+    color: #999;
+    font-size: 14px;
+  }
 `;
 
 export default PublicBrandPage;
