@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_BACKEND_URL,
+  // Use direct API domain in production to match existing backend setup.
+  baseURL:
+    process.env.REACT_APP_BACKEND_URL ||
+    (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co'),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
