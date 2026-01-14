@@ -233,6 +233,15 @@ const PRPipeline = () => {
                 </BrandHeader>
 
                 <BrandDetails>
+                  {brand.application_form_url && (
+                    <ApplicationFormLink
+                      href={brand.application_form_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      📋 Application Form Available →
+                    </ApplicationFormLink>
+                  )}
                   {brand.contact_email && (
                     <Detail>
                       <DetailLabel>Email:</DetailLabel>
@@ -257,6 +266,18 @@ const PRPipeline = () => {
                 </BrandDetails>
 
                 <ActionButtons>
+                  {brand.application_form_url && (
+                    <PrimaryButton
+                      as="a"
+                      href={brand.application_form_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      📋 Open Application
+                    </PrimaryButton>
+                  )}
+
                   {activeTab === 'saved' && (
                     <PrimaryButton onClick={() => handlePitch(brand)}>
                       📧 Pitch Brand
@@ -558,6 +579,38 @@ const DetailLabel = styled.span`
 
 const DetailValue = styled.span`
   color: #1F2937;
+`;
+
+const ApplicationFormLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+  text-decoration: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white !important;
+    text-decoration: none;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    padding: 11px 14px;
+  }
 `;
 
 const ActionButtons = styled.div`
