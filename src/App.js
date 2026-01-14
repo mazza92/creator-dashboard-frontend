@@ -70,6 +70,9 @@ import SubscriptionCancel from './creator-portal/SubscriptionCancel';
 import AccountSettings from './creator-portal/AccountSettings';
 import PublicBrandPage from './pages/PublicBrandPage';
 import UnifiedBrandDirectory from './pages/UnifiedBrandDirectory';
+import SkincareDirectory from './pages/SkincareDirectory';
+import KBeautyDirectory from './pages/KBeautyDirectory';
+import AustraliaDirectory from './pages/AustraliaDirectory';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -303,6 +306,9 @@ function AppContent() {
                     user ? <Navigate to='/creator/dashboard/pr-brands' replace /> : <UnifiedBrandDirectory />
                 }
             />
+            <Route path='/directory/skincare' element={<SkincareDirectory />} />
+            <Route path='/directory/k-beauty' element={<KBeautyDirectory />} />
+            <Route path='/directory/australia' element={<AustraliaDirectory />} />
             <Route path='/brand/:slug' element={<PublicBrandPage />} />
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             <Route path='/register-new' element={<CreatorSignup />} />

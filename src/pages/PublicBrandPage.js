@@ -331,7 +331,7 @@ const PublicBrandPage = () => {
             )}
 
             <Section>
-              <SectionTitle>Application Requirements</SectionTitle>
+              <SectionTitle>Qualification Requirements</SectionTitle>
               <RequirementsGrid>
                 {brand.requirements.minFollowers !== null && brand.requirements.minFollowers !== undefined && brand.requirements.minFollowers > 0 && (
                   <Requirement>
@@ -398,6 +398,71 @@ const PublicBrandPage = () => {
                   </Requirement>
                 )}
               </RequirementsGrid>
+
+              <RequirementsExplanation>
+                <h4>Can I get {brand.name} PR with less followers?</h4>
+                {brand.requirements.minFollowers && brand.requirements.minFollowers > 0 ? (
+                  <p>
+                    {brand.name} requires a minimum of {brand.requirements.minFollowers >= 1000
+                      ? `${(brand.requirements.minFollowers / 1000).toFixed(0)}K`
+                      : brand.requirements.minFollowers} followers to qualify for their PR list.
+                    {brand.requirements.minFollowers <= 5000 && (
+                      <> This is considered <strong>micro-influencer friendly</strong>, making it accessible to smaller creators.</>
+                    )}
+                    {brand.requirements.minFollowers > 5000 && brand.requirements.minFollowers <= 25000 && (
+                      <> This requirement targets <strong>mid-tier influencers</strong> with established audiences.</>
+                    )}
+                  </p>
+                ) : (
+                  <p>
+                    Great news! {brand.name} does not have a strict follower minimum listed, making them accessible to
+                    <strong> micro-influencers and creators with smaller audiences</strong>. They evaluate applications based on
+                    content quality, engagement, and niche relevance rather than follower count alone.
+                  </p>
+                )}
+
+                <h4>How to meet {brand.name} PR list requirements</h4>
+                <ul>
+                  {brand.requirements.minFollowers && brand.requirements.minFollowers > 0 && (
+                    <li>
+                      <strong>Follower Count:</strong> You need at least {brand.requirements.minFollowers >= 1000
+                        ? `${(brand.requirements.minFollowers / 1000).toFixed(0)}K`
+                        : brand.requirements.minFollowers} followers on your primary platform
+                    </li>
+                  )}
+                  {brand.requirements.platforms && brand.requirements.platforms.length > 0 ? (
+                    <li>
+                      <strong>Platform:</strong> {brand.name} accepts applications from {brand.requirements.platforms.join(', ')} creators
+                    </li>
+                  ) : (
+                    <li>
+                      <strong>Platform:</strong> Applications accepted from Instagram, TikTok, YouTube, and other major platforms
+                    </li>
+                  )}
+                  {brand.niches && brand.niches.length > 0 && (
+                    <li>
+                      <strong>Niche:</strong> Your content should align with {brand.niches.join(', ')}
+                    </li>
+                  )}
+                  {brand.requirements.regions && brand.requirements.regions.length > 0 && (
+                    <li>
+                      <strong>Location:</strong> {brand.name} ships to creators in {brand.requirements.regions.join(', ')}
+                    </li>
+                  )}
+                  <li>
+                    <strong>Engagement:</strong> Maintain authentic engagement with your audience (quality over quantity)
+                  </li>
+                  <li>
+                    <strong>Content Quality:</strong> Showcase professional-looking content that aligns with {brand.name}'s brand aesthetic
+                  </li>
+                </ul>
+
+                <p style={{ marginTop: '16px', fontSize: '14px', color: '#666' }}>
+                  <strong>Pro tip:</strong> Even if you don't meet all requirements, consider applying anyway.
+                  Many brands make exceptions for creators with high engagement rates or niche audiences that align
+                  perfectly with their products.
+                </p>
+              </RequirementsExplanation>
             </Section>
 
             {brand.stats && (brand.stats.responseRate || brand.stats.avgResponseTime) && (
@@ -722,6 +787,53 @@ const RequirementValue = styled.div`
   font-size: 16px;
   color: #333;
   font-weight: 500;
+`;
+
+const RequirementsExplanation = styled.div`
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 2px solid #f0f0f0;
+
+  h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    margin-top: 24px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 16px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+
+    li {
+      padding: 12px 16px;
+      background: #f9fafb;
+      border-left: 3px solid #667eea;
+      margin-bottom: 10px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #555;
+
+      strong {
+        color: #333;
+        display: inline-block;
+        margin-right: 6px;
+      }
+    }
+  }
 `;
 
 const StatsGrid = styled.div`

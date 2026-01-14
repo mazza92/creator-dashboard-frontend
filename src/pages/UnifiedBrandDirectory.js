@@ -11,7 +11,7 @@ import LandingPageLayout from '../Layouts/LandingPageLayout';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
 
-const UnifiedBrandDirectory = () => {
+const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDescription }) => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -200,22 +200,25 @@ const UnifiedBrandDirectory = () => {
 
   const content = (
     <>
-      <Helmet>
-        <title>Direct PR Application Forms: 500+ Brand PR Lists (2026) | NewCollab</title>
-        <meta name="description" content="Access direct PR application forms for 500+ brands. Find PR list requirements, application links, and brands that send PR packages to small influencers. Filter by beauty, skincare, K-beauty, tech, and fashion." />
-        <meta name="keywords" content="pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, pr packages australia, brands that send pr to small influencers, influencer pr list requirements" />
-        <meta property="og:title" content="Direct PR Application Forms - 500+ Brand PR Lists" />
-        <meta property="og:description" content="Direct links to PR application forms and requirements for 500+ beauty, skincare, and lifestyle brands. Micro-influencer friendly." />
-        <link rel="canonical" href="https://newcollab.co/directory" />
-      </Helmet>
+      {/* Only show default Helmet if not in collection mode */}
+      {!collectionMode && (
+        <Helmet>
+          <title>Direct PR Application Forms: 500+ Brand PR Lists (2026) | NewCollab</title>
+          <meta name="description" content="Access direct PR application forms for 500+ brands. Find PR list requirements, application links, and brands that send PR packages to small influencers. Filter by beauty, skincare, K-beauty, tech, and fashion." />
+          <meta name="keywords" content="pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, pr packages australia, brands that send pr to small influencers, influencer pr list requirements" />
+          <meta property="og:title" content="Direct PR Application Forms - 500+ Brand PR Lists" />
+          <meta property="og:description" content="Direct links to PR application forms and requirements for 500+ beauty, skincare, and lifestyle brands. Micro-influencer friendly." />
+          <link rel="canonical" href="https://newcollab.co/directory" />
+        </Helmet>
+      )}
 
       <Container $isDashboard={isDashboardView}>
         {/* Hero Section - Only show on public /directory page */}
         {!isDashboardView && (
           <Hero>
             <HeroContent>
-              <h1>Direct PR Application Forms - 500+ Brand PR Lists</h1>
-              <p>Access direct PR application forms and requirements for {pagination.total}+ brands. Find brands that send PR to small influencers, skincare PR lists, K-beauty forms, and more.</p>
+              <h1>{collectionTitle || 'Direct PR Application Forms - 500+ Brand PR Lists'}</h1>
+              <p>{collectionDescription || `Access direct PR application forms and requirements for ${pagination.total}+ brands. Find brands that send PR to small influencers, skincare PR lists, K-beauty forms, and more.`}</p>
             </HeroContent>
           </Hero>
         )}
