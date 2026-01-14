@@ -277,7 +277,7 @@ const PublicBrandPage = () => {
             <Section>
               <SectionTitle>Application Requirements</SectionTitle>
               <RequirementsGrid>
-                {brand.requirements.minFollowers && (
+                {brand.requirements.minFollowers && brand.requirements.minFollowers > 0 && (
                   <Requirement>
                     <RequirementIcon>📊</RequirementIcon>
                     <div>
@@ -527,6 +527,7 @@ const CategoryTag = styled.span`
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.5px;
+  margin-right: 16px;
 `;
 
 const WebsiteLink = styled.a`
@@ -535,6 +536,7 @@ const WebsiteLink = styled.a`
   color: #667eea;
   text-decoration: none;
   font-weight: 500;
+  margin-left: 8px;
 
   &:hover {
     text-decoration: underline;

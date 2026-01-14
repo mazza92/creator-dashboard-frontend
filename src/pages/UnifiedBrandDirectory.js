@@ -350,7 +350,7 @@ const UnifiedBrandDirectory = () => {
 
                     <BrandMeta>
                       {brand.category && <MetaTag>{brand.category}</MetaTag>}
-                      {brand.minFollowers && (
+                      {brand.minFollowers && brand.minFollowers > 0 && (
                         <MetaTag>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</MetaTag>
                       )}
                     </BrandMeta>
@@ -419,8 +419,13 @@ const Container = styled.div`
 const Hero = styled.div`
   background: linear-gradient(135deg, #3B82F6 0%, #EC4899 100%);
   color: white;
-  padding: 60px 24px 40px;
+  padding: 120px 24px 60px;
   text-align: center;
+  margin-top: 0;
+
+  @media (max-width: 768px) {
+    padding: 100px 24px 50px;
+  }
 `;
 
 const HeroContent = styled.div`
