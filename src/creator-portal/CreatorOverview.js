@@ -74,6 +74,7 @@ import axios from "axios";
 import moment from "moment";
 import styled from "styled-components";
 import { motion } from "framer-motion";
+import { API_URL } from "../config/api";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -785,8 +786,6 @@ const OnboardingChecklist = styled.div`
     }
   }
 `;
-const API_URL = process.env.REACT_APP_BACKEND_URL;
-
 // Add styled components for the vibrant modal (define at the top, after imports)
 const ModalHeader = styled.div`
   display: flex;

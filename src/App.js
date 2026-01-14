@@ -297,7 +297,12 @@ function AppContent() {
             <Route path='/stripe/success' element={<StripeSuccess />} />
             <Route path='/stripe/reauth' element={<StripeSuccess />} />
             <Route path='/marketplace' element={<Marketplace />} />
-            <Route path='/directory' element={<UnifiedBrandDirectory />} />
+            <Route
+                path='/directory'
+                element={
+                    user ? <Navigate to='/creator/dashboard/pr-brands' replace /> : <UnifiedBrandDirectory />
+                }
+            />
             <Route path='/brand/:slug' element={<PublicBrandPage />} />
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             <Route path='/register-new' element={<CreatorSignup />} />

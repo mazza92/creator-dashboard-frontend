@@ -326,6 +326,21 @@ const PublicBrandPage = () => {
                     </div>
                   </Requirement>
                 )}
+
+                {!brand.requirements.minFollowers &&
+                 (!brand.requirements.platforms || brand.requirements.platforms.length === 0) &&
+                 (!brand.niches || brand.niches.length === 0) &&
+                 (!brand.requirements.regions || brand.requirements.regions.length === 0) && (
+                  <Requirement>
+                    <RequirementIcon>✨</RequirementIcon>
+                    <div>
+                      <RequirementLabel>Open to All Creators</RequirementLabel>
+                      <RequirementValue>
+                        No specific requirements listed - all creators welcome to apply!
+                      </RequirementValue>
+                    </div>
+                  </Requirement>
+                )}
               </RequirementsGrid>
             </Section>
 

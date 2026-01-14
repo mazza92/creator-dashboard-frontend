@@ -669,6 +669,7 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
           </Link>
           <NavLinks>
             <NavLink to="/marketplace" $isSignupPage={isTransparentHeader}>Marketplace</NavLink>
+            <NavLink to="/directory" $isSignupPage={isTransparentHeader}>Directory</NavLink>
             <NavLink to="/about" $isSignupPage={isTransparentHeader}>About</NavLink>
             <NavLink to="/blog" $isSignupPage={isTransparentHeader}>Blog</NavLink>
             <NavLink to="/contact" $isSignupPage={isTransparentHeader}>Contact</NavLink>
@@ -713,6 +714,9 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
         <MobileNavLinks>
           <MobileNavLink to="/marketplace" onClick={closeMobileMenu}>
             Marketplace
+          </MobileNavLink>
+          <MobileNavLink to="/directory" onClick={closeMobileMenu}>
+            Directory
           </MobileNavLink>
           <MobileNavLink to="/about" onClick={closeMobileMenu}>
             About
