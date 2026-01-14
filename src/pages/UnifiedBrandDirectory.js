@@ -201,10 +201,11 @@ const UnifiedBrandDirectory = () => {
   const content = (
     <>
       <Helmet>
-        <title>PR Brand Directory | 500+ Brands Accepting Influencer Applications</title>
-        <meta name="description" content="Find and apply to 500+ brands seeking influencers for PR packages. Search beauty, fashion, tech, and lifestyle brands accepting creator applications." />
-        <meta property="og:title" content="PR Brand Directory - Find Brands Accepting Influencer Applications" />
-        <meta property="og:description" content="Browse 500+ brands with open PR programs. Get application links, response rates, and follower requirements." />
+        <title>Direct PR Application Forms: 500+ Brand PR Lists (2026) | NewCollab</title>
+        <meta name="description" content="Access direct PR application forms for 500+ brands. Find PR list requirements, application links, and brands that send PR packages to small influencers. Filter by beauty, skincare, K-beauty, tech, and fashion." />
+        <meta name="keywords" content="pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, pr packages australia, brands that send pr to small influencers, influencer pr list requirements" />
+        <meta property="og:title" content="Direct PR Application Forms - 500+ Brand PR Lists" />
+        <meta property="og:description" content="Direct links to PR application forms and requirements for 500+ beauty, skincare, and lifestyle brands. Micro-influencer friendly." />
         <link rel="canonical" href="https://newcollab.co/directory" />
       </Helmet>
 
@@ -213,8 +214,8 @@ const UnifiedBrandDirectory = () => {
         {!isDashboardView && (
           <Hero>
             <HeroContent>
-              <h1>Find Brands That Want to Work With You</h1>
-              <p>Browse {pagination.total}+ brands actively seeking influencers for PR packages and paid collaborations</p>
+              <h1>Direct PR Application Forms - 500+ Brand PR Lists</h1>
+              <p>Access direct PR application forms and requirements for {pagination.total}+ brands. Find brands that send PR to small influencers, skincare PR lists, K-beauty forms, and more.</p>
             </HeroContent>
           </Hero>
         )}
