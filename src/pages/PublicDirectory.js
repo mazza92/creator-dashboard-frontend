@@ -201,7 +201,14 @@ const PublicDirectory = () => {
 
                   <BrandLogo>
                     {brand.logo ? (
-                      <img src={brand.logo} alt={brand.name} />
+                      <img
+                        src={brand.logo}
+                        alt={brand.name}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222);">${brand.name.charAt(0)}</div>`;
+                        }}
+                      />
                     ) : (
                       <PlaceholderLogo>{brand.name.charAt(0)}</PlaceholderLogo>
                     )}
@@ -216,14 +223,14 @@ const PublicDirectory = () => {
                     )}
 
                     <BrandStats>
-                      {brand.minFollowers && (
+                      {brand.minFollowers !== null && brand.minFollowers !== undefined && (
                         <StatItem>
                           <span>📊</span> {brand.minFollowers >= 1000
                             ? `${(brand.minFollowers / 1000).toFixed(0)}K+`
                             : brand.minFollowers}+ followers
                         </StatItem>
                       )}
-                      {brand.responseRate && (
+                      {brand.responseRate !== null && brand.responseRate !== undefined && (
                         <StatItem>
                           <span>✉️</span> {brand.responseRate}% response rate
                         </StatItem>

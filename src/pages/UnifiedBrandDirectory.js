@@ -336,7 +336,14 @@ const UnifiedBrandDirectory = () => {
 
                   <BrandLogo>
                     {brand.logo ? (
-                      <img src={brand.logo} alt={brand.name} />
+                      <img
+                        src={brand.logo}
+                        alt={brand.name}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222); border-radius: 12px;">${brand.name.charAt(0)}</div>`;
+                        }}
+                      />
                     ) : (
                       <LogoPlaceholder>{brand.name.charAt(0)}</LogoPlaceholder>
                     )}
@@ -350,12 +357,12 @@ const UnifiedBrandDirectory = () => {
 
                     <BrandMeta>
                       {brand.category && <MetaTag>{brand.category}</MetaTag>}
-                      {brand.minFollowers && brand.minFollowers > 0 && (
+                      {brand.minFollowers !== null && brand.minFollowers !== undefined && brand.minFollowers > 0 && (
                         <MetaTag>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</MetaTag>
                       )}
                     </BrandMeta>
 
-                    {brand.responseRate && (
+                    {brand.responseRate !== null && brand.responseRate !== undefined && (
                       <ResponseRate>
                         {brand.responseRate}% response rate
                       </ResponseRate>

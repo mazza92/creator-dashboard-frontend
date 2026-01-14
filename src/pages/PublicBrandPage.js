@@ -246,7 +246,14 @@ const PublicBrandPage = () => {
         <Header>
           <BrandLogo>
             {brand.logo ? (
-              <img src={brand.logo} alt={brand.name} />
+              <img
+                src={brand.logo}
+                alt={brand.name}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222); border-radius: 16px;">${brand.name.charAt(0)}</div>`;
+                }}
+              />
             ) : (
               <PlaceholderLogo>{brand.name.charAt(0)}</PlaceholderLogo>
             )}
@@ -277,7 +284,7 @@ const PublicBrandPage = () => {
             <Section>
               <SectionTitle>Application Requirements</SectionTitle>
               <RequirementsGrid>
-                {brand.requirements.minFollowers && brand.requirements.minFollowers > 0 && (
+                {brand.requirements.minFollowers !== null && brand.requirements.minFollowers !== undefined && brand.requirements.minFollowers > 0 && (
                   <Requirement>
                     <RequirementIcon>📊</RequirementIcon>
                     <div>
@@ -327,7 +334,7 @@ const PublicBrandPage = () => {
                   </Requirement>
                 )}
 
-                {!brand.requirements.minFollowers &&
+                {(brand.requirements.minFollowers === null || brand.requirements.minFollowers === undefined || brand.requirements.minFollowers === 0) &&
                  (!brand.requirements.platforms || brand.requirements.platforms.length === 0) &&
                  (!brand.niches || brand.niches.length === 0) &&
                  (!brand.requirements.regions || brand.requirements.regions.length === 0) && (
