@@ -119,7 +119,7 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand saves
                 </Feature>
                 <Feature>
-                  <FiCheck /> 10 free brand contacts
+                  <FiCheck /> 5 application forms per day
                 </Feature>
                 <Feature>
                   <FiCheck /> Full brand directory access
@@ -243,7 +243,7 @@ const AccountSettings = () => {
       </Section>
 
       <Section>
-        <SectionTitle>Usage This Month</SectionTitle>
+        <SectionTitle>Usage {tier === 'free' ? 'Today' : 'This Month'}</SectionTitle>
         <UsageGrid>
           <UsageCard>
             <UsageLabel>Brands Saved</UsageLabel>
@@ -254,13 +254,19 @@ const AccountSettings = () => {
           </UsageCard>
 
           <UsageCard>
-            <UsageLabel>Brand Contacts Revealed</UsageLabel>
+            <UsageLabel>
+              {tier === 'free' ? 'Application Forms Unlocked' : 'Brand Contacts Revealed'}
+            </UsageLabel>
             <UsageValue>
-              {subscriptionInfo?.pitches_sent_this_month || 0}
-              {tier === 'free' && <UsageLimit>   / 20</UsageLimit>}
-              {tier === 'pro' && <UsageLimit>  / 20</UsageLimit>}
+              {tier === 'free'
+                ? (subscriptionInfo?.daily_unlocks_used || 0)
+                : (subscriptionInfo?.pitches_sent_this_month || 0)
+              }
+              {tier === 'free' && <UsageLimit> / 5</UsageLimit>}
+              {tier === 'pro' && <UsageLimit> / 20</UsageLimit>}
             </UsageValue>
             {tier === 'elite' && <UsageUnlimited>Unlimited</UsageUnlimited>}
+            {tier === 'free' && <UsageNote>Resets daily at midnight</UsageNote>}
           </UsageCard>
         </UsageGrid>
       </Section>
@@ -547,6 +553,13 @@ const UsageUnlimited = styled.div`
   color: #10B981;
   font-weight: 600;
   margin-top: 4px;
+`;
+
+const UsageNote = styled.div`
+  font-size: 12px;
+  color: #9CA3AF;
+  margin-top: 6px;
+  font-style: italic;
 `;
 
 const LoadingText = styled.div`
