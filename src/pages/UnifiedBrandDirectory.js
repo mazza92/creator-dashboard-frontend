@@ -7,6 +7,7 @@ import { SearchOutlined, FilterOutlined, HeartOutlined, HeartFilled, CrownOutlin
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import LandingPageLayout from '../Layouts/LandingPageLayout';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
 
@@ -197,7 +198,7 @@ const UnifiedBrandDirectory = () => {
 
   const isBrandSaved = (brandId) => savedBrandIds.has(brandId);
 
-  return (
+  const content = (
     <>
       <Helmet>
         <title>PR Brand Directory | 500+ Brands Accepting Influencer Applications</title>
@@ -316,7 +317,7 @@ const UnifiedBrandDirectory = () => {
               {brands.map(brand => (
                 <BrandCard
                   key={brand.slug}
-                  to={`/brand/${brand.slug}`}
+                  to={!user && !isDashboardView ? '/register/creator' : `/brand/${brand.slug}`}
                 >
                   {brand.isFeatured && (
                     <FeaturedBadge>
@@ -359,6 +360,12 @@ const UnifiedBrandDirectory = () => {
                         {brand.responseRate}% response rate
                       </ResponseRate>
                     )}
+
+                    {!user && !isDashboardView && (
+                      <SignupCTA>
+                        <LockOutlined /> Sign up to view application link
+                      </SignupCTA>
+                    )}
                   </BrandInfo>
                 </BrandCard>
               ))}
@@ -390,6 +397,9 @@ const UnifiedBrandDirectory = () => {
       )}
     </>
   );
+
+  // Wrap with LandingPageLayout for public view, return plain content for dashboard
+  return isDashboardView ? content : <LandingPageLayout>{content}</LandingPageLayout>;
 };
 
 // Styled Components
@@ -651,6 +661,21 @@ const ResponseRate = styled.div`
   color: #10B981;
   font-size: 12px;
   font-weight: 600;
+`;
+
+const SignupCTA = styled.div`
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #3B82F6, #EC4899);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 `;
 
 const LoadingContainer = styled.div`
