@@ -26,6 +26,58 @@
       "source": "/home/",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/ressources/:path*",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/search",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/missions/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/features",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/blog",
+      "has": [
+        {
+          "type": "query",
+          "key": "search"
+        }
+      ],
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "ref"
+        }
+      ],
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/brands/send-pr-packages",
+      "destination": "/brands/pr-packages",
+      "permanent": true
+    },
+    {
+      "source": "/f50",
+      "destination": "/",
+      "permanent": true
     }
   ],
   "headers": [

@@ -418,9 +418,22 @@ const BlogPost = () => {
   if (error || !post) {
     return (
       <LandingPageLayout>
+        <Helmet>
+          <title>Post Not Found | Newcollab Blog</title>
+          <meta name="description" content="The blog post you're looking for doesn't exist." />
+          <meta name="robots" content="noindex, follow" />
+        </Helmet>
         <PageContainer>
           <Section>
             <Title level={2} style={{ textAlign: 'center', marginTop: '100px' }}>Post not found</Title>
+            <Paragraph style={{ textAlign: 'center', marginTop: '24px' }}>
+              The blog post you're looking for doesn't exist or has been removed.
+            </Paragraph>
+            <div style={{ textAlign: 'center', marginTop: '32px' }}>
+              <Link to="/blog" style={{ color: '#26A69A', fontSize: '16px' }}>
+                ← Back to Blog
+              </Link>
+            </div>
           </Section>
         </PageContainer>
       </LandingPageLayout>
@@ -432,22 +445,33 @@ const BlogPost = () => {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": post.title,
-    "image": post.image,
+    "image": [
+      {
+        "@type": "ImageObject",
+        "url": post.image,
+        "width": 1200,
+        "height": 630
+      }
+    ],
     "datePublished": post.date,
-    "dateModified": post.date,
+    "dateModified": post.date || post.date,
     "author": {
       "@type": "Person",
       "name": post.author.name,
       "jobTitle": post.author.role,
       "image": post.author.image,
+      "url": `https://newcollab.co/blog`,
       ...(post.author.description && { "description": post.author.description })
     },
     "publisher": {
       "@type": "Organization",
       "name": "Newcollab",
+      "url": "https://newcollab.co",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://newcollab.co/logo.png"
+        "url": "https://newcollab.co/logo.png",
+        "width": 600,
+        "height": 60
       }
     },
     "description": post.metaDescription || post.excerpt,
@@ -456,8 +480,12 @@ const BlogPost = () => {
       "@type": "WebPage",
       "@id": `https://newcollab.co/blog/${post.slug}`
     },
+    "url": `https://newcollab.co/blog/${post.slug}`,
+    "wordCount": post.content?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0,
+    "articleSection": post.category,
+    "articleBody": post.content?.replace(/<[^>]*>/g, '').substring(0, 500) || post.excerpt,
     // Add FAQ schema if available
-    ...(post.faq && {
+    ...(post.faq && post.faq.length > 0 && {
       "mainEntity": {
         "@type": "FAQPage",
         "mainEntity": post.faq.map(faq => ({
@@ -503,13 +531,50 @@ const BlogPost = () => {
           <meta name="twitter:creator" content="@newcollab" />
 
           {/* Additional SEO tags */}
-          <meta name="robots" content="index, follow, max-image-preview:large" />
+          <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
           <meta name="author" content={post.author.name} />
           <meta name="language" content="English" />
+          <meta name="article:published_time" content={post.date} />
+          <meta name="article:modified_time" content={post.date} />
+          <meta name="article:expiration_time" content="" />
+          <meta name="article:author" content={post.author.name} />
+          <meta name="article:section" content={post.category} />
+          {post.tags?.map(tag => (
+            <meta key={tag} name="article:tag" content={tag} />
+          ))}
+          <meta name="news_keywords" content={post.keywords?.join(', ') || post.tags?.join(', ')} />
 
           {/* Structured Data */}
           <script type="application/ld+json">
             {JSON.stringify(structuredData)}
+          </script>
+          
+          {/* Breadcrumb Structured Data */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://newcollab.co/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Blog",
+                  "item": "https://newcollab.co/blog"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": post.title,
+                  "item": `https://newcollab.co/blog/${post.slug}`
+                }
+              ]
+            })}
           </script>
         </Helmet>
 

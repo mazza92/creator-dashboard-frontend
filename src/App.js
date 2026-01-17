@@ -6,6 +6,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Analytics } from '@vercel/analytics/react';
 import IndexNowInitializer from './components/IndexNowInitializer';
 import IndexNowTest from './components/IndexNowTest';
+import QueryParamRedirect from './components/QueryParamRedirect';
 import CreatorOverview from './creator-portal/CreatorOverview';
 import BrandOnboardingForm from './components/forms/BrandOnboardingForm';
 // eslint-disable-next-line no-unused-vars
@@ -17,6 +18,7 @@ import CreatorDashboardLayout from './Layouts/CreatorDashboardLayout';
 import BrandOverview from './components/BrandOverview';
 import BrandPROffers from './brand-portal/BrandPROffers';
 import BrandMarketplace from './brand-portal/BrandMarketplace';
+import PRHunter from './brand-portal/PRHunter';
 import CreatorBookings from './components/CreatorBookings';
 import ManagePackages from './creator-portal/ManagePackages';
 // eslint-disable-next-line no-unused-vars
@@ -73,6 +75,7 @@ import UnifiedBrandDirectory from './pages/UnifiedBrandDirectory';
 import SkincareDirectory from './pages/SkincareDirectory';
 import KBeautyDirectory from './pages/KBeautyDirectory';
 import AustraliaDirectory from './pages/AustraliaDirectory';
+import NotFound from './pages/NotFound';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -255,11 +258,11 @@ function AppContent() {
     );
 
     // Only show loading spinner for protected routes
-    const isProtectedRoute = location.pathname.startsWith('/brand') || 
+    const isProtectedRoute = location.pathname.startsWith('/brand') ||
                             location.pathname.startsWith('/creator') ||
                             location.pathname.startsWith('/creator/profile') ||
                             location.pathname.startsWith('/brand/profile');
-    
+
     if (loading && isProtectedRoute) return <LoadingSpinner />;
 
     const isPayPalFlow = location.pathname === '/payment-success' && location.search.includes('paymentId');
@@ -273,6 +276,7 @@ function AppContent() {
     return (
         <>
             <IndexNowInitializer />
+            <QueryParamRedirect />
             <Routes>
             {/* Public routes always available */}
             <Route path='/login' element={<Login />} />
@@ -317,6 +321,9 @@ function AppContent() {
             <Route path='/creator/dashboard/subscription/success' element={<SubscriptionSuccess />} />
             <Route path='/creator/dashboard/subscription/cancel' element={<SubscriptionCancel />} />
 
+            {/* PR Hunter - Internal Tool (has its own login) */}
+            <Route path='/supply' element={<PRHunter />} />
+
             {/* Standalone routes for profiles, wrapped in a layout manager */}
             <Route element={<ProfileLayoutWrapper />}>
               <Route path='/creator/profile/:id' element={<ProfilePage />} />
@@ -334,6 +341,7 @@ function AppContent() {
             <Route path='dashboard/marketplace' element={<BrandMarketplace />} />
             <Route path='dashboard/bookings' element={<BrandBookings />} />
             <Route path='dashboard/pr-offers' element={<BrandPROffers />} />
+            <Route path='dashboard/pr-hunter' element={<PRHunter />} />
             <Route path='dashboard/branded-partnerships' element={<SponsorOpportunities />} />
                 {/* The profile/:id route is now handled by the wrapper */}
             </Route>
@@ -360,7 +368,7 @@ function AppContent() {
             </Route>
 
             {/* Fallback 404 */}
-            <Route path='*' element={<div>404 Not Found</div>} />
+            <Route path='*' element={<NotFound />} />
         </Routes>
         </>
     );

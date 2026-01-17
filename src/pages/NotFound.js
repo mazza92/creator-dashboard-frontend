@@ -1,66 +1,104 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { Button } from 'antd';
+import { HomeOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import LandingPageLayout from '../Layouts/LandingPageLayout';
 
-const NotFoundContainer = styled(motion.div)`
-  max-width: 600px;
-  margin: 4rem auto;
-  padding: 2rem;
+const NotFoundContainer = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 80px 24px;
   text-align: center;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 `;
 
-const Title = styled.h1`
+const NotFoundTitle = styled.h1`
   font-size: 6rem;
-  color: #007bff;
+  font-weight: 700;
+  color: #26A69A;
   margin: 0;
   line-height: 1;
-`;
-
-const Subtitle = styled.h2`
-  color: #333;
-  margin: 1rem 0 2rem;
-`;
-
-const Message = styled.p`
-  color: #666;
-  margin-bottom: 2rem;
-  font-size: 1.1rem;
-  line-height: 1.6;
-`;
-
-const HomeButton = styled(Link)`
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  background: #007bff;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background: #0056b3;
+  
+  @media (max-width: 768px) {
+    font-size: 4rem;
   }
 `;
 
+const NotFoundSubtitle = styled.h2`
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 24px 0 16px;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+`;
+
+const NotFoundText = styled.p`
+  font-size: 1.125rem;
+  color: #666;
+  margin-bottom: 32px;
+  max-width: 500px;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+`;
+
 const NotFound = () => {
+  const navigate = useNavigate();
+
   return (
-    <NotFoundContainer
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Title>404</Title>
-      <Subtitle>Page Not Found</Subtitle>
-      <Message>
-        Oops! The page you're looking for doesn't exist or has been moved.
-        <br />
-        Let's get you back on track.
-      </Message>
-      <HomeButton to="/">Return to Home</HomeButton>
-    </NotFoundContainer>
+    <LandingPageLayout>
+      <Helmet>
+        <title>404 - Page Not Found | Newcollab</title>
+        <meta name="description" content="The page you're looking for doesn't exist. Return to Newcollab homepage or browse our blog." />
+        <meta name="robots" content="noindex, follow" />
+        <link rel="canonical" href="https://newcollab.co/404" />
+      </Helmet>
+      <NotFoundContainer>
+        <NotFoundTitle>404</NotFoundTitle>
+        <NotFoundSubtitle>Page Not Found</NotFoundSubtitle>
+        <NotFoundText>
+          The page you're looking for doesn't exist or has been moved. 
+          Let's get you back on track.
+        </NotFoundText>
+        <ButtonGroup>
+          <Button 
+            type="primary" 
+            size="large" 
+            icon={<HomeOutlined />}
+            onClick={() => navigate('/')}
+          >
+            Go Home
+          </Button>
+          <Button 
+            size="large" 
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+          >
+            Go Back
+          </Button>
+          <Button 
+            size="large"
+            onClick={() => navigate('/blog')}
+          >
+            Browse Blog
+          </Button>
+        </ButtonGroup>
+      </NotFoundContainer>
+    </LandingPageLayout>
   );
 };
 
-export default NotFound; 
+export default NotFound;
