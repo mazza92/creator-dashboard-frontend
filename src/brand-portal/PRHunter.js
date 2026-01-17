@@ -2,17 +2,21 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import {
   Table, Button, Input, Tag, message, Modal, Space, Tooltip,
-  Statistic, Card, Row, Col, Progress, Select, Spin, Badge
+  Statistic, Card, Row, Col, Progress, Select, Spin, Badge, Form
 } from 'antd';
 import {
   SearchOutlined, ReloadOutlined, CheckCircleOutlined,
   CloseCircleOutlined, WarningOutlined, LinkedinOutlined,
   MailOutlined, GlobalOutlined, InstagramOutlined,
-  PlayCircleOutlined, SyncOutlined
+  PlayCircleOutlined, SyncOutlined, LockOutlined, UserOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+
+// Admin credentials - hardcoded for this internal tool
+const ADMIN_EMAIL = 'team@newcollab.co';
+const ADMIN_PASSWORD = 'Ilovela1992!';
 
 const PRHunter = () => {
   const [candidates, setCandidates] = useState([]);
@@ -27,11 +31,54 @@ const PRHunter = () => {
   const [currentHuntTask, setCurrentHuntTask] = useState(null);
   const [editingKey, setEditingKey] = useState('');
   const [editForm, setEditForm] = useState({});
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
+  // Check if already authenticated (stored in sessionStorage)
+  useEffect(() => {
+    const authStatus = sessionStorage.getItem('prHunterAuth');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchCandidates();
-    fetchStats();
-  }, [pagination.page]);
+    if (isAuthenticated) {
+      fetchCandidates();
+      fetchStats();
+    }
+  }, [pagination.page, isAuthenticated]);
+
+  const handleLogin = (values) => {
+    setLoginLoading(true);
+    setLoginError('');
+
+    // Simple credential check - no backend call needed
+    if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
+      sessionStorage.setItem('prHunterAuth', 'true');
+      setIsAuthenticated(true);
+      message.success('Welcome to PR Hunter!');
+    } else {
+      setLoginError('Invalid credentials');
+      message.error('Invalid email or password');
+    }
+    setLoginLoading(false);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('prHunterAuth');
+    setIsAuthenticated(false);
+    message.info('Logged out');
+  };
+
+  // Helper to get axios config with admin token
+  const getApiConfig = (extraConfig = {}) => ({
+    headers: {
+      'X-Admin-Token': 'pr-hunter-admin-2026'
+    },
+    ...extraConfig
+  });
 
   const fetchCandidates = async () => {
     setLoading(true);
@@ -42,13 +89,19 @@ const PRHunter = () => {
           limit: pagination.limit,
           status: 'PENDING'
         },
-        withCredentials: true
+        ...getApiConfig()
       });
 
-      setCandidates(data.candidates);
-      setPagination(prev => ({ ...prev, total: data.pagination.total }));
+      setCandidates(data.candidates || []);
+      setPagination(prev => ({ ...prev, total: data.pagination?.total || 0 }));
     } catch (error) {
-      message.error('Failed to load candidates');
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        setIsAuthenticated(false);
+        sessionStorage.removeItem('prHunterAuth');
+        message.error('Session expired. Please login again.');
+      } else {
+        message.error('Failed to load candidates');
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -57,9 +110,7 @@ const PRHunter = () => {
 
   const fetchStats = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/api/admin/pr-hunt/stats`, {
-        withCredentials: true
-      });
+      const { data } = await axios.get(`${API_BASE}/api/admin/pr-hunt/stats`, getApiConfig());
       setStats(data);
     } catch (error) {
       console.error('Failed to load stats:', error);
@@ -76,16 +127,24 @@ const PRHunter = () => {
     try {
       const { data } = await axios.post(
         `${API_BASE}/api/admin/pr-hunt/start`,
-        { keyword: huntKeyword, max_results: maxResults },
-        { withCredentials: true }
+        { keyword: huntKeyword, max_results: maxResults, sync: true },
+        getApiConfig()
       );
 
-      message.success(`PR Hunt started for "${huntKeyword}"`);
-      setCurrentHuntTask(data.task_id);
-      setHuntModalVisible(false);
-
-      // Poll for task status
-      pollHuntStatus(data.task_id);
+      // Check if completed synchronously (no Redis)
+      if (data.status === 'completed') {
+        message.success(data.message || `PR Hunt completed for "${huntKeyword}"`);
+        setHuntModalVisible(false);
+        setHuntKeyword('');
+        fetchCandidates();
+        fetchStats();
+      } else {
+        // Async mode - poll for status
+        message.success(`PR Hunt started for "${huntKeyword}"`);
+        setCurrentHuntTask(data.task_id);
+        setHuntModalVisible(false);
+        pollHuntStatus(data.task_id);
+      }
     } catch (error) {
       message.error('Failed to start hunt');
       console.error(error);
@@ -99,7 +158,7 @@ const PRHunter = () => {
       try {
         const { data } = await axios.get(
           `${API_BASE}/api/admin/pr-hunt/status/${taskId}`,
-          { withCredentials: true }
+          getApiConfig()
         );
 
         if (data.state === 'SUCCESS') {
@@ -132,7 +191,7 @@ const PRHunter = () => {
       const { data } = await axios.post(
         `${API_BASE}/api/admin/candidates/approve`,
         { candidate_ids: selectedRowKeys },
-        { withCredentials: true }
+        getApiConfig()
       );
 
       message.success(`Approved ${data.approved} candidates`);
@@ -159,7 +218,7 @@ const PRHunter = () => {
           const { data } = await axios.post(
             `${API_BASE}/api/admin/candidates/reject`,
             { candidate_ids: selectedRowKeys, reason: 'Not a good fit' },
-            { withCredentials: true }
+            getApiConfig()
           );
 
           message.success(`Rejected ${data.rejected} candidates`);
@@ -179,7 +238,7 @@ const PRHunter = () => {
       await axios.post(
         `${API_BASE}/api/admin/candidates/${candidateId}/reverify`,
         {},
-        { withCredentials: true }
+        getApiConfig()
       );
 
       message.success('Email verification started. Will update shortly.');
@@ -197,7 +256,7 @@ const PRHunter = () => {
       await axios.patch(
         `${API_BASE}/api/admin/candidates/${id}`,
         { [field]: value },
-        { withCredentials: true }
+        getApiConfig()
       );
 
       message.success('Updated successfully');
@@ -363,11 +422,77 @@ const PRHunter = () => {
     onChange: (selectedKeys) => setSelectedRowKeys(selectedKeys)
   };
 
+  // Show access denied message if not admin
+  if (!isAuthenticated) {
+    return (
+      <Container>
+        <Card style={{ maxWidth: 400, margin: '100px auto', padding: '20px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 30 }}>
+            <LockOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
+            <h2 style={{ margin: 0 }}>PR Hunter</h2>
+            <p style={{ color: '#666', marginTop: 8 }}>Internal Tool - Admin Access Required</p>
+          </div>
+
+          <Form
+            name="prHunterLogin"
+            onFinish={handleLogin}
+            layout="vertical"
+          >
+            <Form.Item
+              name="email"
+              rules={[{ required: true, message: 'Please enter your email' }]}
+            >
+              <Input
+                prefix={<UserOutlined />}
+                placeholder="Admin Email"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              rules={[{ required: true, message: 'Please enter your password' }]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Password"
+                size="large"
+              />
+            </Form.Item>
+
+            {loginError && (
+              <p style={{ color: '#ff4d4f', textAlign: 'center' }}>{loginError}</p>
+            )}
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loginLoading}
+                block
+                size="large"
+              >
+                Sign In
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Header>
-        <h1>PR Hunter</h1>
-        <p>Automated brand discovery and enrichment engine</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>PR Hunter</h1>
+            <p>Automated brand discovery and enrichment engine - INTERNAL USE ONLY</p>
+          </div>
+          <Button onClick={handleLogout} type="text" style={{ color: '#666' }}>
+            Logout
+          </Button>
+        </div>
       </Header>
 
       {/* Statistics Cards */}
