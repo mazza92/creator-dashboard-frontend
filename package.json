@@ -28,6 +28,7 @@
     "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.9.1",
     "moment": "^2.30.1",
+    "next": "^16.1.3",
     "pusher-js": "^8.4.0",
     "react": "^18.2.0",
     "react-country-flag": "^3.1.0",
@@ -61,7 +62,10 @@
     "eject": "react-scripts eject",
     "create-post": "node scripts/create-post.js",
     "update-posts-index": "node scripts/update-posts-index.js",
-    "generate-sitemap": "node scripts/generate-sitemap.js"
+    "generate-sitemap": "node scripts/generate-sitemap.js",
+    "dev:next": "next dev --webpack",
+    "build:next": "next build",
+    "start:next": "next start"
   },
   "eslintConfig": {
     "extends": [
@@ -93,4 +97,3 @@
   },
   "proxy": "http://127.0.0.1:5000"
 }
-
