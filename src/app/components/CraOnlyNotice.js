@@ -1,19 +1,32 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 
 export default function CraOnlyNotice({ title, path }) {
   const origin = process.env.CRA_ORIGIN;
 
   if (origin) {
-    redirect(`${origin}${path}`);
+    // Safety: avoid infinite redirects if CRA_ORIGIN points to same host
+    try {
+      const h = headers();
+      const host = h.get('host') || '';
+      const originHost = new URL(origin).host || '';
+      if (host && originHost && host.toLowerCase() === originHost.toLowerCase()) {
+        // fall through to the notice instead of redirecting
+      } else {
+        redirect(`${origin}${path}`);
+      }
+    } catch {
+      // If URL parsing fails, don't redirect
+    }
   }
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '120px 24px 80px' }}>
       <h1 style={{ fontSize: 28, marginBottom: 12 }}>{title}</h1>
       <p style={{ opacity: 0.8, lineHeight: 1.6 }}>
-        This page is served by the React (CRA) app. You’re currently running <strong>Next-only</strong> on{' '}
-        <code>http://localhost:3000</code>, so CRA routes aren’t available.
+        This page is served by the React (CRA) app. CRA routing isn’t available from this deployment unless{' '}
+        <code>CRA_ORIGIN</code> is set correctly.
       </p>
       <ul style={{ marginTop: 14, opacity: 0.85, lineHeight: 1.7 }}>
         <li>

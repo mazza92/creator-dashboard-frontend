@@ -53,6 +53,14 @@ function isPublicFile(pathname) {
   return last.includes('.') && !last.endsWith('.html');
 }
 
+function safeParseUrl(value) {
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+}
+
 export function proxy(request) {
   const { pathname, search } = request.nextUrl;
 
@@ -67,6 +75,16 @@ export function proxy(request) {
 
   // If we don't know where CRA lives, let Next handle (may 404)
   if (!origin) return NextResponse.next();
+
+  // Safety: never rewrite to ourselves (causes infinite redirects)
+  const originUrl = safeParseUrl(origin);
+  if (originUrl) {
+    const requestHost = request.nextUrl.host;
+    const originHost = originUrl.host;
+    if (requestHost && originHost && requestHost.toLowerCase() === originHost.toLowerCase()) {
+      return NextResponse.next();
+    }
+  }
 
   // When CRA_ORIGIN is configured, prefer CRA for known core routes first.
   // This avoids accidentally capturing dashboard routes when we migrate public prefixes like "/brand".
