@@ -104,12 +104,13 @@ export default function BlogPageClient({ initialPosts, categories }) {
       <PageContainer>
         <main>
           <Section>
-            <Breadcrumb style={{ marginBottom: '24px' }}>
-              <Breadcrumb.Item>
-                <Link href="/"><HomeOutlined /></Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Item>Blog</Breadcrumb.Item>
-            </Breadcrumb>
+            <Breadcrumb
+              style={{ marginBottom: '24px' }}
+              items={[
+                { title: <Link href="/"><HomeOutlined /></Link> },
+                { title: 'Blog' },
+              ]}
+            />
 
             <Title level={1} style={{ textAlign: 'center', marginBottom: '24px' }}>
               Free Link in Bio for Paid Partnerships & Sponsorships for Influencers

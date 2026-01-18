@@ -256,17 +256,13 @@ export default function BlogPostClient({ post, relatedPosts }) {
       <PageContainer>
         <Section>
           <BreadcrumbWrapper>
-            <StyledBreadcrumb>
-              <Breadcrumb.Item>
-                <Link href="/"><HomeOutlined /></Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Item>
-                <Link href="/blog">Blog</Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Item>
-                <span style={{ padding: '4px 8px' }}>{post.title}</span>
-              </Breadcrumb.Item>
-            </StyledBreadcrumb>
+            <StyledBreadcrumb
+              items={[
+                { title: <Link href="/"><HomeOutlined /></Link> },
+                { title: <Link href="/blog">Blog</Link> },
+                { title: <span style={{ padding: '4px 8px' }}>{post.title}</span> },
+              ]}
+            />
           </BreadcrumbWrapper>
 
           <BlogHeader>

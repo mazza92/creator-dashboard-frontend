@@ -1,6 +1,4 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -8,6 +6,12 @@
     },
     {
       "source": "/((?!static|.*\\.js$|.*\\.css$|.*\\.ico$|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.webp$|.*\\.woff2?$|.*\\.map$|manifest\\.json$|robots\\.txt$|sitemap\\.xml$).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.newcollab.co"
+        }
+      ],
       "destination": "/index.html"
     }
   ],

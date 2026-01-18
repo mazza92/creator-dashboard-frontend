@@ -64,6 +64,8 @@
     "update-posts-index": "node scripts/update-posts-index.js",
     "generate-sitemap": "node scripts/generate-sitemap.js",
     "dev:next": "next dev --webpack",
+    "dev:cra": "cross-env BROWSER=none PORT=3001 react-scripts start",
+    "dev:hybrid": "concurrently -n NEXT,CRA -c cyan,magenta \"cross-env CRA_ORIGIN=http://localhost:3001 npm run dev:next\" \"npm run dev:cra\"",
     "build:next": "next build",
     "start:next": "next start"
   },
@@ -93,6 +95,8 @@
     "@babel/plugin-transform-runtime": "^7.25.9",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
+    "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
     "tailwindcss": "^3.4.14"
   },
   "proxy": "http://127.0.0.1:5000"

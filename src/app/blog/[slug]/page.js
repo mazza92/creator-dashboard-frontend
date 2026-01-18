@@ -12,7 +12,8 @@ export async function generateStaticParams() {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }) {
-  const post = getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
   
   if (!post) {
     return {
@@ -63,14 +64,15 @@ export async function generateMetadata({ params }) {
 export const revalidate = 3600; // Revalidate every hour (ISR)
 
 export default async function BlogPostPage({ params }) {
-  const post = getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
   
   if (!post) {
     notFound();
   }
 
   // Get related posts
-  const relatedPosts = getRelatedPosts(params.slug, post, 3);
+  const relatedPosts = getRelatedPosts(slug, post, 3);
 
   // Create structured data for SEO
   const structuredData = {
