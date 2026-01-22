@@ -1,8 +1,14 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "https://api.newcollab.co/$1"
+    },
+    {
+      "source": "/((?!api|static|.*\\.js$|.*\\.css$|.*\\.ico$|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.webp$|.*\\.woff2?$|.*\\.map$|manifest\\.json$|robots\\.txt$|sitemap\\.xml$).*)",
+      "destination": "/index.html"
     }
   ],
   "redirects": [
