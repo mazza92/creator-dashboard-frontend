@@ -9,7 +9,13 @@ import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+// Normalize API base URL - remove trailing slash to prevent double slashes
+const getApiBase = () => {
+  const base = process.env.REACT_APP_API_BASE || 
+    (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
+  return base.replace(/\/+$/, ''); // Remove trailing slashes
+};
+const API_BASE = getApiBase();
 
 const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDescription }) => {
   const { user } = useContext(UserContext);

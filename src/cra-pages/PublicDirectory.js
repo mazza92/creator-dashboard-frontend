@@ -6,7 +6,13 @@ import { Input, Select, Spin, Pagination, Button } from 'antd';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+// Normalize API base URL - remove trailing slash to prevent double slashes
+const getApiBase = () => {
+  const base = process.env.REACT_APP_API_BASE || 
+    (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
+  return base.replace(/\/+$/, ''); // Remove trailing slashes
+};
+const API_BASE = getApiBase();
 
 const PublicDirectory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
