@@ -10,3 +10,4 @@ test-*.js
 public/Pages.csv
 public/Queries.csv
 next.config.js
+src/app/
