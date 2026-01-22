@@ -8,9 +8,10 @@ import { LinkOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ||
-  process.env.REACT_APP_API_BASE ||
-  'http://localhost:5000';
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : 'https://api.newcollab.co');
 
 const Page = styled.div`
   max-width: 1100px;

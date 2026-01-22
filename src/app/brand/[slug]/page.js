@@ -1,10 +1,8 @@
 import { notFound } from 'next/navigation';
 import BrandPublicClient from './BrandPublicClient';
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ||
-  process.env.REACT_APP_API_BASE ||
-  'http://localhost:5000';
+// Server-side API base - always use production URL for SSR
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co';
 
 export const revalidate = 3600;
 
