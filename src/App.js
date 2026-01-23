@@ -36,8 +36,7 @@ import SponsorOffers from './creator-portal/SponsorOffers';
 // eslint-disable-next-line no-unused-vars
 import LandingPage from './cra-pages/LandingPage';
 import AboutPage from './cra-pages/AboutPage';
-import BlogPage from './cra-pages/BlogPage';
-import BlogPost from './cra-pages/BlogPost';
+// Blog routes - MIGRATED TO NEXT.JS - Removed imports: BlogPage, BlogPost
 import ContactPage from './cra-pages/ContactPage';
 import PrivacyPolicy from './cra-pages/PrivacyPolicy';
 import TermsOfService from './cra-pages/TermsOfService';
@@ -46,7 +45,7 @@ import BrandPRPackagesPage from './cra-pages/BrandPRPackagesPage';
 import LandingPageLayout from './Layouts/LandingPageLayout';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
-import Founding50 from './cra-pages/Founding50';
+// Homepage - MIGRATED TO NEXT.JS - Removed import: Founding50
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import PaymentsPage from './creator-portal/PaymentsPage';
@@ -60,7 +59,7 @@ import ResendVerification from './components/ResendVerification';
 import LoadingSpinner from './components/LoadingSpinner';
 import StripeSuccess from './components/StripeSuccess';
 import api from './config/api';
-import PublicCreatorProfile from './components/PublicCreatorProfile';
+// Creator profiles - MIGRATED TO NEXT.JS - Removed import: PublicCreatorProfile
 import CreatorSignup from './components/forms/CreatorSignup';
 import CreatorOnboarding from './components/forms/CreatorOnboarding';
 import ProfileLayoutWrapper from './Layouts/ProfileLayoutWrapper';
@@ -70,11 +69,8 @@ import PRPipeline from './creator-portal/PRPipeline';
 import SubscriptionSuccess from './creator-portal/SubscriptionSuccess';
 import SubscriptionCancel from './creator-portal/SubscriptionCancel';
 import AccountSettings from './creator-portal/AccountSettings';
-import PublicBrandPage from './cra-pages/PublicBrandPage';
-import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
-import SkincareDirectory from './cra-pages/SkincareDirectory';
-import KBeautyDirectory from './cra-pages/KBeautyDirectory';
-import AustraliaDirectory from './cra-pages/AustraliaDirectory';
+// Brand pages - MIGRATED TO NEXT.JS - Removed import: PublicBrandPage
+// Directory pages - MIGRATED TO NEXT.JS - Removed imports: UnifiedBrandDirectory, SkincareDirectory, KBeautyDirectory, AustraliaDirectory
 import NotFound from './cra-pages/NotFound';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
@@ -283,15 +279,15 @@ function AppContent() {
             <Route path='/register' element={<Signup />} />
             <Route path='/register/brand' element={<BrandOnboardingForm />} />
             <Route path='/register/creator' element={<CreatorSignup />} />
+            {/* About, Contact, Privacy, Terms - Still on CRA (Next.js has placeholders) */}
             <Route path='/about' element={<AboutPage />} />
-            <Route path='/blog' element={<BlogPage />} />
-            <Route path='/blog/:slug' element={<BlogPost />} />
             <Route path='/contact' element={<ContactPage />} />
             <Route path='/privacy-policy' element={<PrivacyPolicy />} />
             <Route path='/terms-of-service' element={<TermsOfService />} />
-            <Route path='/brands/pr-packages' element={<BrandPRPackagesPage />} />
+            {/* Blog routes - MIGRATED TO NEXT.JS - Removed CRA routes */}
+            {/* Brand PR Packages - MIGRATED TO NEXT.JS - Removed CRA route */}
             <Route path='/brands/send-pr-packages' element={<BrandPRPackagesPage />} />
-            <Route path='/f50' element={<Founding50 />} />
+            {/* /f50 redirects to / (handled by vercel.json redirect, / is Next.js) */}
             <Route path='/success' element={<SuccessPage />} />
             <Route path='/forgot-password' element={<ForgotPassword />} />
             <Route path='/reset-password' element={<ResetPassword />} />
@@ -303,18 +299,11 @@ function AppContent() {
             <Route path='/resend-verification' element={<ResendVerification />} />
             <Route path='/stripe/success' element={<StripeSuccess />} />
             <Route path='/stripe/reauth' element={<StripeSuccess />} />
+            {/* Marketplace - Still on CRA (Next.js has placeholder) */}
             <Route path='/marketplace' element={<Marketplace />} />
-            <Route
-                path='/directory'
-                element={
-                    user ? <Navigate to='/creator/dashboard/pr-brands' replace /> : <UnifiedBrandDirectory />
-                }
-            />
-            <Route path='/directory/skincare' element={<SkincareDirectory />} />
-            <Route path='/directory/k-beauty' element={<KBeautyDirectory />} />
-            <Route path='/directory/australia' element={<AustraliaDirectory />} />
-            <Route path='/brand/:slug' element={<PublicBrandPage />} />
-            <Route path='/c/:username' element={<PublicCreatorProfile />} />
+            {/* Directory routes - MIGRATED TO NEXT.JS - Removed CRA routes */}
+            {/* Brand pages - MIGRATED TO NEXT.JS - Removed CRA route */}
+            {/* Creator profiles - MIGRATED TO NEXT.JS - Removed CRA route */}
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<CreatorOnboarding />} />
             <Route path='/test-indexnow' element={<IndexNowTest />} />
@@ -330,7 +319,7 @@ function AppContent() {
               <Route path='/brand/profile/:id' element={<BrandProfilePage />} />
             </Route>
 
-            <Route path='/' element={<Founding50 />} />
+            {/* Homepage - MIGRATED TO NEXT.JS - Removed CRA route */}
 
             {/* Brand dashboard routes with layout */}
             <Route
