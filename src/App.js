@@ -45,7 +45,8 @@ import BrandPRPackagesPage from './cra-pages/BrandPRPackagesPage';
 import LandingPageLayout from './Layouts/LandingPageLayout';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
-// Homepage - MIGRATED TO NEXT.JS - Removed import: Founding50
+// Homepage - Next.js has /app/page.js, but keep CRA route for development and as fallback
+import Founding50 from './cra-pages/Founding50';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import PaymentsPage from './creator-portal/PaymentsPage';
@@ -321,7 +322,8 @@ function AppContent() {
               <Route path='/brand/profile/:id' element={<BrandProfilePage />} />
             </Route>
 
-            {/* Homepage - MIGRATED TO NEXT.JS - Removed CRA route */}
+            {/* Homepage - Next.js handles in production, but keep CRA route for dev/fallback */}
+            <Route path='/' element={<Founding50 />} />
 
             {/* Brand dashboard routes with layout */}
             <Route
