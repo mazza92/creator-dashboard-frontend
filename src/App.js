@@ -36,7 +36,9 @@ import SponsorOffers from './creator-portal/SponsorOffers';
 // eslint-disable-next-line no-unused-vars
 import LandingPage from './cra-pages/LandingPage';
 import AboutPage from './cra-pages/AboutPage';
-// Blog routes - MIGRATED TO NEXT.JS - Removed imports: BlogPage, BlogPost
+// Blog routes - Next.js has /app/blog, but keep CRA routes for dev/fallback
+import BlogPage from './cra-pages/BlogPage';
+import BlogPost from './cra-pages/BlogPost';
 import ContactPage from './cra-pages/ContactPage';
 import PrivacyPolicy from './cra-pages/PrivacyPolicy';
 import TermsOfService from './cra-pages/TermsOfService';
@@ -60,7 +62,8 @@ import ResendVerification from './components/ResendVerification';
 import LoadingSpinner from './components/LoadingSpinner';
 import StripeSuccess from './components/StripeSuccess';
 import api from './config/api';
-// Creator profiles - MIGRATED TO NEXT.JS - Removed import: PublicCreatorProfile
+// Creator profiles - Next.js has /app/c/[username], but keep CRA route for dev/fallback
+import PublicCreatorProfile from './components/PublicCreatorProfile';
 import CreatorSignup from './components/forms/CreatorSignup';
 import CreatorOnboarding from './components/forms/CreatorOnboarding';
 import ProfileLayoutWrapper from './Layouts/ProfileLayoutWrapper';
@@ -70,9 +73,13 @@ import PRPipeline from './creator-portal/PRPipeline';
 import SubscriptionSuccess from './creator-portal/SubscriptionSuccess';
 import SubscriptionCancel from './creator-portal/SubscriptionCancel';
 import AccountSettings from './creator-portal/AccountSettings';
-// Brand pages - MIGRATED TO NEXT.JS - Removed import: PublicBrandPage
-// Public directory pages - MIGRATED TO NEXT.JS - Removed imports: SkincareDirectory, KBeautyDirectory, AustraliaDirectory
-// UnifiedBrandDirectory still used in dashboard (/creator/dashboard/pr-brands) - keep import
+// Brand pages - Next.js has /app/brand/[slug], but keep CRA route for dev/fallback
+import PublicBrandPage from './cra-pages/PublicBrandPage';
+// Public directory pages - Next.js has /app/directory, but keep CRA routes for dev/fallback
+import SkincareDirectory from './cra-pages/SkincareDirectory';
+import KBeautyDirectory from './cra-pages/KBeautyDirectory';
+import AustraliaDirectory from './cra-pages/AustraliaDirectory';
+// UnifiedBrandDirectory used in dashboard (/creator/dashboard/pr-brands) and public directory
 import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
 
@@ -287,8 +294,11 @@ function AppContent() {
             <Route path='/contact' element={<ContactPage />} />
             <Route path='/privacy-policy' element={<PrivacyPolicy />} />
             <Route path='/terms-of-service' element={<TermsOfService />} />
-            {/* Blog routes - MIGRATED TO NEXT.JS - Removed CRA routes */}
-            {/* Brand PR Packages - MIGRATED TO NEXT.JS - Removed CRA route */}
+            {/* Blog routes - Next.js has /app/blog, but keep CRA routes for dev/fallback */}
+            <Route path='/blog' element={<BlogPage />} />
+            <Route path='/blog/:slug' element={<BlogPost />} />
+            {/* Brand PR Packages - Next.js has /app/brands/pr-packages, but keep CRA route for dev/fallback */}
+            <Route path='/brands/pr-packages' element={<BrandPRPackagesPage />} />
             <Route path='/brands/send-pr-packages' element={<BrandPRPackagesPage />} />
             {/* /f50 redirects to / (handled by vercel.json redirect, / is Next.js) */}
             <Route path='/success' element={<SuccessPage />} />
@@ -304,9 +314,20 @@ function AppContent() {
             <Route path='/stripe/reauth' element={<StripeSuccess />} />
             {/* Marketplace - Still on CRA (Next.js has placeholder) */}
             <Route path='/marketplace' element={<Marketplace />} />
-            {/* Directory routes - MIGRATED TO NEXT.JS - Removed CRA routes */}
-            {/* Brand pages - MIGRATED TO NEXT.JS - Removed CRA route */}
-            {/* Creator profiles - MIGRATED TO NEXT.JS - Removed CRA route */}
+            {/* Directory routes - Next.js has /app/directory, but keep CRA routes for dev/fallback */}
+            <Route
+                path='/directory'
+                element={
+                    user ? <Navigate to='/creator/dashboard/pr-brands' replace /> : <UnifiedBrandDirectory />
+                }
+            />
+            <Route path='/directory/skincare' element={<SkincareDirectory />} />
+            <Route path='/directory/k-beauty' element={<KBeautyDirectory />} />
+            <Route path='/directory/australia' element={<AustraliaDirectory />} />
+            {/* Brand pages - Next.js has /app/brand/[slug], but keep CRA route for dev/fallback */}
+            <Route path='/brand/:slug' element={<PublicBrandPage />} />
+            {/* Creator profiles - Next.js has /app/c/[username], but keep CRA route for dev/fallback */}
+            <Route path='/c/:username' element={<PublicCreatorProfile />} />
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<CreatorOnboarding />} />
             <Route path='/test-indexnow' element={<IndexNowTest />} />
