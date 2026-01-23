@@ -70,7 +70,9 @@ import SubscriptionSuccess from './creator-portal/SubscriptionSuccess';
 import SubscriptionCancel from './creator-portal/SubscriptionCancel';
 import AccountSettings from './creator-portal/AccountSettings';
 // Brand pages - MIGRATED TO NEXT.JS - Removed import: PublicBrandPage
-// Directory pages - MIGRATED TO NEXT.JS - Removed imports: UnifiedBrandDirectory, SkincareDirectory, KBeautyDirectory, AustraliaDirectory
+// Public directory pages - MIGRATED TO NEXT.JS - Removed imports: SkincareDirectory, KBeautyDirectory, AustraliaDirectory
+// UnifiedBrandDirectory still used in dashboard (/creator/dashboard/pr-brands) - keep import
+import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
