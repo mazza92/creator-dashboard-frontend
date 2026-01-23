@@ -1583,7 +1583,7 @@ const Founding50 = () => {
         <meta property="twitter:creator" content="@newcollab" />
       
         {/* Video-specific meta tags for better indexing */}
-        <meta property="og:video" content="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators/prpack_newcollab.mp4" />
+        <meta property="og:video" content="https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4" />
         <meta property="og:video:type" content="video/mp4" />
         <meta property="og:video:width" content="400" />
         <meta property="og:video:height" content="800" />
@@ -1907,7 +1907,7 @@ const Founding50 = () => {
               "thumbnailUrl": "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(1).png",
               "uploadDate": "2025-08-04T00:00:00Z",
               "duration": "PT30S",
-              "contentUrl": "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators/prpack_newcollab.mp4",
+              "contentUrl": "https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4",
               "embedUrl": "https://newcollab.co/f50",
               "publisher": {
                 "@type": "Organization",
@@ -1932,7 +1932,7 @@ const Founding50 = () => {
               },
               "potentialAction": {
                 "@type": "WatchAction",
-                "target": "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators/prpack_newcollab.mp4"
+                "target": "https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4"
               }
             }
           `}
@@ -1959,7 +1959,7 @@ const Founding50 = () => {
                   <ModernPhoneMockup>
                     <ModernPhoneScreen>
                       <video
-                        src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators/prpack_newcollab.mp4"
+                        src="https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '38px' }}
                         autoPlay
                         loop
@@ -1967,7 +1967,7 @@ const Founding50 = () => {
                         playsInline
                         controls={false}
                         aria-label="Demo of Newcollab PR packages and brand partnerships"
-                        poster="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(1).png"
+                        poster="/images/biolink-1.png"
                         preload="metadata"
                       />
                     </ModernPhoneScreen>
@@ -2041,7 +2041,7 @@ const Founding50 = () => {
                 <ModernPhoneMockup>
                   <ModernPhoneScreen>
                     <video
-                      src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators/prpack_newcollab.mp4"
+                      src="https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4"
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '38px' }}
                       autoPlay
                       loop
@@ -2049,7 +2049,7 @@ const Founding50 = () => {
                       playsInline
                       controls={false}
                       aria-label="Demo of Newcollab PR packages and brand partnerships"
-                      poster="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(1).png"
+                      poster="/images/biolink-1.png"
                       preload="metadata"
                     />
                   </ModernPhoneScreen>
@@ -2860,11 +2860,11 @@ const Founding50 = () => {
               spaceBetween={12}
             >
               {[
-                "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(5).png",
-                "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(2).png",
-                "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(1).png",
-                "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(3).png",
-                "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(4).png"
+                "/images/biolink-5.png",
+                "/images/biolink-2.png",
+                "/images/biolink-1.png",
+                "/images/biolink-3.png",
+                "/images/biolink-4.png"
               ].map((img, idx) => (
                 <StyledSwiperSlide key={idx}>
                   <ModernPhoneMockup>

@@ -631,7 +631,7 @@ function DashboardLayout() {
 
   const handleLogoError = (e) => {
     e.target.onerror = null;
-    e.target.src = 'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5ELnBuZyIsImlhdCI6MTc0NjgxMzgyNywiZXhwIjoxNzc4MzQ5ODI3fQ.CV154O5M8NHs--l6-0M6a_CIvQuXqDxlkva8MlQf-hY';
+    e.target.src = '/NEWCOLLAB-BRAND.png';
   };
 
   return (
@@ -640,7 +640,7 @@ function DashboardLayout() {
         <StyledSider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} width={280}>
           <LogoContainer>
             <LogoImage
-              src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5ELnBuZyIsImlhdCI6MTc0NjgxMzgyNywiZXhwIjoxNzc4MzQ5ODI3fQ.CV154O5M8NHs--l6-0M6a_CIvQuXqDxlkva8MlQf-hY"
+              src="/NEWCOLLAB-BRAND.png"
               alt="NewCollab Brand Logo"
               onError={handleLogoError}
             />
@@ -665,7 +665,7 @@ function DashboardLayout() {
           title={
             <LogoContainer>
               <LogoImage
-                src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5ELnBuZyIsImlhdCI6MTc0NjgxMzgyNywiZXhwIjoxNzc4MzQ5ODI3fQ.CV154O5M8NHs--l6-0M6a_CIvQuXqDxlkva8MlQf-hY"
+                src="/NEWCOLLAB-BRAND.png"
                 alt="NewCollab Brand Logo"
                 onError={handleLogoError}
               />

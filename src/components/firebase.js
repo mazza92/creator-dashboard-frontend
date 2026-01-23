@@ -10,10 +10,34 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-console.log('Firebase Config:', firebaseConfig); // Debug log
-if (!process.env.REACT_APP_FIREBASE_API_KEY) {
-  console.error('Missing REACT_APP_FIREBASE_API_KEY');
+export const firebaseConfigured = Boolean(
+  firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.storageBucket &&
+    firebaseConfig.messagingSenderId &&
+    firebaseConfig.appId
+);
+
+// Never hard-crash the whole app because a Vercel env var is missing
+// OR because Firebase is misconfigured (invalid key, wrong domain, etc).
+// If Firebase isn't configured (or fails to init), export a null auth and let callers degrade gracefully.
+let authInstance = null;
+if (firebaseConfigured) {
+  try {
+    authInstance = getAuth(initializeApp(firebaseConfig));
+  } catch (e) {
+    authInstance = null;
+    // eslint-disable-next-line no-console
+    console.warn('Firebase failed to initialize. Google sign-in will be disabled.', e);
+  }
 }
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+export const auth = authInstance;
+
+if (!firebaseConfigured) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    'Firebase is not configured (missing REACT_APP_FIREBASE_* env vars). Google sign-in will be disabled.'
+  );
+}

@@ -450,9 +450,9 @@ const BrandPRPackagesPage = () => {
   });
 
   const creatorShowcaseImages = [
-    'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(5).png',
-    'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(1).png',
-    'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(3).png'
+    '/images/biolink-5.png',
+    '/images/biolink-1.png',
+    '/images/biolink-3.png'
   ];
 
   return (
@@ -690,7 +690,7 @@ const BrandPRPackagesPage = () => {
               <ModernPhoneMockup>
                 <ModernPhoneScreen>
                   <video
-                    src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators/newcollab_sendPR.mp4"
+                    src="https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '38px' }}
                     autoPlay
                     loop
@@ -698,10 +698,8 @@ const BrandPRPackagesPage = () => {
                     playsInline
                     controls={false}
                     aria-label="Demo of Newcollab PR package sending platform for brands"
-                    poster="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(1).png"
+                    poster="/images/biolink-1.png"
                     preload="metadata"
-                    itemScope
-                    itemType="https://schema.org/VideoObject"
                   />
                 </ModernPhoneScreen>
               </ModernPhoneMockup>

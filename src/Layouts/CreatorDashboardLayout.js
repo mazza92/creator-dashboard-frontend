@@ -461,11 +461,11 @@ const CreatorDashboardLayout = () => {
           {/* Logo */}
           <LogoSection to="/creator/dashboard/pr-brands">
             <img
-              src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND_logo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5EX2xvZ28ucG5nIiwiaWF0IjoxNzY3NzE0MzUxLCJleHAiOjE3OTkyNTAzNTF9.WnVNtcKOODxOstVADE8Y6zlxbNovPbl3K97FZow5lR0"
+              src="/NEWCOLLAB-BRAND.png"
               alt="NewCollab"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = 'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND_logo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTkVXQ09MTEFCLUJSQU5EX2xvZ28ucG5nIiwiaWF0IjoxNzY3NzE0MzUxLCJleHAiOjE3OTkyNTAzNTF9.WnVNtcKOODxOstVADE8Y6zlxbNovPbl3K97FZow5lR0';
+                e.target.src = '/NEWCOLLAB-BRAND.png';
               }}
             />
           </LogoSection>

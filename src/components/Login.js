@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { UserContext } from '../contexts/UserContext';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
-import { auth } from './firebase';
+import { auth, firebaseConfigured } from './firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { apiClient } from '../config/api'; // Import apiClient
 
@@ -34,6 +34,17 @@ const Container = styled.div`
   font-family: "Inter", sans-serif;
   padding: 20px;
   position: relative;
+`;
+
+const FirebaseWarning = styled.div`
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 12.5px;
+  line-height: 1.45;
 `;
 
 const LoginCard = styled.div`
@@ -182,6 +193,8 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const { setUser } = useContext(UserContext);
   const [form] = Form.useForm();
 
+  const googleLoginEnabled = Boolean(firebaseConfigured && auth);
+
   const handleLogin = async (values) => {
       const { email, password } = values;
       setLoading(true);
@@ -245,6 +258,10 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   };
 
   const handleGoogleSignIn = async () => {
+      if (!googleLoginEnabled) {
+          message.error('Google Sign-In is unavailable (missing Firebase configuration).');
+          return;
+      }
       setGoogleLoading(true);
       try {
           const provider = new GoogleAuthProvider();
@@ -434,7 +451,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
 
         <button
           onClick={handleGoogleSignIn}
-          disabled={loading || googleLoading}
+          disabled={loading || googleLoading || !googleLoginEnabled}
           style={{
             width: '100%',
             padding: '12px 24px',
@@ -468,6 +485,13 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
           <GoogleOutlined style={{ fontSize: 18 }} />
           {googleLoading ? "Processing..." : "Continue with Google"}
         </button>
+
+        {!googleLoginEnabled && (
+          <FirebaseWarning>
+            Google Sign-In is disabled on this deployment because Firebase env vars are missing. Add
+            `REACT_APP_FIREBASE_*` to the Vercel <strong>CRA</strong> project and redeploy.
+          </FirebaseWarning>
+        )}
 
         {showSignupLink && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
@@ -622,13 +646,21 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
                   <motion.div variants={buttonVariants} whileHover="hover">
                       <StyledButton
                           onClick={handleGoogleSignIn}
-                          disabled={loading || googleLoading}
+                          disabled={loading || googleLoading || !googleLoginEnabled}
                           aria-label="Sign in with Google"
                       >
                           <GoogleOutlined />
                           {googleLoading ? "Processing..." : "Sign in with Google"}
                       </StyledButton>
                   </motion.div>
+
+                  {!googleLoginEnabled && (
+                    <FirebaseWarning>
+                      Google Sign-In is disabled because Firebase env vars are missing on this CRA deployment.
+                      Add `REACT_APP_FIREBASE_*` in Vercel → <strong>`newcollab-app`</strong> → Environment Variables,
+                      then redeploy.
+                    </FirebaseWarning>
+                  )}
 
                   {showSignupLink && (
                     <Form.Item style={{ textAlign: "center", marginTop: 16 }}>
