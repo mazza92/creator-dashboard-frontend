@@ -3,10 +3,10 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { message, Modal } from 'antd';
 import axios from 'axios';
-import { API_URL } from '../config/api';
+import { getRuntimeApiUrl } from '../config/api';
 
-// Use shared API config instead of local definition
-const API_BASE = API_URL;
+// Use shared API config - runtime function ensures correct URL in production
+const getApiBase = () => getRuntimeApiUrl();
 
 // Utility function to get brand logo URL
 const getBrandLogoUrl = (brand) => {
@@ -57,7 +57,8 @@ const PRPipeline = () => {
   const fetchPipelineBrands = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/pr-crm/pipeline`, {
+      const apiBase = getApiBase();
+      const response = await axios.get(`${apiBase}/api/pr-crm/pipeline`, {
         params: { stage: activeTab },
         withCredentials: true
       });
@@ -78,7 +79,8 @@ const PRPipeline = () => {
 
   const fetchEmailTemplates = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/pr-crm/templates`, {
+      const apiBase = getApiBase();
+      const response = await axios.get(`${apiBase}/api/pr-crm/templates`, {
         withCredentials: true
       });
       setEmailTemplates(response.data.templates || []);
@@ -89,7 +91,8 @@ const PRPipeline = () => {
 
   const updateStage = async (pipelineId, newStage) => {
     try {
-      await axios.patch(`${API_BASE}/api/pr-crm/pipeline/${pipelineId}/update-stage`, {
+      const apiBase = getApiBase();
+      await axios.patch(`${apiBase}/api/pr-crm/pipeline/${pipelineId}/update-stage`, {
         stage: newStage
       }, { withCredentials: true });
 
@@ -103,7 +106,8 @@ const PRPipeline = () => {
 
   const removeBrand = async (pipelineId) => {
     try {
-      await axios.delete(`${API_BASE}/api/pr-crm/pipeline/${pipelineId}`, {
+      const apiBase = getApiBase();
+      await axios.delete(`${apiBase}/api/pr-crm/pipeline/${pipelineId}`, {
         withCredentials: true
       });
 
@@ -117,8 +121,9 @@ const PRPipeline = () => {
 
   const renderTemplate = async (template) => {
     try {
+      const apiBase = getApiBase();
       const response = await axios.post(
-        `${API_BASE}/api/pr-crm/templates/${template.id}/render`,
+        `${apiBase}/api/pr-crm/templates/${template.id}/render`,
         {},
         { withCredentials: true }
       );

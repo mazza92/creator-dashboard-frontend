@@ -4,22 +4,55 @@ import axios from 'axios';
 // In development, use localhost unless overridden by REACT_APP_API_URL.
 // Ensure we never use localhost in production (browser security blocks it)
 const getApiUrl = () => {
+  // Runtime check: if we're running in browser on production domain, never use localhost
+  const isProductionDomain = typeof window !== 'undefined' && 
+    (window.location.hostname === 'newcollab.co' || 
+     window.location.hostname === 'www.newcollab.co' ||
+     window.location.hostname === 'app.newcollab.co');
+  
   const envUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL;
+  
   if (envUrl) {
-    // If env var is set but points to localhost in production, override it
-    if (process.env.NODE_ENV === 'production' && envUrl.includes('localhost')) {
-      console.warn('⚠️ REACT_APP_API_URL points to localhost in production, using https://api.newcollab.co instead');
-      return 'https://api.newcollab.co';
+    // If env var is set but points to localhost, override it in production
+    if (envUrl.includes('localhost')) {
+      if (isProductionDomain || process.env.NODE_ENV === 'production') {
+        console.warn('⚠️ REACT_APP_API_URL points to localhost in production, using https://api.newcollab.co instead');
+        return 'https://api.newcollab.co';
+      }
+      // In development, allow localhost
+      return envUrl;
     }
     return envUrl;
   }
+  
+  // No env var set - use localhost only in development, production domain always uses api.newcollab.co
+  if (isProductionDomain) {
+    return 'https://api.newcollab.co';
+  }
+  
   return process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co';
 };
 
+// Use a function that checks at runtime, not just build time
+let cachedApiUrl = null;
+const getRuntimeApiUrl = () => {
+  if (cachedApiUrl === null) {
+    cachedApiUrl = getApiUrl();
+    console.log('🌐 API_URL resolved to:', cachedApiUrl, {
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+      nodeEnv: process.env.NODE_ENV,
+      reactAppUrl: process.env.REACT_APP_API_URL,
+      nextPublicUrl: process.env.NEXT_PUBLIC_API_URL
+    });
+  }
+  return cachedApiUrl;
+};
+
+// For build-time compatibility, still export a constant, but it will be overridden at runtime
 const API_URL = getApiUrl();
 
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: getRuntimeApiUrl(),
     headers: {
         'Content-Type': 'application/json',
     },
@@ -179,5 +212,6 @@ export const apiClient = {
     delete: (url, config = {}) => api.delete(url, config),
 };
 
-export { API_URL };
+// Export both the constant (for build-time) and the runtime function
+export { API_URL, getRuntimeApiUrl };
 export default api;
