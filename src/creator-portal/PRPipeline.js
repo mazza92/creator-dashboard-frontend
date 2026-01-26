@@ -3,8 +3,10 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { message, Modal } from 'antd';
 import axios from 'axios';
+import { API_URL } from '../config/api';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Use shared API config instead of local definition
+const API_BASE = API_URL;
 
 // Utility function to get brand logo URL
 const getBrandLogoUrl = (brand) => {
