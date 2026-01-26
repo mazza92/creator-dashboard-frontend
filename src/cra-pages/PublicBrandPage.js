@@ -12,8 +12,13 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
+import { getRuntimeApiUrl } from '../config/api';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+// Use shared API config with runtime detection
+const getApiBase = () => {
+  const base = getRuntimeApiUrl();
+  return base.replace(/\/+$/, ''); // Remove trailing slashes to prevent double slashes
+};
 
 const PublicBrandPage = () => {
   const { slug } = useParams();
@@ -31,7 +36,8 @@ const PublicBrandPage = () => {
 
   const fetchBrand = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/api/public/brands/${slug}`);
+      const apiBase = getApiBase();
+      const { data } = await axios.get(`${apiBase}/api/public/brands/${slug}`);
       setBrand(data);
     } catch (error) {
       console.error('Error fetching brand:', error);
@@ -55,8 +61,9 @@ const PublicBrandPage = () => {
 
     setUnlocking(true);
     try {
+      const apiBase = getApiBase();
       const { data } = await axios.post(
-        `${API_BASE}/api/public/brands/${slug}/unlock`,
+        `${apiBase}/api/public/brands/${slug}/unlock`,
         {},
         { withCredentials: true }
       );
