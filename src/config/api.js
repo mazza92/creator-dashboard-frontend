@@ -2,9 +2,21 @@ import axios from 'axios';
 
 // Default to direct API domain in production to match existing backend setup.
 // In development, use localhost unless overridden by REACT_APP_API_URL.
-const API_URL =
-  process.env.REACT_APP_API_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
+// Ensure we never use localhost in production (browser security blocks it)
+const getApiUrl = () => {
+  const envUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) {
+    // If env var is set but points to localhost in production, override it
+    if (process.env.NODE_ENV === 'production' && envUrl.includes('localhost')) {
+      console.warn('⚠️ REACT_APP_API_URL points to localhost in production, using https://api.newcollab.co instead');
+      return 'https://api.newcollab.co';
+    }
+    return envUrl;
+  }
+  return process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co';
+};
+
+const API_URL = getApiUrl();
 
 const api = axios.create({
     baseURL: API_URL,
