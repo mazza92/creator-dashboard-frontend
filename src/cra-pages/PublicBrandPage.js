@@ -13,6 +13,7 @@ import {
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import { getRuntimeApiUrl } from '../config/api';
+import UpgradeModal from '../creator-portal/UpgradeModal';
 
 // Use shared API config with runtime detection
 const getApiBase = () => {
@@ -29,6 +30,10 @@ const PublicBrandPage = () => {
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockedData, setUnlockedData] = useState(null);
+  const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+  const [dailyUnlocksUsed, setDailyUnlocksUsed] = useState(0);
+  
+  const DAILY_UNLOCK_LIMIT = 5; // Free users get 5 unlocks per day
 
   useEffect(() => {
     fetchBrand();
@@ -77,7 +82,22 @@ const PublicBrandPage = () => {
       }
     } catch (error) {
       console.error('Error unlocking brand:', error);
-      message.error('Failed to unlock access. Please try again.');
+      
+      // Check if it's a quota exceeded error (403)
+      if (error.response?.status === 403) {
+        // Extract quota info from error response if available
+        const quotaInfo = error.response?.data;
+        if (quotaInfo?.daily_unlocks_used !== undefined) {
+          setDailyUnlocksUsed(quotaInfo.daily_unlocks_used);
+        } else {
+          // If not provided, assume they've hit the limit
+          setDailyUnlocksUsed(DAILY_UNLOCK_LIMIT);
+        }
+        // Show upgrade modal instead of error message
+        setUpgradeModalVisible(true);
+      } else {
+        message.error('Failed to unlock access. Please try again.');
+      }
     } finally {
       setUnlocking(false);
     }
@@ -595,6 +615,17 @@ const PublicBrandPage = () => {
           </Link>
         </RelatedSection>
       </Container>
+      
+      {/* Upgrade Modal - shown when quota exceeded */}
+      {upgradeModalVisible && (
+        <UpgradeModal
+          isOpen={upgradeModalVisible}
+          onClose={() => setUpgradeModalVisible(false)}
+          currentCount={dailyUnlocksUsed}
+          limit={DAILY_UNLOCK_LIMIT}
+          feature="brand applications"
+        />
+      )}
     </>
   );
 };
