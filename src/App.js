@@ -82,6 +82,7 @@ import AustraliaDirectory from './cra-pages/AustraliaDirectory';
 // UnifiedBrandDirectory used in dashboard (/creator/dashboard/pr-brands) and public directory
 import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
+import BrandAdmin from './admin/BrandAdmin';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -108,6 +109,7 @@ function AppContent() {
             '/stripe',
             '/onboarding',
             '/supply',
+            '/admin',
             '/creator',
             '/brand',
             '/directory',
@@ -370,6 +372,7 @@ function AppContent() {
 
             {/* PR Hunter - Internal Tool (has its own login) */}
             <Route path='/supply' element={<PRHunter />} />
+            <Route path='/admin/brands' element={<BrandAdmin />} />
 
             {/* Standalone routes for profiles, wrapped in a layout manager */}
             <Route element={<ProfileLayoutWrapper />}>

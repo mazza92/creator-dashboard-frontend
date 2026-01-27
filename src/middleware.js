@@ -20,6 +20,7 @@ const CRA_ROUTES = [
   '/settings',
   '/onboarding',
   '/supply',
+  '/admin',
 ];
 
 function matchesCraRoute(pathname) {
