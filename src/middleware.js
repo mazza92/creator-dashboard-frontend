@@ -19,6 +19,7 @@ const CRA_ROUTES = [
   '/marketplace',
   '/settings',
   '/onboarding',
+  '/supply',
 ];
 
 function matchesCraRoute(pathname) {
