@@ -358,13 +358,36 @@ export default async function BrandPage({ params }) {
                   {brand.productTypes && (
                     <div>
                       <dt>Product Types</dt>
-                      <dd style={{ fontSize: 15, color: '#334155' }}>{brand.productTypes}</dd>
+                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {brand.productTypes.split(/[,;]+/).map(t => t.trim()).filter(Boolean).map(t => (
+                          <span key={t} className="bp-pill" style={{ textTransform: 'capitalize' }}>{t}</span>
+                        ))}
+                      </dd>
                     </div>
                   )}
                   {brand.applicationMethod && (
                     <div>
                       <dt>Application Method</dt>
-                      <dd style={{ fontSize: 15, color: '#334155', textTransform: 'capitalize' }}>{brand.applicationMethod}</dd>
+                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {(() => {
+                          const m = brand.applicationMethod.toLowerCase();
+                          const badges = [];
+                          if (m.includes('link') || m.includes('form') || m.includes('direct')) {
+                            badges.push({ label: 'PR Form', color: '#6366f1', bg: '#eef2ff' });
+                          }
+                          if (m.includes('email') || m.includes('mail')) {
+                            badges.push({ label: 'PR Email', color: '#0891b2', bg: '#ecfeff' });
+                          }
+                          if (badges.length === 0) {
+                            badges.push({ label: brand.applicationMethod, color: '#6366f1', bg: '#eef2ff' });
+                          }
+                          return badges.map(b => (
+                            <span key={b.label} style={{ background: b.bg, color: b.color, padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                              {b.label}
+                            </span>
+                          ));
+                        })()}
+                      </dd>
                     </div>
                   )}
                 </dl>
