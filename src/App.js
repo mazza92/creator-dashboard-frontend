@@ -90,6 +90,39 @@ function AppContent() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const isAppHost = window.location.hostname.startsWith('app.');
+        if (!isAppHost) return;
+
+        const appPrefixes = [
+            '/login',
+            '/register',
+            '/marketplace',
+            '/payment',
+            '/forgot-password',
+            '/reset-password',
+            '/verify-email',
+            '/verify-email-pending',
+            '/resend-verification',
+            '/stripe',
+            '/onboarding',
+            '/supply',
+            '/creator',
+            '/brand/dashboard',
+            '/brand/profile',
+        ];
+
+        const isAppRoute = appPrefixes.some(prefix =>
+            location.pathname === prefix || location.pathname.startsWith(`${prefix}/`)
+        );
+
+        if (!isAppRoute) {
+            const target = `https://newcollab.co${location.pathname}${location.search}`;
+            window.location.replace(target);
+        }
+    }, [location.pathname, location.search]);
+
     const completeStripePayment = useCallback(async (subscriptionId, paymentIntentId = null) => {
         try {
             if (!paymentIntentId) {

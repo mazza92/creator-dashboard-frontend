@@ -1,104 +1,18 @@
 {
-  "framework": "create-react-app",
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://api.newcollab.co/$1"
+      "source": "/api/:path*",
+      "destination": "https://api.newcollab.co/:path*"
     },
     {
       "source": "/((?!api|static|.*\\.js$|.*\\.css$|.*\\.ico$|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.webp$|.*\\.woff2?$|.*\\.map$|manifest\\.json$|robots\\.txt$|sitemap\\.xml$).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.newcollab.co"
+        }
+      ],
       "destination": "/index.html"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/blog/:slug/",
-      "destination": "/blog/:slug",
-      "permanent": true
-    },
-    {
-      "source": "/home",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/home/",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/ressources/:path*",
-      "destination": "/blog",
-      "permanent": true
-    },
-    {
-      "source": "/search",
-      "destination": "/blog",
-      "permanent": true
-    },
-    {
-      "source": "/missions/:path*",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/features",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/blog",
-      "has": [
-        {
-          "type": "query",
-          "key": "search"
-        }
-      ],
-      "destination": "/blog",
-      "permanent": true
-    },
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "query",
-          "key": "ref"
-        }
-      ],
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/brands/send-pr-packages",
-      "destination": "/brands/pr-packages",
-      "permanent": true
-    },
-    {
-      "source": "/f50",
-      "destination": "/",
-      "permanent": true
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin-allow-popups"
-        }
-      ]
-    },
-    {
-      "source": "/marketplace",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
     }
   ]
 }

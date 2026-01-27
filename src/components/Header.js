@@ -89,15 +89,24 @@ const MobileCTAButton = styled(Link)`
 const Header = () => {
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const location = useLocation();
+  const isAppHost = typeof window !== 'undefined' && window.location.hostname.startsWith('app.');
+  const seoBase = isAppHost ? 'https://newcollab.co' : '';
 
   const menuItems = [
-    { key: 'platform', label: 'Platform', path: '/#platform' },
-    { key: 'features', label: 'Features', path: '/#features' },
-    { key: 'marketplace', label: 'Marketplace', path: '/marketplace' },
-    { key: 'pricing', label: 'Pricing', path: '/pricing' },
-    { key: 'about', label: 'About', path: '/about' },
-    { key: 'blog', label: 'Blog', path: '/blog' },
+    { key: 'platform', label: 'Platform', path: '/#platform', seo: true },
+    { key: 'features', label: 'Features', path: '/#features', seo: true },
+    { key: 'marketplace', label: 'Marketplace', path: '/marketplace', seo: false },
+    { key: 'pricing', label: 'Pricing', path: '/pricing', seo: true },
+    { key: 'about', label: 'About', path: '/about', seo: true },
+    { key: 'blog', label: 'Blog', path: '/blog', seo: true },
   ];
+
+  const getNavHref = (item) => {
+    if (item.seo && seoBase) {
+      return `${seoBase}${item.path}`;
+    }
+    return item.path;
+  };
 
   const toggleMobileMenu = () => {
     setMobileMenuVisible(!mobileMenuVisible);
@@ -116,7 +125,9 @@ const Header = () => {
             selectedKeys={[location.pathname]}
             items={menuItems.map(item => ({
               key: item.key,
-              label: <Link to={item.path}>{item.label}</Link>,
+              label: item.seo && seoBase
+                ? <a href={getNavHref(item)}>{item.label}</a>
+                : <Link to={getNavHref(item)}>{item.label}</Link>,
             }))}
           />
           <Space>
@@ -152,7 +163,9 @@ const Header = () => {
             items={[
               ...menuItems.map(item => ({
                 key: item.key,
-                label: <Link to={item.path}>{item.label}</Link>,
+                label: item.seo && seoBase
+                  ? <a href={getNavHref(item)}>{item.label}</a>
+                  : <Link to={getNavHref(item)}>{item.label}</Link>,
               })),
               {
                 key: 'login',

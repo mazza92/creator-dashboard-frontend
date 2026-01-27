@@ -57,6 +57,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:next": "next build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "create-post": "node scripts/create-post.js",
@@ -65,7 +66,6 @@
     "dev:next": "next dev --webpack",
     "dev:cra": "cross-env BROWSER=none PORT=3001 react-scripts start",
     "dev:hybrid": "concurrently -n NEXT,CRA -c cyan,magenta \"cross-env CRA_ORIGIN=http://localhost:3001 npm run dev:next\" \"npm run dev:cra\"",
-    "build:next": "next build",
     "start:next": "next start"
   },
   "eslintConfig": {

@@ -1,11 +1,13 @@
-import CraOnlyNotice from '../components/CraOnlyNotice';
+import PrivacyPolicyClient from './PrivacyPolicyClient';
 
 export const metadata = {
   title: 'Privacy Policy | Newcollab',
-  robots: { index: false, follow: false },
+  description: "Newcollab's privacy policy - Learn how we protect your data and ensure secure creator-brand collaborations.",
+  alternates: {
+    canonical: 'https://newcollab.co/privacy-policy',
+  },
 };
 
 export default function PrivacyPolicyPage() {
-  return <CraOnlyNotice title="Privacy Policy" path="/privacy-policy" />;
+  return <PrivacyPolicyClient />;
 }
-

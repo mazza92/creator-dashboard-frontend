@@ -5,6 +5,8 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function BrandRegisterPage() {
   return <CraOnlyNotice title="Brand sign up" path="/register/brand" />;
 }
