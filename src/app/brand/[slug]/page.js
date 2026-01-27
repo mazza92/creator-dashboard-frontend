@@ -143,74 +143,182 @@ export default async function BrandPage({ params }) {
   return (
     <>
       <JsonLd brand={brand} />
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem 24px 4rem' }}>
+      <style>{`
+        .bp-page { max-width: 1100px; margin: 0 auto; padding: 2rem 24px 4rem; }
+        .bp-breadcrumb { margin-bottom: 24px; font-size: 14px; color: #64748b; }
+        .bp-breadcrumb a { color: #6366f1; text-decoration: none; }
+        .bp-breadcrumb .bp-sep { margin: 0 8px; }
+
+        .bp-header { display: flex; gap: 20px; align-items: center; margin-bottom: 24px; }
+        .bp-logo { width: 88px; height: 88px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); background: #f3f4f6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .bp-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .bp-header-info { flex: 1; min-width: 0; }
+        .bp-title { margin: 0; font-size: 32px; line-height: 1.2; color: #0f172a; }
+        .bp-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .bp-tag { padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+
+        .bp-grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
+        .bp-main { min-width: 0; }
+
+        .bp-card { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .bp-card h2 { margin: 0 0 12px; font-size: 20px; color: #0f172a; }
+
+        .bp-req-grid { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
+        .bp-req-grid dt { font-size: 13px; color: #64748b; margin-bottom: 4px; font-weight: 500; }
+        .bp-req-grid dd { margin: 0; font-size: 16px; color: #0f172a; font-weight: 600; }
+
+        .bp-stats { display: flex; gap: 32px; }
+        .bp-stat-value { font-size: 36px; font-weight: 700; }
+        .bp-stat-label { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+        .bp-social-links { display: flex; gap: 12px; flex-wrap: wrap; }
+        .bp-social-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: 1px solid #e2e8f0; color: #334155; text-decoration: none; font-size: 14px; }
+
+        .bp-sidebar .bp-cta-box { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); position: sticky; top: 100px; }
+        .bp-cta-box h2 { margin: 0 0 8px; font-size: 20px; color: #0f172a; }
+        .bp-cta-box .bp-cta-desc { margin: 0 0 16px; color: #64748b; line-height: 1.6; font-size: 14px; }
+        .bp-cta-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.06); }
+        .bp-cta-footer p { margin: 0 0 12px; font-size: 14px; color: #64748b; }
+        .bp-btn-primary { display: block; text-align: center; background: #6366f1; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px; }
+        .bp-btn-secondary { display: block; text-align: center; color: #6366f1; padding: 8px 20px; text-decoration: none; font-size: 14px; margin-top: 8px; }
+
+        .bp-related { margin-top: 40px; }
+        .bp-related h2 { font-size: 24px; color: #0f172a; margin-bottom: 20px; }
+        .bp-related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .bp-related-card { display: block; background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 14px; padding: 20px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .bp-related-header { display: flex; gap: 12px; align-items: center; }
+        .bp-related-logo { width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: #f3f4f6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .bp-related-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .bp-related-name { font-weight: 600; color: #0f172a; font-size: 16px; }
+        .bp-related-meta { font-size: 13px; color: #64748b; margin-top: 2px; }
+        .bp-related-desc { margin: 10px 0 0; font-size: 13px; color: #64748b; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .bp-seo-footer { margin-top: 40px; padding: 24px; background: #f8fafc; border-radius: 16px; }
+        .bp-seo-footer h2 { font-size: 20px; color: #0f172a; margin: 0 0 12px; }
+        .bp-seo-footer p { color: #475569; line-height: 1.8; font-size: 15px; margin: 0; }
+
+        .bp-pill { background: #f1f5f9; padding: 3px 10px; border-radius: 12px; font-size: 13px; color: #334155; display: inline-block; }
+        .bp-pill-purple { background: #faf5ff; color: #7c3aed; }
+
+        /* ===== MOBILE: up to 768px ===== */
+        @media (max-width: 768px) {
+          .bp-page { padding: 1rem 16px 3rem; }
+
+          .bp-header { gap: 14px; }
+          .bp-logo { width: 64px; height: 64px; border-radius: 12px; }
+          .bp-title { font-size: 24px; }
+          .bp-tags { gap: 6px; margin-top: 8px; }
+          .bp-tag { font-size: 12px; padding: 3px 10px; }
+
+          .bp-grid {
+            display: flex;
+            flex-direction: column;
+          }
+          /* CTA sidebar appears FIRST on mobile */
+          .bp-sidebar { order: -1; }
+          .bp-sidebar .bp-cta-box {
+            position: static;
+            margin-bottom: 20px;
+          }
+
+          .bp-card { padding: 18px; border-radius: 14px; margin-bottom: 16px; }
+          .bp-card h2 { font-size: 18px; margin-bottom: 10px; }
+
+          .bp-req-grid { grid-template-columns: 1fr; gap: 14px; }
+          .bp-req-grid dd { font-size: 15px; }
+
+          .bp-stats { gap: 24px; }
+          .bp-stat-value { font-size: 28px; }
+
+          .bp-social-links { gap: 8px; }
+          .bp-social-link { padding: 6px 12px; font-size: 13px; }
+
+          .bp-related h2 { font-size: 20px; }
+          .bp-related-grid { grid-template-columns: 1fr; gap: 12px; }
+          .bp-related-card { padding: 16px; }
+
+          .bp-seo-footer { padding: 18px; margin-top: 32px; }
+          .bp-seo-footer h2 { font-size: 18px; }
+          .bp-seo-footer p { font-size: 14px; }
+
+          .bp-btn-primary { padding: 12px 20px; font-size: 16px; }
+        }
+
+        /* ===== TABLET: 769px - 1024px ===== */
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .bp-grid { grid-template-columns: 1fr 300px; gap: 20px; }
+          .bp-title { font-size: 28px; }
+        }
+      `}</style>
+
+      <div className="bp-page">
 
         {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 24, fontSize: 14, color: '#64748b' }}>
-          <Link href="/directory" style={{ color: '#6366f1', textDecoration: 'none' }}>Directory</Link>
+        <nav aria-label="Breadcrumb" className="bp-breadcrumb">
+          <Link href="/directory">Directory</Link>
           {categoryLabel && (
             <>
-              <span style={{ margin: '0 8px' }}>›</span>
-              <Link href={`/directory?category=${brand.category}`} style={{ color: '#6366f1', textDecoration: 'none' }}>{categoryLabel}</Link>
+              <span className="bp-sep">›</span>
+              <Link href={`/directory?category=${brand.category}`}>{categoryLabel}</Link>
             </>
           )}
-          <span style={{ margin: '0 8px' }}>›</span>
+          <span className="bp-sep">›</span>
           <span>{brand.name}</span>
         </nav>
 
         {/* Header */}
-        <header style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
-          <div style={{ width: 88, height: 88, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)', background: '#f3f4f6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <header className="bp-header">
+          <div className="bp-logo">
             {brand.logo ? (
-              <img src={brand.logo} alt={`${brand.name} logo`} width={88} height={88} style={{ objectFit: 'cover' }} />
+              <img src={brand.logo} alt={`${brand.name} logo`} />
             ) : (
               <span style={{ fontWeight: 900, color: '#6366f1', fontSize: 32 }}>
                 {brand.name?.slice(0, 1) || 'B'}
               </span>
             )}
           </div>
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <h1 style={{ margin: 0, fontSize: 32, lineHeight: 1.2, color: '#0f172a' }}>{brand.name}</h1>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+          <div className="bp-header-info">
+            <h1 className="bp-title">{brand.name}</h1>
+            <div className="bp-tags">
               {categoryLabel && (
-                <span style={{ background: '#eff6ff', color: '#3b82f6', padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 500 }}>
+                <span className="bp-tag" style={{ background: '#eff6ff', color: '#3b82f6' }}>
                   {categoryLabel}
                 </span>
               )}
               {brand.isFeatured && (
-                <span style={{ background: '#fefce8', color: '#ca8a04', padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 500 }}>
-                  ⭐ Featured
+                <span className="bp-tag" style={{ background: '#fefce8', color: '#ca8a04' }}>
+                  Featured
                 </span>
               )}
               {minFollowers > 0 && (
-                <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 500 }}>
-                  {minFollowers >= 1000 ? `${Math.round(minFollowers / 1000)}K` : minFollowers}+ followers required
+                <span className="bp-tag" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+                  {minFollowers >= 1000 ? `${Math.round(minFollowers / 1000)}K` : minFollowers}+ followers
                 </span>
               )}
             </div>
           </div>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
+        <div className="bp-grid">
           {/* Main content */}
-          <div>
+          <div className="bp-main">
             {/* About section */}
             {brand.description && (
-              <section style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                <h2 style={{ margin: '0 0 12px', fontSize: 20, color: '#0f172a' }}>About {brand.name}</h2>
+              <section className="bp-card">
+                <h2>About {brand.name}</h2>
                 <p style={{ margin: 0, color: '#475569', lineHeight: 1.8, fontSize: 16 }}>{brand.description}</p>
               </section>
             )}
 
             {/* Requirements section */}
             {(minFollowers > 0 || platforms.length > 0 || regions.length > 0 || niches.length > 0) && (
-              <section style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                <h2 style={{ margin: '0 0 16px', fontSize: 20, color: '#0f172a' }}>Requirements & Details</h2>
-                <dl style={{ margin: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 32px' }}>
+              <section className="bp-card">
+                <h2 style={{ marginBottom: 16 }}>Requirements & Details</h2>
+                <dl className="bp-req-grid">
                   {minFollowers > 0 && (
                     <div>
-                      <dt style={{ fontSize: 13, color: '#64748b', marginBottom: 4, fontWeight: 500 }}>Minimum Followers</dt>
-                      <dd style={{ margin: 0, fontSize: 16, color: '#0f172a', fontWeight: 600 }}>
+                      <dt>Minimum Followers</dt>
+                      <dd>
                         {minFollowers >= 1000 ? `${(minFollowers / 1000).toFixed(0)}K` : minFollowers}
                         {maxFollowers ? ` – ${maxFollowers >= 1000 ? `${(maxFollowers / 1000).toFixed(0)}K` : maxFollowers}` : '+'}
                       </dd>
@@ -218,44 +326,44 @@ export default async function BrandPage({ params }) {
                   )}
                   {platforms.length > 0 && (
                     <div>
-                      <dt style={{ fontSize: 13, color: '#64748b', marginBottom: 4, fontWeight: 500 }}>Platforms</dt>
-                      <dd style={{ margin: 0, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <dt>Platforms</dt>
+                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {platforms.map(p => (
-                          <span key={p} style={{ background: '#f1f5f9', padding: '3px 10px', borderRadius: 12, fontSize: 13, color: '#334155' }}>{p}</span>
+                          <span key={p} className="bp-pill">{p}</span>
                         ))}
                       </dd>
                     </div>
                   )}
                   {regions.length > 0 && (
                     <div>
-                      <dt style={{ fontSize: 13, color: '#64748b', marginBottom: 4, fontWeight: 500 }}>Regions</dt>
-                      <dd style={{ margin: 0, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <dt>Regions</dt>
+                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {regions.map(r => (
-                          <span key={r} style={{ background: '#f1f5f9', padding: '3px 10px', borderRadius: 12, fontSize: 13, color: '#334155' }}>{r}</span>
+                          <span key={r} className="bp-pill">{r}</span>
                         ))}
                       </dd>
                     </div>
                   )}
                   {niches.length > 0 && (
                     <div style={{ gridColumn: niches.length > 3 ? 'span 2' : undefined }}>
-                      <dt style={{ fontSize: 13, color: '#64748b', marginBottom: 4, fontWeight: 500 }}>Niches</dt>
-                      <dd style={{ margin: 0, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <dt>Niches</dt>
+                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {niches.map(n => (
-                          <span key={n} style={{ background: '#faf5ff', padding: '3px 10px', borderRadius: 12, fontSize: 13, color: '#7c3aed' }}>{n}</span>
+                          <span key={n} className="bp-pill bp-pill-purple">{n}</span>
                         ))}
                       </dd>
                     </div>
                   )}
                   {brand.productTypes && (
                     <div>
-                      <dt style={{ fontSize: 13, color: '#64748b', marginBottom: 4, fontWeight: 500 }}>Product Types</dt>
-                      <dd style={{ margin: 0, fontSize: 15, color: '#334155' }}>{brand.productTypes}</dd>
+                      <dt>Product Types</dt>
+                      <dd style={{ fontSize: 15, color: '#334155' }}>{brand.productTypes}</dd>
                     </div>
                   )}
                   {brand.applicationMethod && (
                     <div>
-                      <dt style={{ fontSize: 13, color: '#64748b', marginBottom: 4, fontWeight: 500 }}>Application Method</dt>
-                      <dd style={{ margin: 0, fontSize: 15, color: '#334155', textTransform: 'capitalize' }}>{brand.applicationMethod}</dd>
+                      <dt>Application Method</dt>
+                      <dd style={{ fontSize: 15, color: '#334155', textTransform: 'capitalize' }}>{brand.applicationMethod}</dd>
                     </div>
                   )}
                 </dl>
@@ -264,19 +372,19 @@ export default async function BrandPage({ params }) {
 
             {/* Stats section */}
             {(responseRate || avgResponseTime) && (
-              <section style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                <h2 style={{ margin: '0 0 16px', fontSize: 20, color: '#0f172a' }}>Response Stats</h2>
-                <div style={{ display: 'flex', gap: 32 }}>
+              <section className="bp-card">
+                <h2 style={{ marginBottom: 16 }}>Response Stats</h2>
+                <div className="bp-stats">
                   {responseRate > 0 && (
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 36, fontWeight: 700, color: '#16a34a' }}>{responseRate}%</div>
-                      <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Response Rate</div>
+                      <div className="bp-stat-value" style={{ color: '#16a34a' }}>{responseRate}%</div>
+                      <div className="bp-stat-label">Response Rate</div>
                     </div>
                   )}
                   {avgResponseTime > 0 && (
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 36, fontWeight: 700, color: '#6366f1' }}>{avgResponseTime}</div>
-                      <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Avg. Days to Respond</div>
+                      <div className="bp-stat-value" style={{ color: '#6366f1' }}>{avgResponseTime}</div>
+                      <div className="bp-stat-label">Avg. Days to Respond</div>
                     </div>
                   )}
                 </div>
@@ -285,21 +393,21 @@ export default async function BrandPage({ params }) {
 
             {/* Social handles */}
             {(brand.instagram || brand.tiktok || brand.website) && (
-              <section style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                <h2 style={{ margin: '0 0 12px', fontSize: 20, color: '#0f172a' }}>Connect</h2>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <section className="bp-card">
+                <h2>Connect</h2>
+                <div className="bp-social-links">
                   {brand.website && (
-                    <a href={brand.website} target="_blank" rel="noopener noreferrer nofollow" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: '1px solid #e2e8f0', color: '#334155', textDecoration: 'none', fontSize: 14 }}>
+                    <a href={brand.website} target="_blank" rel="noopener noreferrer nofollow" className="bp-social-link">
                       🌐 Website
                     </a>
                   )}
                   {brand.instagram && (
-                    <a href={`https://instagram.com/${brand.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer nofollow" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: '1px solid #e2e8f0', color: '#334155', textDecoration: 'none', fontSize: 14 }}>
+                    <a href={`https://instagram.com/${brand.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer nofollow" className="bp-social-link">
                       📸 @{brand.instagram.replace('@', '')}
                     </a>
                   )}
                   {brand.tiktok && (
-                    <a href={`https://tiktok.com/@${brand.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer nofollow" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, border: '1px solid #e2e8f0', color: '#334155', textDecoration: 'none', fontSize: 14 }}>
+                    <a href={`https://tiktok.com/@${brand.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer nofollow" className="bp-social-link">
                       🎵 @{brand.tiktok.replace('@', '')}
                     </a>
                   )}
@@ -309,11 +417,10 @@ export default async function BrandPage({ params }) {
           </div>
 
           {/* Sidebar */}
-          <aside>
-            {/* Apply / Unlock CTA */}
-            <div style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.04)', position: 'sticky', top: 100 }}>
-              <h2 style={{ margin: '0 0 8px', fontSize: 20, color: '#0f172a' }}>Apply to {brand.name}</h2>
-              <p style={{ margin: '0 0 16px', color: '#64748b', lineHeight: 1.6, fontSize: 14 }}>
+          <aside className="bp-sidebar">
+            <div className="bp-cta-box">
+              <h2>Apply to {brand.name}</h2>
+              <p className="bp-cta-desc">
                 Unlock the PR application link{hasEmail ? ' and contact email' : ''} to start collaborating with {brand.name}.
               </p>
 
@@ -323,14 +430,12 @@ export default async function BrandPage({ params }) {
                 hasEmail={hasEmail}
               />
 
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                <p style={{ margin: '0 0 12px', fontSize: 14, color: '#64748b' }}>
-                  Want to track your applications and discover more brands?
-                </p>
-                <a href="/register/creator" style={{ display: 'block', textAlign: 'center', background: '#6366f1', color: 'white', padding: '10px 20px', borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: 15 }}>
+              <div className="bp-cta-footer">
+                <p>Want to track your applications and discover more brands?</p>
+                <a href="/register/creator" className="bp-btn-primary">
                   Create free account
                 </a>
-                <a href="/login" style={{ display: 'block', textAlign: 'center', color: '#6366f1', padding: '8px 20px', textDecoration: 'none', fontSize: 14, marginTop: 8 }}>
+                <a href="/login" className="bp-btn-secondary">
                   Already have an account? Log in
                 </a>
               </div>
@@ -340,25 +445,19 @@ export default async function BrandPage({ params }) {
 
         {/* Related brands */}
         {relatedBrands.length > 0 && (
-          <section style={{ marginTop: 40 }}>
-            <h2 style={{ fontSize: 24, color: '#0f172a', marginBottom: 20 }}>
-              More {categoryLabel || ''} Brands on Newcollab
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          <section className="bp-related">
+            <h2>More {categoryLabel || ''} Brands on Newcollab</h2>
+            <div className="bp-related-grid">
               {relatedBrands.map(rb => {
                 const rbName = rb.name || rb.brand_name;
                 const rbLogo = rb.logo || rb.logo_url;
                 const rbMinFollowers = rb.minFollowers || rb.min_followers;
                 return (
-                <Link
-                  key={rb.slug}
-                  href={`/brand/${rb.slug}`}
-                  style={{ display: 'block', background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 14, padding: 20, textDecoration: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s' }}
-                >
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', background: '#f3f4f6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Link key={rb.slug} href={`/brand/${rb.slug}`} className="bp-related-card">
+                  <div className="bp-related-header">
+                    <div className="bp-related-logo">
                       {rbLogo ? (
-                        <img src={rbLogo} alt={rbName} width={48} height={48} style={{ objectFit: 'cover' }} />
+                        <img src={rbLogo} alt={rbName} />
                       ) : (
                         <span style={{ fontWeight: 800, color: '#6366f1', fontSize: 18 }}>
                           {rbName?.slice(0, 1) || 'B'}
@@ -366,17 +465,15 @@ export default async function BrandPage({ params }) {
                       )}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 16 }}>{rbName}</div>
-                      <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>
+                      <div className="bp-related-name">{rbName}</div>
+                      <div className="bp-related-meta">
                         {rb.category && <span style={{ textTransform: 'capitalize' }}>{rb.category}</span>}
                         {rbMinFollowers > 0 && <span> · {rbMinFollowers >= 1000 ? `${Math.round(rbMinFollowers / 1000)}K` : rbMinFollowers}+ followers</span>}
                       </div>
                     </div>
                   </div>
                   {rb.description && (
-                    <p style={{ margin: '10px 0 0', fontSize: 13, color: '#64748b', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {rb.description}
-                    </p>
+                    <p className="bp-related-desc">{rb.description}</p>
                   )}
                 </Link>
                 );
@@ -386,25 +483,15 @@ export default async function BrandPage({ params }) {
         )}
 
         {/* SEO content footer */}
-        <section style={{ marginTop: 40, padding: 24, background: '#f8fafc', borderRadius: 16 }}>
-          <h2 style={{ fontSize: 20, color: '#0f172a', marginBottom: 12 }}>How to Apply to {brand.name} PR List</h2>
-          <p style={{ color: '#475569', lineHeight: 1.8, fontSize: 15, margin: 0 }}>
+        <section className="bp-seo-footer">
+          <h2>How to Apply to {brand.name} PR List</h2>
+          <p>
             {brand.name} accepts PR applications from content creators{minFollowers > 0 ? ` with ${minFollowers >= 1000 ? `${Math.round(minFollowers / 1000)}K` : minFollowers}+ followers` : ''}{platforms.length > 0 ? ` on ${platforms.join(', ')}` : ''}.
             {brand.applicationMethod === 'form' ? ` Apply directly through their application form.` : brand.applicationMethod === 'email' ? ` Reach out via their PR email.` : ` Unlock the application details above to get started.`}
             {' '}Create a free Newcollab account to track your application, discover more brands, and manage your PR pipeline.
           </p>
         </section>
       </div>
-
-      {/* Responsive styles */}
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*="grid-template-columns: 1fr 360px"] {
-            display: flex !important;
-            flex-direction: column-reverse !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
