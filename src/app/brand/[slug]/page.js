@@ -346,7 +346,11 @@ export default async function BrandPage({ params }) {
               More {categoryLabel || ''} Brands on Newcollab
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-              {relatedBrands.map(rb => (
+              {relatedBrands.map(rb => {
+                const rbName = rb.name || rb.brand_name;
+                const rbLogo = rb.logo || rb.logo_url;
+                const rbMinFollowers = rb.minFollowers || rb.min_followers;
+                return (
                 <Link
                   key={rb.slug}
                   href={`/brand/${rb.slug}`}
@@ -354,19 +358,19 @@ export default async function BrandPage({ params }) {
                 >
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', background: '#f3f4f6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {rb.logo_url ? (
-                        <Image src={rb.logo_url} alt={rb.brand_name} width={48} height={48} style={{ objectFit: 'cover' }} />
+                      {rbLogo ? (
+                        <Image src={rbLogo} alt={rbName} width={48} height={48} style={{ objectFit: 'cover' }} />
                       ) : (
                         <span style={{ fontWeight: 800, color: '#6366f1', fontSize: 18 }}>
-                          {rb.brand_name?.slice(0, 1) || 'B'}
+                          {rbName?.slice(0, 1) || 'B'}
                         </span>
                       )}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 16 }}>{rb.brand_name}</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 16 }}>{rbName}</div>
                       <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>
                         {rb.category && <span style={{ textTransform: 'capitalize' }}>{rb.category}</span>}
-                        {rb.min_followers > 0 && <span> · {rb.min_followers >= 1000 ? `${Math.round(rb.min_followers / 1000)}K` : rb.min_followers}+ followers</span>}
+                        {rbMinFollowers > 0 && <span> · {rbMinFollowers >= 1000 ? `${Math.round(rbMinFollowers / 1000)}K` : rbMinFollowers}+ followers</span>}
                       </div>
                     </div>
                   </div>
@@ -376,7 +380,8 @@ export default async function BrandPage({ params }) {
                     </p>
                   )}
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
