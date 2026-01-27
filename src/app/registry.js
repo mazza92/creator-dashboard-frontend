@@ -1,9 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useServerInsertedHTML } from 'next/navigation';
+import { ServerStyleSheet, StyleSheetManager } from 'styled-components';
 
-// Simplified registry - styled-components 6.x works with Next.js App Router
-// The compiler option in next.config.js handles most of the SSR
 export default function StyledComponentsRegistry({ children }) {
-  return <>{children}</>;
+  const [styledComponentsStyleSheet] = useState(() => new ServerStyleSheet());
+
+  useServerInsertedHTML(() => {
+    const styles = styledComponentsStyleSheet.getStyleElement();
+    styledComponentsStyleSheet.instance.clearTag();
+    return <>{styles}</>;
+  });
+
+  if (typeof window !== 'undefined') return <>{children}</>;
+
+  return (
+    <StyleSheetManager sheet={styledComponentsStyleSheet.instance}>
+      {children}
+    </StyleSheetManager>
+  );
 }
