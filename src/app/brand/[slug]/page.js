@@ -359,7 +359,7 @@ export default async function BrandPage({ params }) {
                     <div>
                       <dt>Product Types</dt>
                       <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {brand.productTypes.split(/[,;]+/).map(t => t.trim()).filter(Boolean).map(t => (
+                        {(Array.isArray(brand.productTypes) ? brand.productTypes : String(brand.productTypes).split(/[,;]+/)).map(t => String(t).trim()).filter(Boolean).map(t => (
                           <span key={t} className="bp-pill" style={{ textTransform: 'capitalize' }}>{t}</span>
                         ))}
                       </dd>
