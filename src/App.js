@@ -109,8 +109,9 @@ function AppContent() {
             '/onboarding',
             '/supply',
             '/creator',
-            '/brand/dashboard',
-            '/brand/profile',
+            '/brand',
+            '/directory',
+            '/c/',
         ];
 
         const isAppRoute = appPrefixes.some(prefix =>
