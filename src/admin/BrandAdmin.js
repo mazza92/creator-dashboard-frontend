@@ -18,9 +18,7 @@ import {
   CheckCircleOutlined, CloseCircleOutlined, EyeOutlined,
   LockOutlined, UserOutlined, SearchOutlined, FilterOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+import api from '../config/api';
 
 // Admin credentials - same as PRHunter
 const ADMIN_EMAIL = 'team@newcollab.co';
@@ -77,7 +75,7 @@ const BrandAdmin = () => {
     setLoading(true);
     try {
       // Fetch all brands - no limit for admin CRM
-      const { data } = await axios.get(`${API_BASE}/api/admin/brands?limit=10000`, getApiConfig());
+      const { data } = await api.get('/api/admin/brands?limit=10000', getApiConfig());
       const brands = data.brands || data || [];
       setRowData(brands);
 
@@ -129,8 +127,8 @@ const BrandAdmin = () => {
 
     // Auto-save after a short delay
     try {
-      await axios.patch(
-        `${API_BASE}/api/admin/brands/${data.id}`,
+      await api.patch(
+        `/api/admin/brands/${data.id}`,
         { [colDef.field]: newValue },
         getApiConfig()
       );
@@ -165,8 +163,8 @@ const BrandAdmin = () => {
     };
 
     try {
-      const { data } = await axios.post(
-        `${API_BASE}/api/admin/brands`,
+      const { data } = await api.post(
+        '/api/admin/brands',
         newBrand,
         getApiConfig()
       );
@@ -191,7 +189,7 @@ const BrandAdmin = () => {
     try {
       await Promise.all(
         ids.map(id =>
-          axios.delete(`${API_BASE}/api/admin/brands/${id}`, getApiConfig())
+          api.delete(`/api/admin/brands/${id}`, getApiConfig())
         )
       );
       setRowData(prev => prev.filter(b => !ids.includes(b.id)));
@@ -207,8 +205,8 @@ const BrandAdmin = () => {
   const bulkUpdateStatus = async (status) => {
     const ids = selectedRows.map(r => r.id);
     try {
-      await axios.post(
-        `${API_BASE}/api/admin/brands/bulk-update`,
+      await api.post(
+        '/api/admin/brands/bulk-update',
         { ids, updates: { status } },
         getApiConfig()
       );
@@ -236,8 +234,8 @@ const BrandAdmin = () => {
     };
 
     try {
-      const { data } = await axios.post(
-        `${API_BASE}/api/admin/brands`,
+      const { data } = await api.post(
+        '/api/admin/brands',
         newBrand,
         getApiConfig()
       );
@@ -290,8 +288,8 @@ const BrandAdmin = () => {
         content: `First brand: ${newBrands[0].name}`,
         onOk: async () => {
           try {
-            const { data } = await axios.post(
-              `${API_BASE}/api/admin/brands/bulk-import`,
+            const { data } = await api.post(
+              '/api/admin/brands/bulk-import',
               { brands: newBrands },
               getApiConfig()
             );
@@ -323,8 +321,8 @@ const BrandAdmin = () => {
     try {
       const values = await form.validateFields();
 
-      await axios.patch(
-        `${API_BASE}/api/admin/brands/${currentBrand.id}`,
+      await api.patch(
+        `/api/admin/brands/${currentBrand.id}`,
         values,
         getApiConfig()
       );
