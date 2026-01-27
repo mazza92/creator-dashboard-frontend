@@ -7,7 +7,7 @@ import { GiLipstick } from 'react-icons/gi';
 import { FiVideo, FiCamera, FiFilm, FiImage } from 'react-icons/fi';
 import { MdOutlineLiveTv, MdOutlineAudiotrack } from 'react-icons/md';
 import PROfferForm from '@/src/components/PROfferForm';
-import LandingPageLayout from '@/src/Layouts/LandingPageLayout';
+import LandingPageLayout from '@/src/app/components/LandingPageLayoutNext';
 import { formatPrice, getCurrencySymbol } from '@/src/utils/currency';
 
 const BRAND_COLOR = '#10b981';
