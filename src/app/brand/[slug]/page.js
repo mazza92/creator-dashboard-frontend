@@ -162,7 +162,6 @@ export default async function BrandPage({ params }) {
         <header style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
           <div style={{ width: 88, height: 88, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)', background: '#f3f4f6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {brand.logo ? (
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={brand.logo} alt={`${brand.name} logo`} width={88} height={88} style={{ objectFit: 'cover' }} />
             ) : (
               <span style={{ fontWeight: 900, color: '#6366f1', fontSize: 32 }}>
@@ -359,7 +358,6 @@ export default async function BrandPage({ params }) {
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', background: '#f3f4f6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {rbLogo ? (
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={rbLogo} alt={rbName} width={48} height={48} style={{ objectFit: 'cover' }} />
                       ) : (
                         <span style={{ fontWeight: 800, color: '#6366f1', fontSize: 18 }}>
