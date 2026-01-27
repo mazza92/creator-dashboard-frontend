@@ -3,6 +3,7 @@
 import React from 'react';
 import { Typography, Row, Col } from 'antd';
 import styled from 'styled-components';
+import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
 import {
   RocketOutlined,
   TeamOutlined,
@@ -116,6 +117,7 @@ const VisualCard = styled.div`
 
 export default function AboutClient() {
   return (
+    <LandingPageLayoutNext>
     <PageContainer>
       <Section>
         <HeroSection>
@@ -263,5 +265,6 @@ export default function AboutClient() {
         </Row>
       </Section>
     </PageContainer>
+    </LandingPageLayoutNext>
   );
 }

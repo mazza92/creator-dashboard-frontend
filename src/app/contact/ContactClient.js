@@ -4,6 +4,7 @@ import React from 'react';
 import { Typography, Form, Input, Button, Row, Col, Card } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
+import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -39,6 +40,7 @@ export default function ContactClient() {
   };
 
   return (
+    <LandingPageLayoutNext>
     <PageContainer>
       <Section>
         <Title level={1} style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -75,5 +77,6 @@ export default function ContactClient() {
         </Row>
       </Section>
     </PageContainer>
+    </LandingPageLayoutNext>
   );
 }

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BrandUnlockClient from './BrandUnlockClient';
+import BrandPageLayout from './BrandPageLayout';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co';
 
@@ -141,7 +142,7 @@ export default async function BrandPage({ params }) {
     : null;
 
   return (
-    <>
+    <BrandPageLayout canonicalUrl={`https://newcollab.co/brand/${brand.slug}`}>
       <JsonLd brand={brand} />
       <style>{`
         .bp-page { max-width: 1100px; margin: 0 auto; padding: 2rem 24px 4rem; }
@@ -492,6 +493,6 @@ export default async function BrandPage({ params }) {
           </p>
         </section>
       </div>
-    </>
+    </BrandPageLayout>
   );
 }
