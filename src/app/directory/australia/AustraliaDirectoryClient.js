@@ -16,8 +16,9 @@ export default function AustraliaDirectoryClient() {
   const router = useRouter();
 
   useEffect(() => {
-    // Set country filter to "Australia" on mount if not already set
-    if (!searchParams.get('country')) {
+    // Set both category and country filters on mount if not already set
+    // Using category filter for consistency with other directory pages
+    if (!searchParams.get('category') && !searchParams.get('country')) {
       router.replace('/directory/australia?country=Australia');
     }
   }, [searchParams, router]);

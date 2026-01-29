@@ -23,7 +23,7 @@ export default function SkincareDirectoryClient() {
   return (
     <DirectoryClient
       collectionTitle="Skincare Brand PR Application Forms"
-      collectionDescription="Access direct PR application forms for 75+ skincare and beauty brands. Find requirements, contact information, and brands that send PR to micro-influencers."
+      collectionDescription="Access direct PR application forms for skincare and beauty brands. Find requirements, contact information, and brands that send PR to micro-influencers."
       initialCategory="Skincare"
     />
   );

@@ -65,6 +65,8 @@
     "create-post": "node scripts/create-post.js",
     "update-posts-index": "node scripts/update-posts-index.js",
     "generate-sitemap": "node scripts/generate-sitemap.js",
+    "generate-image-sitemap": "node scripts/generate-image-sitemap.js",
+    "generate-all-sitemaps": "npm run generate-sitemap && npm run generate-image-sitemap",
     "dev:next": "next dev --webpack",
     "dev:cra": "cross-env BROWSER=none PORT=3001 react-scripts start",
     "dev:hybrid": "concurrently -n NEXT,CRA -c cyan,magenta \"cross-env CRA_ORIGIN=http://localhost:3001 npm run dev:next\" \"npm run dev:cra\"",

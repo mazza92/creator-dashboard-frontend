@@ -189,7 +189,8 @@ export default function DirectoryClient({
   const [total, setTotal] = useState(0);
 
   const [search, setSearch] = useState(initialSearch || '');
-  const [category, setCategory] = useState(initialCategory || '');
+  // Keep category case-sensitive to match API values
+  const [category, setCategory] = useState(initialCategory ? initialCategory.trim() : '');
   const [minFollowers, setMinFollowers] = useState('');
   const [featuredOnly, setFeaturedOnly] = useState(false);
 
@@ -207,7 +208,9 @@ export default function DirectoryClient({
     const urlPage = Number(searchParams?.get('page') || '1');
 
     if (!initialSearch && urlSearch) setSearch(urlSearch);
-    if (!initialCategory && urlCategory) setCategory(urlCategory);
+    if (!initialCategory && urlCategory) {
+      setCategory(urlCategory.trim());
+    }
     if (urlMinFollowers) setMinFollowers(urlMinFollowers);
     if (urlFeatured) setFeaturedOnly(true);
     if (Number.isFinite(urlPage) && urlPage > 1) setPage(urlPage);
@@ -239,13 +242,20 @@ export default function DirectoryClient({
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
-    params.set('page', String(page));
-    params.set('limit', String(limit));
+    // For region-based filtering (client-side), fetch more brands
+    if (initialCountry) {
+      params.set('page', '1');
+      params.set('limit', '500');
+    } else {
+      params.set('page', String(page));
+      params.set('limit', String(limit));
+    }
     if (search) params.set('search', search);
-    if (category) params.set('category', category);
+    if (category) {
+      params.set('category', category.trim());
+    }
     if (minFollowers) params.set('min_followers', minFollowers);
     if (featuredOnly) params.set('featured_only', 'true');
-    if (initialCountry) params.set('country', initialCountry);
     return params.toString();
   }, [page, search, category, minFollowers, featuredOnly, initialCountry]);
 
@@ -273,11 +283,30 @@ export default function DirectoryClient({
       setLoading(true);
       try {
         const res = await fetch(`${API_BASE}/api/public/brands?${queryParams}`);
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status}`);
+        }
         const data = await res.json();
         if (cancelled) return;
-        setBrands(Array.isArray(data.brands) ? data.brands : []);
-        setTotal(data?.pagination?.total || 0);
+        let brandsList = Array.isArray(data.brands) ? data.brands : [];
+
+        // Client-side region filtering (API doesn't support this natively)
+        if (initialCountry) {
+          brandsList = brandsList.filter(brand =>
+            Array.isArray(brand.regions) &&
+            brand.regions.some(r => r.toLowerCase() === initialCountry.toLowerCase())
+          );
+        }
+
+        setBrands(brandsList);
+        setTotal(initialCountry ? brandsList.length : (data?.pagination?.total || 0));
+
+        // Log for debugging if no brands found with filters
+        if (brandsList.length === 0 && (category || initialCountry || search)) {
+          console.log('No brands found with filters:', { category, initialCountry, search, queryParams });
+        }
       } catch (e) {
+        console.error('Error loading brands:', e);
         if (!cancelled) {
           setBrands([]);
           setTotal(0);
@@ -290,7 +319,7 @@ export default function DirectoryClient({
     return () => {
       cancelled = true;
     };
-  }, [queryParams]);
+  }, [queryParams, category, initialCountry, search]);
 
   return (
     <LandingPageLayoutNext canonicalUrl="https://newcollab.co/directory">
@@ -329,7 +358,7 @@ export default function DirectoryClient({
               placeholder="All categories"
               value={category || undefined}
               onChange={(val) => {
-                const next = val || '';
+                const next = val ? val.trim() : '';
                 setPage(1);
                 setCategory(next);
                 updateUrl({ category: next, page: 1 });

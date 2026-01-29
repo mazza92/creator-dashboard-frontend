@@ -12,10 +12,9 @@ const KBeautyDirectory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    // Set search filter to "K-beauty" on mount if not already set
-    // Since we may not have a specific K-beauty category, use search
-    if (!searchParams.get('search')) {
-      setSearchParams({ search: 'K-beauty' });
+    // Set category filter to "beauty" and search to "k-beauty" on mount if not already set
+    if (!searchParams.get('category') && !searchParams.get('search')) {
+      setSearchParams({ category: 'beauty', search: 'k-beauty' });
     }
   }, [searchParams, setSearchParams]);
 

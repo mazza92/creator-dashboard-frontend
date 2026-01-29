@@ -361,20 +361,32 @@ const Marketplace = () => {
 
       <main style={{
         minHeight: '100vh',
-        background: '#f9fafb'
+        background: '#f9fafb',
+        paddingTop: isMobile ? 80 : 72
       }}>
-        {/* Header */}
-        <header style={{
-          padding: isMobile ? '120px 16px 24px' : '48px 24px 32px',
-          marginBottom: isMobile ? 24 : 32
+        {/* Main Content Container */}
+        <div style={{
+          maxWidth: 1400,
+          margin: '0 auto',
+          padding: isMobile ? '32px 16px 48px' : '48px 24px 64px'
         }}>
-          <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          {/* Page Header */}
+          <header style={{ marginBottom: isMobile ? 28 : 36 }}>
+            {/* Decorative accent line */}
+            <div style={{
+              width: 80,
+              height: 4,
+              background: 'linear-gradient(90deg, #f97316 0%, #ec4899 100%)',
+              borderRadius: 2,
+              marginBottom: 16
+            }} />
             <h1 style={{
-              margin: '0 0 8px 0',
-              fontSize: isMobile ? 28 : 36,
-              fontWeight: 700,
-              color: '#1f2937',
-              lineHeight: 1.2
+              margin: '0 0 12px 0',
+              fontSize: isMobile ? 28 : 40,
+              fontWeight: 800,
+              color: '#111827',
+              lineHeight: 1.15,
+              letterSpacing: '-0.025em'
             }}>
               Creator Marketplace
             </h1>
@@ -382,23 +394,21 @@ const Marketplace = () => {
               margin: 0,
               fontSize: isMobile ? 16 : 18,
               color: '#6b7280',
-              lineHeight: 1.5
+              lineHeight: 1.6,
+              maxWidth: 600
             }}>
               Discover verified creators ready to collaborate with your brand
             </p>
-          </div>
-        </header>
+          </header>
 
-        {/* Filters and Sort */}
-        <section aria-label="Filter and sort creators" style={{
-          maxWidth: 1400,
-          margin: '0 auto 32px',
-          padding: '0 24px',
-          display: 'flex',
-          gap: 16,
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}>
+          {/* Filters and Sort */}
+          <section aria-label="Filter and sort creators" style={{
+            display: 'flex',
+            gap: isMobile ? 12 : 16,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            marginBottom: isMobile ? 24 : 32
+          }}>
           {/* Niche Filter */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <FaFilter style={{ color: '#6b7280', fontSize: 16 }} />
@@ -478,12 +488,8 @@ const Marketplace = () => {
           </div>
         </section>
 
-        {/* Creator Cards Grid */}
-        <section aria-label="Creator listings" style={{
-          maxWidth: 1400,
-          margin: '0 auto',
-          padding: '0 24px 48px'
-        }}>
+          {/* Creator Cards Grid */}
+          <section aria-label="Creator listings">
           {loading ? (
             <div style={{ textAlign: 'center', padding: 64 }}>
               <div style={{ fontSize: 16, color: '#6b7280' }}>Loading creators...</div>
@@ -576,7 +582,8 @@ const Marketplace = () => {
             )}
             </>
           )}
-        </section>
+          </section>
+        </div>
 
         {/* Login Modal */}
         {showLoginModal && (

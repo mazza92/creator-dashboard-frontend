@@ -13,9 +13,9 @@ const SkincareDirectory = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set category filter to "Skincare" on mount if not already set
+    // Set category filter to "skincare" (lowercase) on mount if not already set
     if (!searchParams.get('category')) {
-      setSearchParams({ category: 'Skincare' });
+      setSearchParams({ category: 'skincare' });
     }
   }, [searchParams, setSearchParams]);
 

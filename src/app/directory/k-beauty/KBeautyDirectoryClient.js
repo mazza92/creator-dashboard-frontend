@@ -14,17 +14,17 @@ export default function KBeautyDirectoryClient() {
   const router = useRouter();
 
   useEffect(() => {
-    // Set search filter to "K-beauty" on mount if not already set
-    if (!searchParams.get('search')) {
-      router.replace('/directory/k-beauty?search=K-beauty');
+    // Set category filter to "Beauty" on mount if not already set
+    if (!searchParams.get('category')) {
+      router.replace('/directory/k-beauty?category=Beauty');
     }
   }, [searchParams, router]);
 
   return (
     <DirectoryClient
-      collectionTitle="K-Beauty PR Application Forms"
-      collectionDescription="Access direct PR application forms for Korean beauty and K-beauty brands. Find requirements, contact information, and brands that send PR to micro-influencers."
-      initialSearch="K-beauty"
+      collectionTitle="K-Beauty & Korean Beauty PR Application Forms"
+      collectionDescription="Access direct PR application forms for Korean beauty, K-beauty, and Asian beauty brands. Find requirements, contact information, and brands that send PR to micro-influencers."
+      initialCategory="Beauty"
     />
   );
 }
