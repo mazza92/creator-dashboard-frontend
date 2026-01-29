@@ -112,8 +112,8 @@ function AppContent() {
             '/admin',
             '/creator',
             '/brand',
-            '/directory',
             '/c/',
+            // Note: /directory removed - served by Next.js on newcollab.co for SEO
         ];
 
         const isAppRoute = appPrefixes.some(prefix =>
