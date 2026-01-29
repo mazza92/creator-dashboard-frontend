@@ -3,9 +3,12 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
+
   // Enable static exports for blog pages
   output: 'standalone',
+
+  // Increase timeout for static page generation (default is 60s)
+  staticPageGenerationTimeout: 120,
   
   // Path aliases
   webpack: (config) => {

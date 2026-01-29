@@ -38,8 +38,10 @@ async function fetchRelatedBrands(category, currentSlug) {
 
 export async function generateStaticParams() {
   try {
-    const res = await fetch(`${API_BASE}/api/public/brands?limit=100`, {
-      signal: AbortSignal.timeout(8000),
+    // Pre-generate top 50 pages at build time to speed up deployment
+    // Remaining pages are generated on-demand via ISR (revalidate: 3600)
+    const res = await fetch(`${API_BASE}/api/public/brands?limit=50`, {
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return [];
     const data = await res.json();
