@@ -17,6 +17,17 @@ const getApiBase = () => {
 };
 const API_BASE = getApiBase();
 
+// Helper to generate favicon URL from website
+const getFaviconUrl = (website) => {
+  if (!website) return null;
+  try {
+    const domain = new URL(website.startsWith('http') ? website : `https://${website}`).hostname;
+    return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+  } catch {
+    return null;
+  }
+};
+
 const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDescription }) => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
@@ -29,6 +40,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openPrBrands, setOpenPrBrands] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, total: 0, limit: 24 });
   const [savedBrandIds, setSavedBrandIds] = useState(new Set());
 
@@ -47,6 +59,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   useEffect(() => {
     fetchCategories();
+    fetchOpenPrBrands();
     if (user) {
       fetchSubscriptionStatus();
       fetchSavedBrands();
@@ -56,6 +69,15 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   useEffect(() => {
     fetchBrands();
   }, [pagination.page, filters]);
+
+  const fetchOpenPrBrands = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/api/admin/brands/open-pr-featured`);
+      setOpenPrBrands(Array.isArray(data.brands) ? data.brands : []);
+    } catch (error) {
+      console.error('Error fetching open PR brands:', error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -315,6 +337,70 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             </FilterItem>
           </FilterRow>
         </FiltersSection>
+
+        {/* Open PR Applications - Featured Section */}
+        {!filters.search && !filters.category && openPrBrands.length > 0 && (
+          <OpenPRSection $isDashboard={isDashboardView}>
+            <OpenPRHeader>
+              <h2>
+                <span>🎯</span> Open PR Applications
+              </h2>
+              <span className="badge">Apply Now</span>
+            </OpenPRHeader>
+            <OpenPRSubtitle>
+              {user
+                ? "These brands are actively accepting PR applications. Click to apply directly!"
+                : "These brands are actively accepting PR applications. Sign up free to access application forms!"}
+            </OpenPRSubtitle>
+            <OpenPRGrid>
+              {openPrBrands.map((brand) => {
+                const logoUrl = brand.logo || getFaviconUrl(brand.website);
+                // For logged-in users, show actual application URL; for public, show signup
+                const applyUrl = user && brand.application_url
+                  ? brand.application_url
+                  : '/register/creator';
+                const buttonText = user ? 'Apply Now' : 'Sign up to apply';
+                const isExternal = user && brand.application_url;
+
+                return (
+                  <OpenPRCard key={brand.slug || brand.id}>
+                    <OpenPRCardHeader>
+                      <OpenPRLogo>
+                        {logoUrl ? (
+                          <img src={logoUrl} alt={brand.name} />
+                        ) : (
+                          <span style={{ fontWeight: 900, color: '#16a34a' }}>
+                            {(brand.name || 'B').slice(0, 1)}
+                          </span>
+                        )}
+                      </OpenPRLogo>
+                      <OpenPRInfo>
+                        <div className="name">{brand.name}</div>
+                        <div className="category">{brand.category}</div>
+                      </OpenPRInfo>
+                    </OpenPRCardHeader>
+                    <ApplyButton
+                      href={applyUrl}
+                      target={isExternal ? "_blank" : "_self"}
+                      rel={isExternal ? "noopener noreferrer" : undefined}
+                    >
+                      {user ? (
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      ) : (
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      )}
+                      {buttonText}
+                    </ApplyButton>
+                  </OpenPRCard>
+                );
+              })}
+            </OpenPRGrid>
+          </OpenPRSection>
+        )}
 
         {/* Brand Grid */}
         {loading ? (
@@ -712,6 +798,169 @@ const PaginationContainer = styled.div`
   justify-content: center;
   margin-top: 48px;
   padding: 0 24px;
+`;
+
+// Open PR Applications Featured Section
+const OpenPRSection = styled.section`
+  max-width: 1200px;
+  margin: ${props => props.$isDashboard ? '0 auto 28px' : '28px auto 32px'};
+  padding: 24px;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6 0%, #ec4899 100%);
+  }
+
+  @media (max-width: 768px) {
+    padding: 18px;
+    margin: 20px auto 24px;
+  }
+`;
+
+const OpenPRHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    background: linear-gradient(135deg, #3b82f6 0%, #ec4899 100%);
+    color: white;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 768px) {
+    h2 { font-size: 17px; }
+  }
+`;
+
+const OpenPRSubtitle = styled.p`
+  margin: 0 0 18px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+`;
+
+const OpenPRGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+`;
+
+const OpenPRCard = styled.div`
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+`;
+
+const OpenPRCardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const OpenPRLogo = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const OpenPRInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  .name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .category {
+    font-size: 12px;
+    color: #6b7280;
+  }
+`;
+
+const ApplyButton = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    transform: scale(1.02);
+    color: white;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 `;
 
 export default UnifiedBrandDirectory;
