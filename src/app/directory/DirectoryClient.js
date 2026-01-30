@@ -169,6 +169,212 @@ const Center = styled.div`
   padding: 34px 0;
 `;
 
+// Open PR Applications Featured Section
+const OpenPRSection = styled.section`
+  margin: 28px 0 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+  border-radius: 20px;
+  border: 2px solid #f59e0b;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '🔥';
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    font-size: 48px;
+    opacity: 0.3;
+  }
+
+  @media (max-width: 768px) {
+    padding: 18px;
+    margin: 20px 0 24px;
+  }
+`;
+
+const OpenPRHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    background: #dc2626;
+    color: white;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 768px) {
+    h2 { font-size: 18px; }
+  }
+`;
+
+const OpenPRSubtitle = styled.p`
+  margin: 0 0 18px;
+  color: #a16207;
+  font-size: 14px;
+  line-height: 1.5;
+`;
+
+const OpenPRGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+`;
+
+const OpenPRCard = styled.div`
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+`;
+
+const OpenPRCardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const OpenPRLogo = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const OpenPRInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  .name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .category {
+    font-size: 12px;
+    color: #6b7280;
+  }
+`;
+
+const ApplyButton = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    transform: scale(1.02);
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
+// Curated list of brands with OPEN PR application forms
+// Update this list to feature brands actively accepting applications
+const OPEN_PR_BRANDS = [
+  {
+    name: 'Glow Recipe',
+    slug: 'glow-recipe',
+    category: 'Skincare',
+    logo: 'https://icons.duckduckgo.com/ip3/glowrecipe.com.ico',
+    formUrl: 'https://www.glowrecipe.com/pages/become-a-glow-gang-affiliate',
+  },
+  {
+    name: 'ColourPop',
+    slug: 'colourpop-cosmetics',
+    category: 'Beauty',
+    logo: 'https://icons.duckduckgo.com/ip3/colourpop.com.ico',
+    formUrl: 'https://colourpop.com/pages/collab',
+  },
+  {
+    name: 'Tower 28',
+    slug: 'tower-28',
+    category: 'Beauty',
+    logo: 'https://icons.duckduckgo.com/ip3/tower28beauty.com.ico',
+    formUrl: 'https://tower28beauty.com/pages/tower-28-affiliate-program',
+  },
+  {
+    name: 'Summer Fridays',
+    slug: 'summer-fridays',
+    category: 'Skincare',
+    logo: 'https://icons.duckduckgo.com/ip3/summerfridays.com.ico',
+    formUrl: 'https://summerfridays.com/pages/affiliate-program',
+  },
+  {
+    name: 'The Ordinary',
+    slug: 'the-ordinary',
+    category: 'Skincare',
+    logo: 'https://icons.duckduckgo.com/ip3/theordinary.com.ico',
+    formUrl: 'https://theordinary.com/en/affiliates.html',
+  },
+  {
+    name: 'Rare Beauty',
+    slug: 'rare-beauty-by-selena-gomez',
+    category: 'Beauty',
+    logo: 'https://icons.duckduckgo.com/ip3/rarebeauty.com.ico',
+    formUrl: 'https://www.rarebeauty.com/pages/affiliate',
+  },
+];
+
 export default function DirectoryClient({
   collectionTitle,
   collectionDescription,
@@ -397,6 +603,53 @@ export default function DirectoryClient({
               suffixIcon={<FilterOutlined />}
             />
           </Filters>
+
+          {/* Open PR Applications - Featured Section */}
+          {!search && !category && !initialCountry && (
+            <OpenPRSection>
+              <OpenPRHeader>
+                <h2>
+                  <span>🎯</span> Open PR Applications
+                </h2>
+                <span className="badge">Apply Now</span>
+              </OpenPRHeader>
+              <OpenPRSubtitle>
+                These brands are actively accepting PR applications. Apply directly through their forms — no account needed!
+              </OpenPRSubtitle>
+              <OpenPRGrid>
+                {OPEN_PR_BRANDS.map((brand) => (
+                  <OpenPRCard key={brand.slug}>
+                    <OpenPRCardHeader>
+                      <OpenPRLogo>
+                        {brand.logo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={brand.logo} alt={brand.name} />
+                        ) : (
+                          <span style={{ fontWeight: 900, color: '#16a34a' }}>
+                            {brand.name.slice(0, 1)}
+                          </span>
+                        )}
+                      </OpenPRLogo>
+                      <OpenPRInfo>
+                        <div className="name">{brand.name}</div>
+                        <div className="category">{brand.category}</div>
+                      </OpenPRInfo>
+                    </OpenPRCardHeader>
+                    <ApplyButton
+                      href={brand.formUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      Apply Now
+                    </ApplyButton>
+                  </OpenPRCard>
+                ))}
+              </OpenPRGrid>
+            </OpenPRSection>
+          )}
 
           {loading ? (
             <Center>
