@@ -173,19 +173,21 @@ const Center = styled.div`
 const OpenPRSection = styled.section`
   margin: 28px 0 32px;
   padding: 24px;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+  background: white;
   border-radius: 20px;
-  border: 2px solid #f59e0b;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
   position: relative;
   overflow: hidden;
 
   &::before {
-    content: '🔥';
+    content: '';
     position: absolute;
-    top: -10px;
-    right: 20px;
-    font-size: 48px;
-    opacity: 0.3;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6 0%, #ec4899 100%);
   }
 
   @media (max-width: 768px) {
@@ -198,22 +200,22 @@ const OpenPRHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 
   h2 {
     margin: 0;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
-    color: #92400e;
+    color: #111827;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
   .badge {
-    background: #dc2626;
+    background: linear-gradient(135deg, #3b82f6 0%, #ec4899 100%);
     color: white;
-    font-size: 11px;
+    font-size: 10px;
     padding: 4px 10px;
     border-radius: 999px;
     font-weight: 700;
@@ -222,13 +224,13 @@ const OpenPRHeader = styled.div`
   }
 
   @media (max-width: 768px) {
-    h2 { font-size: 18px; }
+    h2 { font-size: 17px; }
   }
 `;
 
 const OpenPRSubtitle = styled.p`
   margin: 0 0 18px;
-  color: #a16207;
+  color: #6b7280;
   font-size: 14px;
   line-height: 1.5;
 `;
@@ -308,7 +310,7 @@ const ApplyButton = styled.a`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   color: white;
   padding: 10px 14px;
   border-radius: 10px;
@@ -318,7 +320,7 @@ const ApplyButton = styled.a`
   transition: all 0.15s ease;
 
   &:hover {
-    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
     transform: scale(1.02);
   }
 
