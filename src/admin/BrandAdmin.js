@@ -632,6 +632,19 @@ const BrandAdmin = () => {
       )
     },
     {
+      field: 'open_pr_featured',
+      headerName: 'Open PR',
+      editable: true,
+      width: 100,
+      cellEditor: 'agSelectCellEditor',
+      cellEditorParams: { values: [true, false] },
+      cellRenderer: (params) => (
+        <Tag color={params.value ? 'cyan' : 'default'}>
+          {params.value ? 'Yes' : 'No'}
+        </Tag>
+      )
+    },
+    {
       field: 'is_premium',
       headerName: 'Premium',
       editable: true,
@@ -1056,6 +1069,9 @@ const BrandAdmin = () => {
                 <Switch />
               </Form.Item>
               <Form.Item name="is_featured" label="Featured Brand" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+              <Form.Item name="open_pr_featured" label="Open PR Featured" valuePropName="checked">
                 <Switch />
               </Form.Item>
               <Form.Item name="is_premium" label="Premium Brand" valuePropName="checked">

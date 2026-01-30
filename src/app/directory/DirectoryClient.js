@@ -322,6 +322,7 @@ const ApplyButton = styled.a`
   &:hover {
     background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
     transform: scale(1.02);
+    color: white;
   }
 
   svg {
@@ -330,52 +331,16 @@ const ApplyButton = styled.a`
   }
 `;
 
-// Curated list of brands with OPEN PR application forms
-// Update this list to feature brands actively accepting applications
-const OPEN_PR_BRANDS = [
-  {
-    name: 'Glow Recipe',
-    slug: 'glow-recipe',
-    category: 'Skincare',
-    logo: 'https://icons.duckduckgo.com/ip3/glowrecipe.com.ico',
-    formUrl: 'https://www.glowrecipe.com/pages/become-a-glow-gang-affiliate',
-  },
-  {
-    name: 'ColourPop',
-    slug: 'colourpop-cosmetics',
-    category: 'Beauty',
-    logo: 'https://icons.duckduckgo.com/ip3/colourpop.com.ico',
-    formUrl: 'https://colourpop.com/pages/collab',
-  },
-  {
-    name: 'Tower 28',
-    slug: 'tower-28',
-    category: 'Beauty',
-    logo: 'https://icons.duckduckgo.com/ip3/tower28beauty.com.ico',
-    formUrl: 'https://tower28beauty.com/pages/tower-28-affiliate-program',
-  },
-  {
-    name: 'Summer Fridays',
-    slug: 'summer-fridays',
-    category: 'Skincare',
-    logo: 'https://icons.duckduckgo.com/ip3/summerfridays.com.ico',
-    formUrl: 'https://summerfridays.com/pages/affiliate-program',
-  },
-  {
-    name: 'The Ordinary',
-    slug: 'the-ordinary',
-    category: 'Skincare',
-    logo: 'https://icons.duckduckgo.com/ip3/theordinary.com.ico',
-    formUrl: 'https://theordinary.com/en/affiliates.html',
-  },
-  {
-    name: 'Rare Beauty',
-    slug: 'rare-beauty-by-selena-gomez',
-    category: 'Beauty',
-    logo: 'https://icons.duckduckgo.com/ip3/rarebeauty.com.ico',
-    formUrl: 'https://www.rarebeauty.com/pages/affiliate',
-  },
-];
+// Helper to generate favicon URL from website
+const getFaviconUrl = (website) => {
+  if (!website) return null;
+  try {
+    const domain = new URL(website.startsWith('http') ? website : `https://${website}`).hostname;
+    return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+  } catch {
+    return null;
+  }
+};
 
 export default function DirectoryClient({
   collectionTitle,
@@ -392,6 +357,7 @@ export default function DirectoryClient({
   const [loading, setLoading] = useState(true);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [openPrBrands, setOpenPrBrands] = useState([]);
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -480,6 +446,25 @@ export default function DirectoryClient({
       }
     }
     loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load Open PR Featured brands
+  useEffect(() => {
+    let cancelled = false;
+    async function loadOpenPrBrands() {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/brands/open-pr-featured`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setOpenPrBrands(Array.isArray(data.brands) ? data.brands : []);
+      } catch (_) {
+        // ignore - section will not show if no brands
+      }
+    }
+    loadOpenPrBrands();
     return () => {
       cancelled = true;
     };
@@ -607,7 +592,7 @@ export default function DirectoryClient({
           </Filters>
 
           {/* Open PR Applications - Featured Section */}
-          {!search && !category && !initialCountry && (
+          {!search && !category && !initialCountry && openPrBrands.length > 0 && (
             <OpenPRSection>
               <OpenPRHeader>
                 <h2>
@@ -616,39 +601,38 @@ export default function DirectoryClient({
                 <span className="badge">Apply Now</span>
               </OpenPRHeader>
               <OpenPRSubtitle>
-                These brands are actively accepting PR applications. Apply directly through their forms — no account needed!
+                These brands are actively accepting PR applications. Sign up free to access application forms!
               </OpenPRSubtitle>
               <OpenPRGrid>
-                {OPEN_PR_BRANDS.map((brand) => (
-                  <OpenPRCard key={brand.slug}>
-                    <OpenPRCardHeader>
-                      <OpenPRLogo>
-                        {brand.logo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={brand.logo} alt={brand.name} />
-                        ) : (
-                          <span style={{ fontWeight: 900, color: '#16a34a' }}>
-                            {brand.name.slice(0, 1)}
-                          </span>
-                        )}
-                      </OpenPRLogo>
-                      <OpenPRInfo>
-                        <div className="name">{brand.name}</div>
-                        <div className="category">{brand.category}</div>
-                      </OpenPRInfo>
-                    </OpenPRCardHeader>
-                    <ApplyButton
-                      href={brand.formUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      Apply Now
-                    </ApplyButton>
-                  </OpenPRCard>
-                ))}
+                {openPrBrands.map((brand) => {
+                  const logoUrl = brand.logo || getFaviconUrl(brand.website);
+                  return (
+                    <OpenPRCard key={brand.slug || brand.id}>
+                      <OpenPRCardHeader>
+                        <OpenPRLogo>
+                          {logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={logoUrl} alt={brand.name} />
+                          ) : (
+                            <span style={{ fontWeight: 900, color: '#16a34a' }}>
+                              {(brand.name || 'B').slice(0, 1)}
+                            </span>
+                          )}
+                        </OpenPRLogo>
+                        <OpenPRInfo>
+                          <div className="name">{brand.name}</div>
+                          <div className="category">{brand.category}</div>
+                        </OpenPRInfo>
+                      </OpenPRCardHeader>
+                      <ApplyButton href="https://app.newcollab.co/register/creator">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Sign up to apply
+                      </ApplyButton>
+                    </OpenPRCard>
+                  );
+                })}
               </OpenPRGrid>
             </OpenPRSection>
           )}
