@@ -355,12 +355,30 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             <OpenPRGrid>
               {openPrBrands.map((brand) => {
                 const logoUrl = brand.logo || getFaviconUrl(brand.website);
-                // For logged-in users, show actual application URL; for public, show signup
-                const applyUrl = user && brand.application_url
-                  ? brand.application_url
-                  : '/register/creator';
-                const buttonText = user ? 'Apply Now' : 'Sign up to apply';
-                const isExternal = user && brand.application_url;
+
+                // Determine URL and button behavior based on login state
+                let applyUrl, buttonText, isExternal;
+                if (!user) {
+                  // Not logged in: redirect to signup
+                  applyUrl = '/register/creator';
+                  buttonText = 'Sign up to apply';
+                  isExternal = false;
+                } else if (brand.application_url) {
+                  // Logged in + has application form: direct link
+                  applyUrl = brand.application_url;
+                  buttonText = 'Apply Now';
+                  isExternal = true;
+                } else if (brand.website) {
+                  // Logged in + no form but has website: link to website
+                  applyUrl = brand.website.startsWith('http') ? brand.website : `https://${brand.website}`;
+                  buttonText = 'Visit Website';
+                  isExternal = true;
+                } else {
+                  // Logged in + no form, no website: link to brand detail page
+                  applyUrl = `/brand/${brand.slug}`;
+                  buttonText = 'View Details';
+                  isExternal = false;
+                }
 
                 return (
                   <OpenPRCard key={brand.slug || brand.id}>
