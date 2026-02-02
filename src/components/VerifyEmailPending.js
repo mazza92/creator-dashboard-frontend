@@ -217,7 +217,7 @@ const VerifyEmailPending = () => {
 
         <SpamNote>
           <strong>📧 Can't find the email?</strong> Check your spam or promotions folder.
-          The email is from <strong>noreply@newcollab.co</strong>
+          The email is from <strong>team@newcollab.co</strong>
         </SpamNote>
 
         <ResendSection>
