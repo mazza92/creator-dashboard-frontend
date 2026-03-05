@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiCheck, FiZap } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../config/api';
 import { message } from 'antd';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
   const [loading, setLoading] = useState(false);
@@ -13,10 +11,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
   const handleUpgrade = async (tier) => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${API_BASE}/api/subscription/create-checkout`,
-        { tier },
-        { withCredentials: true }
+      const response = await api.post(
+        '/api/subscription/create-checkout',
+        { tier }
       );
 
       // Redirect to Stripe Checkout

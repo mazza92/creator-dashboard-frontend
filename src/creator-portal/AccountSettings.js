@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../config/api';
 import { message } from 'antd';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const AccountSettings = () => {
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
@@ -18,9 +16,7 @@ const AccountSettings = () => {
 
   const fetchSubscriptionStatus = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/subscription/status`, {
-        withCredentials: true
-      });
+      const response = await api.get('/api/subscription/status');
       setSubscriptionInfo(response.data);
       setLoading(false);
     } catch (error) {
@@ -32,11 +28,7 @@ const AccountSettings = () => {
   const handleManageSubscription = async () => {
     try {
       setPortalLoading(true);
-      const response = await axios.post(
-        `${API_BASE}/api/subscription/portal`,
-        {},
-        { withCredentials: true }
-      );
+      const response = await api.post('/api/subscription/portal', {});
 
       // Redirect to Stripe Customer Portal
       window.location.href = response.data.portal_url;

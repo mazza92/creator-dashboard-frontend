@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiHeart, FiX, FiInstagram, FiMail, FiExternalLink, FiZap, FiLock, FiCheck } from 'react-icons/fi';
 import axios from 'axios';
+import api from '../config/api';
 import { message } from 'antd';
 import PROnboarding from '../components/PROnboarding';
 import UpgradeModal from './UpgradeModal';
@@ -698,7 +699,7 @@ const PRBrandDiscovery = () => {
   const [seenBrandIds, setSeenBrandIds] = useState(new Set()); // Track all brands shown to avoid duplicates
   const [fetchingMore, setFetchingMore] = useState(false);
                     
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  // Using centralized api client from config/api.js
 
   // Check for achievement unlocks
     const FREE_BRAND_LIMIT = 5;
@@ -721,9 +722,7 @@ const PRBrandDiscovery = () => {
         setFetchingMore(true);
         try {
           const excludeArray = Array.from(seenBrandIds);
-          const response = await axios.get(`${API_BASE}/api/pr-crm/brands?limit=20&exclude_ids=${excludeArray.join(',')}`, {
-            withCredentials: true
-          });
+          const response = await api.get(`/api/pr-crm/brands?limit=20&exclude_ids=${excludeArray.join(',')}`);
 
           if (response.data.success && response.data.brands.length > 0) {
             const parsedBrands = response.data.brands.map(brand => ({
@@ -756,9 +755,7 @@ const PRBrandDiscovery = () => {
 
   const fetchSubscriptionStatus = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/subscription/status`, {
-        withCredentials: true
-      });
+      const response = await api.get('/api/subscription/status');
       setSubscriptionTier(response.data.tier || 'free');
       setBrandsSavedCount(response.data.brands_saved_count || 0);
       setPitchesSentThisMonth(response.data.pitches_sent_this_month || 0);
@@ -772,9 +769,7 @@ const PRBrandDiscovery = () => {
       setLoading(true);
       // Build query params with exclusions
       const excludeIdsParam = excludeIds.length > 0 ? `&exclude_ids=${excludeIds.join(',')}` : '';
-      const response = await axios.get(`${API_BASE}/api/pr-crm/brands?limit=20${excludeIdsParam}`, {
-        withCredentials: true
-      });
+      const response = await api.get(`/api/pr-crm/brands?limit=20${excludeIdsParam}`);
 
       if (response.data.success) {
         const parsedBrands = response.data.brands.map(brand => ({
@@ -804,9 +799,8 @@ const PRBrandDiscovery = () => {
 
     const brand = brands[currentIndex];
     try {
-      await axios.post(`${API_BASE}/api/pr-crm/pipeline/save`,
-        { brand_id: brand.id },
-        { withCredentials: true }
+      await api.post('/api/pr-crm/pipeline/save',
+        { brand_id: brand.id }
       );
       message.success(`${brand.brand_name} saved to pipeline!`);
 
@@ -849,10 +843,9 @@ const PRBrandDiscovery = () => {
       setRevealingContact(true);
 
       // Check limits first
-      const checkResponse = await axios.post(
-        `${API_BASE}/api/subscription/check-limits`,
-        { action_type: 'send_pitch' },
-        { withCredentials: true }
+      const checkResponse = await api.post(
+        '/api/subscription/check-limits',
+        { action_type: 'send_pitch' }
       );
 
       if (!checkResponse.data.allowed) {
@@ -868,17 +861,15 @@ const PRBrandDiscovery = () => {
       }
 
       // Record the contact (increment pitch count)
-      await axios.post(
-        `${API_BASE}/api/pr-crm/reveal-contact`,
-        { brand_id: brand.id },
-        { withCredentials: true }
+      await api.post(
+        '/api/pr-crm/reveal-contact',
+        { brand_id: brand.id }
       );
 
       // Save to pipeline
-      await axios.post(
-        `${API_BASE}/api/pr-crm/pipeline/save`,
-        { brand_id: brand.id },
-        { withCredentials: true }
+      await api.post(
+        '/api/pr-crm/pipeline/save',
+        { brand_id: brand.id }
       );
 
       // Mark as revealed/contacted locally

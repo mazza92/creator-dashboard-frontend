@@ -3,9 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiCheckCircle, FiArrowRight } from 'react-icons/fi';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import api from '../config/api';
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
@@ -20,17 +18,14 @@ const SubscriptionSuccess = () => {
       try {
         // First, confirm the checkout to activate subscription
         if (sessionId) {
-          await axios.post(
-            `${API_BASE}/api/subscription/confirm-checkout`,
-            { session_id: sessionId },
-            { withCredentials: true }
+          await api.post(
+            '/api/subscription/confirm-checkout',
+            { session_id: sessionId }
           );
         }
 
         // Then fetch the updated subscription status
-        const response = await axios.get(`${API_BASE}/api/subscription/status`, {
-          withCredentials: true
-        });
+        const response = await api.get('/api/subscription/status');
         setSubscriptionInfo(response.data);
         setLoading(false);
       } catch (error) {
