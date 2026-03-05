@@ -1,17 +1,17 @@
 import axios from 'axios';
 
 // Default to direct API domain in production to match existing backend setup.
-// In development, use localhost unless overridden by REACT_APP_API_URL.
+// In development, use the CRA proxy (configured in package.json) to avoid cross-origin cookie issues.
 // Ensure we never use localhost in production (browser security blocks it)
 const getApiUrl = () => {
   // Runtime check: if we're running in browser on production domain, never use localhost
-  const isProductionDomain = typeof window !== 'undefined' && 
-    (window.location.hostname === 'newcollab.co' || 
+  const isProductionDomain = typeof window !== 'undefined' &&
+    (window.location.hostname === 'newcollab.co' ||
      window.location.hostname === 'www.newcollab.co' ||
      window.location.hostname === 'app.newcollab.co');
-  
+
   const envUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL;
-  
+
   if (envUrl) {
     // If env var is set but points to localhost, override it in production
     if (envUrl.includes('localhost')) {
@@ -19,17 +19,23 @@ const getApiUrl = () => {
         console.warn('⚠️ REACT_APP_API_URL points to localhost in production, using https://api.newcollab.co instead');
         return 'https://api.newcollab.co';
       }
-      // In development, allow localhost
+      // In development with explicit localhost env var, use it directly
       return envUrl;
     }
     return envUrl;
   }
-  
-  // No env var set - use localhost only in development, production domain always uses api.newcollab.co
+
+  // No env var set - use the production API for production domains
   if (isProductionDomain) {
     return 'https://api.newcollab.co';
   }
-  
+
+  // In development on localhost, use empty baseURL to leverage the CRA proxy (package.json proxy setting)
+  // This makes requests go through localhost:3000 which proxies to localhost:5000, solving cookie issues
+  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return ''; // Empty baseURL = relative URLs = goes through CRA proxy
+  }
+
   return process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co';
 };
 
@@ -38,6 +44,11 @@ let cachedApiUrl = null;
 const getRuntimeApiUrl = () => {
   if (cachedApiUrl === null) {
     cachedApiUrl = getApiUrl();
+    // Ensure we never return undefined
+    if (!cachedApiUrl && cachedApiUrl !== '') {
+      console.error('⚠️ API URL is undefined, defaulting to production API');
+      cachedApiUrl = 'https://api.newcollab.co';
+    }
     console.log('🌐 API_URL resolved to:', cachedApiUrl, {
       hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
       nodeEnv: process.env.NODE_ENV,
@@ -61,6 +72,13 @@ const api = axios.create({
 
 api.interceptors.request.use(
     (config) => {
+        // Ensure baseURL is never undefined at request time
+        if (!config.baseURL || config.baseURL === 'undefined') {
+            const runtimeUrl = getRuntimeApiUrl();
+            config.baseURL = runtimeUrl;
+            console.warn('⚠️ BaseURL was undefined, set to:', runtimeUrl);
+        }
+        
         // Only send CSRF token for endpoints that require JWT authentication
         // These are typically /api/* endpoints that use @jwt_required()
         const requiresCSRF = config.url?.startsWith('/api/') && 
