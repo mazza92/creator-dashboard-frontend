@@ -9,7 +9,7 @@ import api from "../config/api";
 
 const { Title, Text } = Typography;
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+// API calls use the api client from config/api which has baseURL configured
 
 // Bento Grid Container
 const BentoContainer = styled.div`
@@ -307,7 +307,7 @@ const BrandOverview = () => {
   useEffect(() => {
     const fetchBrandId = async () => {
       try {
-        const response = await api.get(`${API_URL}/profile`, { withCredentials: true });
+        const response = await api.get(`/profile`, { withCredentials: true });
         if (response.data.user_role === "brand") {
           const actualBrandId = response.data.brand_id || response.data.id;
           setBrandId(actualBrandId);
@@ -334,15 +334,15 @@ const BrandOverview = () => {
         // Try new endpoint first, fallback to existing endpoints
         let summaryData;
         try {
-          const response = await api.get(`${API_URL}/brand/dashboard-summary`, { withCredentials: true });
+          const response = await api.get(`/brand/dashboard-summary`, { withCredentials: true });
           summaryData = response.data;
         } catch (error) {
           console.warn('⚠️ Dashboard summary endpoint not available, using fallback');
           // Fallback: fetch from existing endpoints
           const [bookingsRes, creatorsRes, prOffersRes] = await Promise.all([
-            api.get(`${API_URL}/bookings?brand_id=${brandId}`, { withCredentials: true }).catch(() => ({ data: [] })),
-            api.get(`${API_URL}/creators`, { withCredentials: true }).catch(() => ({ data: [] })),
-            api.get(`${API_URL}/api/pr-offers`, { withCredentials: true }).catch(() => ({ data: [] })),
+            api.get(`/bookings?brand_id=${brandId}`, { withCredentials: true }).catch(() => ({ data: [] })),
+            api.get(`/creators`, { withCredentials: true }).catch(() => ({ data: [] })),
+            api.get(`/api/pr-offers`, { withCredentials: true }).catch(() => ({ data: [] })),
           ]);
 
           const bookings = bookingsRes.data || [];

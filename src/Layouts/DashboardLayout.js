@@ -37,7 +37,7 @@ const { useBreakpoint } = Grid;
 const { Text } = Typography;
 const { Header, Sider, Content, Footer } = Layout;
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+// API_URL not needed - api client from config/api already has baseURL configured
 
 const StyledLayout = styled(Layout)`
   min-height: 100vh;
@@ -380,12 +380,12 @@ function DashboardLayout() {
   useEffect(() => {
     async function fetchUserData() {
       try {
-        console.log(`🟢 Fetching session from: ${API_URL}/api/session`, {
+        console.log(`🟢 Fetching session from: /api/session`, {
           cookies: document.cookie
         });
         let sessionData = {};
         try {
-          const sessionResponse = await api.get(`${API_URL}/api/session`, {
+          const sessionResponse = await api.get(`/api/session`, {
             withCredentials: true,
           });
           console.log('📌 Session response:', sessionResponse.data);
@@ -400,10 +400,10 @@ function DashboardLayout() {
           });
         }
   
-        console.log(`🟢 Fetching profile from: ${API_URL}/profile`, {
+        console.log(`🟢 Fetching profile from: /profile`, {
           cookies: document.cookie
         });
-        const profileResponse = await api.get(`${API_URL}/profile`, {
+        const profileResponse = await api.get(`/profile`, {
           withCredentials: true,
         });
         console.log('📌 Profile response:', profileResponse.data);
@@ -452,8 +452,8 @@ function DashboardLayout() {
       const fetchBrandName = async () => {
         setLoadingBrand(true);
         try {
-          console.log(`🟢 Fetching brand name from: ${API_URL}/brands/${id}`);
-          const response = await api.get(`${API_URL}/brands/${id}`, {
+          console.log(`🟢 Fetching brand name from: /brands/${id}`);
+          const response = await api.get(`/brands/${id}`, {
             withCredentials: true,
           });
           console.log('📌 Brand name response:', response.data);
@@ -484,8 +484,8 @@ function DashboardLayout() {
   const handleLogout = async () => {
     try {
       cleanupSocket();
-      console.log(`🟢 Logging out at: ${API_URL}/logout`);
-      const response = await api.post(`${API_URL}/logout`, {}, {
+      console.log(`🟢 Logging out at: /logout`);
+      const response = await api.post(`/logout`, {}, {
         withCredentials: true,
       });
       console.log('📌 Logout response:', response.data);

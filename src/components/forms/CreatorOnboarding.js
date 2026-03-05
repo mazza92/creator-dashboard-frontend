@@ -9,7 +9,7 @@ import { Helmet } from 'react-helmet-async';
 import { UserContext } from '../../contexts/UserContext';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { API_URL } from '../../config/api';
+import api from '../../config/api';
 import { submitCreatorProfileToIndexNow } from '../../utils/indexNow';
 
 const { TextArea } = Input;
@@ -1480,20 +1480,17 @@ export default function CreatorOnboarding() {
         formDataToSubmit.append('user_id', user.id);
       }
       
-      // Use the consistent API configuration
-      const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
-      console.log('🚀 Submitting profile completion to:', `${API_URL}/profile/onboarding`);
+      console.log('🚀 Submitting profile completion');
       console.log('🔍 Form data keys:', Array.from(formDataToSubmit.keys()));
       console.log('👤 User context:', user);
       console.log('📧 Email from localStorage:', email);
       console.log('🔑 User ID from context:', user?.id);
-      
-      const response = await axios.post(
-        `${API_URL}/profile/onboarding`,
+
+      const response = await api.post(
+        '/profile/onboarding',
         formDataToSubmit,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
-          withCredentials: true,
         }
       );
       
@@ -1580,7 +1577,7 @@ export default function CreatorOnboarding() {
         message.error('Your session has expired. Please log in again.');
         // Clear session and redirect to login
         try {
-          await axios.post(`${API_URL}/clear-session`, {}, { withCredentials: true });
+          await api.post('/clear-session', {});
         } catch (clearError) {
           console.error('Failed to clear session:', clearError);
         }

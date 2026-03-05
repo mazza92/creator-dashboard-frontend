@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Typography, Input, Button, message } from 'antd';
-import axios from 'axios';
+import api from '../config/api';
 import styled from 'styled-components';
-
-// Use the consistent API configuration
-const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
 
 const { Title, Text } = Typography;
 
@@ -39,9 +36,8 @@ const ResendVerification = () => {
 
     setLoading(true);
     try {
-      const fullUrl = `${API_URL}/api/resend-verification`;
-      console.log(`🟢 Calling API: ${fullUrl}`);
-      const response = await axios.post(fullUrl, { email });
+      console.log('🟢 Calling API: /api/resend-verification');
+      const response = await api.post('/api/resend-verification', { email });
       console.log('🟢 Resend response:', response.data);
       message.success('Verification email resent successfully!');
       navigate('/verify-email-pending', { replace: true });

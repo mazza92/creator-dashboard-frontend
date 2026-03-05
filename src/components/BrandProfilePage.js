@@ -7,7 +7,7 @@ import moment from 'moment';
 import { motion } from 'framer-motion';
 import api from '../config/api';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+// API calls use the api client from config/api which has baseURL configured
 
 const getBadgeColor = (category) => {
   switch (category) {
@@ -80,7 +80,7 @@ const BrandProfilePage = () => {
       setLoading(true);
       try {
         console.log(`🟢 Fetching profile for brand ID: ${id}`);
-        const response = await api.get(`${API_URL}/brands/${id}`, { withCredentials: true });
+        const response = await api.get(`/brands/${id}`, { withCredentials: true });
         const data = response.data;
 
         console.log('🟢 API Response:', data);
@@ -98,19 +98,19 @@ const BrandProfilePage = () => {
 
         console.log('🟢 Parsed Brand Data:', parsedBrand);
 
-        const userResponse = await api.get(`${API_URL}/profile`, { withCredentials: true });
+        const userResponse = await api.get(`/profile`, { withCredentials: true });
         console.log('📌 Logged-in user profile response:', userResponse.data);
         const role = userResponse.data.user_role;
         setUserRole(role);
         console.log('🟢 userRole set to:', role);
 
-        const postsResponse = await api.get(`${API_URL}/brands/${id}/social-posts`, { withCredentials: true });
+        const postsResponse = await api.get(`/brands/${id}/social-posts`, { withCredentials: true });
         console.log('🟢 Social Posts Response:', postsResponse.data);
         setSocialPosts(postsResponse.data);
 
         // Fetch brand stats if available
         try {
-          const statsResponse = await api.get(`${API_URL}/brands/${id}/stats`, { withCredentials: true });
+          const statsResponse = await api.get(`/brands/${id}/stats`, { withCredentials: true });
           if (statsResponse.data) {
             setBrandStats(statsResponse.data);
           }
@@ -120,7 +120,7 @@ const BrandProfilePage = () => {
 
         // Fetch active campaigns/opportunities
         try {
-          const campaignsResponse = await api.get(`${API_URL}/brands/${id}/campaigns`, { withCredentials: true });
+          const campaignsResponse = await api.get(`/brands/${id}/campaigns`, { withCredentials: true });
           if (campaignsResponse.data && Array.isArray(campaignsResponse.data)) {
             setActiveCampaigns(campaignsResponse.data);
           } else if (campaignsResponse.data?.campaigns) {

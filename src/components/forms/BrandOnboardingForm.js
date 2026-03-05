@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Form, Input, Button, Checkbox, Row, Col, Typography, Upload, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
+import { UserContext } from '../../contexts/UserContext';
 import Select from 'react-select';
 import { CountryDropdown } from 'react-country-region-selector';
 import PhoneInput from 'react-phone-input-2';
@@ -251,6 +253,8 @@ const categoriesOptions = [
 
 function BrandOnboardingForm({ role, onSuccess, onError }) {
   const { trackSignUp, trackOnboardingComplete, trackFormSubmission } = useAnalytics();
+  const { setUser, refreshUser } = useContext(UserContext);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -271,9 +275,6 @@ function BrandOnboardingForm({ role, onSuccess, onError }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-
-  // eslint-disable-next-line no-unused-vars
-  const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
 
   const handleLogoUpload = (file) => {
     const isPngOrJpeg = file.type === 'image/png' || file.type === 'image/jpeg';
@@ -364,8 +365,10 @@ function BrandOnboardingForm({ role, onSuccess, onError }) {
     console.log('🟢 Form Data:', Object.fromEntries(formDataToSubmit));
   
     try {
-      const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
-      console.log('🟢 API Endpoint:', `${API_URL}/register/brand`); // Removed .replace(/\/api$/, '')
+      // In development on localhost, use relative URL to leverage CRA proxy (avoids cross-origin cookie issues)
+      const isLocalDev = process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && window.location.hostname === 'localhost';
+      const API_URL = isLocalDev ? '' : (process.env.REACT_APP_API_URL || 'https://api.newcollab.co');
+      console.log('🟢 API Endpoint:', `${API_URL}/register/brand`, { isLocalDev });
       const response = await axios.post(`${API_URL}/register/brand`, formDataToSubmit, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true,
@@ -389,16 +392,44 @@ function BrandOnboardingForm({ role, onSuccess, onError }) {
         });
         trackOnboardingComplete('brand');
         trackFormSubmission('brand_signup', true);
-        
-        console.log('🟢 Calling onSuccess with:', { data: responseData });
+
+        // Set localStorage first so profile fetch works
+        localStorage.setItem('userRole', 'brand');
+        localStorage.setItem('authToken', 'logged-in');
+        localStorage.setItem('pendingVerificationEmail', formData.email);
+        // Set flag to tell App.js to wait for user context to update
+        sessionStorage.setItem('justCompletedOnboarding', 'true');
+
+        // Refresh user context from server - this will fetch brand_id from the now-set session
+        console.log('🟢 Calling refreshUser to get brand_id from session...');
         try {
-          onSuccess({ data: responseData });
-          console.log('🟢 onSuccess completed successfully');
-        } catch (e) {
-          console.error('🔥 onSuccess error:', e.message, e.stack);
-          throw new Error('Failed to process registration success');
+          await refreshUser();
+          console.log('🟢 User context refreshed successfully');
+        } catch (refreshError) {
+          console.warn('⚠️ Could not refresh user, setting minimal data:', refreshError);
+          // Fallback: set minimal user data if refresh fails
+          const userData = {
+            id: responseData.user_id,
+            role: 'brand',
+            creator_id: null,
+            brand_id: responseData.brand_id,
+          };
+          setUser(userData);
         }
+
+        if (onSuccess) {
+          console.log('🟢 Calling onSuccess with:', { data: responseData });
+          try {
+            onSuccess({ data: responseData });
+            console.log('🟢 onSuccess completed successfully');
+          } catch (e) {
+            console.error('🔥 onSuccess error:', e.message, e.stack);
+          }
+        }
+
+        // Navigate to verify-email-pending page
         message.success('Redirecting to verify your email...');
+        navigate('/verify-email-pending');
       } else {
         console.error('🔥 Invalid response:', response.data);
         throw new Error('Invalid or missing redirect URL');

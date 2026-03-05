@@ -1,12 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Typography, Spin, message } from 'antd';
-import axios from 'axios';
+import api from '../config/api';
 import styled from 'styled-components';
-import { UserContext } from '../contexts/UserContext'; // Adjust path
-
-// Use the consistent API configuration
-const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
+import { UserContext } from '../contexts/UserContext';
 
 const { Title, Text } = Typography;
 
@@ -45,11 +42,8 @@ const VerifyEmail = () => {
 
     const verifyToken = async () => {
       try {
-        const fullUrl = `${API_URL}/api/verify-email?token=${token}`;
-        console.log(`🟢 Calling API: ${fullUrl}`);
-        const response = await axios.get(fullUrl, {
-          withCredentials: true,
-        });
+        console.log(`🟢 Calling API: /api/verify-email?token=${token}`);
+        const response = await api.get(`/api/verify-email?token=${token}`);
         console.log('🟢 Verification response:', response.data);
         message.success('Email verified successfully!');
         

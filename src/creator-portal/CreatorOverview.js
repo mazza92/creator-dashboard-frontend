@@ -74,7 +74,7 @@ import axios from "axios";
 import moment from "moment";
 import styled from "styled-components";
 import { motion } from "framer-motion";
-import { API_URL } from "../config/api";
+import api from "../config/api";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -1084,10 +1084,10 @@ const CreatorOverview = () => {
       try {
         console.log('🔍 Fetching overview data...');
         const [statsResponse, profileResponse, draftsResponse, adSlotsResponse] = await Promise.all([
-          axios.get(`${API_URL}/creators/me/stats`, { withCredentials: true }),
-          axios.get(`${API_URL}/profile`, { withCredentials: true }),
-          axios.get(`${API_URL}/my-sponsor-drafts`, { withCredentials: true }),
-          axios.get(`${API_URL}/creator/has-ad-slots`, { withCredentials: true }),
+          api.get('/creators/me/stats'),
+          api.get('/profile'),
+          api.get('/my-sponsor-drafts'),
+          api.get('/creator/has-ad-slots'),
         ]);
   
         console.log('🔍 Stats response:', statsResponse.data);
@@ -1186,9 +1186,8 @@ const CreatorOverview = () => {
         formData.append("snippet", values.snippet.file);
       }
   
-      console.log('🔍 Submitting draft to:', `${API_URL}/sponsor-draft`);
-      await axios.post(`${API_URL}/sponsor-draft`, formData, {
-        withCredentials: true,
+      console.log('🔍 Submitting draft');
+      await api.post('/sponsor-draft', formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
   
@@ -1199,7 +1198,7 @@ const CreatorOverview = () => {
 
       // Fetch profile to get username/creatorId for public profile URL
       try {
-        const profileRes = await axios.get(`${API_URL}/profile`, { withCredentials: true });
+        const profileRes = await api.get('/profile');
         const username = profileRes.data.username;
         const creatorId = profileRes.data.creator_id;
         const url = username
@@ -1213,7 +1212,7 @@ const CreatorOverview = () => {
       }
   
       console.log('🔍 Refetching drafts...');
-      const draftsResponse = await axios.get(`${API_URL}/my-sponsor-drafts`, { withCredentials: true });
+      const draftsResponse = await api.get('/my-sponsor-drafts');
       console.log('🔍 Drafts response:', draftsResponse.data);
       setSponsorDrafts(
         draftsResponse.data
@@ -1230,7 +1229,7 @@ const CreatorOverview = () => {
                 const grossAmount = parseFloat(bid.bid_amount) || 0;
                 const platformFee = grossAmount * 0.15; // 15% platform fee
                 const netAmount = grossAmount - platformFee;
-                
+
                 return {
                   bid_id: bid.bid_id,
                   brand_id: bid.brand_id,
@@ -1254,14 +1253,13 @@ const CreatorOverview = () => {
     setActionLoading(true);
     try {
       console.log('🔍 Processing bid action:', { bidId, action });
-      await axios.post(
-        `${API_URL}/sponsor-bids/${bidId}/action`,
-        { action },
-        { withCredentials: true }
+      await api.post(
+        `/sponsor-bids/${bidId}/action`,
+        { action }
       );
   
       console.log('🔍 Refetching drafts after bid action...');
-      const draftsResponse = await axios.get(`${API_URL}/my-sponsor-drafts`, { withCredentials: true });
+      const draftsResponse = await api.get('/my-sponsor-drafts');
       console.log('🔍 Drafts response:', draftsResponse.data);
       setSponsorDrafts(
         draftsResponse.data

@@ -38,6 +38,7 @@ import {
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { SearchOutlined } from "@ant-design/icons";
 import axios from "axios";
+import api from "../config/api";
 import moment from "moment";
 import styled from "styled-components";
 import { loadStripe } from "@stripe/stripe-js";
@@ -486,13 +487,11 @@ const BrandBookings = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
-
   useEffect(() => {
     const fetchBrandIdAndData = async () => {
       setLoading(true);
       try {
-        const profileResponse = await axios.get(`${API_URL}/profile`, { withCredentials: true });
+        const profileResponse = await api.get('/profile');
         console.log(`📌 Profile response:`, profileResponse.data);
         if (profileResponse.data.user_role === "brand") {
           const actualBrandId = profileResponse.data.brand_id || profileResponse.data.id;
@@ -557,8 +556,8 @@ const BrandBookings = () => {
       return;
     }
     try {
-      console.log(`🟢 Fetching bookings for brand_id: ${id} from: ${API_URL}/bookings?brand_id=${id}`);
-      const bookingsResponse = await axios.get(`${API_URL}/bookings?brand_id=${id}`, { withCredentials: true });
+      console.log(`🟢 Fetching bookings for brand_id: ${id}`);
+      const bookingsResponse = await api.get(`/bookings?brand_id=${id}`);
       console.log(`📌 Fetched all bookings for brand ${id}:`, bookingsResponse.data);
       const allBookings = bookingsResponse.data.map((booking) => {
         const bookingType = booking.type || (booking.offer_id ? "One-off Partnership" : "Sponsor");
@@ -624,7 +623,7 @@ const BrandBookings = () => {
 
   const fetchBookingDetails = async (bookingId) => {
     try {
-      const response = await axios.get(`${API_URL}/bookings/${bookingId}`, { withCredentials: true });
+      const response = await api.get(`/bookings/${bookingId}`);
       const booking = response.data;
       console.log(`📌 Fetched booking details for ${bookingId}:`, booking);
       const isSubscription = booking.type === "Subscription";
@@ -793,9 +792,9 @@ const BrandBookings = () => {
     try {
       const endpoint =
         booking.type === "Subscription"
-          ? `${API_URL}/messages/subscription/${booking.id}`
-          : `${API_URL}/messages/booking/${booking.id}`;
-      const response = await axios.get(endpoint, { withCredentials: true });
+          ? `/messages/subscription/${booking.id}`
+          : `/messages/booking/${booking.id}`;
+      const response = await api.get(endpoint);
       setMessages(response.data || []);
       fetchAllBookings(brandId);
     } catch (error) {
@@ -812,9 +811,9 @@ const BrandBookings = () => {
     try {
       const endpoint =
         selectedBooking.type === "Subscription"
-          ? `${API_URL}/messages/subscription/${selectedBooking.id}`
-          : `${API_URL}/messages/booking/${selectedBooking.id}`;
-      await axios.post(endpoint, { message: currentMessage, sender_type: "brand" }, { withCredentials: true });
+          ? `/messages/subscription/${selectedBooking.id}`
+          : `/messages/booking/${selectedBooking.id}`;
+      await api.post(endpoint, { message: currentMessage, sender_type: "brand" });
       setMessages([...messages, { sender_type: "brand", message: currentMessage, created_at: new Date() }]);
       setCurrentMessage("");
       message.success("Message sent successfully!");
@@ -828,7 +827,7 @@ const BrandBookings = () => {
 
   const fetchCreatorPackages = async (creatorId) => {
     try {
-      const response = await axios.get(`${API_URL}/creators/${creatorId}/offers`, { withCredentials: true });
+      const response = await api.get(`/creators/${creatorId}/offers`);
       const subscriptionOffers = response.data.filter(offer => offer.frequency);
       setSubscriptionPackages(subscriptionOffers);
       setIsSubscribeModalVisible(true);
@@ -842,10 +841,9 @@ const BrandBookings = () => {
     try {
       setLoading(true);
       console.log(`🟢 Initiating subscription for package ${packageId} with method: ${paymentMethod}`);
-      const response = await axios.post(
-        `${API_URL}/subscriptions/${packageId}/subscribe`,
-        { payment_method: paymentMethod },
-        { withCredentials: true }
+      const response = await api.post(
+        `/subscriptions/${packageId}/subscribe`,
+        { payment_method: paymentMethod }
       );
       console.log("📌 Subscription response:", response.data);
       const { subscription_id, payment } = response.data;
@@ -881,7 +879,7 @@ const BrandBookings = () => {
 
   const handleCancelSubscription = async (subscriptionId) => {
     try {
-      await axios.put(`${API_URL}/subscriptions/${subscriptionId}/cancel`, {}, { withCredentials: true });
+      await api.put(`/subscriptions/${subscriptionId}/cancel`, {});
       message.success("Subscription canceled.");
       fetchAllBookings(brandId);
     } catch (error) {
@@ -903,10 +901,9 @@ const BrandBookings = () => {
         revision_notes: values.action === "revision" ? values.revision_notes : null,
       };
       console.debug(`🟢 Submitting review for booking ${selectedBooking.id}:`, payload);
-      const response = await axios.post(
-        `${API_URL}/approve-content/${selectedBooking.id}`,
-        payload,
-        { withCredentials: true }
+      const response = await api.post(
+        `/approve-content/${selectedBooking.id}`,
+        payload
       );
       console.debug(`📌 Review submission response:`, response.data);
       notification.success({
@@ -956,10 +953,9 @@ const BrandBookings = () => {
         throw new Error("Only Stripe payments are supported in the current version.");
       }
   
-      const paymentResponse = await axios.post(
-        `${API_URL}/create-stripe-payment`,
-        paymentPayload,
-        { withCredentials: true }
+      const paymentResponse = await api.post(
+        `/create-stripe-payment`,
+        paymentPayload
       );
       console.log("📌 Stripe payment response:", paymentResponse.data);
       setSelectedBooking({ ...booking, payment_status: "Pending", brand_id: brandId });
@@ -990,12 +986,11 @@ const BrandBookings = () => {
         throw new Error(`${isSubscription ? "Subscription" : "Booking"} ID is undefined`);
       }
       const endpoint = isSubscription
-        ? `${API_URL}/subscriptions/${id}/complete-payment`
-        : `${API_URL}/bookings/${id}/complete-payment`;
-      const response = await axios.post(
+        ? `/subscriptions/${id}/complete-payment`
+        : `/bookings/${id}/complete-payment`;
+      const response = await api.post(
         endpoint,
-        { payment_intent_id: paymentIntentId },
-        { withCredentials: true }
+        { payment_intent_id: paymentIntentId }
       );
       console.log(`📌 Payment completed successfully:`, response.data);
       message.success(`${isSubscription ? "Subscription" : "Booking"} payment completed successfully!`);
@@ -1022,10 +1017,9 @@ const BrandBookings = () => {
         throw new Error("Invalid brand ID");
       }
       console.log(`🟢 Confirming content for subscription ${booking.id}, brand_id: ${booking.brand_id}`);
-      await axios.post(
-        `${API_URL}/subscriptions/${booking.id}/confirm-content`,
-        { deliverable_ids: booking.deliverables.filter(d => d.status === "Submitted").map(d => d.index) },
-        { withCredentials: true }
+      await api.post(
+        `/subscriptions/${booking.id}/confirm-content`,
+        { deliverable_ids: booking.deliverables.filter(d => d.status === "Submitted").map(d => d.index) }
       );
       message.success("Content confirmed successfully!");
       fetchAllBookings(booking.brand_id);
@@ -1061,7 +1055,7 @@ const BrandBookings = () => {
     setIsReviewModalVisible(true);
     reviewForm.setFieldsValue({ revision_notes: booking.revision_notes || "" });
     try {
-      const response = await axios.get(`${API_URL}/bookings/${booking.id}`, { withCredentials: true });
+      const response = await api.get(`/bookings/${booking.id}`);
       const updatedBooking = {
         ...booking,
         content_link: response.data.content_link || null,

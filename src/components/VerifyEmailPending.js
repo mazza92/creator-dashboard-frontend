@@ -3,9 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Typography, Button, message } from 'antd';
 import { MailOutlined, ReloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
+import api from '../config/api';
 
 const { Title, Text } = Typography;
 
@@ -167,7 +165,7 @@ const VerifyEmailPending = () => {
     setResendSuccess(false);
 
     try {
-      await axios.post(`${API_URL}/api/resend-verification`, { email });
+      await api.post('/api/resend-verification', { email });
       setResendSuccess(true);
       setResendCount(prev => prev + 1);
       setCountdown(60); // 60 second cooldown

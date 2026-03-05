@@ -136,7 +136,7 @@ import { GiLipstick, GiCookingPot } from "react-icons/gi";
 import { MdFamilyRestroom, MdSportsEsports, MdBeachAccess } from "react-icons/md";
 // eslint-disable-next-line no-unused-vars
 import axios from "axios";
-import { apiClient } from '../config/api';
+import api, { apiClient } from '../config/api';
 import moment from "moment";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
@@ -549,15 +549,11 @@ const CreatorBookings = () => {
   });
   const navigate = useNavigate();
 
-  const API_URL = process.env.REACT_APP_BACKEND_URL;
-
   const fetchCreatorId = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Fetching creator profile from:', `${API_URL}/profile`);
-      const response = await axios.get(`${API_URL}/profile`, {
-        withCredentials: true,
-      });
+      console.log('🔍 Fetching creator profile');
+      const response = await api.get('/profile');
       console.log('🔍 Profile response:', {
         status: response.status,
         data: response.data,
@@ -573,10 +569,8 @@ const CreatorBookings = () => {
       // Fetch creator_id if not in profile response
       if (!creator_id && user_id) {
         try {
-          console.log('🔍 Fetching creator_id from:', `${API_URL}/creators?user_id=${user_id}`);
-          const creatorResponse = await axios.get(`${API_URL}/creators?user_id=${user_id}`, {
-            withCredentials: true,
-          });
+          console.log('🔍 Fetching creator_id for user:', user_id);
+          const creatorResponse = await api.get(`/creators?user_id=${user_id}`);
           console.log('🔍 Creator response:', {
             status: creatorResponse.status,
             data: creatorResponse.data,
@@ -656,9 +650,7 @@ const CreatorBookings = () => {
     async (id) => {
       try {
         console.log('🔍 Fetching bookings for creator_id:', id);
-        const bookingsResponse = await axios.get(`${API_URL}/bookings?creator_id=${id}`, {
-          withCredentials: true,
-        });
+        const bookingsResponse = await api.get(`/bookings?creator_id=${id}`);
         console.log('🔍 Bookings response:', {
           status: bookingsResponse.status,
           data: bookingsResponse.data,
@@ -764,7 +756,7 @@ const CreatorBookings = () => {
           status: error.response?.status,
           headers: error.response?.headers,
           creator_id: id,
-          request_url: `${API_URL}/bookings?creator_id=${id}`,
+          request_url: `/bookings?creator_id=${id}`,
           response_body: error.response?.data || error.response?.statusText,
         });
         if (error.response?.status === 500) {
@@ -780,7 +772,7 @@ const CreatorBookings = () => {
         }
       }
     },
-    [API_URL, navigate]
+    [navigate]
   );
 
   useEffect(() => {
@@ -796,9 +788,8 @@ const CreatorBookings = () => {
     try {
       console.log('🔍 Fetching booking details:', { bookingId, bookingType });
       if (bookingType === "Subscription") {
-        const response = await axios.get(
-          `${API_URL}/subscriptions/${bookingId}/deliverables`,
-          { withCredentials: true }
+        const response = await api.get(
+          `/subscriptions/${bookingId}/deliverables`
         );
         const deliverables = response.data.map((d, i) => ({
           index: d.index,
@@ -816,9 +807,8 @@ const CreatorBookings = () => {
         );
         return { ...booking, deliverables };
       } else {
-        const response = await axios.get(
-          `${API_URL}/bookings/${bookingId}`,
-          { withCredentials: true }
+        const response = await api.get(
+          `/bookings/${bookingId}`
         );
         const booking = response.data;
 
@@ -929,10 +919,10 @@ const CreatorBookings = () => {
     try {
       const endpoint =
         booking.type === "Subscription"
-          ? `${API_URL}/messages/subscription/${booking.id}`
-          : `${API_URL}/messages/booking/${booking.id}`;
+          ? `/messages/subscription/${booking.id}`
+          : `/messages/booking/${booking.id}`;
       console.log('🔍 Fetching messages from:', endpoint);
-      const response = await axios.get(endpoint, { withCredentials: true });
+      const response = await api.get(endpoint);
       console.log('🔍 Messages response:', response.data);
       setMessages(response.data || []);
       fetchBookings(creatorId);
@@ -950,13 +940,12 @@ const CreatorBookings = () => {
     try {
       const endpoint =
         selectedBooking.type === "Subscription"
-          ? `${API_URL}/messages/subscription/${selectedBooking.id}`
-          : `${API_URL}/messages/booking/${selectedBooking.id}`;
+          ? `/messages/subscription/${selectedBooking.id}`
+          : `/messages/booking/${selectedBooking.id}`;
       console.log('🔍 Sending message to:', endpoint);
-      await axios.post(
+      await api.post(
         endpoint,
-        { message: currentMessage, sender_type: "creator" },
-        { withCredentials: true }
+        { message: currentMessage, sender_type: "creator" }
       );
       setMessages([
         ...messages,
@@ -1029,12 +1018,11 @@ const CreatorBookings = () => {
     try {
       const endpoint =
         selectedBooking.type === "Subscription"
-          ? `${API_URL}/submit-content/subscription/${selectedBooking.id}`
-          : `${API_URL}/submit-content/${selectedBooking.id}`;
+          ? `/submit-content/subscription/${selectedBooking.id}`
+          : `/submit-content/${selectedBooking.id}`;
       console.log('🔍 Submitting content to:', endpoint);
-      const response = await axios.post(endpoint, formData, {
+      const response = await api.post(endpoint, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       });
       console.log('🔍 Content submission response:', response.data);
       message.success(
