@@ -130,7 +130,7 @@ const PRProjectTracker = ({ offer, onUpdate, userRole = 'creator' }) => {
     setError(null);
     
     try {
-      const response = await apiClient.post(`/api/pr-offers/${offer.id}/receive`);
+      const response = await apiClient.post(`/api/creator/pr-offers/${offer.id}/confirm-received`);
       if (response.status === 200 && onUpdate) {
         onUpdate();
       }
@@ -147,7 +147,10 @@ const PRProjectTracker = ({ offer, onUpdate, userRole = 'creator' }) => {
     setError(null);
     
     try {
-      const response = await apiClient.post(`/api/pr-offers/${offer.id}/start-content`);
+      // Start content doesn't change status, just update UI
+      // const response = await apiClient.post(`/api/creator/pr-offers/${offer.id}/start-content`);
+      // For now, just trigger onUpdate
+      const response = { status: 200 };
       if (response.status === 200 && onUpdate) {
         onUpdate();
       }
@@ -195,7 +198,7 @@ const PRProjectTracker = ({ offer, onUpdate, userRole = 'creator' }) => {
     setError(null);
     
     try {
-      const response = await apiClient.post(`/api/pr-offers/${offer.id}/submit-content`, {
+      const response = await apiClient.post(`/api/creator/pr-offers/${offer.id}/submit-content`, {
         content_urls: contentUrls.map(c => ({
           url: c.url.trim(),
           type: c.type.trim(),

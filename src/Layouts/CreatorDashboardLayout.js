@@ -6,7 +6,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useNotification } from '../contexts/NotificationContext';
 import styled from 'styled-components';
-import { RiSearchLine, RiListCheck2, RiNotification3Line } from 'react-icons/ri';
+import { RiSearchLine, RiListCheck2, RiNotification3Line, RiGiftLine } from 'react-icons/ri';
 import api from '../config/api';
 
 // Brand colors
@@ -480,6 +480,10 @@ const CreatorDashboardLayout = () => {
               <RiListCheck2 />
               <span>Pipeline</span>
             </TabButton>
+            <TabButton to="/creator/dashboard/pr-offers" $active={isActive('/pr-offers')}>
+              <RiGiftLine />
+              <span>PR Offers</span>
+            </TabButton>
           </DesktopTabNavigation>
 
           {/* Right Actions */}
@@ -577,6 +581,10 @@ const CreatorDashboardLayout = () => {
         <TabButton to="/creator/dashboard/pr-pipeline" $active={isActive('/pr-pipeline')}>
           <RiListCheck2 />
           <span>Pipeline</span>
+        </TabButton>
+        <TabButton to="/creator/dashboard/pr-offers" $active={isActive('/pr-offers')}>
+          <RiGiftLine />
+          <span>PR Offers</span>
         </TabButton>
       </MobileTabNavigation>
 

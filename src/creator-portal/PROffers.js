@@ -16,7 +16,7 @@ const PROffers = () => {
 
   useEffect(() => {
     fetchOffers();
-    fetchWishlist();
+    // fetchWishlist(); // Commented out for MVP
   }, []);
 
   const fetchWishlist = async () => {
@@ -36,7 +36,7 @@ const PROffers = () => {
   const fetchOffers = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/pr-offers');
+      const response = await apiClient.get('/api/creator/pr-offers');
       if (response.status === 200) {
         setOffers(response.data);
       }
@@ -85,6 +85,7 @@ const PROffers = () => {
               </p>
             </div>
           </div>
+          {/* PR Preferences button - Commented out for MVP
           <button
             onClick={() => setShowPRWishlist(true)}
             style={{
@@ -120,10 +121,11 @@ const PROffers = () => {
               'Set PR Preferences'
             )}
           </button>
+          */}
         </div>
       </div>
 
-      {/* PR Preferences Setup Banner */}
+      {/* PR Preferences Setup Banner - Commented out for MVP
       {!wishlistLoading && wishlist.length === 0 && (
         <div style={{
           background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
@@ -177,6 +179,7 @@ const PROffers = () => {
           </button>
         </div>
       )}
+      */}
 
       {/* PR Preferences Status (if set) */}
       {!wishlistLoading && wishlist.length > 0 && (
@@ -307,7 +310,7 @@ const PROffers = () => {
         </div>
       )}
 
-      {/* PR Wishlist Settings Modal */}
+      {/* PR Wishlist Settings Modal - Commented out for MVP
       <Modal
         title="PR Package Preferences"
         open={showPRWishlist}
@@ -319,10 +322,11 @@ const PROffers = () => {
           onUpdate={(updatedWishlist) => {
             setWishlist(updatedWishlist);
             setShowPRWishlist(false);
-            fetchOffers(); // Refresh offers to show newly matched ones
+            fetchOffers();
           }}
         />
       </Modal>
+      */}
     </div>
   );
 };

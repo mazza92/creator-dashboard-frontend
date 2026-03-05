@@ -182,6 +182,59 @@ const BrandPROfferCard = ({ offer, onUpdate }) => {
       );
     }
 
+    // Mark as Ready to Ship (when accepted)
+    if (offer.status === 'accepted') {
+      buttons.push(
+        <button
+          key="ready-to-ship"
+          onClick={async () => {
+            setLoading(true);
+            try {
+              const response = await apiClient.post(`/api/pr-offers/${offer.id}/ready-to-ship`);
+              if (response.status === 200) {
+                message.success('Marked as ready to ship!');
+                if (onUpdate) onUpdate();
+              }
+            } catch (err) {
+              console.error('Error:', err);
+              message.error('Failed to update status');
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 16px',
+            border: 'none',
+            borderRadius: 8,
+            background: '#3b82f6',
+            color: '#fff',
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: 13,
+            opacity: loading ? 0.6 : 1,
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!loading) {
+              e.currentTarget.style.background = '#2563eb';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!loading) {
+              e.currentTarget.style.background = '#3b82f6';
+            }
+          }}
+        >
+          <FaBox />
+          Preparing to Ship
+        </button>
+      );
+    }
+    
     // Mark as Shipped (when awaiting shipment)
     if (offer.status === 'awaiting_shipment') {
       buttons.push(
@@ -222,9 +275,9 @@ const BrandPROfferCard = ({ offer, onUpdate }) => {
     }
 
     // View Content (when content is submitted)
-    const submissions = typeof offer.content_submissions === 'string' 
-      ? JSON.parse(offer.content_submissions || '[]')
-      : (offer.content_submissions || []);
+    const submissions = typeof offer.content_urls === 'string' 
+      ? JSON.parse(offer.content_urls || '[]')
+      : (offer.content_urls || []);
     
     if (offer.status === 'content_submitted' && submissions.length > 0) {
       buttons.push(
@@ -335,6 +388,58 @@ const BrandPROfferCard = ({ offer, onUpdate }) => {
     return buttons;
   };
 
+  // Status-specific next action messages
+  const getNextActionMessage = () => {
+    switch (offer.status) {
+      case 'accepted':
+        return {
+          message: '✓ Offer accepted! Mark as "Preparing to Ship" when ready to pack products.',
+          bgColor: '#fef3c7',
+          textColor: '#92400e',
+          borderColor: '#fbbf24'
+        };
+      case 'awaiting_shipment':
+        return {
+          message: '📦 Ready to ship! Add tracking number and mark as shipped.',
+          bgColor: '#dbeafe',
+          textColor: '#1e3a8a',
+          borderColor: '#3b82f6'
+        };
+      case 'shipped':
+        return {
+          message: '🚚 Product shipped! Waiting for creator to confirm receipt.',
+          bgColor: '#e0e7ff',
+          textColor: '#3730a3',
+          borderColor: '#6366f1'
+        };
+      case 'product_received':
+        return {
+          message: '📦 Creator received product! Content creation in progress.',
+          bgColor: '#dbeafe',
+          textColor: '#1e3a8a',
+          borderColor: '#3b82f6'
+        };
+      case 'content_in_progress':
+        return {
+          message: '🎨 Creator is working on content. Check back soon!',
+          bgColor: '#fef3c7',
+          textColor: '#92400e',
+          borderColor: '#fbbf24'
+        };
+      case 'content_submitted':
+        return {
+          message: '🎉 Content submitted! Review and mark as complete when satisfied.',
+          bgColor: '#d1fae5',
+          textColor: '#065f46',
+          borderColor: '#10b981'
+        };
+      default:
+        return null;
+    }
+  };
+
+  const nextActionInfo = getNextActionMessage();
+
   return (
     <>
       <div style={{
@@ -345,6 +450,21 @@ const BrandPROfferCard = ({ offer, onUpdate }) => {
         border: '1px solid #e5e7eb',
         marginBottom: 16
       }}>
+        {/* Next Action Banner */}
+        {nextActionInfo && (
+          <div style={{
+            padding: '12px 16px',
+            background: nextActionInfo.bgColor,
+            border: `1.5px solid ${nextActionInfo.borderColor}`,
+            borderRadius: 8,
+            marginBottom: 16
+          }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: nextActionInfo.textColor }}>
+              {nextActionInfo.message}
+            </p>
+          </div>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: '0 0 8px 0', fontSize: 18, fontWeight: 700 }}>{offer.offer_title}</h3>
@@ -516,9 +636,9 @@ const BrandPROfferCard = ({ offer, onUpdate }) => {
         width={800}
       >
         {(() => {
-          const submissions = typeof offer.content_submissions === 'string' 
-            ? JSON.parse(offer.content_submissions || '[]')
-            : (offer.content_submissions || []);
+          const submissions = typeof offer.content_urls === 'string' 
+            ? JSON.parse(offer.content_urls || '[]')
+            : (offer.content_urls || []);
           
           return submissions.length > 0 ? (
             <div>
@@ -527,40 +647,52 @@ const BrandPROfferCard = ({ offer, onUpdate }) => {
                 padding: 16,
                 background: '#f9fafb',
                 borderRadius: 8,
-                marginBottom: 12
+                marginBottom: 12,
+                border: '1.5px solid #e5e7eb'
               }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: 15, fontWeight: 600 }}>
-                  {submission.deliverable_type}
-                </h4>
-                {submission.content_url && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 600 }}>
+                      {submission.type || 'Content'}
+                    </h4>
+                    {submission.platform && (
+                      <p style={{ margin: 0, fontSize: 13, color: '#6B7280' }}>
+                        Platform: <strong>{submission.platform}</strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {submission.url && (
                   <div style={{ marginTop: 8 }}>
                     <a
-                      href={ensureAbsoluteUrl(submission.content_url)}
+                      href={ensureAbsoluteUrl(submission.url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => {
-                        // Ensure we always open the absolute URL, even if React Router tries to intercept
-                        const absoluteUrl = ensureAbsoluteUrl(submission.content_url);
+                        const absoluteUrl = ensureAbsoluteUrl(submission.url);
                         if (absoluteUrl && absoluteUrl !== '#') {
                           window.open(absoluteUrl, '_blank', 'noopener,noreferrer');
                           e.preventDefault();
                         }
                       }}
                       style={{
-                        color: '#3b82f6',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '8px 16px',
+                        background: '#3b82f6',
+                        color: '#fff',
+                        borderRadius: 8,
                         textDecoration: 'none',
                         fontWeight: 600,
-                        cursor: 'pointer'
+                        fontSize: 14,
+                        transition: 'all 0.2s'
                       }}
                     >
-                      View Content →
+                      <FaEye />
+                      View Content
                     </a>
                   </div>
-                )}
-                {submission.submitted_at && (
-                  <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#6B7280' }}>
-                    Submitted: {new Date(submission.submitted_at).toLocaleDateString()}
-                  </p>
                 )}
               </div>
               ))}

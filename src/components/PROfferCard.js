@@ -56,7 +56,7 @@ const PROfferCard = ({ offer, onUpdate }) => {
     setError(null);
     
     try {
-      const response = await apiClient.post(`/api/pr-offers/${offer.id}/accept`, {
+      const response = await apiClient.post(`/api/creator/pr-offers/${offer.id}/accept`, {
         shipping_address: shippingData.shipping_address,
         size_preferences: shippingData.size_preferences,
         saveToProfile: shippingData.saveToProfile,
@@ -80,8 +80,8 @@ const PROfferCard = ({ offer, onUpdate }) => {
     setError(null);
     
     try {
-      const response = await apiClient.post(`/api/pr-offers/${offer.id}/decline`, {
-        declined_reason: declineReason.trim() || null
+      const response = await apiClient.post(`/api/creator/pr-offers/${offer.id}/decline`, {
+        decline_reason: declineReason.trim() || null
       });
       
       if (response.status === 200) {
@@ -219,6 +219,91 @@ const PROfferCard = ({ offer, onUpdate }) => {
         </div>
       )}
 
+      {/* Status-specific guidance banner */}
+      {offer.status === 'accepted' && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#fef3c7',
+          border: '1.5px solid #fbbf24',
+          borderRadius: 8,
+          marginBottom: 16
+        }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+            ✓ Offer accepted! Waiting for brand to ship products.
+          </p>
+        </div>
+      )}
+
+      {offer.status === 'awaiting_shipment' && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#dbeafe',
+          border: '1.5px solid #3b82f6',
+          borderRadius: 8,
+          marginBottom: 16
+        }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#1e3a8a' }}>
+            📦 Brand is preparing to ship your products. Check back soon!
+          </p>
+        </div>
+      )}
+
+      {offer.status === 'shipped' && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#d1fae5',
+          border: '1.5px solid #10b981',
+          borderRadius: 8,
+          marginBottom: 16
+        }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#065f46' }}>
+            🚚 Products shipped! Confirm when you receive them.
+          </p>
+        </div>
+      )}
+
+      {(offer.status === 'product_received' || offer.status === 'content_in_progress') && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#fef3c7',
+          border: '1.5px solid #fbbf24',
+          borderRadius: 8,
+          marginBottom: 16
+        }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+            🎨 Time to create! Submit your content within {offer.content_deadline_days || 14} days.
+          </p>
+        </div>
+      )}
+
+      {offer.status === 'content_submitted' && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#dbeafe',
+          border: '1.5px solid #3b82f6',
+          borderRadius: 8,
+          marginBottom: 16
+        }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#1e3a8a' }}>
+            ✓ Content submitted! Waiting for brand to review and approve.
+          </p>
+        </div>
+      )}
+
+      {offer.status === 'completed' && (
+        <div style={{
+          padding: '12px 16px',
+          background: '#d1fae5',
+          border: '1.5px solid #10b981',
+          borderRadius: 8,
+          marginBottom: 16
+        }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#065f46' }}>
+            🎉 Project complete! Great work on this collaboration.
+          </p>
+        </div>
+      )}
+
       {/* Actions */}
       {offer.status === 'pending' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -290,6 +375,113 @@ const PROfferCard = ({ offer, onUpdate }) => {
         </div>
       )}
 
+      {/* Action Buttons Based on Status */}
+      {offer.status === 'shipped' && (
+        <button
+          onClick={async () => {
+            setLoading(true);
+            setError(null);
+            try {
+              const response = await apiClient.post(`/api/creator/pr-offers/${offer.id}/confirm-received`);
+              if (response.status === 200 && onUpdate) {
+                onUpdate();
+              }
+            } catch (err) {
+              console.error('Error confirming product received:', err);
+              setError(err.response?.data?.error || 'Failed to confirm product received');
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '12px 20px',
+            border: 'none',
+            borderRadius: 8,
+            background: loading ? '#d1fae5' : '#10b981',
+            color: loading ? '#6b7280' : '#fff',
+            fontWeight: 700,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: 15,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginTop: 12
+          }}
+        >
+          <FaCheckCircle />
+          {loading ? 'Processing...' : 'Confirm Product Received'}
+        </button>
+      )}
+
+      {offer.status === 'product_received' && (
+        <button
+          onClick={async () => {
+            setLoading(true);
+            setError(null);
+            try {
+              // This transitions to content_in_progress
+              const response = await apiClient.post(`/api/creator/pr-offers/${offer.id}/start-content`);
+              if (response.status === 200 && onUpdate) {
+                onUpdate();
+              }
+            } catch (err) {
+              console.error('Error starting content:', err);
+              setError(err.response?.data?.error || 'Failed to start content creation');
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '12px 20px',
+            border: 'none',
+            borderRadius: 8,
+            background: loading ? '#fde68a' : '#fbbf24',
+            color: loading ? '#6b7280' : '#78350f',
+            fontWeight: 700,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: 15,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginTop: 12
+          }}
+        >
+          <FaVideo />
+          {loading ? 'Processing...' : 'Start Creating Content'}
+        </button>
+      )}
+
+      {offer.status === 'content_in_progress' && (
+        <button
+          onClick={() => setShowTracker(true)}
+          style={{
+            width: '100%',
+            padding: '12px 20px',
+            border: 'none',
+            borderRadius: 8,
+            background: '#10b981',
+            color: '#fff',
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontSize: 15,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginTop: 12
+          }}
+        >
+          <FaVideo />
+          Submit Content
+        </button>
+      )}
+
       {/* View Tracker Button for Active Projects */}
       {['accepted', 'awaiting_shipment', 'shipped', 'product_received', 'content_in_progress', 'content_submitted'].includes(offer.status) && (
         <button
@@ -297,17 +489,26 @@ const PROfferCard = ({ offer, onUpdate }) => {
           style={{
             width: '100%',
             padding: '10px 20px',
-            border: '1.5px solid #10b981',
+            border: '1.5px solid #e5e7eb',
             borderRadius: 8,
             background: '#fff',
-            color: '#10b981',
+            color: '#6B7280',
             fontWeight: 600,
             cursor: 'pointer',
             fontSize: 14,
-            marginTop: 12
+            marginTop: 8,
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#10b981';
+            e.currentTarget.style.background = '#f9fafb';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#e5e7eb';
+            e.currentTarget.style.background = '#fff';
           }}
         >
-          {showTracker ? 'Hide' : 'View'} Project Tracker
+          {showTracker ? 'Hide' : 'View'} Full Progress Tracker
         </button>
       )}
 

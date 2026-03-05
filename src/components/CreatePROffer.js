@@ -1018,7 +1018,11 @@ const CreatePROffer = ({ onClose, onSuccess, preselectedCreatorId }) => {
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => handleToggleCreator(creator)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleToggleCreator(creator);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                         style={{ width: 20, height: 20, cursor: 'pointer' }}
                       />
                       <Avatar
