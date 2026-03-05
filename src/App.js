@@ -86,6 +86,25 @@ import BrandAdmin from './admin/BrandAdmin';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
+// Role-aware onboarding router - brands complete onboarding during registration,
+// so if they end up here, redirect them to their dashboard
+function OnboardingRouter() {
+    const { user, loading } = useContext(UserContext);
+
+    if (loading) {
+        return <LoadingSpinner />;
+    }
+
+    // If user is a brand, they've already completed onboarding during registration
+    // Redirect them to their dashboard
+    if (user?.role === 'brand') {
+        return <Navigate to="/brand/dashboard/overview" replace />;
+    }
+
+    // For creators (or no user), show the creator onboarding
+    return <CreatorOnboarding />;
+}
+
 function AppContent() {
     const { user, loading } = useContext(UserContext);
     const navigate = useNavigate();
@@ -142,10 +161,10 @@ function AppContent() {
                 localStorage.removeItem('pendingSubscriptionId');
                 localStorage.removeItem('pendingPaymentIntentId');
             }
-            navigate('/brand/dashboard/bookings', { replace: true });
+            navigate('/brand/dashboard/overview', { replace: true });
         } catch (error) {
             console.error('🔥 Error completing Stripe payment:', error.response?.data || error);
-            navigate('/brand/dashboard/bookings', { replace: true });
+            navigate('/brand/dashboard/overview', { replace: true });
         }
     }, [navigate]);
 
@@ -225,7 +244,7 @@ function AppContent() {
                 console.log('🟢 Redirecting unauthenticated user to /login');
                 navigate('/login', { replace: true });
             } else if (user) {
-                const correctBasePath = user.role === 'creator' ? '/creator/dashboard/pr-brands' : '/brand/dashboard/bookings';
+                const correctBasePath = user.role === 'creator' ? '/creator/dashboard/pr-brands' : '/brand/dashboard/overview';
                 
                 // A brand user is allowed to visit a creator's profile page.
                 const isViewingCreatorProfileAsBrand = user.role === 'brand' && location.pathname.startsWith('/creator/profile/');
@@ -233,19 +252,27 @@ function AppContent() {
                 // Check if we just completed onboarding - if so, skip incomplete profile check
                 // This prevents redirect loop when user context hasn't updated yet
                 const justCompletedOnboarding = sessionStorage.getItem('justCompletedOnboarding');
-                
+
+                // Also check if user just registered (pendingVerificationEmail is set)
+                // Brand users complete onboarding during registration, so don't redirect them
+                const justRegistered = localStorage.getItem('pendingVerificationEmail');
+
                 // Check if user has incomplete profile (creator_id/brand_id is null)
                 // Only check if we're not in a loading state to avoid premature redirects
                 // Skip this check if we just completed onboarding (user context is updating)
-                const hasIncompleteProfile = (user.role === 'creator' && !user.creator_id) || 
-                                          (user.role === 'brand' && !user.brand_id);
+                // For brands, also skip if they just registered (their onboarding IS complete)
+                const hasIncompleteProfile = (user.role === 'creator' && !user.creator_id) ||
+                                          (user.role === 'brand' && !user.brand_id && !justRegistered);
                 
                 // If user has incomplete profile and is not on onboarding, redirect to onboarding
                 // But skip this if we just completed onboarding (give user context time to update)
-                if (hasIncompleteProfile && !justCompletedOnboarding && 
-                    !location.pathname.startsWith('/onboarding') && 
-                    !location.pathname.startsWith('/register/creator') && 
-                    !location.pathname.startsWith('/register/brand')) {
+                // Also skip for email verification routes - users need to verify email after registration
+                if (hasIncompleteProfile && !justCompletedOnboarding &&
+                    !location.pathname.startsWith('/onboarding') &&
+                    !location.pathname.startsWith('/register/creator') &&
+                    !location.pathname.startsWith('/register/brand') &&
+                    !location.pathname.startsWith('/verify-email') &&
+                    !location.pathname.startsWith('/resend-verification')) {
                     console.log(`🔄 User has incomplete profile, redirecting to onboarding`);
                     navigate('/onboarding', { replace: true });
                     return;
@@ -281,7 +308,7 @@ function AppContent() {
                     if (subscriptionId) {
                         completeStripePayment(subscriptionId);
                     } else {
-                        navigate('/brand/dashboard/bookings', { replace: true });
+                        navigate('/brand/dashboard/overview', { replace: true });
                     }
                 }
 
@@ -341,7 +368,7 @@ function AppContent() {
             <Route path='/forgot-password' element={<ForgotPassword />} />
             <Route path='/reset-password' element={<ResetPassword />} />
             <Route path='/payment' element={<Payment />} />
-            <Route path='/payment-success' element={isPayPalFlow ? <PaymentSuccess /> : <Navigate to='/brand/dashboard/bookings' replace />} />
+            <Route path='/payment-success' element={isPayPalFlow ? <PaymentSuccess /> : <Navigate to='/brand/dashboard/overview' replace />} />
             <Route path='/payment-failed' element={<PaymentFailed />} />
             <Route path='/verify-email-pending' element={<VerifyEmailPending />} />
             <Route path='/verify-email' element={<VerifyEmail />} />
@@ -365,7 +392,7 @@ function AppContent() {
             {/* Creator profiles - Next.js has /app/c/[username], but keep CRA route for dev/fallback */}
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             <Route path='/register-new' element={<CreatorSignup />} />
-            <Route path='/onboarding' element={<CreatorOnboarding />} />
+            <Route path='/onboarding' element={<OnboardingRouter />} />
             <Route path='/test-indexnow' element={<IndexNowTest />} />
             <Route path='/creator/dashboard/subscription/success' element={<SubscriptionSuccess />} />
             <Route path='/creator/dashboard/subscription/cancel' element={<SubscriptionCancel />} />
@@ -388,6 +415,8 @@ function AppContent() {
                 path='/brand'
                 element={user ? <DashboardLayout /> : <Navigate to='/login' replace />}
             >
+            <Route index element={<Navigate to='/brand/dashboard/overview' replace />} />
+            <Route path='dashboard' element={<Navigate to='/brand/dashboard/overview' replace />} />
             <Route path='dashboard/overview' element={<BrandOverview />} />
             <Route path='dashboard/marketplace' element={<BrandMarketplace />} />
             <Route path='dashboard/bookings' element={<BrandBookings />} />
