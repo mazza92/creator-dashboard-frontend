@@ -69,10 +69,10 @@ const getRuntimeApiUrl = () => {
 };
 
 // For build-time compatibility, still export a constant, but it will be overridden at runtime
-const API_URL = getApiUrl();
+const API_URL = getApiUrl() || 'https://api.newcollab.co';
 
 const api = axios.create({
-    baseURL: getRuntimeApiUrl(),
+    baseURL: getRuntimeApiUrl() || 'https://api.newcollab.co',
     headers: {
         'Content-Type': 'application/json',
     },
