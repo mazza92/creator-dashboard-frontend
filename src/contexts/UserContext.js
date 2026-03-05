@@ -19,18 +19,33 @@ export const UserProvider = ({ children }) => {
             const cachedUserId = localStorage.getItem('userId');
             const cachedAuthToken = localStorage.getItem('authToken');
 
+            // Helper function to fetch session data for brand_id
+            const getSessionData = async () => {
+                try {
+                    const sessionResponse = await apiClient.get('/api/session', { withCredentials: true });
+                    return sessionResponse.data.session_contents || sessionResponse.data || {};
+                } catch (e) {
+                    console.warn('Could not fetch session data:', e);
+                    return {};
+                }
+            };
+
             // If we have cached data and it's recent, verify with server first
             if (cachedUserRole && cachedUserId && cachedAuthToken === 'logged-in') {
                 // Don't set user immediately, verify with server first
                 try {
-                    const response = await apiClient.get('/profile', { withCredentials: true });
-                    const profileData = response.data;
+                    const [profileResponse, sessionData] = await Promise.all([
+                        apiClient.get('/profile', { withCredentials: true }),
+                        getSessionData()
+                    ]);
+                    const profileData = profileResponse.data;
                     if (profileData.user_id) {
+                        // Merge brand_id from session if not in profile (fixes brand user issue)
                         const userData = {
                             id: profileData.user_id,
                             role: profileData.user_role,
                             creator_id: profileData.creator_id,
-                            brand_id: profileData.brand_id,
+                            brand_id: profileData.brand_id || sessionData.brand_id,
                         };
                         setUser(userData);
                         initializeSocket(profileData.user_id, profileData.user_role);
@@ -54,15 +69,19 @@ export const UserProvider = ({ children }) => {
 
             // No cached data, fetch from server
             try {
-                const response = await apiClient.get('/profile', { withCredentials: true });
-                const profileData = response.data;
+                const [profileResponse, sessionData] = await Promise.all([
+                    apiClient.get('/profile', { withCredentials: true }),
+                    getSessionData()
+                ]);
+                const profileData = profileResponse.data;
 
                 if (profileData.user_id) {
+                    // Merge brand_id from session if not in profile (fixes brand user issue)
                     const userData = {
                         id: profileData.user_id,
                         role: profileData.user_role,
                         creator_id: profileData.creator_id,
-                        brand_id: profileData.brand_id,
+                        brand_id: profileData.brand_id || sessionData.brand_id,
                     };
                     setUser(userData);
                     initializeSocket(profileData.user_id, profileData.user_role);
@@ -114,14 +133,20 @@ export const UserProvider = ({ children }) => {
 
     const refreshUser = async () => {
         try {
-            const response = await apiClient.get('/profile', { withCredentials: true });
-            const profileData = response.data;
+            // Fetch both profile and session to get brand_id
+            const [profileResponse, sessionResponse] = await Promise.all([
+                apiClient.get('/profile', { withCredentials: true }),
+                apiClient.get('/api/session', { withCredentials: true }).catch(() => ({ data: {} }))
+            ]);
+            const profileData = profileResponse.data;
+            const sessionData = sessionResponse.data.session_contents || sessionResponse.data || {};
+
             if (profileData.user_id) {
                 const userData = {
                     id: profileData.user_id,
                     role: profileData.user_role,
                     creator_id: profileData.creator_id,
-                    brand_id: profileData.brand_id,
+                    brand_id: profileData.brand_id || sessionData.brand_id,
                 };
                 setUser(userData);
                 console.log('✅ User context refreshed:', userData);
