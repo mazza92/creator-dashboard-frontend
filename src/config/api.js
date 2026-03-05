@@ -36,7 +36,16 @@ const getApiUrl = () => {
     return ''; // Empty baseURL = relative URLs = goes through CRA proxy
   }
 
-  return process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co';
+  // Final fallback - default to production API if nothing else matches
+  const fallbackUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co';
+  
+  // Safety check - never return undefined
+  if (!fallbackUrl) {
+    console.error('🔥 CRITICAL: API URL is undefined, forcing production API');
+    return 'https://api.newcollab.co';
+  }
+  
+  return fallbackUrl;
 };
 
 // Use a function that checks at runtime, not just build time
