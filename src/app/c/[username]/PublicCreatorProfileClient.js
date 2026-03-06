@@ -270,9 +270,17 @@ export default function PublicCreatorProfileClient({ username }) {
     { icon: <FaLinkedinIn size={18} />, label: 'LinkedIn', onClick: () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank'), color: '#0a66c2' },
   ];
 
+  // NewCollab icon SVG for fallback
+  const newcollabIconSvg = (
+    <svg width="18" height="18" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#26A69A"/>
+      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="white" fontSize="24" fontWeight="bold" fontFamily="Arial, sans-serif">N</text>
+    </svg>
+  );
+
   // Get social icon helper
   const getSocialIcon = (platform) => {
-    if (!platform) return <FaLink style={{ color: BRAND_COLOR, fontSize: 18 }} />;
+    if (!platform) return newcollabIconSvg;
     const platformLower = platform.toLowerCase();
     if (platformLower.includes('instagram')) return <FaInstagram style={{ color: '#E1306C', fontSize: 18 }} />;
     if (platformLower.includes('youtube')) return <FaYoutube style={{ color: '#FF0000', fontSize: 18 }} />;
@@ -283,7 +291,7 @@ export default function PublicCreatorProfileClient({ username }) {
     if (platformLower.includes('snapchat')) return <FaSnapchat style={{ color: '#FFFC00', fontSize: 18 }} />;
     if (platformLower.includes('pinterest')) return <FaPinterest style={{ color: '#BD081C', fontSize: 18 }} />;
     if (platformLower.includes('twitch')) return <FaTwitch style={{ color: '#9146FF', fontSize: 18 }} />;
-    return <FaLink style={{ color: BRAND_COLOR, fontSize: 18 }} />;
+    return newcollabIconSvg;
   };
 
   return (
@@ -345,8 +353,19 @@ export default function PublicCreatorProfileClient({ username }) {
             {socialLinksArr.length > 0 && (
               <div style={{ display: 'flex', gap: 16, margin: '6px 0', justifyContent: 'center', alignItems: 'center' }}>
                 {socialLinksArr.map((link, idx) => {
-                  const normalizedUrl = link.url && !link.url.startsWith('http://') && !link.url.startsWith('https://')
-                    ? `https://${link.url}` : link.url;
+                  let normalizedUrl = link.url;
+                  // Fix malformed URLs like "https://tiktok.com/@https://www.tiktok.com/user"
+                  if (normalizedUrl && normalizedUrl.includes('http', 10)) {
+                    // Extract the actual URL from the malformed string
+                    const match = normalizedUrl.match(/(https?:\/\/[^/]+\.[^/]+\/[^h]*)(https?:\/\/.+)/);
+                    if (match) {
+                      normalizedUrl = match[2]; // Use the second (actual) URL
+                    }
+                  }
+                  // Add https if missing
+                  if (normalizedUrl && !normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+                    normalizedUrl = `https://${normalizedUrl}`;
+                  }
                   return (
                     <a
                       key={idx}

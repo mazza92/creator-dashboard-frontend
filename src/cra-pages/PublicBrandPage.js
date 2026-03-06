@@ -48,7 +48,7 @@ const PublicBrandPage = () => {
       console.error('Error fetching brand:', error);
       if (error.response?.status === 404) {
         message.error('Brand not found');
-        navigate('/directory');
+        navigate(user?.role === 'creator' ? '/creator/dashboard/pr-brands' : '/directory');
       }
     } finally {
       setLoading(false);
@@ -287,7 +287,9 @@ const PublicBrandPage = () => {
 
       <Container>
         <Breadcrumb>
-          <Link to="/directory">← Back to Directory</Link>
+          <Link to={user?.role === 'creator' ? '/creator/dashboard/pr-brands' : '/directory'}>
+            ← Back to Directory
+          </Link>
         </Breadcrumb>
 
         <Header>
@@ -610,7 +612,7 @@ const PublicBrandPage = () => {
 
         <RelatedSection>
           <h2>More Brands in {brand.category?.replace('_', ' ')}</h2>
-          <Link to={`/directory?category=${brand.category}`}>
+          <Link to={user?.role === 'creator' ? `/creator/dashboard/pr-brands?category=${brand.category}` : `/directory?category=${brand.category}`}>
             <Button type="link">Browse All {brand.category?.replace('_', ' ')} Brands →</Button>
           </Link>
         </RelatedSection>

@@ -634,9 +634,18 @@ const ProfilePage = () => {
             }}>
               {creator.social_links.map((link, idx) => {
                 const platformKey = link.platform?.trim() || '';
-                const normalizedUrl = link.url && !link.url.startsWith('http://') && !link.url.startsWith('https://') 
-                  ? `https://${link.url}` 
-                  : link.url;
+                let normalizedUrl = link.url;
+                // Fix malformed URLs like "https://tiktok.com/@https://www.tiktok.com/user"
+                if (normalizedUrl && normalizedUrl.includes('http', 10)) {
+                  const match = normalizedUrl.match(/(https?:\/\/[^/]+\.[^/]+\/[^h]*)(https?:\/\/.+)/);
+                  if (match) {
+                    normalizedUrl = match[2];
+                  }
+                }
+                // Add https if missing
+                if (normalizedUrl && !normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+                  normalizedUrl = `https://${normalizedUrl}`;
+                }
                 // Normalize platform name for lookup (capitalize first letter)
                 const normalizedPlatform = platformKey 
                   ? platformKey.charAt(0).toUpperCase() + platformKey.slice(1).toLowerCase()
@@ -671,7 +680,12 @@ const ProfilePage = () => {
                       e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
                     }}
                   >
-                    {platformLogos[normalizedPlatform] || platformLogos[link.platform] || <span>{link.platform}</span>}
+                    {platformLogos[normalizedPlatform] || platformLogos[link.platform] || (
+                                      <svg width="24" height="24" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="40" height="40" rx="8" fill="#26A69A"/>
+                                        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="white" fontSize="24" fontWeight="bold" fontFamily="Arial, sans-serif">N</text>
+                                      </svg>
+                                    )}
                   </a>
                 );
               })}

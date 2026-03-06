@@ -936,7 +936,13 @@ export default function CreatorOnboarding() {
             value={socialLinks.find(s => s.platform === 'Instagram')?.url?.replace('https://instagram.com/', '').replace('https://www.instagram.com/', '').replace('@', '') || ''}
             onChange={e => {
               const instagramLink = socialLinks.find(s => s.platform === 'Instagram');
-              const handle = e.target.value.replace('@', '').trim();
+              let input = e.target.value.trim();
+              // Extract handle from full URL if pasted
+              if (input.includes('instagram.com')) {
+                const match = input.match(/instagram\.com\/([^/?]+)/);
+                input = match ? match[1] : input;
+              }
+              const handle = input.replace('@', '').trim();
               if (instagramLink) {
                 handleSocialUrlChange(socialLinks.indexOf(instagramLink), handle ? `https://instagram.com/${handle}` : '');
               } else {
@@ -981,7 +987,13 @@ export default function CreatorOnboarding() {
             value={socialLinks.find(s => s.platform === 'TikTok')?.url?.replace('https://tiktok.com/@', '').replace('https://www.tiktok.com/@', '').replace('@', '') || ''}
             onChange={e => {
               const tiktokLink = socialLinks.find(s => s.platform === 'TikTok');
-              const handle = e.target.value.replace('@', '').trim();
+              let input = e.target.value.trim();
+              // Extract handle from full URL if pasted
+              if (input.includes('tiktok.com')) {
+                const match = input.match(/tiktok\.com\/@?([^/?]+)/);
+                input = match ? match[1] : input;
+              }
+              const handle = input.replace('@', '').trim();
               if (tiktokLink) {
                 handleSocialUrlChange(socialLinks.indexOf(tiktokLink), handle ? `https://tiktok.com/@${handle}` : '');
               } else {
@@ -1070,7 +1082,13 @@ export default function CreatorOnboarding() {
             value={socialLinks.find(s => s.platform === 'Snapchat')?.url?.replace('https://snapchat.com/add/', '').replace('https://www.snapchat.com/add/', '').replace('@', '') || ''}
             onChange={e => {
               const snapchatLink = socialLinks.find(s => s.platform === 'Snapchat');
-              const handle = e.target.value.replace('@', '').trim();
+              let input = e.target.value.trim();
+              // Extract handle from full URL if pasted
+              if (input.includes('snapchat.com')) {
+                const match = input.match(/snapchat\.com\/add\/([^/?]+)/);
+                input = match ? match[1] : input;
+              }
+              const handle = input.replace('@', '').trim();
               if (snapchatLink) {
                 handleSocialUrlChange(socialLinks.indexOf(snapchatLink), handle ? `https://snapchat.com/add/${handle}` : '');
               } else {
@@ -1115,7 +1133,13 @@ export default function CreatorOnboarding() {
             value={socialLinks.find(s => s.platform === 'Twitch')?.url?.replace('https://twitch.tv/', '').replace('https://www.twitch.tv/', '').replace('@', '') || ''}
             onChange={e => {
               const twitchLink = socialLinks.find(s => s.platform === 'Twitch');
-              const handle = e.target.value.replace('@', '').trim();
+              let input = e.target.value.trim();
+              // Extract handle from full URL if pasted
+              if (input.includes('twitch.tv')) {
+                const match = input.match(/twitch\.tv\/([^/?]+)/);
+                input = match ? match[1] : input;
+              }
+              const handle = input.replace('@', '').trim();
               if (twitchLink) {
                 handleSocialUrlChange(socialLinks.indexOf(twitchLink), handle ? `https://twitch.tv/${handle}` : '');
               } else {
