@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
+import UpgradeModal from './UpgradeModal';
 
 const AccountSettings = () => {
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     fetchSubscriptionStatus();
@@ -219,7 +221,7 @@ const AccountSettings = () => {
             <>
               <Divider />
               <UpgradeButton
-                onClick={() => window.location.href = '/creator/dashboard/pr-brands'}
+                onClick={() => setShowUpgradeModal(true)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -233,6 +235,13 @@ const AccountSettings = () => {
           )}
         </PlanCard>
       </Section>
+
+      {showUpgradeModal && (
+        <UpgradeModal
+          visible={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+        />
+      )}
 
       <Section>
         <SectionTitle>Usage {tier === 'free' ? 'Today' : 'This Month'}</SectionTitle>
