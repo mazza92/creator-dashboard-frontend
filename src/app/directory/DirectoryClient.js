@@ -70,6 +70,14 @@ const Container = styled.div`
   max-width: 1200px;
   margin: -22px auto 0;
   padding: 0 24px 60px;
+
+  @media (max-width: 768px) {
+    padding: 0 16px 40px;
+  }
+
+  @media (max-width: 380px) {
+    padding: 0 12px 32px;
+  }
 `;
 
 const Filters = styled.div`
@@ -191,15 +199,21 @@ const OpenPRSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    padding: 18px;
+    padding: 18px 16px;
     margin: 20px 0 24px;
+  }
+
+  @media (max-width: 380px) {
+    padding: 16px 12px;
+    border-radius: 16px;
   }
 `;
 
 const OpenPRHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 14px;
 
   h2 {
@@ -225,6 +239,11 @@ const OpenPRHeader = styled.div`
 
   @media (max-width: 768px) {
     h2 { font-size: 17px; }
+    gap: 8px;
+  }
+
+  @media (max-width: 380px) {
+    h2 { font-size: 16px; }
   }
 `;
 
@@ -233,6 +252,11 @@ const OpenPRSubtitle = styled.p`
   color: #6b7280;
   font-size: 14px;
   line-height: 1.5;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
 `;
 
 const OpenPRGrid = styled.div`
@@ -243,6 +267,11 @@ const OpenPRGrid = styled.div`
   @media (max-width: 600px) {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 `;
 
@@ -255,10 +284,16 @@ const OpenPRCard = styled.div`
   flex-direction: column;
   gap: 10px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-width: 0;
 
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px;
+    border-radius: 12px;
   }
 `;
 
@@ -266,6 +301,7 @@ const OpenPRCardHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 `;
 
 const OpenPRLogo = styled.div`
@@ -283,6 +319,12 @@ const OpenPRLogo = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
   }
 `;
 
@@ -303,6 +345,11 @@ const OpenPRInfo = styled.div`
     font-size: 12px;
     color: #6b7280;
   }
+
+  @media (max-width: 480px) {
+    .name { font-size: 13px; }
+    .category { font-size: 11px; }
+  }
 `;
 
 const ApplyButton = styled.a`
@@ -318,6 +365,7 @@ const ApplyButton = styled.a`
   font-weight: 700;
   text-decoration: none;
   transition: all 0.15s ease;
+  white-space: nowrap;
 
   &:hover {
     background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
@@ -328,6 +376,12 @@ const ApplyButton = styled.a`
   svg {
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+    font-size: 12px;
   }
 `;
 

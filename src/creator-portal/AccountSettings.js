@@ -238,7 +238,7 @@ const AccountSettings = () => {
 
       {showUpgradeModal && (
         <UpgradeModal
-          visible={showUpgradeModal}
+          isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
         />
       )}
