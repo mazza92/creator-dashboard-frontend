@@ -36,7 +36,14 @@ const AccountSettings = () => {
       window.location.href = response.data.portal_url;
     } catch (error) {
       console.error('Error opening portal:', error);
-      message.error('Failed to open billing portal. Please try again.');
+      const errorData = error.response?.data;
+      if (errorData?.code === 'customer_not_found') {
+        message.warning('Your subscription data has been reset. Please subscribe again.');
+        // Refresh subscription status to show free tier
+        fetchSubscriptionStatus();
+      } else {
+        message.error('Failed to open billing portal. Please try again.');
+      }
       setPortalLoading(false);
     }
   };
