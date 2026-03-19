@@ -20,7 +20,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);
-      message.error('Failed to start checkout. Please try again.');
+      const errorData = error.response?.data;
+      if (errorData?.code === 'stripe_account_pending') {
+        message.warning('Payment processing is temporarily unavailable. Please try again later or contact support@newcollab.co');
+      } else {
+        message.error('Failed to start checkout. Please try again.');
+      }
       setLoading(false);
     }
   };
