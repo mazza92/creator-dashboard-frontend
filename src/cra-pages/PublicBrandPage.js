@@ -32,12 +32,31 @@ const PublicBrandPage = () => {
   const [unlockedData, setUnlockedData] = useState(null);
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
   const [dailyUnlocksUsed, setDailyUnlocksUsed] = useState(0);
-  
+  const [subscriptionTier, setSubscriptionTier] = useState('free');
+
   const DAILY_UNLOCK_LIMIT = 5; // Free users get 5 unlocks per day
 
   useEffect(() => {
     fetchBrand();
   }, [slug]);
+
+  // Fetch subscription status when user is logged in
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (!user) return;
+      try {
+        const apiBase = getApiBase();
+        const { data } = await axios.get(`${apiBase}/api/subscription/status`, {
+          withCredentials: true
+        });
+        setSubscriptionTier(data.tier || 'free');
+        setDailyUnlocksUsed(data.daily_unlocks_used || 0);
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+      }
+    };
+    fetchSubscriptionStatus();
+  }, [user]);
 
   const fetchBrand = async () => {
     try {
@@ -55,7 +74,7 @@ const PublicBrandPage = () => {
     }
   };
 
-  const handleUnlock = async () => {
+  const handleUnlock = async (unlockType = 'all') => {
     if (!user) {
       // Save referral for post-signup redirect
       sessionStorage.setItem('brandReferral', slug);
@@ -69,20 +88,26 @@ const PublicBrandPage = () => {
       const apiBase = getApiBase();
       const { data } = await axios.post(
         `${apiBase}/api/public/brands/${slug}/unlock`,
-        {},
+        { unlock_type: unlockType },
         { withCredentials: true }
       );
 
-      setUnlockedData(data);
-      message.success('Access unlocked! Brand saved to your pipeline.');
+      setUnlockedData(prev => ({ ...prev, ...data }));
 
-      // If it's a direct link, open in new tab
-      if (data.applicationUrl) {
+      const unlockMessages = {
+        application: 'Application link unlocked!',
+        contact: 'PR contact email unlocked!',
+        all: 'Access unlocked! Brand saved to your pipeline.'
+      };
+      message.success(unlockMessages[unlockType] || unlockMessages.all);
+
+      // If it's an application unlock, open in new tab
+      if (data.applicationUrl && unlockType !== 'contact') {
         window.open(data.applicationUrl, '_blank');
       }
     } catch (error) {
       console.error('Error unlocking brand:', error);
-      
+
       // Check if it's a quota exceeded error (403)
       if (error.response?.status === 403) {
         // Extract quota info from error response if available
@@ -104,13 +129,30 @@ const PublicBrandPage = () => {
   };
 
   const renderCTA = () => {
-    // Already unlocked
-    if (unlockedData) {
+    const hasApplication = brand.gated?.hasDirectLink;
+    const hasEmail = brand.gated?.hasEmailContact;
+    const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+
+    // Determine what's already unlocked
+    const applicationUnlocked = unlockedData?.applicationUrl;
+    const emailUnlocked = unlockedData?.contactEmail;
+    const fullyUnlocked = (!hasApplication || applicationUnlocked) && (!hasEmail || emailUnlocked);
+
+    // Dynamic title based on what's available
+    const getTitle = () => {
+      if (hasApplication && hasEmail) return `Unlock ${brand.name} Contact`;
+      if (hasEmail) return `Unlock ${brand.name} Contact`;
+      if (hasApplication) return `Get ${brand.name} Application`;
+      return `Access ${brand.name}`;
+    };
+
+    // Fully unlocked state
+    if (fullyUnlocked && (applicationUnlocked || emailUnlocked)) {
       return (
         <UnlockedSection>
           <h3>✅ Access Granted</h3>
 
-          {unlockedData.applicationUrl && (
+          {applicationUnlocked && (
             <AccessItem>
               <LinkOutlined /> Application Link
               <Button
@@ -124,7 +166,7 @@ const PublicBrandPage = () => {
             </AccessItem>
           )}
 
-          {unlockedData.contactEmail && (
+          {emailUnlocked && (
             <AccessItem>
               <MailOutlined /> PR Manager Email
               <Button
@@ -146,20 +188,24 @@ const PublicBrandPage = () => {
 
     // User not logged in
     if (!user) {
+      const primaryFeature = hasEmail && !hasApplication
+        ? 'PR contact email'
+        : 'application link';
+
       return (
         <CTABox>
           <LockIcon><LockOutlined /></LockIcon>
           <h3>Sign Up to Apply</h3>
-          <p>Create a free account to unlock the application link</p>
+          <p>Create a free account to unlock the {primaryFeature}</p>
           <Button
             type="primary"
             size="large"
-            onClick={handleUnlock}
+            onClick={() => handleUnlock()}
           >
             Create Free Account
           </Button>
           <FeatureList>
-            <li>✓ Instant access to application link</li>
+            <li>✓ Instant access to {hasApplication ? 'application links' : 'brand contacts'}</li>
             <li>✓ Save to your brand pipeline</li>
             <li>✓ Track your applications</li>
           </FeatureList>
@@ -167,34 +213,39 @@ const PublicBrandPage = () => {
       );
     }
 
-    // User logged in but hasn't unlocked
-    const tier = user.subscription_tier || 'free';
-    const isPro = tier === 'pro' || tier === 'elite';
-
+    // User logged in - show dynamic unlock options
     return (
       <CTABox>
-        <h3>Unlock {brand.name} Contact</h3>
+        <h3>{getTitle()}</h3>
 
         <UnlockOptions>
-          {brand.gated.hasDirectLink && (
-            <UnlockOption>
-              <LinkOutlined style={{ fontSize: 24 }} />
+          {/* Application Link Option */}
+          {hasApplication && (
+            <UnlockOption $unlocked={applicationUnlocked}>
+              <LinkOutlined style={{ fontSize: 24, color: applicationUnlocked ? '#52c41a' : '#667eea' }} />
               <div>
                 <strong>Application Link</strong>
                 <span>Direct link to brand's application form</span>
               </div>
-              <FreeBadge>FREE</FreeBadge>
+              {applicationUnlocked ? (
+                <UnlockedBadge>✓ Unlocked</UnlockedBadge>
+              ) : (
+                <FreeBadge>FREE</FreeBadge>
+              )}
             </UnlockOption>
           )}
 
-          {brand.gated.hasEmailContact && (
-            <UnlockOption disabled={!isPro}>
-              <MailOutlined style={{ fontSize: 24 }} />
+          {/* PR Contact Email Option */}
+          {hasEmail && (
+            <UnlockOption $unlocked={emailUnlocked} $disabled={!isPro && !emailUnlocked}>
+              <MailOutlined style={{ fontSize: 24, color: emailUnlocked ? '#52c41a' : (!isPro ? '#999' : '#667eea') }} />
               <div>
                 <strong>PR Manager Email</strong>
                 <span>Pitch directly to the decision maker</span>
               </div>
-              {isPro ? (
+              {emailUnlocked ? (
+                <UnlockedBadge>✓ Unlocked</UnlockedBadge>
+              ) : isPro ? (
                 <ProBadge>PRO</ProBadge>
               ) : (
                 <LockedBadge><LockOutlined /> PRO</LockedBadge>
@@ -203,17 +254,91 @@ const PublicBrandPage = () => {
           )}
         </UnlockOptions>
 
-        <Button
-          type="primary"
-          size="large"
-          loading={unlocking}
-          onClick={handleUnlock}
-          block
-        >
-          {isPro ? 'Get Full Access' : 'Get Application Link'}
-        </Button>
+        {/* Dynamic action buttons */}
+        <UnlockActions>
+          {/* Show application unlock button if available and not unlocked */}
+          {hasApplication && !applicationUnlocked && (
+            <Button
+              type="primary"
+              size="large"
+              loading={unlocking}
+              onClick={() => handleUnlock('application')}
+              block
+            >
+              Get Application Link
+            </Button>
+          )}
 
-        {!isPro && brand.gated.hasEmailContact && (
+          {/* Show email unlock button if available */}
+          {hasEmail && !emailUnlocked && (
+            isPro ? (
+              <Button
+                type={hasApplication && !applicationUnlocked ? 'default' : 'primary'}
+                size="large"
+                loading={unlocking}
+                onClick={() => handleUnlock('contact')}
+                block
+                style={hasApplication && !applicationUnlocked ? { marginTop: 12 } : {}}
+              >
+                <MailOutlined /> Unlock PR Contact Email
+              </Button>
+            ) : (
+              <UpgradeButton
+                type="default"
+                size="large"
+                onClick={() => setUpgradeModalVisible(true)}
+                block
+                style={hasApplication && !applicationUnlocked ? { marginTop: 12 } : {}}
+              >
+                <LockOutlined /> Unlock PR Email
+                <UpgradeTag>PRO</UpgradeTag>
+              </UpgradeButton>
+            )
+          )}
+
+          {/* If both are available and user is PRO, offer unlock all */}
+          {hasApplication && hasEmail && !applicationUnlocked && !emailUnlocked && isPro && (
+            <Button
+              type="link"
+              onClick={() => handleUnlock('all')}
+              style={{ marginTop: 8 }}
+            >
+              Unlock Both →
+            </Button>
+          )}
+        </UnlockActions>
+
+        {/* Unlocked items - show access buttons */}
+        {(applicationUnlocked || emailUnlocked) && (
+          <UnlockedAccess>
+            {applicationUnlocked && (
+              <Button
+                type="primary"
+                href={unlockedData.applicationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                icon={<LinkOutlined />}
+                block
+              >
+                Open Application Form
+              </Button>
+            )}
+            {emailUnlocked && (
+              <Button
+                type="primary"
+                href={`mailto:${unlockedData.contactEmail}`}
+                icon={<MailOutlined />}
+                block
+                style={{ marginTop: applicationUnlocked ? 12 : 0 }}
+              >
+                Email: {unlockedData.contactEmail}
+              </Button>
+            )}
+          </UnlockedAccess>
+        )}
+
+        {/* Upgrade prompt for free users when email is available */}
+        {!isPro && hasEmail && !emailUnlocked && (
           <UpgradePrompt>
             <p>Want the PR manager's email?</p>
             <Link to="/creator/dashboard/settings">
@@ -974,11 +1099,11 @@ const UnlockOption = styled.div`
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: ${props => props.disabled ? '#f5f5f5' : '#f9fafb'};
-  border: 2px solid ${props => props.disabled ? '#ddd' : '#667eea'};
+  background: ${props => props.$unlocked ? '#f0fdf4' : (props.$disabled ? '#f5f5f5' : '#f9fafb')};
+  border: 2px solid ${props => props.$unlocked ? '#52c41a' : (props.$disabled ? '#ddd' : '#667eea')};
   border-radius: 12px;
   text-align: left;
-  opacity: ${props => props.disabled ? 0.6 : 1};
+  opacity: ${props => props.$disabled ? 0.6 : 1};
 
   div {
     flex: 1;
@@ -993,6 +1118,50 @@ const UnlockOption = styled.div`
       color: #666;
     }
   }
+`;
+
+const UnlockedBadge = styled.span`
+  background: #52c41a;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+`;
+
+const UnlockActions = styled.div`
+  margin-top: 20px;
+`;
+
+const UpgradeButton = styled(Button)`
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #f5f5f5 !important;
+  border-color: #ddd !important;
+  color: #666 !important;
+
+  &:hover {
+    background: #eee !important;
+    border-color: #ccc !important;
+  }
+`;
+
+const UpgradeTag = styled.span`
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #333;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 8px;
+`;
+
+const UnlockedAccess = styled.div`
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
 `;
 
 const FreeBadge = styled.span`

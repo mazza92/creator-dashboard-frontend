@@ -53,8 +53,8 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || '',
-    minFollowers: searchParams.get('minFollowers') || '',
-    featuredOnly: searchParams.get('featured') === 'true'
+    activity: searchParams.get('activity') || '', // 'new', 'active', 'responsive'
+    contactType: searchParams.get('contactType') || '' // 'application', 'email', or '' for all
   });
 
   useEffect(() => {
@@ -122,8 +122,8 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         limit: pagination.limit,
         ...(filters.search && { search: filters.search }),
         ...(filters.category && { category: filters.category }),
-        ...(filters.minFollowers && { min_followers: filters.minFollowers }),
-        ...(filters.featuredOnly && { featured_only: true })
+        ...(filters.activity && { activity: filters.activity }),
+        ...(filters.contactType && { contact_type: filters.contactType })
       };
 
       const { data } = await axios.get(`${API_BASE}/api/public/brands`, { params });
@@ -193,6 +193,11 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   };
 
   const handleFilterChange = (key, value) => {
+    // Check if free user is trying to use PRO "responsive" filter
+    if (key === 'activity' && value === 'responsive' && subscriptionTier !== 'pro' && subscriptionTier !== 'elite') {
+      setUpgradeModalVisible(true);
+      return;
+    }
     setFilters(prev => ({ ...prev, [key]: value }));
     setPagination(prev => ({ ...prev, page: 1 }));
     updateURLParams({ [key]: value });
@@ -214,15 +219,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     setPagination(prev => ({ ...prev, page }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  const followerOptions = [
-    { label: 'Any Size', value: '' },
-    { label: '1K+ followers', value: '1000' },
-    { label: '5K+ followers', value: '5000' },
-    { label: '10K+ followers', value: '10000' },
-    { label: '50K+ followers', value: '50000' },
-    { label: '100K+ followers', value: '100000' }
-  ];
 
   const isBrandSaved = (brandId) => savedBrandIds.has(brandId);
 
@@ -306,33 +302,43 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             </FilterItem>
 
             <FilterItem>
-              <label>Minimum Followers</label>
+              <label>Brand Activity</label>
               <Select
                 size="large"
                 style={{ width: '100%' }}
-                placeholder="Any Size"
-                value={filters.minFollowers || undefined}
-                onChange={(value) => handleFilterChange('minFollowers', value)}
+                placeholder="All Brands"
+                value={filters.activity || undefined}
+                onChange={(value) => handleFilterChange('activity', value)}
                 allowClear
               >
-                {followerOptions.map(opt => (
-                  <Select.Option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </Select.Option>
-                ))}
+                <Select.Option value="new">
+                  🆕 Added This Week
+                </Select.Option>
+                <Select.Option value="active">
+                  ⚡ Actively Reviewing
+                </Select.Option>
+                <Select.Option value="responsive">
+                  ✨ High Response Rate {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
+                </Select.Option>
               </Select>
             </FilterItem>
 
             <FilterItem>
-              <label>Show Featured Only</label>
+              <label>Contact Type</label>
               <Select
                 size="large"
                 style={{ width: '100%' }}
-                value={filters.featuredOnly ? 'true' : 'false'}
-                onChange={(value) => handleFilterChange('featuredOnly', value === 'true')}
+                value={filters.contactType || undefined}
+                onChange={(value) => handleFilterChange('contactType', value)}
+                placeholder="All Brands"
+                allowClear
               >
-                <Select.Option value="false">All Brands</Select.Option>
-                <Select.Option value="true">Featured Only</Select.Option>
+                <Select.Option value="application">
+                  🔗 Has Application Form <FreeBadgeInline>FREE</FreeBadgeInline>
+                </Select.Option>
+                <Select.Option value="email">
+                  ✉️ Has PR Email <ProBadgeInline>PRO</ProBadgeInline>
+                </Select.Option>
               </Select>
             </FilterItem>
           </FilterRow>
@@ -638,6 +644,26 @@ const FilterItem = styled.div`
     margin-bottom: 8px;
     text-transform: uppercase;
   }
+`;
+
+const FreeBadgeInline = styled.span`
+  background: #52c41a;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 8px;
+`;
+
+const ProBadgeInline = styled.span`
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #333;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 8px;
 `;
 
 const BrandGrid = styled.div`

@@ -257,6 +257,17 @@ const BrandAdmin = () => {
 
   // Import from clipboard (paste handler)
   const handlePaste = useCallback(async (e) => {
+    // Skip bulk import if user is editing a cell or input field
+    const activeElement = document.activeElement;
+    const isEditing = activeElement && (
+      activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.isContentEditable ||
+      activeElement.closest('.ag-cell-edit-wrapper') ||
+      activeElement.closest('.ag-popup-editor')
+    );
+    if (isEditing) return;
+
     const clipboardData = e.clipboardData?.getData('text');
     if (!clipboardData) return;
 

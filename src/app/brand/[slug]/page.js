@@ -452,6 +452,7 @@ export default async function BrandPage({ params }) {
 
               <BrandUnlockClient
                 slug={brand.slug}
+                brandName={brand.name}
                 hasDirectLink={hasDirectLink}
                 hasEmail={hasEmail}
               />

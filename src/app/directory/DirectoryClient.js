@@ -419,8 +419,8 @@ export default function DirectoryClient({
   const [search, setSearch] = useState(initialSearch || '');
   // Keep category case-sensitive to match API values
   const [category, setCategory] = useState(initialCategory ? initialCategory.trim() : '');
-  const [minFollowers, setMinFollowers] = useState('');
-  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [activity, setActivity] = useState(''); // 'new', 'active', 'responsive'
+  const [contactType, setContactType] = useState(''); // 'application', 'email', or '' for all
 
   const limit = 24;
 
@@ -431,16 +431,16 @@ export default function DirectoryClient({
 
     const urlSearch = searchParams?.get('search') || '';
     const urlCategory = searchParams?.get('category') || '';
-    const urlMinFollowers = searchParams?.get('minFollowers') || '';
-    const urlFeatured = searchParams?.get('featured') === 'true';
+    const urlActivity = searchParams?.get('activity') || '';
+    const urlContactType = searchParams?.get('contactType') || '';
     const urlPage = Number(searchParams?.get('page') || '1');
 
     if (!initialSearch && urlSearch) setSearch(urlSearch);
     if (!initialCategory && urlCategory) {
       setCategory(urlCategory.trim());
     }
-    if (urlMinFollowers) setMinFollowers(urlMinFollowers);
-    if (urlFeatured) setFeaturedOnly(true);
+    if (urlActivity) setActivity(urlActivity);
+    if (urlContactType) setContactType(urlContactType);
     if (Number.isFinite(urlPage) && urlPage > 1) setPage(urlPage);
   }, [searchParams, initialSearch, initialCategory]);
 
@@ -459,15 +459,6 @@ export default function DirectoryClient({
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
-  const followerOptions = [
-    { label: 'Any size', value: '' },
-    { label: '1K+ followers', value: '1000' },
-    { label: '5K+ followers', value: '5000' },
-    { label: '10K+ followers', value: '10000' },
-    { label: '50K+ followers', value: '50000' },
-    { label: '100K+ followers', value: '100000' },
-  ];
-
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     // For region-based filtering (client-side), fetch more brands
@@ -482,10 +473,10 @@ export default function DirectoryClient({
     if (category) {
       params.set('category', category.trim());
     }
-    if (minFollowers) params.set('min_followers', minFollowers);
-    if (featuredOnly) params.set('featured_only', 'true');
+    if (activity) params.set('activity', activity);
+    if (contactType) params.set('contact_type', contactType);
     return params.toString();
-  }, [page, search, category, minFollowers, featuredOnly, initialCountry]);
+  }, [page, search, category, activity, contactType, initialCountry]);
 
   useEffect(() => {
     let cancelled = false;
@@ -618,28 +609,34 @@ export default function DirectoryClient({
             <Select
               size="large"
               allowClear
-              placeholder="Any size"
-              value={minFollowers || undefined}
+              placeholder="All brands"
+              value={activity || undefined}
               onChange={(val) => {
                 const next = val || '';
                 setPage(1);
-                setMinFollowers(next);
-                updateUrl({ minFollowers: next, page: 1 });
+                setActivity(next);
+                updateUrl({ activity: next, page: 1 });
               }}
-              options={followerOptions.map((o) => ({ value: o.value, label: o.label }))}
+              options={[
+                { value: 'new', label: '🆕 Added This Week' },
+                { value: 'active', label: '⚡ Actively Reviewing' },
+                { value: 'responsive', label: '✨ High Response Rate' },
+              ]}
             />
             <Select
               size="large"
-              value={featuredOnly ? 'true' : 'false'}
+              value={contactType || undefined}
+              placeholder="All brands"
+              allowClear
               onChange={(val) => {
-                const next = val === 'true';
+                const next = val || '';
                 setPage(1);
-                setFeaturedOnly(next);
-                updateUrl({ featured: next ? 'true' : '', page: 1 });
+                setContactType(next);
+                updateUrl({ contactType: next, page: 1 });
               }}
               options={[
-                { value: 'false', label: 'All brands' },
-                { value: 'true', label: 'Featured only' },
+                { value: 'application', label: '🔗 Has Application Form' },
+                { value: 'email', label: '✉️ Has PR Email' },
               ]}
               suffixIcon={<FilterOutlined />}
             />
