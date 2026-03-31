@@ -1,5 +1,6 @@
 // Auto-generated post index — do not edit manually
 export const posts = [
+  "ugc-vs-influencer-marketing-differences-2026",
   "jewelry-brands-micro-influencers-2026",
   "food-brands-sending-pr-packages-2026",
   "fitness-brands-pr-micro-influencers-2026",
