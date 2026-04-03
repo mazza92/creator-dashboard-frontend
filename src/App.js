@@ -83,6 +83,7 @@ import AustraliaDirectory from './cra-pages/AustraliaDirectory';
 import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
 import BrandAdmin from './admin/BrandAdmin';
+import AdminReports from './admin/AdminReports';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -400,6 +401,7 @@ function AppContent() {
             {/* PR Hunter - Internal Tool (has its own login) */}
             <Route path='/supply' element={<PRHunter />} />
             <Route path='/admin/brands' element={<BrandAdmin />} />
+            <Route path='/admin/reports' element={<AdminReports />} />
 
             {/* Standalone routes for profiles, wrapped in a layout manager */}
             <Route element={<ProfileLayoutWrapper />}>
