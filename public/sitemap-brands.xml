@@ -1,0 +1,2453 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Brand Directory Landing Page -->
+  <url>
+    <loc>https://newcollab.co/directory</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Pela Case -->
+  <url>
+    <loc>https://newcollab.co/brand/pela-case</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/pelacase.com.ico</image:loc>
+      <image:title>Pela Case Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Briogeo -->
+  <url>
+    <loc>https://newcollab.co/brand/briogeo</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Lounge Underwear -->
+  <url>
+    <loc>https://newcollab.co/brand/lounge-underwear</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/loungeunderwear.com.ico</image:loc>
+      <image:title>Lounge Underwear Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Showpo -->
+  <url>
+    <loc>https://newcollab.co/brand/showpo</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/showpo.com.ico</image:loc>
+      <image:title>Showpo Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Foreo -->
+  <url>
+    <loc>https://newcollab.co/brand/foreo</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- PrettyLittleThing -->
+  <url>
+    <loc>https://newcollab.co/brand/prettylittlething</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/prettylittlething.com.ico</image:loc>
+      <image:title>PrettyLittleThing Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Aurate New York -->
+  <url>
+    <loc>https://newcollab.co/brand/aurate-new-york</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://auratenewyork.com/cdn/shop/t/35/assets/og-image.png?v=57472515067479349441664483820</image:loc>
+      <image:title>Aurate New York Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- belif -->
+  <url>
+    <loc>https://newcollab.co/brand/belif</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.sanity.io/images/t70t1kyk/intermediate/14f0b60bc06a3a0d3402d4352fb9c11ae24dfadd-1200x630.jpg</image:loc>
+      <image:title>belif Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Biossance -->
+  <url>
+    <loc>https://newcollab.co/brand/biossance</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://biossance.com/ssr-assets/biossance/og-image.png</image:loc>
+      <image:title>Biossance Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Brooklinen -->
+  <url>
+    <loc>https://newcollab.co/brand/brooklinen</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0951/7126/files/0126_Shopify_Social_Image.jpg?v=1765839763</image:loc>
+      <image:title>Brooklinen Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Diptyque -->
+  <url>
+    <loc>https://newcollab.co/brand/diptyque</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.diptyqueparis.com/favicon.svg</image:loc>
+      <image:title>Diptyque Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Function of Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/function-of-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://functionofbeauty.com/cdn/shop/files/FUNCTION_LINK_1200x628_47b7742f-3e1f-47ba-83cb-5182d8d05ebb_1024x1024.png?v=1698694256</image:loc>
+      <image:title>Function of Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- GT's Living Foods -->
+  <url>
+    <loc>https://newcollab.co/brand/gts-living-foods</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://gtslivingfoods.com/cdn/shop/files/GT_s_Favicon.webp?v=1736379824&width=96</image:loc>
+      <image:title>GT's Living Foods Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- JadeYoga -->
+  <url>
+    <loc>https://newcollab.co/brand/jadeyoga</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://jadeyoga.com/cdn/shop/files/jade_logo_large_d20a5d45-dd15-4c6a-9a15-bd69117662c7_1200x1200.png?v=1622053817</image:loc>
+      <image:title>JadeYoga Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Kylie Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/kylie-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/561814645_18490206670072786_3686176010036655327_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby45OTkuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QG0eMfR3JQShRiT8PLLoYkOLjH_s8nFlnKEAApB1Sri2epy4T_ZpE82d0gsFBVig04&_nc_ohc=aXlE0M7EwioQ7kNvwEUwjYd&_nc_gid=bVoAjfIiEqAEAZjomkCgBQ&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfqtGS6vvlABBUQO9vC37wM9BLkAiU7D3zdqNv3K0iaY0g&oe=6964750E&_nc_sid=8b3546</image:loc>
+      <image:title>Kylie Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- MAC Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/mac-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.maccosmetics.com/sites/maccosmetics/themes/mac_base/apple-touch-icon.png</image:loc>
+      <image:title>MAC Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Olay -->
+  <url>
+    <loc>https://newcollab.co/brand/olay</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn11.bigcommerce.com/s-gud7r2x2lu/product_images/Madonna%20-%2050x50%201.png?t=1738333746</image:loc>
+      <image:title>Olay Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Outdoor Voices -->
+  <url>
+    <loc>https://newcollab.co/brand/outdoor-voices</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0190/1390/files/New_Arrivals_-_Mobile_f778f52f-e3ba-40ef-8a66-2a2a4091613d.jpg?v=1767631932</image:loc>
+      <image:title>Outdoor Voices Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Revolution Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/revolution-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.revolutionbeauty.com/on/demandware.static/Sites-revbe-uk-Site/-/default/dwb4801e7e/images/favicons/favicon-196x196.png</image:loc>
+      <image:title>Revolution Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Shopbop -->
+  <url>
+    <loc>https://newcollab.co/brand/shopbop</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.shopbop.com/favicon.ico</image:loc>
+      <image:title>Shopbop Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- ColourPop Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/colourpop-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/482628845_511375448359760_2656690682460089686_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby45NjAuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QHJFhCGsXmg6y7iS9UHEEqEL7kUdCGjiTd_5CkfxSsXNWqmRRp96M1WSIWAR3D9oVo&_nc_ohc=KbsnuneEioYQ7kNvwEIp8eh&_nc_gid=xTTd0g0_LYvlrIkObISmeg&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfqK1wQK8p3QucM8xKtAaAIXCz452pCLL7mvM6oZfbvw7w&oe=69645C00&_nc_sid=8b3546</image:loc>
+      <image:title>ColourPop Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Bondi Sands -->
+  <url>
+    <loc>https://newcollab.co/brand/bondi-sands</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/bondisands.com.ico</image:loc>
+      <image:title>Bondi Sands Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- The Ordinary -->
+  <url>
+    <loc>https://newcollab.co/brand/the-ordinary</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Sand & Sky -->
+  <url>
+    <loc>https://newcollab.co/brand/sand-sky</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/sandandsky.com.ico</image:loc>
+      <image:title>Sand & Sky Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Tower 28 -->
+  <url>
+    <loc>https://newcollab.co/brand/tower-28</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/tower28beauty.com.ico</image:loc>
+      <image:title>Tower 28 Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Glow Recipe -->
+  <url>
+    <loc>https://newcollab.co/brand/glow-recipe</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/glowrecipe.com.ico</image:loc>
+      <image:title>Glow Recipe Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Summer Fridays -->
+  <url>
+    <loc>https://newcollab.co/brand/summer-fridays</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/summerfridays.com.ico</image:loc>
+      <image:title>Summer Fridays Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Frank Body -->
+  <url>
+    <loc>https://newcollab.co/brand/frank-body</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- GFUEL -->
+  <url>
+    <loc>https://newcollab.co/brand/gfuel</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- K18 -->
+  <url>
+    <loc>https://newcollab.co/brand/k18</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Solawave -->
+  <url>
+    <loc>https://newcollab.co/brand/solawave</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Rare Beauty by Selena Gomez -->
+  <url>
+    <loc>https://newcollab.co/brand/rare-beauty-by-selena-gomez</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/588630220_18445605130098631_8762970487040409626_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QHZOiFNXaZWJ_XW10FErpTu_a45_HFAmARI46ehHspDUYS9so7fbiP0u2de5QYr6oU&_nc_ohc=eWb6Bd-Cl4QQ7kNvwGvD0gb&_nc_gid=mbOCfQcHcPHvc-SnkJ6ybg&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afrn9ctDq6G_Rd4jzwE2T6b4crdLrqsiDMe-Qpyd8sS-HA&oe=69645435&_nc_sid=8b3546</image:loc>
+      <image:title>Rare Beauty by Selena Gomez Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Tula Skincare -->
+  <url>
+    <loc>https://newcollab.co/brand/tula-skincare</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Glossier -->
+  <url>
+    <loc>https://newcollab.co/brand/glossier</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/475246770_590040433931997_7945722252960712817_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby42NDAuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QH2FCsP2ioR7UUTc7v-I0saBaHj9PAMKTOBhnTpTslcq-yXx4UUNFfjS_noQdBnR0g&_nc_ohc=Y7o65YMd70UQ7kNvwGTqdVU&_nc_gid=HWFnEg6pE7Ji_aN4PMxJtw&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfrCiohppFXzMcbuCxVn8NtVRyBb_j69qKqKrHfQAZ9dlA&oe=6964669B&_nc_sid=8b3546</image:loc>
+      <image:title>Glossier Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- HyperX -->
+  <url>
+    <loc>https://newcollab.co/brand/hyperx</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/hyperx.com.ico</image:loc>
+      <image:title>HyperX Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Kosas -->
+  <url>
+    <loc>https://newcollab.co/brand/kosas</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/kosas.com.ico</image:loc>
+      <image:title>Kosas Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Liquid I.V. -->
+  <url>
+    <loc>https://newcollab.co/brand/liquid-iv</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/liquid-iv.com.ico</image:loc>
+      <image:title>Liquid I.V. Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Olly -->
+  <url>
+    <loc>https://newcollab.co/brand/olly</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Peach & Lily -->
+  <url>
+    <loc>https://newcollab.co/brand/peach-lily</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/peachandlily.com.ico</image:loc>
+      <image:title>Peach & Lily Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Ana Luisa -->
+  <url>
+    <loc>https://newcollab.co/brand/ana-luisa</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Drunk Elephant Skincare -->
+  <url>
+    <loc>https://newcollab.co/brand/drunk-elephant-skincare</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/502952926_18510773734031542_8161221187375920138_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=110&_nc_oc=Q6cZ2QGPFnR-bCc4hA4atHilDz1KWE0xiUtBKYSqAJycJ3-aqqj5puYV0abRvioCHVkbl5g&_nc_ohc=RNoqviadMWUQ7kNvwGWDQNc&_nc_gid=ECOFZawayeHHRyioSSyqpA&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfpeEg8mjaFFYi9D9MgxanP3mZNtyINaCqjE1WdoOLLCpw&oe=696455B0&_nc_sid=8b3546</image:loc>
+      <image:title>Drunk Elephant Skincare Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Naked Sundays -->
+  <url>
+    <loc>https://newcollab.co/brand/naked-sundays</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/nakedsundays.com.ico</image:loc>
+      <image:title>Naked Sundays Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Olaplex -->
+  <url>
+    <loc>https://newcollab.co/brand/olaplex</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- OLIPOP -->
+  <url>
+    <loc>https://newcollab.co/brand/olipop</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/drinkolipop.com.ico</image:loc>
+      <image:title>OLIPOP Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- PopSockets -->
+  <url>
+    <loc>https://newcollab.co/brand/popsockets</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/popsockets.com.ico</image:loc>
+      <image:title>PopSockets Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Secretlab -->
+  <url>
+    <loc>https://newcollab.co/brand/secretlab</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/secretlab.co.ico</image:loc>
+      <image:title>Secretlab Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Verb -->
+  <url>
+    <loc>https://newcollab.co/brand/verb</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Youth To The People -->
+  <url>
+    <loc>https://newcollab.co/brand/youth-to-the-people</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/youthtothepeople.com.ico</image:loc>
+      <image:title>Youth To The People Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Amika -->
+  <url>
+    <loc>https://newcollab.co/brand/amika</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Casetify -->
+  <url>
+    <loc>https://newcollab.co/brand/casetify</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Elgato -->
+  <url>
+    <loc>https://newcollab.co/brand/elgato</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- FENTY BEAUTY BY RIHANNA -->
+  <url>
+    <loc>https://newcollab.co/brand/fenty-beauty-by-rihanna</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/555000812_18435568984098242_4921633706745003052_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QFD54raBycU4TJCF8rpjJFK1rc0zOSPme7kgxgYEvbP4qRVe6UNtEL5EewJTcExwpU&_nc_ohc=e1u__vMU1b0Q7kNvwFvqbPy&_nc_gid=YYZSHWi8bsP4JtOTF7oVUw&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afqqc3-Eu9lE-2Ijv_3nFHrBV4gK2cJXKK2PdHmLRDLHmg&oe=696483B9&_nc_sid=8b3546</image:loc>
+      <image:title>FENTY BEAUTY BY RIHANNA Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Ilia Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/ilia-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/iliabeauty.com.ico</image:loc>
+      <image:title>Ilia Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Magic Spoon -->
+  <url>
+    <loc>https://newcollab.co/brand/magic-spoon</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/magicspoon.com.ico</image:loc>
+      <image:title>Magic Spoon Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Mecca -->
+  <url>
+    <loc>https://newcollab.co/brand/mecca</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/mecca.com.au.ico</image:loc>
+      <image:title>Mecca Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Mejuri -->
+  <url>
+    <loc>https://newcollab.co/brand/mejuri</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Meshki -->
+  <url>
+    <loc>https://newcollab.co/brand/meshki</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/meshki.us.ico</image:loc>
+      <image:title>Meshki Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- NuFACE -->
+  <url>
+    <loc>https://newcollab.co/brand/nuface</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Pepper Mayo -->
+  <url>
+    <loc>https://newcollab.co/brand/pepper-mayo</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/peppermayo.com.ico</image:loc>
+      <image:title>Pepper Mayo Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- SteelSeries -->
+  <url>
+    <loc>https://newcollab.co/brand/steelseries</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/steelseries.com.ico</image:loc>
+      <image:title>SteelSeries Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Oh Polly -->
+  <url>
+    <loc>https://newcollab.co/brand/oh-polly</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/ohpolly.com.ico</image:loc>
+      <image:title>Oh Polly Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Blue Microphones -->
+  <url>
+    <loc>https://newcollab.co/brand/blue-microphones</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- BYS Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/bys-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Chomps -->
+  <url>
+    <loc>https://newcollab.co/brand/chomps</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/chomps.com.ico</image:loc>
+      <image:title>Chomps Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Girlfriend Collective -->
+  <url>
+    <loc>https://newcollab.co/brand/girlfriend-collective</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Missoma -->
+  <url>
+    <loc>https://newcollab.co/brand/missoma</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Princess Polly -->
+  <url>
+    <loc>https://newcollab.co/brand/princess-polly</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/princesspolly.com.ico</image:loc>
+      <image:title>Princess Polly Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Razer -->
+  <url>
+    <loc>https://newcollab.co/brand/razer</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/razer.com.ico</image:loc>
+      <image:title>Razer Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Ritual -->
+  <url>
+    <loc>https://newcollab.co/brand/ritual</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- TATCHA Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/tatcha-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/461158751_2409466362585111_7724470981884753826_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=103&_nc_oc=Q6cZ2QGVKOyYJBIWsJuk1_sEpY6jxH1dPBUdXa2uKsbQ5vUQpcGIRvKyzfEi0s5c3Jkj4kQ&_nc_ohc=OqgMhAy_-7QQ7kNvwE3SR5v&_nc_gid=uZxzNmp6bFWjNpCdbnCfNg&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfpZfn4L1V6y_gngCxfE81eqdYuAhyi1JMIXVKrIbeh9rA&oe=69647B1E&_nc_sid=8b3546</image:loc>
+      <image:title>TATCHA Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Logitech G -->
+  <url>
+    <loc>https://newcollab.co/brand/logitech-g</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/logitechg.com.ico</image:loc>
+      <image:title>Logitech G Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Alo Yoga -->
+  <url>
+    <loc>https://newcollab.co/brand/alo-yoga</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/aloyoga.com.ico</image:loc>
+      <image:title>Alo Yoga Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Beginning Boutique -->
+  <url>
+    <loc>https://newcollab.co/brand/beginning-boutique</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/beginningboutique.com.ico</image:loc>
+      <image:title>Beginning Boutique Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Nasty Gal -->
+  <url>
+    <loc>https://newcollab.co/brand/nasty-gal</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/nastygal.com.ico</image:loc>
+      <image:title>Nasty Gal Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Allbirds -->
+  <url>
+    <loc>https://newcollab.co/brand/allbirds</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Corsair -->
+  <url>
+    <loc>https://newcollab.co/brand/corsair</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/corsair.com.ico</image:loc>
+      <image:title>Corsair Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Gymshark -->
+  <url>
+    <loc>https://newcollab.co/brand/gymshark</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/469307284_1558880571660077_7433240611982824601_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4zMjAuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QEs6nFpuRPHuZYGVFtTPkpZXHL_sIYrL_7QBDJr74ymSQ5njOMvd-hMIj9kOkkL4z4&_nc_ohc=tDsb4bY8JWsQ7kNvwFDmMd9&_nc_gid=vNDALrdAQI4H95FAiymPnw&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfqAJJeylbXWM3_D8ffNC9-DePIlzsUNIg6w4W6vhvucBQ&oe=69644747&_nc_sid=8b3546</image:loc>
+      <image:title>Gymshark Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Sakara -->
+  <url>
+    <loc>https://newcollab.co/brand/sakara</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ASOS -->
+  <url>
+    <loc>https://newcollab.co/brand/asos</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/asos.com.ico</image:loc>
+      <image:title>ASOS Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Reformation -->
+  <url>
+    <loc>https://newcollab.co/brand/reformation</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Lululemon -->
+  <url>
+    <loc>https://newcollab.co/brand/lululemon</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/lululemon.com.ico</image:loc>
+      <image:title>Lululemon Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Revolve -->
+  <url>
+    <loc>https://newcollab.co/brand/revolve</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://icons.duckduckgo.com/ip3/revolve.com.ico</image:loc>
+      <image:title>Revolve Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Patagonia -->
+  <url>
+    <loc>https://newcollab.co/brand/patagonia</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ADEAM  -->
+  <url>
+    <loc>https://newcollab.co/brand/adeam</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0256/2362/5809/files/Adeam_logo_checkout.jpg?height=628&pad_color=fff&v=1613696349&width=1200</image:loc>
+      <image:title>ADEAM  Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- AG1 Official -->
+  <url>
+    <loc>https://newcollab.co/brand/ag1-official</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.sanity.io/images/jf30o7wb/production/857ba365b3af7285a201e28edd76d67dfe98b538-1800x945.png</image:loc>
+      <image:title>AG1 Official Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- AGOLDE -->
+  <url>
+    <loc>https://newcollab.co/brand/agolde</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://agolde.com/cdn/shop/files/agolde_logo.png?height=628&pad_color=ffffff&v=1633632317&width=1200</image:loc>
+      <image:title>AGOLDE Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- ALICE + OLIVIA -->
+  <url>
+    <loc>https://newcollab.co/brand/alice-olivia</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://mir-s3-cdn-cf.behance.net/projects/404/a43440147555753.Y3JvcCwxNTg2LDEyNDEsODIsMA.jpg</image:loc>
+      <image:title>ALICE + OLIVIA Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Almay -->
+  <url>
+    <loc>https://newcollab.co/brand/almay</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.almay.com/cdn/shop/files/favicon-32x32.png?v=5329274301253224425</image:loc>
+      <image:title>Almay Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- American Eagle Outfitters -->
+  <url>
+    <loc>https://newcollab.co/brand/american-eagle-outfitters</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://s7d2.scene7.com/is/image/aeo/aeo_social</image:loc>
+      <image:title>American Eagle Outfitters Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Anastasia Beverly Hills -->
+  <url>
+    <loc>https://newcollab.co/brand/anastasia-beverly-hills</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.anastasiabeverlyhills.com/cdn/shop/files/ABH_MMDDYY_Hero_Grid_Dt_2x_2400x1256_5801d4ea-1c0a-4d4e-9be3-f51bf10a2e7b.jpg?v=1691193263&width=4800</image:loc>
+      <image:title>Anastasia Beverly Hills Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Andie Co. -->
+  <url>
+    <loc>https://newcollab.co/brand/andie-co</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0024/2289/8758/files/ANDIE-logo-full-rgb-black.png?height=628&pad_color=fff&v=1619642340&width=1200</image:loc>
+      <image:title>Andie Co. Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Anthropologie -->
+  <url>
+    <loc>https://newcollab.co/brand/anthropologie</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://static.anthropologie.com/static/v3/apple-touch/appleicon_29x29.png</image:loc>
+      <image:title>Anthropologie Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Aquaphor -->
+  <url>
+    <loc>https://newcollab.co/brand/aquaphor</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images-1.eucerin.com/~/media/aquaphor/aquaphor-logo/favicon.ico</image:loc>
+      <image:title>Aquaphor Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Article -->
+  <url>
+    <loc>https://newcollab.co/brand/article</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn-cms-assets.article.com/GKDoYHz1ZyltXKe33V8JU-3531008697c5ad898f2aaefe9a820ab1</image:loc>
+      <image:title>Article Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Athleta -->
+  <url>
+    <loc>https://newcollab.co/brand/athleta</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://athleta.gap.com/static_content/onesitecategory/components/mfe/_next/static/media/icon1.6aca43ba.ico</image:loc>
+      <image:title>Athleta Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Augustinus Bader -->
+  <url>
+    <loc>https://newcollab.co/brand/augustinus-bader</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://static.augustinusbader.com/version1765878636/frontend/AugustinusBader/hyva2025/fr_FR/images/favicons/16x16.png</image:loc>
+      <image:title>Augustinus Bader Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Aveeno -->
+  <url>
+    <loc>https://newcollab.co/brand/aveeno</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images.ctfassets.net/mgaihfszrtka/lmohsLgdeVVlZFYuwCayc/bb7f43bf46ce67542be9b80cc0e0aad3/Aveeno_the_Power_of_Oat_for_Sensitive_Skin.png</image:loc>
+      <image:title>Aveeno Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Baggu -->
+  <url>
+    <loc>https://newcollab.co/brand/baggu</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://baggu.com/favicon.png</image:loc>
+      <image:title>Baggu Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Banana Republic -->
+  <url>
+    <loc>https://newcollab.co/brand/banana-republic</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.bananarepublic.com/static_content/onesitecategory/components/mfe/_next/static/media/icon4.e578991d.ico</image:loc>
+      <image:title>Banana Republic Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Bare Minerals -->
+  <url>
+    <loc>https://newcollab.co/brand/bare-minerals</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.bareminerals.com/cdn/shop/files/Logo.png?v=1677626739&width=1024</image:loc>
+      <image:title>Bare Minerals Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Benefit Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/benefit-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.benefitcosmetics.com/on/demandware.static/Sites-benco-fr-Site/-/default/dw02adc660/images/favicons/favicon-180x180.png</image:loc>
+      <image:title>Benefit Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Beyond Yoga -->
+  <url>
+    <loc>https://newcollab.co/brand/beyond-yoga</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://beyondyoga.com/cdn/shop/files/Icon_1_32x32.png?v=1750716487</image:loc>
+      <image:title>Beyond Yoga Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- BH Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/bh-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.bhcosmetics.com/on/demandware.static/Sites-revbe-us-Site/-/default/dwb4801e7e/images/favicons/favicon-196x196.png</image:loc>
+      <image:title>BH Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Bobbi Brown Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/bobbi-brown-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.bobbibrowncosmetics.com/media/export/cms/Homepage/HP_SFSSE_2.0_Product__image_2200x700.jpg</image:loc>
+      <image:title>Bobbi Brown Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Boll and Branch -->
+  <url>
+    <loc>https://newcollab.co/brand/boll-and-branch</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/1154/7838/files/CORE_BrandedItems_Site_Link_Preview_bc4e6fcd-1970-4024-97fa-a960779f42e4.png?v=1767715466</image:loc>
+      <image:title>Boll and Branch Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- boohoo -->
+  <url>
+    <loc>https://newcollab.co/brand/boohoo</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://mediahub.boohoo.com/site/fascia/boohooww/</image:loc>
+      <image:title>boohoo Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Boy Smells -->
+  <url>
+    <loc>https://newcollab.co/brand/boy-smells</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://boysmells.com/cdn/shop/files/BoySmells-purple-1x1_1.jpg?v=1744268642&width=1024</image:loc>
+      <image:title>Boy Smells Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Burrow -->
+  <url>
+    <loc>https://newcollab.co/brand/burrow</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/oxygen-v2/43330/38238/80404/2770795/assets/favicon-xQAyhzaD.svg</image:loc>
+      <image:title>Burrow Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- BY FAR -->
+  <url>
+    <loc>https://newcollab.co/brand/by-far</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://byfar.com/cdn/shop/files/bf_logo_black.webp?v=1738088853</image:loc>
+      <image:title>BY FAR Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Casper Sleep -->
+  <url>
+    <loc>https://newcollab.co/brand/casper-sleep</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://casper.com/cdn/shop/files/Casper-Social-Logo.jpg?v=1734034029&width=2048</image:loc>
+      <image:title>Casper Sleep Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Catbird -->
+  <url>
+    <loc>https://newcollab.co/brand/catbird</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.catbirdnyc.com/media/og_image/default/catbird-logo.png</image:loc>
+      <image:title>Catbird Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Caudalie -->
+  <url>
+    <loc>https://newcollab.co/brand/caudalie</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://assets.caudalie.com/f/286013/7cdba958ec/mycaudalie.svg</image:loc>
+      <image:title>Caudalie Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- CeraVe Skincare -->
+  <url>
+    <loc>https://newcollab.co/brand/cerave-skincare</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/510977241_18508644187036449_1498565566085169608_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDE2LmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QHfQiw4QPUqOSCURBNdOEAIPL0o9KCbQkmLWqnpO_mZwdiwTJmci87V-oJVplCsdnQ&_nc_ohc=6-zB9VR5WRAQ7kNvwFHjgyR&_nc_gid=WDEwfO9dlGEwPwmoO7hAmw&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afot1xyljN1zLQSpFLw1zQJSMe-rQerLO1L-21_LSbvSmg&oe=69646682&_nc_sid=8b3546</image:loc>
+      <image:title>CeraVe Skincare Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Cetaphil -->
+  <url>
+    <loc>https://newcollab.co/brand/cetaphil</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/573338518_18539064697055927_7558316815610445111_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby44MDAuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QGocPhax2gdeXQedzQNdPz85U-95yiFQowkrQfHHVh5EUesosjj_I0F2l7C3GjoH44&_nc_ohc=yuaarkACKvMQ7kNvwG82OSz&_nc_gid=lq2xXSVKr7XowH_0pmW-vA&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfpEyPduTcb7P4fQrBGTzuYckc1fgRqS_ifGDBnx6ogt0Q&oe=69645796&_nc_sid=8b3546</image:loc>
+      <image:title>Cetaphil Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Charlotte Tilbury -->
+  <url>
+    <loc>https://newcollab.co/brand/charlotte-tilbury</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.charlottetilbury.com/_next/static/favicon/favicon-32x32-201902.png</image:loc>
+      <image:title>Charlotte Tilbury Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Clinique -->
+  <url>
+    <loc>https://newcollab.co/brand/clinique</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.clinique.com/sites/clinique/themes/cl_base/favicon.ico</image:loc>
+      <image:title>Clinique Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- COS -->
+  <url>
+    <loc>https://newcollab.co/brand/cos</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.cosstores.com/static_assets/favicons/light-mode-apple-touch-icon.png</image:loc>
+      <image:title>COS Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- COSRX Official -->
+  <url>
+    <loc>https://newcollab.co/brand/cosrx-official</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.cosrx.com/cdn/shop/files/facebookimg_dedb55e4-9ae0-421a-b480-dbcd570723aa_1200x1200.jpg?v=1612428226</image:loc>
+      <image:title>COSRX Official Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- CoverGirl -->
+  <url>
+    <loc>https://newcollab.co/brand/covergirl</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.covergirl.com/favicon.ico</image:loc>
+      <image:title>CoverGirl Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Cozy Earth -->
+  <url>
+    <loc>https://newcollab.co/brand/cozy-earth</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/2114/3697/files/CozyEarth_Wordmark_Horizontal.svg?height=628&pad_color=ffffff&v=1713894976&width=1200</image:loc>
+      <image:title>Cozy Earth Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Crème de la Mer -->
+  <url>
+    <loc>https://newcollab.co/brand/crme-de-la-mer</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.lamer.com/sites/cremedelamer2/themes/cremedelamer2_base/apple-touch-icon.png</image:loc>
+      <image:title>Crème de la Mer Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Cupshe -->
+  <url>
+    <loc>https://newcollab.co/brand/cupshe</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Cuyana -->
+  <url>
+    <loc>https://newcollab.co/brand/cuyana</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0712/5054/2907/files/BagsPLP_3.webp?v=1715724617</image:loc>
+      <image:title>Cuyana Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Dolls Kill -->
+  <url>
+    <loc>https://newcollab.co/brand/dolls-kill</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.dollskill.com/cdn/shop/files/logo.jpg?v=1709315110</image:loc>
+      <image:title>Dolls Kill Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Dove -->
+  <url>
+    <loc>https://newcollab.co/brand/dove</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://assets.unileversolutions.com/v1/949890.png</image:loc>
+      <image:title>Dove Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Dr.Jart+ Skincare -->
+  <url>
+    <loc>https://newcollab.co/brand/drjart-skincare</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.drjart.com/sites/drjart/themes/drjart_base/apple-touch-icon.png</image:loc>
+      <image:title>Dr.Jart+ Skincare Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- e.l.f. Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/elf-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/561541743_18532594063004344_4777510654368924690_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby45NjAuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QFifUQlSH1a9eOpUaNXwwhXGBZsmsBq0V4NzsqM0tsVNn0PZjzFmX9XxWyay99u9KA&_nc_ohc=-bOd72e1oFAQ7kNvwEYncFR&_nc_gid=cauKzsm34tp5YiWMu4qMbQ&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afrm6v4kHeRrkElyGrVMt1B0349KDeBrp9HMtbDkno4s5w&oe=696483C0&_nc_sid=8b3546</image:loc>
+      <image:title>e.l.f. Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- essence makeup -->
+  <url>
+    <loc>https://newcollab.co/brand/essence-makeup</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://essencemakeup.com/cdn/shop/files/favicon-32x32_32x32.png?v=1614290340</image:loc>
+      <image:title>essence makeup Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Estee Lauder -->
+  <url>
+    <loc>https://newcollab.co/brand/estee-lauder</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.esteelauder.com/sites/esteelauder/themes/us/img/favicon.ico</image:loc>
+      <image:title>Estee Lauder Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Eucerin -->
+  <url>
+    <loc>https://newcollab.co/brand/eucerin</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images-1.eucerin.com/~/media/eucerin%20reference%20site/eucerin_favicon.ico</image:loc>
+      <image:title>Eucerin Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Everlane -->
+  <url>
+    <loc>https://newcollab.co/brand/everlane</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.everlane.com/cdn/shop/files/EverlaneFavicon_2025-01.png?crop=center&height=32&v=1757958640&width=32</image:loc>
+      <image:title>Everlane Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- FARFETCH -->
+  <url>
+    <loc>https://newcollab.co/brand/farfetch-france</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn-static.farfetch-contents.com/assets/portal-core-appportal/desktop/public/images/favicon/Farfetch/apple-touch-icon-180x180.png</image:loc>
+      <image:title>FARFETCH Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- FashionNova.com -->
+  <url>
+    <loc>https://newcollab.co/brand/fashionnovacom</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/591140818_18569223178059181_239709320970497729_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby45NTkuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QELxq2n20ukHGoSjzm3onWrR_vo2zQcy4f1xiOn4F1NlqCT5epm9ctkNTgpezhyouU&_nc_ohc=c4oGtB7vKnQQ7kNvwFsrv1J&_nc_gid=H35hjRAS-cgmq51Hy74V_Q&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfrSTh8l-35PCs0NDYAzPGmpbF1who6grr5i4xHYBCIoUA&oe=696446BF&_nc_sid=8b3546</image:loc>
+      <image:title>FashionNova.com Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- FLOWER Beauty by Drew -->
+  <url>
+    <loc>https://newcollab.co/brand/flower-beauty-by-drew</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/156002642_1071919646613776_6908677382123329202_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=108&_nc_oc=Q6cZ2QEG4as0AXPy2sOjNLYf5ugKVX0uIL6CFEjJvumKF6tzVVXCRzMJJZ9z9tfDjERrV-M&_nc_ohc=vYu9Ey5BhTMQ7kNvwFjUheN&_nc_gid=amtlnlmP6PLTN6GocuOb7g&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afolb9VfUkGDtWMIPFYyOK0cnSPgAisEgQLgOSPnSg3Qfg&oe=696484CB&_nc_sid=8b3546</image:loc>
+      <image:title>FLOWER Beauty by Drew Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Frankies Bikinis -->
+  <url>
+    <loc>https://newcollab.co/brand/frankies-bikinis</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://frankiesbikinis.com/cdn/shop/files/1200x628_Frankies_Logo.png?v=1725989103</image:loc>
+      <image:title>Frankies Bikinis Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Free People -->
+  <url>
+    <loc>https://newcollab.co/brand/free-people</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://static.freepeople.com/static/v3/apple-touch/appleicon_29x29.png</image:loc>
+      <image:title>Free People Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Fresh -->
+  <url>
+    <loc>https://newcollab.co/brand/fresh</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.fresh.com/on/demandware.static/Sites-fresh-eu-Site/-/default/dwba1f8cc9/images/favicons/favicon-32.png</image:loc>
+      <image:title>Fresh Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Gaiam -->
+  <url>
+    <loc>https://newcollab.co/brand/gaiam</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/1728/2157/files/logo_gaiam.png?height=628&pad_color=ffffff&v=1613156787&width=1200</image:loc>
+      <image:title>Gaiam Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Ganni a/s -->
+  <url>
+    <loc>https://newcollab.co/brand/ganni-as</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.ganni.com/on/demandware.static/-/Sites/default/dwcfb5b867/25-3-url.jpg</image:loc>
+      <image:title>Ganni a/s Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- garnier -->
+  <url>
+    <loc>https://newcollab.co/brand/garnier</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.garnier.fr/-/media/project/loreal/brand-sites/garnier/emea/fr/fr-fr/home/211406_garnier_sharing.jpg?rev=e950a0bba0c241eb9a2af80dcf63f492</image:loc>
+      <image:title>garnier Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- GOOD AMERICAN -->
+  <url>
+    <loc>https://newcollab.co/brand/good-american</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/oxygen-v2/26935/12013/24631/2822322/build/_assets/favicon-NUXD2W7D.svg</image:loc>
+      <image:title>GOOD AMERICAN Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Good Molecules -->
+  <url>
+    <loc>https://newcollab.co/brand/good-molecules</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://dy6g3i6a1660s.cloudfront.net/h7NWAOBw7xxsymoeiyDrcgDIAMg/orig.png</image:loc>
+      <image:title>Good Molecules Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Grlfrnd -->
+  <url>
+    <loc>https://newcollab.co/brand/grlfrnd</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Health-Ade -->
+  <url>
+    <loc>https://newcollab.co/brand/health-ade</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://health-ade.com/cdn/shop/files/HA_Cover.jpg?v=1622042046</image:loc>
+      <image:title>Health-Ade Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Herbivore Botanicals -->
+  <url>
+    <loc>https://newcollab.co/brand/herbivore-botanicals</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.herbivorebotanicals.com/cdn/shop/files/SAM8902-482_2.jpg?v=1746195574</image:loc>
+      <image:title>Herbivore Botanicals Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Homesick -->
+  <url>
+    <loc>https://newcollab.co/brand/homesick</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://storefront-direct-upload.s3.amazonaws.com/4bdfac6d-bdf7-4f70-ba35-48a267e4fd57/favicon.png</image:loc>
+      <image:title>Homesick Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Hourglass Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/hourglass-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0081/1660/0950/files/Hourglass-Cosmetics-Cruelty-Free-Luxury-Beauty_cdc6d24a-62e8-49f0-b66d-b49caaab00d4.jpg?v=1628082798</image:loc>
+      <image:title>Hourglass Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- INKEY USA -->
+  <url>
+    <loc>https://newcollab.co/brand/inkey-usa</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.theinkeylist.com/cdn/shop/files/1200x628.jpg?v=1741799945</image:loc>
+      <image:title>INKEY USA Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Intelligentsia Coffee -->
+  <url>
+    <loc>https://newcollab.co/brand/intelligentsia-coffee</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.intelligentsia.com/cdn/shop/t/296/assets/logo-og.png?v=110203643234035765081692724605</image:loc>
+      <image:title>Intelligentsia Coffee Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- J.Crew -->
+  <url>
+    <loc>https://newcollab.co/brand/jcrew</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.jcrew.com/next-static/images/jcrew/jc-default.jpg</image:loc>
+      <image:title>J.Crew Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Jones Road -->
+  <url>
+    <loc>https://newcollab.co/brand/jones-road</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0424/9527/9254/files/jones-road-logo.png?height=628&pad_color=f6f2eb&v=1614300340&width=1200</image:loc>
+      <image:title>Jones Road Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Juvia's Place -->
+  <url>
+    <loc>https://newcollab.co/brand/juvias-place</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/458963661_485602094391370_8360840371185186221_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=110&_nc_oc=Q6cZ2QEgNEMvM1MUOJoZ8yKlBh8dTpfuk_Atqk_a2UfE_YVE4ZyJkx6TL-gtnns5z_OBGdE&_nc_ohc=Ds0SIN49SssQ7kNvwHjBLyp&_nc_gid=kjtcLtF4qBHlFh-WiqPAWQ&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afq23hPyDaIRs41pbyu-DFuH2ea_5kDm2jxgaSL1pTC9Ww&oe=6964851E&_nc_sid=8b3546</image:loc>
+      <image:title>Juvia's Place Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Laneige International -->
+  <url>
+    <loc>https://newcollab.co/brand/laneige-international</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://int.laneige.com/cdn/shop/files/laneige-og_240304_12.jpg?v=1753231908</image:loc>
+      <image:title>Laneige International Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Liforme -->
+  <url>
+    <loc>https://newcollab.co/brand/liforme</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://liforme.com/cdn/shop/files/20.05_Liforme_Logo_Pink-Grey_Word_Mark_294fabc6-b123-42ef-8f40-a3ef8935fad5.png?height=628&pad_color=FFFFFF&v=1691600224&width=1200</image:loc>
+      <image:title>Liforme Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Living Proof -->
+  <url>
+    <loc>https://newcollab.co/brand/living-proof</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.livingproof.com/cdn/shop/files/lp-logomark-black.png?v=1761855251</image:loc>
+      <image:title>Living Proof Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Love Lashes London -->
+  <url>
+    <loc>https://newcollab.co/brand/love-lashes-london</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQjPUXyymQ6xFciSYl1ocmpdv2lr06PJ-DCvg&s</image:loc>
+      <image:title>Love Lashes London Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Madewell -->
+  <url>
+    <loc>https://newcollab.co/brand/madewell</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.madewell.com/_next/static/media/apple-touch-icon-old.16358045.png</image:loc>
+      <image:title>Madewell Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Manduka -->
+  <url>
+    <loc>https://newcollab.co/brand/manduka</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.manduka.com/cdn/shop/files/download_1.png?height=628&pad_color=fff&v=1694803913&width=1200</image:loc>
+      <image:title>Manduka Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- MANSUR GAVRIEL -->
+  <url>
+    <loc>https://newcollab.co/brand/mansur-gavriel</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.mansurgavriel.com/cdn/shop/files/Mansur_Gavriel_Favicon.jpg?crop=center&height=32&v=1753902449&width=32</image:loc>
+      <image:title>MANSUR GAVRIEL Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Maybelline New York -->
+  <url>
+    <loc>https://newcollab.co/brand/maybelline-new-york</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/198028759_692833654857282_797261321924659386_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby45OTEuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QHxZP9tGqETM-jr1CdDfOU11e7xWau_sOvIMtAi4Y4rb-AysfZKQIkI_VCr9V265ck&_nc_ohc=DSb2Vo1KrHkQ7kNvwFpXzl8&_nc_gid=JhTj_3fmykjLEKgD-LpibA&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfqbKvo1xhb9szY4NuHLaP9gsBgdbB0LOV4FOXT9Pcwt3w&oe=6964566C&_nc_sid=8b3546</image:loc>
+      <image:title>Maybelline New York Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- MERIT Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/merit-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/0412/1296/9117/files/Brandi_Lip_Liner.jpg?v=1758128440</image:loc>
+      <image:title>MERIT Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Milani Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/milani-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/1824/2901/files/Screen_Shot_2021-07-21_at_3.34.34_PM.png?v=1626896088</image:loc>
+      <image:title>Milani Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Milk Makeup -->
+  <url>
+    <loc>https://newcollab.co/brand/milk-makeup</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/588502093_18517548643069960_1399190681288229242_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby42MDAuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QF65tHlUZXUIXpkswAQola4xb6II28t8Pgsx069WsoKHVP6_ymQJ06cfBq6WEkfyFs&_nc_ohc=ntPwmwHJrG8Q7kNvwEgUGpx&_nc_gid=1UuA_cQBdEBcsCg1QeV_ig&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afrl1cuebv5QBiWCj39Vpdrhipz5EoAVEi8K0rNlPJPmWA&oe=696458DA&_nc_sid=8b3546</image:loc>
+      <image:title>Milk Makeup Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Missguided -->
+  <url>
+    <loc>https://newcollab.co/brand/missguided</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Moon Juice -->
+  <url>
+    <loc>https://newcollab.co/brand/moon-juice</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://moonjuice.com/cdn/shop/t/1041/assets/logo.png?380815</image:loc>
+      <image:title>Moon Juice Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Moroccanoil -->
+  <url>
+    <loc>https://newcollab.co/brand/moroccanoil</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.moroccanoil.com/cdn/shop/files/D1860-Category-Banner_MO.com_BC-F_F-Banner_925x450_Final_1_6f7f8d50-a7cc-441d-848e-9c7bc61225a7.jpg?v=1684193778</image:loc>
+      <image:title>Moroccanoil Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Morphe -->
+  <url>
+    <loc>https://newcollab.co/brand/morphe</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/605869440_18561345712023087_675083644140276047_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby41MzYuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QGuKlGyODoqJTE6XP4nL6RrsSCRiK9rzODVbMspY9BNbKJe6puit79A3Wrl0unCfQU&_nc_ohc=qGwXHh5IZ_wQ7kNvwExPiiE&_nc_gid=Bl1MHbkRFKB__m_RQ6B0ag&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_Afrjny7XWAAOCssFlSiUT_9aSedf6c0b4JjOBwMqqe0vRQ&oe=6964612A&_nc_sid=8b3546</image:loc>
+      <image:title>Morphe Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- MOTHER -->
+  <url>
+    <loc>https://newcollab.co/brand/mother</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.motherdenim.com/cdn/shop/files/logo_104d67ab-34ef-49d1-8b19-4147fcbe0f04.png?v=1646768644</image:loc>
+      <image:title>MOTHER Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- NARS Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/nars-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.narscosmetics.com/on/demandware.static/Sites-nars_us-Site/-/default/dw2dcac281/images/favicon.ico</image:loc>
+      <image:title>NARS Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Naturium -->
+  <url>
+    <loc>https://newcollab.co/brand/naturium</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://naturium.com/cdn/shop/files/social_sharing_black_logo.png?v=1741724108&width=2048</image:loc>
+      <image:title>Naturium Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Neutrogena -->
+  <url>
+    <loc>https://newcollab.co/brand/neutrogena</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.neutrogena.com/favicon.ico</image:loc>
+      <image:title>Neutrogena Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- NIVEA -->
+  <url>
+    <loc>https://newcollab.co/brand/nivea</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://img.nivea.com/-/media/nivea/general/products/products/niv_19606_nivea_hammock_mery_shin_claire_pos.jpg?rx=0&ry=461&rw=8256&rh=4581&hash=05C60D79145EF778A6E94454D6441F7F</image:loc>
+      <image:title>NIVEA Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Nom Nom -->
+  <url>
+    <loc>https://newcollab.co/brand/nom-nom</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.nomnomnow.com/static/dist/images/og_image.ae7ed1ac0bf1a80ebb59.jpg</image:loc>
+      <image:title>Nom Nom Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Nordstrom -->
+  <url>
+    <loc>https://newcollab.co/brand/nordstrom</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- NYX Professional Makeup -->
+  <url>
+    <loc>https://newcollab.co/brand/nyx-professional-makeup</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/477661102_640468608362292_2613412429825721508_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDAwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QHIA7044Gam7cOfs4WtnRx_22pXH165y8tasdG2sDRiCUKG5o-I2yoV0Pjm9KLmcGg&_nc_ohc=-v1cxFA0lcIQ7kNvwEP-4Ax&_nc_gid=AxZD9Mf-kjVzv8iZZYbsdg&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfrPiraNQc_T0YRRwoD6cwfQgWvtp6lWm_lN5jxCNPqNgA&oe=696456B1&_nc_sid=8b3546</image:loc>
+      <image:title>NYX Professional Makeup Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Old Navy -->
+  <url>
+    <loc>https://newcollab.co/brand/old-navy</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.oldnavy.com/static_content/onesitecategory/components/mfe/_next/static/media/on-favicon-2025.9d3ad95f.ico</image:loc>
+      <image:title>Old Navy Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Ollie -->
+  <url>
+    <loc>https://newcollab.co/brand/ollie</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://a.storyblok.com/f/125940/2000x1999/133eca6d41/scroll-dog-2a.jpg</image:loc>
+      <image:title>Ollie Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Oribe Hair Care -->
+  <url>
+    <loc>https://newcollab.co/brand/oribe-hair-care</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.oribe.com/cdn/shop/files/oribe-logo-black.jpg?v=1715713337</image:loc>
+      <image:title>Oribe Hair Care Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Origins -->
+  <url>
+    <loc>https://newcollab.co/brand/origins</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.origins.com/sites/origins/themes/or_base/apple-touch-icon.png</image:loc>
+      <image:title>Origins Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Otherland -->
+  <url>
+    <loc>https://newcollab.co/brand/otherland</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.otherland.com/cdn/shop/t/267/assets/rattan_hero1_1024x1024.png?v=74185924007353040431767043067</image:loc>
+      <image:title>Otherland Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- & Other Stories -->
+  <url>
+    <loc>https://newcollab.co/brand/-other-stories</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.stories.com/static_assets/favicons-new/favicon-180x180.png</image:loc>
+      <image:title>& Other Stories Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- OUAI -->
+  <url>
+    <loc>https://newcollab.co/brand/ouai</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/1043/7322/files/OUAI_Metadata_Image_126a4ba3-3f38-4c58-9c73-c14a99111de9.jpg?v=1618359813</image:loc>
+      <image:title>OUAI Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Pacifica Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/pacifica-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/482381666_1997831144042445_2511365490797609206_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=109&_nc_oc=Q6cZ2QHV1IP2zIBfVn5p3PR2SHBXBJ3LYK4atXMNMk7pLolSXqoMVPh38wzaYLV22j10NuA&_nc_ohc=DAl97a9qq3QQ7kNvwFijwln&_nc_gid=rqCqs5VYoLs-6aXAAcciKg&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfppAA5Q0FTPOKx32xLciec8473X5cNnLIj1L_G36MqQNg&oe=6964737D&_nc_sid=8b3546</image:loc>
+      <image:title>Pacifica Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- PAT McGRATH LABS -->
+  <url>
+    <loc>https://newcollab.co/brand/pat-mcgrath-labs</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.patmcgrath.com/cdn/shop/files/PMG_Favicon_32x32_Crown.png?crop=center&height=32&v=1695764494&width=32</image:loc>
+      <image:title>PAT McGRATH LABS Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- poppi -->
+  <url>
+    <loc>https://newcollab.co/brand/poppi</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://drinkpoppi.com/cdn/shop/files/0505_2025_Evergreen-Preview-Image.jpg?v=1747076592</image:loc>
+      <image:title>poppi Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Prose -->
+  <url>
+    <loc>https://newcollab.co/brand/prose</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Purple -->
+  <url>
+    <loc>https://newcollab.co/brand/purple</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- REAL TECHNIQUES -->
+  <url>
+    <loc>https://newcollab.co/brand/real-techniques</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://instagram.fcdg2-1.fna.fbcdn.net/v/t51.2885-19/475345889_2037067170098974_8996616902992310432_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby43OTMuYzIifQ&_nc_ht=instagram.fcdg2-1.fna.fbcdn.net&_nc_cat=110&_nc_oc=Q6cZ2QGFrSgCz7Pbr9NRc2HQlC8PiVD0GIn2vc6Y2Zr5XVheGB4KNWTw4u64wYfDVtdpH44&_nc_ohc=kSiZ3qOeIGIQ7kNvwE1ElUs&_nc_gid=F_Tv-ZtlzNDaXR4r3RcDIA&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfrwjTv5ZDaCv79XG7hVd2asf2DIyqpE00ZIgVM0QTt7ig&oe=696476A8&_nc_sid=8b3546</image:loc>
+      <image:title>REAL TECHNIQUES Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- REFY -->
+  <url>
+    <loc>https://newcollab.co/brand/refy</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://refybeauty.com/cdn/shop/files/REFY_WEB_LOGO.png?v=1613592744&width=2048</image:loc>
+      <image:title>REFY Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Revlon -->
+  <url>
+    <loc>https://newcollab.co/brand/revlon</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.revlon.com/cdn/shop/files/favicon-32x32.png?v=14984406978837108464</image:loc>
+      <image:title>Revlon Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- RMS Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/rms-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.rmsbeauty.com/cdn/shop/files/GIF_link_shareout_841a4b99-d0bd-4d25-ad8a-ec2f7deb230d.gif?v=1690370207</image:loc>
+      <image:title>RMS Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Sephora -->
+  <url>
+    <loc>https://newcollab.co/brand/sephora</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.sephora.com/images/Sephora_logo.jpg</image:loc>
+      <image:title>Sephora Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- SET ACTIVE -->
+  <url>
+    <loc>https://newcollab.co/brand/set-active</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://setactive.co/cdn/shop/files/SET_LOGO-NEW_afccf305-3c44-4602-9916-d29ab285d5cf.png?v=1749497703</image:loc>
+      <image:title>SET ACTIVE Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Smashbox -->
+  <url>
+    <loc>https://newcollab.co/brand/smashbox</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.smashbox.com/media/export/cms/home_featured/Homepage_Featured_Lipsticks_582x354.jpg</image:loc>
+      <image:title>Smashbox Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Sol de Janeiro -->
+  <url>
+    <loc>https://newcollab.co/brand/sol-de-janeiro</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSsCfPZh444NBqpMFWFC1JfRGyOVdOIMtR2_Vrhw-vESnG0sQM_IZ1IohyIRVyAJ4OgQgorzjM_VqhZ0MWICnWpTNdSh81OTStjhqGdNzNBtOl7Ci0E2xk85dCWlGtdpcjtQVaadw&usqp=CAc</image:loc>
+      <image:title>Sol de Janeiro Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Solid & Striped -->
+  <url>
+    <loc>https://newcollab.co/brand/solid-striped</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.solidandstriped.com/cdn/shop/files/solid-striped-logotype-black-v2_2x_2e8e6571-8217-4a6e-b91f-9feed78a2aa8.png?height=628&pad_color=fff&v=1707186616&width=1200</image:loc>
+      <image:title>Solid & Striped Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- STAUD -->
+  <url>
+    <loc>https://newcollab.co/brand/staud</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://staud.clothing/cdn/shop/files/STAUD-SOCIAL-PREVIEW.jpg?v=1684326950</image:loc>
+      <image:title>STAUD Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Stumptown Coffee -->
+  <url>
+    <loc>https://newcollab.co/brand/stumptown-coffee</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.stumptowncoffee.com/cdn/shop/files/stumptown-social-share.jpg?v=1616691690</image:loc>
+      <image:title>Stumptown Coffee Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Summersalt -->
+  <url>
+    <loc>https://newcollab.co/brand/summersalt</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.sanity.io/images/aigdmsls/production/5d9c953f696678e40f2043ddd9f755a5e624dcc9-32x32.webp</image:loc>
+      <image:title>Summersalt Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Target -->
+  <url>
+    <loc>https://newcollab.co/brand/target</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://assets.targetimg1.com/static/images/favicon.ico</image:loc>
+      <image:title>Target Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Tarte Cosmetics -->
+  <url>
+    <loc>https://newcollab.co/brand/tarte-cosmetics</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://tartecosmetics.com/cdn/shop/files/tarte-cosmetics.png?v=1747244468</image:loc>
+      <image:title>Tarte Cosmetics Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- TooFaced -->
+  <url>
+    <loc>https://newcollab.co/brand/toofaced</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.toofaced.com/favicon.ico</image:loc>
+      <image:title>TooFaced Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Topicals -->
+  <url>
+    <loc>https://newcollab.co/brand/topicals</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.mytopicals.com/favicon.png</image:loc>
+      <image:title>Topicals Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Triangl -->
+  <url>
+    <loc>https://newcollab.co/brand/triangl</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://triangl.com/cdn/shop/files/logo_240x240_6f792959-9478-437e-90cb-a05b31444a80.png?v=1679308162&width=1200</image:loc>
+      <image:title>Triangl Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Ulta Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/ulta-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- UNIQLO -->
+  <url>
+    <loc>https://newcollab.co/brand/uniqlo</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://asset.uniqlo.com/logotypes/uniqlo_roman_32.png</image:loc>
+      <image:title>UNIQLO Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Urban Outfitters -->
+  <url>
+    <loc>https://newcollab.co/brand/urban-outfitters</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://static.urbanoutfitters.com/static/v3/apple-touch/appleicon_29x29.png</image:loc>
+      <image:title>Urban Outfitters Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Varley -->
+  <url>
+    <loc>https://newcollab.co/brand/varley</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Vichy -->
+  <url>
+    <loc>https://newcollab.co/brand/vichy</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.vichy.com/include/images/v_logo-vichy-like.gif</image:loc>
+      <image:title>Vichy Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Vital Proteins -->
+  <url>
+    <loc>https://newcollab.co/brand/vital-proteins</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://cdn.shopify.com/s/files/1/2074/9385/files/vital_proteins_logo_horizontal_fad23378-c59f-46fe-8454-9a7ae224be2a.png?height=628&pad_color=fff&v=1613676736&width=1200</image:loc>
+      <image:title>Vital Proteins Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Voluspa -->
+  <url>
+    <loc>https://newcollab.co/brand/voluspa</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://voluspa.com/Liquid error (snippets/social-meta-info line 10): invalid url input</image:loc>
+      <image:title>Voluspa Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Vuori Clothing -->
+  <url>
+    <loc>https://newcollab.co/brand/vuori-clothing</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://vuoriclothing.com/android-icon-192x192.png</image:loc>
+      <image:title>Vuori Clothing Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- wet n wild Beauty -->
+  <url>
+    <loc>https://newcollab.co/brand/wet-n-wild-beauty</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://www.wetnwildbeauty.com/cdn/shop/files/markwins_wnw_thumbnail_1200x1200.jpg?v=1754409071</image:loc>
+      <image:title>wet n wild Beauty Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Wild Earth -->
+  <url>
+    <loc>https://newcollab.co/brand/wild-earth</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>http://wildearth.com/cdn/shop/files/photo-1522276498395-f4f68f7f8454.jpg?v=1599870047</image:loc>
+      <image:title>Wild Earth Logo</image:title>
+    </image:image>
+  </url>
+
+  <!-- Zara -->
+  <url>
+    <loc>https://newcollab.co/brand/zara</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>
