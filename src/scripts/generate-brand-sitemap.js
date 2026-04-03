@@ -11,6 +11,58 @@ const path = require('path');
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://api.newcollab.co';
 const SITE_URL = 'https://newcollab.co';
 
+/**
+ * Detect low-quality brand slugs that shouldn't be in the sitemap.
+ * These are typically auto-generated from scraped meta titles/descriptions.
+ */
+function isLowQualitySlug(slug, brandName) {
+  if (!slug) return true;
+
+  // Too long = probably scraped from meta description
+  if (slug.length > 50) return true;
+
+  // Generic product/website terms that indicate scraped content
+  const junkPatterns = [
+    /official.*website/i,
+    /official.*site/i,
+    /site-officiel/i,
+    /welcome-to-/i,
+    /^buy-/i,
+    /^shop-/i,
+    /-shop$/i,
+    /-store$/i,
+    /-home$/i,
+    /-us$/i,
+    /-eu$/i,
+    /skin-care.*products/i,
+    /beauty-products/i,
+    /makeup-and-beauty/i,
+    /home-furniture/i,
+    /clothing-and/i,
+    /-for-healthier-/i,
+    /-for-healthy-/i,
+    /luxury-organic/i,
+    /luxury-skin/i,
+    /technical-apparel/i,
+    /maquillage-soins/i,
+    /collagen-protein/i,
+    /collagen-supplements/i,
+  ];
+
+  if (junkPatterns.some(p => p.test(slug))) return true;
+
+  // If slug doesn't remotely match brand name (if we have it)
+  if (brandName) {
+    const normalizedBrand = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizedSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (normalizedBrand.length <= 20 && !normalizedSlug.includes(normalizedBrand.slice(0, 5))) {
+      if (slug.length > normalizedBrand.length * 3) return true;
+    }
+  }
+
+  return false;
+}
+
 async function generateBrandSitemap() {
   try {
     console.log('🔍 Fetching all brands from API...');
@@ -34,7 +86,13 @@ async function generateBrandSitemap() {
       console.log(`  ✓ Fetched page ${page - 1} of ${totalPages}`);
     }
 
-    console.log(`\n📊 Total brands: ${allBrands.length}`);
+    console.log(`\n📊 Total brands fetched: ${allBrands.length}`);
+
+    // Filter out low-quality brands
+    const qualityBrands = allBrands.filter(brand => !isLowQualitySlug(brand.slug, brand.name));
+    const filtered = allBrands.length - qualityBrands.length;
+    console.log(`🔍 Filtered out ${filtered} low-quality slugs`);
+    console.log(`✅ Quality brands for sitemap: ${qualityBrands.length}`);
 
     // Generate XML sitemap
     const now = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -53,8 +111,8 @@ async function generateBrandSitemap() {
 
 `;
 
-    // Add each brand page
-    allBrands.forEach(brand => {
+    // Add each quality brand page
+    qualityBrands.forEach(brand => {
       const brandUrl = `${SITE_URL}/brand/${brand.slug}`;
 
       xml += `  <!-- ${brand.name} -->

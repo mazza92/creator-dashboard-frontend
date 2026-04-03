@@ -7,6 +7,60 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co';
 
 export const revalidate = 3600;
 
+/**
+ * Detect low-quality brand slugs that shouldn't be indexed.
+ * These are typically auto-generated from scraped meta titles/descriptions.
+ */
+function isLowQualitySlug(slug, brandName) {
+  if (!slug) return true;
+
+  // Too long = probably scraped from meta description
+  if (slug.length > 50) return true;
+
+  // Generic product/website terms that indicate scraped content
+  const junkPatterns = [
+    /official.*website/i,
+    /official.*site/i,
+    /site-officiel/i,
+    /welcome-to-/i,
+    /^buy-/i,
+    /^shop-/i,
+    /-shop$/i,
+    /-store$/i,
+    /-home$/i,
+    /-us$/i,
+    /-eu$/i,
+    /skin-care.*products/i,
+    /beauty-products/i,
+    /makeup-and-beauty/i,
+    /home-furniture/i,
+    /clothing-and/i,
+    /-for-healthier-/i,
+    /-for-healthy-/i,
+    /luxury-organic/i,
+    /luxury-skin/i,
+    /technical-apparel/i,
+    /maquillage-soins/i,
+    /collagen-protein/i,
+    /collagen-supplements/i,
+  ];
+
+  if (junkPatterns.some(p => p.test(slug))) return true;
+
+  // If slug doesn't remotely match brand name (if we have it)
+  if (brandName) {
+    const normalizedBrand = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizedSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // If brand name is reasonably short and slug doesn't contain any part of it
+    if (normalizedBrand.length <= 20 && !normalizedSlug.includes(normalizedBrand.slice(0, 5))) {
+      // Check if slug is way longer than brand name (scraped content)
+      if (slug.length > normalizedBrand.length * 3) return true;
+    }
+  }
+
+  return false;
+}
+
 async function fetchBrand(slug) {
   try {
     const res = await fetch(`${API_BASE}/api/public/brands/${slug}`, {
@@ -65,9 +119,14 @@ export async function generateMetadata({ params }) {
     brand?.seo?.description ||
     `Apply to ${brand.name} PR list. ${brand.description ? brand.description.slice(0, 120) : `Get free products and collaborate with ${brand.name}.`}`;
 
+  // Check if this is a low-quality page that shouldn't be indexed
+  const shouldNoIndex = isLowQualitySlug(slug, brand.name);
+
   return {
     title,
     description,
+    // Add noindex for low-quality brand pages
+    ...(shouldNoIndex && { robots: { index: false, follow: true } }),
     alternates: { canonical: `https://newcollab.co/brand/${brand.slug}` },
     openGraph: {
       type: 'website',
