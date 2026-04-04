@@ -7,7 +7,8 @@ import {
 import {
   LockOutlined, UserOutlined, ReloadOutlined, LineChartOutlined,
   TeamOutlined, RiseOutlined, DollarOutlined, FireOutlined,
-  TrophyOutlined, BarChartOutlined, FunnelPlotOutlined, CalendarOutlined
+  TrophyOutlined, BarChartOutlined, FunnelPlotOutlined, CalendarOutlined,
+  ShopOutlined, LinkOutlined, MailOutlined
 } from '@ant-design/icons';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -34,6 +35,7 @@ const AdminReports = () => {
   const [popularBrands, setPopularBrands] = useState([]);
   const [retention, setRetention] = useState(null);
   const [todayStats, setTodayStats] = useState(null);
+  const [brandAnalytics, setBrandAnalytics] = useState(null);
   const [activeTab, setActiveTab] = useState('today');
   const [dateRange, setDateRange] = useState(30);
 
@@ -68,7 +70,8 @@ const AdminReports = () => {
         fetchTopUsers(),
         fetchQuotaHits(),
         fetchPopularBrands(),
-        fetchRetention()
+        fetchRetention(),
+        fetchBrandAnalytics()
       ]);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -156,6 +159,15 @@ const AdminReports = () => {
       setRetention(data);
     } catch (error) {
       console.error('Failed to fetch retention:', error);
+    }
+  };
+
+  const fetchBrandAnalytics = async () => {
+    try {
+      const { data } = await api.get(`/api/admin/reports/brand-analytics?days=${dateRange}&limit=20`, getApiConfig());
+      setBrandAnalytics(data);
+    } catch (error) {
+      console.error('Failed to fetch brand analytics:', error);
     }
   };
 
@@ -883,6 +895,204 @@ const AdminReports = () => {
                       ))}
                     </tbody>
                   </RetentionTable>
+                </ChartCard>
+              </Col>
+            </Row>
+          </Tabs.TabPane>
+
+          {/* Brands Tab */}
+          <Tabs.TabPane tab={<span><ShopOutlined /> Brands</span>} key="brands">
+            {/* Brand Overview Stats */}
+            <StatsRow gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Total Brands"
+                    value={brandAnalytics?.overview?.total_brands || 0}
+                    prefix={<ShopOutlined />}
+                    valueStyle={{ color: '#667eea' }}
+                  />
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Brands with Form"
+                    value={brandAnalytics?.overview?.brands_with_form || 0}
+                    prefix={<LinkOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Brands with Email"
+                    value={brandAnalytics?.overview?.brands_with_email || 0}
+                    prefix={<MailOutlined />}
+                    valueStyle={{ color: '#1890ff' }}
+                  />
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title={`Unlocks (${dateRange}d)`}
+                    value={brandAnalytics?.overview?.total_unlocks_period || 0}
+                    prefix={<TrophyOutlined />}
+                    valueStyle={{ color: '#faad14' }}
+                  />
+                </StatCard>
+              </Col>
+            </StatsRow>
+
+            {/* Unlocks by Category */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24} lg={12}>
+                <ChartCard>
+                  <h3>Unlocks by Category</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={brandAnalytics?.unlocks_by_category || []} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis type="category" dataKey="category" width={100} />
+                      <RechartsTooltip />
+                      <Bar dataKey="unlock_count" fill="#667eea" name="Unlocks" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </Col>
+              <Col xs={24} lg={12}>
+                <ChartCard>
+                  <h3>Recent Unlocks</h3>
+                  <Table
+                    dataSource={brandAnalytics?.recent_unlocks?.slice(0, 10) || []}
+                    columns={[
+                      {
+                        title: 'Brand',
+                        dataIndex: 'brand_name',
+                        key: 'brand_name',
+                        ellipsis: true
+                      },
+                      {
+                        title: 'User',
+                        dataIndex: 'user_email',
+                        key: 'user_email',
+                        ellipsis: true,
+                        render: (email) => email?.split('@')[0] + '...'
+                      },
+                      {
+                        title: 'When',
+                        dataIndex: 'unlocked_at',
+                        key: 'unlocked_at',
+                        render: (date) => new Date(date).toLocaleString()
+                      }
+                    ]}
+                    rowKey="id"
+                    pagination={false}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+            </Row>
+
+            {/* Top Brands Tables */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24} lg={8}>
+                <ChartCard>
+                  <h3>Top Unlocked Brands (All)</h3>
+                  <Table
+                    dataSource={brandAnalytics?.top_unlocked_brands || []}
+                    columns={[
+                      {
+                        title: 'Brand',
+                        dataIndex: 'brand_name',
+                        key: 'brand_name',
+                        ellipsis: true
+                      },
+                      {
+                        title: 'Type',
+                        dataIndex: 'contact_type',
+                        key: 'contact_type',
+                        render: (type) => (
+                          <Tag color={type === 'form' ? 'green' : type === 'email' ? 'blue' : 'default'}>
+                            {type === 'form' ? 'Form' : type === 'email' ? 'Email' : 'None'}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: 'Unlocks',
+                        dataIndex: 'unlock_count',
+                        key: 'unlock_count',
+                        render: (count) => <strong>{count}</strong>
+                      }
+                    ]}
+                    rowKey="brand_id"
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+              <Col xs={24} lg={8}>
+                <ChartCard>
+                  <h3><LinkOutlined /> Top Brands with Form</h3>
+                  <Table
+                    dataSource={brandAnalytics?.top_brands_with_form || []}
+                    columns={[
+                      {
+                        title: 'Brand',
+                        dataIndex: 'brand_name',
+                        key: 'brand_name',
+                        ellipsis: true
+                      },
+                      {
+                        title: 'Category',
+                        dataIndex: 'category',
+                        key: 'category',
+                        render: (cat) => <Tag>{cat}</Tag>
+                      },
+                      {
+                        title: 'Unlocks',
+                        dataIndex: 'unlock_count',
+                        key: 'unlock_count',
+                        render: (count) => <strong>{count}</strong>
+                      }
+                    ]}
+                    rowKey="brand_id"
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+              <Col xs={24} lg={8}>
+                <ChartCard>
+                  <h3><MailOutlined /> Top Brands (Email Only)</h3>
+                  <Table
+                    dataSource={brandAnalytics?.top_brands_email_only || []}
+                    columns={[
+                      {
+                        title: 'Brand',
+                        dataIndex: 'brand_name',
+                        key: 'brand_name',
+                        ellipsis: true
+                      },
+                      {
+                        title: 'Category',
+                        dataIndex: 'category',
+                        key: 'category',
+                        render: (cat) => <Tag>{cat}</Tag>
+                      },
+                      {
+                        title: 'Unlocks',
+                        dataIndex: 'unlock_count',
+                        key: 'unlock_count',
+                        render: (count) => <strong>{count}</strong>
+                      }
+                    ]}
+                    rowKey="brand_id"
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                  />
                 </ChartCard>
               </Col>
             </Row>
