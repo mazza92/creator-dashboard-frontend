@@ -640,6 +640,65 @@ const AdminReports = () => {
               </Col>
             </StatsRow>
 
+            {/* Top Active Creators */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24}>
+                <ChartCard>
+                  <h3><UserOutlined /> Top Active Creators (by Pipeline Saves)</h3>
+                  <Table
+                    dataSource={overview?.top_creators || []}
+                    columns={[
+                      {
+                        title: 'Email',
+                        dataIndex: 'email',
+                        key: 'email',
+                        ellipsis: true
+                      },
+                      {
+                        title: 'Username',
+                        dataIndex: 'username',
+                        key: 'username',
+                        render: (val) => val || '-'
+                      },
+                      {
+                        title: 'Tier',
+                        dataIndex: 'tier',
+                        key: 'tier',
+                        render: (tier) => (
+                          <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
+                            {tier}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: 'Last 7d',
+                        dataIndex: 'saves_7d',
+                        key: 'saves_7d',
+                        sorter: (a, b) => a.saves_7d - b.saves_7d,
+                        render: (count) => <Tag color="blue">{count}</Tag>
+                      },
+                      {
+                        title: 'Total Saves',
+                        dataIndex: 'total_saves',
+                        key: 'total_saves',
+                        sorter: (a, b) => a.total_saves - b.total_saves,
+                        render: (count) => <strong>{count}</strong>
+                      },
+                      {
+                        title: 'Last Active',
+                        dataIndex: 'last_activity',
+                        key: 'last_activity',
+                        render: (date) => date ? new Date(date).toLocaleDateString() : '-'
+                      }
+                    ]}
+                    rowKey="creator_id"
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+            </Row>
+
             {/* Charts Row */}
             <Row gutter={[16, 16]}>
               <Col xs={24} lg={16}>
