@@ -482,16 +482,26 @@ const AdminReports = () => {
                     dataSource={todayStats?.most_active_users_today || []}
                     columns={[
                       {
-                        title: 'Email',
-                        dataIndex: 'email',
-                        key: 'email',
-                        ellipsis: true
+                        title: 'Creator',
+                        key: 'creator',
+                        render: (_, record) => (
+                          <div>
+                            <strong>{record.username || '-'}</strong>
+                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
+                          </div>
+                        )
                       },
                       {
-                        title: 'Username',
-                        dataIndex: 'username',
-                        key: 'instagram',
-                        render: (val) => val || '-'
+                        title: 'Followers',
+                        dataIndex: 'followers_count',
+                        key: 'followers_count',
+                        render: (val) => val ? val.toLocaleString() : '-'
+                      },
+                      {
+                        title: 'Eng %',
+                        dataIndex: 'engagement_rate',
+                        key: 'engagement_rate',
+                        render: (val) => val ? `${val.toFixed(1)}%` : '-'
                       },
                       {
                         title: 'Tier',
@@ -504,10 +514,10 @@ const AdminReports = () => {
                         )
                       },
                       {
-                        title: 'Unlocks',
+                        title: 'Saves',
                         dataIndex: 'unlocks_today',
                         key: 'unlocks_today',
-                        render: (count) => <strong>{count}</strong>
+                        render: (count) => <Tag color="green"><strong>{count}</strong></Tag>
                       }
                     ]}
                     rowKey="creator_id"
@@ -644,21 +654,34 @@ const AdminReports = () => {
             <Row gutter={[16, 16]}>
               <Col xs={24}>
                 <ChartCard>
-                  <h3><UserOutlined /> Top Active Creators (by Pipeline Saves)</h3>
+                  <h3><UserOutlined /> Top Active Creators</h3>
                   <Table
                     dataSource={overview?.top_creators || []}
                     columns={[
                       {
-                        title: 'Email',
-                        dataIndex: 'email',
-                        key: 'email',
-                        ellipsis: true
+                        title: 'Creator',
+                        key: 'creator',
+                        width: 200,
+                        render: (_, record) => (
+                          <div>
+                            <strong>{record.username || '-'}</strong>
+                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
+                          </div>
+                        )
                       },
                       {
-                        title: 'Username',
-                        dataIndex: 'username',
-                        key: 'username',
-                        render: (val) => val || '-'
+                        title: 'Followers',
+                        dataIndex: 'followers_count',
+                        key: 'followers_count',
+                        sorter: (a, b) => (a.followers_count || 0) - (b.followers_count || 0),
+                        render: (val) => val ? val.toLocaleString() : '-'
+                      },
+                      {
+                        title: 'Eng. Rate',
+                        dataIndex: 'engagement_rate',
+                        key: 'engagement_rate',
+                        sorter: (a, b) => (a.engagement_rate || 0) - (b.engagement_rate || 0),
+                        render: (val) => val ? `${val.toFixed(1)}%` : '-'
                       },
                       {
                         title: 'Tier',
@@ -671,7 +694,7 @@ const AdminReports = () => {
                         )
                       },
                       {
-                        title: 'Last 7d',
+                        title: 'Saves (7d)',
                         dataIndex: 'saves_7d',
                         key: 'saves_7d',
                         sorter: (a, b) => a.saves_7d - b.saves_7d,
@@ -685,6 +708,12 @@ const AdminReports = () => {
                         render: (count) => <strong>{count}</strong>
                       },
                       {
+                        title: 'Daily Used',
+                        dataIndex: 'daily_unlocks_used',
+                        key: 'daily_unlocks_used',
+                        render: (val) => <span>{val || 0}/5</span>
+                      },
+                      {
                         title: 'Last Active',
                         dataIndex: 'last_activity',
                         key: 'last_activity',
@@ -692,8 +721,9 @@ const AdminReports = () => {
                       }
                     ]}
                     rowKey="creator_id"
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 15 }}
                     size="small"
+                    scroll={{ x: 900 }}
                   />
                 </ChartCard>
               </Col>
