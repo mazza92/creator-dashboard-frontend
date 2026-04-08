@@ -27,20 +27,38 @@ export async function generateStaticParams() {
   return [];
 }
 
+// Visually hidden h1 style for SEO
+const srOnlyStyle = { position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 };
+
 // This function runs at build time to generate the page
 export default async function BlogPage() {
   try {
     // Fetch all posts at build time (SSG)
     const posts = getAllPosts() || [];
-    
+
     // Get unique categories safely
-    const categories = posts.length > 0 
+    const categories = posts.length > 0
       ? [...new Set(posts.map(post => post.category).filter(Boolean))].filter(Boolean)
       : [];
-    
-    return <BlogPageClient initialPosts={posts} categories={categories} />;
+
+    return (
+      <>
+        {/* Server-rendered h1 for SEO - visually hidden, client component renders visible title */}
+        <h1 style={srOnlyStyle}>
+          Free Link in Bio for Paid Partnerships &amp; Sponsorships for Influencers
+        </h1>
+        <BlogPageClient initialPosts={posts} categories={categories} />
+      </>
+    );
   } catch (error) {
     console.error('Error loading blog posts:', error);
-    return <BlogPageClient initialPosts={[]} categories={[]} />;
+    return (
+      <>
+        <h1 style={srOnlyStyle}>
+          Free Link in Bio for Paid Partnerships &amp; Sponsorships for Influencers
+        </h1>
+        <BlogPageClient initialPosts={[]} categories={[]} />
+      </>
+    );
   }
 }

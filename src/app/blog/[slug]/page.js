@@ -169,6 +169,10 @@ export default async function BlogPostPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
       />
+      {/* Server-rendered h1 for SEO - visually hidden, client component renders visible title */}
+      <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+        {post.title}
+      </h1>
       <BlogPostClient post={post} relatedPosts={relatedPosts} />
     </>
   );

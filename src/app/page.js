@@ -24,5 +24,13 @@ export const metadata = {
 };
 
 export default function HomePage() {
-  return <Founding50Client />;
+  return (
+    <>
+      {/* Server-rendered h1 for SEO - visually hidden, client component renders visible title */}
+      <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+        Get PR packages &amp; paid partnerships from brands
+      </h1>
+      <Founding50Client />
+    </>
+  );
 }
