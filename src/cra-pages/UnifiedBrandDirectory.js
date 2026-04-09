@@ -2,11 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
-import { Input, Select, Spin, Pagination, Button, Badge, Progress, message } from 'antd';
-import { SearchOutlined, FilterOutlined, HeartOutlined, HeartFilled, CrownOutlined, LockOutlined } from '@ant-design/icons';
+import { Input, Select, Spin, Pagination, Button, Progress, message } from 'antd';
+import { SearchOutlined, CrownOutlined, LockOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import AIPitchModal from '../creator-portal/AIPitchModal';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 
 // Normalize API base URL - remove trailing slash to prevent double slashes
@@ -46,9 +47,14 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [dailyUnlocksUsed, setDailyUnlocksUsed] = useState(0);
+  const [pitchesSentThisWeek, setPitchesSentThisWeek] = useState(0);
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
-  const DAILY_UNLOCK_LIMIT = 5; // Free users get 5 unlocks per day
+  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per week
+
+  // Pitch modal state
+  const [showPitchModal, setShowPitchModal] = useState(false);
+  const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
+  const [pitchedBrands, setPitchedBrands] = useState(new Set());
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -90,11 +96,19 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   const fetchSubscriptionStatus = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/subscription/status`, {
+      // Fetch subscription tier
+      const subResponse = await axios.get(`${API_BASE}/api/subscription/status`, {
         withCredentials: true
       });
-      setSubscriptionTier(response.data.tier || 'free');
-      setDailyUnlocksUsed(response.data.daily_unlocks_used || 0);
+      setSubscriptionTier(subResponse.data.tier || 'free');
+
+      // Fetch accurate pitch limits from PR CRM endpoint (handles weekly reset)
+      const limitsResponse = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+        withCredentials: true
+      });
+      if (limitsResponse.data.success) {
+        setPitchesSentThisWeek(limitsResponse.data.used || 0);
+      }
     } catch (error) {
       console.error('Error fetching subscription:', error);
     }
@@ -108,6 +122,14 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       if (response.data.success) {
         const saved = new Set(response.data.pipeline.map(item => item.brand_id));
         setSavedBrandIds(saved);
+
+        // Also populate pitched/contacted brands from pipeline
+        const pitched = new Set(
+          response.data.pipeline
+            .filter(item => item.stage === 'pitched')
+            .map(item => item.brand_id)
+        );
+        setPitchedBrands(pitched);
       }
     } catch (error) {
       console.error('Error fetching saved brands:', error);
@@ -141,21 +163,15 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     e.stopPropagation();
 
     if (!user) {
-      message.info('Sign up to save brands to your pipeline!');
+      message.info('Sign up to save brands!');
       navigate('/register/creator');
-      return;
-    }
-
-    // Check daily unlock limit for FREE users (unsaving doesn't count)
-    if (subscriptionTier === 'free' && dailyUnlocksUsed >= DAILY_UNLOCK_LIMIT && !savedBrandIds.has(brand.id)) {
-      setUpgradeModalVisible(true);
       return;
     }
 
     try {
       // Toggle save/unsave
       if (savedBrandIds.has(brand.id)) {
-        // Unsave (doesn't count against quota)
+        // Unsave
         await axios.delete(`${API_BASE}/api/pr-crm/pipeline/brand/${brand.id}`, {
           withCredentials: true
         });
@@ -164,25 +180,63 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           newSet.delete(brand.id);
           return newSet;
         });
-        message.success('Brand removed from pipeline');
+        message.success('Brand removed from saved list');
       } else {
-        // Save (counts against daily quota for FREE users)
+        // Save
         await axios.post(`${API_BASE}/api/pr-crm/pipeline/save`,
-          { brand_id: brand.id },
+          { brand_id: brand.id, slug: brand.slug },
           { withCredentials: true }
         );
         setSavedBrandIds(prev => new Set([...prev, brand.id]));
-
-        // Increment daily unlock count for free users
-        if (subscriptionTier === 'free') {
-          setDailyUnlocksUsed(prev => prev + 1);
-        }
-
-        message.success(`${brand.name} saved to pipeline!`);
+        message.success(`${brand.name} saved!`);
       }
     } catch (error) {
       console.error('Error saving brand:', error);
       message.error('Failed to save brand');
+    }
+  };
+
+  const handlePitchBrand = (brand, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      message.info('Sign up to contact brands!');
+      navigate('/register/creator');
+      return;
+    }
+
+    // Check pitch limit for free users
+    const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+    if (!isPro && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
+      setUpgradeModalVisible(true);
+      return;
+    }
+
+    // Open pitch modal
+    setSelectedBrandForPitch(brand);
+    setShowPitchModal(true);
+  };
+
+  const handlePitchSent = async () => {
+    // Mark brand as contacted locally
+    if (selectedBrandForPitch) {
+      setPitchedBrands(prev => new Set([...prev, selectedBrandForPitch.id]));
+    }
+    setShowPitchModal(false);
+    setSelectedBrandForPitch(null);
+
+    // Re-fetch quota from API to ensure accurate count
+    try {
+      const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setPitchesSentThisWeek(response.data.used || 0);
+      }
+    } catch (error) {
+      // Fallback to incrementing locally if API fails
+      setPitchesSentThisWeek(prev => prev + 1);
     }
   };
 
@@ -247,23 +301,23 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           </Hero>
         )}
 
-        {/* Daily Quota Tracker - Show for logged-in FREE users */}
-        {user && subscriptionTier === 'free' && (
+        {/* Weekly Contact Quota Tracker - Show for logged-in FREE users */}
+        {user && subscriptionTier === 'free' && isDashboardView && (
           <QuotaBanner $isDashboard={isDashboardView}>
             <Progress
-              percent={(dailyUnlocksUsed / DAILY_UNLOCK_LIMIT) * 100}
+              percent={(pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100}
               showInfo={false}
               strokeColor="#EC4899"
             />
             <QuotaText>
-              <span><strong>{dailyUnlocksUsed}/{DAILY_UNLOCK_LIMIT}</strong> applications used today</span>
+              <span><strong>{pitchesSentThisWeek}/{FREE_PITCH_LIMIT}</strong> AI contacts used this week</span>
               <Button type="link" onClick={() => setUpgradeModalVisible(true)}>
                 Upgrade for unlimited <CrownOutlined />
               </Button>
             </QuotaText>
-            {dailyUnlocksUsed >= DAILY_UNLOCK_LIMIT && (
+            {pitchesSentThisWeek >= FREE_PITCH_LIMIT && (
               <QuotaWarning>
-                ⏰ Come back tomorrow for 5 more free applications, or upgrade now!
+                ⏰ Contacts reset next week, or upgrade now for unlimited!
               </QuotaWarning>
             )}
           </QuotaBanner>
@@ -434,68 +488,89 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         ) : (
           <>
             <BrandGrid>
-              {brands.map(brand => (
-                <BrandCard
-                  key={brand.slug}
-                  to={`/brand/${brand.slug}`}
-                >
-                  {brand.isFeatured && (
-                    <FeaturedBadge>
-                      <CrownOutlined /> Featured
-                    </FeaturedBadge>
-                  )}
+              {brands.map(brand => {
+                const isSaved = isBrandSaved(brand.id);
+                const isPitched = pitchedBrands.has(brand.id);
+                const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+                const pitchesLeft = FREE_PITCH_LIMIT - pitchesSentThisWeek;
 
-                  {user && (
-                    <SaveButton
-                      onClick={(e) => handleSaveBrand(brand, e)}
-                      $saved={isBrandSaved(brand.id)}
-                    >
-                      {isBrandSaved(brand.id) ? <HeartFilled /> : <HeartOutlined />}
-                    </SaveButton>
-                  )}
-
-                  <BrandLogo>
-                    {brand.logo ? (
-                      <img
-                        src={brand.logo}
-                        alt={brand.name}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222); border-radius: 12px;">${brand.name.charAt(0)}</div>`;
-                        }}
-                      />
-                    ) : (
-                      <LogoPlaceholder>{brand.name.charAt(0)}</LogoPlaceholder>
-                    )}
-                  </BrandLogo>
-
-                  <BrandInfo>
-                    <BrandName>{brand.name}</BrandName>
-                    {brand.description && (
-                      <BrandDescription>{brand.description}</BrandDescription>
+                return (
+                  <BrandCard
+                    key={brand.slug}
+                    to={`/brand/${brand.slug}`}
+                  >
+                    {brand.isFeatured && (
+                      <FeaturedBadge>
+                        <CrownOutlined /> Featured
+                      </FeaturedBadge>
                     )}
 
-                    <BrandMeta>
-                      {brand.category && <MetaTag>{brand.category}</MetaTag>}
-                      {brand.minFollowers !== null && brand.minFollowers !== undefined && brand.minFollowers > 0 && (
-                        <MetaTag>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</MetaTag>
+                    <BrandLogo>
+                      {brand.logo ? (
+                        <img
+                          src={brand.logo}
+                          alt={brand.name}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222); border-radius: 12px;">${brand.name.charAt(0)}</div>`;
+                          }}
+                        />
+                      ) : (
+                        <LogoPlaceholder>{brand.name.charAt(0)}</LogoPlaceholder>
                       )}
-                    </BrandMeta>
+                    </BrandLogo>
 
-                    {brand.responseRate !== null && brand.responseRate !== undefined && (
-                      <ResponseRate>
-                        {brand.responseRate}% response rate
-                      </ResponseRate>
-                    )}
+                    <BrandInfo>
+                      <BrandName>{brand.name}</BrandName>
+                      {brand.description && (
+                        <BrandDescription>{brand.description}</BrandDescription>
+                      )}
 
-                    {!user && !isDashboardView && (
-                      <SignupCTA>
-                        <LockOutlined /> Sign up to view application link
-                      </SignupCTA>
-                    )}
-                  </BrandInfo>
-                </BrandCard>
-              ))}
+                      <BrandMeta>
+                        {brand.category && <MetaTag>{brand.category}</MetaTag>}
+                        {brand.minFollowers !== null && brand.minFollowers !== undefined && brand.minFollowers > 0 && (
+                          <MetaTag>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</MetaTag>
+                        )}
+                      </BrandMeta>
+
+                      {brand.responseRate !== null && brand.responseRate !== undefined && (
+                        <ResponseRate>
+                          {brand.responseRate}% response rate
+                        </ResponseRate>
+                      )}
+
+                      {/* Action buttons - only show in dashboard view for logged-in users */}
+                      {isDashboardView && user && (
+                        <CardActions>
+                          <PitchButton
+                            onClick={(e) => handlePitchBrand(brand, e)}
+                            $pitched={isPitched}
+                            disabled={isPitched}
+                          >
+                            {isPitched ? (
+                              <>✓ Contacted</>
+                            ) : (
+                              <>📧 Contact</>
+                            )}
+                          </PitchButton>
+                          <SaveActionButton
+                            onClick={(e) => handleSaveBrand(brand, e)}
+                            $saved={isSaved}
+                          >
+                            {isSaved ? '✓ Saved' : '🔖 Save'}
+                          </SaveActionButton>
+                        </CardActions>
+                      )}
+
+                      {!user && !isDashboardView && (
+                        <SignupCTA>
+                          <LockOutlined /> Sign up to contact brands
+                        </SignupCTA>
+                      )}
+                    </BrandInfo>
+                  </BrandCard>
+                );
+              })}
             </BrandGrid>
 
             <PaginationContainer>
@@ -505,7 +580,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 pageSize={pagination.limit}
                 onChange={handlePageChange}
                 showSizeChanger={false}
-                showTotal={(total) => `${total} brands found`}
+                showTotal={(total) => `${total} brands`}
+                showLessItems
+                responsive
               />
             </PaginationContainer>
           </>
@@ -517,9 +594,22 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         <UpgradeModal
           isOpen={upgradeModalVisible}
           onClose={() => setUpgradeModalVisible(false)}
-          currentCount={dailyUnlocksUsed}
-          limit={DAILY_UNLOCK_LIMIT}
-          feature="brand applications"
+          currentCount={pitchesSentThisWeek}
+          limit={FREE_PITCH_LIMIT}
+          feature="AI contacts"
+        />
+      )}
+
+      {/* AI Contact Modal */}
+      {showPitchModal && selectedBrandForPitch && (
+        <AIPitchModal
+          isOpen={showPitchModal}
+          onClose={() => {
+            setShowPitchModal(false);
+            setSelectedBrandForPitch(null);
+          }}
+          brand={selectedBrandForPitch}
+          onPitchSent={handlePitchSent}
         />
       )}
     </>
@@ -697,6 +787,11 @@ const BrandCard = styled(Link)`
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     transform: translateY(-4px);
   }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 12px;
+  }
 `;
 
 const FeaturedBadge = styled.div`
@@ -714,28 +809,81 @@ const FeaturedBadge = styled.div`
   gap: 4px;
 `;
 
-const SaveButton = styled.button`
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: ${props => props.$saved ? '#EC4899' : 'white'};
-  color: ${props => props.$saved ? 'white' : '#6B7280'};
-  border: ${props => props.$saved ? 'none' : '1px solid #E5E7EB'};
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+const CardActions = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 6px;
+  }
+`;
+
+const PitchButton = styled.button`
+  flex: 1;
+  background: ${props => props.$pitched
+    ? '#F0FDF4'
+    : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%)'};
+  color: ${props => props.$pitched ? '#15803D' : 'white'};
+  border: ${props => props.$pitched ? '2px solid #BBF7D0' : 'none'};
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: ${props => props.$pitched || props.disabled ? 'default' : 'pointer'};
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  gap: 6px;
+  min-height: 40px;
+  box-shadow: ${props => props.$pitched ? 'none' : '0 2px 8px rgba(99, 102, 241, 0.2)'};
+
+  &:hover:not(:disabled) {
+    transform: ${props => props.$pitched ? 'none' : 'translateY(-2px)'};
+    box-shadow: ${props => props.$pitched ? 'none' : '0 6px 20px rgba(99, 102, 241, 0.3)'};
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+`;
+
+const SaveActionButton = styled.button`
+  flex: 1;
+  background: ${props => props.$saved ? '#F0FDF4' : '#F9FAFB'};
+  color: ${props => props.$saved ? '#15803D' : '#374151'};
+  border: ${props => props.$saved ? '2px solid #BBF7D0' : '1px solid #E5E7EB'};
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  min-height: 40px;
 
   &:hover {
-    transform: scale(1.1);
-    background: ${props => props.$saved ? '#DB2777' : '#F3F4F6'};
+    background: ${props => props.$saved ? '#DCFCE7' : '#F3F4F6'};
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
   }
 `;
 
@@ -839,9 +987,97 @@ const LoadingContainer = styled.div`
 
 const PaginationContainer = styled.div`
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   margin-top: 48px;
-  padding: 0 24px;
+  padding: 0 24px 24px;
+
+  .ant-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .ant-pagination-item,
+  .ant-pagination-prev,
+  .ant-pagination-next {
+    min-width: 36px;
+    height: 36px;
+    line-height: 34px;
+    border-radius: 10px;
+    border: 1px solid #E5E7EB;
+    background: white;
+
+    a {
+      color: #374151;
+      font-weight: 500;
+    }
+
+    &:hover {
+      border-color: #3B82F6;
+
+      a {
+        color: #3B82F6;
+      }
+    }
+  }
+
+  .ant-pagination-item-active {
+    background: linear-gradient(135deg, #3B82F6, #6366F1);
+    border-color: transparent;
+
+    a {
+      color: white !important;
+    }
+  }
+
+  .ant-pagination-total-text {
+    font-size: 14px;
+    color: #6B7280;
+    font-weight: 500;
+    order: -1;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 768px) {
+    margin-top: 32px;
+    padding: 0 16px 80px; /* Extra bottom padding for mobile nav */
+
+    .ant-pagination-item,
+    .ant-pagination-prev,
+    .ant-pagination-next {
+      min-width: 32px;
+      height: 32px;
+      line-height: 30px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .ant-pagination-jump-prev,
+    .ant-pagination-jump-next {
+      min-width: 28px;
+    }
+
+    .ant-pagination-total-text {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .ant-pagination-item,
+    .ant-pagination-prev,
+    .ant-pagination-next {
+      min-width: 30px;
+      height: 30px;
+      line-height: 28px;
+      font-size: 12px;
+    }
+  }
 `;
 
 // Open PR Applications Featured Section

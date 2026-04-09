@@ -2,6 +2,18 @@
 User-agent: *
 Allow: /
 
+# Block URL parameters (tracking refs, search queries)
+Disallow: /*?ref=
+Disallow: /*?search=
+Disallow: /blog?search=*
+
+# Block RSS/XML feeds from indexing
+Disallow: /blog/rss.xml
+Disallow: *.xml$
+
+# Block missions pages (temporary/dynamic content)
+Disallow: /missions/
+
 # Allow AI Search Crawlers
 User-agent: ChatGPT-User
 Allow: /
@@ -36,6 +48,12 @@ Allow: /about
 Allow: /features
 Allow: /contact
 Allow: /marketplace
+Allow: /directory
+Allow: /directory/*
+Allow: /brand/
+Allow: /brand/*
+Allow: /brands/
+Allow: /brands/*
 Allow: /register
 Allow: /register/creator
 Allow: /register/brand
@@ -66,8 +84,10 @@ Allow: /register/creator
 Allow: /register/brand
 Crawl-delay: 5
 
-# Sitemap
+# Sitemaps
 Sitemap: https://newcollab.co/sitemap.xml
+Sitemap: https://newcollab.co/sitemap-images.xml
+Sitemap: https://newcollab.co/video-sitemap.xml
 
 # Crawl-delay for other bots
 Crawl-delay: 10 

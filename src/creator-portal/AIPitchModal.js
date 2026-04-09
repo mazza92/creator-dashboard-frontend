@@ -20,6 +20,10 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [regenerateCount, setRegenerateCount] = useState(0);
+  const [fetchedBrandEmail, setFetchedBrandEmail] = useState(null); // Email from API
+  const [fetchedApplicationUrl, setFetchedApplicationUrl] = useState(null); // Application form URL from API
+  const [upgrading, setUpgrading] = useState(false); // Stripe checkout loading
+  const [creditUsed, setCreditUsed] = useState(false); // Track if credit was deducted
   const MAX_REGENERATES = 3; // Limit regenerations to save API credits
 
   // Fetch creator profile and generate pitch when modal opens
@@ -32,17 +36,57 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const initializePitch = async () => {
     setLoading(true);
 
-    // Fetch creator profile first
+    // Fetch limits first to check if user can contact
+    const limits = await fetchPitchLimits();
+
+    // If user can't pitch, just show upgrade prompt (don't generate pitch)
+    if (!limits.canPitch) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch creator profile
     const profile = await fetchCreatorProfile();
     setCreatorProfile(profile);
 
     // Try AI endpoint, fall back to smart template
-    await generatePitch(profile);
+    const pitchData = await generatePitch(profile);
 
-    // Fetch limits (silently fail if endpoint doesn't exist)
-    await fetchPitchLimits();
+    // Check if brand has any contact method (email or application form from API response or brand prop)
+    const hasEmail = pitchData?.brand_email || brand?.contact_email || brand?.email || brand?.pr_email;
+    const hasAppForm = pitchData?.application_form_url || brand?.application_form_url || brand?.applicationUrl;
+
+    // Only deduct credit if there's a way to contact the brand
+    if (hasEmail || hasAppForm) {
+      await trackPitchUsage();
+      // Refresh limits to show updated count
+      await fetchPitchLimits();
+    }
 
     setLoading(false);
+  };
+
+  const trackPitchUsage = async () => {
+    try {
+      await api.post('/api/pr-crm/track-pitch', {
+        brand_id: brand.brand_id || brand.id,
+        slug: brand.slug,
+        pipeline_id: brand.id
+      });
+      // Credit deducted successfully
+      setCreditUsed(true);
+    } catch (error) {
+      // Silently fail - don't block the user
+      console.error('Error tracking pitch:', error);
+    }
+  };
+
+  // Handle modal close - notify parent if credit was used
+  const handleClose = () => {
+    if (creditUsed && onPitchSent) {
+      onPitchSent(brand);
+    }
+    onClose();
   };
 
   const fetchCreatorProfile = async () => {
@@ -59,22 +103,43 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
     try {
       const response = await api.get('/api/pr-crm/pitch-limits');
       setPitchLimits(response.data);
+      return response.data;
     } catch (error) {
       // Endpoint doesn't exist yet - default to allowing pitches
-      setPitchLimits({ used: 0, limit: 3, canPitch: true });
+      const defaults = { used: 0, limit: 3, canPitch: true };
+      setPitchLimits(defaults);
+      return defaults;
     }
   };
 
   const generatePitch = async (profile) => {
     try {
-      // Try AI endpoint first
+      // Try AI endpoint first - send both brand_id and slug as fallback
       const response = await api.post('/api/pr-crm/generate-pitch', {
-        brand_id: brand.brand_id || brand.id
+        brand_id: brand.brand_id || brand.id,
+        slug: brand.slug
+      });
+      console.log('[AIPitchModal] Generate pitch response:', {
+        brand_email: response.data.brand_email,
+        application_form_url: response.data.application_form_url,
+        brand_name: response.data.brand_name
       });
       setPitch(response.data);
+      // Store the email from API if available
+      if (response.data.brand_email) {
+        setFetchedBrandEmail(response.data.brand_email);
+      }
+      // Store the application form URL from API if available
+      if (response.data.application_form_url) {
+        setFetchedApplicationUrl(response.data.application_form_url);
+      }
+      return response.data;
     } catch (error) {
+      console.error('[AIPitchModal] Generate pitch error:', error);
       // AI endpoint not ready - use the Golden Template with real data
-      setPitch(generateGoldenTemplate(brand, profile));
+      const fallbackPitch = generateGoldenTemplate(brand, profile);
+      setPitch(fallbackPitch);
+      return fallbackPitch;
     }
   };
 
@@ -225,19 +290,13 @@ ${creatorName}`;
 
   const handleSendEmail = async () => {
     if (!pitchLimits.canPitch) {
-      message.warning('You\'ve used all your free pitches this week. Upgrade to continue!');
+      message.warning('You\'ve used all your free contacts this week. Upgrade to continue!');
       return;
     }
 
     setSending(true);
 
     try {
-      // Try to track the pitch (silently fail if endpoint doesn't exist)
-      await api.post('/api/pr-crm/track-pitch', {
-        brand_id: brand.brand_id || brand.id,
-        pipeline_id: brand.id
-      }).catch(() => {}); // Silently fail
-
       // Build mailto URL
       const mailtoUrl = buildMailtoUrl();
 
@@ -246,21 +305,15 @@ ${creatorName}`;
 
       message.success('Opening your email app...');
 
-      // Callback to update pipeline stage
-      if (onPitchSent) {
-        onPitchSent(brand);
-      }
-
-      // Close modal after short delay
+      // Close modal after short delay (handleClose notifies parent)
       setTimeout(() => {
-        onClose();
+        handleClose();
       }, 1000);
 
     } catch (error) {
-      // Still open email even if tracking fails
+      // Still open email even if something fails
       window.location.href = buildMailtoUrl();
-      if (onPitchSent) onPitchSent(brand);
-      onClose();
+      handleClose();
     } finally {
       setSending(false);
     }
@@ -279,7 +332,7 @@ ${creatorName}`;
       const fullPitch = `Subject: ${pitch?.subject}\n\n${pitch?.body}`;
       await navigator.clipboard.writeText(fullPitch);
       setCopied(true);
-      message.success('Pitch copied to clipboard!');
+      message.success('Email copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       message.error('Failed to copy');
@@ -295,8 +348,42 @@ ${creatorName}`;
     initializePitch();
   };
 
-  // Check if we have any email to send to
-  const brandEmail = brand?.contact_email || brand?.email || null;
+  const handleUpgrade = async () => {
+    try {
+      setUpgrading(true);
+      const response = await api.post('/api/subscription/create-checkout', { tier: 'pro' });
+      // Redirect to Stripe Checkout
+      window.location.href = response.data.checkout_url;
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      const errorData = error.response?.data;
+      if (errorData?.code === 'stripe_account_pending') {
+        message.warning('Payment processing is temporarily unavailable. Please try again later.');
+      } else {
+        message.error('Failed to start checkout. Please try again.');
+      }
+      setUpgrading(false);
+    }
+  };
+
+  // Normalize brand property names (handle both API formats)
+  // Priority: API fetched > brand prop variations
+  const brandName = brand?.brand_name || brand?.name || 'Brand';
+  const brandLogo = brand?.logo_url || brand?.logo || null;
+  const brandEmail = fetchedBrandEmail || brand?.contact_email || brand?.email || brand?.pr_email || null;
+  // Check all possible field names for application form URL
+  const applicationFormUrl = fetchedApplicationUrl || brand?.application_form_url || brand?.applicationUrl || brand?.application_url || null;
+  const hasContactMethod = brandEmail || applicationFormUrl;
+
+  // Debug logging
+  console.log('[AIPitchModal] Render state:', {
+    loading,
+    brandName,
+    brandEmail,
+    applicationFormUrl,
+    fetchedApplicationUrl,
+    hasContactMethod
+  });
 
   if (!isOpen) return null;
 
@@ -306,7 +393,7 @@ ${creatorName}`;
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={handleClose}
       >
         <Modal
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -314,7 +401,7 @@ ${creatorName}`;
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
-          <CloseButton onClick={onClose}>
+          <CloseButton onClick={handleClose}>
             <FiX />
           </CloseButton>
 
@@ -322,21 +409,21 @@ ${creatorName}`;
           <Header>
             <BrandInfo>
               <BrandLogo>
-                {brand.logo_url ? (
-                  <img src={brand.logo_url} alt={brand.brand_name} />
+                {brandLogo ? (
+                  <img src={brandLogo} alt={brandName} />
                 ) : (
-                  <span>{brand.brand_name?.charAt(0)}</span>
+                  <span>{brandName?.charAt(0)}</span>
                 )}
               </BrandLogo>
               <div>
-                <BrandName>Pitch {brand.brand_name}</BrandName>
+                <BrandName>Contact {brandName}</BrandName>
                 <BrandCategory>{brand.category}</BrandCategory>
               </div>
             </BrandInfo>
 
             <PitchCounter canPitch={pitchLimits.canPitch}>
               <FiZap />
-              <span>{pitchLimits.limit - pitchLimits.used} / {pitchLimits.limit} pitches left</span>
+              <span>{pitchLimits.limit - pitchLimits.used} / {pitchLimits.limit} contacts left</span>
             </PitchCounter>
           </Header>
 
@@ -344,20 +431,29 @@ ${creatorName}`;
           {loading ? (
             <LoadingState>
               <Spin size="large" />
-              <LoadingText>Crafting your perfect pitch...</LoadingText>
-              <LoadingSubtext>Personalizing for {brand.brand_name}</LoadingSubtext>
+              <LoadingText>Crafting your email...</LoadingText>
+              <LoadingSubtext>Personalizing for {brandName}</LoadingSubtext>
             </LoadingState>
           ) : !pitchLimits.canPitch ? (
             <UpgradePrompt>
-              <UpgradeIcon><FiLock /></UpgradeIcon>
-              <UpgradeTitle>Weekly Limit Reached</UpgradeTitle>
+              <UpgradeIcon><FiZap /></UpgradeIcon>
+              <UpgradeTitle>You've Used All Free Contacts!</UpgradeTitle>
               <UpgradeText>
-                You've sent {pitchLimits.limit} pitches this week. Upgrade to Pro for unlimited AI pitches!
+                Upgrade to Pro for unlimited AI-powered emails and land more brand deals.
               </UpgradeText>
-              <UpgradeButton href="/account/upgrade">
-                Upgrade to Pro - $12/month
+              <UpgradeFeatures>
+                <UpgradeFeature>✓ Unlimited AI contacts</UpgradeFeature>
+                <UpgradeFeature>✓ Direct PR manager emails</UpgradeFeature>
+                <UpgradeFeature>✓ Priority brand matching</UpgradeFeature>
+              </UpgradeFeatures>
+              <UpgradeButton
+                as="button"
+                onClick={handleUpgrade}
+                disabled={upgrading}
+              >
+                {upgrading ? 'Processing...' : 'Upgrade to Pro - $12/month'}
               </UpgradeButton>
-              <UpgradeNote>Or wait until next week for 3 more free pitches</UpgradeNote>
+              <UpgradeNote>💡 One PR package pays for 6+ months of Pro!</UpgradeNote>
             </UpgradePrompt>
           ) : (
             <>
@@ -365,7 +461,7 @@ ${creatorName}`;
               <EmailPreview>
                 <EmailHeader>
                   <EmailLabel>To:</EmailLabel>
-                  <EmailValue>{brand.contact_email || 'Brand email'}</EmailValue>
+                  <EmailValue>{brandEmail || `${brandName} PR Team`}</EmailValue>
                 </EmailHeader>
                 <EmailHeader>
                   <EmailLabel>Subject:</EmailLabel>
@@ -395,20 +491,31 @@ ${creatorName}`;
 
               {/* Action Buttons */}
               <Actions>
-                <SendButton
-                  onClick={handleSendEmail}
-                  disabled={sending || !brandEmail}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {sending ? (
-                    'Opening Email...'
-                  ) : (
-                    <>
-                      <FiSend /> Send Email to {brand.brand_name}
-                    </>
-                  )}
-                </SendButton>
+                {/* Primary action: Application Form if no email, or Send Email if email exists */}
+                {!brandEmail && applicationFormUrl ? (
+                  <PrimaryApplicationButton
+                    href={applicationFormUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    📋 <span>Open Application Form</span>
+                  </PrimaryApplicationButton>
+                ) : (
+                  <SendButton
+                    onClick={handleSendEmail}
+                    disabled={sending || !brandEmail}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {sending ? (
+                      <span>Opening Email...</span>
+                    ) : (
+                      <>
+                        <FiSend /> <span>Send Email to {brandName}</span>
+                      </>
+                    )}
+                  </SendButton>
+                )}
 
                 <SecondaryActions>
                   <SecondaryButton onClick={handleCopyPitch}>
@@ -423,10 +530,37 @@ ${creatorName}`;
                 </SecondaryActions>
               </Actions>
 
-              {/* No email warning */}
-              {!brandEmail && (
+              {/* Show application form as secondary if brand has BOTH email and application form */}
+              {brandEmail && applicationFormUrl && (
+                <ApplicationFormBox>
+                  <ApplicationFormHeader>
+                    <span>📋</span>
+                    <div>
+                      <ApplicationFormTitle>Application Form Available</ApplicationFormTitle>
+                      <ApplicationFormSubtitle>You can also apply directly on their website</ApplicationFormSubtitle>
+                    </div>
+                  </ApplicationFormHeader>
+                  <ApplicationFormButton
+                    href={applicationFormUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open Form →
+                  </ApplicationFormButton>
+                </ApplicationFormBox>
+              )}
+
+              {/* Tip for using the pitch when application form is primary */}
+              {!brandEmail && applicationFormUrl && (
+                <PitchTip>
+                  💡 Use the pitch above as a reference when filling out the application form
+                </PitchTip>
+              )}
+
+              {/* No email and no application form */}
+              {!brandEmail && !applicationFormUrl && (
                 <NoEmailWarning>
-                  <FiMail /> No email found. Copy the pitch and send via Instagram DM instead!
+                  <FiMail /> No contact info found. Copy the pitch and send via Instagram DM instead!
                 </NoEmailWarning>
               )}
             </>
@@ -434,7 +568,7 @@ ${creatorName}`;
 
           {/* Footer tip */}
           <FooterTip>
-            💡 Personalized pitches get 3x more responses than generic templates
+            💡 Personalized emails get 3x more responses than generic templates
           </FooterTip>
         </Modal>
       </Overlay>
@@ -691,30 +825,110 @@ const Actions = styled.div`
 const SendButton = styled(motion.button)`
   width: 100%;
   padding: 16px 24px;
-  background: linear-gradient(135deg, #3B82F6, #EC4899);
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
   color: white;
   border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #818CF8 0%, #A78BFA 50%, #C084FC 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
   }
 
   &:hover:not(:disabled) {
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  /* Ensure all content stays above the ::before overlay */
+  > * {
+    position: relative;
+    z-index: 1;
   }
 
   svg {
+    position: relative;
+    z-index: 1;
     font-size: 18px;
+  }
+`;
+
+const PrimaryApplicationButton = styled.a`
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+  text-decoration: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+    color: white;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+  }
+`;
+
+const PitchTip = styled.div`
+  margin: 12px 24px 0;
+  padding: 10px 14px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1E40AF;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    margin: 12px 16px 0;
   }
 `;
 
@@ -765,6 +979,117 @@ const NoEmailWarning = styled.div`
   }
 `;
 
+const ApplicationFormBox = styled.div`
+  margin: 16px 24px 0;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  border: 2px solid #BBF7D0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    margin: 16px 16px 0;
+    padding: 14px 16px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  @media (max-width: 380px) {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+`;
+
+const ApplicationFormHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+
+  > span {
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    gap: 10px;
+
+    > span {
+      font-size: 24px;
+    }
+  }
+`;
+
+const ApplicationFormTitle = styled.div`
+  font-weight: 700;
+  font-size: 15px;
+  color: #15803D;
+  line-height: 1.3;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 13px;
+  }
+`;
+
+const ApplicationFormSubtitle = styled.div`
+  font-size: 13px;
+  color: #6B7280;
+  margin-top: 2px;
+  line-height: 1.3;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+
+  @media (max-width: 380px) {
+    display: none;
+  }
+`;
+
+const ApplicationFormButton = styled.a`
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 380px) {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+`;
+
 const UpgradePrompt = styled.div`
   padding: 40px 24px;
   text-align: center;
@@ -806,11 +1131,19 @@ const UpgradeButton = styled.a`
   font-weight: 700;
   text-decoration: none;
   transition: all 0.2s;
+  border: none;
+  cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
     color: white;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -818,6 +1151,25 @@ const UpgradeNote = styled.p`
   margin-top: 12px;
   font-size: 12px;
   color: #9CA3AF;
+`;
+
+const UpgradeFeatures = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  text-align: left;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const UpgradeFeature = styled.div`
+  font-size: 14px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const FooterTip = styled.div`

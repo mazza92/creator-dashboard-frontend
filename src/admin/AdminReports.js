@@ -8,7 +8,7 @@ import {
   LockOutlined, UserOutlined, ReloadOutlined, LineChartOutlined,
   TeamOutlined, RiseOutlined, DollarOutlined, FireOutlined,
   TrophyOutlined, BarChartOutlined, FunnelPlotOutlined, CalendarOutlined,
-  ShopOutlined, LinkOutlined, MailOutlined
+  ShopOutlined, LinkOutlined, MailOutlined, SendOutlined, ThunderboltOutlined
 } from '@ant-design/icons';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -36,6 +36,7 @@ const AdminReports = () => {
   const [retention, setRetention] = useState(null);
   const [todayStats, setTodayStats] = useState(null);
   const [brandAnalytics, setBrandAnalytics] = useState(null);
+  const [pitchAnalytics, setPitchAnalytics] = useState(null);
   const [activeTab, setActiveTab] = useState('today');
   const [dateRange, setDateRange] = useState(30);
 
@@ -71,7 +72,8 @@ const AdminReports = () => {
         fetchQuotaHits(),
         fetchPopularBrands(),
         fetchRetention(),
-        fetchBrandAnalytics()
+        fetchBrandAnalytics(),
+        fetchPitchAnalytics()
       ]);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -168,6 +170,15 @@ const AdminReports = () => {
       setBrandAnalytics(data);
     } catch (error) {
       console.error('Failed to fetch brand analytics:', error);
+    }
+  };
+
+  const fetchPitchAnalytics = async () => {
+    try {
+      const { data } = await api.get(`/api/admin/reports/pitch-analytics?days=${dateRange}`, getApiConfig());
+      setPitchAnalytics(data);
+    } catch (error) {
+      console.error('Failed to fetch pitch analytics:', error);
     }
   };
 
@@ -436,17 +447,69 @@ const AdminReports = () => {
               </Col>
             </StatsRow>
 
-            {/* Monetization Signals */}
+            {/* AI Pitch Credits Today */}
             <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={8}>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="AI Pitches Today"
+                    value={pitchAnalytics?.today?.pitches_today || 0}
+                    prefix={<SendOutlined />}
+                    valueStyle={{ color: '#667eea' }}
+                    suffix={
+                      <ChangeIndicator positive={(pitchAnalytics?.today?.change || 0) >= 0}>
+                        {(pitchAnalytics?.today?.change || 0) > 0 ? '+' : ''}{pitchAnalytics?.today?.change || 0} vs yesterday
+                      </ChangeIndicator>
+                    }
+                  />
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Pitch Users Today"
+                    value={pitchAnalytics?.today?.unique_users_today || 0}
+                    prefix={<UserOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                  <HelpText>Creators who used AI contact</HelpText>
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
                 <StatCard highlight>
                   <Statistic
-                    title="Users Hit Quota Limit"
+                    title="At Pitch Limit"
+                    value={pitchAnalytics?.quota?.at_limit || 0}
+                    prefix={<ThunderboltOutlined />}
+                    valueStyle={{ color: '#f5222d' }}
+                  />
+                  <HelpText>Free users maxed 3 pitches/week</HelpText>
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="New Pro Subscriptions"
+                    value={todayStats?.new_pro_subscriptions || 0}
+                    prefix={<TrophyOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                  <HelpText>Conversions to paid tier today</HelpText>
+                </StatCard>
+              </Col>
+            </StatsRow>
+
+            {/* Legacy Monetization Signals */}
+            <StatsRow gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={8}>
+                <StatCard>
+                  <Statistic
+                    title="Users Hit Unlock Limit"
                     value={todayStats?.quota?.at_limit || 0}
                     prefix={<DollarOutlined />}
-                    valueStyle={{ color: '#f5222d', fontSize: 36 }}
+                    valueStyle={{ color: '#faad14', fontSize: 28 }}
                   />
-                  <HelpText>Free users who maxed out 5 unlocks - ready to upgrade!</HelpText>
+                  <HelpText>Free users who maxed out 5 unlocks</HelpText>
                 </StatCard>
               </Col>
               <Col xs={24} sm={12} md={8}>
@@ -455,7 +518,7 @@ const AdminReports = () => {
                     title="Users Near Limit (3-4)"
                     value={todayStats?.quota?.near_limit || 0}
                     prefix={<RiseOutlined />}
-                    valueStyle={{ color: '#faad14', fontSize: 36 }}
+                    valueStyle={{ color: '#faad14', fontSize: 28 }}
                   />
                   <HelpText>One more session and they'll hit the paywall</HelpText>
                 </StatCard>
@@ -463,12 +526,11 @@ const AdminReports = () => {
               <Col xs={24} sm={12} md={8}>
                 <StatCard>
                   <Statistic
-                    title="New Pro Subscriptions"
-                    value={todayStats?.new_pro_subscriptions || 0}
-                    prefix={<TrophyOutlined />}
-                    valueStyle={{ color: '#52c41a', fontSize: 36 }}
+                    title="Pipeline Saves"
+                    value={todayStats?.pipeline_saves_today || 0}
+                    prefix={<FunnelPlotOutlined />}
+                    valueStyle={{ color: '#eb2f96', fontSize: 28 }}
                   />
-                  <HelpText>Conversions to paid tier today</HelpText>
                 </StatCard>
               </Col>
             </StatsRow>
@@ -477,7 +539,103 @@ const AdminReports = () => {
             <Row gutter={[16, 16]}>
               <Col xs={24} lg={12}>
                 <ChartCard>
-                  <h3>Most Active Users Today</h3>
+                  <h3><SendOutlined /> Top Pitch Users Today</h3>
+                  <Table
+                    dataSource={pitchAnalytics?.today?.top_users || []}
+                    columns={[
+                      {
+                        title: 'Creator',
+                        key: 'creator',
+                        render: (_, record) => (
+                          <div>
+                            <strong>{record.username || '-'}</strong>
+                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
+                          </div>
+                        )
+                      },
+                      {
+                        title: 'Tier',
+                        dataIndex: 'tier',
+                        key: 'tier',
+                        render: (tier) => (
+                          <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
+                            {tier}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: 'Pitches Today',
+                        dataIndex: 'pitches_today',
+                        key: 'pitches_today',
+                        render: (count) => <Tag color="purple"><strong>{count}</strong></Tag>
+                      },
+                      {
+                        title: 'Week Total',
+                        dataIndex: 'pitches_this_week',
+                        key: 'pitches_this_week',
+                        render: (count, record) => (
+                          <span>
+                            {count}
+                            {record.tier === 'free' && <small style={{ color: '#999' }}>/3</small>}
+                          </span>
+                        )
+                      }
+                    ]}
+                    rowKey="creator_id"
+                    pagination={false}
+                    size="small"
+                    locale={{ emptyText: 'No pitches yet today' }}
+                  />
+                </ChartCard>
+              </Col>
+              <Col xs={24} lg={12}>
+                <ChartCard>
+                  <h3><ShopOutlined /> Top Pitched Brands Today</h3>
+                  <Table
+                    dataSource={pitchAnalytics?.today?.top_brands || []}
+                    columns={[
+                      {
+                        title: 'Brand',
+                        dataIndex: 'brand_name',
+                        key: 'brand_name'
+                      },
+                      {
+                        title: 'Category',
+                        dataIndex: 'category',
+                        key: 'category',
+                        render: (cat) => <Tag>{cat}</Tag>
+                      },
+                      {
+                        title: 'Contact',
+                        dataIndex: 'contact_type',
+                        key: 'contact_type',
+                        render: (type) => (
+                          <Tag color={type === 'email' ? 'blue' : 'green'} size="small">
+                            {type === 'email' ? 'Email' : 'Form'}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: 'Pitches',
+                        dataIndex: 'pitch_count',
+                        key: 'pitch_count',
+                        render: (count) => <strong>{count}</strong>
+                      }
+                    ]}
+                    rowKey="brand_id"
+                    pagination={false}
+                    size="small"
+                    locale={{ emptyText: 'No pitches yet today' }}
+                  />
+                </ChartCard>
+              </Col>
+            </Row>
+
+            {/* Legacy Tables - Unlocks */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24} lg={12}>
+                <ChartCard>
+                  <h3>Most Active Users Today (Saves)</h3>
                   <Table
                     dataSource={todayStats?.most_active_users_today || []}
                     columns={[
@@ -1179,6 +1337,295 @@ const AdminReports = () => {
                       }
                     ]}
                     rowKey="brand_id"
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+            </Row>
+          </Tabs.TabPane>
+
+          {/* AI Pitches Tab - Track credit usage */}
+          <Tabs.TabPane tab={<span><SendOutlined /> AI Pitches</span>} key="pitches">
+            {/* Pitch Overview Stats */}
+            <StatsRow gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Pitches Today"
+                    value={pitchAnalytics?.today?.pitches_today || 0}
+                    prefix={<SendOutlined />}
+                    valueStyle={{ color: '#667eea' }}
+                  />
+                  <HelpText>AI credits used today</HelpText>
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Unique Users Today"
+                    value={pitchAnalytics?.today?.unique_users_today || 0}
+                    prefix={<UserOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                  <HelpText>Users who sent pitches today</HelpText>
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard highlight>
+                  <Statistic
+                    title="At Weekly Limit"
+                    value={pitchAnalytics?.quota?.at_limit || 0}
+                    prefix={<ThunderboltOutlined />}
+                    valueStyle={{ color: '#f5222d' }}
+                  />
+                  <HelpText>Free users who maxed 3 pitches/week</HelpText>
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title={`Total Pitches (${dateRange}d)`}
+                    value={pitchAnalytics?.period?.total_pitches || 0}
+                    prefix={<TrophyOutlined />}
+                    valueStyle={{ color: '#faad14' }}
+                  />
+                </StatCard>
+              </Col>
+            </StatsRow>
+
+            {/* Daily Pitch Trend Chart */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24}>
+                <ChartCard>
+                  <h3>Daily Pitch Credits Used (Last {dateRange} days)</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={pitchAnalytics?.daily || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      />
+                      <YAxis />
+                      <RechartsTooltip />
+                      <Area
+                        type="monotone"
+                        dataKey="pitch_count"
+                        stroke="#667eea"
+                        fill="url(#pitchGradient)"
+                        name="Pitches Sent"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="unique_users"
+                        stroke="#52c41a"
+                        fill="url(#usersGradient)"
+                        name="Unique Users"
+                      />
+                      <defs>
+                        <linearGradient id="pitchGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#667eea" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#667eea" stopOpacity={0.1}/>
+                        </linearGradient>
+                        <linearGradient id="usersGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#52c41a" stopOpacity={0.6}/>
+                          <stop offset="95%" stopColor="#52c41a" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </Col>
+            </Row>
+
+            {/* Top Users and Top Brands Tables */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24} lg={12}>
+                <ChartCard>
+                  <h3><UserOutlined /> Top Users by Pitches Sent</h3>
+                  <Table
+                    dataSource={pitchAnalytics?.top_users || []}
+                    columns={[
+                      {
+                        title: 'Creator',
+                        key: 'creator',
+                        render: (_, record) => (
+                          <div>
+                            <strong>{record.username || '-'}</strong>
+                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
+                          </div>
+                        )
+                      },
+                      {
+                        title: 'Tier',
+                        dataIndex: 'tier',
+                        key: 'tier',
+                        render: (tier) => (
+                          <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
+                            {tier}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: 'This Week',
+                        dataIndex: 'pitches_this_week',
+                        key: 'pitches_this_week',
+                        render: (count, record) => (
+                          <span>
+                            <strong>{count}</strong>
+                            {record.tier === 'free' && <small style={{ color: '#999' }}>/3</small>}
+                          </span>
+                        )
+                      },
+                      {
+                        title: `Total (${dateRange}d)`,
+                        dataIndex: 'total_pitches',
+                        key: 'total_pitches',
+                        sorter: (a, b) => a.total_pitches - b.total_pitches,
+                        render: (count) => <Tag color="blue">{count}</Tag>
+                      }
+                    ]}
+                    rowKey="creator_id"
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+              <Col xs={24} lg={12}>
+                <ChartCard>
+                  <h3><ShopOutlined /> Most Pitched Brands</h3>
+                  <Table
+                    dataSource={pitchAnalytics?.top_brands || []}
+                    columns={[
+                      {
+                        title: 'Brand',
+                        dataIndex: 'brand_name',
+                        key: 'brand_name',
+                        ellipsis: true
+                      },
+                      {
+                        title: 'Category',
+                        dataIndex: 'category',
+                        key: 'category',
+                        render: (cat) => <Tag>{cat}</Tag>
+                      },
+                      {
+                        title: 'Contact Type',
+                        dataIndex: 'contact_type',
+                        key: 'contact_type',
+                        render: (type) => (
+                          <Tag color={type === 'email' ? 'blue' : type === 'form' ? 'green' : 'default'}>
+                            {type === 'email' ? 'Email' : type === 'form' ? 'Form' : 'Mixed'}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: 'Pitches',
+                        dataIndex: 'pitch_count',
+                        key: 'pitch_count',
+                        sorter: (a, b) => a.pitch_count - b.pitch_count,
+                        render: (count) => <strong>{count}</strong>
+                      },
+                      {
+                        title: 'Unique Users',
+                        dataIndex: 'unique_users',
+                        key: 'unique_users'
+                      }
+                    ]}
+                    rowKey="brand_id"
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+            </Row>
+
+            {/* Recent Pitches and Quota Hits */}
+            <Row gutter={[16, 16]}>
+              <Col xs={24} lg={12}>
+                <ChartCard>
+                  <h3>Recent Pitch Activity</h3>
+                  <Table
+                    dataSource={pitchAnalytics?.recent_pitches || []}
+                    columns={[
+                      {
+                        title: 'User',
+                        dataIndex: 'email',
+                        key: 'email',
+                        ellipsis: true,
+                        render: (email) => email?.split('@')[0] + '...'
+                      },
+                      {
+                        title: 'Brand',
+                        dataIndex: 'brand_name',
+                        key: 'brand_name',
+                        ellipsis: true
+                      },
+                      {
+                        title: 'Type',
+                        dataIndex: 'contact_type',
+                        key: 'contact_type',
+                        render: (type) => (
+                          <Tag color={type === 'email' ? 'blue' : 'green'} size="small">
+                            {type === 'email' ? 'Email' : 'Form'}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: 'When',
+                        dataIndex: 'pitched_at',
+                        key: 'pitched_at',
+                        render: (date) => {
+                          const d = new Date(date);
+                          const now = new Date();
+                          const diffMins = Math.floor((now - d) / 60000);
+                          if (diffMins < 60) return `${diffMins}m ago`;
+                          if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+                          return d.toLocaleDateString();
+                        }
+                      }
+                    ]}
+                    rowKey="id"
+                    pagination={false}
+                    size="small"
+                  />
+                </ChartCard>
+              </Col>
+              <Col xs={24} lg={12}>
+                <ChartCard highlight>
+                  <h3><ThunderboltOutlined /> Users at Weekly Pitch Limit (Upsell Opportunity)</h3>
+                  <Table
+                    dataSource={pitchAnalytics?.users_at_limit || []}
+                    columns={[
+                      {
+                        title: 'User',
+                        key: 'user',
+                        render: (_, record) => (
+                          <div>
+                            <strong>{record.username || '-'}</strong>
+                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
+                          </div>
+                        )
+                      },
+                      {
+                        title: 'Used',
+                        dataIndex: 'pitches_this_week',
+                        key: 'pitches_this_week',
+                        render: (count) => <Tag color="red">{count}/3</Tag>
+                      },
+                      {
+                        title: 'Total Pitches',
+                        dataIndex: 'total_pitches',
+                        key: 'total_pitches'
+                      },
+                      {
+                        title: 'Last Pitch',
+                        dataIndex: 'last_pitch_at',
+                        key: 'last_pitch_at',
+                        render: (date) => date ? new Date(date).toLocaleDateString() : '-'
+                      }
+                    ]}
+                    rowKey="creator_id"
                     pagination={{ pageSize: 10 }}
                     size="small"
                   />

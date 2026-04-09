@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiHeart, FiX, FiInstagram, FiMail, FiExternalLink, FiZap, FiLock, FiCheck } from 'react-icons/fi';
-import axios from 'axios';
+import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import PROnboarding from '../components/PROnboarding';
 import UpgradeModal from './UpgradeModal';
+import AIPitchModal from './AIPitchModal';
 
 // Brand colors
 const primaryBlue = '#3B82F6';
@@ -533,42 +533,6 @@ const ContactItem = styled.a`
   }
 `;
 
-// Locked contact section for free users - more compact design
-const LockedContactSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 14px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: 2px dashed #cbd5e0;
-  border-radius: 10px;
-  text-align: center;
-  margin-top: 6px;
-
-  svg {
-    color: #6b7280;
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const LockedText = styled.div`
-  strong {
-    display: block;
-    font-size: 14px;
-    color: #1f2937;
-    margin-bottom: 3px;
-  }
-
-  p {
-    font-size: 12px;
-    color: #6b7280;
-    margin: 0;
-    line-height: 1.4;
-  }
-`;
-
 // Action buttons - separated from card with proper spacing
 const ActionButtons = styled.div`
   display: flex;
@@ -641,6 +605,47 @@ const ActionButton = styled(motion.button)`
       cursor: not-allowed;
     }
   `}
+
+  ${props => props.variant === 'bookmark' && `
+    background: white;
+    color: #F59E0B;
+    border: 2px solid #FEF3C7;
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+
+    &:hover {
+      background: #FFFBEB;
+      border-color: #FCD34D;
+      box-shadow: 0 12px 32px rgba(245, 158, 11, 0.2);
+    }
+
+    &:disabled {
+      background: #FEF3C7;
+      color: #D97706;
+      border-color: #FCD34D;
+      opacity: 1;
+    }
+  `}
+
+  ${props => props.variant === 'pitch' && `
+    background: linear-gradient(135deg, #3B82F6, #EC4899);
+    color: white;
+    border: 2px solid transparent;
+    font-size: 24px;
+    width: 80px;
+    height: 80px;
+
+    &:hover {
+      box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+      transform: translateY(-6px) scale(1.05);
+    }
+
+    &:disabled {
+      background: linear-gradient(135deg, #10B981, #34D399);
+      opacity: 1;
+    }
+  `}
 `;
 
 // Empty state - minimal
@@ -690,19 +695,17 @@ const PRBrandDiscovery = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [upgradeInfo, setUpgradeInfo] = useState({ currentCount: 0, limit: 5, feature: 'brands saved' });
+  const [upgradeInfo, setUpgradeInfo] = useState({ currentCount: 0, limit: 3, feature: 'pitches' });
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [brandsSavedCount, setBrandsSavedCount] = useState(0);
-  const [pitchesSentThisMonth, setPitchesSentThisMonth] = useState(0);
-  const [revealedBrands, setRevealedBrands] = useState(new Set()); // Track which brands have been revealed
-  const [revealingContact, setRevealingContact] = useState(false);
+  const [pitchesSentThisWeek, setPitchesSentThisWeek] = useState(0);
+  const [pitchedBrands, setPitchedBrands] = useState(new Set()); // Track brands already pitched
+  const [savedBrands, setSavedBrands] = useState(new Set()); // Track bookmarked brands
   const [seenBrandIds, setSeenBrandIds] = useState(new Set()); // Track all brands shown to avoid duplicates
   const [fetchingMore, setFetchingMore] = useState(false);
+  const [showPitchModal, setShowPitchModal] = useState(false);
+  const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
                     
   // Using centralized api client from config/api.js
-
-  // Check for achievement unlocks
-    const FREE_BRAND_LIMIT = 5;
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem('prOnboardingCompleted');
@@ -751,14 +754,27 @@ const PRBrandDiscovery = () => {
     };
 
     fetchMoreIfNeeded();
-  }, [currentIndex, brands.length, fetchingMore, seenBrandIds, API_BASE]);
+  }, [currentIndex, brands.length, fetchingMore, seenBrandIds]);
 
   const fetchSubscriptionStatus = async () => {
     try {
       const response = await api.get('/api/subscription/status');
       setSubscriptionTier(response.data.tier || 'free');
-      setBrandsSavedCount(response.data.brands_saved_count || 0);
-      setPitchesSentThisMonth(response.data.pitches_sent_this_month || 0);
+      setPitchesSentThisWeek(response.data.pitches_sent_this_week || 0);
+
+      // Load pitched brands from pipeline
+      const pipelineResponse = await api.get('/api/pr-crm/pipeline?stage=pitched');
+      if (pipelineResponse.data.success && pipelineResponse.data.pipeline) {
+        const pitched = new Set(pipelineResponse.data.pipeline.map(b => b.brand_id || b.id));
+        setPitchedBrands(pitched);
+      }
+
+      // Load saved brands
+      const savedResponse = await api.get('/api/pr-crm/pipeline?stage=saved');
+      if (savedResponse.data.success && savedResponse.data.pipeline) {
+        const saved = new Set(savedResponse.data.pipeline.map(b => b.brand_id || b.id));
+        setSavedBrands(saved);
+      }
     } catch (error) {
       console.error('Error fetching subscription status:', error);
     }
@@ -794,106 +810,69 @@ const PRBrandDiscovery = () => {
     }
   };
 
-  const handleSave = async () => {
+  // Save brand for later (bookmark)
+  const handleSaveForLater = async () => {
     if (currentIndex >= brands.length) return;
-
     const brand = brands[currentIndex];
-    try {
-      await api.post('/api/pr-crm/pipeline/save',
-        { brand_id: brand.id }
-      );
-      message.success(`${brand.brand_name} saved to pipeline!`);
 
+    // Already saved?
+    if (savedBrands.has(brand.id)) {
+      message.info(`${brand.brand_name} is already saved`);
+      setCurrentIndex(prev => prev + 1);
+      return;
+    }
+
+    try {
+      await api.post('/api/pr-crm/pipeline/save', { brand_id: brand.id });
+      setSavedBrands(prev => new Set([...prev, brand.id]));
       setSavedCount(prev => prev + 1);
-      setBrandsSavedCount(prev => prev + 1); // Update the saved count for quota display
+      message.success(`${brand.brand_name} saved for later!`);
       setCurrentIndex(prev => prev + 1);
     } catch (error) {
       console.error('Error saving brand:', error);
-
-      // Check if it's an upgrade required error
-      if (error.response && error.response.status === 403 && error.response.data.upgrade_required) {
-        setUpgradeInfo({
-          currentCount: error.response.data.current_count,
-          limit: error.response.data.limit,
-          feature: 'brands saved'
-        });
-        setShowUpgradeModal(true);
-      } else {
-        message.error('Failed to save brand');
-      }
+      message.error('Failed to save brand');
     }
   };
 
-  // Double tap to quick save
-  
   const handlePass = () => {
     setCurrentIndex(prev => prev + 1);
   };
 
-  const handleContactBrand = async () => {
+  // Open AI Pitch Modal - the main action
+  const handlePitchBrand = () => {
     if (currentIndex >= brands.length) return;
     const brand = brands[currentIndex];
 
-    // Check if already contacted
-    if (revealedBrands.has(brand.id)) {
-      return; // Already contacted, just show it
-    }
-
-    try {
-      setRevealingContact(true);
-
-      // Check limits first
-      const checkResponse = await api.post(
-        '/api/subscription/check-limits',
-        { action_type: 'send_pitch' }
-      );
-
-      if (!checkResponse.data.allowed) {
-        // Show upgrade modal
-        setUpgradeInfo({
-          currentCount: checkResponse.data.current_count,
-          limit: checkResponse.data.limit,
-          feature: 'brand contacts'
-        });
-        setShowUpgradeModal(true);
-        setRevealingContact(false);
-        return;
-      }
-
-      // Record the contact (increment pitch count)
-      await api.post(
-        '/api/pr-crm/reveal-contact',
-        { brand_id: brand.id }
-      );
-
-      // Save to pipeline
-      await api.post(
-        '/api/pr-crm/pipeline/save',
-        { brand_id: brand.id }
-      );
-
-      // Mark as revealed/contacted locally
-      setRevealedBrands(prev => new Set([...prev, brand.id]));
-      setPitchesSentThisMonth(prev => prev + 1);
-      message.success(`Contact revealed and ${brand.brand_name} added to pipeline!`);
-
-      // Advance to next brand
+    // Check if already pitched
+    if (pitchedBrands.has(brand.id)) {
+      message.info(`You've already pitched ${brand.brand_name}`);
       setCurrentIndex(prev => prev + 1);
-    } catch (error) {
-      console.error('Error contacting brand:', error);
-      if (error.response && error.response.status === 403) {
-        setUpgradeInfo({
-          currentCount: error.response.data.current_count,
-          limit: error.response.data.limit,
-          feature: 'brand contacts'
-        });
-        setShowUpgradeModal(true);
-      } else {
-        message.error('Failed to contact brand');
-      }
-    } finally {
-      setRevealingContact(false);
+      return;
     }
+
+    // Check pitch limits for free users
+    const FREE_PITCH_LIMIT = 3;
+    if (subscriptionTier === 'free' && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
+      setUpgradeInfo({
+        currentCount: pitchesSentThisWeek,
+        limit: FREE_PITCH_LIMIT,
+        feature: 'pitches'
+      });
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    // Open the AI pitch modal
+    setSelectedBrandForPitch(brand);
+    setShowPitchModal(true);
+  };
+
+  // Called when user sends a pitch from the modal
+  const handlePitchSent = (brand) => {
+    setPitchedBrands(prev => new Set([...prev, brand.id]));
+    setPitchesSentThisWeek(prev => prev + 1);
+    setShowPitchModal(false);
+    setCurrentIndex(prev => prev + 1);
   };
 
   if (loading) {
@@ -919,17 +898,17 @@ const PRBrandDiscovery = () => {
         <PlanBadge tier={subscriptionTier}>
           {subscriptionTier === 'elite' && (
             <>
-              <FiZap /> Elite
+              <FiZap /> Elite (Unlimited)
             </>
           )}
           {subscriptionTier === 'pro' && (
             <>
-              <FiZap /> Pro ({20 - pitchesSentThisMonth} contacts left)
+              <FiZap /> Pro (Unlimited)
             </>
           )}
           {subscriptionTier === 'free' && (
             <>
-              Free ({10 - pitchesSentThisMonth} free contacts left)
+              <FiSend size={14} /> {3 - pitchesSentThisWeek} free pitches left
             </>
           )}
         </PlanBadge>
@@ -1050,16 +1029,17 @@ const PRBrandDiscovery = () => {
                         Visit website
                       </ContactItem>
                     )}
-
-                    {/* CONTACT GATING: Reveal button system */}
-                    {currentBrand.contact_email && (
-                      revealedBrands.has(currentBrand.id) ? (
-                        // Contact already revealed - show it
-                        <ContactItem href={`mailto:${currentBrand.contact_email}`}>
-                          <FiMail size={16} />
-                          {currentBrand.contact_email}
-                        </ContactItem>
-                      ) : null
+                    {/* Show application form link if available */}
+                    {(currentBrand.application_form_url || currentBrand.application_url) && (
+                      <ContactItem
+                        href={currentBrand.application_form_url || currentBrand.application_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#10B981' }}
+                      >
+                        <FiExternalLink size={16} />
+                        Apply via Form
+                      </ContactItem>
                     )}
                   </ContactInfo>
                 </CardContent>
@@ -1077,31 +1057,44 @@ const PRBrandDiscovery = () => {
             whileTap={{ scale: 0.9 }}
           >
             <FiX />
-            <span style={{ fontSize: '13px', marginTop: '4px' }}>Skip</span>
+            <span style={{ fontSize: '11px', marginTop: '4px' }}>Skip</span>
           </ActionButton>
           <ActionButton
-            variant="save"
-            onClick={handleContactBrand}
-            disabled={revealingContact}
+            variant="bookmark"
+            onClick={handleSaveForLater}
             whileTap={{ scale: 0.9 }}
+            disabled={savedBrands.has(currentBrand.id)}
           >
-            {revealingContact ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                style={{ fontSize: '28px' }}
-              >
-                ⟳
-              </motion.div>
-            ) : (
+            <FiBookmark />
+            <span style={{ fontSize: '11px', marginTop: '4px' }}>
+              {savedBrands.has(currentBrand.id) ? 'Saved' : 'Save'}
+            </span>
+          </ActionButton>
+          <ActionButton
+            variant="pitch"
+            onClick={handlePitchBrand}
+            whileTap={{ scale: 0.9 }}
+            disabled={pitchedBrands.has(currentBrand.id)}
+          >
+            {pitchedBrands.has(currentBrand.id) ? (
               <FiCheck />
+            ) : (
+              <FiSend />
             )}
-            <span style={{ fontSize: '13px', marginTop: '4px' }}>
-              Contact
+            <span style={{ fontSize: '11px', marginTop: '4px' }}>
+              {pitchedBrands.has(currentBrand.id) ? 'Pitched' : 'Pitch'}
             </span>
           </ActionButton>
         </ActionButtons>
       )}
+
+      {/* AI Pitch Modal */}
+      <AIPitchModal
+        isOpen={showPitchModal}
+        onClose={() => setShowPitchModal(false)}
+        brand={selectedBrandForPitch}
+        onPitchSent={handlePitchSent}
+      />
 
       {/* Upgrade Modal */}
       <UpgradeModal
