@@ -421,7 +421,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 if (!user) {
                   // Not logged in: redirect to signup
                   applyUrl = '/register/creator';
-                  buttonText = 'Sign up to apply';
+                  buttonText = 'Sign up to pitch';
                   isExternal = false;
                 } else if (brand.application_url) {
                   // Logged in + has application form: direct link
