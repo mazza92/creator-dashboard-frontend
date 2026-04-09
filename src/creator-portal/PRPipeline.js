@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { message, Modal } from 'antd';
+import { message } from 'antd';
 import axios from 'axios';
 import { getRuntimeApiUrl } from '../config/api';
+import AIPitchModal from './AIPitchModal';
 
 // Use shared API config - runtime function ensures correct URL in production
 const getApiBase = () => getRuntimeApiUrl();
@@ -43,14 +44,11 @@ const PRPipeline = () => {
   });
   const [loading, setLoading] = useState(true);
   const [selectedBrand, setSelectedBrand] = useState(null);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailTemplates, setEmailTemplates] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showPitchModal, setShowPitchModal] = useState(false);
 
   // Fetch pipeline brands
   useEffect(() => {
     fetchPipelineBrands();
-    fetchEmailTemplates();
   }, [activeTab]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,18 +72,6 @@ const PRPipeline = () => {
       message.error('Failed to load brands');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchEmailTemplates = async () => {
-    try {
-      const apiBase = getApiBase();
-      const response = await axios.get(`${apiBase}/api/pr-crm/templates`, {
-        withCredentials: true
-      });
-      setEmailTemplates(response.data.templates || []);
-    } catch (error) {
-      console.error('Error fetching templates:', error);
     }
   };
 
@@ -119,41 +105,15 @@ const PRPipeline = () => {
     }
   };
 
-  const renderTemplate = async (template) => {
-    try {
-      const apiBase = getApiBase();
-      const response = await axios.post(
-        `${apiBase}/api/pr-crm/templates/${template.id}/render`,
-        {},
-        { withCredentials: true }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error('Error rendering template:', error);
-      return template;
-    }
-  };
-
   const handlePitch = (brand) => {
     setSelectedBrand(brand);
-    setShowEmailModal(true);
+    setShowPitchModal(true);
   };
 
-  const handleCopyTemplate = async (template) => {
-    const rendered = await renderTemplate(template);
-    const emailContent = `Subject: ${rendered.subject}\n\n${rendered.body}`;
-
-    try {
-      await navigator.clipboard.writeText(emailContent);
-      message.success('Email template copied! Paste it into your email client');
-      setShowEmailModal(false);
-
-      // Move to "pitched" stage
-      updateStage(selectedBrand.id, 'pitched');
-    } catch (error) {
-      message.error('Failed to copy template');
-    }
+  const handlePitchSent = (brand) => {
+    // Move brand to "pitched" stage after successful pitch
+    updateStage(brand.id, 'pitched');
+    setShowPitchModal(false);
   };
 
   const tabs = [
@@ -307,40 +267,13 @@ const PRPipeline = () => {
         )}
       </BrandList>
 
-      {/* Email Template Modal */}
-      <Modal
-        open={showEmailModal}
-        onCancel={() => setShowEmailModal(false)}
-        footer={null}
-        width="90%"
-        style={{ maxWidth: '500px', top: 20 }}
-      >
-        <ModalHeader>
-          <ModalTitle>Choose Email Template</ModalTitle>
-          <ModalSubtitle>Select a template to pitch {selectedBrand?.brand_name}</ModalSubtitle>
-        </ModalHeader>
-
-        <TemplateList>
-          {emailTemplates.map(template => (
-            <TemplateCard key={template.id} onClick={() => setSelectedTemplate(template)}>
-              <TemplateName>{template.name}</TemplateName>
-              <TemplateSubject>Subject: {template.subject_line}</TemplateSubject>
-              <TemplatePreview>{template.body_template.substring(0, 120)}...</TemplatePreview>
-              <TemplateStats>
-                {template.success_rate && (
-                  <SuccessRate>✅ {template.success_rate}% success rate</SuccessRate>
-                )}
-              </TemplateStats>
-              <CopyButton onClick={(e) => {
-                e.stopPropagation();
-                handleCopyTemplate(template);
-              }}>
-                📋 Copy & Use
-              </CopyButton>
-            </TemplateCard>
-          ))}
-        </TemplateList>
-      </Modal>
+      {/* AI Pitch Modal - Generates personalized outreach */}
+      <AIPitchModal
+        isOpen={showPitchModal}
+        onClose={() => setShowPitchModal(false)}
+        brand={selectedBrand}
+        onPitchSent={handlePitchSent}
+      />
     </Container>
   );
 };
@@ -738,126 +671,6 @@ const LoadingText = styled.div`
   @media (max-width: 768px) {
     font-size: 14px;
     padding: 30px;
-  }
-`;
-
-const ModalHeader = styled.div`
-  margin-bottom: 20px;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 8px 0;
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-  }
-`;
-
-const ModalSubtitle = styled.p`
-  font-size: 14px;
-  color: #6B7280;
-  margin: 0;
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
-`;
-
-const TemplateList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 60vh;
-  overflow-y: auto;
-`;
-
-const TemplateCard = styled.div`
-  background: #F9FAFB;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: #3B82F6;
-    background: white;
-  }
-
-  @media (max-width: 768px) {
-    padding: 14px;
-  }
-`;
-
-const TemplateName = styled.h4`
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 8px 0;
-
-  @media (max-width: 768px) {
-    font-size: 15px;
-  }
-`;
-
-const TemplateSubject = styled.p`
-  font-size: 13px;
-  color: #6B7280;
-  margin: 0 0 8px 0;
-  font-style: italic;
-
-  @media (max-width: 768px) {
-    font-size: 12px;
-  }
-`;
-
-const TemplatePreview = styled.p`
-  font-size: 12px;
-  color: #9CA3AF;
-  margin: 0 0 12px 0;
-  line-height: 1.5;
-
-  @media (max-width: 768px) {
-    font-size: 11px;
-  }
-`;
-
-const TemplateStats = styled.div`
-  margin-bottom: 12px;
-`;
-
-const SuccessRate = styled.span`
-  font-size: 12px;
-  color: #10B981;
-  font-weight: 600;
-`;
-
-const CopyButton = styled.button`
-  width: 100%;
-  background: linear-gradient(135deg, #3B82F6 0%, #EC4899 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-
-  @media (max-width: 768px) {
-    padding: 9px;
-    font-size: 13px;
   }
 `;
 
