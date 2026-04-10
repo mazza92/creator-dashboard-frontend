@@ -101,21 +101,27 @@ const Grid = styled.div`
   margin-top: 22px;
 `;
 
-const CardLink = styled(Link)`
+const Card = styled.div`
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 16px;
   padding: 18px;
-  text-decoration: none;
-  color: inherit;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  display: block;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
   }
+`;
+
+const CardLink = styled(Link)`
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  flex: 1;
 `;
 
 const Logo = styled.div`
@@ -169,6 +175,34 @@ const Meta = styled.span`
   padding: 4px 10px;
   border-radius: 999px;
   font-weight: 600;
+`;
+
+const CardCTA = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  margin-top: 14px;
+
+  &:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    transform: scale(1.02);
+    color: white;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
 `;
 
 const Center = styled.div`
@@ -696,29 +730,37 @@ export default function DirectoryClient({
             <>
               <Grid>
                 {brands.map((brand) => (
-                  <CardLink key={brand.slug || brand.id} href={`/brand/${brand.slug}`}>
-                    <Logo>
-                      {brand.logo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={brand.logo} alt={brand.name || 'Brand'} />
-                      ) : (
-                        <span style={{ fontWeight: 900, color: '#3b82f6' }}>
-                          {(brand.name || 'B').slice(0, 1)}
-                        </span>
-                      )}
-                    </Logo>
-                    <Name>{brand.name}</Name>
-                    <Desc>{brand.description || 'PR applications and influencer partnerships.'}</Desc>
-                    <MetaRow>
-                      {brand.category ? <Meta>{brand.category}</Meta> : null}
-                      {brand.minFollowers ? (
-                        <Meta>{Math.round(brand.minFollowers / 1000)}K+ followers</Meta>
-                      ) : null}
-                      {typeof brand.responseRate === 'number' ? (
-                        <Meta>{brand.responseRate}% response</Meta>
-                      ) : null}
-                    </MetaRow>
-                  </CardLink>
+                  <Card key={brand.slug || brand.id}>
+                    <CardLink href={`/brand/${brand.slug}`}>
+                      <Logo>
+                        {brand.logo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={brand.logo} alt={brand.name || 'Brand'} />
+                        ) : (
+                          <span style={{ fontWeight: 900, color: '#3b82f6' }}>
+                            {(brand.name || 'B').slice(0, 1)}
+                          </span>
+                        )}
+                      </Logo>
+                      <Name>{brand.name}</Name>
+                      <Desc>{brand.description || 'PR applications and influencer partnerships.'}</Desc>
+                      <MetaRow>
+                        {brand.category ? <Meta>{brand.category}</Meta> : null}
+                        {brand.minFollowers ? (
+                          <Meta>{Math.round(brand.minFollowers / 1000)}K+ followers</Meta>
+                        ) : null}
+                        {typeof brand.responseRate === 'number' ? (
+                          <Meta>{brand.responseRate}% response</Meta>
+                        ) : null}
+                      </MetaRow>
+                    </CardLink>
+                    <CardCTA href="https://app.newcollab.co/register/creator">
+                      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Sign up to contact brand
+                    </CardCTA>
+                  </Card>
                 ))}
               </Grid>
 
