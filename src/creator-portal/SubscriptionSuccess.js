@@ -64,7 +64,7 @@ const SubscriptionSuccess = () => {
             <Feature>✅ Email tracking & analytics</Feature>
             {subscriptionInfo.tier === 'elite' && (
               <>
-                <Feature>✅ AI-powered pitch writing</Feature>
+                <Feature>✅ Professional pitch tools</Feature>
                 <Feature>✅ Personal PR coach</Feature>
                 <Feature>✅ Exclusive brand partnerships</Feature>
               </>

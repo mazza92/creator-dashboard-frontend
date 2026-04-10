@@ -478,7 +478,7 @@ const CreatorDashboardLayout = () => {
             </TabButton>
             <TabButton to="/creator/dashboard/pr-pipeline" $active={isActive('/pr-pipeline')}>
               <RiListCheck2 />
-              <span>Pipeline</span>
+              <span>Saved</span>
             </TabButton>
             <TabButton to="/creator/dashboard/pr-offers" $active={isActive('/pr-offers')}>
               <RiGiftLine />
@@ -580,7 +580,7 @@ const CreatorDashboardLayout = () => {
         </TabButton>
         <TabButton to="/creator/dashboard/pr-pipeline" $active={isActive('/pr-pipeline')}>
           <RiListCheck2 />
-          <span>Pipeline</span>
+          <span>Saved</span>
         </TabButton>
         <TabButton to="/creator/dashboard/pr-offers" $active={isActive('/pr-offers')}>
           <RiGiftLine />

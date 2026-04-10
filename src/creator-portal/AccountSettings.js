@@ -18,8 +18,17 @@ const AccountSettings = () => {
 
   const fetchSubscriptionStatus = async () => {
     try {
-      const response = await api.get('/api/subscription/status');
-      setSubscriptionInfo(response.data);
+      // Fetch subscription status and pitch limits in parallel
+      const [subResponse, limitsResponse] = await Promise.all([
+        api.get('/api/subscription/status'),
+        api.get('/api/pr-crm/pitch-limits').catch(() => ({ data: { used: 0, limit: 3 } }))
+      ]);
+
+      setSubscriptionInfo({
+        ...subResponse.data,
+        contacts_used_this_week: limitsResponse.data.used,
+        contacts_limit: limitsResponse.data.limit
+      });
       setLoading(false);
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -120,7 +129,7 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand saves
                 </Feature>
                 <Feature>
-                  <FiCheck /> 5 application forms per day
+                  <FiCheck /> 3 brand contacts per week
                 </Feature>
                 <Feature>
                   <FiCheck /> Full brand directory access
@@ -134,16 +143,16 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand saves
                 </Feature>
                 <Feature>
-                  <FiCheck /> 20 brand contacts/month
+                  <FiCheck /> Unlimited brand contacts
                 </Feature>
                 <Feature>
                   <FiCheck /> Verified brand emails
                 </Feature>
                 <Feature>
-                  <FiCheck /> Custom pitch templates
+                  <FiCheck /> Personalized pitch templates
                 </Feature>
                 <Feature>
-                  <FiCheck /> Basic analytics
+                  <FiCheck /> Priority support
                 </Feature>
               </>
             )}
@@ -157,7 +166,7 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand contacts
                 </Feature>
                 <Feature>
-                  <FiCheck /> AI pitch generator
+                  <FiCheck /> Professional pitch tools
                 </Feature>
                 <Feature>
                   <FiCheck /> Guaranteed PR packages
@@ -236,7 +245,7 @@ const AccountSettings = () => {
                 Upgrade Plan
               </UpgradeButton>
               <HelpText>
-                Get 20 brand contacts/month + pitch templates with Pro
+                Get unlimited brand contacts + personalized templates with Pro
               </HelpText>
             </>
           )}
@@ -251,7 +260,7 @@ const AccountSettings = () => {
       )}
 
       <Section>
-        <SectionTitle>Usage {tier === 'free' ? 'Today' : 'This Month'}</SectionTitle>
+        <SectionTitle>Usage This Week</SectionTitle>
         <UsageGrid>
           <UsageCard>
             <UsageLabel>Brands Saved</UsageLabel>
@@ -262,19 +271,13 @@ const AccountSettings = () => {
           </UsageCard>
 
           <UsageCard>
-            <UsageLabel>
-              {tier === 'free' ? 'Application Forms Unlocked' : 'Brand Contacts Revealed'}
-            </UsageLabel>
+            <UsageLabel>AI Contacts</UsageLabel>
             <UsageValue>
-              {tier === 'free'
-                ? (subscriptionInfo?.daily_unlocks_used || 0)
-                : (subscriptionInfo?.pitches_sent_this_month || 0)
-              }
-              {tier === 'free' && <UsageLimit> / 5</UsageLimit>}
-              {tier === 'pro' && <UsageLimit> / 20</UsageLimit>}
+              {subscriptionInfo?.contacts_used_this_week || 0}
+              {tier === 'free' && <UsageLimit> / {subscriptionInfo?.contacts_limit || 3}</UsageLimit>}
             </UsageValue>
-            {tier === 'elite' && <UsageUnlimited>Unlimited</UsageUnlimited>}
-            {tier === 'free' && <UsageNote>Resets daily at midnight</UsageNote>}
+            {(tier === 'pro' || tier === 'elite') && <UsageUnlimited>Unlimited</UsageUnlimited>}
+            {tier === 'free' && <UsageNote>Resets weekly</UsageNote>}
           </UsageCard>
         </UsageGrid>
       </Section>

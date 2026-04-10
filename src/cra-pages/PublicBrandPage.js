@@ -14,6 +14,7 @@ import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import { getRuntimeApiUrl } from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import AIPitchModal from '../creator-portal/AIPitchModal';
 
 // Use shared API config with runtime detection
 const getApiBase = () => {
@@ -28,13 +29,16 @@ const PublicBrandPage = () => {
 
   const [brand, setBrand] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [unlocking, setUnlocking] = useState(false);
-  const [unlockedData, setUnlockedData] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
-  const [dailyUnlocksUsed, setDailyUnlocksUsed] = useState(0);
   const [subscriptionTier, setSubscriptionTier] = useState('free');
+  const [pitchesSentThisWeek, setPitchesSentThisWeek] = useState(0);
+  const [showPitchModal, setShowPitchModal] = useState(false);
 
-  const DAILY_UNLOCK_LIMIT = 5; // Free users get 5 unlocks per day
+  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per week
+  const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  const pitchesLeft = Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisWeek);
 
   useEffect(() => {
     fetchBrand();
@@ -50,7 +54,7 @@ const PublicBrandPage = () => {
           withCredentials: true
         });
         setSubscriptionTier(data.tier || 'free');
-        setDailyUnlocksUsed(data.daily_unlocks_used || 0);
+        setPitchesSentThisWeek(data.pitches_sent_this_week || 0);
       } catch (error) {
         console.error('Error fetching subscription:', error);
       }
@@ -74,277 +78,142 @@ const PublicBrandPage = () => {
     }
   };
 
-  const handleUnlock = async (unlockType = 'all') => {
+  // Handle pitch brand click
+  const handlePitchBrand = () => {
     if (!user) {
-      // Save referral for post-signup redirect
       sessionStorage.setItem('brandReferral', slug);
       sessionStorage.setItem('brandName', brand.name);
       navigate('/register/creator');
       return;
     }
 
-    setUnlocking(true);
+    // Check pitch limit for free users
+    if (!isPro && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
+      setUpgradeModalVisible(true);
+      return;
+    }
+
+    setShowPitchModal(true);
+  };
+
+  // Handle pitch sent callback
+  const handlePitchSent = () => {
+    setPitchesSentThisWeek(prev => prev + 1);
+    setShowPitchModal(false);
+    message.success('Email opened in your mail app!');
+  };
+
+  // Handle save for later
+  const handleSaveForLater = async () => {
+    if (!user) {
+      sessionStorage.setItem('brandReferral', slug);
+      navigate('/register/creator');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const apiBase = getApiBase();
+      await axios.post(
+        `${apiBase}/api/pr-crm/pipeline/save`,
+        { brand_id: brand.id, slug: slug },
+        { withCredentials: true }
+      );
+      setSaved(true);
+      message.success(`${brand.name} saved to your pipeline!`);
+    } catch (error) {
+      console.error('Error saving brand:', error);
+      message.error('Failed to save brand');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle application link click
+  const handleApplicationLink = async () => {
+    if (!user) {
+      sessionStorage.setItem('brandReferral', slug);
+      navigate('/register/creator');
+      return;
+    }
+
     try {
       const apiBase = getApiBase();
       const { data } = await axios.post(
         `${apiBase}/api/public/brands/${slug}/unlock`,
-        { unlock_type: unlockType },
+        { unlock_type: 'application' },
         { withCredentials: true }
       );
-
-      setUnlockedData(prev => ({ ...prev, ...data }));
-
-      const unlockMessages = {
-        application: 'Application link unlocked!',
-        contact: 'PR contact email unlocked!',
-        all: 'Access unlocked! Brand saved to your pipeline.'
-      };
-      message.success(unlockMessages[unlockType] || unlockMessages.all);
-
-      // If it's an application unlock, open in new tab
-      if (data.applicationUrl && unlockType !== 'contact') {
+      if (data.applicationUrl) {
         window.open(data.applicationUrl, '_blank');
       }
     } catch (error) {
-      console.error('Error unlocking brand:', error);
-
-      // Check if it's a quota exceeded error (403)
-      if (error.response?.status === 403) {
-        // Extract quota info from error response if available
-        const quotaInfo = error.response?.data;
-        if (quotaInfo?.daily_unlocks_used !== undefined) {
-          setDailyUnlocksUsed(quotaInfo.daily_unlocks_used);
-        } else {
-          // If not provided, assume they've hit the limit
-          setDailyUnlocksUsed(DAILY_UNLOCK_LIMIT);
-        }
-        // Show upgrade modal instead of error message
-        setUpgradeModalVisible(true);
-      } else {
-        message.error('Failed to unlock access. Please try again.');
-      }
-    } finally {
-      setUnlocking(false);
+      message.error('Failed to get application link');
     }
   };
 
   const renderCTA = () => {
     const hasApplication = brand.gated?.hasDirectLink;
-    const hasEmail = brand.gated?.hasEmailContact;
-    const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
-
-    // Determine what's already unlocked
-    const applicationUnlocked = unlockedData?.applicationUrl;
-    const emailUnlocked = unlockedData?.contactEmail;
-    const fullyUnlocked = (!hasApplication || applicationUnlocked) && (!hasEmail || emailUnlocked);
-
-    // Dynamic title based on what's available
-    const getTitle = () => {
-      if (hasApplication && hasEmail) return `Unlock ${brand.name} Contact`;
-      if (hasEmail) return `Unlock ${brand.name} Contact`;
-      if (hasApplication) return `Get ${brand.name} Application`;
-      return `Access ${brand.name}`;
-    };
-
-    // Fully unlocked state
-    if (fullyUnlocked && (applicationUnlocked || emailUnlocked)) {
-      return (
-        <UnlockedSection>
-          <h3>✅ Access Granted</h3>
-
-          {applicationUnlocked && (
-            <AccessItem>
-              <LinkOutlined /> Application Link
-              <Button
-                type="primary"
-                href={unlockedData.applicationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open Application Form
-              </Button>
-            </AccessItem>
-          )}
-
-          {emailUnlocked && (
-            <AccessItem>
-              <MailOutlined /> PR Manager Email
-              <Button
-                type="primary"
-                href={`mailto:${unlockedData.contactEmail}`}
-              >
-                {unlockedData.contactEmail}
-              </Button>
-              <ProBadge>PRO</ProBadge>
-            </AccessItem>
-          )}
-
-          <Link to="/creator/dashboard/pr-pipeline">
-            <Button type="link">View in Your Pipeline →</Button>
-          </Link>
-        </UnlockedSection>
-      );
-    }
 
     // User not logged in
     if (!user) {
-      const primaryFeature = hasEmail && !hasApplication
-        ? 'PR contact email'
-        : 'application link';
-
       return (
         <CTABox>
-          <LockIcon><LockOutlined /></LockIcon>
-          <h3>Sign Up to Apply</h3>
-          <p>Create a free account to unlock the {primaryFeature}</p>
-          <Button
-            type="primary"
-            size="large"
-            onClick={() => handleUnlock()}
-          >
-            Create Free Account
-          </Button>
+          <PitchIcon>📧</PitchIcon>
+          <h3>Contact {brand.name}</h3>
+          <p>Access direct PR contacts and tools to start your collaboration with {brand.name}.</p>
+          <PitchButton onClick={handlePitchBrand}>
+            ✨ Sign up to Contact {brand.name}
+          </PitchButton>
           <FeatureList>
-            <li>✓ Instant access to {hasApplication ? 'application links' : 'brand contacts'}</li>
-            <li>✓ Save to your brand pipeline</li>
-            <li>✓ Track your applications</li>
+            <li>✓ Direct PR team contacts</li>
+            <li>✓ Professional pitch tools</li>
+            <li>✓ Track your collaborations</li>
           </FeatureList>
         </CTABox>
       );
     }
 
-    // User logged in - show dynamic unlock options
+    // User logged in - show contact-focused CTA
     return (
       <CTABox>
-        <h3>{getTitle()}</h3>
+        <h3>Contact {brand.name}</h3>
+        <CTADescription>
+          Access direct PR contacts and tools to start your collaboration with {brand.name}.
+        </CTADescription>
 
-        <UnlockOptions>
-          {/* Application Link Option */}
-          {hasApplication && (
-            <UnlockOption $unlocked={applicationUnlocked}>
-              <LinkOutlined style={{ fontSize: 24, color: applicationUnlocked ? '#52c41a' : '#667eea' }} />
-              <div>
-                <strong>Application Link</strong>
-                <span>Direct link to brand's application form</span>
-              </div>
-              {applicationUnlocked ? (
-                <UnlockedBadge>✓ Unlocked</UnlockedBadge>
-              ) : (
-                <FreeBadge>FREE</FreeBadge>
-              )}
-            </UnlockOption>
+        {/* Main Contact Button */}
+        <PitchButton onClick={handlePitchBrand} disabled={!isPro && pitchesLeft === 0}>
+          📧 Contact {brand.name}
+        </PitchButton>
+
+        {/* Contact limit info */}
+        <PitchLimitInfo $isPro={isPro} $hasQuota={pitchesLeft > 0}>
+          {isPro ? (
+            <>✨ Pro member - Unlimited brand contacts</>
+          ) : pitchesLeft > 0 ? (
+            <>{pitchesLeft} free contact{pitchesLeft !== 1 ? 's' : ''} left this week</>
+          ) : (
+            <>You've used your 3 free contacts. <Link to="/creator/dashboard/settings" style={{ color: '#92400E', textDecoration: 'underline' }}>Upgrade to Pro</Link></>
           )}
+        </PitchLimitInfo>
 
-          {/* PR Contact Email Option */}
-          {hasEmail && (
-            <UnlockOption $unlocked={emailUnlocked} $disabled={!isPro && !emailUnlocked}>
-              <MailOutlined style={{ fontSize: 24, color: emailUnlocked ? '#52c41a' : (!isPro ? '#999' : '#667eea') }} />
-              <div>
-                <strong>PR Manager Email</strong>
-                <span>Pitch directly to the decision maker</span>
-              </div>
-              {emailUnlocked ? (
-                <UnlockedBadge>✓ Unlocked</UnlockedBadge>
-              ) : isPro ? (
-                <ProBadge>PRO</ProBadge>
-              ) : (
-                <LockedBadge><LockOutlined /> PRO</LockedBadge>
-              )}
-            </UnlockOption>
-          )}
-        </UnlockOptions>
+        {/* Save for Later */}
+        <SaveButton onClick={handleSaveForLater} disabled={saving || saved}>
+          {saved ? '✓ Saved to your list' : '🔖 Save for Later'}
+        </SaveButton>
 
-        {/* Dynamic action buttons */}
-        <UnlockActions>
-          {/* Show application unlock button if available and not unlocked */}
-          {hasApplication && !applicationUnlocked && (
-            <Button
-              type="primary"
-              size="large"
-              loading={unlocking}
-              onClick={() => handleUnlock('application')}
-              block
-            >
-              Get Application Link
-            </Button>
-          )}
-
-          {/* Show email unlock button if available */}
-          {hasEmail && !emailUnlocked && (
-            isPro ? (
-              <Button
-                type={hasApplication && !applicationUnlocked ? 'default' : 'primary'}
-                size="large"
-                loading={unlocking}
-                onClick={() => handleUnlock('contact')}
-                block
-                style={hasApplication && !applicationUnlocked ? { marginTop: 12 } : {}}
-              >
-                <MailOutlined /> Unlock PR Contact Email
-              </Button>
-            ) : (
-              <UpgradeButton
-                type="default"
-                size="large"
-                onClick={() => setUpgradeModalVisible(true)}
-                block
-                style={hasApplication && !applicationUnlocked ? { marginTop: 12 } : {}}
-              >
-                <LockOutlined /> Unlock PR Email
-                <UpgradeTag>PRO</UpgradeTag>
-              </UpgradeButton>
-            )
-          )}
-
-          {/* If both are available and user is PRO, offer unlock all */}
-          {hasApplication && hasEmail && !applicationUnlocked && !emailUnlocked && isPro && (
-            <Button
-              type="link"
-              onClick={() => handleUnlock('all')}
-              style={{ marginTop: 8 }}
-            >
-              Unlock Both →
-            </Button>
-          )}
-        </UnlockActions>
-
-        {/* Unlocked items - show access buttons */}
-        {(applicationUnlocked || emailUnlocked) && (
-          <UnlockedAccess>
-            {applicationUnlocked && (
-              <Button
-                type="primary"
-                href={unlockedData.applicationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                icon={<LinkOutlined />}
-                block
-              >
-                Open Application Form
-              </Button>
-            )}
-            {emailUnlocked && (
-              <Button
-                type="primary"
-                href={`mailto:${unlockedData.contactEmail}`}
-                icon={<MailOutlined />}
-                block
-                style={{ marginTop: applicationUnlocked ? 12 : 0 }}
-              >
-                Email: {unlockedData.contactEmail}
-              </Button>
-            )}
-          </UnlockedAccess>
-        )}
-
-        {/* Upgrade prompt for free users when email is available */}
-        {!isPro && hasEmail && !emailUnlocked && (
-          <UpgradePrompt>
-            <p>Want the PR manager's email?</p>
-            <Link to="/creator/dashboard/settings">
-              <Button type="link">Upgrade to Pro ($12/mo) →</Button>
-            </Link>
-          </UpgradePrompt>
+        {/* Application Form Link (if available) */}
+        {hasApplication && (
+          <ApplicationLinkBox>
+            <div>
+              <ApplicationLinkTitle>📋 Application Form Available</ApplicationLinkTitle>
+              <ApplicationLinkSubtitle>Apply directly on brand's website</ApplicationLinkSubtitle>
+            </div>
+            <ApplicationLinkButton onClick={handleApplicationLink}>
+              Apply Now →
+            </ApplicationLinkButton>
+          </ApplicationLinkBox>
         )}
       </CTABox>
     );
@@ -743,14 +612,30 @@ const PublicBrandPage = () => {
         </RelatedSection>
       </Container>
       
+      {/* AI Pitch Modal */}
+      {showPitchModal && brand && (
+        <AIPitchModal
+          isOpen={showPitchModal}
+          onClose={() => setShowPitchModal(false)}
+          brand={{
+            ...brand,
+            brand_id: brand.id,
+            brand_name: brand.name,
+            logo_url: brand.logo,
+            slug: slug // Explicitly pass the slug from URL params
+          }}
+          onPitchSent={handlePitchSent}
+        />
+      )}
+
       {/* Upgrade Modal - shown when quota exceeded */}
       {upgradeModalVisible && (
         <UpgradeModal
           isOpen={upgradeModalVisible}
           onClose={() => setUpgradeModalVisible(false)}
-          currentCount={dailyUnlocksUsed}
-          limit={DAILY_UNLOCK_LIMIT}
-          feature="brand applications"
+          currentCount={pitchesSentThisWeek}
+          limit={FREE_PITCH_LIMIT}
+          feature="brand contacts"
         />
       )}
     </>
@@ -1072,6 +957,127 @@ const LockIcon = styled.div`
   font-size: 48px;
   color: #667eea;
   margin-bottom: 16px;
+`;
+
+const PitchIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 16px;
+`;
+
+const CTADescription = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 20px;
+  line-height: 1.5;
+`;
+
+const PitchButton = styled.button`
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+`;
+
+const PitchLimitInfo = styled.div`
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: ${props => props.$isPro ? '#EFF6FF' : (props.$hasQuota ? '#FEF3C7' : '#FEE2E2')};
+  border: 1px solid ${props => props.$isPro ? '#BFDBFE' : (props.$hasQuota ? '#FDE68A' : '#FECACA')};
+  border-radius: 10px;
+  font-size: 13px;
+  color: ${props => props.$isPro ? '#1E40AF' : (props.$hasQuota ? '#92400E' : '#DC2626')};
+  text-align: center;
+  font-weight: 500;
+`;
+
+const SaveButton = styled.button`
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 20px;
+  background: ${props => props.disabled ? '#F0FDF4' : '#F9FAFB'};
+  color: ${props => props.disabled ? '#15803D' : '#374151'};
+  border: ${props => props.disabled ? '2px solid #BBF7D0' : '1px solid #E5E7EB'};
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: ${props => props.disabled ? 'default' : 'pointer'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #F3F4F6;
+  }
+`;
+
+const ApplicationLinkBox = styled.div`
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #F0FDF4;
+  border: 2px solid #BBF7D0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const ApplicationLinkTitle = styled.div`
+  font-weight: 600;
+  font-size: 14px;
+  color: #15803D;
+`;
+
+const ApplicationLinkSubtitle = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 2px;
+`;
+
+const ApplicationLinkButton = styled.button`
+  background: #10B981;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #059669;
+  }
 `;
 
 const FeatureList = styled.ul`

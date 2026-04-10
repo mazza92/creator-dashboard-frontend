@@ -504,27 +504,18 @@ export default async function BrandPage({ params }) {
           {/* Sidebar */}
           <aside className="bp-sidebar">
             <div className="bp-cta-box">
-              <h2>Apply to {brand.name}</h2>
+              <h2>Contact {brand.name}</h2>
               <p className="bp-cta-desc">
-                Unlock the PR application link{hasEmail ? ' and contact email' : ''} to start collaborating with {brand.name}.
+                Access direct PR contacts and tools to start your collaboration with {brand.name}.
               </p>
 
               <BrandUnlockClient
                 slug={brand.slug}
+                brandId={brand.id}
                 brandName={brand.name}
                 hasDirectLink={hasDirectLink}
                 hasEmail={hasEmail}
               />
-
-              <div className="bp-cta-footer">
-                <p>Want to track your applications and discover more brands?</p>
-                <a href="/register/creator" className="bp-btn-primary">
-                  Create free account
-                </a>
-                <a href="/login" className="bp-btn-secondary">
-                  Already have an account? Log in
-                </a>
-              </div>
             </div>
           </aside>
         </div>

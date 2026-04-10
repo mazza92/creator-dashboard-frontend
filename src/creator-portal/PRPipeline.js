@@ -32,41 +32,28 @@ const getBrandLogoUrl = (brand) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(brand.brand_name)}&size=128&background=3B82F6&color=fff&bold=true`;
 };
 
-// Mobile-First 4-Tab Pipeline Component
+// Simplified Saved Brands Component
 const PRPipeline = () => {
   const [activeTab, setActiveTab] = useState('saved');
-  const [brands, setBrands] = useState([]);
-  const [stageCounts, setStageCounts] = useState({
-    saved: 0,
-    pitched: 0,
-    responded: 0,
-    success: 0
-  });
+  const [allBrands, setAllBrands] = useState([]); // All pipeline brands
   const [loading, setLoading] = useState(true);
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [showPitchModal, setShowPitchModal] = useState(false);
 
-  // Fetch pipeline brands
+  // Fetch ALL pipeline brands on mount
   useEffect(() => {
     fetchPipelineBrands();
-  }, [activeTab]);
+  }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchPipelineBrands = async () => {
     try {
       setLoading(true);
       const apiBase = getApiBase();
+      // Fetch ALL pipeline items (no stage filter) for complete data
       const response = await axios.get(`${apiBase}/api/pr-crm/pipeline`, {
-        params: { stage: activeTab },
         withCredentials: true
       });
-      setBrands(response.data.pipeline || []);
-      setStageCounts(response.data.stage_counts || {
-        saved: 0,
-        pitched: 0,
-        responded: 0,
-        success: 0
-      });
+      setAllBrands(response.data.pipeline || []);
     } catch (error) {
       console.error('Error fetching pipeline:', error);
       message.error('Failed to load brands');
@@ -75,6 +62,17 @@ const PRPipeline = () => {
     }
   };
 
+  // Filter brands based on active tab
+  const filteredBrands = allBrands.filter(brand => {
+    if (activeTab === 'saved') {
+      // Show in saved tab: stage is 'saved' AND has NOT been contacted
+      return brand.stage === 'saved' && !brand.pitched_at;
+    } else {
+      // Show in contacted tab: stage is 'pitched' OR has pitched_at set
+      return brand.stage === 'pitched' || brand.pitched_at;
+    }
+  });
+
   const updateStage = async (pipelineId, newStage) => {
     try {
       const apiBase = getApiBase();
@@ -82,8 +80,9 @@ const PRPipeline = () => {
         stage: newStage
       }, { withCredentials: true });
 
-      message.success(`Moved to ${newStage}!`);
-      fetchPipelineBrands();
+      message.success(newStage === 'pitched' ? 'Moved to Contacted!' : `Moved to ${newStage}!`);
+      // Refresh all data
+      await fetchPipelineBrands();
     } catch (error) {
       console.error('Error updating stage:', error);
       message.error('Failed to update stage');
@@ -97,8 +96,9 @@ const PRPipeline = () => {
         withCredentials: true
       });
 
+      // Update local state immediately for better UX
+      setAllBrands(prev => prev.filter(b => b.id !== pipelineId));
       message.success('Removed from pipeline');
-      fetchPipelineBrands();
     } catch (error) {
       console.error('Error removing brand:', error);
       message.error('Failed to remove brand');
@@ -110,31 +110,28 @@ const PRPipeline = () => {
     setShowPitchModal(true);
   };
 
-  const handlePitchSent = (brand) => {
-    // Move brand to "pitched" stage after successful pitch
-    updateStage(brand.id, 'pitched');
+  const handlePitchSent = async (brand) => {
+    // Close modal first
     setShowPitchModal(false);
+    // Refresh pipeline data to get updated stage/pitched_at
+    await fetchPipelineBrands();
   };
+
+  // Compute counts dynamically from allBrands
+  const savedCount = allBrands.filter(b => b.stage === 'saved' && !b.pitched_at).length;
+  const contactedCount = allBrands.filter(b => b.stage === 'pitched' || b.pitched_at).length;
 
   const tabs = [
-    { key: 'saved', label: 'Saved', emoji: '💾', color: '#3B82F6' },
-    { key: 'pitched', label: 'Pitched', emoji: '📧', color: '#EC4899' },
-    { key: 'responded', label: 'Responded', emoji: '💬', color: '#F59E0B' },
-    { key: 'success', label: 'Success', emoji: '🎉', color: '#10B981' }
+    { key: 'saved', label: 'Saved for Later', emoji: '🔖', color: '#3B82F6', count: savedCount },
+    { key: 'pitched', label: 'Contacted', emoji: '📧', color: '#10B981', count: contactedCount }
   ];
-
-  const getNextStage = (currentStage) => {
-    const stages = ['saved', 'pitched', 'responded', 'success'];
-    const currentIndex = stages.indexOf(currentStage);
-    return currentIndex < stages.length - 1 ? stages[currentIndex + 1] : null;
-  };
 
   return (
     <Container>
       {/* Header */}
       <Header>
-        <Title>PR Pipeline</Title>
-        <Subtitle>Track your outreach journey</Subtitle>
+        <Title>Saved Brands</Title>
+        <Subtitle>Brands you've bookmarked to contact</Subtitle>
       </Header>
 
       {/* 4-Tab Navigation */}
@@ -149,7 +146,7 @@ const PRPipeline = () => {
             <TabEmoji>{tab.emoji}</TabEmoji>
             <TabLabel active={activeTab === tab.key}>{tab.label}</TabLabel>
             <TabCount active={activeTab === tab.key}>
-              {stageCounts[tab.key] || 0}
+              {tab.count}
             </TabCount>
           </Tab>
         ))}
@@ -159,20 +156,18 @@ const PRPipeline = () => {
       <BrandList>
         {loading ? (
           <LoadingText>Loading brands...</LoadingText>
-        ) : brands.length === 0 ? (
+        ) : filteredBrands.length === 0 ? (
           <EmptyState>
             <EmptyEmoji>{tabs.find(t => t.key === activeTab)?.emoji}</EmptyEmoji>
             <EmptyTitle>No brands yet</EmptyTitle>
             <EmptyText>
-              {activeTab === 'saved' && 'Start discovering brands to save them here'}
-              {activeTab === 'pitched' && 'Pitch saved brands to move them here'}
-              {activeTab === 'responded' && 'Brands will appear here when they respond'}
-              {activeTab === 'success' && 'Successfully secured PR packages will appear here'}
+              {activeTab === 'saved' && 'Save brands from Discover to contact them later'}
+              {activeTab === 'pitched' && 'Brands you\'ve contacted will appear here'}
             </EmptyText>
           </EmptyState>
         ) : (
           <AnimatePresence>
-            {brands.map(brand => (
+            {filteredBrands.map(brand => (
               <BrandCard
                 key={brand.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -230,6 +225,14 @@ const PRPipeline = () => {
                       }
                     </DetailValue>
                   </Detail>
+                  {brand.pitched_at && (
+                    <Detail>
+                      <DetailLabel>Contacted:</DetailLabel>
+                      <DetailValue>
+                        {new Date(brand.pitched_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </DetailValue>
+                    </Detail>
+                  )}
                 </BrandDetails>
 
                 <ActionButtons>
@@ -245,16 +248,17 @@ const PRPipeline = () => {
                     </PrimaryButton>
                   )}
 
-                  {activeTab === 'saved' && (
+                  {activeTab === 'saved' && !brand.pitched_at && (
                     <PrimaryButton onClick={() => handlePitch(brand)}>
-                      📧 Pitch Brand
+                      📧 Contact Brand
                     </PrimaryButton>
                   )}
 
-                  {getNextStage(activeTab) && activeTab !== 'saved' && (
-                    <PrimaryButton onClick={() => updateStage(brand.id, getNextStage(activeTab))}>
-                      Move to {getNextStage(activeTab)}
-                    </PrimaryButton>
+                  {/* Show Contacted badge if brand was contacted (even in saved tab) */}
+                  {(activeTab === 'pitched' || brand.pitched_at) && (
+                    <ContactedBadge>
+                      ✓ Contacted
+                    </ContactedBadge>
                   )}
 
                   <SecondaryButton onClick={() => removeBrand(brand.id)}>
@@ -267,7 +271,7 @@ const PRPipeline = () => {
         )}
       </BrandList>
 
-      {/* AI Pitch Modal - Generates personalized outreach */}
+      {/* Pitch Modal - Generates personalized outreach */}
       <AIPitchModal
         isOpen={showPitchModal}
         onClose={() => setShowPitchModal(false)}
@@ -318,7 +322,7 @@ const Subtitle = styled.p`
 
 const TabNavigation = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-bottom: 20px;
   background: white;
@@ -613,9 +617,22 @@ const SecondaryButton = styled.button`
     padding: 11px 14px;
     font-size: 13px;
   }
+`;
 
-  &:hover {
-    background: rgba(239, 68, 68, 0.2);
+const ContactedBadge = styled.div`
+  flex: 1;
+  background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 11px 14px;
+    font-size: 13px;
   }
 `;
 

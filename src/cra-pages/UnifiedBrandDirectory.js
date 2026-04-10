@@ -310,7 +310,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               strokeColor="#EC4899"
             />
             <QuotaText>
-              <span><strong>{pitchesSentThisWeek}/{FREE_PITCH_LIMIT}</strong> AI contacts used this week</span>
+              <span><strong>{pitchesSentThisWeek}/{FREE_PITCH_LIMIT}</strong> brand contacts used this week</span>
               <Button type="link" onClick={() => setUpgradeModalVisible(true)}>
                 Upgrade for unlimited <CrownOutlined />
               </Button>
@@ -421,7 +421,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 if (!user) {
                   // Not logged in: redirect to signup
                   applyUrl = '/register/creator';
-                  buttonText = 'Sign up to pitch';
+                  buttonText = 'Sign up to contact brand';
                   isExternal = false;
                 } else if (brand.application_url) {
                   // Logged in + has application form: direct link
@@ -564,7 +564,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
                       {!user && !isDashboardView && (
                         <SignupCTA>
-                          <LockOutlined /> Sign up to contact brands
+                          <LockOutlined /> Sign up to contact brand
                         </SignupCTA>
                       )}
                     </BrandInfo>
@@ -596,11 +596,11 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           onClose={() => setUpgradeModalVisible(false)}
           currentCount={pitchesSentThisWeek}
           limit={FREE_PITCH_LIMIT}
-          feature="AI contacts"
+          feature="brand contacts"
         />
       )}
 
-      {/* AI Contact Modal */}
+      {/* Brand Contact Modal */}
       {showPitchModal && selectedBrandForPitch && (
         <AIPitchModal
           isOpen={showPitchModal}

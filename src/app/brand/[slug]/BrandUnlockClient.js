@@ -7,13 +7,12 @@ const API_BASE =
     ? 'http://localhost:5000'
     : 'https://api.newcollab.co';
 
-export default function BrandUnlockClient({ slug, brandName, hasDirectLink, hasEmail }) {
-  const [unlocking, setUnlocking] = useState(false);
-  const [unlocked, setUnlocked] = useState({});
-  const [error, setError] = useState(null);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  const [subscriptionTier, setSubscriptionTier] = useState(null); // null = loading, 'free'/'pro'/'elite' = loaded
-  const [isLoggedIn, setIsLoggedIn] = useState(null); // null = checking, true/false = known
+export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectLink, hasEmail }) {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [subscriptionTier, setSubscriptionTier] = useState(null);
+  const [pitchesLeft, setPitchesLeft] = useState(3);
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
 
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
 
@@ -33,6 +32,8 @@ export default function BrandUnlockClient({ slug, brandName, hasDirectLink, hasE
           const data = await res.json();
           setIsLoggedIn(true);
           setSubscriptionTier(data.tier || 'free');
+          const sent = data.pitches_sent_this_week || 0;
+          setPitchesLeft(Math.max(0, 3 - sent));
         } else {
           setIsLoggedIn(false);
           setSubscriptionTier('free');
@@ -45,51 +46,57 @@ export default function BrandUnlockClient({ slug, brandName, hasDirectLink, hasE
     fetchSubscriptionStatus();
   }, []);
 
-  async function unlock(unlockType = 'all') {
-    // If trying to unlock email without PRO, show upgrade prompt
-    if (unlockType === 'contact' && !isPro) {
-      setShowUpgradePrompt(true);
+  // Save brand and redirect to pitch
+  async function handlePitchBrand() {
+    if (!isLoggedIn) {
+      // Redirect to signup with return URL
+      window.location.href = `/register/creator?redirect=/creator/dashboard/pr-brands&brand=${slug}`;
       return;
     }
 
-    setUnlocking(true);
-    setError(null);
+    setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/api/public/brands/${slug}/unlock`, {
+      // Save to pipeline first
+      await fetch(`${API_BASE}/api/pr-crm/pipeline/save`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ unlock_type: unlockType }),
+        body: JSON.stringify({ brand_id: brandId || slug }),
       });
 
-      if (res.status === 401) {
-        window.location.href = '/register/creator';
-        return;
-      }
-
-      if (res.status === 403) {
-        setShowUpgradePrompt(true);
-        return;
-      }
-
-      if (!res.ok) throw new Error(`Unlock failed (${res.status})`);
-
-      const data = await res.json();
-      setUnlocked(prev => ({ ...prev, ...data }));
-
-      // Open application URL in new tab if just unlocked application
-      if (data?.applicationUrl && unlockType !== 'contact') {
-        window.open(data.applicationUrl, '_blank', 'noopener,noreferrer');
-      }
-    } catch {
-      setError('Failed to unlock. Please try again or create an account.');
+      // Redirect to dashboard where they can pitch
+      window.location.href = `/creator/dashboard/pr-pipeline`;
+    } catch (error) {
+      console.error('Error:', error);
+      // Still redirect even if save fails
+      window.location.href = `/creator/dashboard/pr-brands`;
     } finally {
-      setUnlocking(false);
+      setSaving(false);
     }
   }
 
-  const applicationUnlocked = unlocked?.applicationUrl;
-  const emailUnlocked = unlocked?.contactEmail;
+  // Save for later only
+  async function handleSaveForLater() {
+    if (!isLoggedIn) {
+      window.location.href = `/register/creator?redirect=/creator/dashboard/pr-pipeline`;
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await fetch(`${API_BASE}/api/pr-crm/pipeline/save`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brand_id: brandId || slug }),
+      });
+      setSaved(true);
+    } catch (error) {
+      console.error('Error saving:', error);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   // Loading state
   if (subscriptionTier === null) {
@@ -107,184 +114,175 @@ export default function BrandUnlockClient({ slug, brandName, hasDirectLink, hasE
       flexDirection: 'column',
       gap: '12px',
     },
-    optionRow: (isUnlocked, isDisabled) => ({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '14px 16px',
-      background: isUnlocked ? '#f0fdf4' : (isDisabled ? '#f5f5f5' : '#fafafa'),
-      border: `2px solid ${isUnlocked ? '#52c41a' : (isDisabled ? '#e5e5e5' : '#e5e7eb')}`,
+    pitchButton: {
+      background: 'linear-gradient(135deg, #3B82F6, #EC4899)',
+      color: 'white',
+      padding: '14px 24px',
       borderRadius: '12px',
-      opacity: isDisabled ? 0.7 : 1,
-    }),
-    label: {
-      fontWeight: 600,
-      color: '#0f172a',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      fontSize: '14px',
-    },
-    description: {
-      fontSize: '12px',
-      color: '#64748b',
-      marginTop: '2px',
-    },
-    badge: (type) => ({
-      background: type === 'free' ? '#52c41a' : type === 'pro' ? 'linear-gradient(135deg, #ffd700, #ffed4e)' : type === 'unlocked' ? '#52c41a' : '#e5e5e5',
-      color: type === 'pro' ? '#333' : type === 'locked' ? '#666' : 'white',
-      padding: '3px 10px',
-      borderRadius: '10px',
-      fontSize: '10px',
+      border: 'none',
+      cursor: saving ? 'not-allowed' : 'pointer',
+      fontSize: '16px',
       fontWeight: 700,
-      textTransform: 'uppercase',
-    }),
-    button: (isPrimary, isDisabled) => ({
-      background: isPrimary ? '#6366f1' : '#f5f5f5',
-      color: isPrimary ? 'white' : '#666',
-      padding: '10px 20px',
-      borderRadius: '10px',
-      border: isPrimary ? 'none' : '1px solid #ddd',
-      cursor: isDisabled ? 'not-allowed' : 'pointer',
-      fontSize: '14px',
-      fontWeight: 600,
-      opacity: isDisabled ? 0.7 : 1,
       width: '100%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       gap: '8px',
-    }),
-    upgradePrompt: {
-      background: 'linear-gradient(135deg, #667eea15, #764ba215)',
-      border: '1px solid #667eea40',
-      borderRadius: '12px',
-      padding: '16px',
-      textAlign: 'center',
-      marginTop: '8px',
+      opacity: saving ? 0.7 : 1,
+      transition: 'all 0.2s',
     },
-    error: {
-      color: '#ef4444',
+    saveButton: {
+      background: saved ? '#F0FDF4' : '#F9FAFB',
+      color: saved ? '#15803D' : '#374151',
+      padding: '12px 20px',
+      borderRadius: '10px',
+      border: saved ? '2px solid #BBF7D0' : '1px solid #E5E7EB',
+      cursor: saving || saved ? 'not-allowed' : 'pointer',
+      fontSize: '14px',
+      fontWeight: 600,
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      opacity: saving ? 0.7 : 1,
+    },
+    pitchInfo: {
+      background: isPro ? '#EFF6FF' : '#FEF3C7',
+      border: isPro ? '1px solid #BFDBFE' : '1px solid #FDE68A',
+      borderRadius: '10px',
+      padding: '12px 16px',
       fontSize: '13px',
-      marginTop: '8px',
+      color: isPro ? '#1E40AF' : '#92400E',
+      textAlign: 'center',
+      fontWeight: 500,
+    },
+    applicationLink: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '14px 16px',
+      background: '#F0FDF4',
+      border: '2px solid #BBF7D0',
+      borderRadius: '12px',
+    },
+    linkButton: {
+      background: '#10B981',
+      color: 'white',
+      padding: '8px 16px',
+      borderRadius: '8px',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: '13px',
+      fontWeight: 600,
+      textDecoration: 'none',
     },
   };
 
   return (
     <div style={styles.container}>
-      {/* Application Link Option */}
-      {hasDirectLink && (
-        <div style={styles.optionRow(applicationUnlocked, false)}>
-          <div>
-            <div style={styles.label}>
-              🔗 Application Link
-            </div>
-            <div style={styles.description}>Direct link to brand's form</div>
-          </div>
-          {applicationUnlocked ? (
-            <a
-              href={unlocked.applicationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ ...styles.button(true, false), width: 'auto', textDecoration: 'none' }}
-            >
-              Open Form
-            </a>
+      {/* Main CTA: Pitch Brand */}
+      <button
+        onClick={handlePitchBrand}
+        disabled={saving}
+        style={styles.pitchButton}
+        onMouseOver={(e) => !saving && (e.target.style.transform = 'translateY(-2px)')}
+        onMouseOut={(e) => (e.target.style.transform = 'translateY(0)')}
+      >
+        {saving ? (
+          'Loading...'
+        ) : isLoggedIn ? (
+          <>
+            <span style={{ fontSize: '18px' }}>📧</span>
+            Pitch {brandName}
+          </>
+        ) : (
+          <>
+            <span style={{ fontSize: '18px' }}>✨</span>
+            Sign up to Contact {brandName}
+          </>
+        )}
+      </button>
+
+      {/* Pitch limit info */}
+      {isLoggedIn && (
+        <div style={styles.pitchInfo}>
+          {isPro ? (
+            <>✨ Pro member - Unlimited brand pitches</>
+          ) : pitchesLeft > 0 ? (
+            <>{pitchesLeft} free pitch{pitchesLeft !== 1 ? 'es' : ''} left this week</>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={styles.badge('free')}>FREE</span>
-              <button
-                onClick={() => unlock('application')}
-                disabled={unlocking}
-                style={{ ...styles.button(true, unlocking), width: 'auto' }}
-              >
-                {unlocking ? '...' : 'Unlock'}
-              </button>
-            </div>
+            <>You've used your 3 free pitches. <a href="/creator/dashboard/settings" style={{ color: '#92400E', textDecoration: 'underline' }}>Upgrade to Pro</a></>
           )}
         </div>
       )}
 
-      {/* PR Email Option */}
-      {hasEmail && (
-        <div style={styles.optionRow(emailUnlocked, !isPro && !emailUnlocked)}>
-          <div>
-            <div style={styles.label}>
-              ✉️ PR Manager Email
-            </div>
-            <div style={styles.description}>Pitch directly to decision maker</div>
-          </div>
-          {emailUnlocked ? (
-            <a
-              href={`mailto:${unlocked.contactEmail}`}
-              style={{ ...styles.button(true, false), width: 'auto', textDecoration: 'none' }}
-            >
-              {unlocked.contactEmail}
-            </a>
-          ) : isPro ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={styles.badge('pro')}>PRO</span>
-              <button
-                onClick={() => unlock('contact')}
-                disabled={unlocking}
-                style={{ ...styles.button(true, unlocking), width: 'auto' }}
-              >
-                {unlocking ? '...' : 'Unlock'}
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={styles.badge('locked')}>🔒 PRO</span>
-              <button
-                onClick={() => setShowUpgradePrompt(true)}
-                style={{ ...styles.button(false, false), width: 'auto' }}
-              >
-                Unlock
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Upgrade Prompt */}
-      {showUpgradePrompt && !isPro && (
-        <div style={styles.upgradePrompt}>
-          <div style={{ fontWeight: 600, marginBottom: '8px' }}>
-            🔓 Unlock PR Contact Emails
-          </div>
-          <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-            Get direct access to PR manager emails with Pro
-          </div>
-          <a
-            href="/creator/dashboard/settings"
-            style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
-              color: 'white',
-              padding: '10px 24px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '14px',
-            }}
-          >
-            Upgrade to Pro - $12/mo
-          </a>
-        </div>
-      )}
-
-      {/* Both unlock button for PRO users */}
-      {hasDirectLink && hasEmail && isPro && !applicationUnlocked && !emailUnlocked && (
+      {/* Save for Later */}
+      {isLoggedIn && (
         <button
-          onClick={() => unlock('all')}
-          disabled={unlocking}
-          style={{ ...styles.button(false, unlocking), marginTop: '4px' }}
+          onClick={handleSaveForLater}
+          disabled={saving || saved}
+          style={styles.saveButton}
         >
-          Unlock Both →
+          {saved ? (
+            <>
+              <span>✓</span> Saved to your list
+            </>
+          ) : (
+            <>
+              <span>🔖</span> Save for Later
+            </>
+          )}
         </button>
       )}
 
-      {error && <p style={styles.error}>{error}</p>}
+      {/* Application Form Link (if available) */}
+      {hasDirectLink && (
+        <div style={styles.applicationLink}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '14px', color: '#15803D' }}>
+              📋 Application Form Available
+            </div>
+            <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>
+              Apply directly on brand's website
+            </div>
+          </div>
+          {isLoggedIn ? (
+            <a
+              href={`https://api.newcollab.co/api/public/brands/${slug}/redirect`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.linkButton}
+            >
+              Apply Now →
+            </a>
+          ) : (
+            <a
+              href={`/register/creator?redirect=/brand/${slug}`}
+              style={styles.linkButton}
+            >
+              Apply Now →
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Value prop for non-logged in users */}
+      {!isLoggedIn && (
+        <div style={{
+          background: '#F9FAFB',
+          borderRadius: '12px',
+          padding: '16px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
+            Why sign up?
+          </div>
+          <div style={{ fontSize: '13px', color: '#6B7280', lineHeight: '1.6' }}>
+            Access verified PR contacts for 500+ brands. Join thousands of creators securing PR packages and paid collaborations.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

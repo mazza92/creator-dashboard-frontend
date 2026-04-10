@@ -439,10 +439,10 @@ ${creatorName}`;
               <UpgradeIcon><FiZap /></UpgradeIcon>
               <UpgradeTitle>You've Used All Free Contacts!</UpgradeTitle>
               <UpgradeText>
-                Upgrade to Pro for unlimited AI-powered emails and land more brand deals.
+                Upgrade to Pro for unlimited brand contacts and land more PR deals.
               </UpgradeText>
               <UpgradeFeatures>
-                <UpgradeFeature>✓ Unlimited AI contacts</UpgradeFeature>
+                <UpgradeFeature>✓ Unlimited brand contacts</UpgradeFeature>
                 <UpgradeFeature>✓ Direct PR manager emails</UpgradeFeature>
                 <UpgradeFeature>✓ Priority brand matching</UpgradeFeature>
               </UpgradeFeatures>

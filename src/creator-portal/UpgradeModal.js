@@ -54,18 +54,18 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
             <Icon>
               <FiZap />
             </Icon>
-            <Title>You've Hit Your Daily Limit!</Title>
+            <Title>You've Used Your Free Pitches!</Title>
             <Subtitle>
-              You have used your {limit} free {feature} for today.
+              You've sent {limit} brand pitches this week.
             </Subtitle>
             <DailyResetNote>
-              ⏰ Come back tomorrow for {limit} more, or upgrade now for unlimited access!
+              ⏰ Resets next week, or upgrade now for unlimited pitches!
             </DailyResetNote>
           </Header>
 
           <LimitInfo>
             <LimitText>
-              {currentCount} / {limit} {feature} used today
+              {currentCount} / {limit} pitches used this week
             </LimitText>
             <ProgressBar>
               <ProgressFill width={100} />
@@ -85,19 +85,19 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
 
               <Features>
                 <Feature>
-                  <FiCheck /> <span><strong>Unlimited Applications</strong> (No daily limits!)</span>
+                  <FiCheck /> <span><strong>Unlimited Brand Pitches</strong> (No weekly limits!)</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>Direct PR Manager Emails (Skip the forms!)</span>
+                  <FiCheck /> <span>Personalized emails that brands actually read</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>Proven Pitch Templates</span>
+                  <FiCheck /> <span>Direct access to PR manager emails</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>Advanced CRM Pipeline</span>
+                  <FiCheck /> <span>Pitch templates proven to get responses</span>
                 </Feature>
                 <Feature>
-                  <FiCheck /> <span>Priority Support</span>
+                  <FiCheck /> <span>Priority support</span>
                 </Feature>
               </Features>
 
