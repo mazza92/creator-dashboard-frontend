@@ -84,6 +84,7 @@ import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
 import BrandAdmin from './admin/BrandAdmin';
 import AdminReports from './admin/AdminReports';
+import AdminEmail from './admin/AdminEmail';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -407,6 +408,7 @@ function AppContent() {
             <Route path='/supply' element={<PRHunter />} />
             <Route path='/admin/brands' element={<BrandAdmin />} />
             <Route path='/admin/reports' element={<AdminReports />} />
+            <Route path='/admin/email' element={<AdminEmail />} />
 
             {/* Standalone routes for profiles, wrapped in a layout manager */}
             <Route element={<ProfileLayoutWrapper />}>
