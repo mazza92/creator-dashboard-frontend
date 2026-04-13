@@ -29,7 +29,7 @@ const AdminReports = () => {
   const [overview, setOverview] = useState(null);
   const [signups, setSignups] = useState(null);
   const [dau, setDau] = useState(null);
-  const [funnel, setFunnel] = useState(null);
+  const [engagement, setEngagement] = useState(null);
   const [topUsers, setTopUsers] = useState([]);
   const [quotaHits, setQuotaHits] = useState(null);
   const [popularBrands, setPopularBrands] = useState([]);
@@ -67,7 +67,7 @@ const AdminReports = () => {
         fetchOverview(),
         fetchSignups(),
         fetchDAU(),
-        fetchFunnel(),
+        fetchEngagement(),
         fetchTopUsers(),
         fetchQuotaHits(),
         fetchPopularBrands(),
@@ -119,18 +119,18 @@ const AdminReports = () => {
     }
   };
 
-  const fetchFunnel = async () => {
+  const fetchEngagement = async () => {
     try {
-      const { data } = await api.get('/api/admin/reports/funnel', getApiConfig());
-      setFunnel(data);
+      const { data } = await api.get(`/api/admin/reports/engagement?days=${dateRange}`, getApiConfig());
+      setEngagement(data);
     } catch (error) {
-      console.error('Failed to fetch funnel:', error);
+      console.error('Failed to fetch engagement:', error);
     }
   };
 
   const fetchTopUsers = async () => {
     try {
-      const { data } = await api.get('/api/admin/reports/top-users?limit=15', getApiConfig());
+      const { data } = await api.get(`/api/admin/reports/top-users?limit=20&days=${dateRange}`, getApiConfig());
       setTopUsers(data.users || []);
     } catch (error) {
       console.error('Failed to fetch top users:', error);
@@ -210,16 +210,14 @@ const AdminReports = () => {
       )
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      ellipsis: true
-    },
-    {
-      title: 'Username',
-      dataIndex: 'username',
-      key: 'instagram',
-      render: (val) => val || '-'
+      title: 'Creator',
+      key: 'creator',
+      render: (_, record) => (
+        <div>
+          <strong>{record.username || '-'}</strong>
+          <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
+        </div>
+      )
     },
     {
       title: 'Tier',
@@ -232,11 +230,29 @@ const AdminReports = () => {
       )
     },
     {
-      title: 'Unlocks',
-      dataIndex: 'count',
-      key: 'count',
-      sorter: (a, b) => a.count - b.count,
-      render: (count) => <strong>{count}</strong>
+      title: 'Saves',
+      dataIndex: 'saves',
+      key: 'saves',
+      sorter: (a, b) => a.saves - b.saves,
+      render: (saves) => <span style={{ color: '#667eea' }}>{saves}</span>
+    },
+    {
+      title: 'Pitches',
+      dataIndex: 'pitches',
+      key: 'pitches',
+      sorter: (a, b) => a.pitches - b.pitches,
+      render: (pitches) => <strong style={{ color: '#52c41a' }}>{pitches}</strong>
+    },
+    {
+      title: 'This Week',
+      dataIndex: 'pitches_this_week',
+      key: 'pitches_this_week',
+      render: (count, record) => (
+        <span>
+          <strong>{count}</strong>
+          {record.tier === 'free' && <small style={{ color: '#999' }}>/3</small>}
+        </span>
+      )
     },
     {
       title: 'Last Active',
@@ -266,11 +282,17 @@ const AdminReports = () => {
       render: (cat) => <Tag>{cat}</Tag>
     },
     {
-      title: 'Unlocks',
-      dataIndex: 'unlock_count',
-      key: 'unlock_count',
-      sorter: (a, b) => a.unlock_count - b.unlock_count,
-      render: (count) => <strong>{count}</strong>
+      title: 'Saves',
+      dataIndex: 'save_count',
+      key: 'save_count',
+      sorter: (a, b) => a.save_count - b.save_count,
+      render: (count) => <span style={{ color: '#667eea' }}>{count}</span>
+    },
+    {
+      title: 'Pitches',
+      dataIndex: 'pitch_count',
+      key: 'pitch_count',
+      render: (count) => <strong style={{ color: '#52c41a' }}>{count}</strong>
     },
     {
       title: 'Unique Users',
@@ -279,33 +301,43 @@ const AdminReports = () => {
     }
   ];
 
-  // Quota hits table columns
+  // Quota hits table columns (now tracking pitch quota)
   const quotaHitsColumns = [
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      ellipsis: true
-    },
-    {
-      title: 'Username',
-      dataIndex: 'username',
-      key: 'instagram',
-      render: (val) => val || '-'
-    },
-    {
-      title: 'Unlocks Used',
-      dataIndex: 'unlocks_used',
-      key: 'unlocks_used',
-      render: (count) => (
-        <Tag color="red">{count}/5</Tag>
+      title: 'Creator',
+      key: 'creator',
+      render: (_, record) => (
+        <div>
+          <strong>{record.username || '-'}</strong>
+          <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
+        </div>
       )
     },
     {
-      title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
-      render: (date) => new Date(date).toLocaleDateString()
+      title: 'Tier',
+      dataIndex: 'tier',
+      key: 'tier',
+      render: (tier) => (
+        <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
+          {tier}
+        </Tag>
+      )
+    },
+    {
+      title: 'Pitches This Week',
+      dataIndex: 'pitches_this_week',
+      key: 'pitches_this_week',
+      render: (count, record) => (
+        <Tag color={count >= 3 ? 'red' : 'orange'}>
+          {count}{record.tier === 'free' && '/3'}
+        </Tag>
+      )
+    },
+    {
+      title: 'Last Pitch',
+      dataIndex: 'last_pitch_at',
+      key: 'last_pitch_at',
+      render: (date) => date ? new Date(date).toLocaleDateString() : '-'
     }
   ];
 
@@ -333,13 +365,6 @@ const AdminReports = () => {
     );
   }
 
-  // Format funnel data for chart
-  const funnelData = funnel ? [
-    { name: 'Saved', value: funnel.stages.saved || 0, fill: COLORS[0] },
-    { name: 'Pitched', value: funnel.stages.pitched || 0, fill: COLORS[1] },
-    { name: 'Responded', value: funnel.stages.responded || 0, fill: COLORS[2] },
-    { name: 'Success', value: funnel.stages.success || 0, fill: COLORS[3] }
-  ] : [];
 
   // Format subscription data for pie chart
   const subscriptionData = overview?.subscription_breakdown
@@ -971,53 +996,160 @@ const AdminReports = () => {
             </Row>
           </Tabs.TabPane>
 
-          {/* Funnel Tab */}
-          <Tabs.TabPane tab={<span><FunnelPlotOutlined /> Funnel</span>} key="funnel">
+          {/* Engagement Tab - User Activation & Journey */}
+          <Tabs.TabPane tab={<span><FunnelPlotOutlined /> Engagement</span>} key="engagement">
+            {/* Activation Metrics */}
+            <StatsRow gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title={`Signups (${dateRange}d)`}
+                    value={engagement?.activation?.signups || 0}
+                    prefix={<UserOutlined />}
+                    valueStyle={{ color: '#667eea' }}
+                  />
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Saved a Brand"
+                    value={engagement?.activation?.saved_brand || 0}
+                    suffix={<small style={{ fontSize: 12, color: '#52c41a' }}>({engagement?.activation?.activation_rate || 0}%)</small>}
+                    prefix={<FireOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                  <HelpText>Users who saved at least 1 brand</HelpText>
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard highlight>
+                  <Statistic
+                    title="Pitched a Brand"
+                    value={engagement?.activation?.pitched_brand || 0}
+                    suffix={<small style={{ fontSize: 12, color: '#f5222d' }}>({engagement?.activation?.pitch_rate || 0}%)</small>}
+                    prefix={<SendOutlined />}
+                    valueStyle={{ color: '#f5222d' }}
+                  />
+                  <HelpText>Users who contacted at least 1 brand</HelpText>
+                </StatCard>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <StatCard>
+                  <Statistic
+                    title="Power Users"
+                    value={engagement?.engagement?.power_users || 0}
+                    prefix={<TrophyOutlined />}
+                    valueStyle={{ color: '#faad14' }}
+                  />
+                  <HelpText>5+ pitches in period</HelpText>
+                </StatCard>
+              </Col>
+            </StatsRow>
+
             <Row gutter={[16, 16]}>
-              <Col xs={24} lg={12}>
+              {/* User Segments */}
+              <Col xs={24} lg={8}>
                 <ChartCard>
-                  <h3>Pipeline Funnel</h3>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={funnelData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="name" width={100} />
-                      <RechartsTooltip />
-                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                        {funnelData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <h3>User Segments</h3>
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span>🔥 Power Users (5+ pitches)</span>
+                        <strong>{engagement?.user_segments?.power_user?.count || 0}</strong>
+                      </div>
+                      <Progress percent={Math.round((engagement?.user_segments?.power_user?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#f5222d" size="small" />
+                    </div>
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span>✨ Engaged (1+ pitches)</span>
+                        <strong>{engagement?.user_segments?.engaged?.count || 0}</strong>
+                      </div>
+                      <Progress percent={Math.round((engagement?.user_segments?.engaged?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#52c41a" size="small" />
+                    </div>
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span>👀 Exploring (1+ saves, no pitch)</span>
+                        <strong>{engagement?.user_segments?.exploring?.count || 0}</strong>
+                      </div>
+                      <Progress percent={Math.round((engagement?.user_segments?.exploring?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#faad14" size="small" />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span>💤 Inactive (no activity)</span>
+                        <strong>{engagement?.user_segments?.inactive?.count || 0}</strong>
+                      </div>
+                      <Progress percent={Math.round((engagement?.user_segments?.inactive?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#999" size="small" />
+                    </div>
+                  </div>
                 </ChartCard>
               </Col>
-              <Col xs={24} lg={12}>
+
+              {/* Time to Action */}
+              <Col xs={24} lg={8}>
                 <ChartCard>
-                  <h3>Conversion Rates</h3>
-                  <ConversionRates>
-                    <ConversionItem>
-                      <span>Saved → Pitched</span>
-                      <Progress
-                        percent={funnel?.conversion_rates?.saved_to_pitched || 0}
-                        strokeColor="#667eea"
+                  <h3>Time to First Action</h3>
+                  <div style={{ marginTop: 24 }}>
+                    <Statistic
+                      title="Avg Hours to First Save"
+                      value={engagement?.time_to_action?.avg_hours_to_save || 0}
+                      suffix="hours"
+                      valueStyle={{ fontSize: 28 }}
+                    />
+                    <div style={{ marginTop: 24 }}>
+                      <Statistic
+                        title="Avg Hours to First Pitch"
+                        value={engagement?.time_to_action?.avg_hours_to_pitch || 0}
+                        suffix="hours"
+                        valueStyle={{ fontSize: 28 }}
                       />
-                    </ConversionItem>
-                    <ConversionItem>
-                      <span>Pitched → Responded</span>
-                      <Progress
-                        percent={funnel?.conversion_rates?.pitched_to_responded || 0}
-                        strokeColor="#764ba2"
+                    </div>
+                  </div>
+                </ChartCard>
+              </Col>
+
+              {/* Engagement Metrics */}
+              <Col xs={24} lg={8}>
+                <ChartCard>
+                  <h3>Engagement Depth</h3>
+                  <div style={{ marginTop: 24 }}>
+                    <Statistic
+                      title="Avg Saves per User"
+                      value={engagement?.engagement?.avg_saves_per_user || 0}
+                      valueStyle={{ fontSize: 28, color: '#667eea' }}
+                    />
+                    <div style={{ marginTop: 24 }}>
+                      <Statistic
+                        title="Avg Pitches per Active User"
+                        value={engagement?.engagement?.avg_pitches_per_user || 0}
+                        valueStyle={{ fontSize: 28, color: '#52c41a' }}
                       />
-                    </ConversionItem>
-                    <ConversionItem>
-                      <span>Responded → Success</span>
-                      <Progress
-                        percent={funnel?.conversion_rates?.responded_to_success || 0}
-                        strokeColor="#52c41a"
+                    </div>
+                  </div>
+                </ChartCard>
+              </Col>
+            </Row>
+
+            {/* Daily Engagement Chart */}
+            <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+              <Col xs={24}>
+                <ChartCard>
+                  <h3>Daily Engagement (Last {dateRange} days)</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={engagement?.daily_engagement || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       />
-                    </ConversionItem>
-                  </ConversionRates>
+                      <YAxis />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Area type="monotone" dataKey="saves" stroke="#667eea" fill="#667eea" fillOpacity={0.3} name="Saves" />
+                      <Area type="monotone" dataKey="pitches" stroke="#52c41a" fill="#52c41a" fillOpacity={0.3} name="Pitches" />
+                      <Area type="monotone" dataKey="active_users" stroke="#f5576c" fill="#f5576c" fillOpacity={0.2} name="Active Users" />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </ChartCard>
               </Col>
             </Row>
@@ -1028,12 +1160,12 @@ const AdminReports = () => {
             <Row gutter={[16, 16]}>
               <Col xs={24}>
                 <ChartCard>
-                  <h3>Top Users by Unlocks</h3>
+                  <h3>Top Users by Activity (Last {dateRange} days)</h3>
                   <Table
                     dataSource={topUsers}
                     columns={topUsersColumns}
                     rowKey="creator_id"
-                    pagination={false}
+                    pagination={{ pageSize: 15 }}
                     size="small"
                   />
                 </ChartCard>
@@ -1046,29 +1178,34 @@ const AdminReports = () => {
             <Row gutter={[16, 16]}>
               <Col xs={24} lg={12}>
                 <ChartCard highlight>
-                  <h3>Quota Limit Hits (Upsell Signal)</h3>
+                  <h3><ThunderboltOutlined /> Pitch Quota Limit Hits (Upsell Signal)</h3>
+                  <p style={{ color: '#666', marginBottom: 16 }}>
+                    Free users hitting their 3 pitches/week limit are prime upgrade candidates
+                  </p>
                   <Row gutter={16} style={{ marginBottom: 16 }}>
                     <Col span={12}>
                       <Statistic
-                        title="At Limit Today"
-                        value={quotaHits?.users_at_limit_today || 0}
+                        title="At Pitch Limit"
+                        value={pitchAnalytics?.quota?.at_limit || 0}
                         valueStyle={{ color: '#f5222d' }}
+                        prefix={<ThunderboltOutlined />}
                       />
                     </Col>
                     <Col span={12}>
                       <Statistic
-                        title="Near Limit (3-4)"
-                        value={quotaHits?.users_near_limit_today || 0}
+                        title="Near Limit (2/3)"
+                        value={pitchAnalytics?.quota?.near_limit || 0}
                         valueStyle={{ color: '#faad14' }}
                       />
                     </Col>
                   </Row>
                   <Table
-                    dataSource={quotaHits?.recent_limit_hits || []}
+                    dataSource={pitchAnalytics?.users_at_limit || []}
                     columns={quotaHitsColumns}
                     rowKey="creator_id"
                     pagination={{ pageSize: 10 }}
                     size="small"
+                    locale={{ emptyText: 'No users at pitch limit yet' }}
                   />
                 </ChartCard>
               </Col>
