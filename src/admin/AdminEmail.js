@@ -37,6 +37,7 @@ const AdminEmail = () => {
   const [selectedSegment, setSelectedSegment] = useState('all_active');
   const [campaignName, setCampaignName] = useState('');
   const [subjectOverride, setSubjectOverride] = useState('');
+  const [emailContent, setEmailContent] = useState('');
   const [sending, setSending] = useState(false);
 
   // Check auth on mount
@@ -155,6 +156,7 @@ const AdminEmail = () => {
         name: campaignName,
         template_id: selectedTemplate.id,
         subject_override: subjectOverride || null,
+        html_content_override: emailContent || null,
         segment_type: selectedSegment,
         segment_filters: {}
       }, getApiConfig());
@@ -216,6 +218,7 @@ const AdminEmail = () => {
     setSelectedSegment('all_active');
     setCampaignName('');
     setSubjectOverride('');
+    setEmailContent('');
     setPreviewUsers([]);
     setPreviewCount(0);
   };
@@ -555,6 +558,7 @@ const AdminEmail = () => {
                     setSelectedTemplate(template);
                     if (template) {
                       setSubjectOverride(template.subject);
+                      setEmailContent(template.html_content || '');
                     }
                   }}
                   style={{ width: '100%' }}
@@ -582,24 +586,34 @@ const AdminEmail = () => {
                 </Radio.Group>
               </div>
 
-              {/* Step 3: Customize Subject */}
+              {/* Step 3: Customize Subject & Content */}
               {selectedTemplate && (
                 <div className="step">
-                  <h4>3. Customize Subject (Optional)</h4>
+                  <h4>3. Edit Subject</h4>
                   <Input
-                    placeholder="Leave blank to use template default"
+                    placeholder="Email subject line"
                     value={subjectOverride}
                     onChange={(e) => setSubjectOverride(e.target.value)}
+                    style={{ marginBottom: 16 }}
                   />
-                  <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                    Variables: {'{{first_name}}'}, {'{{pitches_remaining}}'}, {'{{brands_saved_count}}'}
+
+                  <h4>4. Edit Email Content</h4>
+                  <TextArea
+                    rows={10}
+                    value={emailContent}
+                    onChange={(e) => setEmailContent(e.target.value)}
+                    placeholder="HTML email content..."
+                    style={{ fontFamily: 'monospace', fontSize: 12 }}
+                  />
+                  <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+                    <strong>Available variables:</strong> {'{{first_name}}'}, {'{{username}}'}, {'{{pitches_remaining}}'}, {'{{brands_saved_count}}'}, {'{{pitches_sent_total}}'}
                   </div>
                 </div>
               )}
 
-              {/* Step 4: Select Audience */}
+              {/* Step 5: Select Audience */}
               <div className="step">
-                <h4>4. Select Audience</h4>
+                <h4>5. Select Audience</h4>
                 <Select
                   value={selectedSegment}
                   onChange={handleSegmentSelect}
