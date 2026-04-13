@@ -96,10 +96,15 @@ function OnboardingRouter() {
         return <LoadingSpinner />;
     }
 
-    // If user is a brand, they've already completed onboarding during registration
+    // If user is a brand with a brand_id, they've completed onboarding
     // Redirect them to their dashboard
-    if (user?.role === 'brand') {
+    if (user?.role === 'brand' && user?.brand_id) {
         return <Navigate to="/brand/dashboard/overview" replace />;
+    }
+
+    // If brand user but no brand_id, show brand onboarding form
+    if (user?.role === 'brand' && !user?.brand_id) {
+        return <BrandOnboardingForm />;
     }
 
     // For creators (or no user), show the creator onboarding
@@ -258,12 +263,12 @@ function AppContent() {
                 // Brand users complete onboarding during registration, so don't redirect them
                 const justRegistered = localStorage.getItem('pendingVerificationEmail');
 
-                // Check if user has incomplete profile (creator_id/brand_id is null)
+                // Check if user has incomplete profile (creator_id is null for creators)
                 // Only check if we're not in a loading state to avoid premature redirects
                 // Skip this check if we just completed onboarding (user context is updating)
-                // For brands, also skip if they just registered (their onboarding IS complete)
-                const hasIncompleteProfile = (user.role === 'creator' && !user.creator_id) ||
-                                          (user.role === 'brand' && !user.brand_id && !justRegistered);
+                // For brands: they complete onboarding during registration, so don't redirect them
+                // The brand_id might be in session but not in profile response - don't rely on it
+                const hasIncompleteProfile = (user.role === 'creator' && !user.creator_id);
                 
                 // If user has incomplete profile and is not on onboarding, redirect to onboarding
                 // But skip this if we just completed onboarding (give user context time to update)
