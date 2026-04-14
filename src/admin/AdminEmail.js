@@ -8,9 +8,11 @@ import {
   MailOutlined, UserOutlined, ReloadOutlined, SendOutlined,
   TeamOutlined, RiseOutlined, EyeOutlined, ThunderboltOutlined,
   TrophyOutlined, ClockCircleOutlined, EditOutlined, PlusOutlined,
-  CheckCircleOutlined, ExclamationCircleOutlined, LockOutlined
+  CheckCircleOutlined, ExclamationCircleOutlined, LockOutlined,
+  DesktopOutlined, MobileOutlined, CopyOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
+import { generateWeeklyBrandRoundup, sampleBrands } from '../email-templates';
 
 const { TextArea } = Input;
 
@@ -39,6 +41,11 @@ const AdminEmail = () => {
   const [subjectOverride, setSubjectOverride] = useState('');
   const [emailContent, setEmailContent] = useState('');
   const [sending, setSending] = useState(false);
+
+  // Template preview states
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+  const [previewViewMode, setPreviewViewMode] = useState('desktop');
+  const [previewTemplateName, setPreviewTemplateName] = useState('brand_roundup');
 
   // Check auth on mount
   useEffect(() => {
@@ -506,6 +513,80 @@ const AdminEmail = () => {
 
             {/* Templates Tab */}
             <Tabs.TabPane tab={<span><EditOutlined /> Templates</span>} key="templates">
+              {/* New Modern Templates Section */}
+              <ChartCard style={{ marginBottom: 24, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                <Row align="middle" justify="space-between">
+                  <Col>
+                    <h3 style={{ color: '#fff', margin: 0 }}>New: Modern Email Templates</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.8)', margin: '8px 0 0 0' }}>
+                      Clean, responsive designs inspired by top SaaS apps
+                    </p>
+                  </Col>
+                  <Col>
+                    <Button
+                      type="primary"
+                      ghost
+                      size="large"
+                      icon={<EyeOutlined />}
+                      onClick={() => setShowTemplatePreview(true)}
+                      style={{ borderColor: '#fff', color: '#fff' }}
+                    >
+                      Preview Templates
+                    </Button>
+                  </Col>
+                </Row>
+              </ChartCard>
+
+              {/* Modern Template Cards */}
+              <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => setShowTemplatePreview(true)}
+                    featured
+                  >
+                    <div className="template-badge">NEW</div>
+                    <div className="template-icon-large">📦</div>
+                    <h4>Weekly Brand Roundup</h4>
+                    <p>Showcase new brands with clean grid cards featuring logos, descriptions, and CTAs</p>
+                    <div className="template-features">
+                      <span>Responsive</span>
+                      <span>Dark Mode Ready</span>
+                      <span>Brand Cards</span>
+                    </div>
+                    <Button type="primary" block style={{ marginTop: 16 }}>
+                      <EyeOutlined /> Preview & Use
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard disabled>
+                    <div className="template-badge coming-soon">COMING SOON</div>
+                    <div className="template-icon-large">🔄</div>
+                    <h4>Re-engagement</h4>
+                    <p>Win back dormant users with personalized content and special offers</p>
+                    <div className="template-features">
+                      <span>Personalized</span>
+                      <span>Stats</span>
+                    </div>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard disabled>
+                    <div className="template-badge coming-soon">COMING SOON</div>
+                    <div className="template-icon-large">⚡</div>
+                    <h4>Quota Alert</h4>
+                    <p>Notify users approaching their pitch limit with upgrade prompts</p>
+                    <div className="template-features">
+                      <span>Urgency</span>
+                      <span>Upsell</span>
+                    </div>
+                  </ModernTemplateCard>
+                </Col>
+              </Row>
+
+              <Divider>Legacy Templates (Database)</Divider>
+
+              {/* Legacy Templates from DB */}
               <Row gutter={[16, 16]}>
                 {templates.map(template => (
                   <Col xs={24} md={12} lg={8} key={template.id}>
@@ -662,6 +743,107 @@ const AdminEmail = () => {
                 </Button>
               </div>
             </CampaignBuilder>
+          </Modal>
+
+          {/* Template Preview Modal */}
+          <Modal
+            title={null}
+            open={showTemplatePreview}
+            onCancel={() => setShowTemplatePreview(false)}
+            footer={null}
+            width={900}
+            style={{ top: 20 }}
+            bodyStyle={{ padding: 0, background: '#1a1a2e' }}
+          >
+            <TemplatePreviewContainer>
+              {/* Header */}
+              <div className="preview-header">
+                <div>
+                  <h3>Weekly Brand Roundup Template</h3>
+                  <p>Clean, responsive email design with brand cards</p>
+                </div>
+                <Space>
+                  <Button
+                    type={previewViewMode === 'desktop' ? 'primary' : 'default'}
+                    icon={<DesktopOutlined />}
+                    onClick={() => setPreviewViewMode('desktop')}
+                  >
+                    Desktop
+                  </Button>
+                  <Button
+                    type={previewViewMode === 'mobile' ? 'primary' : 'default'}
+                    icon={<MobileOutlined />}
+                    onClick={() => setPreviewViewMode('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </Space>
+              </div>
+
+              {/* Preview Frame */}
+              <div className="preview-frame">
+                <div
+                  className={`device-frame ${previewViewMode}`}
+                  style={{ width: previewViewMode === 'mobile' ? 375 : 650 }}
+                >
+                  {previewViewMode === 'mobile' && <div className="device-notch" />}
+                  <iframe
+                    srcDoc={generateWeeklyBrandRoundup({
+                      firstName: 'Sarah',
+                      brands: sampleBrands,
+                      weekDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                      totalNewBrands: 23
+                    })}
+                    title="Email Preview"
+                    style={{
+                      width: '100%',
+                      height: previewViewMode === 'mobile' ? 600 : 700,
+                      border: 'none',
+                      background: '#f3f4f6',
+                      borderRadius: previewViewMode === 'mobile' ? '0 0 24px 24px' : 8
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="preview-actions">
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={() => {
+                    const html = generateWeeklyBrandRoundup({
+                      firstName: '{{first_name}}',
+                      brands: sampleBrands,
+                      weekDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                      totalNewBrands: 23
+                    });
+                    navigator.clipboard.writeText(html);
+                    message.success('HTML copied to clipboard!');
+                  }}
+                >
+                  Copy HTML
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    const html = generateWeeklyBrandRoundup({
+                      firstName: '{{first_name}}',
+                      brands: sampleBrands,
+                      weekDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                      totalNewBrands: 23
+                    });
+                    setEmailContent(html);
+                    setSubjectOverride('Fresh Brands This Week - Your Weekly Roundup');
+                    setCampaignName(`Weekly Brand Roundup - ${new Date().toLocaleDateString()}`);
+                    setShowTemplatePreview(false);
+                    setShowCampaignModal(true);
+                    message.success('Template loaded! Create your campaign.');
+                  }}
+                >
+                  Use This Template
+                </Button>
+              </div>
+            </TemplatePreviewContainer>
           </Modal>
         </>
       )}
@@ -857,6 +1039,157 @@ const LoginCard = styled.div`
   p {
     color: #666;
     margin-bottom: 24px;
+  }
+`;
+
+const ModernTemplateCard = styled.div`
+  background: ${props => props.disabled ? '#f9fafb' : '#fff'};
+  border-radius: 16px;
+  padding: 24px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s;
+  border: 2px solid ${props => props.featured ? '#667eea' : '#e5e7eb'};
+  position: relative;
+  opacity: ${props => props.disabled ? 0.7 : 1};
+  height: 100%;
+
+  ${props => props.featured && `
+    background: linear-gradient(135deg, #f5f3ff 0%, #fff 100%);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+  `}
+
+  &:hover {
+    ${props => !props.disabled && `
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+      border-color: #667eea;
+    `}
+  }
+
+  .template-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+
+    &.coming-soon {
+      background: #9ca3af;
+    }
+  }
+
+  .template-icon-large {
+    font-size: 40px;
+    margin-bottom: 16px;
+  }
+
+  h4 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  p {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  .template-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    span {
+      display: inline-block;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+  }
+`;
+
+const TemplatePreviewContainer = styled.div`
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: #16213e;
+    border-bottom: 1px solid #0f3460;
+
+    h3 {
+      margin: 0 0 4px 0;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+  }
+
+  .preview-frame {
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    min-height: 500px;
+  }
+
+  .device-frame {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transition: width 0.3s ease;
+    overflow: hidden;
+
+    &.mobile {
+      background: #1c1c1e;
+      border-radius: 40px;
+      padding: 12px;
+    }
+
+    .device-notch {
+      width: 120px;
+      height: 28px;
+      background: #1c1c1e;
+      border-radius: 0 0 14px 14px;
+      margin: 0 auto 8px auto;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 4px;
+        background: #333;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  .preview-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    background: #16213e;
+    border-top: 1px solid #0f3460;
   }
 `;
 
