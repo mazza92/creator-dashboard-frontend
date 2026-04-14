@@ -8,6 +8,7 @@
 export {
   default as generateWeeklyBrandRoundup,
   generateWeeklyBrandRoundup as WeeklyBrandRoundup,
+  generateSubjectLine,
   sampleBrands,
   getPreviewHTML as getWeeklyBrandRoundupPreview
 } from './WeeklyBrandRoundup';

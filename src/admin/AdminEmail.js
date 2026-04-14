@@ -12,7 +12,7 @@ import {
   DesktopOutlined, MobileOutlined, CopyOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
-import { generateWeeklyBrandRoundup, sampleBrands } from '../email-templates';
+import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands } from '../email-templates';
 
 const { TextArea } = Input;
 
@@ -46,6 +46,10 @@ const AdminEmail = () => {
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
   const [previewViewMode, setPreviewViewMode] = useState('desktop');
   const [previewTemplateName, setPreviewTemplateName] = useState('brand_roundup');
+
+  // Roundup brands state
+  const [roundupBrands, setRoundupBrands] = useState([]);
+  const [roundupBrandsLoading, setRoundupBrandsLoading] = useState(false);
 
   // Check auth on mount
   useEffect(() => {
@@ -116,6 +120,19 @@ const AdminEmail = () => {
       setCampaigns(data.campaigns || []);
     } catch (error) {
       console.error('Failed to fetch campaigns:', error);
+    }
+  };
+
+  const fetchRoundupBrands = async () => {
+    setRoundupBrandsLoading(true);
+    try {
+      const { data } = await api.get('/api/admin/brands/roundup-featured', getApiConfig());
+      setRoundupBrands(data.brands || []);
+    } catch (error) {
+      console.error('Failed to fetch roundup brands:', error);
+      message.error('Could not load roundup brands');
+    } finally {
+      setRoundupBrandsLoading(false);
     }
   };
 
@@ -528,7 +545,7 @@ const AdminEmail = () => {
                       ghost
                       size="large"
                       icon={<EyeOutlined />}
-                      onClick={() => setShowTemplatePreview(true)}
+                      onClick={() => { setShowTemplatePreview(true); fetchRoundupBrands(); }}
                       style={{ borderColor: '#fff', color: '#fff' }}
                     >
                       Preview Templates
@@ -541,7 +558,7 @@ const AdminEmail = () => {
               <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                 <Col xs={24} md={12} lg={8}>
                   <ModernTemplateCard
-                    onClick={() => setShowTemplatePreview(true)}
+                    onClick={() => { setShowTemplatePreview(true); fetchRoundupBrands(); }}
                     featured
                   >
                     <div className="template-badge">NEW</div>
@@ -759,10 +776,31 @@ const AdminEmail = () => {
               {/* Header */}
               <div className="preview-header">
                 <div>
-                  <h3>Weekly Brand Roundup Template</h3>
-                  <p>Clean, responsive email design with brand cards</p>
+                  <h3>
+                    Weekly Brand Roundup Template
+                    {roundupBrandsLoading ? (
+                      <Spin size="small" style={{ marginLeft: 10 }} />
+                    ) : (
+                      <Badge
+                        count={roundupBrands.length}
+                        style={{ backgroundColor: roundupBrands.length > 0 ? '#eb2f96' : '#d9d9d9', marginLeft: 10 }}
+                        title={`${roundupBrands.length} brand${roundupBrands.length !== 1 ? 's' : ''} tagged for roundup`}
+                      />
+                    )}
+                  </h3>
+                  <p>
+                    {roundupBrands.length > 0
+                      ? `${roundupBrands.length} brand${roundupBrands.length !== 1 ? 's' : ''} tagged for this roundup — preview shows live data`
+                      : 'No brands tagged yet — tag brands in /admin/brands → Roundup column'}
+                  </p>
                 </div>
                 <Space>
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={fetchRoundupBrands}
+                    loading={roundupBrandsLoading}
+                    title="Refresh roundup brands"
+                  />
                   <Button
                     type={previewViewMode === 'desktop' ? 'primary' : 'default'}
                     icon={<DesktopOutlined />}
@@ -790,9 +828,9 @@ const AdminEmail = () => {
                   <iframe
                     srcDoc={generateWeeklyBrandRoundup({
                       firstName: 'Sarah',
-                      brands: sampleBrands,
+                      brands: roundupBrands.length > 0 ? roundupBrands : sampleBrands,
                       weekDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-                      totalNewBrands: 23
+                      totalNewBrands: roundupBrands.length > 0 ? roundupBrands.length : sampleBrands.length
                     })}
                     title="Email Preview"
                     style={{
@@ -811,33 +849,37 @@ const AdminEmail = () => {
                 <Button
                   icon={<CopyOutlined />}
                   onClick={() => {
+                    const brandsToUse = roundupBrands.length > 0 ? roundupBrands : sampleBrands;
+                    const subject = generateSubjectLine(brandsToUse);
                     const html = generateWeeklyBrandRoundup({
                       firstName: '{{first_name}}',
-                      brands: sampleBrands,
+                      brands: brandsToUse,
                       weekDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-                      totalNewBrands: 23
+                      totalNewBrands: brandsToUse.length
                     });
-                    navigator.clipboard.writeText(html);
-                    message.success('HTML copied to clipboard!');
+                    navigator.clipboard.writeText(`Subject: ${subject}\n\n${html}`);
+                    message.success('HTML + subject copied to clipboard!');
                   }}
                 >
                   Copy HTML
                 </Button>
                 <Button
                   type="primary"
+                  disabled={roundupBrandsLoading}
                   onClick={() => {
+                    const brandsToUse = roundupBrands.length > 0 ? roundupBrands : sampleBrands;
                     const html = generateWeeklyBrandRoundup({
                       firstName: '{{first_name}}',
-                      brands: sampleBrands,
+                      brands: brandsToUse,
                       weekDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-                      totalNewBrands: 23
+                      totalNewBrands: brandsToUse.length
                     });
                     setEmailContent(html);
-                    setSubjectOverride('Fresh Brands This Week - Your Weekly Roundup');
-                    setCampaignName(`Weekly Brand Roundup - ${new Date().toLocaleDateString()}`);
+                    setSubjectOverride(generateSubjectLine(brandsToUse));
+                    setCampaignName(`Weekly Brand Roundup - ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
                     setShowTemplatePreview(false);
                     setShowCampaignModal(true);
-                    message.success('Template loaded! Create your campaign.');
+                    message.success(`Template loaded with ${brandsToUse.length} brand${brandsToUse.length !== 1 ? 's' : ''}! Finish setting up your campaign.`);
                   }}
                 >
                   Use This Template

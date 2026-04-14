@@ -326,7 +326,7 @@ const PublicBrandPage = () => {
                 </StatusBadge>
                 <p>
                   <strong>Yes</strong>, {brand.name} is {brand.accepting_pr !== false ? 'currently' : 'periodically'} accepting applications from creators
-                  {brand.min_followers && brand.min_followers > 0 && ` with ${brand.min_followers >= 1000 ? `${(brand.min_followers / 1000).toFixed(0)}K+` : brand.min_followers} followers`}.
+                  {brand.min_followers > 0 && ` with ${brand.min_followers >= 1000 ? `${(brand.min_followers / 1000).toFixed(0)}K+` : brand.min_followers} followers`}.
                   {brand.product_types && ` They typically send ${brand.product_types} packages.`}
                 </p>
                 {brand.application_url && (
@@ -424,7 +424,7 @@ const PublicBrandPage = () => {
 
               <RequirementsExplanation>
                 <h4>Can I get {brand.name} PR with less followers?</h4>
-                {brand.requirements.minFollowers && brand.requirements.minFollowers > 0 ? (
+                {brand.requirements.minFollowers > 0 ? (
                   <p>
                     {brand.name} requires a minimum of {brand.requirements.minFollowers >= 1000
                       ? `${(brand.requirements.minFollowers / 1000).toFixed(0)}K`
@@ -446,7 +446,7 @@ const PublicBrandPage = () => {
 
                 <h4>How to meet {brand.name} PR list requirements</h4>
                 <ul>
-                  {brand.requirements.minFollowers && brand.requirements.minFollowers > 0 && (
+                  {brand.requirements.minFollowers > 0 && (
                     <li>
                       <strong>Follower Count:</strong> You need at least {brand.requirements.minFollowers >= 1000
                         ? `${(brand.requirements.minFollowers / 1000).toFixed(0)}K`

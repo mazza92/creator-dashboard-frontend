@@ -40,6 +40,7 @@ const REGION_OPTIONS = ['USA', 'UK', 'Canada', 'Australia', 'Europe', 'Worldwide
 
 const BrandAdmin = () => {
   const gridRef = useRef();
+  const isReverting = useRef(false);
   const [rowData, setRowData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -118,18 +119,25 @@ const BrandAdmin = () => {
 
   // Auto-save cell changes
   const onCellValueChanged = useCallback(async (params) => {
+    if (isReverting.current) return;
+
     const { data, colDef, newValue, oldValue } = params;
 
     if (newValue === oldValue) return;
 
+    // Use the value from row data (already converted by valueSetter for boolean columns)
+    // rather than newValue which may be a raw string ('Yes'/'No') or undefined
+    const valueToSave = data[colDef.field];
+
+    if (valueToSave === undefined && newValue === undefined) return;
+
     // Mark as having unsaved changes
     setUnsavedChanges(prev => new Set(prev).add(data.id));
 
-    // Auto-save after a short delay
     try {
       await api.patch(
         `/api/admin/brands/${data.id}`,
-        { [colDef.field]: newValue },
+        { [colDef.field]: valueToSave },
         getApiConfig()
       );
 
@@ -143,8 +151,10 @@ const BrandAdmin = () => {
     } catch (error) {
       console.error('Failed to save:', error);
       message.error(`Failed to save ${colDef.headerName}`);
-      // Revert the change
+      // Revert the change without triggering another save
+      isReverting.current = true;
       params.node.setDataValue(colDef.field, oldValue);
+      isReverting.current = false;
     }
   }, []);
 
@@ -534,15 +544,24 @@ const BrandAdmin = () => {
     {
       field: 'has_application_form',
       headerName: 'Has App Form',
-      editable: true,
+      editable: false,
       width: 110,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: [true, false] },
-      cellRenderer: (params) => (
-        <Tag color={params.value ? 'green' : 'default'}>
-          {params.value ? 'Yes' : 'No'}
-        </Tag>
-      )
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.has_application_form;
+          params.data.has_application_form = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['has_application_form'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { has_application_form: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Has App Form', 1);
+          } catch (e) {
+            params.data.has_application_form = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['has_application_form'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'green' : 'default'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? 'Yes' : 'No'}</Tag>;
+      }
     },
     {
       field: 'application_method',
@@ -605,68 +624,135 @@ const BrandAdmin = () => {
     {
       field: 'payment_offered',
       headerName: 'Payment Offered',
-      editable: true,
+      editable: false,
       width: 120,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: [true, false] },
-      cellRenderer: (params) => (
-        <Tag color={params.value ? 'green' : 'default'}>
-          {params.value ? 'Yes' : 'No'}
-        </Tag>
-      )
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.payment_offered;
+          params.data.payment_offered = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['payment_offered'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { payment_offered: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Payment Offered', 1);
+          } catch (e) {
+            params.data.payment_offered = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['payment_offered'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'green' : 'default'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? 'Yes' : 'No'}</Tag>;
+      }
     },
     // Flags
     {
       field: 'accepting_pr',
       headerName: 'Accepting PR',
-      editable: true,
+      editable: false,
       width: 110,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: [true, false] },
-      cellRenderer: (params) => (
-        <Tag color={params.value !== false ? 'green' : 'red'}>
-          {params.value !== false ? 'Yes' : 'No'}
-        </Tag>
-      )
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.accepting_pr;
+          params.data.accepting_pr = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['accepting_pr'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { accepting_pr: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Accepting PR', 1);
+          } catch (e) {
+            params.data.accepting_pr = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['accepting_pr'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'green' : 'red'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? 'Yes' : 'No'}</Tag>;
+      }
     },
     {
       field: 'is_featured',
       headerName: 'Featured',
-      editable: true,
+      editable: false,
       width: 100,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: [true, false] },
-      cellRenderer: (params) => (
-        <Tag color={params.value ? 'gold' : 'default'}>
-          {params.value ? 'Yes' : 'No'}
-        </Tag>
-      )
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.is_featured;
+          params.data.is_featured = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['is_featured'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { is_featured: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Featured', 1);
+          } catch (e) {
+            params.data.is_featured = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['is_featured'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'gold' : 'default'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? 'Yes' : 'No'}</Tag>;
+      }
     },
     {
       field: 'open_pr_featured',
       headerName: 'Open PR',
-      editable: true,
+      editable: false,
       width: 100,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: [true, false] },
-      cellRenderer: (params) => (
-        <Tag color={params.value ? 'cyan' : 'default'}>
-          {params.value ? 'Yes' : 'No'}
-        </Tag>
-      )
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.open_pr_featured;
+          params.data.open_pr_featured = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['open_pr_featured'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { open_pr_featured: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Open PR', 1);
+          } catch (e) {
+            params.data.open_pr_featured = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['open_pr_featured'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'cyan' : 'default'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? 'Yes' : 'No'}</Tag>;
+      }
+    },
+    {
+      field: 'roundup_featured',
+      headerName: '📧 Roundup',
+      editable: false,
+      width: 115,
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.roundup_featured;
+          params.data.roundup_featured = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['roundup_featured'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { roundup_featured: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Roundup', 1);
+          } catch (e) {
+            params.data.roundup_featured = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['roundup_featured'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'magenta' : 'default'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? '✓ In Roundup' : 'No'}</Tag>;
+      }
     },
     {
       field: 'is_premium',
       headerName: 'Premium',
-      editable: true,
+      editable: false,
       width: 100,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: [true, false] },
-      cellRenderer: (params) => (
-        <Tag color={params.value ? 'purple' : 'default'}>
-          {params.value ? 'Yes' : 'No'}
-        </Tag>
-      )
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.is_premium;
+          params.data.is_premium = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['is_premium'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { is_premium: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Premium', 1);
+          } catch (e) {
+            params.data.is_premium = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['is_premium'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'purple' : 'default'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? 'Yes' : 'No'}</Tag>;
+      }
     },
     // SEO
     {
@@ -1083,6 +1169,9 @@ const BrandAdmin = () => {
                 <Switch />
               </Form.Item>
               <Form.Item name="open_pr_featured" label="Open PR Featured" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+              <Form.Item name="roundup_featured" label="📧 Feature in Next Roundup" valuePropName="checked">
                 <Switch />
               </Form.Item>
               <Form.Item name="is_premium" label="Premium Brand" valuePropName="checked">
