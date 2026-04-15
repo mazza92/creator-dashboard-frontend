@@ -139,6 +139,7 @@ function AppContent() {
             '/creator',
             '/brand',
             '/c/',
+            '/dashboard',
             // Note: /directory removed - served by Next.js on newcollab.co for SEO
         ];
 
@@ -420,9 +421,11 @@ function AppContent() {
             <Route
                 path='/dashboard'
                 element={
-                    user
-                        ? <Navigate to={user.role === 'brand' ? '/brand/dashboard/overview' : '/creator/dashboard/pr-brands'} replace />
-                        : <Navigate to='/login?redirect=/creator/dashboard/pr-brands' replace />
+                    loading
+                        ? <LoadingSpinner />
+                        : user
+                            ? <Navigate to={user.role === 'brand' ? '/brand/dashboard/overview' : '/creator/dashboard/pr-brands'} replace />
+                            : <Navigate to='/login?redirect=/creator/dashboard/pr-brands' replace />
                 }
             />
 
