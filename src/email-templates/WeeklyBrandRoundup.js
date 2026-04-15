@@ -49,7 +49,7 @@ const renderBrandCard = (brand, index) => `
               <!-- CTA Button -->
               <tr>
                 <td>
-                  <a href="https://app.newcollab.co/brand/${brand.slug || brand.id}"
+                  <a href="https://app.newcollab.co/dashboard?utm_source=email&utm_medium=weekly_roundup&utm_content=${brand.slug || brand.id}"
                      style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 8px; text-decoration: none;">
                     Contact Brand for PR &rarr;
                   </a>
