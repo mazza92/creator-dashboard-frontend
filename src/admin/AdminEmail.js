@@ -395,9 +395,22 @@ const AdminEmail = () => {
             </>
           )}
           {record.status === 'sent' && (
-            <span style={{ color: '#999', fontSize: 12 }}>
-              {new Date(record.sent_at).toLocaleDateString()}
-            </span>
+            <>
+              <span style={{ color: '#999', fontSize: 12, marginRight: 8 }}>
+                {new Date(record.sent_at).toLocaleDateString()}
+              </span>
+              {record.total_sent < record.total_recipients && (
+                <Tooltip title={`Resume sending to ${record.total_recipients - record.total_sent} remaining recipients`}>
+                  <Button
+                    size="small"
+                    onClick={() => handleSendCampaign(record.id)}
+                    loading={sending}
+                  >
+                    Resume
+                  </Button>
+                </Tooltip>
+              )}
+            </>
           )}
         </Space>
       )
