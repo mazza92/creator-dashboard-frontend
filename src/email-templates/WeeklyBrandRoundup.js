@@ -164,7 +164,7 @@ export const generateWeeklyBrandRoundup = ({
                   <table cellpadding="0" cellspacing="0" border="0" style="margin: auto;">
                     <tr>
                       <td>
-                        <img src="https://newcollab.co/logo192.png" alt="Newcollab" width="36" height="36" style="display: inline-block; vertical-align: middle; border-radius: 8px;">
+                        <img src="https://app.newcollab.co/logo.png" alt="Newcollab" width="36" height="36" style="display: inline-block; vertical-align: middle; border-radius: 8px;">
                       </td>
                       <td style="padding-left: 8px; vertical-align: middle;">
                         <span style="font-size: 18px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Newcollab</span>
