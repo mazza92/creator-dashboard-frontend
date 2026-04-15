@@ -170,15 +170,28 @@ const AdminEmail = () => {
   };
 
   const handleCreateCampaign = async () => {
-    if (!selectedTemplate || !campaignName) {
-      message.error('Please select a template and enter a campaign name');
+    // Allow creating campaign with either a template OR custom content
+    if (!campaignName) {
+      message.error('Please enter a campaign name');
+      return;
+    }
+
+    // Must have either a template selected OR custom email content
+    if (!selectedTemplate && !emailContent) {
+      message.error('Please select a template or provide email content');
+      return;
+    }
+
+    // If using custom content without template, require subject
+    if (!selectedTemplate && !subjectOverride) {
+      message.error('Please provide an email subject');
       return;
     }
 
     try {
       const { data } = await api.post('/api/admin/email/campaigns', {
         name: campaignName,
-        template_id: selectedTemplate.id,
+        template_id: selectedTemplate?.id || null,
         subject_override: subjectOverride || null,
         html_content_override: emailContent || null,
         segment_type: selectedSegment,
@@ -198,30 +211,51 @@ const AdminEmail = () => {
   };
 
   const handleSendCampaign = async (campaignId) => {
-    Modal.confirm({
-      title: 'Send Campaign?',
-      content: `This will send emails to ${previewCount} recipients. Are you sure?`,
-      okText: 'Send Now',
-      okType: 'primary',
-      cancelText: 'Cancel',
-      onOk: async () => {
-        setSending(true);
-        try {
-          const { data } = await api.post(
-            `/api/admin/email/campaigns/${campaignId}/send`,
-            {},
-            getApiConfig()
-          );
-          message.success(`Sent ${data.sent} emails! (${data.failed} failed)`);
-          fetchCampaigns();
-          fetchStats();
-        } catch (error) {
-          message.error('Failed to send campaign');
-        } finally {
-          setSending(false);
+    // Find the campaign to get its segment_type
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (!campaign) {
+      message.error('Campaign not found');
+      return;
+    }
+
+    // Fetch the actual recipient count for this campaign's segment
+    setSending(true);
+    try {
+      const { data: segmentData } = await api.post('/api/admin/email/segments/preview',
+        { segment_id: campaign.segment_type, limit: 1 },
+        getApiConfig()
+      );
+      const recipientCount = segmentData.total_count || 0;
+      setSending(false);
+
+      Modal.confirm({
+        title: 'Send Campaign?',
+        content: `This will send emails to ${recipientCount} recipients. Are you sure?`,
+        okText: 'Send Now',
+        okType: 'primary',
+        cancelText: 'Cancel',
+        onOk: async () => {
+          setSending(true);
+          try {
+            const { data } = await api.post(
+              `/api/admin/email/campaigns/${campaignId}/send`,
+              {},
+              getApiConfig()
+            );
+            message.success(`Sent ${data.sent} emails! (${data.failed} failed)`);
+            fetchCampaigns();
+            fetchStats();
+          } catch (error) {
+            message.error('Failed to send campaign');
+          } finally {
+            setSending(false);
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      setSending(false);
+      message.error('Failed to get recipient count');
+    }
   };
 
   const handleSendTest = async (campaignId) => {
@@ -754,7 +788,7 @@ const AdminEmail = () => {
                       });
                     }
                   }}
-                  disabled={!selectedTemplate || !campaignName}
+                  disabled={!campaignName || (!selectedTemplate && !emailContent)}
                 >
                   Create Campaign
                 </Button>
