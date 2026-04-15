@@ -51,7 +51,7 @@ const renderBrandCard = (brand, index) => `
                 <td>
                   <a href="https://app.newcollab.co/brand/${brand.slug || brand.id}"
                      style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 8px; text-decoration: none;">
-                    View PR Package &rarr;
+                    Contact Brand for PR &rarr;
                   </a>
                 </td>
               </tr>
