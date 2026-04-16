@@ -1,5 +1,6 @@
 // Auto-generated post index — do not edit manually
 export const posts = [
+  "ai-tools-for-creator-brand-deals-2026",
   "pet-brands-looking-for-influencers-2026",
   "linkedin-creator-brand-deals-2026",
   "wellness-brands-influencer-programs-2026",
