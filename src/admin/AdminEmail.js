@@ -242,12 +242,51 @@ const AdminEmail = () => {
               {},
               getApiConfig()
             );
-            message.success(`Sent ${data.sent} emails! (${data.failed} failed)`);
+
+            message.info(`Sending started for ${data.sending} recipients — tracking progress...`);
             fetchCampaigns();
-            fetchStats();
+
+            // Poll until the campaign finishes
+            const key = `send-progress-${campaignId}`;
+            message.loading({ content: 'Sending emails...', key, duration: 0 });
+
+            const poll = setInterval(async () => {
+              try {
+                const { data: statusData } = await api.get(
+                  `/api/admin/email/campaigns/${campaignId}/send-status`,
+                  getApiConfig()
+                );
+
+                if (statusData.status === 'sent') {
+                  clearInterval(poll);
+                  message.success({
+                    content: `Campaign sent: ${statusData.sent} delivered, ${statusData.failed} failed`,
+                    key,
+                    duration: 5
+                  });
+                  fetchCampaigns();
+                  fetchStats();
+                  setSending(false);
+                } else if (statusData.status === 'failed') {
+                  clearInterval(poll);
+                  message.error({ content: 'Campaign sending failed', key, duration: 5 });
+                  fetchCampaigns();
+                  setSending(false);
+                } else {
+                  message.loading({
+                    content: `Sending... ${statusData.sent}/${statusData.total_recipients} (${statusData.progress}%)`,
+                    key,
+                    duration: 0
+                  });
+                }
+              } catch {
+                clearInterval(poll);
+                setSending(false);
+              }
+            }, 4000);
+
           } catch (error) {
-            message.error('Failed to send campaign');
-          } finally {
+            message.error('Failed to start campaign send');
             setSending(false);
           }
         }
