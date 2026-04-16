@@ -297,6 +297,16 @@ const AdminEmail = () => {
     }
   };
 
+  const handleResetCampaign = async (campaignId) => {
+    try {
+      await api.post(`/api/admin/email/campaigns/${campaignId}/reset`, {}, getApiConfig());
+      message.success('Campaign reset to draft — you can now re-send it');
+      fetchCampaigns();
+    } catch (error) {
+      message.error('Failed to reset campaign');
+    }
+  };
+
   const handleSendTest = async (campaignId) => {
     try {
       const { data } = await api.post(
@@ -432,6 +442,17 @@ const AdminEmail = () => {
                 Send
               </Button>
             </>
+          )}
+          {(record.status === 'sending' || record.status === 'failed') && (
+            <Tooltip title="Thread may have crashed — reset to draft then re-send">
+              <Button
+                size="small"
+                danger
+                onClick={() => handleResetCampaign(record.id)}
+              >
+                Reset & Resend
+              </Button>
+            </Tooltip>
           )}
           {record.status === 'sent' && (
             <>
