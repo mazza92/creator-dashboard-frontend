@@ -307,6 +307,54 @@ const AdminEmail = () => {
     }
   };
 
+  const handleContinueSending = async (campaignId) => {
+    const key = `continue-${campaignId}`;
+    setSending(true);
+
+    const processBatch = async () => {
+      try {
+        const { data } = await api.post(
+          `/api/admin/email/campaigns/${campaignId}/continue`,
+          {},
+          getApiConfig()
+        );
+
+        message.loading({
+          content: `Sending... ${data.total_sent}/${data.total_recipients} (${data.sent_this_batch} this batch, ${data.remaining} remaining)`,
+          key,
+          duration: 0
+        });
+
+        fetchCampaigns();
+
+        if (data.is_complete) {
+          message.success({
+            content: `Campaign complete: ${data.total_sent}/${data.total_recipients} sent`,
+            key,
+            duration: 5
+          });
+          fetchStats();
+          setSending(false);
+          return;
+        }
+
+        if (data.remaining > 0) {
+          // Continue with next batch after a short delay
+          setTimeout(processBatch, 1000);
+        } else {
+          setSending(false);
+        }
+
+      } catch (error) {
+        message.error({ content: 'Failed to continue sending', key, duration: 3 });
+        setSending(false);
+      }
+    };
+
+    message.loading({ content: 'Starting batch processing...', key, duration: 0 });
+    processBatch();
+  };
+
   const handleSendTest = async (campaignId) => {
     try {
       const { data } = await api.post(
@@ -444,15 +492,26 @@ const AdminEmail = () => {
             </>
           )}
           {(record.status === 'sending' || record.status === 'failed') && (
-            <Tooltip title="Thread may have crashed — reset to draft then re-send">
-              <Button
-                size="small"
-                danger
-                onClick={() => handleResetCampaign(record.id)}
-              >
-                Reset & Resend
-              </Button>
-            </Tooltip>
+            <>
+              <Tooltip title="Continue sending to remaining recipients">
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() => handleContinueSending(record.id)}
+                  loading={sending}
+                >
+                  Continue
+                </Button>
+              </Tooltip>
+              <Tooltip title="Reset attempt counts and retry all failed">
+                <Button
+                  size="small"
+                  onClick={() => handleResetCampaign(record.id)}
+                >
+                  Reset
+                </Button>
+              </Tooltip>
+            </>
           )}
           {record.status === 'sent' && (
             <>
