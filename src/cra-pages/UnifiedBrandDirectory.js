@@ -3,7 +3,7 @@ import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-do
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
 import { Input, Select, Spin, Pagination, Button, Progress, message } from 'antd';
-import { SearchOutlined, CrownOutlined, LockOutlined } from '@ant-design/icons';
+import { SearchOutlined, CrownOutlined, LockOutlined, TeamOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
@@ -49,7 +49,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [subscriptionTier, setSubscriptionTier] = useState('free');
   const [pitchesSentThisWeek, setPitchesSentThisWeek] = useState(0);
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
-  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per week
+  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per month
 
   // Pitch modal state
   const [showPitchModal, setShowPitchModal] = useState(false);
@@ -102,7 +102,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       });
       setSubscriptionTier(subResponse.data.tier || 'free');
 
-      // Fetch accurate pitch limits from PR CRM endpoint (handles weekly reset)
+      // Fetch accurate pitch limits from PR CRM endpoint (handles monthly reset)
       const limitsResponse = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
         withCredentials: true
       });
@@ -301,7 +301,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           </Hero>
         )}
 
-        {/* Weekly Contact Quota Tracker - Show for logged-in FREE users */}
+        {/* Monthly Contact Quota Tracker - Show for logged-in FREE users */}
         {user && subscriptionTier === 'free' && isDashboardView && (
           <QuotaBanner $isDashboard={isDashboardView}>
             <Progress
@@ -310,14 +310,14 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               strokeColor="#EC4899"
             />
             <QuotaText>
-              <span><strong>{pitchesSentThisWeek}/{FREE_PITCH_LIMIT}</strong> brand contacts used this week</span>
+              <span><strong>{pitchesSentThisWeek}/{FREE_PITCH_LIMIT}</strong> brand contacts used this month</span>
               <Button type="link" onClick={() => setUpgradeModalVisible(true)}>
                 Upgrade for unlimited <CrownOutlined />
               </Button>
             </QuotaText>
             {pitchesSentThisWeek >= FREE_PITCH_LIMIT && (
               <QuotaWarning>
-                ⏰ Contacts reset next week, or upgrade now for unlimited!
+                ⏰ Contacts reset next month, or upgrade now for unlimited!
               </QuotaWarning>
             )}
           </QuotaBanner>
@@ -537,6 +537,17 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                         <ResponseRate>
                           {brand.responseRate}% response rate
                         </ResponseRate>
+                      )}
+
+                      {/* Pitch stats - social proof */}
+                      {brand.pitchStats && brand.pitchStats.totalPitches > 0 && (
+                        <PitchStats>
+                          <TeamOutlined style={{ marginRight: 4 }} />
+                          {brand.pitchStats.totalPitches} creator{brand.pitchStats.totalPitches !== 1 ? 's' : ''} contacted
+                          {brand.pitchStats.totalResponses > 0 && (
+                            <span style={{ color: '#10b981' }}> • {brand.pitchStats.totalResponses} got responses</span>
+                          )}
+                        </PitchStats>
                       )}
 
                       {/* Action buttons - only show in dashboard view for logged-in users */}
@@ -961,6 +972,15 @@ const ResponseRate = styled.div`
   color: #10B981;
   font-size: 12px;
   font-weight: 600;
+`;
+
+const PitchStats = styled.div`
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
 `;
 
 const SignupCTA = styled.div`

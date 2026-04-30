@@ -117,6 +117,7 @@ export default function BrandPublicClient({ brand }) {
 
   const hasDirectLink = Boolean(brand?.gated?.hasDirectLink);
   const hasEmail = Boolean(brand?.gated?.hasEmailContact);
+  const maskedEmail = brand?.gated?.maskedEmail;
 
   async function unlock() {
     setUnlocking(true);
@@ -215,9 +216,30 @@ export default function BrandPublicClient({ brand }) {
                       {unlocked.contactEmail}
                     </Button>
                   ) : (
-                    <Button icon={<LockOutlined />} loading={unlocking} onClick={unlock}>
-                      Unlock
-                    </Button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {maskedEmail && (
+                        <span style={{
+                          color: '#94a3b8',
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          background: 'linear-gradient(90deg, #64748b 0%, transparent 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          filter: 'blur(0.5px)'
+                        }}>
+                          {maskedEmail}
+                        </span>
+                      )}
+                      <Button
+                        type="primary"
+                        icon={<LockOutlined />}
+                        loading={unlocking}
+                        onClick={unlock}
+                        size="small"
+                      >
+                        Unlock
+                      </Button>
+                    </div>
                   )}
                 </Right>
               </AccessItem>
