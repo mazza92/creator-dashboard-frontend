@@ -908,7 +908,7 @@ const PRBrandDiscovery = () => {
           )}
           {subscriptionTier === 'free' && (
             <>
-              <FiSend size={14} /> {3 - pitchesSentThisWeek} free pitches left
+              <FiSend size={14} /> {3 - pitchesSentThisWeek} free pitches left this month
             </>
           )}
         </PlanBadge>

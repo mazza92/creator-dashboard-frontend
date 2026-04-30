@@ -129,7 +129,7 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand saves
                 </Feature>
                 <Feature>
-                  <FiCheck /> 3 brand contacts per week
+                  <FiCheck /> 3 brand contacts per month
                 </Feature>
                 <Feature>
                   <FiCheck /> Full brand directory access
@@ -260,7 +260,7 @@ const AccountSettings = () => {
       )}
 
       <Section>
-        <SectionTitle>Usage This Week</SectionTitle>
+        <SectionTitle>Usage This Month</SectionTitle>
         <UsageGrid>
           <UsageCard>
             <UsageLabel>Brands Saved</UsageLabel>
@@ -277,7 +277,7 @@ const AccountSettings = () => {
               {tier === 'free' && <UsageLimit> / {subscriptionInfo?.contacts_limit || 3}</UsageLimit>}
             </UsageValue>
             {(tier === 'pro' || tier === 'elite') && <UsageUnlimited>Unlimited</UsageUnlimited>}
-            {tier === 'free' && <UsageNote>Resets weekly</UsageNote>}
+            {tier === 'free' && <UsageNote>Resets monthly</UsageNote>}
           </UsageCard>
         </UsageGrid>
       </Section>

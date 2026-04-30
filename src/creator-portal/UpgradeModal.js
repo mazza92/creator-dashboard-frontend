@@ -57,19 +57,19 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
             <Title>{currentCount >= limit ? "You've Used Your Free Pitches!" : "Unlock Unlimited Brand Pitches"}</Title>
             <Subtitle>
               {currentCount >= limit
-                ? `You've sent ${currentCount} brand pitches this week.`
-                : `You have ${limit - currentCount} free pitches left this week.`}
+                ? `You've sent ${currentCount} brand pitches this month.`
+                : `You have ${limit - currentCount} free pitches left this month.`}
             </Subtitle>
             {currentCount >= limit && (
               <DailyResetNote>
-                ⏰ Resets next week, or upgrade now for unlimited pitches!
+                ⏰ Resets next month, or upgrade now for unlimited pitches!
               </DailyResetNote>
             )}
           </Header>
 
           <LimitInfo>
             <LimitText>
-              {currentCount} / {limit} pitches used this week
+              {currentCount} / {limit} pitches used this month
             </LimitText>
             <ProgressBar>
               <ProgressFill width={Math.min((currentCount / limit) * 100, 100)} />
@@ -89,7 +89,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
 
               <Features>
                 <Feature>
-                  <FiCheck /> <span><strong>Unlimited Brand Pitches</strong> (No weekly limits!)</span>
+                  <FiCheck /> <span><strong>Unlimited Brand Pitches</strong> (No monthly limits!)</span>
                 </Feature>
                 <Feature>
                   <FiCheck /> <span>Personalized emails that brands actually read</span>

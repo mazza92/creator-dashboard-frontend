@@ -210,9 +210,9 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
           {isPro ? (
             <>✨ Pro member - Unlimited brand pitches</>
           ) : pitchesLeft > 0 ? (
-            <>{pitchesLeft} free pitch{pitchesLeft !== 1 ? 'es' : ''} left this week</>
+            <>{pitchesLeft} free pitch{pitchesLeft !== 1 ? 'es' : ''} left this month</>
           ) : (
-            <>You've used your 3 free pitches. <a href="/creator/dashboard/settings" style={{ color: '#92400E', textDecoration: 'underline' }}>Upgrade to Pro</a></>
+            <>You've used your 3 free pitches this month. <a href="/creator/dashboard/settings" style={{ color: '#92400E', textDecoration: 'underline' }}>Upgrade to Pro</a></>
           )}
         </div>
       )}

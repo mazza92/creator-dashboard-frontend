@@ -36,7 +36,7 @@ const PublicBrandPage = () => {
   const [pitchesSentThisWeek, setPitchesSentThisWeek] = useState(0);
   const [showPitchModal, setShowPitchModal] = useState(false);
 
-  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per week
+  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per month
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const pitchesLeft = Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisWeek);
 
@@ -192,7 +192,7 @@ const PublicBrandPage = () => {
           {isPro ? (
             <>✨ Pro member - Unlimited brand contacts</>
           ) : pitchesLeft > 0 ? (
-            <>{pitchesLeft} free contact{pitchesLeft !== 1 ? 's' : ''} left this week</>
+            <>{pitchesLeft} free contact{pitchesLeft !== 1 ? 's' : ''} left this month</>
           ) : (
             <>You've used your 3 free contacts. <Link to="/creator/dashboard/settings" style={{ color: '#92400E', textDecoration: 'underline' }}>Upgrade to Pro</Link></>
           )}

@@ -290,7 +290,7 @@ ${creatorName}`;
 
   const handleSendEmail = async () => {
     if (!pitchLimits.canPitch) {
-      message.warning('You\'ve used all your free contacts this week. Upgrade to continue!');
+      message.warning('You\'ve used all your free contacts this month. Upgrade to continue!');
       return;
     }
 
