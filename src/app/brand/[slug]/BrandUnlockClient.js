@@ -98,6 +98,29 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
     }
   }
 
+  // Handle upgrade - direct to Stripe checkout
+  async function handleUpgrade() {
+    try {
+      const res = await fetch(`${API_BASE}/api/subscription/create-checkout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: 'pro' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        window.location.href = data.checkout_url;
+      } else {
+        console.error('Failed to create checkout');
+        // Fallback to settings page
+        window.location.href = '/creator/dashboard/settings';
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      window.location.href = '/creator/dashboard/settings';
+    }
+  }
+
   // Loading state
   if (subscriptionTier === null) {
     return (
@@ -212,7 +235,7 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
           ) : pitchesLeft > 0 ? (
             <>{pitchesLeft} free pitch{pitchesLeft !== 1 ? 'es' : ''} left this month</>
           ) : (
-            <>You've used your 3 free pitches this month. <a href="/creator/dashboard/settings" style={{ color: '#92400E', textDecoration: 'underline' }}>Upgrade to Pro</a></>
+            <>You've used your 3 free pitches this month. <span onClick={handleUpgrade} style={{ color: '#92400E', textDecoration: 'underline', cursor: 'pointer' }}>Upgrade to Pro</span></>
           )}
         </div>
       )}

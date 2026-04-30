@@ -256,6 +256,9 @@ const AccountSettings = () => {
         <UpgradeModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
+          currentCount={subscriptionInfo?.contacts_used_this_week || 0}
+          limit={subscriptionInfo?.contacts_limit || 3}
+          feature="brand contacts"
         />
       )}
 

@@ -162,6 +162,22 @@ const PublicBrandPage = () => {
           <PitchIcon>📧</PitchIcon>
           <h3>Contact {brand.name}</h3>
           <p>Access direct PR contacts and tools to start your collaboration with {brand.name}.</p>
+
+          {/* Masked email teaser - creates desire to sign up */}
+          {brand.gated?.maskedEmail && (
+            <MaskedEmailTeaser>
+              <span style={{ marginRight: 6 }}>📧</span>
+              <span style={{
+                fontFamily: 'monospace',
+                color: '#94a3b8',
+                letterSpacing: '0.5px'
+              }}>
+                {brand.gated.maskedEmail}
+              </span>
+              <span style={{ marginLeft: 8, fontSize: 11, color: '#cbd5e1' }}>• Sign up to reveal</span>
+            </MaskedEmailTeaser>
+          )}
+
           <PitchButton onClick={handlePitchBrand}>
             ✨ Sign up to Contact {brand.name}
           </PitchButton>
@@ -182,6 +198,23 @@ const PublicBrandPage = () => {
           Access direct PR contacts and tools to start your collaboration with {brand.name}.
         </CTADescription>
 
+        {/* Masked email teaser - creates desire */}
+        {brand.gated?.maskedEmail && (
+          <MaskedEmailTeaser>
+            <span style={{ marginRight: 6 }}>📧</span>
+            <span style={{
+              fontFamily: 'monospace',
+              background: 'linear-gradient(90deg, #64748b 60%, transparent 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'blur(0.3px)'
+            }}>
+              {brand.gated.maskedEmail}
+            </span>
+            <span style={{ marginLeft: 8, fontSize: 11, color: '#94a3b8' }}>• Unlock to reveal</span>
+          </MaskedEmailTeaser>
+        )}
+
         {/* Main Contact Button */}
         <PitchButton onClick={handlePitchBrand} disabled={!isPro && pitchesLeft === 0}>
           📧 Contact {brand.name}
@@ -194,7 +227,7 @@ const PublicBrandPage = () => {
           ) : pitchesLeft > 0 ? (
             <>{pitchesLeft} free contact{pitchesLeft !== 1 ? 's' : ''} left this month</>
           ) : (
-            <>You've used your 3 free contacts. <Link to="/creator/dashboard/settings" style={{ color: '#92400E', textDecoration: 'underline' }}>Upgrade to Pro</Link></>
+            <>You've used your 3 free contacts. <span onClick={() => setUpgradeModalVisible(true)} style={{ color: '#92400E', textDecoration: 'underline', cursor: 'pointer' }}>Upgrade to Pro</span></>
           )}
         </PitchLimitInfo>
 
@@ -354,6 +387,19 @@ const PublicBrandPage = () => {
             )}
 
 
+
+            {/* Pitch Stats Banner - Social Proof */}
+            {brand.stats && brand.stats.totalPitches > 0 && (
+              <PitchStatsBanner>
+                <span style={{ marginRight: 8 }}>👥</span>
+                <strong>{brand.stats.totalPitches}</strong> creator{brand.stats.totalPitches !== 1 ? 's' : ''} have contacted this brand
+                {brand.stats.totalResponses > 0 && (
+                  <span style={{ color: '#10b981', marginLeft: 8 }}>
+                    • <strong>{brand.stats.totalResponses}</strong> got responses
+                  </span>
+                )}
+              </PitchStatsBanner>
+            )}
 
             {brand.stats && (brand.stats.responseRate || brand.stats.avgResponseTime) && (
               <Section>
@@ -661,6 +707,18 @@ const Section = styled.div`
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 `;
 
+const PitchStatsBanner = styled.div`
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #fbbf24;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
 const SectionTitle = styled.h2`
   font-size: 20px;
   font-weight: 600;
@@ -836,6 +894,19 @@ const CTADescription = styled.p`
   color: #6B7280;
   margin-bottom: 20px;
   line-height: 1.5;
+`;
+
+const MaskedEmailTeaser = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #64748b;
 `;
 
 const PitchButton = styled.button`
