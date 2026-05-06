@@ -12,6 +12,20 @@ const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://api.newcollab.co
 const SITE_URL = 'https://newcollab.co';
 
 /**
+ * Escape special XML characters to prevent parsing errors
+ * Required for: & < > " '
+ */
+function escapeXml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
  * Detect low-quality brand slugs that shouldn't be in the sitemap.
  * These are typically auto-generated from scraped meta titles/descriptions.
  */
@@ -114,8 +128,10 @@ async function generateBrandSitemap() {
     // Add each quality brand page
     qualityBrands.forEach(brand => {
       const brandUrl = `${SITE_URL}/brand/${brand.slug}`;
+      const escapedName = escapeXml(brand.name);
+      const escapedLogo = brand.logo ? escapeXml(brand.logo) : null;
 
-      xml += `  <!-- ${brand.name} -->
+      xml += `  <!-- ${escapedName} -->
   <url>
     <loc>${brandUrl}</loc>
     <lastmod>${now}</lastmod>
@@ -123,11 +139,11 @@ async function generateBrandSitemap() {
     <priority>0.8</priority>`;
 
       // Add brand logo as image sitemap extension
-      if (brand.logo) {
+      if (escapedLogo) {
         xml += `
     <image:image>
-      <image:loc>${brand.logo}</image:loc>
-      <image:title>${brand.name} Logo</image:title>
+      <image:loc>${escapedLogo}</image:loc>
+      <image:title>${escapedName} Logo</image:title>
     </image:image>`;
       }
 

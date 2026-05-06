@@ -5,6 +5,19 @@ const path = require('path');
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://api.newcollab.co';
 const SITE_URL = 'https://newcollab.co';
 
+/**
+ * Escape special XML characters to prevent parsing errors
+ */
+function escapeXml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 async function fetchAllBrands() {
   let allBrands = [];
   let page = 1;
@@ -44,17 +57,22 @@ async function generateImageSitemap() {
       if (brand.logo) {
         const brandUrl = `${SITE_URL}/brand/${brand.slug}`;
         const logoUrl = brand.logo.startsWith('http') ? brand.logo : `${SITE_URL}${brand.logo}`;
-        
-        xml += `  <!-- ${brand.name} -->
+        const escapedLogoUrl = escapeXml(logoUrl);
+        const escapedName = escapeXml(brand.name);
+        const escapedDescription = brand.description
+          ? escapeXml(brand.description.replace(/<[^>]*>/g, '').substring(0, 200))
+          : '';
+
+        xml += `  <!-- ${escapedName} -->
   <url>
     <loc>${brandUrl}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>${logoUrl}</image:loc>
-      <image:title>${brand.name} Logo</image:title>${brand.description ? `
-      <image:caption>${brand.description.replace(/<[^>]*>/g, '').substring(0, 200)}</image:caption>` : ''}
+      <image:loc>${escapedLogoUrl}</image:loc>
+      <image:title>${escapedName} Logo</image:title>${escapedDescription ? `
+      <image:caption>${escapedDescription}</image:caption>` : ''}
     </image:image>
   </url>
 
