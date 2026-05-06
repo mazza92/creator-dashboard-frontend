@@ -61,17 +61,25 @@ function isLowQualitySlug(slug, brandName) {
   return false;
 }
 
-async function fetchBrand(slug) {
-  try {
-    const res = await fetch(`${API_BASE}/api/public/brands/${slug}`, {
-      next: { revalidate },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
+async function fetchBrand(slug, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}/api/public/brands/${slug}`, {
+        next: { revalidate },
+        signal: AbortSignal.timeout(15000), // Increased from 5s to 15s
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (err) {
+      if (attempt === retries) {
+        console.error(`Failed to fetch brand ${slug} after ${retries + 1} attempts:`, err);
+        return null;
+      }
+      // Wait before retry (exponential backoff)
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
   }
+  return null;
 }
 
 async function fetchRelatedBrands(category, currentSlug) {
@@ -79,7 +87,7 @@ async function fetchRelatedBrands(category, currentSlug) {
   try {
     const res = await fetch(`${API_BASE}/api/public/brands?category=${encodeURIComponent(category)}&limit=7`, {
       next: { revalidate },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(15000), // Increased from 5s to 15s
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -92,10 +100,11 @@ async function fetchRelatedBrands(category, currentSlug) {
 
 export async function generateStaticParams() {
   try {
-    // Pre-generate top 50 pages at build time to speed up deployment
-    // Remaining pages are generated on-demand via ISR (revalidate: 3600)
-    const res = await fetch(`${API_BASE}/api/public/brands?limit=50`, {
-      signal: AbortSignal.timeout(10000),
+    // Pre-generate top 500 pages at build time for better SEO coverage
+    // This ensures most commonly accessed brands are available immediately
+    // Remaining pages use ISR (revalidate: 3600)
+    const res = await fetch(`${API_BASE}/api/public/brands?limit=500`, {
+      signal: AbortSignal.timeout(30000),
     });
     if (!res.ok) return [];
     const data = await res.json();
