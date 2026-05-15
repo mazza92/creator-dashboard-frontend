@@ -55,6 +55,7 @@ import PaymentsPage from './creator-portal/PaymentsPage';
 import CampaignInvites from './creator-portal/CampaignInvites';
 import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
+import MediaKit from './creator-portal/MediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
 import VerifyEmailPending from './components/VerifyEmailPending';
 import VerifyEmail from './components/VerifyEmail';
@@ -82,6 +83,7 @@ import AustraliaDirectory from './cra-pages/AustraliaDirectory';
 // UnifiedBrandDirectory used in dashboard (/creator/dashboard/pr-brands) and public directory
 import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
+import PublicMediaKit from './pages/PublicMediaKit';
 import BrandAdmin from './admin/BrandAdmin';
 import AdminReports from './admin/AdminReports';
 import AdminEmail from './admin/AdminEmail';
@@ -463,11 +465,15 @@ function AppContent() {
                 <Route path='dashboard/pr-pipeline' element={<PRPipeline />} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
                 <Route path='dashboard/pr-offers' element={<PROffers />} />
+                <Route path='dashboard/media-kit' element={<MediaKit />} />
                 <Route path='dashboard/settings' element={<AccountSettings />} />
                 <Route path='first-ad-slot' element={<FirstAdSlot />} />
                 <Route path='first-ad-slot/success' element={<FirstAdSlotSuccess />} />
                 {/* The profile/:id route is now handled by the wrapper */}
             </Route>
+
+            {/* Public Media Kit Page */}
+            <Route path='/kit/:username' element={<PublicMediaKit />} />
 
             {/* Fallback 404 */}
             <Route path='*' element={<NotFound />} />

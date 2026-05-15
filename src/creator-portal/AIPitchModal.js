@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { message, Spin } from 'antd';
-import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw } from 'react-icons/fi';
+import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFileText } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 
 /**
@@ -13,6 +14,7 @@ import api from '../config/api';
  */
 
 const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [pitch, setPitch] = useState(null);
   const [creatorProfile, setCreatorProfile] = useState(null);
@@ -564,6 +566,30 @@ ${creatorName}`;
                 </NoEmailWarning>
               )}
             </>
+          )}
+
+          {/* Media Kit CTA - show if creator doesn't have one */}
+          {!loading && creatorProfile && !creatorProfile.has_media_kit && (
+            <MediaKitCTA>
+              <FiFileText />
+              <MediaKitCTAText>
+                <strong>Boost your response rate!</strong> Create a Media Kit to share with brands.
+              </MediaKitCTAText>
+              <MediaKitCTAButton onClick={() => { onClose(); navigate('/creator/dashboard/media-kit'); }}>
+                Build Media Kit
+              </MediaKitCTAButton>
+            </MediaKitCTA>
+          )}
+
+          {/* Show media kit link if creator has one */}
+          {!loading && creatorProfile && creatorProfile.has_media_kit && creatorProfile.media_kit_url && (
+            <MediaKitLink>
+              <FiFileText />
+              <span>Your Media Kit: <a href={creatorProfile.media_kit_url} target="_blank" rel="noopener noreferrer">{creatorProfile.media_kit_url}</a></span>
+              <CopyMediaKitButton onClick={() => { navigator.clipboard.writeText(creatorProfile.media_kit_url); message.success('Media kit link copied!'); }}>
+                Copy
+              </CopyMediaKitButton>
+            </MediaKitLink>
           )}
 
           {/* Footer tip */}
@@ -1170,6 +1196,102 @@ const UpgradeFeature = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+`;
+
+const MediaKitCTA = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #EFF6FF, #F5F3FF);
+  border-top: 1px solid #E5E7EB;
+
+  svg {
+    color: #3B82F6;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+`;
+
+const MediaKitCTAText = styled.div`
+  flex: 1;
+  font-size: 13px;
+  color: #374151;
+
+  strong {
+    color: #1F2937;
+  }
+`;
+
+const MediaKitCTAButton = styled.button`
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+`;
+
+const MediaKitLink = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #ECFDF5;
+  border-top: 1px solid #E5E7EB;
+  font-size: 13px;
+  color: #059669;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  a {
+    color: #059669;
+    text-decoration: underline;
+    word-break: break-all;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+`;
+
+const CopyMediaKitButton = styled.button`
+  padding: 4px 12px;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+
+  &:hover {
+    background: #047857;
+  }
+
+  @media (max-width: 480px) {
+    margin-left: 0;
+  }
 `;
 
 const FooterTip = styled.div`
