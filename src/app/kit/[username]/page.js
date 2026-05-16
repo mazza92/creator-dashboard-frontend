@@ -21,8 +21,9 @@ async function getMediaKit(username) {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }) {
-  const { username } = await params;
+export async function generateMetadata(props) {
+  const params = await props.params;
+  const { username } = params;
   const data = await getMediaKit(username);
 
   if (!data || !data.media_kit) {
@@ -69,8 +70,9 @@ export async function generateMetadata({ params }) {
 // ISR - Revalidate every hour
 export const revalidate = 3600;
 
-export default async function MediaKitPage({ params }) {
-  const { username } = await params;
+export default async function MediaKitPage(props) {
+  const params = await props.params;
+  const { username } = params;
   const data = await getMediaKit(username);
 
   if (!data || !data.media_kit) {
