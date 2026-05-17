@@ -1,6 +1,4 @@
 {
-  "buildCommand": "npm run build:next",
-  "framework": "nextjs",
   "rewrites": [
     {
       "source": "/api/:path*",
