@@ -20,10 +20,16 @@ async function getMediaKit(username) {
   }
 }
 
+// Generate static params for common media kits at build time (SSG)
+export async function generateStaticParams() {
+  // Return empty array - all usernames will be generated on-demand
+  // This enables ISR while avoiding build-time API calls
+  return [];
+}
+
 // Generate metadata for SEO
-export async function generateMetadata(props) {
-  const params = await props.params;
-  const { username } = params;
+export async function generateMetadata({ params }) {
+  const { username } = await params;
   const data = await getMediaKit(username);
 
   if (!data || !data.media_kit) {
@@ -67,15 +73,12 @@ export async function generateMetadata(props) {
   };
 }
 
-// Force dynamic rendering - no static generation
-export const dynamic = 'force-dynamic';
+// This page uses Static Site Generation (SSG) with Incremental Static Regeneration (ISR)
+// Pages are pre-rendered at build time and can be regenerated on-demand
+export const revalidate = 3600; // Revalidate every hour (ISR)
 
-// Allow dynamic params for usernames not generated at build time
-export const dynamicParams = true;
-
-export default async function MediaKitPage(props) {
-  const params = await props.params;
-  const { username } = params;
+export default async function MediaKitPage({ params }) {
+  const { username } = await params;
   const data = await getMediaKit(username);
 
   if (!data || !data.media_kit) {
