@@ -67,8 +67,8 @@ export async function generateMetadata(props) {
   };
 }
 
-// ISR - Revalidate every hour
-export const revalidate = 3600;
+// Force dynamic rendering - no static generation
+export const dynamic = 'force-dynamic';
 
 // Allow dynamic params for usernames not generated at build time
 export const dynamicParams = true;
