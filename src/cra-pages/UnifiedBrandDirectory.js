@@ -302,81 +302,82 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           </Hero>
         )}
 
-        {/* Monthly Contact Quota Tracker - Show for logged-in FREE users */}
-        {user && subscriptionTier === 'free' && isDashboardView && (
-          <QuotaStrip>
-            <QuotaIconBox>
-              <Mail size={20} />
-            </QuotaIconBox>
-            <QuotaBody>
-              <QuotaTitle>{pitchesSentThisWeek} of {FREE_PITCH_LIMIT} brand contacts used this month</QuotaTitle>
-              <QuotaBarTrack>
-                <QuotaBarFill style={{ width: `${(pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100}%` }} />
-              </QuotaBarTrack>
-              <QuotaMeta>{FREE_PITCH_LIMIT - pitchesSentThisWeek} contacts remaining · Resets in 14 days</QuotaMeta>
-            </QuotaBody>
-            <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
-              Upgrade to Pro
-            </QuotaCTA>
-          </QuotaStrip>
-        )}
+        <ContentWrapper>
+          {/* Monthly Contact Quota Tracker - Show for logged-in FREE users */}
+          {user && subscriptionTier === 'free' && isDashboardView && (
+            <QuotaStrip>
+              <QuotaIconBox>
+                <Mail size={20} />
+              </QuotaIconBox>
+              <QuotaBody>
+                <QuotaTitle>{pitchesSentThisWeek} of {FREE_PITCH_LIMIT} brand contacts used this month</QuotaTitle>
+                <QuotaBarTrack>
+                  <QuotaBarFill style={{ width: `${(pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100}%` }} />
+                </QuotaBarTrack>
+                <QuotaMeta>{FREE_PITCH_LIMIT - pitchesSentThisWeek} contacts remaining · Resets in 14 days</QuotaMeta>
+              </QuotaBody>
+              <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
+                Upgrade to Pro
+              </QuotaCTA>
+            </QuotaStrip>
+          )}
 
-        {/* Search + Filters Row */}
-        <SearchRow $isDashboard={isDashboardView}>
-          <SearchWrap>
-            <Input
+          {/* Search + Filters Row */}
+          <SearchRow>
+            <SearchWrap>
+              <Input
+                size="large"
+                placeholder="Search brand names..."
+                prefix={<Search size={17} />}
+                value={filters.search}
+                onChange={(e) => handleSearch(e.target.value)}
+                allowClear
+              />
+            </SearchWrap>
+            <Select
               size="large"
-              placeholder="Search brand names..."
-              prefix={<Search size={17} />}
-              value={filters.search}
-              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="All Categories"
+              value={filters.category || undefined}
+              onChange={(value) => handleFilterChange('category', value)}
               allowClear
-            />
-          </SearchWrap>
-          <Select
-            size="large"
-            placeholder="All Categories"
-            value={filters.category || undefined}
-            onChange={(value) => handleFilterChange('category', value)}
-            allowClear
-            style={{ minWidth: 160 }}
-          >
-            {categories.map(cat => (
-              <Select.Option key={cat.value} value={cat.value}>
-                {cat.label} ({cat.count})
+              style={{ minWidth: 160 }}
+            >
+              {categories.map(cat => (
+                <Select.Option key={cat.value} value={cat.value}>
+                  {cat.label} ({cat.count})
+                </Select.Option>
+              ))}
+            </Select>
+            <Select
+              size="large"
+              placeholder="All Brands"
+              value={filters.activity || undefined}
+              onChange={(value) => handleFilterChange('activity', value)}
+              allowClear
+              style={{ minWidth: 160 }}
+            >
+              <Select.Option value="new">Added This Week</Select.Option>
+              <Select.Option value="active">Actively Reviewing</Select.Option>
+              <Select.Option value="responsive">
+                High Response Rate {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
               </Select.Option>
-            ))}
-          </Select>
-          <Select
-            size="large"
-            placeholder="All Brands"
-            value={filters.activity || undefined}
-            onChange={(value) => handleFilterChange('activity', value)}
-            allowClear
-            style={{ minWidth: 160 }}
-          >
-            <Select.Option value="new">Added This Week</Select.Option>
-            <Select.Option value="active">Actively Reviewing</Select.Option>
-            <Select.Option value="responsive">
-              High Response Rate {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
-            </Select.Option>
-          </Select>
-          <Select
-            size="large"
-            value={filters.contactType || undefined}
-            onChange={(value) => handleFilterChange('contactType', value)}
-            placeholder="Contact Type"
-            allowClear
-            style={{ minWidth: 160 }}
-          >
-            <Select.Option value="application">Has Application Form</Select.Option>
-            <Select.Option value="email">Has PR Email</Select.Option>
-          </Select>
-        </SearchRow>
+            </Select>
+            <Select
+              size="large"
+              value={filters.contactType || undefined}
+              onChange={(value) => handleFilterChange('contactType', value)}
+              placeholder="Contact Type"
+              allowClear
+              style={{ minWidth: 160 }}
+            >
+              <Select.Option value="application">Has Application Form</Select.Option>
+              <Select.Option value="email">Has PR Email</Select.Option>
+            </Select>
+          </SearchRow>
 
-        {/* Open PR Applications - Featured Section */}
-        {!filters.search && !filters.category && openPrBrands.length > 0 && (
-          <OpenPRSection $isDashboard={isDashboardView}>
+          {/* Open PR Applications - Featured Section */}
+          {!filters.search && !filters.category && openPrBrands.length > 0 && (
+            <OpenPRSection>
             <OpenPRHeader>
               <h2>
                 <Target size={20} /> Open PR Applications
@@ -454,16 +455,16 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               })}
             </OpenPRGrid>
           </OpenPRSection>
-        )}
+          )}
 
-        {/* Brand Grid */}
-        {loading ? (
-          <LoadingContainer>
-            <Spin size="large" />
-          </LoadingContainer>
-        ) : (
-          <>
-            <BrandGrid>
+          {/* Brand Grid */}
+          {loading ? (
+            <LoadingContainer>
+              <Spin size="large" />
+            </LoadingContainer>
+          ) : (
+            <>
+              <BrandGrid>
               {brands.map(brand => {
                 const isSaved = isBrandSaved(brand.id);
                 const isPitched = pitchedBrands.has(brand.id);
@@ -562,22 +563,23 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   </BrandCard>
                 );
               })}
-            </BrandGrid>
+              </BrandGrid>
 
-            <PaginationContainer>
-              <Pagination
-                current={pagination.page}
-                total={pagination.total}
-                pageSize={pagination.limit}
-                onChange={handlePageChange}
-                showSizeChanger={false}
-                showTotal={(total) => `${total} brands`}
-                showLessItems
-                responsive
-              />
-            </PaginationContainer>
-          </>
-        )}
+              <PaginationContainer>
+                <Pagination
+                  current={pagination.page}
+                  total={pagination.total}
+                  pageSize={pagination.limit}
+                  onChange={handlePageChange}
+                  showSizeChanger={false}
+                  showTotal={(total) => `${total} brands`}
+                  showLessItems
+                  responsive
+                />
+              </PaginationContainer>
+            </>
+          )}
+        </ContentWrapper>
       </Container>
 
       {/* Upgrade Modal */}
@@ -613,15 +615,19 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 // Styled Components
 const Container = styled.div`
   width: 100%;
-  max-width: ${props => props.$isDashboard ? '100%' : '100%'};
   background: ${props => props.$isDashboard ? 'transparent' : '#FAFAFA'};
   min-height: ${props => props.$isDashboard ? 'auto' : '100vh'};
   padding-bottom: ${props => props.$isDashboard ? '40px' : '80px'};
-  ${props => props.$isDashboard && `
-    padding-left: 0;
-    padding-right: 0;
-    margin: 0;
-  `}
+`;
+
+const ContentWrapper = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 32px;
+
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
 `;
 
 const Hero = styled.div`
@@ -663,14 +669,13 @@ const QuotaStrip = styled.div`
   border: 1px solid ${tokens.border};
   border-radius: 14px;
   padding: 14px 18px;
-  margin: 0 32px 20px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 14px;
   box-shadow: ${tokens.shadowCard};
 
   @media (max-width: 768px) {
-    margin: 0 16px 20px;
     flex-wrap: wrap;
   }
 `;
@@ -753,13 +758,8 @@ const QuotaCTA = styled.button`
 const SearchRow = styled.div`
   display: flex;
   gap: 8px;
-  margin: ${props => props.$isDashboard ? '0 32px 20px' : '0 auto 20px'};
-  max-width: 1280px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    margin: ${props => props.$isDashboard ? '0 16px 20px' : '0 auto 20px'};
-  }
 
   .ant-select,
   .ant-input-affix-wrapper {
@@ -815,16 +815,16 @@ const ProBadgeInline = styled.span`
 `;
 
 const BrandGrid = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -875,15 +875,10 @@ const FeaturedBadge = styled.div`
 `;
 
 const CardActions = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-top: 12px;
-  width: 100%;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 6px;
-  }
+  margin-top: auto;
 `;
 
 const PitchButton = styled.button`
@@ -963,33 +958,34 @@ const SaveActionButton = styled.button`
 `;
 
 const BrandLogo = styled.div`
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  aspect-ratio: 2.2 / 1;
+  background: ${tokens.bg};
   border-radius: 12px;
-  overflow: hidden;
+  display: grid;
+  place-items: center;
   margin-bottom: 16px;
-  border: 1px solid #E5E7EB;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
+  border: 1px solid ${tokens.border};
 
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    padding: 12px;
   }
 `;
 
 const LogoPlaceholder = styled.div`
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3B82F6, #EC4899);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 32px;
-  font-weight: 700;
+  color: ${tokens.textPrimary};
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -1px;
 `;
 
 const BrandInfo = styled.div`
@@ -1080,7 +1076,6 @@ const PaginationContainer = styled.div`
   align-items: center;
   gap: 12px;
   margin-top: 48px;
-  padding: 0 24px 24px;
 
   .ant-pagination {
     display: flex;
@@ -1134,7 +1129,6 @@ const PaginationContainer = styled.div`
 
   @media (max-width: 768px) {
     margin-top: 32px;
-    padding: 0 16px 80px; /* Extra bottom padding for mobile nav */
 
     .ant-pagination-item,
     .ant-pagination-prev,
@@ -1171,8 +1165,7 @@ const PaginationContainer = styled.div`
 
 // Open PR Applications Featured Section
 const OpenPRSection = styled.section`
-  max-width: 1200px;
-  margin: ${props => props.$isDashboard ? '0 auto 28px' : '28px auto 32px'};
+  margin-bottom: 20px;
   padding: 24px;
   background: white;
   border-radius: 20px;
