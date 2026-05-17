@@ -83,7 +83,6 @@ import AustraliaDirectory from './cra-pages/AustraliaDirectory';
 // UnifiedBrandDirectory used in dashboard (/creator/dashboard/pr-brands) and public directory
 import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
-import PublicMediaKit from './pages/PublicMediaKit';
 import BrandAdmin from './admin/BrandAdmin';
 import AdminReports from './admin/AdminReports';
 import AdminEmail from './admin/AdminEmail';
@@ -471,9 +470,6 @@ function AppContent() {
                 <Route path='first-ad-slot/success' element={<FirstAdSlotSuccess />} />
                 {/* The profile/:id route is now handled by the wrapper */}
             </Route>
-
-            {/* Public Media Kit Page */}
-            <Route path='/kit/:username' element={<PublicMediaKit />} />
 
             {/* Fallback 404 */}
             <Route path='*' element={<NotFound />} />
