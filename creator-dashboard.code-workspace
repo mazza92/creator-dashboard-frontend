@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../creator_dashboard"
+		},
+		{
+			"path": "../seo-assistant"
+		},
+		{
+			"path": "../agents"
+		},
+		{
+			"path": "\\\\wsl$\\Ubuntu\\home\\mazza\\hermes-agent"
+		}
+	],
+	"settings": {}
+}

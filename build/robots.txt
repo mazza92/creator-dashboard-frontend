@@ -86,6 +86,7 @@ Crawl-delay: 5
 
 # Sitemaps
 Sitemap: https://newcollab.co/sitemap.xml
+Sitemap: https://newcollab.co/sitemap-brands.xml
 Sitemap: https://newcollab.co/sitemap-images.xml
 Sitemap: https://newcollab.co/video-sitemap.xml
 

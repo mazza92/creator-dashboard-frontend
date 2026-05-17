@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "Bash(node -e:*)",
+      "Bash(python -m cli.main:*)",
+      "Bash(dir \"C:\\\\Users\\\\maher\\\\Desktop\\\\agents\\\\profiles\"\" 2>nul || echo \"No local agents folder \")",
+      "Bash(wsl -e ssh hermes@178.104.230.7 \"echo ''=== BRAND-MANAGER .env ==='' && cat ~/.hermes/profiles/brand-manager/.env\")",
+      "Bash(wsl -e ssh hermes@178.104.230.7 \"sed -i ''/GEMINI_BASE_URL/d'' ~/.hermes/profiles/brand-manager/.env && echo ''Removed GEMINI_BASE_URL from brand-manager .env''\")",
+      "Bash(powershell -Command \"wsl bash -c ''echo \"\"ls /home/hermes/.hermes\"\" | ssh hermes@178.104.230.7''\")",
+      "Bash(powershell -Command \"wsl ssh hermes@178.104.230.7 ''bash -c \"\"ls -la /home/hermes/.hermes/\"\"''\")",
+      "Bash(powershell -Command \"wsl ssh hermes@178.104.230.7 ''ls -ld /home/hermes/.hermes''\")"
     ]
   }
 }
