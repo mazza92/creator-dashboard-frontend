@@ -1,10 +1,30 @@
 {
-  "buildCommand": "npm run build:next",
+  "buildCommand": "npm run build:cra",
+  "installCommand": "npm install",
   "framework": "nextjs",
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "https://api.newcollab.co/:path*"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "dest": "/build/static/$1"
+    },
+    {
+      "src": "/(manifest\\.json|robots\\.txt|favicon\\.ico)",
+      "dest": "/build/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/((?!_next|api|static|kit|blog|brand|brands|c|about|contact|directory|privacy-policy|terms-of-service|login|register|marketplace).*)",
+      "headers": { "Host": "app.newcollab.co" },
+      "dest": "/build/index.html"
     }
   ]
 }
