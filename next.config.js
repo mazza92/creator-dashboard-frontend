@@ -4,9 +4,6 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
 
-  // Enable static exports for blog pages
-  output: 'standalone',
-
   // Increase timeout for static page generation (default is 60s)
   staticPageGenerationTimeout: 120,
   
