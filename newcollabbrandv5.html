@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NewCollab — Brand Identity v5</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* === NEWCOLLAB BRAND TOKENS v5 === */
+
+    /* Primary — Rose. Creator energy, bold, memorable */
+    --c-primary:        #E11D48;
+    --c-primary-hover:  #BE123C;
+    --c-primary-light:  #FFF1F3;
+    --c-primary-border: #FECDD3;
+
+    /* Contact button — near-black. Premium, trustworthy */
+    --c-action:         #0F0F0F;
+    --c-action-hover:   #1C1C1C;
+
+    /* Accent — Violet. Pro-only moments, upgrades */
+    --c-accent:         #7C3AED;
+    --c-accent-light:   #F5F3FF;
+    --c-accent-border:  #DDD6FE;
+
+    /* Success — Emerald. Response rates, confirmations */
+    --c-success:        #059669;
+    --c-success-light:  #ECFDF5;
+    --c-success-border: #A7F3D0;
+
+    /* Neutrals */
+    --c-bg:             #FAFAFA;
+    --c-surface:        #FFFFFF;
+    --c-border:         #EBEBEB;
+    --c-border-hover:   #D4D4D4;
+    --c-text-primary:   #0F0F0F;
+    --c-text-secondary: #4B4B4B;
+    --c-text-muted:     #8C8C8C;
+    --c-subtle:         #F4F4F4;
+
+    /* Pro gradient — ONLY for Pro/upgrade moments */
+    --c-pro-gradient: linear-gradient(135deg, #E11D48, #7C3AED);
+
+    /* Radius */
+    --r-card:  20px;
+    --r-btn:   10px;
+    --r-pill:  100px;
+    --r-input: 12px;
+
+    /* Shadow */
+    --shadow-card: 0 1px 3px rgba(15,15,26,0.04), 0 4px 16px rgba(15,15,26,0.03);
+    --shadow-hover: 0 8px 28px rgba(15,15,26,0.08);
+    --shadow-nav: 0 1px 0 #EBEBF0;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text-primary);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============================================================
+     TOP NAV
+     ============================================================ */
+  .topnav {
+    background: var(--c-surface);
+    box-shadow: var(--shadow-nav);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: 60px;
+  }
+
+  .nav-left { display: flex; align-items: center; gap: 36px; }
+
+  /* Logo */
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--c-action);
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+  }
+  .logo-mark svg { display: block; }
+  .logo-wordmark {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--c-text-primary);
+    letter-spacing: -0.5px;
+  }
+  .logo-wordmark span { color: var(--c-primary); font-weight: 900; }
+
+  /* Pill nav */
+  .nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--c-subtle);
+    padding: 4px;
+    border-radius: var(--r-pill);
+  }
+
+  .nav-tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    border-radius: var(--r-pill);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--c-text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav-tab svg { opacity: 0.6; }
+  .nav-tab:hover { color: var(--c-text-primary); }
+  .nav-tab:hover svg { opacity: 0.8; }
+  .nav-tab.active {
+    background: var(--c-action);
+    color: #FFFFFF;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .nav-tab.active svg { opacity: 1; color: #FFFFFF; }
+
+  /* Right side */
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    color: var(--c-text-muted);
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { background: var(--c-subtle); color: var(--c-text-primary); }
+
+  .avatar-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 4px;
+    background: var(--c-subtle);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .avatar-pill:hover { border-color: var(--c-border-hover); }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--c-primary);
+    display: grid;
+    place-items: center;
+    color: white;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+  .avatar-name { font-size: 13px; font-weight: 600; color: var(--c-text-primary); }
+
+  /* ============================================================
+     CONTENT
+     ============================================================ */
+  .content {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 28px 32px;
+  }
+
+  /* ============================================================
+     PAGE HEADER
+     ============================================================ */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--c-text-primary);
+  }
+  .page-subtitle {
+    font-size: 13px;
+    color: var(--c-text-muted);
+    margin-top: 2px;
+  }
+
+  /* ============================================================
+     QUOTA STRIP
+     ============================================================ */
+  .quota-strip {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-card);
+  }
+  .quota-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--c-subtle);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    color: var(--c-text-secondary);
+  }
+  .quota-body { flex: 1; }
+  .quota-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c-text-primary);
+    margin-bottom: 5px;
+  }
+  .quota-bar-track {
+    height: 4px;
+    background: var(--c-subtle);
+    border-radius: 2px;
+    overflow: hidden;
+    max-width: 280px;
+    margin-bottom: 5px;
+  }
+  .quota-bar-fill {
+    height: 100%;
+    background: var(--c-pro-gradient);
+    border-radius: 2px;
+    width: 33%;
+    transition: width 0.4s ease;
+  }
+  .quota-meta { font-size: 11px; color: var(--c-text-muted); }
+  .quota-cta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--c-pro-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .quota-cta:hover { opacity: 0.9; }
+
+  /* ============================================================
+     SEARCH + FILTERS
+     ============================================================ */
+  .search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .search-wrap {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--c-text-muted);
+    display: grid;
+    place-items: center;
+  }
+  .search-input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid var(--c-border);
+    background: var(--c-surface);
+    border-radius: var(--r-input);
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+    color: var(--c-text-primary);
+  }
+  .search-input::placeholder { color: var(--c-text-muted); }
+  .search-input:focus { border-color: var(--c-action); }
+
+  .filter-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-input);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c-text-secondary);
+    cursor: pointer;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .filter-pill:hover { border-color: var(--c-border-hover); }
+  .filter-pill svg { color: var(--c-text-muted); }
+
+  /* ============================================================
+     BRAND GRID
+     ============================================================ */
+  .brand-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  /* ============================================================
+     BRAND CARD
+     ============================================================ */
+  .brand-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-card);
+    padding: 20px;
+    position: relative;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+  .brand-card:hover {
+    border-color: var(--c-border-hover);
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  /* Featured */
+  .featured-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: #FEF3C7;
+    color: #92400E;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: var(--r-pill);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.2px;
+    border: 1px solid #FDE68A;
+  }
+
+  /* Logo box */
+  .logo-box {
+    width: 100%;
+    aspect-ratio: 2.2 / 1;
+    background: var(--c-bg);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid var(--c-border);
+  }
+  .logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--c-text-primary);
+  }
+
+  /* Brand info */
+  .card-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--c-text-primary);
+    margin-bottom: 5px;
+    letter-spacing: -0.2px;
+    text-align: center;
+  }
+  .card-desc {
+    font-size: 12.5px;
+    color: var(--c-text-muted);
+    line-height: 1.55;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  /* Tags */
+  .card-tags {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    background: var(--c-subtle);
+    color: var(--c-text-secondary);
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+  }
+  .tag-followers {
+    background: var(--c-accent-light);
+    color: var(--c-accent);
+    border: 1px solid var(--c-accent-border);
+  }
+
+  /* Divider */
+  .card-divider {
+    height: 1px;
+    background: var(--c-border);
+    margin: 0 -20px 14px;
+  }
+
+  /* Stats */
+  .card-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .stat-value.green { color: var(--c-success); }
+  .stat-value.indigo { color: var(--c-text-primary); }
+  .stat-label {
+    font-size: 10px;
+    color: var(--c-text-muted);
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+  .stat-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--c-border);
+  }
+
+  /* Responses line */
+  .responses-line {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--c-text-muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .responses-count {
+    color: var(--c-success);
+    font-weight: 700;
+  }
+
+  /* Action buttons */
+  .card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .btn {
+    padding: 9px 12px;
+    border-radius: var(--r-btn);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid transparent;
+    font-family: inherit;
+    letter-spacing: 0.1px;
+  }
+
+  .btn-contact {
+    background: var(--c-action);
+    color: white;
+  }
+  .btn-contact:hover { background: var(--c-action-hover); transform: translateY(-1px); }
+
+  .btn-contacted {
+    background: var(--c-success-light);
+    color: var(--c-success);
+    border-color: var(--c-success-border);
+    cursor: default;
+  }
+
+  .btn-save {
+    background: transparent;
+    color: var(--c-text-secondary);
+    border-color: var(--c-border);
+  }
+  .btn-save:hover {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    border-color: var(--c-primary-border);
+  }
+
+  .btn-saved {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    border-color: var(--c-primary-border);
+  }
+
+  .btn-pro {
+    background: var(--c-pro-gradient);
+    color: white;
+    grid-column: span 2;
+  }
+
+  /* ============================================================
+     MOBILE BOTTOM TAB BAR
+     ============================================================ */
+  .mobile-tabbar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--c-surface);
+    border-top: 1px solid var(--c-border);
+    padding: 8px 0 12px;
+    justify-content: space-around;
+    z-index: 100;
+  }
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    color: var(--c-text-muted);
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    flex: 1;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.15s;
+  }
+  .mobile-tab.active { color: var(--c-action); font-weight: 700; }
+  .mobile-tab svg { flex-shrink: 0; }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 1024px) {
+    .brand-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .brand-grid { grid-template-columns: 1fr; gap: 12px; }
+    .content { padding: 16px 16px 80px; }
+    .topnav { padding: 0 16px; }
+    .nav-tabs { display: none; }
+    .mobile-tabbar { display: flex; }
+    .page-header { margin-bottom: 14px; }
+  }
+
+  /* ============================================================
+     SVG ICONS (inline, no deps)
+     ============================================================ */
+  svg { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     TOP NAV
+     ================================================================ -->
+<nav class="topnav">
+  <div class="nav-left">
+
+    <!-- Logo -->
+    <a class="logo" href="#">
+      <div class="logo-mark">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M3 9C3 5.686 5.686 3 9 3s6 2.686 6 6-2.686 6-6 6S3 12.314 3 9z" stroke="white" stroke-width="1.8"/>
+          <path d="M6 9h6M9 6v6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-wordmark">new<span>collab</span></span>
+    </a>
+
+    <!-- Pill tabs -->
+    <nav class="nav-tabs">
+      <a class="nav-tab active" href="#">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        Discover
+      </a>
+      <a class="nav-tab" href="#">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+        Saved
+      </a>
+      <a class="nav-tab" href="#">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+        </svg>
+        PR Offers
+      </a>
+      <a class="nav-tab" href="#">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
+        My Kit
+      </a>
+    </nav>
+  </div>
+
+  <div class="nav-right">
+    <button class="icon-btn" title="Notifications">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+    <button class="avatar-pill">
+      <div class="avatar">MC</div>
+      <span class="avatar-name">mazza</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ================================================================
+     CONTENT
+     ================================================================ -->
+<div class="content">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Brand Directory</div>
+      <div class="page-subtitle">Find brands open to creator partnerships</div>
+    </div>
+  </div>
+
+  <!-- Quota strip (free user, 1/3 used) -->
+  <div class="quota-strip">
+    <div class="quota-icon-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+      </svg>
+    </div>
+    <div class="quota-body">
+      <div class="quota-title">1 of 3 brand contacts used this month</div>
+      <div class="quota-bar-track">
+        <div class="quota-bar-fill" style="width:33%"></div>
+      </div>
+      <div class="quota-meta">2 contacts remaining · Resets in 14 days</div>
+    </div>
+    <button class="quota-cta">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+      Upgrade to Pro
+    </button>
+  </div>
+
+  <!-- Search + filters -->
+  <div class="search-row">
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+      </span>
+      <input class="search-input" type="text" placeholder="Search brands..." />
+    </div>
+    <button class="filter-pill">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      All Categories
+    </button>
+    <button class="filter-pill">
+      All Brands
+    </button>
+    <button class="filter-pill">
+      Contact Type
+    </button>
+  </div>
+
+  <!-- Brand grid -->
+  <div class="brand-grid">
+
+    <!-- 1. Pela Case — Contact + Saved -->
+    <div class="brand-card">
+      <div class="featured-badge">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#92400E" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Featured
+      </div>
+      <div class="logo-box"><div class="logo-text">pela</div></div>
+      <div class="card-name">Pela Case</div>
+      <div class="card-desc">Sustainable phone case brand offering compostable, eco-friendly phone cases and accessories.</div>
+      <div class="card-tags">
+        <span class="tag">Lifestyle</span>
+        <span class="tag tag-followers">3K+ followers</span>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stats">
+        <div class="stat-item">
+          <div class="stat-value green">55%</div>
+          <div class="stat-label">Response rate</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value indigo">9</div>
+          <div class="stat-label">Creators pitched</div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-contact">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Contact
+        </button>
+        <button class="btn btn-saved">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Saved
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Briogeo — Contacted + Saved -->
+    <div class="brand-card">
+      <div class="featured-badge">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#92400E" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Featured
+      </div>
+      <div class="logo-box"><div class="logo-text" style="font-style:italic">OG</div></div>
+      <div class="card-name">Briogeo</div>
+      <div class="card-desc">Clean haircare brand with 6-free-from products using naturally derived ingredients.</div>
+      <div class="card-tags">
+        <span class="tag">Haircare</span>
+        <span class="tag tag-followers">8K+ followers</span>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stats">
+        <div class="stat-item">
+          <div class="stat-value green">42%</div>
+          <div class="stat-label">Response rate</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value indigo">25</div>
+          <div class="stat-label">Creators pitched</div>
+        </div>
+      </div>
+      <div class="responses-line">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span class="responses-count">1 creator got a response</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-contacted">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Contacted
+        </button>
+        <button class="btn btn-saved">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Saved
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. Lounge Underwear — Contact + Save -->
+    <div class="brand-card">
+      <div class="featured-badge">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#92400E" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Featured
+      </div>
+      <div class="logo-box"><div class="logo-text" style="font-family:Georgia,serif">L</div></div>
+      <div class="card-name">Lounge Underwear</div>
+      <div class="card-desc">Australian intimates brand offering comfortable, stylish underwear and loungewear.</div>
+      <div class="card-tags">
+        <span class="tag">Fashion</span>
+        <span class="tag tag-followers">10K+ followers</span>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stats">
+        <div class="stat-item">
+          <div class="stat-value green">40%</div>
+          <div class="stat-label">Response rate</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value indigo">11</div>
+          <div class="stat-label">Creators pitched</div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-contact">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Contact
+        </button>
+        <button class="btn btn-save">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Save
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. Babe Original — Contact + Save -->
+    <div class="brand-card">
+      <div class="featured-badge">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#92400E" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Featured
+      </div>
+      <div class="logo-box"><div class="logo-text" style="font-size:13px;letter-spacing:1px">BABE ORIGINAL</div></div>
+      <div class="card-name">Babe Original</div>
+      <div class="card-desc">Lash and brow care brand offering serums and accessories for natural-looking enhancement.</div>
+      <div class="card-tags">
+        <span class="tag">Beauty</span>
+        <span class="tag tag-followers">6K+ followers</span>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stats">
+        <div class="stat-item">
+          <div class="stat-value green">58%</div>
+          <div class="stat-label">Response rate</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value indigo">17</div>
+          <div class="stat-label">Creators pitched</div>
+        </div>
+      </div>
+      <div class="responses-line">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span class="responses-count">3 creators got a response</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-contact">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Contact
+        </button>
+        <button class="btn btn-save">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Save
+        </button>
+      </div>
+    </div>
+
+    <!-- 5. Foreo — Contact + Saved -->
+    <div class="brand-card">
+      <div class="featured-badge">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#92400E" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Featured
+      </div>
+      <div class="logo-box"><div class="logo-text" style="letter-spacing:2px;font-size:18px">FOREO</div></div>
+      <div class="card-name">Foreo</div>
+      <div class="card-desc">Swedish beauty-tech brand known for LUNA facial cleansing devices and smart skincare tools.</div>
+      <div class="card-tags">
+        <span class="tag">Beauty</span>
+        <span class="tag tag-followers">10K+ followers</span>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stats">
+        <div class="stat-item">
+          <div class="stat-value green">35%</div>
+          <div class="stat-label">Response rate</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value indigo">11</div>
+          <div class="stat-label">Creators pitched</div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-contact">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Contact
+        </button>
+        <button class="btn btn-saved">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          Saved
+        </button>
+      </div>
+    </div>
+
+    <!-- 6. belif — Pro locked -->
+    <div class="brand-card">
+      <div class="featured-badge">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#92400E" stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Featured
+      </div>
+      <div class="logo-box"><div class="logo-text" style="font-style:italic;font-family:Georgia,serif">belif</div></div>
+      <div class="card-name">belif</div>
+      <div class="card-desc">Korean skincare brand focused on hydration and clean ingredients, beloved by skincare enthusiasts.</div>
+      <div class="card-tags">
+        <span class="tag">Skincare</span>
+        <span class="tag tag-followers">9K+ followers</span>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stats">
+        <div class="stat-item">
+          <div class="stat-value green">48%</div>
+          <div class="stat-label">Response rate</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value indigo">8</div>
+          <div class="stat-label">Creators pitched</div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-pro" style="grid-column:span 2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Unlock with Pro
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /brand-grid -->
+</div><!-- /content -->
+
+<!-- Mobile tab bar -->
+<nav class="mobile-tabbar">
+  <button class="mobile-tab active">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    Discover
+  </button>
+  <button class="mobile-tab">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+    </svg>
+    Saved
+  </button>
+  <button class="mobile-tab">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/>
+    </svg>
+    Offers
+  </button>
+  <button class="mobile-tab">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+    </svg>
+    My Kit
+  </button>
+</nav>
+
+</body>
+</html>

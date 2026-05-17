@@ -1,176 +1,98 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { UserContext } from '../contexts/UserContext';
-import { Avatar, message } from 'antd';
-import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useNotification } from '../contexts/NotificationContext';
 import styled from 'styled-components';
-import { RiSearchLine, RiListCheck2, RiNotification3Line, RiGiftLine, RiFileList3Line } from 'react-icons/ri';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Bookmark, Gift, FileText, Bell } from 'lucide-react';
+import { message, Avatar } from 'antd';
+import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { motion } from 'framer-motion';
+import { UserContext } from '../contexts/UserContext';
+import { useNotification } from '../contexts/NotificationContext';
+import Logo from '../components/Logo';
 import api from '../config/api';
 
-// Brand colors
-const primaryBlue = '#3B82F6';
-const brightMagenta = '#EC4899';
+// ============================================================
+// STYLED COMPONENTS
+// ============================================================
 
-// Minimalist Layout Container
 const LayoutContainer = styled.div`
   min-height: 100vh;
   background: #FAFAFA;
-  display: flex;
-  flex-direction: column;
 `;
 
-// Clean Top Navigation Bar
 const TopNav = styled.nav`
-  background: white;
-  border-bottom: 1px solid #E5E7EB;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-`;
-
-const NavContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 24px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 0 #EBEBEB;
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 60px;
 
-  @media (max-width: 768px) {
-    padding: 14px 16px;
-    gap: 16px;
-  }
+  @media (max-width: 640px) { padding: 0 16px; }
 `;
 
-const LogoSection = styled(Link)`
+const NavLeft = styled.div`
   display: flex;
   align-items: center;
+  gap: 36px;
+`;
+
+const NavTabs = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #F4F4F4;
+  padding: 4px;
+  border-radius: 100px;
+
+  @media (max-width: 640px) { display: none; }
+`;
+
+const NavTab = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 13.5px;
+  font-weight: ${p => (p.$active ? 600 : 500)};
+  color: ${p => (p.$active ? '#FFFFFF' : '#4B4B4B')};
+  background: ${p => (p.$active ? '#0F0F0F' : 'transparent')};
+  box-shadow: ${p => (p.$active ? '0 1px 4px rgba(0,0,0,0.15)' : 'none')};
   text-decoration: none;
-  flex-shrink: 0;
+  transition: all 0.15s;
+  font-family: inherit;
 
-  img {
-    height: 120px;
-    width: auto;
-    object-fit: contain;
-  }
+  &:hover { color: ${p => (p.$active ? '#FFFFFF' : '#0F0F0F')}; }
 
-  @media (max-width: 768px) {
-    img {
-      height: 100px;
-    }
-  }
+  svg { width: 16px; height: 16px; }
 `;
 
-// Desktop Tab Navigation
-const DesktopTabNavigation = styled.nav`
-  display: flex;
-  gap: 12px;
-  flex: 0 0 auto;
-  justify-content: flex-start;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-// Mobile Bottom Tab Navigation
-const MobileTabNavigation = styled.nav`
-  display: none;
-
-  @media (max-width: 768px) {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    border-top: 1px solid #E5E7EB;
-    padding: 8px 16px;
-    gap: 12px;
-    z-index: 1000;
-    justify-content: space-around;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const TabButton = styled(Link)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 10px;
-  text-decoration: none;
-  color: #6B7280;
-  font-size: 15px;
-  font-weight: 600;
-  transition: all 0.2s;
-  position: relative;
-  white-space: nowrap;
-
-  svg {
-    font-size: 20px;
-  }
-
-  ${props => props.$active && `
-    background: linear-gradient(135deg, ${primaryBlue}10, ${brightMagenta}10);
-    color: ${primaryBlue};
-  `}
-
-  &:hover {
-    background: #F3F4F6;
-    color: #111827;
-  }
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    padding: 10px 8px;
-    font-size: 11px;
-    flex: 1;
-    gap: 4px;
-
-    svg {
-      font-size: 22px;
-    }
-  }
-`;
-
-// Right Section with Actions
-const NavActions = styled.div`
+const NavRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
+  gap: 10px;
 `;
 
-const NotificationButton = styled.button`
-  width: 40px;
-  height: 40px;
+const IconBtn = styled.button`
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
+  background: #F4F4F4;
   border: none;
-  background: #F9FAFB;
-  color: #6B7280;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #4B4B4B;
+  transition: all 0.15s;
   position: relative;
-  transition: all 0.2s;
 
-  &:hover {
-    background: #F3F4F6;
-    color: #111827;
-  }
+  &:hover { background: #EBEBEB; color: #0F0F0F; }
 
-  svg {
-    font-size: 20px;
-  }
+  svg { width: 17px; height: 17px; }
 `;
 
 const NotificationBadge = styled.span`
@@ -190,37 +112,68 @@ const NotificationBadge = styled.span`
   border: 2px solid white;
 `;
 
-const UserButton = styled.button`
+const AvatarPill = styled.button`
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 12px 6px 6px;
-  border-radius: 20px;
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+  background: #F4F4F4;
   border: none;
-  background: #F9FAFB;
+  border-radius: 100px;
   cursor: pointer;
-  transition: all 0.2s;
+  font-family: inherit;
 
-  &:hover {
-    background: #F3F4F6;
-  }
+  &:hover { background: #EBEBEB; }
 
   .ant-avatar {
-    border: 2px solid white;
-  }
-
-  @media (max-width: 768px) {
-    padding: 6px;
+    background: #E11D48;
   }
 `;
 
-const UserName = styled.span`
-  font-size: 14px;
+const AvatarName = styled.span`
+  font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: #0F0F0F;
 
-  @media (max-width: 768px) {
-    display: none;
+  @media (max-width: 640px) { display: none; }
+`;
+
+const MobileTabBar = styled.nav`
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #EBEBEB;
+  padding: 6px 0 8px;
+  justify-content: space-around;
+  z-index: 100;
+
+  @media (max-width: 640px) { display: flex; }
+`;
+
+const MobileTab = styled(Link)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 10px;
+  color: ${p => (p.$active ? '#0F0F0F' : '#8C8C8C')};
+  font-weight: ${p => (p.$active ? 700 : 500)};
+  text-decoration: none;
+  font-size: 10px;
+  flex: 1;
+  font-family: inherit;
+
+  svg { width: 20px; height: 20px; }
+`;
+
+const Content = styled.main`
+  min-height: calc(100vh - 60px);
+
+  @media (max-width: 640px) {
+    padding-bottom: 72px;
   }
 `;
 
@@ -274,19 +227,6 @@ const MenuDivider = styled.div`
   height: 1px;
   background: #E5E7EB;
   margin: 4px 0;
-`;
-
-// Main Content Area
-const ContentArea = styled.main`
-  flex: 1;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-bottom: 80px;
-
-  @media (min-width: 769px) {
-    padding-bottom: 20px;
-  }
 `;
 
 // Notification Dropdown
@@ -349,8 +289,19 @@ const EmptyNotifications = styled.div`
   font-size: 14px;
 `;
 
+// ============================================================
+// COMPONENT
+// ============================================================
+
+const navItems = [
+  { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
+  { label: 'Saved',    icon: Bookmark, path: '/creator/dashboard/pr-pipeline' },
+  { label: 'PR Offers', icon: Gift,    path: '/creator/dashboard/pr-offers' },
+  { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/media-kit' },
+];
+
 const CreatorDashboardLayout = () => {
-  const { user, handleLogout } = useContext(UserContext);
+  const { handleLogout } = useContext(UserContext);
   const { notifications, unreadCount, markAsRead } = useNotification();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -433,8 +384,6 @@ const CreatorDashboardLayout = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const isActive = (path) => location.pathname.includes(path);
-
   if (isLoading) {
     return (
       <LayoutContainer>
@@ -445,7 +394,6 @@ const CreatorDashboardLayout = () => {
           height: '100vh'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
             <div style={{ fontSize: '16px', color: '#6B7280' }}>Loading...</div>
           </div>
         </div>
@@ -455,151 +403,110 @@ const CreatorDashboardLayout = () => {
 
   return (
     <LayoutContainer>
-      {/* Top Navigation Bar */}
       <TopNav>
-        <NavContent>
-          {/* Logo */}
-          <LogoSection to="/creator/dashboard/pr-brands">
-            <img
-              src="/NEWCOLLAB-BRAND.png"
-              alt="NewCollab"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/NEWCOLLAB-BRAND.png';
-              }}
+        <NavLeft>
+          <Logo />
+          <NavTabs>
+            {navItems.map(({ label, icon: Icon, path }) => (
+              <NavTab key={path} to={path} $active={location.pathname === path}>
+                <Icon />
+                {label}
+              </NavTab>
+            ))}
+          </NavTabs>
+        </NavLeft>
+        <NavRight>
+          <IconBtn onClick={() => setShowNotifications(!showNotifications)}>
+            <Bell />
+            {unreadCount > 0 && <NotificationBadge>{unreadCount}</NotificationBadge>}
+          </IconBtn>
+          <AvatarPill onClick={() => setShowUserMenu(!showUserMenu)}>
+            <Avatar
+              size={28}
+              icon={<UserOutlined />}
+              src={userData?.image_profile}
             />
-          </LogoSection>
+            <AvatarName>{userData?.username || userData?.name || 'Creator'}</AvatarName>
+          </AvatarPill>
+        </NavRight>
 
-          {/* Desktop Tab Navigation */}
-          <DesktopTabNavigation>
-            <TabButton to="/creator/dashboard/pr-brands" $active={isActive('/pr-brands')}>
-              <RiSearchLine />
-              <span>Discover</span>
-            </TabButton>
-            <TabButton to="/creator/dashboard/pr-pipeline" $active={isActive('/pr-pipeline')}>
-              <RiListCheck2 />
-              <span>Saved</span>
-            </TabButton>
-            <TabButton to="/creator/dashboard/pr-offers" $active={isActive('/pr-offers')}>
-              <RiGiftLine />
-              <span>PR Offers</span>
-            </TabButton>
-            <TabButton to="/creator/dashboard/media-kit" $active={isActive('/media-kit')}>
-              <RiFileList3Line />
-              <span>My Kit</span>
-            </TabButton>
-          </DesktopTabNavigation>
+        {/* User Dropdown */}
+        {showUserMenu && (
+          <DropdownMenu
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <MenuItem onClick={() => {
+              navigate(`/creator/profile/${userData?.creator_id}`);
+              setShowUserMenu(false);
+            }}>
+              <UserOutlined />
+              View Profile
+            </MenuItem>
+            <MenuItem onClick={() => {
+              navigate('/creator/dashboard/settings');
+              setShowUserMenu(false);
+            }}>
+              <SettingOutlined />
+              Account Settings
+            </MenuItem>
+            <MenuItem onClick={() => {
+              window.open('https://dashboard.stripe.com', '_blank');
+              setShowUserMenu(false);
+            }}>
+              <CheckCircleOutlined />
+              Stripe Dashboard
+            </MenuItem>
+            <MenuDivider />
+            <MenuItem $danger onClick={handleLogoutWithCleanup}>
+              <LogoutOutlined />
+              Logout
+            </MenuItem>
+          </DropdownMenu>
+        )}
 
-          {/* Right Actions */}
-          <NavActions>
-            {/* Notifications */}
-            <NotificationButton onClick={() => setShowNotifications(!showNotifications)}>
-              <RiNotification3Line />
-              {unreadCount > 0 && <NotificationBadge>{unreadCount}</NotificationBadge>}
-            </NotificationButton>
-
-            {/* User Menu */}
-            <UserButton onClick={() => setShowUserMenu(!showUserMenu)}>
-              <Avatar
-                size={32}
-                icon={<UserOutlined />}
-                src={userData?.image_profile}
-                style={{ background: primaryBlue }}
-              />
-              <UserName>{userData?.name || 'Creator'}</UserName>
-            </UserButton>
-          </NavActions>
-
-          {/* User Dropdown */}
-          {showUserMenu && (
-            <DropdownMenu
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <MenuItem onClick={() => {
-                navigate(`/creator/profile/${userData?.creator_id}`);
-                setShowUserMenu(false);
-              }}>
-                <UserOutlined />
-                View Profile
-              </MenuItem>
-              <MenuItem onClick={() => {
-                navigate('/creator/dashboard/settings');
-                setShowUserMenu(false);
-              }}>
-                <SettingOutlined />
-                Account Settings
-              </MenuItem>
-              <MenuItem onClick={() => {
-                window.open('https://dashboard.stripe.com', '_blank');
-                setShowUserMenu(false);
-              }}>
-                <CheckCircleOutlined />
-                Stripe Dashboard
-              </MenuItem>
-              <MenuDivider />
-              <MenuItem $danger onClick={handleLogoutWithCleanup}>
-                <LogoutOutlined />
-                Logout
-              </MenuItem>
-            </DropdownMenu>
-          )}
-
-          {/* Notification Dropdown */}
-          {showNotifications && (
-            <NotificationDropdown
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              {notifications.length === 0 ? (
-                <EmptyNotifications>No notifications</EmptyNotifications>
-              ) : (
-                notifications.slice(0, 5).map((notification) => (
-                  <NotificationItem
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <NotificationTitle>
-                      {notification.event_type?.replace('_', ' ').toLowerCase() || 'Notification'}
-                    </NotificationTitle>
-                    <NotificationMessage>{notification.message}</NotificationMessage>
-                    <NotificationTime>
-                      {new Date(notification.created_at).toLocaleDateString()}
-                    </NotificationTime>
-                  </NotificationItem>
-                ))
-              )}
-            </NotificationDropdown>
-          )}
-        </NavContent>
+        {/* Notification Dropdown */}
+        {showNotifications && (
+          <NotificationDropdown
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            {notifications.length === 0 ? (
+              <EmptyNotifications>No notifications</EmptyNotifications>
+            ) : (
+              notifications.slice(0, 5).map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <NotificationTitle>
+                    {notification.event_type?.replace('_', ' ').toLowerCase() || 'Notification'}
+                  </NotificationTitle>
+                  <NotificationMessage>{notification.message}</NotificationMessage>
+                  <NotificationTime>
+                    {new Date(notification.created_at).toLocaleDateString()}
+                  </NotificationTime>
+                </NotificationItem>
+              ))
+            )}
+          </NotificationDropdown>
+        )}
       </TopNav>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileTabNavigation>
-        <TabButton to="/creator/dashboard/pr-brands" $active={isActive('/pr-brands')}>
-          <RiSearchLine />
-          <span>Discover</span>
-        </TabButton>
-        <TabButton to="/creator/dashboard/pr-pipeline" $active={isActive('/pr-pipeline')}>
-          <RiListCheck2 />
-          <span>Saved</span>
-        </TabButton>
-        <TabButton to="/creator/dashboard/pr-offers" $active={isActive('/pr-offers')}>
-          <RiGiftLine />
-          <span>PR Offers</span>
-        </TabButton>
-        <TabButton to="/creator/dashboard/media-kit" $active={isActive('/media-kit')}>
-          <RiFileList3Line />
-          <span>My Kit</span>
-        </TabButton>
-      </MobileTabNavigation>
-
-      {/* Main Content */}
-      <ContentArea>
+      <Content>
         <Outlet />
-      </ContentArea>
+      </Content>
+
+      <MobileTabBar>
+        {navItems.map(({ label, icon: Icon, path }) => (
+          <MobileTab key={path} to={path} $active={location.pathname === path}>
+            <Icon />
+            {label}
+          </MobileTab>
+        ))}
+      </MobileTabBar>
     </LayoutContainer>
   );
 };
