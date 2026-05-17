@@ -503,28 +503,37 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                         <BrandDescription>{brand.description}</BrandDescription>
                       )}
 
-                      <BrandMeta>
-                        {brand.category && <MetaTag>{brand.category}</MetaTag>}
+                      <CardTags>
+                        {brand.category && <Tag>{brand.category}</Tag>}
                         {brand.minFollowers !== null && brand.minFollowers !== undefined && brand.minFollowers > 0 && (
-                          <MetaTag>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</MetaTag>
+                          <TagFollowers>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</TagFollowers>
                         )}
-                      </BrandMeta>
+                      </CardTags>
 
-                      {brand.responseRate !== null && brand.responseRate !== undefined && (
-                        <ResponseRate>
-                          {brand.responseRate}% response rate
-                        </ResponseRate>
-                      )}
+                      <CardDivider />
 
-                      {/* Pitch stats - social proof */}
-                      {brand.pitchStats && brand.pitchStats.totalPitches > 0 && (
-                        <PitchStats>
-                          <Users size={14} style={{ marginRight: 4 }} />
-                          {brand.pitchStats.totalPitches} creator{brand.pitchStats.totalPitches !== 1 ? 's' : ''} contacted
-                          {brand.pitchStats.totalResponses > 0 && (
-                            <span style={{ color: '#10b981' }}> • {brand.pitchStats.totalResponses} got responses</span>
-                          )}
-                        </PitchStats>
+                      <CardStats>
+                        {brand.responseRate !== null && brand.responseRate !== undefined && (
+                          <>
+                            <StatItem>
+                              <StatValue className="green">{brand.responseRate}%</StatValue>
+                              <StatLabel>Response rate</StatLabel>
+                            </StatItem>
+                            <StatDivider />
+                          </>
+                        )}
+                        {brand.pitchStats && brand.pitchStats.totalPitches > 0 && (
+                          <StatItem>
+                            <StatValue>{brand.pitchStats.totalPitches}</StatValue>
+                            <StatLabel>Creators pitched</StatLabel>
+                          </StatItem>
+                        )}
+                      </CardStats>
+
+                      {brand.pitchStats && brand.pitchStats.totalResponses > 0 && (
+                        <ResponsesLine>
+                          <Users size={12} /> <ResponsesCount>{brand.pitchStats.totalResponses}</ResponsesCount> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got a response
+                        </ResponsesLine>
                       )}
 
                       {/* Action buttons - only show in dashboard view for logged-in users */}
@@ -829,26 +838,21 @@ const BrandGrid = styled.div`
 `;
 
 const BrandCard = styled(Link)`
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: all 0.2s ease;
+  background: ${tokens.surface};
+  border: 1px solid ${tokens.border};
+  border-radius: ${tokens.radiusCard};
+  padding: 20px;
   position: relative;
-  text-decoration: none;
-  color: inherit;
+  transition: all 0.2s;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  text-decoration: none;
+  color: inherit;
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    transform: translateY(-4px);
-  }
-
-  @media (max-width: 768px) {
-    padding: 16px;
-    border-radius: 12px;
+    border-color: ${tokens.borderHover};
+    box-shadow: ${tokens.shadowHover};
+    transform: translateY(-2px);
   }
 `;
 
@@ -994,53 +998,120 @@ const BrandInfo = styled.div`
 `;
 
 const BrandName = styled.h3`
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: #111827;
-  margin-bottom: 8px;
+  color: ${tokens.textPrimary};
+  margin-bottom: 5px;
+  letter-spacing: -0.2px;
+  text-align: center;
 `;
 
 const BrandDescription = styled.p`
-  font-size: 13px;
-  color: #6B7280;
-  line-height: 1.5;
-  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: ${tokens.textMuted};
+  line-height: 1.55;
+  margin-bottom: 14px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-align: center;
 `;
 
-const BrandMeta = styled.div`
+const CardTags = styled.div`
   display: flex;
-  gap: 8px;
   justify-content: center;
+  gap: 6px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
 `;
 
-const MetaTag = styled.span`
-  background: #F3F4F6;
-  color: #4B5563;
-  font-size: 11px;
+const Tag = styled.span`
+  background: ${tokens.subtle};
+  color: ${tokens.textSecondary};
   padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: 500;
-`;
-
-const ResponseRate = styled.div`
-  color: #10B981;
-  font-size: 12px;
-  font-weight: 600;
-`;
-
-const PitchStats = styled.div`
-  color: #6b7280;
+  border-radius: ${tokens.radiusPill};
   font-size: 11px;
-  font-weight: 500;
-  margin-top: 4px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+`;
+
+const TagFollowers = styled.span`
+  background: ${tokens.accentLight};
+  color: ${tokens.accent};
+  border: 1px solid ${tokens.accentBorder};
+  padding: 4px 10px;
+  border-radius: ${tokens.radiusPill};
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+`;
+
+const CardDivider = styled.div`
+  height: 1px;
+  background: ${tokens.border};
+  margin: 0 -20px 14px;
+`;
+
+const CardStats = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 14px;
+`;
+
+const StatItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+`;
+
+const StatValue = styled.div`
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: ${tokens.textPrimary};
+
+  &.green {
+    color: ${tokens.success};
+  }
+`;
+
+const StatLabel = styled.div`
+  font-size: 10px;
+  color: ${tokens.textMuted};
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+`;
+
+const StatDivider = styled.div`
+  width: 1px;
+  height: 28px;
+  background: ${tokens.border};
+`;
+
+const ResponsesLine = styled.div`
+  text-align: center;
+  font-size: 11.5px;
+  color: ${tokens.textMuted};
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+`;
+
+const ResponsesCount = styled.span`
+  color: ${tokens.success};
+  font-weight: 700;
 `;
 
 const SignupCTA = styled.div`
