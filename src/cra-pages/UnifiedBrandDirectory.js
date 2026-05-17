@@ -304,32 +304,26 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
         {/* Monthly Contact Quota Tracker - Show for logged-in FREE users */}
         {user && subscriptionTier === 'free' && isDashboardView && (
-          <QuotaBanner $isDashboard={isDashboardView}>
-            <Progress
-              percent={(pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100}
-              showInfo={false}
-              strokeColor={{
-                '0%': tokens.primary,
-                '100%': tokens.accent
-              }}
-            />
-            <QuotaText>
-              <span><strong>{pitchesSentThisWeek}/{FREE_PITCH_LIMIT}</strong> brand contacts used this month</span>
-              <Button type="link" onClick={() => setUpgradeModalVisible(true)}>
-                Upgrade for unlimited <Crown size={14} />
-              </Button>
-            </QuotaText>
-            {pitchesSentThisWeek >= FREE_PITCH_LIMIT && (
-              <QuotaWarning>
-                <Clock size={14} /> Contacts reset next month, or upgrade now for unlimited!
-              </QuotaWarning>
-            )}
-          </QuotaBanner>
+          <QuotaStrip>
+            <QuotaIconBox>
+              <Mail size={20} />
+            </QuotaIconBox>
+            <QuotaBody>
+              <QuotaTitle>{pitchesSentThisWeek} of {FREE_PITCH_LIMIT} brand contacts used this month</QuotaTitle>
+              <QuotaBarTrack>
+                <QuotaBarFill style={{ width: `${(pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100}%` }} />
+              </QuotaBarTrack>
+              <QuotaMeta>{FREE_PITCH_LIMIT - pitchesSentThisWeek} contacts remaining · Resets in 14 days</QuotaMeta>
+            </QuotaBody>
+            <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
+              Upgrade to Pro
+            </QuotaCTA>
+          </QuotaStrip>
         )}
 
-        {/* Filters Section */}
-        <FiltersSection $isDashboard={isDashboardView}>
-          <SearchBar>
+        {/* Search + Filters Row */}
+        <SearchRow $isDashboard={isDashboardView}>
+          <SearchWrap>
             <Input
               size="large"
               placeholder="Search brand names..."
@@ -338,72 +332,47 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               onChange={(e) => handleSearch(e.target.value)}
               allowClear
             />
-          </SearchBar>
-
-          <FilterRow>
-            <FilterItem>
-              <label>Category</label>
-              <Select
-                size="large"
-                style={{ width: '100%' }}
-                placeholder="All Categories"
-                value={filters.category || undefined}
-                onChange={(value) => handleFilterChange('category', value)}
-                allowClear
-              >
-                {categories.map(cat => (
-                  <Select.Option key={cat.value} value={cat.value}>
-                    {cat.label} ({cat.count})
-                  </Select.Option>
-                ))}
-              </Select>
-            </FilterItem>
-
-            <FilterItem>
-              <label>Brand Activity</label>
-              <Select
-                size="large"
-                style={{ width: '100%' }}
-                placeholder="All Brands"
-                value={filters.activity || undefined}
-                onChange={(value) => handleFilterChange('activity', value)}
-                allowClear
-              >
-                <Select.Option value="new">
-                  <FilterOptionContent><Sparkles size={14} /> Added This Week</FilterOptionContent>
-                </Select.Option>
-                <Select.Option value="active">
-                  <FilterOptionContent><Zap size={14} /> Actively Reviewing</FilterOptionContent>
-                </Select.Option>
-                <Select.Option value="responsive">
-                  <FilterOptionContent>
-                    <Sparkles size={14} /> High Response Rate
-                    {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
-                  </FilterOptionContent>
-                </Select.Option>
-              </Select>
-            </FilterItem>
-
-            <FilterItem>
-              <label>Contact Type</label>
-              <Select
-                size="large"
-                style={{ width: '100%' }}
-                value={filters.contactType || undefined}
-                onChange={(value) => handleFilterChange('contactType', value)}
-                placeholder="All Brands"
-                allowClear
-              >
-                <Select.Option value="application">
-                  <FilterOptionContent><ExternalLink size={14} /> Has Application Form <FreeBadgeInline>FREE</FreeBadgeInline></FilterOptionContent>
-                </Select.Option>
-                <Select.Option value="email">
-                  <FilterOptionContent><Mail size={14} /> Has PR Email <ProBadgeInline>PRO</ProBadgeInline></FilterOptionContent>
-                </Select.Option>
-              </Select>
-            </FilterItem>
-          </FilterRow>
-        </FiltersSection>
+          </SearchWrap>
+          <Select
+            size="large"
+            placeholder="All Categories"
+            value={filters.category || undefined}
+            onChange={(value) => handleFilterChange('category', value)}
+            allowClear
+            style={{ minWidth: 160 }}
+          >
+            {categories.map(cat => (
+              <Select.Option key={cat.value} value={cat.value}>
+                {cat.label} ({cat.count})
+              </Select.Option>
+            ))}
+          </Select>
+          <Select
+            size="large"
+            placeholder="All Brands"
+            value={filters.activity || undefined}
+            onChange={(value) => handleFilterChange('activity', value)}
+            allowClear
+            style={{ minWidth: 160 }}
+          >
+            <Select.Option value="new">Added This Week</Select.Option>
+            <Select.Option value="active">Actively Reviewing</Select.Option>
+            <Select.Option value="responsive">
+              High Response Rate {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
+            </Select.Option>
+          </Select>
+          <Select
+            size="large"
+            value={filters.contactType || undefined}
+            onChange={(value) => handleFilterChange('contactType', value)}
+            placeholder="Contact Type"
+            allowClear
+            style={{ minWidth: 160 }}
+          >
+            <Select.Option value="application">Has Application Form</Select.Option>
+            <Select.Option value="email">Has PR Email</Select.Option>
+          </Select>
+        </SearchRow>
 
         {/* Open PR Applications - Featured Section */}
         {!filters.search && !filters.category && openPrBrands.length > 0 && (
@@ -689,81 +658,140 @@ const HeroContent = styled.div`
   }
 `;
 
-const QuotaBanner = styled.div`
-  background: ${props => props.$isDashboard ? 'white' : 'rgba(255, 255, 255, 0.15)'};
-  backdrop-filter: ${props => props.$isDashboard ? 'none' : 'blur(10px)'};
-  padding: 16px 24px;
-  border-radius: 12px;
-  margin: ${props => props.$isDashboard ? '0 24px 24px' : '24px 0 0'};
-  box-shadow: ${props => props.$isDashboard ? '0 2px 8px rgba(0, 0, 0, 0.06)' : 'none'};
-  color: ${props => props.$isDashboard ? '#111827' : 'white'};
-`;
-
-const QuotaText = styled.div`
+const QuotaStrip = styled.div`
+  background: ${tokens.surface};
+  border: 1px solid ${tokens.border};
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin: 0 32px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 14px;
+  gap: 14px;
+  box-shadow: ${tokens.shadowCard};
 
-  button {
-    color: ${props => props.theme?.isDashboard ? '#EC4899' : 'white'};
-    padding: 0 8px;
-
-    &:hover {
-      color: #FCD34D;
-    }
+  @media (max-width: 768px) {
+    margin: 0 16px 20px;
+    flex-wrap: wrap;
   }
 `;
 
-const QuotaWarning = styled.div`
-  margin-top: 8px;
+const QuotaIconBox = styled.div`
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: ${tokens.subtle};
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: ${tokens.textSecondary};
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const QuotaBody = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const QuotaTitle = styled.div`
   font-size: 13px;
-  color: #F59E0B;
-  font-weight: 500;
+  font-weight: 600;
+  color: ${tokens.textPrimary};
+  margin-bottom: 5px;
+`;
+
+const QuotaBarTrack = styled.div`
+  height: 4px;
+  background: ${tokens.subtle};
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 280px;
+  margin-bottom: 5px;
+`;
+
+const QuotaBarFill = styled.div`
+  height: 100%;
+  background: ${tokens.proGradient};
+  border-radius: 2px;
+  transition: width 0.4s ease;
+`;
+
+const QuotaMeta = styled.div`
+  font-size: 11px;
+  color: ${tokens.textMuted};
+`;
+
+const QuotaCTA = styled.button`
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 14px;
+  background: ${tokens.proGradient};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: opacity 0.15s;
 
-  svg {
-    width: 14px;
-    height: 14px;
+  &:hover {
+    opacity: 0.9;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
   }
 `;
 
-const FiltersSection = styled.div`
-  max-width: 1200px;
-  margin: ${props => props.$isDashboard ? '0 auto 32px' : '-20px auto 32px'};
-  padding: 0 24px;
-`;
+const SearchRow = styled.div`
+  display: flex;
+  gap: 8px;
+  margin: ${props => props.$isDashboard ? '0 32px 20px' : '0 auto 20px'};
+  max-width: 1280px;
+  flex-wrap: wrap;
 
-const SearchBar = styled.div`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 12px;
-  margin-bottom: 16px;
-`;
-
-const FilterRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-`;
-
-const FilterItem = styled.div`
-  label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #6B7280;
-    margin-bottom: 8px;
-    text-transform: uppercase;
+  @media (max-width: 768px) {
+    margin: ${props => props.$isDashboard ? '0 16px 20px' : '0 auto 20px'};
   }
+
+  .ant-select,
+  .ant-input-affix-wrapper {
+    border-radius: ${tokens.radiusInput};
+    border-color: ${tokens.border};
+
+    &:hover {
+      border-color: ${tokens.borderHover};
+    }
+
+    &:focus,
+    &.ant-input-affix-wrapper-focused {
+      border-color: ${tokens.action};
+      box-shadow: none;
+    }
+  }
+
+  .ant-select-selector {
+    border-radius: ${tokens.radiusInput} !important;
+    font-size: 13px;
+    font-weight: 500;
+    color: ${tokens.textSecondary};
+  }
+
+  .ant-input {
+    font-size: 13.5px;
+  }
+`;
+
+const SearchWrap = styled.div`
+  flex: 1;
+  min-width: 240px;
 `;
 
 const FreeBadgeInline = styled.span`
@@ -784,17 +812,6 @@ const ProBadgeInline = styled.span`
   font-size: 10px;
   font-weight: 700;
   margin-left: 8px;
-`;
-
-const FilterOptionContent = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
 `;
 
 const BrandGrid = styled.div`
@@ -837,21 +854,23 @@ const BrandCard = styled(Link)`
 
 const FeaturedBadge = styled.div`
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: linear-gradient(135deg, #F59E0B, #EAB308);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 11px;
+  top: 14px;
+  left: 14px;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 4px 9px;
+  border-radius: ${tokens.radiusPill};
+  border: 1px solid #FDE68A;
+  font-size: 10px;
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 4px;
+  letter-spacing: 0.2px;
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 `;
 
@@ -869,14 +888,14 @@ const CardActions = styled.div`
 
 const PitchButton = styled.button`
   flex: 1;
-  background: ${props => props.$pitched ? tokens.primaryLight : tokens.action};
-  color: ${props => props.$pitched ? tokens.primary : 'white'};
-  border: none;
+  background: ${props => props.$pitched ? tokens.successLight : tokens.action};
+  color: ${props => props.$pitched ? tokens.success : 'white'};
+  border: ${props => props.$pitched ? `1px solid ${tokens.successBorder}` : 'none'};
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 9px 12px;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.1px;
   cursor: ${props => props.$pitched || props.disabled ? 'default' : 'pointer'};
   transition: all 0.15s;
   display: flex;
@@ -884,12 +903,10 @@ const PitchButton = styled.button`
   justify-content: center;
   gap: 6px;
   min-height: 40px;
-  box-shadow: ${props => props.$pitched ? 'none' : '0 1px 3px rgba(15, 15, 15, 0.1)'};
 
   &:hover:not(:disabled) {
-    background: ${props => props.$pitched ? tokens.primaryLight : tokens.actionHover};
+    background: ${props => props.$pitched ? tokens.successLight : tokens.actionHover};
     transform: ${props => props.$pitched ? 'none' : 'translateY(-1px)'};
-    box-shadow: ${props => props.$pitched ? 'none' : '0 4px 12px rgba(15, 15, 15, 0.15)'};
   }
 
   &:active:not(:disabled) {
@@ -910,11 +927,11 @@ const PitchButton = styled.button`
 
 const SaveActionButton = styled.button`
   flex: 1;
-  background: ${props => props.$saved ? tokens.primaryLight : tokens.subtle};
+  background: ${props => props.$saved ? tokens.primaryLight : 'transparent'};
   color: ${props => props.$saved ? tokens.primary : tokens.textSecondary};
-  border: none;
+  border: 1px solid ${props => props.$saved ? tokens.primaryBorder : tokens.border};
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 9px 12px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -925,9 +942,12 @@ const SaveActionButton = styled.button`
   gap: 6px;
   white-space: nowrap;
   min-height: 40px;
+  letter-spacing: 0.1px;
 
   &:hover {
-    background: ${props => props.$saved ? tokens.primaryBorder : tokens.borderHover};
+    background: ${props => props.$saved ? tokens.primaryLight : tokens.primaryLight};
+    color: ${props => props.$saved ? tokens.primary : tokens.primary};
+    border-color: ${props => props.$saved ? tokens.primaryBorder : tokens.primaryBorder};
   }
 
   svg {
