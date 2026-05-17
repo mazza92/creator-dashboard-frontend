@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build:cra",
+  "buildCommand": "npm run build:cra && npm run build:next",
   "installCommand": "npm install",
   "framework": "nextjs",
   "rewrites": [
