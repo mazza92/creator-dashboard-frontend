@@ -3,12 +3,13 @@ import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-do
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
 import { Input, Select, Spin, Pagination, Button, Progress, message } from 'antd';
-import { SearchOutlined, CrownOutlined, LockOutlined, TeamOutlined } from '@ant-design/icons';
+import { Search, Crown, Lock, Users, Mail, Heart, Sparkles, Zap, Check, Target, Clock, ExternalLink } from 'lucide-react';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
+import { tokens } from '../theme/tokens';
 
 // Normalize API base URL - remove trailing slash to prevent double slashes
 const getApiBase = () => {
@@ -307,17 +308,20 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             <Progress
               percent={(pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100}
               showInfo={false}
-              strokeColor="#EC4899"
+              strokeColor={{
+                '0%': tokens.primary,
+                '100%': tokens.accent
+              }}
             />
             <QuotaText>
               <span><strong>{pitchesSentThisWeek}/{FREE_PITCH_LIMIT}</strong> brand contacts used this month</span>
               <Button type="link" onClick={() => setUpgradeModalVisible(true)}>
-                Upgrade for unlimited <CrownOutlined />
+                Upgrade for unlimited <Crown size={14} />
               </Button>
             </QuotaText>
             {pitchesSentThisWeek >= FREE_PITCH_LIMIT && (
               <QuotaWarning>
-                ⏰ Contacts reset next month, or upgrade now for unlimited!
+                <Clock size={14} /> Contacts reset next month, or upgrade now for unlimited!
               </QuotaWarning>
             )}
           </QuotaBanner>
@@ -329,7 +333,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             <Input
               size="large"
               placeholder="Search brand names..."
-              prefix={<SearchOutlined />}
+              prefix={<Search size={17} />}
               value={filters.search}
               onChange={(e) => handleSearch(e.target.value)}
               allowClear
@@ -366,13 +370,16 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 allowClear
               >
                 <Select.Option value="new">
-                  🆕 Added This Week
+                  <FilterOptionContent><Sparkles size={14} /> Added This Week</FilterOptionContent>
                 </Select.Option>
                 <Select.Option value="active">
-                  ⚡ Actively Reviewing
+                  <FilterOptionContent><Zap size={14} /> Actively Reviewing</FilterOptionContent>
                 </Select.Option>
                 <Select.Option value="responsive">
-                  ✨ High Response Rate {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
+                  <FilterOptionContent>
+                    <Sparkles size={14} /> High Response Rate
+                    {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
+                  </FilterOptionContent>
                 </Select.Option>
               </Select>
             </FilterItem>
@@ -388,10 +395,10 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 allowClear
               >
                 <Select.Option value="application">
-                  🔗 Has Application Form <FreeBadgeInline>FREE</FreeBadgeInline>
+                  <FilterOptionContent><ExternalLink size={14} /> Has Application Form <FreeBadgeInline>FREE</FreeBadgeInline></FilterOptionContent>
                 </Select.Option>
                 <Select.Option value="email">
-                  ✉️ Has PR Email <ProBadgeInline>PRO</ProBadgeInline>
+                  <FilterOptionContent><Mail size={14} /> Has PR Email <ProBadgeInline>PRO</ProBadgeInline></FilterOptionContent>
                 </Select.Option>
               </Select>
             </FilterItem>
@@ -403,7 +410,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           <OpenPRSection $isDashboard={isDashboardView}>
             <OpenPRHeader>
               <h2>
-                <span>🎯</span> Open PR Applications
+                <Target size={20} /> Open PR Applications
               </h2>
               <span className="badge">Apply Now</span>
             </OpenPRHeader>
@@ -501,7 +508,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   >
                     {brand.isFeatured && (
                       <FeaturedBadge>
-                        <CrownOutlined /> Featured
+                        <Sparkles size={14} /> Featured
                       </FeaturedBadge>
                     )}
 
@@ -542,7 +549,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                       {/* Pitch stats - social proof */}
                       {brand.pitchStats && brand.pitchStats.totalPitches > 0 && (
                         <PitchStats>
-                          <TeamOutlined style={{ marginRight: 4 }} />
+                          <Users size={14} style={{ marginRight: 4 }} />
                           {brand.pitchStats.totalPitches} creator{brand.pitchStats.totalPitches !== 1 ? 's' : ''} contacted
                           {brand.pitchStats.totalResponses > 0 && (
                             <span style={{ color: '#10b981' }}> • {brand.pitchStats.totalResponses} got responses</span>
@@ -559,23 +566,27 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                             disabled={isPitched}
                           >
                             {isPitched ? (
-                              <>✓ Contacted</>
+                              <><Check size={16} /> Contacted</>
                             ) : (
-                              <>📧 Contact</>
+                              <><Mail size={16} /> Contact</>
                             )}
                           </PitchButton>
                           <SaveActionButton
                             onClick={(e) => handleSaveBrand(brand, e)}
                             $saved={isSaved}
                           >
-                            {isSaved ? '✓ Saved' : '🔖 Save'}
+                            {isSaved ? (
+                              <><Heart size={16} fill="currentColor" /> Saved</>
+                            ) : (
+                              <><Heart size={16} /> Save</>
+                            )}
                           </SaveActionButton>
                         </CardActions>
                       )}
 
                       {!user && !isDashboardView && (
                         <SignupCTA>
-                          <LockOutlined /> Sign up to contact brand
+                          <Lock size={16} /> Sign up to contact brand
                         </SignupCTA>
                       )}
                     </BrandInfo>
@@ -710,6 +721,14 @@ const QuotaWarning = styled.div`
   font-size: 13px;
   color: #F59E0B;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 `;
 
 const FiltersSection = styled.div`
@@ -748,7 +767,7 @@ const FilterItem = styled.div`
 `;
 
 const FreeBadgeInline = styled.span`
-  background: #52c41a;
+  background: ${tokens.success};
   color: white;
   padding: 2px 6px;
   border-radius: 4px;
@@ -758,13 +777,24 @@ const FreeBadgeInline = styled.span`
 `;
 
 const ProBadgeInline = styled.span`
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #333;
+  background: ${tokens.proGradient};
+  color: white;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
   margin-left: 8px;
+`;
+
+const FilterOptionContent = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 `;
 
 const BrandGrid = styled.div`
@@ -814,10 +844,15 @@ const FeaturedBadge = styled.div`
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 4px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
 `;
 
 const CardActions = styled.div`
@@ -834,32 +869,36 @@ const CardActions = styled.div`
 
 const PitchButton = styled.button`
   flex: 1;
-  background: ${props => props.$pitched
-    ? '#F0FDF4'
-    : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%)'};
-  color: ${props => props.$pitched ? '#15803D' : 'white'};
-  border: ${props => props.$pitched ? '2px solid #BBF7D0' : 'none'};
+  background: ${props => props.$pitched ? tokens.primaryLight : tokens.action};
+  color: ${props => props.$pitched ? tokens.primary : 'white'};
+  border: none;
   border-radius: 10px;
   padding: 10px 16px;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.2px;
   cursor: ${props => props.$pitched || props.disabled ? 'default' : 'pointer'};
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-height: 40px;
-  box-shadow: ${props => props.$pitched ? 'none' : '0 2px 8px rgba(99, 102, 241, 0.2)'};
+  box-shadow: ${props => props.$pitched ? 'none' : '0 1px 3px rgba(15, 15, 15, 0.1)'};
 
   &:hover:not(:disabled) {
-    transform: ${props => props.$pitched ? 'none' : 'translateY(-2px)'};
-    box-shadow: ${props => props.$pitched ? 'none' : '0 6px 20px rgba(99, 102, 241, 0.3)'};
+    background: ${props => props.$pitched ? tokens.primaryLight : tokens.actionHover};
+    transform: ${props => props.$pitched ? 'none' : 'translateY(-1px)'};
+    box-shadow: ${props => props.$pitched ? 'none' : '0 4px 12px rgba(15, 15, 15, 0.15)'};
   }
 
   &:active:not(:disabled) {
     transform: translateY(0);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 
   @media (max-width: 768px) {
@@ -871,15 +910,15 @@ const PitchButton = styled.button`
 
 const SaveActionButton = styled.button`
   flex: 1;
-  background: ${props => props.$saved ? '#F0FDF4' : '#F9FAFB'};
-  color: ${props => props.$saved ? '#15803D' : '#374151'};
-  border: ${props => props.$saved ? '2px solid #BBF7D0' : '1px solid #E5E7EB'};
-  border-radius: 8px;
+  background: ${props => props.$saved ? tokens.primaryLight : tokens.subtle};
+  color: ${props => props.$saved ? tokens.primary : tokens.textSecondary};
+  border: none;
+  border-radius: 10px;
   padding: 10px 16px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -888,7 +927,12 @@ const SaveActionButton = styled.button`
   min-height: 40px;
 
   &:hover {
-    background: ${props => props.$saved ? '#DCFCE7' : '#F3F4F6'};
+    background: ${props => props.$saved ? tokens.primaryBorder : tokens.borderHover};
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 
   @media (max-width: 768px) {
@@ -986,9 +1030,9 @@ const PitchStats = styled.div`
 const SignupCTA = styled.div`
   margin-top: 16px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #3B82F6, #EC4899);
+  background: ${tokens.proGradient};
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   text-align: center;
@@ -996,6 +1040,11 @@ const SignupCTA = styled.div`
   align-items: center;
   justify-content: center;
   gap: 6px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 `;
 
 const LoadingContainer = styled.div`
@@ -1148,10 +1197,16 @@ const OpenPRHeader = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+      color: ${tokens.primary};
+    }
   }
 
   .badge {
-    background: linear-gradient(135deg, #3b82f6 0%, #ec4899 100%);
+    background: ${tokens.proGradient};
     color: white;
     font-size: 10px;
     padding: 4px 10px;
