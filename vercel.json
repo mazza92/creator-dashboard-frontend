@@ -1,19 +1,10 @@
 {
-  "buildCommand": "npm run build:cra && npm run build:next",
+  "buildCommand": "npm run build:next",
+  "framework": "nextjs",
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "https://api.newcollab.co/:path*"
-    },
-    {
-      "source": "/((?!api|static|.*\\.js$|.*\\.css$|.*\\.ico$|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.webp$|.*\\.woff2?$|.*\\.map$|manifest\\.json$|robots\\.txt$|sitemap\\.xml$).*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "app.newcollab.co"
-        }
-      ],
-      "destination": "/build/index.html"
     }
   ]
 }

@@ -70,6 +70,9 @@ export async function generateMetadata(props) {
 // ISR - Revalidate every hour
 export const revalidate = 3600;
 
+// Allow dynamic params for usernames not generated at build time
+export const dynamicParams = true;
+
 export default async function MediaKitPage(props) {
   const params = await props.params;
   const { username } = params;
