@@ -228,6 +228,14 @@ function JsonLd({ brand }) {
   );
 }
 
+// Format follower counts
+function formatFollowers(num) {
+  if (!num) return '0';
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${Math.round(num / 1000)}K`;
+  return num.toString();
+}
+
 export default async function BrandPage({ params }) {
   const { slug } = await params;
   const brand = await fetchBrand(slug);
@@ -243,381 +251,992 @@ export default async function BrandPage({ params }) {
   const niches = brand.niches || [];
   const minFollowers = requirements.minFollowers || brand.minFollowers;
   const maxFollowers = requirements.maxFollowers || brand.maxFollowers;
-  const responseRate = stats.responseRate || brand.responseRate;
-  const avgResponseTime = stats.avgResponseTime || brand.avgResponseTime;
+  const responseRate = stats.responseRate || brand.responseRate || 0;
+  const avgResponseTime = stats.avgResponseTime || brand.avgResponseTime || 7;
+  const totalPitches = stats.totalPitches || brand.total_pitches || 0;
+  const responsesReceived = stats.totalResponses || brand.responses_received || 0;
   const hasDirectLink = Boolean(brand?.gated?.hasDirectLink);
   const hasEmail = Boolean(brand?.gated?.hasEmailContact);
+  const isAcceptingPR = brand.is_accepting_pr ?? brand.accepting_pr ?? true;
+  const collabType = brand.collab_type || brand.collaboration_type;
 
   const categoryLabel = brand.category
     ? brand.category.charAt(0).toUpperCase() + brand.category.slice(1)
     : null;
 
+  // Extract domain from website
+  const getDomain = (url) => {
+    if (!url) return null;
+    try {
+      return new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+    } catch { return null; }
+  };
+
+  const domain = getDomain(brand.website);
+
   return (
     <BrandPageLayout canonicalUrl={`https://newcollab.co/brand/${brand.slug}`}>
       <JsonLd brand={brand} />
       <style>{`
-        .bp-page { max-width: 1100px; margin: 0 auto; padding: 2rem 24px 4rem; }
-        .bp-breadcrumb { margin-bottom: 24px; font-size: 14px; color: #64748b; }
-        .bp-breadcrumb a { color: #6366f1; text-decoration: none; }
-        .bp-breadcrumb .bp-sep { margin: 0 8px; }
-
-        .bp-header { display: flex; gap: 20px; align-items: center; margin-bottom: 24px; }
-        .bp-logo { width: 88px; height: 88px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); background: #f3f4f6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .bp-logo img { width: 100%; height: 100%; object-fit: cover; }
-        .bp-header-info { flex: 1; min-width: 0; }
-        .bp-title { margin: 0; font-size: 32px; line-height: 1.2; color: #0f172a; }
-        .bp-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .bp-tag { padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
-
-        .bp-grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
-        .bp-main { min-width: 0; }
-
-        .bp-card { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-        .bp-card h2 { margin: 0 0 12px; font-size: 20px; color: #0f172a; }
-
-        .bp-req-grid { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
-        .bp-req-grid dt { font-size: 13px; color: #64748b; margin-bottom: 4px; font-weight: 500; }
-        .bp-req-grid dd { margin: 0; font-size: 16px; color: #0f172a; font-weight: 600; }
-
-        .bp-stats { display: flex; gap: 32px; }
-        .bp-stat-value { font-size: 36px; font-weight: 700; }
-        .bp-stat-label { font-size: 13px; color: #64748b; margin-top: 4px; }
-
-        .bp-social-links { display: flex; gap: 12px; flex-wrap: wrap; }
-        .bp-social-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: 1px solid #e2e8f0; color: #334155; text-decoration: none; font-size: 14px; }
-
-        .bp-sidebar .bp-cta-box { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); position: sticky; top: 100px; }
-        .bp-cta-box h2 { margin: 0 0 8px; font-size: 20px; color: #0f172a; }
-        .bp-cta-box .bp-cta-desc { margin: 0 0 16px; color: #64748b; line-height: 1.6; font-size: 14px; }
-        .bp-cta-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.06); }
-        .bp-cta-footer p { margin: 0 0 12px; font-size: 14px; color: #64748b; }
-        .bp-btn-primary { display: block; text-align: center; background: #6366f1; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px; }
-        .bp-btn-secondary { display: block; text-align: center; color: #6366f1; padding: 8px 20px; text-decoration: none; font-size: 14px; margin-top: 8px; }
-
-        .bp-related { margin-top: 40px; }
-        .bp-related h2 { font-size: 24px; color: #0f172a; margin-bottom: 20px; }
-        .bp-related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-        .bp-related-card { display: block; background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 14px; padding: 20px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .bp-related-header { display: flex; gap: 12px; align-items: center; }
-        .bp-related-logo { width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: #f3f4f6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .bp-related-logo img { width: 100%; height: 100%; object-fit: cover; }
-        .bp-related-name { font-weight: 600; color: #0f172a; font-size: 16px; }
-        .bp-related-meta { font-size: 13px; color: #64748b; margin-top: 2px; }
-        .bp-related-desc { margin: 10px 0 0; font-size: 13px; color: #64748b; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-        .bp-seo-footer { margin-top: 40px; padding: 24px; background: #f8fafc; border-radius: 16px; }
-        .bp-seo-footer h2 { font-size: 20px; color: #0f172a; margin: 0 0 12px; }
-        .bp-seo-footer p { color: #475569; line-height: 1.8; font-size: 15px; margin: 0; }
-
-        .bp-pill { background: #f1f5f9; padding: 3px 10px; border-radius: 12px; font-size: 13px; color: #334155; display: inline-block; }
-        .bp-pill-purple { background: #faf5ff; color: #7c3aed; }
-
-        /* ===== MOBILE: up to 768px ===== */
-        @media (max-width: 768px) {
-          .bp-page { padding: 1rem 16px 3rem; }
-
-          .bp-header { gap: 14px; }
-          .bp-logo { width: 64px; height: 64px; border-radius: 12px; }
-          .bp-title { font-size: 24px; }
-          .bp-tags { gap: 6px; margin-top: 8px; }
-          .bp-tag { font-size: 12px; padding: 3px 10px; }
-
-          .bp-grid {
-            display: flex;
-            flex-direction: column;
-          }
-          /* CTA sidebar appears FIRST on mobile */
-          .bp-sidebar { order: -1; }
-          .bp-sidebar .bp-cta-box {
-            position: static;
-            margin-bottom: 20px;
-          }
-
-          .bp-card { padding: 18px; border-radius: 14px; margin-bottom: 16px; }
-          .bp-card h2 { font-size: 18px; margin-bottom: 10px; }
-
-          .bp-req-grid { grid-template-columns: 1fr; gap: 14px; }
-          .bp-req-grid dd { font-size: 15px; }
-
-          .bp-stats { gap: 24px; }
-          .bp-stat-value { font-size: 28px; }
-
-          .bp-social-links { gap: 8px; }
-          .bp-social-link { padding: 6px 12px; font-size: 13px; }
-
-          .bp-related h2 { font-size: 20px; }
-          .bp-related-grid { grid-template-columns: 1fr; gap: 12px; }
-          .bp-related-card { padding: 16px; }
-
-          .bp-seo-footer { padding: 18px; margin-top: 32px; }
-          .bp-seo-footer h2 { font-size: 18px; }
-          .bp-seo-footer p { font-size: 14px; }
-
-          .bp-btn-primary { padding: 12px 20px; font-size: 16px; }
+        /* Page wrapper - light gray background like dashboard */
+        .bp-wrap {
+          background: #F5F5F7;
+          min-height: 100vh;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+        .bp-page {
+          max-width: 1160px;
+          margin: 0 auto;
+          padding: 28px 24px 80px;
         }
 
-        /* ===== TABLET: 769px - 1024px ===== */
-        @media (min-width: 769px) and (max-width: 1024px) {
-          .bp-grid { grid-template-columns: 1fr 300px; gap: 20px; }
-          .bp-title { font-size: 28px; }
+        /* Back link */
+        .bp-back {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          color: #8C8C8C;
+          font-size: 13px;
+          font-weight: 500;
+          text-decoration: none;
+          margin-bottom: 20px;
+          transition: color 0.15s;
+        }
+        .bp-back:hover { color: #0F0F0F; }
+        .bp-back svg { width: 14px; height: 14px; }
+
+        /* Brand header card */
+        .bp-header {
+          background: #FFFFFF;
+          border: 1px solid #E8E8E8;
+          border-radius: 20px;
+          padding: 24px 28px;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          margin-bottom: 20px;
+          box-shadow: 0 1px 3px rgba(15,15,15,0.05), 0 1px 8px rgba(15,15,15,0.04);
+        }
+        .bp-logo {
+          width: 80px;
+          height: 80px;
+          background: #F4F4F4;
+          border: 1px solid #E8E8E8;
+          border-radius: 16px;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+          overflow: hidden;
+          padding: 10px;
+        }
+        .bp-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .bp-logo-letter {
+          font-weight: 900;
+          color: #E11D48;
+          font-size: 32px;
+        }
+        .bp-header-info { flex: 1; min-width: 0; }
+        .bp-title {
+          margin: 0 0 10px 0;
+          font-size: 26px;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+          color: #0F0F0F;
+        }
+        .bp-meta {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .bp-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 5px 11px;
+          border-radius: 100px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        .bp-badge-featured {
+          background: linear-gradient(135deg, #FBBF24, #F59E0B);
+          color: #78350F;
+          box-shadow: 0 2px 6px rgba(251,191,36,0.25);
+        }
+        .bp-badge-category {
+          background: #F4F4F4;
+          color: #4B4B4B;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+          font-size: 11px;
+        }
+        .bp-website {
+          color: #8C8C8C;
+          font-size: 13px;
+          font-weight: 500;
+          text-decoration: none;
+          transition: color 0.15s;
+        }
+        .bp-website:hover { color: #0F0F0F; }
+        .bp-header-right { flex-shrink: 0; }
+        .bp-status-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          border-radius: 100px;
+          font-size: 13px;
+          font-weight: 600;
+        }
+        .bp-status-open {
+          background: #ECFDF5;
+          color: #059669;
+          border: 1px solid #A7F3D0;
+        }
+        .bp-status-closed {
+          background: #FEF2F2;
+          color: #DC2626;
+          border: 1px solid #FECACA;
+        }
+        .bp-status-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: currentColor;
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+
+        /* Grid layout */
+        .bp-grid {
+          display: grid;
+          grid-template-columns: 1fr 340px;
+          gap: 16px;
+          align-items: start;
+        }
+        .bp-main { display: flex; flex-direction: column; gap: 16px; }
+        .bp-sidebar {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          position: sticky;
+          top: 76px;
+        }
+
+        /* Social proof bar */
+        .bp-social-proof {
+          background: #FFFFFF;
+          border: 1px solid #E8E8E8;
+          border-radius: 14px;
+          padding: 14px 20px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+        }
+        .bp-social-proof-icon {
+          width: 34px;
+          height: 34px;
+          border-radius: 9px;
+          background: #ECFDF5;
+          border: 1px solid #A7F3D0;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+          color: #059669;
+        }
+        .bp-social-proof-text {
+          font-size: 13px;
+          color: #4B4B4B;
+        }
+        .bp-social-proof-text strong { color: #0F0F0F; font-weight: 700; }
+        .bp-social-proof-text .green { color: #059669; font-weight: 700; }
+
+        /* Cards */
+        .bp-card {
+          background: #FFFFFF;
+          border: 1px solid #E8E8E8;
+          border-radius: 18px;
+          padding: 24px;
+          box-shadow: 0 1px 3px rgba(15,15,15,0.05), 0 1px 8px rgba(15,15,15,0.04);
+        }
+        .bp-card-title {
+          font-size: 15px;
+          font-weight: 700;
+          margin-bottom: 16px;
+          letter-spacing: -0.2px;
+          color: #0F0F0F;
+        }
+        .bp-card-desc {
+          font-size: 14px;
+          color: #4B4B4B;
+          line-height: 1.7;
+          margin: 0;
+        }
+
+        /* Stats grid */
+        .bp-stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .bp-stat-card {
+          background: #F4F4F4;
+          border-radius: 14px;
+          padding: 18px 16px;
+          text-align: center;
+        }
+        .bp-stat-value {
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: -1px;
+          margin-bottom: 4px;
+        }
+        .bp-stat-value-green { color: #059669; }
+        .bp-stat-value-dark { color: #0F0F0F; }
+        .bp-stat-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #8C8C8C;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+        }
+        .bp-stat-sub {
+          font-size: 11px;
+          color: #8C8C8C;
+          margin-top: 3px;
+        }
+
+        /* Requirements list with icons */
+        .bp-req-list { display: flex; flex-direction: column; gap: 12px; }
+        .bp-req-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .bp-req-icon {
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
+          background: #F4F4F4;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+          margin-top: 1px;
+          color: #4B4B4B;
+        }
+        .bp-req-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #0F0F0F;
+        }
+        .bp-req-value {
+          font-size: 12.5px;
+          color: #8C8C8C;
+          margin-top: 2px;
+        }
+
+        /* Social media list */
+        .bp-social-list { display: flex; flex-direction: column; gap: 8px; }
+        .bp-social-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          background: #F4F4F4;
+          border-radius: 10px;
+        }
+        .bp-social-icon {
+          width: 26px;
+          height: 26px;
+          border-radius: 6px;
+          background: white;
+          border: 1px solid #E8E8E8;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+          color: #4B4B4B;
+        }
+        .bp-social-handle {
+          font-size: 13px;
+          font-weight: 600;
+          color: #0F0F0F;
+          flex: 1;
+        }
+        .bp-social-followers {
+          font-size: 12px;
+          color: #8C8C8C;
+        }
+
+        /* CTA Card */
+        .bp-cta-card {
+          background: #FFFFFF;
+          border: 1px solid #E8E8E8;
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 4px 16px rgba(15,15,15,0.06), 0 1px 3px rgba(15,15,15,0.04);
+        }
+        .bp-cta-top { padding: 22px 22px 0; }
+        .bp-cta-brand-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+        .bp-cta-brand-logo {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          background: #F4F4F4;
+          border: 1px solid #E8E8E8;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          padding: 5px;
+          flex-shrink: 0;
+        }
+        .bp-cta-brand-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .bp-cta-brand-name {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0F0F0F;
+        }
+        .bp-cta-brand-sub {
+          font-size: 12px;
+          color: #8C8C8C;
+          margin-top: 2px;
+        }
+        .bp-email-teaser {
+          background: #F4F4F4;
+          border: 1px solid #E8E8E8;
+          border-radius: 12px;
+          padding: 12px 14px;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .bp-email-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: white;
+          border: 1px solid #E8E8E8;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+          color: #4B4B4B;
+        }
+        .bp-email-wrap { flex: 1; overflow: hidden; }
+        .bp-email-label {
+          font-size: 10px;
+          color: #8C8C8C;
+          margin-bottom: 3px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          font-weight: 600;
+        }
+        .bp-email-blurred {
+          font-size: 13.5px;
+          font-weight: 600;
+          color: #0F0F0F;
+          filter: blur(4px);
+          user-select: none;
+          letter-spacing: 0.5px;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        .bp-unlock-badge {
+          background: #FFF1F3;
+          color: #E11D48;
+          border: 1px solid #FECDD3;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 9px;
+          border-radius: 100px;
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+        .bp-quick-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        .bp-quick-stat {
+          background: #F4F4F4;
+          border-radius: 10px;
+          padding: 10px 12px;
+          text-align: center;
+        }
+        .bp-quick-stat-val {
+          font-size: 18px;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+        }
+        .bp-quick-stat-lbl {
+          font-size: 10.5px;
+          color: #8C8C8C;
+          margin-top: 2px;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          font-weight: 600;
+        }
+        .bp-cta-divider {
+          border: none;
+          border-top: 1px solid #E8E8E8;
+          margin: 0 -22px 18px;
+        }
+        .bp-cta-bottom { padding: 0 22px 22px; }
+        .bp-value-props { display: flex; flex-direction: column; gap: 12px; }
+        .bp-value-prop {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        .bp-vp-icon {
+          width: 26px;
+          height: 26px;
+          border-radius: 7px;
+          background: #ECFDF5;
+          border: 1px solid #A7F3D0;
+          color: #059669;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+        }
+        .bp-vp-title {
+          font-size: 12.5px;
+          font-weight: 700;
+          color: #0F0F0F;
+        }
+        .bp-vp-sub {
+          font-size: 11.5px;
+          color: #8C8C8C;
+          margin-top: 2px;
+        }
+
+        /* Trust card */
+        .bp-trust-card {
+          background: #FFFFFF;
+          border: 1px solid #E8E8E8;
+          border-radius: 16px;
+          padding: 18px;
+          box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+        }
+        .bp-trust-list { display: flex; flex-direction: column; gap: 10px; }
+        .bp-trust-row {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #4B4B4B;
+        }
+        .bp-trust-check {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #ECFDF5;
+          border: 1px solid #A7F3D0;
+          color: #059669;
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+        }
+
+        /* Related brands section */
+        .bp-related {
+          background: #FFFFFF;
+          border: 1px solid #E8E8E8;
+          border-radius: 20px;
+          padding: 32px 28px;
+          text-align: center;
+          margin-top: 20px;
+          box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+        }
+        .bp-related-title {
+          font-size: 18px;
+          font-weight: 700;
+          margin: 0 0 6px 0;
+          letter-spacing: -0.3px;
+          color: #0F0F0F;
+        }
+        .bp-related-sub {
+          font-size: 13px;
+          color: #8C8C8C;
+          margin: 0 0 20px 0;
+        }
+        .bp-brand-chips {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          flex-wrap: wrap;
+          margin-bottom: 20px;
+        }
+        .bp-brand-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 14px;
+          background: #F4F4F4;
+          border: 1px solid #E8E8E8;
+          border-radius: 100px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #0F0F0F;
+          text-decoration: none;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .bp-brand-chip:hover { background: white; border-color: #D4D4D4; }
+        .bp-live-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #059669;
+          flex-shrink: 0;
+        }
+        .bp-browse-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          color: #E11D48;
+          font-size: 13.5px;
+          font-weight: 700;
+          text-decoration: none;
+        }
+        .bp-browse-link:hover { color: #BE123C; }
+
+        /* SEO Footer */
+        .bp-seo-footer {
+          background: white;
+          border: 1px solid #E8E8E8;
+          border-radius: 18px;
+          padding: 24px;
+          margin-top: 20px;
+          box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+        }
+        .bp-seo-footer h2 {
+          font-size: 16px;
+          font-weight: 700;
+          color: #0F0F0F;
+          margin: 0 0 12px;
+        }
+        .bp-seo-footer p {
+          color: #4B4B4B;
+          line-height: 1.8;
+          font-size: 14px;
+          margin: 0;
+        }
+
+        /* SVG Icons inline */
+        .icon-sm { width: 14px; height: 14px; }
+        .icon-md { width: 15px; height: 15px; }
+        .icon-check { width: 11px; height: 11px; }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 860px) {
+          .bp-grid {
+            grid-template-columns: 1fr;
+          }
+          .bp-sidebar {
+            position: static;
+            order: -1;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .bp-page { padding: 20px 16px 80px; }
+          .bp-header {
+            flex-wrap: wrap;
+            padding: 18px;
+            gap: 14px;
+          }
+          .bp-logo { width: 60px; height: 60px; border-radius: 12px; }
+          .bp-title { font-size: 22px; }
+          .bp-header-right { width: 100%; }
+          .bp-card { padding: 18px; }
+          .bp-stats-grid { grid-template-columns: 1fr; }
+          .bp-stat-value { font-size: 24px; }
+          .bp-related { padding: 24px 18px; }
         }
       `}</style>
 
-      <div className="bp-page">
+      <div className="bp-wrap">
+        <div className="bp-page">
 
-        {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" className="bp-breadcrumb">
-          <Link href="/directory">Directory</Link>
-          {categoryLabel && (
-            <>
-              <span className="bp-sep">›</span>
-              <Link href={`/directory?category=${brand.category}`}>{categoryLabel}</Link>
-            </>
-          )}
-          <span className="bp-sep">›</span>
-          <span>{brand.name}</span>
-        </nav>
+          {/* Back link */}
+          <Link href="/directory" className="bp-back">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-sm">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Directory
+          </Link>
 
-        {/* Header */}
-        <header className="bp-header">
-          <div className="bp-logo">
-            {brand.logo ? (
-              <img src={brand.logo} alt={`${brand.name} logo`} />
-            ) : (
-              <span style={{ fontWeight: 900, color: '#6366f1', fontSize: 32 }}>
-                {brand.name?.slice(0, 1) || 'B'}
-              </span>
-            )}
-          </div>
-          <div className="bp-header-info">
-            <h1 className="bp-title">{brand.name}</h1>
-            <div className="bp-tags">
-              {categoryLabel && (
-                <span className="bp-tag" style={{ background: '#eff6ff', color: '#3b82f6' }}>
-                  {categoryLabel}
-                </span>
-              )}
-              {brand.isFeatured && (
-                <span className="bp-tag" style={{ background: '#fefce8', color: '#ca8a04' }}>
-                  Featured
-                </span>
-              )}
-              {minFollowers > 0 && (
-                <span className="bp-tag" style={{ background: '#f0fdf4', color: '#16a34a' }}>
-                  {minFollowers >= 1000 ? `${Math.round(minFollowers / 1000)}K` : minFollowers}+ followers
-                </span>
+          {/* Brand header */}
+          <header className="bp-header">
+            <div className="bp-logo">
+              {brand.logo ? (
+                <img src={brand.logo} alt={`${brand.name} logo`} />
+              ) : (
+                <span className="bp-logo-letter">{brand.name?.slice(0, 1) || 'B'}</span>
               )}
             </div>
-          </div>
-        </header>
-
-        <div className="bp-grid">
-          {/* Main content */}
-          <div className="bp-main">
-            {/* About section */}
-            {brand.description && (
-              <section className="bp-card">
-                <h2>About {brand.name}</h2>
-                <p style={{ margin: 0, color: '#475569', lineHeight: 1.8, fontSize: 16 }}>{brand.description}</p>
-              </section>
-            )}
-
-            {/* Requirements section */}
-            {(minFollowers > 0 || platforms.length > 0 || regions.length > 0 || niches.length > 0) && (
-              <section className="bp-card">
-                <h2 style={{ marginBottom: 16 }}>Requirements & Details</h2>
-                <dl className="bp-req-grid">
-                  {minFollowers > 0 && (
-                    <div>
-                      <dt>Minimum Followers</dt>
-                      <dd>
-                        {minFollowers >= 1000 ? `${(minFollowers / 1000).toFixed(0)}K` : minFollowers}
-                        {maxFollowers ? ` – ${maxFollowers >= 1000 ? `${(maxFollowers / 1000).toFixed(0)}K` : maxFollowers}` : '+'}
-                      </dd>
-                    </div>
-                  )}
-                  {platforms.length > 0 && (
-                    <div>
-                      <dt>Platforms</dt>
-                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {platforms.map(p => (
-                          <span key={p} className="bp-pill">{p}</span>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                  {regions.length > 0 && (
-                    <div>
-                      <dt>Regions</dt>
-                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {regions.map(r => (
-                          <span key={r} className="bp-pill">{r}</span>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                  {niches.length > 0 && (
-                    <div style={{ gridColumn: niches.length > 3 ? 'span 2' : undefined }}>
-                      <dt>Niches</dt>
-                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {niches.map(n => (
-                          <span key={n} className="bp-pill bp-pill-purple">{n}</span>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                  {brand.productTypes && (
-                    <div>
-                      <dt>Product Types</dt>
-                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {(Array.isArray(brand.productTypes) ? brand.productTypes : String(brand.productTypes).split(/[,;]+/)).map(t => String(t).trim()).filter(Boolean).map(t => (
-                          <span key={t} className="bp-pill" style={{ textTransform: 'capitalize' }}>{t}</span>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                  {brand.applicationMethod && (
-                    <div>
-                      <dt>Application Method</dt>
-                      <dd style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {(() => {
-                          const m = brand.applicationMethod.toLowerCase();
-                          const badges = [];
-                          if (m.includes('link') || m.includes('form') || m.includes('direct')) {
-                            badges.push({ label: 'PR Form', color: '#6366f1', bg: '#eef2ff' });
-                          }
-                          if (m.includes('email') || m.includes('mail')) {
-                            badges.push({ label: 'PR Email', color: '#0891b2', bg: '#ecfeff' });
-                          }
-                          if (badges.length === 0) {
-                            badges.push({ label: brand.applicationMethod, color: '#6366f1', bg: '#eef2ff' });
-                          }
-                          return badges.map(b => (
-                            <span key={b.label} style={{ background: b.bg, color: b.color, padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
-                              {b.label}
-                            </span>
-                          ));
-                        })()}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </section>
-            )}
-
-            {/* Stats section */}
-            {(responseRate || avgResponseTime) && (
-              <section className="bp-card">
-                <h2 style={{ marginBottom: 16 }}>Response Stats</h2>
-                <div className="bp-stats">
-                  {responseRate > 0 && (
-                    <div style={{ textAlign: 'center' }}>
-                      <div className="bp-stat-value" style={{ color: '#16a34a' }}>{responseRate}%</div>
-                      <div className="bp-stat-label">Response Rate</div>
-                    </div>
-                  )}
-                  {avgResponseTime > 0 && (
-                    <div style={{ textAlign: 'center' }}>
-                      <div className="bp-stat-value" style={{ color: '#6366f1' }}>{avgResponseTime}</div>
-                      <div className="bp-stat-label">Avg. Days to Respond</div>
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {/* Social handles */}
-            {(brand.instagram || brand.tiktok || brand.website) && (
-              <section className="bp-card">
-                <h2>Connect</h2>
-                <div className="bp-social-links">
-                  {brand.website && (
-                    <a href={brand.website} target="_blank" rel="noopener noreferrer nofollow" className="bp-social-link">
-                      🌐 Website
-                    </a>
-                  )}
-                  {brand.instagram && (
-                    <a href={`https://instagram.com/${brand.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer nofollow" className="bp-social-link">
-                      📸 @{brand.instagram.replace('@', '')}
-                    </a>
-                  )}
-                  {brand.tiktok && (
-                    <a href={`https://tiktok.com/@${brand.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer nofollow" className="bp-social-link">
-                      🎵 @{brand.tiktok.replace('@', '')}
-                    </a>
-                  )}
-                </div>
-              </section>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <aside className="bp-sidebar">
-            <div className="bp-cta-box">
-              <h2>Contact {brand.name}</h2>
-              <p className="bp-cta-desc">
-                Access direct PR contacts and tools to start your collaboration with {brand.name}.
-              </p>
-
-              <BrandUnlockClient
-                slug={brand.slug}
-                brandId={brand.id}
-                brandName={brand.name}
-                hasDirectLink={hasDirectLink}
-                hasEmail={hasEmail}
-              />
+            <div className="bp-header-info">
+              <h1 className="bp-title">{brand.name}</h1>
+              <div className="bp-meta">
+                {brand.isFeatured && (
+                  <span className="bp-badge bp-badge-featured">Featured</span>
+                )}
+                {categoryLabel && (
+                  <span className="bp-badge bp-badge-category">{categoryLabel}</span>
+                )}
+                {domain && (
+                  <a href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`} target="_blank" rel="noopener noreferrer" className="bp-website">
+                    {domain} →
+                  </a>
+                )}
+              </div>
             </div>
-          </aside>
-        </div>
+            <div className="bp-header-right">
+              <div className={`bp-status-pill ${isAcceptingPR ? 'bp-status-open' : 'bp-status-closed'}`}>
+                <span className="bp-status-dot" style={{ animation: isAcceptingPR ? undefined : 'none' }}></span>
+                {isAcceptingPR ? 'Accepting PR' : 'Not Accepting PR'}
+              </div>
+            </div>
+          </header>
 
-        {/* Related brands */}
-        {relatedBrands.length > 0 && (
-          <section className="bp-related">
-            <h2>More {categoryLabel || ''} Brands on Newcollab</h2>
-            <div className="bp-related-grid">
-              {relatedBrands.map(rb => {
-                const rbName = rb.name || rb.brand_name;
-                const rbLogo = rb.logo || rb.logo_url;
-                const rbMinFollowers = rb.minFollowers || rb.min_followers;
-                return (
-                <Link key={rb.slug} href={`/brand/${rb.slug}`} className="bp-related-card">
-                  <div className="bp-related-header">
-                    <div className="bp-related-logo">
-                      {rbLogo ? (
-                        <img src={rbLogo} alt={rbName} />
+          <div className="bp-grid">
+            {/* Main content */}
+            <div className="bp-main">
+              {/* Social proof */}
+              {totalPitches > 0 && (
+                <div className="bp-social-proof">
+                  <div className="bp-social-proof-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  </div>
+                  <div className="bp-social-proof-text">
+                    <strong>{totalPitches} creators</strong> have contacted this brand
+                    {responsesReceived > 0 && (
+                      <> · <span className="green">{responsesReceived} got a response</span></>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* About section */}
+              {brand.description && (
+                <section className="bp-card">
+                  <div className="bp-card-title">About {brand.name}</div>
+                  <p className="bp-card-desc">{brand.description}</p>
+                </section>
+              )}
+
+              {/* Stats section */}
+              <section className="bp-card">
+                <div className="bp-card-title">Brand Stats</div>
+                <div className="bp-stats-grid">
+                  <div className="bp-stat-card">
+                    <div className="bp-stat-value bp-stat-value-green">{responseRate}%</div>
+                    <div className="bp-stat-label">Response Rate</div>
+                    <div className="bp-stat-sub">{responseRate >= 40 ? 'Above average' : 'Industry average'}</div>
+                  </div>
+                  <div className="bp-stat-card">
+                    <div className="bp-stat-value bp-stat-value-dark">~{avgResponseTime}d</div>
+                    <div className="bp-stat-label">Avg. Response</div>
+                    <div className="bp-stat-sub">When they reply</div>
+                  </div>
+                </div>
+              </section>
+
+              {/* What They're Looking For */}
+              {(minFollowers > 0 || niches?.length > 0 || platforms?.length > 0 || collabType) && (
+                <section className="bp-card">
+                  <div className="bp-card-title">What They're Looking For</div>
+                  <div className="bp-req-list">
+                    {minFollowers > 0 && (
+                      <div className="bp-req-row">
+                        <div className="bp-req-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="bp-req-label">Minimum Followers</div>
+                          <div className="bp-req-value">{formatFollowers(minFollowers)}+ followers on any platform</div>
+                        </div>
+                      </div>
+                    )}
+                    {niches?.length > 0 && (
+                      <div className="bp-req-row">
+                        <div className="bp-req-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
+                            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="bp-req-label">Niche</div>
+                          <div className="bp-req-value">{niches.join(', ')}</div>
+                        </div>
+                      </div>
+                    )}
+                    {platforms?.length > 0 && (
+                      <div className="bp-req-row">
+                        <div className="bp-req-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
+                            <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="bp-req-label">Preferred Platforms</div>
+                          <div className="bp-req-value">{platforms.join(', ')}</div>
+                        </div>
+                      </div>
+                    )}
+                    {collabType && (
+                      <div className="bp-req-row">
+                        <div className="bp-req-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
+                            <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/><path d="M12 12V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 12h4"/><path d="m17.66 12.34 1.41-1.41"/><path d="M18 12h4"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="bp-req-label">Collaboration Type</div>
+                          <div className="bp-req-value">{collabType}</div>
+                        </div>
+                      </div>
+                    )}
+                    {regions?.length > 0 && (
+                      <div className="bp-req-row">
+                        <div className="bp-req-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="bp-req-label">Regions</div>
+                          <div className="bp-req-value">{regions.join(', ')}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* Social media */}
+              {(brand.instagram || brand.tiktok) && (
+                <section className="bp-card">
+                  <div className="bp-card-title">Social Media</div>
+                  <div className="bp-social-list">
+                    {brand.instagram && (
+                      <div className="bp-social-row">
+                        <div className="bp-social-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-sm">
+                            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+                          </svg>
+                        </div>
+                        <span className="bp-social-handle">@{brand.instagram.replace('@', '')}</span>
+                        {brand.instagram_followers && (
+                          <span className="bp-social-followers">{formatFollowers(brand.instagram_followers)} followers</span>
+                        )}
+                      </div>
+                    )}
+                    {brand.tiktok && (
+                      <div className="bp-social-row">
+                        <div className="bp-social-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-sm">
+                            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                          </svg>
+                        </div>
+                        <span className="bp-social-handle">@{brand.tiktok.replace('@', '')}</span>
+                        {brand.tiktok_followers && (
+                          <span className="bp-social-followers">{formatFollowers(brand.tiktok_followers)} followers</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <aside className="bp-sidebar">
+              {/* CTA Card */}
+              <div className="bp-cta-card">
+                <div className="bp-cta-top">
+                  <div className="bp-cta-brand-row">
+                    <div className="bp-cta-brand-logo">
+                      {brand.logo ? (
+                        <img src={brand.logo} alt={brand.name} />
                       ) : (
-                        <span style={{ fontWeight: 800, color: '#6366f1', fontSize: 18 }}>
-                          {rbName?.slice(0, 1) || 'B'}
-                        </span>
+                        <span style={{ fontWeight: 900, color: '#E11D48', fontSize: 18 }}>{brand.name?.slice(0, 1) || 'B'}</span>
                       )}
                     </div>
                     <div>
-                      <div className="bp-related-name">{rbName}</div>
-                      <div className="bp-related-meta">
-                        {rb.category && <span style={{ textTransform: 'capitalize' }}>{rb.category}</span>}
-                        {rbMinFollowers > 0 && <span> · {rbMinFollowers >= 1000 ? `${Math.round(rbMinFollowers / 1000)}K` : rbMinFollowers}+ followers</span>}
+                      <div className="bp-cta-brand-name">Contact {brand.name}</div>
+                      <div className="bp-cta-brand-sub">Direct PR team access</div>
+                    </div>
+                  </div>
+
+                  {/* Email teaser */}
+                  <div className="bp-email-teaser">
+                    <div className="bp-email-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
+                        <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                      </svg>
+                    </div>
+                    <div className="bp-email-wrap">
+                      <div className="bp-email-label">PR Contact Email</div>
+                      <div className="bp-email-blurred">pr@{domain || 'brandname'}.com</div>
+                    </div>
+                    <span className="bp-unlock-badge">Unlock</span>
+                  </div>
+
+                  {/* Quick stats */}
+                  <div className="bp-quick-stats">
+                    <div className="bp-quick-stat">
+                      <div className="bp-quick-stat-val" style={{ color: '#059669' }}>{responseRate}%</div>
+                      <div className="bp-quick-stat-lbl">Response rate</div>
+                    </div>
+                    <div className="bp-quick-stat">
+                      <div className="bp-quick-stat-val" style={{ color: '#0F0F0F' }}>~{avgResponseTime}d</div>
+                      <div className="bp-quick-stat-lbl">Avg. reply time</div>
+                    </div>
+                  </div>
+
+                  <BrandUnlockClient
+                    slug={brand.slug}
+                    brandId={brand.id}
+                    brandName={brand.name}
+                    hasDirectLink={hasDirectLink}
+                    hasEmail={hasEmail}
+                  />
+                </div>
+
+                <hr className="bp-cta-divider" />
+
+                <div className="bp-cta-bottom">
+                  <div className="bp-value-props">
+                    <div className="bp-value-prop">
+                      <div className="bp-vp-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-check">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="bp-vp-title">Direct PR team contact</div>
+                        <div className="bp-vp-sub">Not a generic form — real email access</div>
+                      </div>
+                    </div>
+                    <div className="bp-value-prop">
+                      <div className="bp-vp-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-check">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="bp-vp-title">AI-generated pitch email</div>
+                        <div className="bp-vp-sub">Personalised to your profile in seconds</div>
+                      </div>
+                    </div>
+                    <div className="bp-value-prop">
+                      <div className="bp-vp-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-check">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="bp-vp-title">Track your outreach</div>
+                        <div className="bp-vp-sub">See opens, replies and follow-ups</div>
                       </div>
                     </div>
                   </div>
-                  {rb.description && (
-                    <p className="bp-related-desc">{rb.description}</p>
-                  )}
-                </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
+                </div>
+              </div>
 
-        {/* SEO content footer */}
-        <section className="bp-seo-footer">
-          <h2>How to Apply to {brand.name} PR List</h2>
-          <p>
-            {brand.name} accepts PR applications from content creators{minFollowers > 0 ? ` with ${minFollowers >= 1000 ? `${Math.round(minFollowers / 1000)}K` : minFollowers}+ followers` : ''}{platforms.length > 0 ? ` on ${platforms.join(', ')}` : ''}.
-            {brand.applicationMethod === 'form' ? ` Apply directly through their application form.` : brand.applicationMethod === 'email' ? ` Reach out via their PR email.` : ` Unlock the application details above to get started.`}
-            {' '}Create a free Newcollab account to track your application, discover more brands, and manage your PR pipeline.
-          </p>
-        </section>
+              {/* Trust card */}
+              <div className="bp-trust-card">
+                <div className="bp-trust-list">
+                  {brand.is_verified && (
+                    <div className="bp-trust-row">
+                      <div className="bp-trust-check">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-check">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      Verified Brand
+                    </div>
+                  )}
+                  {isAcceptingPR && (
+                    <div className="bp-trust-row">
+                      <div className="bp-trust-check">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-check">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      Actively Reviewing Applications
+                    </div>
+                  )}
+                  <div className="bp-trust-row">
+                    <div className="bp-trust-check">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-check">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    Free to Apply
+                  </div>
+                  <div className="bp-trust-row">
+                    <div className="bp-trust-check">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-check">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    Open to Nano & Micro Creators
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          {/* Related brands */}
+          {relatedBrands.length > 0 && (
+            <section className="bp-related">
+              <h2 className="bp-related-title">More Brands in {categoryLabel || 'this category'}</h2>
+              <p className="bp-related-sub">Discover more brands open to creator collaborations</p>
+              <div className="bp-brand-chips">
+                {relatedBrands.slice(0, 5).map(rb => {
+                  const rbName = rb.name || rb.brand_name;
+                  return (
+                    <Link key={rb.slug} href={`/brand/${rb.slug}`} className="bp-brand-chip">
+                      <span className="bp-live-dot"></span>
+                      {rbName}
+                    </Link>
+                  );
+                })}
+              </div>
+              <Link href={`/directory?category=${brand.category}`} className="bp-browse-link">
+                Browse all {categoryLabel || ''} brands →
+              </Link>
+            </section>
+          )}
+
+          {/* SEO content footer */}
+          <section className="bp-seo-footer">
+            <h2>How to Apply to {brand.name} PR List</h2>
+            <p>
+              {brand.name} accepts PR applications from content creators{minFollowers > 0 ? ` with ${formatFollowers(minFollowers)}+ followers` : ''}{platforms.length > 0 ? ` on ${platforms.join(', ')}` : ''}.
+              {brand.applicationMethod === 'form' ? ` Apply directly through their application form.` : brand.applicationMethod === 'email' ? ` Reach out via their PR email.` : ` Unlock the application details above to get started.`}
+              {' '}Create a free Newcollab account to track your application, discover more brands, and manage your PR pipeline.
+            </p>
+          </section>
+        </div>
       </div>
     </BrandPageLayout>
   );
