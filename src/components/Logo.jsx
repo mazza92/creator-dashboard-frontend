@@ -10,14 +10,15 @@ const LogoWrap = styled.a`
 const LogoMark = styled.div`
   width: 32px;
   height: 32px;
-  background: #0F0F0F;
   border-radius: 9px;
-  display: grid;
-  place-items: center;
-  color: white;
-  font-weight: 900;
-  font-size: 16px;
-  letter-spacing: -0.5px;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const Wordmark = styled.span`
@@ -33,7 +34,9 @@ const Wordmark = styled.span`
 export default function Logo() {
   return (
     <LogoWrap href="/creator/dashboard/pr-brands">
-      <LogoMark>N</LogoMark>
+      <LogoMark>
+        <img src="/logo.png" alt="NewCollab" />
+      </LogoMark>
       <Wordmark>new<span>collab</span></Wordmark>
     </LogoWrap>
   );

@@ -4,12 +4,13 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { MenuOutlined, CloseOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import styled, { createGlobalStyle } from 'styled-components';
 import { Helmet } from 'react-helmet-async';
-import logo from '../assets/NEWCOLLAB-BRAND.png';
+// Logo now uses /logo.png from public folder
 // eslint-disable-next-line no-unused-vars
 import Header from '../components/Header';
 import { FaLinkedin, FaTwitter, FaInstagram } from 'react-icons/fa';
 import { FaTiktok } from 'react-icons/fa6';
 import CookieSettings from '../components/CookieSettings';
+import { tokens } from '../theme/tokens';
 
 
 const GlobalStyle = createGlobalStyle`
@@ -40,12 +41,11 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// Palette from Founding50.js
-const primaryBlue = '#3B82F6';
-const brightMagenta = '#EC4899';
-const offWhite = '#F9FAFB';
-const warmOrange = '#FF9F43';
-const darkCharcoal = '#1e293b';
+// V5 Palette
+const primaryRose = tokens.primary;
+const accentViolet = tokens.accent;
+const offWhite = tokens.bg;
+const darkCharcoal = tokens.textPrimary;
 
 const LayoutWrapper = styled.div`
   display: flex;
@@ -64,54 +64,28 @@ const LayoutWrapper = styled.div`
     content: '';
     position: fixed;
     border-radius: 50%;
-    filter: blur(120px);
+    filter: blur(140px);
     z-index: -1;
-    opacity: 0.18;
+    opacity: 0.08;
     pointer-events: none;
   }
   &::before {
-    width: 600px;
-    height: 600px;
-    background: ${primaryBlue};
-    top: 5%;
-    left: -300px;
-  }
-  &::after {
     width: 500px;
     height: 500px;
-    background: ${brightMagenta};
-    bottom: 15%;
-    right: -250px;
+    background: ${primaryRose};
+    top: 5%;
+    left: -200px;
   }
-
-  /* Extra color touch: orange radial gradient */
-  .bg-orange {
-    content: '';
-    position: absolute;
+  &::after {
     width: 400px;
     height: 400px;
-    left: 60%;
-    top: 60%;
-    background: radial-gradient(circle, ${warmOrange} 0%, transparent 70%);
-    opacity: 0.12;
-    filter: blur(60px);
-    z-index: -1;
-    pointer-events: none;
+    background: ${accentViolet};
+    bottom: 20%;
+    right: -150px;
   }
 `;
 
-const OrangeBlur = styled.div`
-  position: fixed;
-  width: 400px;
-  height: 400px;
-  left: 60%;
-  top: 60%;
-  background: radial-gradient(circle, ${warmOrange} 0%, transparent 70%);
-  opacity: 0.12;
-  filter: blur(60px);
-  z-index: -1;
-  pointer-events: none;
-`;
+// Removed OrangeBlur - using cleaner V5 design
 
 const HeaderWrapper = styled.header`
   background: transparent !important;
@@ -162,23 +136,53 @@ const ContentWrapper = styled.main`
   }
 `;
 
-const Logo = styled.img`
-  height: 120px;
-  width: auto;
-  max-width: 100%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-left: 48px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(38, 166, 154, 0.1));
+  text-decoration: none;
 
-  &:hover {
-    transform: scale(1.02);
-    filter: drop-shadow(0 4px 8px rgba(38, 166, 154, 0.2));
+  @media (max-width: 768px) {
+    margin-left: 24px;
+    gap: 8px;
+  }
+`;
+
+const LogoMark = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   @media (max-width: 768px) {
-    height: 90px;
-    margin-left: 24px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+`;
+
+const LogoWordmark = styled.span`
+  font-size: 18px;
+  font-weight: 800;
+  color: ${tokens.textPrimary};
+  letter-spacing: -0.5px;
+  font-family: 'Inter', sans-serif;
+
+  span {
+    color: ${tokens.primary};
+    font-weight: 900;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 16px;
   }
 `;
 
@@ -196,36 +200,34 @@ const NavLinks = styled.div`
 `;
 
 const NavLink = styled(Link)`
-  color: ${props => props.$isSignupPage ? '#ffffff' : '#1e293b'};
-  font-size: 16px;
+  color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
+  font-size: 15px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: ${tokens.radiusBtn};
   background: transparent;
   position: relative;
-  overflow: hidden;
 
   &::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: 4px;
     left: 50%;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, #26A69A, #4CAF50, #26A69A);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: ${tokens.primary};
+    transition: all 0.2s ease;
     transform: translateX(-50%);
+    border-radius: 1px;
   }
 
   &:hover {
-    background: ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : 'rgba(38, 166, 154, 0.05)'};
-    transform: translateY(-1px);
-    color: ${props => props.$isSignupPage ? '#ffffff' : '#26A69A'};
+    color: ${props => props.$isSignupPage ? '#ffffff' : tokens.primary};
 
     &::after {
-      width: 80%;
+      width: 60%;
     }
   }
 `;
@@ -243,119 +245,61 @@ const AuthButtons = styled.div`
 `;
 
 const LoginButton = styled(Link)`
-  color: ${props => props.$isSignupPage ? '#ffffff' : '#1e293b'};
-  font-size: 15px;
-  font-weight: 700;
+  color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
+  font-size: 14px;
+  font-weight: 600;
   text-decoration: none;
-  padding: 10px 24px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.3)' : '#FF6B6B'};
+  padding: 10px 20px;
+  border-radius: ${tokens.radiusBtn};
+  transition: all 0.15s ease;
+  border: 1px solid ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.3)' : tokens.border};
   background: transparent;
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.5px;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 107, 107, 0.05)'};
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.5)' : '#FF8E53'};
-    color: ${props => props.$isSignupPage ? '#ffffff' : '#FF6B6B'};
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
-  &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
+    border-color: ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.5)' : tokens.borderHover};
+    color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
+    background: ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : tokens.subtle};
   }
 `;
 
 const SignupButton = styled(Link)`
   color: #ffffff;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   text-decoration: none;
-  padding: 10px 24px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border-radius: ${tokens.radiusBtn};
+  background: ${tokens.action};
+  transition: all 0.15s ease;
   display: block;
   text-align: center;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #FF8E53, #FF6B6B);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+    background: ${tokens.actionHover};
     color: #ffffff;
-
-    &::before {
-      opacity: 1;
-    }
+    transform: translateY(-1px);
   }
 
   &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
+    transform: translateY(0);
   }
 `;
 
 const MobileCTAButton = styled(Link)`
   display: none;
-  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+  background: ${tokens.action};
   color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   text-decoration: none;
   padding: 8px 16px;
-  border-radius: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  border-radius: ${tokens.radiusBtn};
+  transition: all 0.15s ease;
   margin-right: 16px;
   white-space: nowrap;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    background: ${tokens.actionHover};
     color: #ffffff;
   }
 
@@ -422,16 +366,16 @@ const MobileNavLinks = styled.div`
 `;
 
 const MobileNavLink = styled(Link)`
-  color: #1e293b;
-  font-size: 20px;
-  font-weight: 500;
+  color: ${tokens.textPrimary};
+  font-size: 18px;
+  font-weight: 600;
   text-decoration: none;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(30, 41, 59, 0.1);
+  padding: 14px 0;
+  border-bottom: 1px solid ${tokens.border};
   background: transparent;
 
   &:hover {
-    color: #26A69A;
+    color: ${tokens.primary};
   }
 `;
 
@@ -449,13 +393,13 @@ const ScrollToTopButton = styled.button`
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #26A69A, #2BBBAD);
+  background: ${tokens.action};
   border: none;
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -463,18 +407,18 @@ const ScrollToTopButton = styled.button`
   opacity: ${props => props.$visible ? '1' : '0'};
   visibility: ${props => props.$visible ? 'visible' : 'hidden'};
   transform: translateY(${props => props.$visible ? '0' : '20px'});
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(38, 166, 154, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: ${tokens.shadowCard};
   z-index: 999;
 
   &:hover {
+    background: ${tokens.actionHover};
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(38, 166, 154, 0.4);
+    box-shadow: ${tokens.shadowHover};
   }
 
   &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 10px rgba(38, 166, 154, 0.3);
+    transform: translateY(0);
   }
 
   @media (max-width: 768px) {
@@ -482,59 +426,56 @@ const ScrollToTopButton = styled.button`
     right: 16px;
     width: 40px;
     height: 40px;
-    font-size: 18px;
+    font-size: 16px;
   }
 `;
 
 const Footer = styled.footer`
+  width: 100%;
   padding: 48px 24px 32px 24px;
-  background: transparent;
+  background: ${tokens.surface};
   color: ${darkCharcoal};
   text-align: center;
-  border-top: 1px solid rgba(60,60,60,0.06);
-  box-shadow: 0 -8px 32px 0 rgba(60,60,60,0.03);
-  font-size: 16px;
+  border-top: 1px solid ${tokens.border};
+  font-size: 14px;
   @media (max-width: 768px) {
-    padding: 32px 8px 24px 8px;
-    font-size: 14px;
+    padding: 32px 16px 24px 16px;
   }
 `;
 const FooterLinks = styled.div`
   display: flex;
   justify-content: center;
-  gap: 28px;
+  gap: 24px;
   margin-bottom: 24px;
   flex-wrap: wrap;
   @media (max-width: 768px) {
-    gap: 16px;
+    gap: 12px;
   }
 `;
 const FooterLink = styled.a`
-  color: ${primaryBlue};
+  color: ${tokens.textSecondary};
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  transition: color 0.2s, opacity 0.2s;
-  opacity: 0.85;
+  transition: color 0.15s;
   cursor: pointer;
+  padding: 4px 8px;
   border-radius: 6px;
-  padding: 4px 10px;
   &:hover {
-    color: ${brightMagenta};
-    background: rgba(236, 72, 153, 0.07);
-    opacity: 1;
+    color: ${tokens.primary};
+    background: ${tokens.primaryLight};
   }
   @media (max-width: 768px) {
-    font-size: 14px;
+    font-size: 13px;
     padding: 4px 6px;
   }
 `;
 const SocialIcon = styled.div`
-  font-size: 22px;
-  color: ${primaryBlue};
-  margin: 0 10px;
+  font-size: 20px;
+  color: ${tokens.textSecondary};
+  margin: 0 8px;
   cursor: pointer;
-  transition: color 0.2s, transform 0.2s;
+  transition: color 0.15s, transform 0.15s;
   display: inline-block;
   vertical-align: middle;
   @media (max-width: 768px) {
@@ -542,8 +483,8 @@ const SocialIcon = styled.div`
     margin: 0 6px;
   }
   &:hover {
-    color: ${brightMagenta};
-    transform: scale(1.15);
+    color: ${tokens.primary};
+    transform: scale(1.1);
   }
 `;
 
@@ -660,12 +601,16 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
       <Helmet>
         <link rel="canonical" href={canonicalUrl} />
       </Helmet>
-      <OrangeBlur />
       <GlobalStyle />
       {!hideHeader && (
         <HeaderWrapper $isMobile={isMobile} $isScrolled={isScrolled}>
-          <Link to="/">
-            <Logo src={logo} alt="NewCollab" />
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <LogoContainer>
+              <LogoMark>
+                <img src="/logo.png" alt="NewCollab" />
+              </LogoMark>
+              <LogoWordmark>new<span>collab</span></LogoWordmark>
+            </LogoContainer>
           </Link>
           <NavLinks>
             <NavLink to="/marketplace" $isSignupPage={isTransparentHeader}>Marketplace</NavLink>
@@ -702,8 +647,13 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
       </ScrollToTopButton>
       <MobileMenu $isOpen={mobileMenuOpen}>
         <MobileMenuHeader>
-          <Link to="/" onClick={closeMobileMenu}>
-            <Logo src={logo} alt="NewCollab" />
+          <Link to="/" onClick={closeMobileMenu} style={{ textDecoration: 'none' }}>
+            <LogoContainer style={{ marginLeft: 0 }}>
+              <LogoMark>
+                <img src="/logo.png" alt="NewCollab" />
+              </LogoMark>
+              <LogoWordmark>new<span>collab</span></LogoWordmark>
+            </LogoContainer>
           </Link>
           <MobileMenuButton
             type="text"
