@@ -1,990 +1,1272 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Avatar, Spin, Button, Tooltip, Typography, Tag, Space } from 'antd';
-import { CalendarOutlined, StarFilled, ArrowRightOutlined, DollarOutlined } from '@ant-design/icons';
-import { FaInstagram, FaYoutube, FaTwitter, FaFacebook, FaLinkedin, FaMapMarkerAlt, FaBuilding, FaGlobe, FaCamera } from 'react-icons/fa';
-import moment from 'moment';
-import { motion } from 'framer-motion';
-import api from '../config/api';
+import React, { useEffect, useState, useContext } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import styled from 'styled-components';
+import axios from 'axios';
+import { ArrowLeft, Users, Mail, Music2,
+         MapPin, Target, Smartphone, Gift, Zap, Check } from 'lucide-react';
+import { FiInstagram } from 'react-icons/fi';
+import { UserContext } from '../contexts/UserContext';
+import { getRuntimeApiUrl } from '../config/api';
+import BrandLogo from './BrandLogo';
+import { formatFollowers } from '../utils/format';
+import AIPitchModal from '../creator-portal/AIPitchModal';
+import UpgradeModal from '../creator-portal/UpgradeModal';
 
-// API calls use the api client from config/api which has baseURL configured
-
-const getBadgeColor = (category) => {
-  switch (category) {
-    case 'Sportswear': return '🏃';
-    case 'Technology': return '💻';
-    case 'E-commerce': return '🛒';
-    case 'Fashion': return '👗';
-    case 'Marketing & Sales': return '📈';
-    case 'Beauty': return '💄';
-    case 'Animals': return '🐾';
-    case 'Business & Startups': return '💼';
-    case 'TV, Movies, Video': return '🎥';
-    case 'Gaming & Streaming': return '🎮';
-    case 'Travel': return '✈️';
-    case 'IT & Tech': return '🖥️';
-    default: return '📌';
-  }
+// Use shared API config
+const getApiBase = () => {
+  const base = getRuntimeApiUrl();
+  return base.replace(/\/+$/, '');
 };
 
-const parseJsonField = (field, defaultValue = []) => {
-  if (Array.isArray(field)) return field;
-  try {
-    return JSON.parse(field || '[]');
-  } catch (error) {
-    console.error(`Invalid JSON in field:`, error);
-    return defaultValue;
-  }
-};
+// Avatar colors for activity
+const AVATAR_COLORS = ['#E11D48','#7C3AED','#0F0F0F','#059669','#D97706'];
+const avatarColor = (name) =>
+  AVATAR_COLORS[name?.charCodeAt(0) % AVATAR_COLORS.length] || AVATAR_COLORS[0];
 
 const BrandProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(UserContext);
+
   const [brand, setBrand] = useState(null);
-  const [socialPosts, setSocialPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState(null);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [activeCampaigns, setActiveCampaigns] = useState([]);
-  const [brandStats, setBrandStats] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [relatedBrands, setRelatedBrands] = useState([]);
+  const [subscriptionTier, setSubscriptionTier] = useState('free');
+  const [pitchesSentThisMonth, setPitchesSentThisMonth] = useState(0);
+  const [hasPitched, setHasPitched] = useState(false);
+  const [pitchDate, setPitchDate] = useState(null);
+  const [showPitchModal, setShowPitchModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Platform logos mapping (same as creator profile)
-  const platformLogos = {
-    Instagram: <FaInstagram style={{ color: '#E1306C', fontSize: '1.5rem' }} />,
-    YouTube: <FaYoutube style={{ color: '#FF0000', fontSize: '1.5rem' }} />,
-    Twitter: <FaTwitter style={{ color: '#1DA1F2', fontSize: '1.5rem' }} />,
-    TikTok: <FaCamera style={{ color: '#000000', fontSize: '1.5rem' }} />,
-    Facebook: <FaFacebook style={{ color: '#1877F2', fontSize: '1.5rem' }} />,
-    LinkedIn: <FaLinkedin style={{ color: '#0A66C2', fontSize: '1.5rem' }} />,
-  };
-
-  // Check if mobile on mount and resize
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const FREE_PITCH_LIMIT = 3;
+  const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  const pitchesLeft = Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisMonth);
+  const atLimit = !isPro && pitchesLeft === 0;
+  const isLocked = brand?.requires_pro && !isPro;
 
   useEffect(() => {
-    async function fetchBrandProfile() {
-      if (!id) {
-        console.warn('⚠️ No brand ID provided, skipping fetch');
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        console.log(`🟢 Fetching profile for brand ID: ${id}`);
-        const response = await api.get(`/brands/${id}`, { withCredentials: true });
-        const data = response.data;
-
-        console.log('🟢 API Response:', data);
-
-        if (!data?.id) {
-          console.error('🔥 Brand data missing ID:', data);
-          setBrand(null);
-          return;
-        }
-
-        const parsedBrand = {
-          ...data,
-          category: parseJsonField(data.category),
-        };
-
-        console.log('🟢 Parsed Brand Data:', parsedBrand);
-
-        const userResponse = await api.get(`/profile`, { withCredentials: true });
-        console.log('📌 Logged-in user profile response:', userResponse.data);
-        const role = userResponse.data.user_role;
-        setUserRole(role);
-        console.log('🟢 userRole set to:', role);
-
-        const postsResponse = await api.get(`/brands/${id}/social-posts`, { withCredentials: true });
-        console.log('🟢 Social Posts Response:', postsResponse.data);
-        setSocialPosts(postsResponse.data);
-
-        // Fetch brand stats if available
-        try {
-          const statsResponse = await api.get(`/brands/${id}/stats`, { withCredentials: true });
-          if (statsResponse.data) {
-            setBrandStats(statsResponse.data);
-          }
-        } catch (statsError) {
-          console.warn('⚠️ Could not fetch brand stats:', statsError.message);
-        }
-
-        // Fetch active campaigns/opportunities
-        try {
-          const campaignsResponse = await api.get(`/brands/${id}/campaigns`, { withCredentials: true });
-          if (campaignsResponse.data && Array.isArray(campaignsResponse.data)) {
-            setActiveCampaigns(campaignsResponse.data);
-          } else if (campaignsResponse.data?.campaigns) {
-            setActiveCampaigns(campaignsResponse.data.campaigns);
-          }
-        } catch (campaignsError) {
-          console.warn('⚠️ Could not fetch brand campaigns:', campaignsError.message);
-          setActiveCampaigns([]);
-        }
-
-        setBrand(parsedBrand);
-      } catch (error) {
-        console.error('🔥 Error fetching brand profile:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-        });
-        setBrand(null);
-        setUserRole(null);
-        setSocialPosts([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchBrandProfile();
   }, [id]);
 
-  const getInitials = (name) => {
-    if (!name) return 'B';
-    const words = name.trim().split(' ').filter(w => w);
-    return words.map(w => w.charAt(0)).join('').toUpperCase().slice(0, 2);
-  };
-
-  const handleSendProposal = () => {
-    setIsNavigating(true);
-    setTimeout(() => {
-      navigate('/creator/dashboard/overview?openDraftModal=true');
-    }, 300);
-  };
-
-  const BRAND_COLOR = '#10b981';
-  const TEXT_COLOR = '#1F2937';
-  const SUBTLE_TEXT = '#6B7280';
-  const BG_COLOR = '#F9FAFB';
-
-  // Get industry/category display
-  const getIndustryDisplay = () => {
-    const categories = parseJsonField(brand?.category);
-    if (categories.length > 0) {
-      return categories[0];
+  useEffect(() => {
+    if (user) {
+      fetchSubscriptionStatus();
+      checkIfPitched();
     }
-    return null;
-  };
+  }, [user, id]);
 
-  // Get location display
-  const getLocationDisplay = () => {
-    if (brand?.location) return brand.location;
-    if (brand?.country) return brand.country;
-    if (brand?.city && brand?.country) return `${brand.city}, ${brand.country}`;
-    return null;
-  };
-
-  // Social links helper
-  const getSocialLinks = () => {
-    if (!brand) return [];
-    const links = [];
-    
-    // Check if brand has social_links array (like creators)
-    if (brand.social_links && Array.isArray(brand.social_links) && brand.social_links.length > 0) {
-      return brand.social_links.map(link => {
-        const platform = link.platform?.trim() || '';
-        const normalizedPlatform = platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase();
-        let icon = <FaInstagram />;
-        if (normalizedPlatform === 'Instagram') icon = <FaInstagram />;
-        else if (normalizedPlatform === 'YouTube') icon = <FaYoutube />;
-        else if (normalizedPlatform === 'Twitter' || normalizedPlatform === 'X') icon = <FaTwitter />;
-        else if (normalizedPlatform === 'Facebook') icon = <FaFacebook />;
-        else if (normalizedPlatform === 'LinkedIn') icon = <FaLinkedin />;
-        
-        return {
-          platform: normalizedPlatform || platform,
-          url: link.url,
-          icon: icon
-        };
-      });
+  const fetchBrandProfile = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
     }
-    
-    // Fallback to individual fields
-    if (brand.instagram) links.push({ platform: 'Instagram', url: brand.instagram, icon: <FaInstagram /> });
-    if (brand.youtube) links.push({ platform: 'YouTube', url: brand.youtube, icon: <FaYoutube /> });
-    if (brand.twitter) links.push({ platform: 'Twitter', url: brand.twitter, icon: <FaTwitter /> });
-    if (brand.facebook) links.push({ platform: 'Facebook', url: brand.facebook, icon: <FaFacebook /> });
-    if (brand.linkedin) links.push({ platform: 'LinkedIn', url: brand.linkedin, icon: <FaLinkedin /> });
-    return links;
+
+    setLoading(true);
+    try {
+      const apiBase = getApiBase();
+      const { data } = await axios.get(`${apiBase}/brands/${id}`, { withCredentials: true });
+
+      // Parse JSON fields if needed
+      const parsedBrand = {
+        ...data,
+        niches: parseJsonField(data.niches),
+        platforms: parseJsonField(data.platforms),
+        category: Array.isArray(data.category) ? data.category[0] : data.category,
+        brand_name: data.brand_name || data.name,
+        domain: data.domain || extractDomain(data.website),
+        is_accepting_pr: data.is_accepting_pr ?? data.accepting_pr ?? true,
+        response_rate: data.response_rate || data.stats?.responseRate || 0,
+        avg_response_days: data.avg_response_days || data.stats?.avgResponseTime || 7,
+        total_pitches: data.total_pitches || data.stats?.totalPitches || 0,
+        responses_received: data.responses_received || data.stats?.totalResponses || 0,
+      };
+
+      setBrand(parsedBrand);
+
+      // Fetch related brands
+      try {
+        const { data: related } = await axios.get(
+          `${apiBase}/api/public/brands?category=${parsedBrand.category}&limit=5`,
+          { withCredentials: true }
+        );
+        setRelatedBrands((related.brands || related || []).filter(b => b.id !== parsedBrand.id).slice(0, 5));
+      } catch (e) {
+        console.warn('Could not fetch related brands:', e);
+      }
+
+      // Fetch recent activity
+      try {
+        const { data: activity } = await axios.get(
+          `${apiBase}/brands/${id}/recent-activity`,
+          { withCredentials: true }
+        );
+        setRecentActivity(activity || []);
+      } catch (e) {
+        console.warn('Could not fetch recent activity:', e);
+      }
+    } catch (error) {
+      console.error('Error fetching brand:', error);
+      setBrand(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const apiBase = getApiBase();
+      const { data } = await axios.get(`${apiBase}/api/subscription/status`, { withCredentials: true });
+      setSubscriptionTier(data.tier || 'free');
+      setPitchesSentThisMonth(data.pitches_sent_this_week || data.pitches_sent_this_month || 0);
+    } catch (e) {
+      console.warn('Could not fetch subscription:', e);
+    }
+  };
+
+  const checkIfPitched = async () => {
+    try {
+      const apiBase = getApiBase();
+      const { data } = await axios.get(`${apiBase}/api/pr-crm/pipeline`, { withCredentials: true });
+      const pitched = (data.pipeline || data || []).find(p =>
+        (p.brand_id === parseInt(id) || p.brand_id === id) && p.status === 'pitched'
+      );
+      if (pitched) {
+        setHasPitched(true);
+        setPitchDate(pitched.pitched_at || pitched.created_at);
+      }
+    } catch (e) {
+      console.warn('Could not check pitch status:', e);
+    }
+  };
+
+  const parseJsonField = (field) => {
+    if (Array.isArray(field)) return field;
+    if (typeof field === 'string') {
+      try { return JSON.parse(field); } catch { return []; }
+    }
+    return [];
+  };
+
+  const extractDomain = (url) => {
+    if (!url) return null;
+    try {
+      return new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+    } catch { return null; }
+  };
+
+  const handleContactClick = () => {
+    if (!user) {
+      sessionStorage.setItem('brandReferral', brand?.slug || id);
+      navigate('/signup');
+      return;
+    }
+    if (hasPitched) return;
+    if (isLocked || atLimit) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setShowPitchModal(true);
+  };
+
+  const handlePitchSent = () => {
+    setPitchesSentThisMonth(prev => prev + 1);
+    setHasPitched(true);
+    setPitchDate(new Date().toISOString());
+    setShowPitchModal(false);
+  };
+
+  // CTA Render Logic
+  const renderCta = () => {
+    // State A: Logged out
+    if (!user) {
+      return (
+        <>
+          <CtaBtn onClick={handleContactClick}>
+            <Zap size={16} /> Sign up to Contact {brand.brand_name}
+          </CtaBtn>
+          <CtaHint>Already a member? <Link to="/login">Sign in</Link> · Free to start</CtaHint>
+        </>
+      );
+    }
+
+    // State D: Already pitched
+    if (hasPitched) {
+      return (
+        <>
+          <CtaBtnContacted disabled>
+            <Check size={16} /> Pitch Sent — Awaiting Reply
+          </CtaBtnContacted>
+          <CtaHint>Response rate: {brand.response_rate}% · Check your pipeline</CtaHint>
+        </>
+      );
+    }
+
+    // State C: Free user at limit OR Pro-locked brand
+    if (isLocked || atLimit) {
+      return (
+        <>
+          <CtaBtn onClick={handleContactClick}>
+            <Zap size={16} /> Upgrade to Contact {brand.brand_name}
+          </CtaBtn>
+          <CtaHint>
+            {atLimit
+              ? 'Monthly limit reached · Upgrade for unlimited contacts'
+              : 'This brand is only accessible on Pro'}
+          </CtaHint>
+        </>
+      );
+    }
+
+    // State B (free under limit) or State E (pro user)
+    return (
+      <>
+        <CtaBtnContact onClick={handleContactClick}>
+          <Mail size={16} /> Contact {brand.brand_name}
+        </CtaBtnContact>
+        <CtaHint>
+          {isPro
+            ? 'Unlimited contacts included in your Pro plan'
+            : `${pitchesLeft} free contact${pitchesLeft !== 1 ? 's' : ''} remaining this month`}
+        </CtaHint>
+      </>
+    );
   };
 
   if (loading) {
-    return <Spin tip="Loading profile..." style={{ display: 'block', textAlign: 'center', marginTop: '50px' }} />;
+    return (
+      <PageWrap>
+        <PageInner style={{ textAlign: 'center', paddingTop: 100 }}>
+          <div>Loading...</div>
+        </PageInner>
+      </PageWrap>
+    );
   }
 
   if (!brand) {
-    return <div style={{ textAlign: 'center', marginTop: '50px', color: '#1f2937', fontSize: '18px' }}>Brand not found.</div>;
+    return (
+      <PageWrap>
+        <PageInner style={{ textAlign: 'center', paddingTop: 100 }}>
+          <div>Brand not found.</div>
+        </PageInner>
+      </PageWrap>
+    );
   }
 
   return (
-    <div style={{ background: BG_COLOR, minHeight: '100vh', padding: 0 }}>
-      {/* Cover Photo */}
-      <div
-        style={{
-          width: '100%',
-          height: 200,
-          background: brand.cover_photo 
-            ? `url(${brand.cover_photo}) center/cover` 
-            : 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
-          borderRadius: 0,
-          marginBottom: 100,
-          position: 'relative',
-        }}
-      />
-      
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 32px 20px' }}>
-        {/* 1. THE HEADER: The "Instant Impression" */}
-        <div style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          alignItems: isMobile ? 'center' : 'flex-start',
-          gap: 24,
-          marginBottom: 32,
-          padding: '0 0 24px 0',
-          borderBottom: '1px solid #e5e7eb',
-          position: 'relative',
-        }}>
-          {/* Brand Logo - Overlapping Cover */}
-          <div style={{ 
-            position: 'absolute',
-            top: -150,
-            left: isMobile ? '50%' : 0,
-            transform: isMobile ? 'translateX(-50%)' : 'none',
-          }}>
-            <Avatar
-              size={160}
-              src={brand.logo}
-              style={{
-                border: '4px solid #fff',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
-                backgroundColor: BRAND_COLOR,
-                color: '#fff',
-              }}
-              onError={(e) => {
-                e.target.src = undefined;
-                return true;
-              }}
-            >
-              {getInitials(brand.name)}
-            </Avatar>
-          </div>
+    <PageWrap>
+      <PageInner>
+        {/* Back link */}
+        <BackLink onClick={() => navigate(-1)}>
+          <ArrowLeft size={14} /> Back to Directory
+        </BackLink>
 
-          {/* Main Info Block */}
-          <div style={{ 
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: 12, 
-            alignItems: isMobile ? 'center' : 'flex-start',
-            marginTop: isMobile ? 80 : 60,
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: isMobile ? 'center' : 'flex-start' }}>
-              <h1 style={{ 
-                fontWeight: 700, 
-                fontSize: isMobile ? 28 : 36, 
-                color: TEXT_COLOR, 
-                margin: 0,
-                textAlign: isMobile ? 'center' : 'left',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                {brand.name}
-                {brand.spotlight && (
-                  <Tooltip title="Spotlight Brand">
-                    <StarFilled style={{ color: '#FFD700', fontSize: 24 }} />
-                  </Tooltip>
-                )}
-              </h1>
-              
-              {/* Industry - CRITICAL */}
-              {getIndustryDisplay() && (
-                <div style={{
-                  fontSize: 16,
-                  color: BRAND_COLOR,
-                  fontWeight: 600,
-                  textAlign: isMobile ? 'center' : 'left',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}>
-                  <FaBuilding style={{ fontSize: 14 }} />
-                  <span>{getIndustryDisplay()}</span>
-                </div>
-              )}
-              
-              {/* Location */}
-              {getLocationDisplay() && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 14,
-                  color: SUBTLE_TEXT,
-                  textAlign: isMobile ? 'center' : 'left'
-                }}>
-                  <FaMapMarkerAlt style={{ fontSize: 14 }} />
-                  <span>{getLocationDisplay()}</span>
-                </div>
-              )}
-
-              {/* Website */}
+        {/* Brand header */}
+        <BrandHeader>
+          <BrandLogoBox>
+            <BrandLogo brand={brand} />
+          </BrandLogoBox>
+          <BrandHeaderInfo>
+            <BrandName>{brand.brand_name}</BrandName>
+            <BrandMeta>
+              {brand.is_featured && <FeaturedBadge>Featured</FeaturedBadge>}
+              {brand.category && <CategoryBadge>{brand.category}</CategoryBadge>}
               {brand.website && (
-                <a
-                  href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 14,
-                    color: BRAND_COLOR,
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                    textAlign: isMobile ? 'center' : 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.textDecoration = 'underline';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.textDecoration = 'none';
-                  }}
-                >
-                  <FaGlobe style={{ fontSize: 14 }} />
-                  <span>{brand.website.replace(/^https?:\/\//, '')}</span>
-                </a>
+                <WebsiteLink href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`} target="_blank" rel="noopener noreferrer">
+                  {brand.domain || brand.website} →
+                </WebsiteLink>
               )}
-            </div>
-            
-            {/* Social Links */}
-            {getSocialLinks().length > 0 && (
-              <div style={{ 
-                display: 'flex', 
-                gap: 12, 
-                marginTop: 8,
-                justifyContent: isMobile ? 'center' : 'flex-start',
-                flexWrap: 'wrap'
-              }}>
-                {getSocialLinks().map((link, idx) => {
-                  const normalizedUrl = link.url && !link.url.startsWith('http://') && !link.url.startsWith('https://') 
-                    ? `https://${link.url}` 
-                    : link.url;
-                  return (
-                    <a
-                      key={idx}
-                      href={normalizedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={link.platform}
-                      style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        borderRadius: 8, 
-                        background: '#fff', 
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
-                        border: '1.5px solid #e5e7eb', 
-                        width: 40, 
-                        height: 40, 
-                        padding: 0, 
-                        transition: 'all 0.2s', 
-                        textDecoration: 'none',
-                        color: '#1F2937'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
-                      }}
-                    >
-                      {link.icon}
-                    </a>
-                  );
-                })}
-              </div>
+            </BrandMeta>
+          </BrandHeaderInfo>
+          <BrandHeaderRight>
+            <PRStatusPill $open={brand.is_accepting_pr}>
+              <StatusDot $open={brand.is_accepting_pr} />
+              {brand.is_accepting_pr ? 'Accepting PR' : 'Not Accepting PR'}
+            </PRStatusPill>
+          </BrandHeaderRight>
+        </BrandHeader>
+
+        <PageGrid>
+          {/* MAIN COLUMN */}
+          <MainCol>
+            {/* Social proof */}
+            {brand.total_pitches > 0 && (
+              <SocialProof>
+                <SocialProofIcon><Users size={16} /></SocialProofIcon>
+                <SocialProofText>
+                  <strong>{brand.total_pitches} creators</strong> have contacted this brand
+                  {brand.responses_received > 0 && (
+                    <> · <span className="green">{brand.responses_received} got a response</span></>
+                  )}
+                </SocialProofText>
+              </SocialProof>
             )}
-          </div>
-          
-          {/* Primary CTA Block (Top Right) */}
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: 12,
-            alignItems: isMobile ? 'center' : 'flex-end',
-            minWidth: isMobile ? '100%' : 200,
-            marginTop: isMobile ? 0 : 60,
-          }}>
-            {userRole === 'creator' ? (
-              <Button
-                type="primary"
-                size="large"
-                icon={<ArrowRightOutlined />}
-                onClick={handleSendProposal}
-                loading={isNavigating}
-                style={{
-                  background: BRAND_COLOR,
-                  borderColor: BRAND_COLOR,
-                  borderRadius: 12,
-                  padding: '14px 28px',
-                  height: 'auto',
-                  fontWeight: 700,
-                  fontSize: 16,
-                  width: isMobile ? '100%' : 'auto',
-                  minWidth: 200,
-                  boxShadow: '0 4px 12px rgba(16,185,129,0.25)',
-                }}
-              >
-                Send Proposal
-              </Button>
-            ) : (
-              <p style={{ color: SUBTLE_TEXT, fontSize: 14, textAlign: 'center' }}>
-                Log in as a creator to send proposals
-              </p>
+
+            {/* About */}
+            {brand.description && (
+              <Card>
+                <CardTitle>About {brand.brand_name}</CardTitle>
+                <p style={{ fontSize: 14, color: '#4B4B4B', lineHeight: 1.7, margin: 0 }}>
+                  {brand.description}
+                </p>
+              </Card>
             )}
-          </div>
-        </div>
 
-        {/* 2. THE "BRAND STATS" BAR */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            background: '#fff',
-            borderRadius: 16,
-            padding: '24px 32px',
-            marginBottom: 32,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? 20 : 32,
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            border: '1px solid #e5e7eb'
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <div style={{ fontSize: 14, color: SUBTLE_TEXT, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Active Campaigns
-            </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: TEXT_COLOR }}>
-              {brandStats?.active_campaigns || activeCampaigns.length || '0'}
-            </div>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <div style={{ fontSize: 14, color: SUBTLE_TEXT, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Creators Worked With
-            </div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: BRAND_COLOR }}>
-              {brandStats?.creators_worked_with || brandStats?.total_creators || '0'}
-            </div>
-          </div>
-          
-          {brandStats?.total_spent && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ fontSize: 14, color: SUBTLE_TEXT, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Total Spent
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: TEXT_COLOR }}>
-                ${brandStats.total_spent >= 1000 
-                  ? `${(brandStats.total_spent / 1000).toFixed(1)}K`
-                  : brandStats.total_spent?.toLocaleString() || '0'}
-              </div>
-            </div>
-          )}
-          
-          {brandStats?.avg_campaign_value && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ fontSize: 14, color: SUBTLE_TEXT, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Avg. Campaign Value
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: TEXT_COLOR }}>
-                ${brandStats.avg_campaign_value >= 1000 
-                  ? `${(brandStats.avg_campaign_value / 1000).toFixed(1)}K`
-                  : brandStats.avg_campaign_value?.toLocaleString() || '0'}
-              </div>
-            </div>
-          )}
-        </motion.div>
-        
-        {/* 3. THE "ABOUT US" SECTION */}
-        {brand.description && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{
-              background: '#fff',
-              borderRadius: 16,
-              padding: 24,
-              marginBottom: 32,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              border: '1px solid #e5e7eb'
-            }}
-          >
-            <h2 style={{ 
-              fontWeight: 700, 
-              fontSize: 20, 
-              color: TEXT_COLOR, 
-              margin: '0 0 12px 0' 
-            }}>
-              About {brand.name}
-            </h2>
-            <p style={{ 
-              fontSize: 15, 
-              color: SUBTLE_TEXT, 
-              lineHeight: 1.6, 
-              margin: 0,
-              whiteSpace: 'pre-wrap'
-            }}>
-              {brand.description}
-            </p>
-          </motion.div>
-        )}
+            {/* Stats */}
+            <Card>
+              <CardTitle>Brand Stats</CardTitle>
+              <StatsGrid>
+                <StatCard>
+                  <StatValue $green>{brand.response_rate}%</StatValue>
+                  <StatLabel>Response Rate</StatLabel>
+                  <StatSub>
+                    {brand.response_rate >= 40 ? 'Above average' : 'Industry average'}
+                  </StatSub>
+                </StatCard>
+                <StatCard>
+                  <StatValue>~{brand.avg_response_days}d</StatValue>
+                  <StatLabel>Avg. Response</StatLabel>
+                  <StatSub>When they reply</StatSub>
+                </StatCard>
+              </StatsGrid>
+            </Card>
 
-        {/* 4. CATEGORIES/INDUSTRIES */}
-        {parseJsonField(brand.category).length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{
-              background: '#fff',
-              borderRadius: 16,
-              padding: 24,
-              marginBottom: 32,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              border: '1px solid #e5e7eb'
-            }}
-          >
-            <h2 style={{ 
-              fontWeight: 700, 
-              fontSize: 20, 
-              color: TEXT_COLOR, 
-              margin: '0 0 16px 0' 
-            }}>
-              Industries
-            </h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {parseJsonField(brand.category).map((category, index) => (
-                <Tag
-                  key={index}
-                  style={{
-                    padding: '6px 16px',
-                    borderRadius: 20,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    background: '#f0fdf4',
-                    color: BRAND_COLOR,
-                    border: `1px solid ${BRAND_COLOR}40`,
-                  }}
-                >
-                  {getBadgeColor(category.trim())} {category.trim()}
-                </Tag>
-              ))}
-            </div>
-          </motion.div>
-        )}
-        
-        {/* 5. FEATURED WORK - Preview Cards Linking to Social Posts */}
-        {(() => {
-          const socialLinks = getSocialLinks();
-          const hasSocialLinks = socialLinks.length > 0;
-          const hasSocialPosts = socialPosts && Array.isArray(socialPosts) && socialPosts.length > 0;
-          console.log('🔍 Featured Work Debug:', {
-            socialLinksCount: socialLinks.length,
-            socialLinks: socialLinks,
-            socialPostsCount: socialPosts?.length || 0,
-            socialPosts: socialPosts,
-            hasSocialLinks,
-            hasSocialPosts,
-            willShow: hasSocialLinks || hasSocialPosts
-          });
-          return hasSocialLinks || hasSocialPosts;
-        })() && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{ marginBottom: 32 }}
-          >
-            <h2 style={{ 
-              fontWeight: 700, 
-              fontSize: 24, 
-              color: TEXT_COLOR, 
-              margin: '0 0 20px 0' 
-            }}>
-              Featured Work
-            </h2>
-            <p style={{
-              fontSize: 15,
-              color: SUBTLE_TEXT,
-              marginBottom: 24,
-              textAlign: 'center'
-            }}>
-              View our latest content on social media
-            </p>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-              gap: 16,
-            }}>
-              {getSocialLinks().length > 0 ? (
-                getSocialLinks().slice(0, 6).map((link, idx) => {
-                let platform = link.platform?.trim() || '';
-                
-                // If no platform specified, detect from URL
-                if (!platform && link.url) {
-                  const urlLower = link.url.toLowerCase();
-                  if (urlLower.includes('instagram.com')) {
-                    platform = 'Instagram';
-                  } else if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
-                    platform = 'YouTube';
-                  } else if (urlLower.includes('tiktok.com')) {
-                    platform = 'TikTok';
-                  } else if (urlLower.includes('twitter.com') || urlLower.includes('x.com')) {
-                    platform = 'Twitter';
-                  } else if (urlLower.includes('facebook.com')) {
-                    platform = 'Facebook';
-                  } else if (urlLower.includes('linkedin.com')) {
-                    platform = 'LinkedIn';
-                  }
-                }
-                
-                const platformLower = platform.toLowerCase();
-                // Normalize platform name for lookup (capitalize first letter)
-                const normalizedPlatform = platform 
-                  ? platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase()
-                  : '';
-                const normalizedUrl = link.url && !link.url.startsWith('http://') && !link.url.startsWith('https://') 
-                  ? `https://${link.url}` 
-                  : link.url;
-                
-                // Platform-specific gradient colors
-                const getPlatformGradient = (platform) => {
-                  if (platformLower.includes('instagram')) {
-                    return 'linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCB045 100%)';
-                  } else if (platformLower.includes('youtube')) {
-                    return 'linear-gradient(135deg, #FF0000 0%, #CC0000 100%)';
-                  } else if (platformLower.includes('tiktok')) {
-                    return 'linear-gradient(135deg, #000000 0%, #333333 100%)';
-                  } else if (platformLower.includes('twitter') || platformLower.includes('x')) {
-                    return 'linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%)';
-                  } else if (platformLower.includes('facebook')) {
-                    return 'linear-gradient(135deg, #1877F2 0%, #0e5fc7 100%)';
-                  } else if (platformLower.includes('linkedin')) {
-                    return 'linear-gradient(135deg, #0A66C2 0%, #084d94 100%)';
-                  }
-                  return 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)';
-                };
-
-                const platformIcon = platformLogos[normalizedPlatform] || platformLogos[platform] || <FaCamera style={{ fontSize: 32, color: '#fff' }} />;
-                
-                return (
-                  <a
-                    key={idx}
-                    href={normalizedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      position: 'relative',
-                      aspectRatio: '1',
-                      borderRadius: 16,
-                      overflow: 'hidden',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textDecoration: 'none',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer',
-                      background: getPlatformGradient(platform),
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                    }}
-                  >
-                    {/* Platform Icon */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 12,
-                      background: 'rgba(255,255,255,0.2)',
-                      borderRadius: '50%',
-                      width: 64,
-                      height: 64,
-                      backdropFilter: 'blur(10px)',
-                      color: '#fff',
-                    }}>
-                      {platformIcon}
-                    </div>
-                    
-                    {/* Platform Name */}
-                    <div style={{
-                      color: '#fff',
-                      fontSize: 16,
-                      fontWeight: 700,
-                      textAlign: 'center',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                      padding: '0 12px',
-                    }}>
-                      {platform || 'Social Media'}
-                    </div>
-                    
-                    {/* View Posts Text */}
-                    <div style={{
-                      color: 'rgba(255,255,255,0.9)',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      marginTop: 8,
-                      textAlign: 'center',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                    }}>
-                      View Posts →
-                    </div>
-                  </a>
-                );
-                })
-              ) : (
-                // Fallback: Show social posts if available
-                socialPosts && socialPosts.length > 0 ? (
-                  socialPosts.slice(0, 6).map((post, idx) => {
-                  // Try multiple possible field names for URL
-                  const postUrl = post.url || post.post_url || post.link || post.embed_url || null;
-                  
-                  // Skip if no valid URL
-                  if (!postUrl || postUrl === '#') {
-                    return null;
-                  }
-                  
-                  // Detect platform from URL (same logic as creator profile)
-                  const urlLower = postUrl.toLowerCase();
-                  let platform = 'Social Media';
-                  if (urlLower.includes('instagram.com')) {
-                    platform = 'Instagram';
-                  } else if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
-                    platform = 'YouTube';
-                  } else if (urlLower.includes('tiktok.com')) {
-                    platform = 'TikTok';
-                  } else if (urlLower.includes('twitter.com') || urlLower.includes('x.com')) {
-                    platform = 'Twitter';
-                  } else if (urlLower.includes('facebook.com')) {
-                    platform = 'Facebook';
-                  } else if (urlLower.includes('linkedin.com')) {
-                    platform = 'LinkedIn';
-                  } else {
-                    // Try to get from post data
-                    platform = post.platform || post.social_platform || post.platform_name || 'Social Media';
-                  }
-                  
-                  const platformLower = platform.toLowerCase();
-                  // Normalize platform name for lookup
-                  const normalizedPlatform = platform 
-                    ? platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase()
-                    : '';
-                  
-                  // Platform-specific gradient colors
-                  const getPlatformGradient = (platform) => {
-                    if (platformLower.includes('instagram')) {
-                      return 'linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCB045 100%)';
-                    } else if (platformLower.includes('youtube')) {
-                      return 'linear-gradient(135deg, #FF0000 0%, #CC0000 100%)';
-                    } else if (platformLower.includes('tiktok')) {
-                      return 'linear-gradient(135deg, #000000 0%, #333333 100%)';
-                    } else if (platformLower.includes('twitter') || platformLower.includes('x')) {
-                      return 'linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%)';
-                    } else if (platformLower.includes('facebook')) {
-                      return 'linear-gradient(135deg, #1877F2 0%, #0e5fc7 100%)';
-                    } else if (platformLower.includes('linkedin')) {
-                      return 'linear-gradient(135deg, #0A66C2 0%, #084d94 100%)';
-                    }
-                    return 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)';
-                  };
-
-                  const platformIcon = platformLogos[normalizedPlatform] || platformLogos[platform] || <FaCamera style={{ fontSize: 32, color: '#fff' }} />;
-                  
-                  return (
-                    <a
-                      key={idx}
-                      href={postUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        position: 'relative',
-                        aspectRatio: '1',
-                        borderRadius: 16,
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textDecoration: 'none',
-                        transition: 'all 0.3s ease',
-                        cursor: 'pointer',
-                        background: getPlatformGradient(platform),
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                      }}
-                    >
-                      {/* Platform Icon */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: 12,
-                        background: 'rgba(255,255,255,0.2)',
-                        borderRadius: '50%',
-                        width: 64,
-                        height: 64,
-                        backdropFilter: 'blur(10px)',
-                        color: '#fff',
-                      }}>
-                        {platformIcon}
+            {/* What they're looking for */}
+            {(brand.min_followers || brand.niches?.length > 0 || brand.platforms?.length > 0 || brand.collab_type) && (
+              <Card>
+                <CardTitle>What They're Looking For</CardTitle>
+                <RequirementsList>
+                  {brand.min_followers && (
+                    <RequirementRow>
+                      <ReqIcon><Users size={15} /></ReqIcon>
+                      <div>
+                        <ReqLabel>Minimum Followers</ReqLabel>
+                        <ReqValue>{brand.min_followers}+ followers on any platform</ReqValue>
                       </div>
-                      
-                      {/* Platform Name */}
-                      <div style={{
-                        color: '#fff',
-                        fontSize: 16,
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        padding: '0 12px',
-                      }}>
-                        {platform || 'Social Media'}
+                    </RequirementRow>
+                  )}
+                  {brand.niches?.length > 0 && (
+                    <RequirementRow>
+                      <ReqIcon><Target size={15} /></ReqIcon>
+                      <div>
+                        <ReqLabel>Niche</ReqLabel>
+                        <ReqValue>{brand.niches.join(', ')}</ReqValue>
                       </div>
-                      
-                      {/* View Posts Text */}
-                      <div style={{
-                        color: 'rgba(255,255,255,0.9)',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        marginTop: 8,
-                        textAlign: 'center',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                      }}>
-                        View Posts →
+                    </RequirementRow>
+                  )}
+                  {brand.platforms?.length > 0 && (
+                    <RequirementRow>
+                      <ReqIcon><Smartphone size={15} /></ReqIcon>
+                      <div>
+                        <ReqLabel>Preferred Platforms</ReqLabel>
+                        <ReqValue>{brand.platforms.join(', ')}</ReqValue>
                       </div>
-                    </a>
-                  );
-                  })
-                ) : null
-              )}
-            </div>
-          </motion.div>
-        )}
+                    </RequirementRow>
+                  )}
+                  {brand.collab_type && (
+                    <RequirementRow>
+                      <ReqIcon><Gift size={15} /></ReqIcon>
+                      <div>
+                        <ReqLabel>Collaboration Type</ReqLabel>
+                        <ReqValue>{brand.collab_type}</ReqValue>
+                      </div>
+                    </RequirementRow>
+                  )}
+                </RequirementsList>
+              </Card>
+            )}
 
-        {/* 6. ACTIVE CAMPAIGNS / OPPORTUNITIES */}
-        {activeCampaigns.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{ marginBottom: 32 }}
-          >
-            <h2 style={{ 
-              fontWeight: 700, 
-              fontSize: 24, 
-              color: TEXT_COLOR, 
-              margin: '0 0 20px 0' 
-            }}>
-              Active Campaigns
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {activeCampaigns.slice(0, 5).map((campaign) => (
-                <Card
-                  key={campaign.id}
-                  style={{
-                    borderRadius: 12,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                    border: '1px solid #e5e7eb',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-                    <div style={{ flex: 1 }}>
-                      <Typography.Title level={4} style={{ margin: '0 0 8px 0', fontSize: 18 }}>
-                        {campaign.title || campaign.name || 'Campaign Opportunity'}
-                      </Typography.Title>
-                      {campaign.description && (
-                        <Typography.Text type="secondary" style={{ fontSize: 14, display: 'block', marginBottom: 12 }}>
-                          {campaign.description.length > 150 
-                            ? `${campaign.description.slice(0, 150)}...` 
-                            : campaign.description}
-                        </Typography.Text>
+            {/* Social media */}
+            {(brand.instagram_handle || brand.instagram || brand.tiktok_handle || brand.tiktok) && (
+              <Card>
+                <CardTitle>Social Media</CardTitle>
+                <SocialList>
+                  {(brand.instagram_handle || brand.instagram) && (
+                    <SocialRow>
+                      <SocialIcon><FiInstagram size={14} /></SocialIcon>
+                      <SocialHandle>@{(brand.instagram_handle || brand.instagram).replace('@', '')}</SocialHandle>
+                      {brand.instagram_followers && (
+                        <SocialFollowers>
+                          {formatFollowers(brand.instagram_followers)} followers
+                        </SocialFollowers>
                       )}
-                      <Space size="small" wrap>
-                        {campaign.budget && (
-                          <Tag color="green" icon={<DollarOutlined />}>
-                            Budget: ${campaign.budget.toLocaleString()}
-                          </Tag>
-                        )}
-                        {campaign.deadline && (
-                          <Tag color="blue" icon={<CalendarOutlined />}>
-                            Deadline: {moment(campaign.deadline).format('MMM D, YYYY')}
-                          </Tag>
-                        )}
-                      </Space>
-                    </div>
-                    {userRole === 'creator' && (
-                      <Button
-                        type="primary"
-                        icon={<ArrowRightOutlined />}
-                        onClick={handleSendProposal}
-                        style={{
-                          background: BRAND_COLOR,
-                          borderColor: BRAND_COLOR,
-                        }}
-                      >
-                        Apply
-                      </Button>
-                    )}
+                    </SocialRow>
+                  )}
+                  {(brand.tiktok_handle || brand.tiktok) && (
+                    <SocialRow>
+                      <SocialIcon><Music2 size={14} /></SocialIcon>
+                      <SocialHandle>@{(brand.tiktok_handle || brand.tiktok).replace('@', '')}</SocialHandle>
+                      {brand.tiktok_followers && (
+                        <SocialFollowers>
+                          {formatFollowers(brand.tiktok_followers)} followers
+                        </SocialFollowers>
+                      )}
+                    </SocialRow>
+                  )}
+                </SocialList>
+              </Card>
+            )}
+
+            {/* Recent creator activity */}
+            {recentActivity?.length > 0 && (
+              <Card>
+                <CardTitle>Recent Creator Activity</CardTitle>
+                {recentActivity.map((item, i) => (
+                  <ActivityRow key={i}>
+                    <ActivityAvatar $color={avatarColor(item.username)}>
+                      {item.username?.[0]?.toUpperCase() || 'C'}
+                    </ActivityAvatar>
+                    <ActivityText>
+                      <strong>{item.username}</strong> sent a pitch ·{' '}
+                      {item.got_response
+                        ? <span className="got-response">Got a response</span>
+                        : 'No response yet'}
+                    </ActivityText>
+                    <ActivityTime>{item.days_ago}d ago</ActivityTime>
+                  </ActivityRow>
+                ))}
+              </Card>
+            )}
+          </MainCol>
+
+          {/* SIDEBAR */}
+          <Sidebar>
+            {/* CTA card */}
+            <CtaCard>
+              <CtaTop>
+                <CtaBrandRow>
+                  <CtaBrandLogo>
+                    <BrandLogo brand={brand} small />
+                  </CtaBrandLogo>
+                  <div>
+                    <CtaBrandName>Contact {brand.brand_name}</CtaBrandName>
+                    <CtaBrandSub>Direct PR team access</CtaBrandSub>
                   </div>
-                </Card>
+                </CtaBrandRow>
+
+                {/* Email teaser */}
+                <EmailTeaser>
+                  <EmailTeaserIcon><Mail size={15} /></EmailTeaserIcon>
+                  <EmailTextWrap>
+                    <EmailLabel>PR Contact Email</EmailLabel>
+                    <EmailBlurred>{brand.email_preview || 'pr@brandname.com'}</EmailBlurred>
+                  </EmailTextWrap>
+                  {!hasPitched && <EmailUnlockBadge>Unlock</EmailUnlockBadge>}
+                </EmailTeaser>
+
+                {/* Quick stats */}
+                <QuickStats>
+                  <QuickStat>
+                    <QuickStatVal $green>{brand.response_rate}%</QuickStatVal>
+                    <QuickStatLbl>Response rate</QuickStatLbl>
+                  </QuickStat>
+                  <QuickStat>
+                    <QuickStatVal>~{brand.avg_response_days}d</QuickStatVal>
+                    <QuickStatLbl>Avg. reply time</QuickStatLbl>
+                  </QuickStat>
+                </QuickStats>
+
+                {/* CTA button — varies by state */}
+                {renderCta()}
+              </CtaTop>
+
+              <CtaDivider />
+
+              <CtaBottom>
+                <ValueProps>
+                  <ValueProp>
+                    <VPIcon><Check size={12} /></VPIcon>
+                    <div>
+                      <VPTitle>Direct PR team contact</VPTitle>
+                      <VPSub>Not a generic form — real email access</VPSub>
+                    </div>
+                  </ValueProp>
+                  <ValueProp>
+                    <VPIcon><Check size={12} /></VPIcon>
+                    <div>
+                      <VPTitle>AI-generated pitch email</VPTitle>
+                      <VPSub>Personalised to your profile in seconds</VPSub>
+                    </div>
+                  </ValueProp>
+                  <ValueProp>
+                    <VPIcon><Check size={12} /></VPIcon>
+                    <div>
+                      <VPTitle>Track your outreach</VPTitle>
+                      <VPSub>See opens, replies and follow-ups</VPSub>
+                    </div>
+                  </ValueProp>
+                </ValueProps>
+              </CtaBottom>
+            </CtaCard>
+
+            {/* Trust badges */}
+            <TrustCard>
+              <TrustList>
+                {brand.is_verified && (
+                  <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Verified Brand</TrustRow>
+                )}
+                {brand.is_accepting_pr && (
+                  <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Actively Reviewing Applications</TrustRow>
+                )}
+                {brand.is_free_to_apply !== false && (
+                  <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Free to Apply</TrustRow>
+                )}
+                <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Open to Nano & Micro Creators</TrustRow>
+              </TrustList>
+            </TrustCard>
+          </Sidebar>
+        </PageGrid>
+
+        {/* More brands in category */}
+        {relatedBrands?.length > 0 && (
+          <MoreBrands>
+            <MoreBrandsTitle>More Brands in {brand.category}</MoreBrandsTitle>
+            <MoreBrandsSub>Discover more brands open to creator collaborations</MoreBrandsSub>
+            <BrandChips>
+              {relatedBrands.slice(0, 5).map(b => (
+                <BrandChip key={b.id} href={`/brand/profile/${b.id}`}>
+                  <LiveDot />
+                  {b.brand_name || b.name}
+                </BrandChip>
               ))}
-            </div>
-          </motion.div>
+            </BrandChips>
+            <BrowseLink href={`/directory?category=${brand.category}`}>
+              Browse all {brand.category} brands →
+            </BrowseLink>
+          </MoreBrands>
         )}
-      </div>
-    </div>
+      </PageInner>
+
+      {/* AI Pitch Modal */}
+      {showPitchModal && brand && (
+        <AIPitchModal
+          isOpen={showPitchModal}
+          onClose={() => setShowPitchModal(false)}
+          brand={{
+            ...brand,
+            brand_id: brand.id,
+            brand_name: brand.brand_name || brand.name,
+            logo_url: brand.logo_url || brand.logo,
+            slug: brand.slug || id
+          }}
+          onPitchSent={handlePitchSent}
+        />
+      )}
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          currentCount={pitchesSentThisMonth}
+          limit={FREE_PITCH_LIMIT}
+          feature="brand contacts"
+        />
+      )}
+    </PageWrap>
   );
 };
+
+// ── STYLED COMPONENTS ───────────────────────────────────────────────
+
+const PageWrap = styled.div`
+  background: #F5F5F7;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+`;
+
+const PageInner = styled.div`
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+
+  @media (max-width: 640px) { padding: 20px 16px 80px; }
+`;
+
+const BackLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8C8C8C;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: color 0.15s;
+  &:hover { color: #0F0F0F; }
+`;
+
+const BrandHeader = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 20px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05), 0 1px 8px rgba(15,15,15,0.04);
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    padding: 18px;
+    gap: 14px;
+  }
+`;
+
+const BrandLogoBox = styled.div`
+  width: 80px;
+  height: 80px;
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 10px;
+
+  @media (max-width: 640px) { width: 60px; height: 60px; border-radius: 12px; }
+`;
+
+const BrandHeaderInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const BrandName = styled.h1`
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 10px 0;
+  color: #0F0F0F;
+
+  @media (max-width: 640px) { font-size: 22px; }
+`;
+
+const BrandMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const FeaturedBadge = styled(Badge)`
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  color: #78350F;
+  box-shadow: 0 2px 6px rgba(251,191,36,0.25);
+`;
+
+const CategoryBadge = styled(Badge)`
+  background: #F4F4F4;
+  color: #4B4B4B;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 11px;
+`;
+
+const WebsiteLink = styled.a`
+  color: #8C8C8C;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s;
+  &:hover { color: #0F0F0F; }
+`;
+
+const BrandHeaderRight = styled.div`
+  flex-shrink: 0;
+  @media (max-width: 640px) { width: 100%; }
+`;
+
+const PRStatusPill = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  background: ${p => p.$open ? '#ECFDF5' : '#FEF2F2'};
+  color: ${p => p.$open ? '#059669' : '#DC2626'};
+  border: 1px solid ${p => p.$open ? '#A7F3D0' : '#FECACA'};
+`;
+
+const StatusDot = styled.span`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: ${p => p.$open ? 'pulse 2s infinite' : 'none'};
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+`;
+
+const PageGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const MainCol = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const Sidebar = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: sticky;
+  top: 76px;
+
+  @media (max-width: 860px) {
+    position: static;
+    order: -1;
+  }
+`;
+
+const Card = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05), 0 1px 8px rgba(15,15,15,0.04);
+`;
+
+const CardTitle = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.2px;
+  color: #0F0F0F;
+`;
+
+const SocialProof = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 14px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+`;
+
+const SocialProofIcon = styled.div`
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #059669;
+`;
+
+const SocialProofText = styled.div`
+  font-size: 13px;
+  color: #4B4B4B;
+  strong { color: #0F0F0F; font-weight: 700; }
+  .green { color: #059669; font-weight: 700; }
+`;
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+`;
+
+const StatCard = styled.div`
+  background: #F4F4F4;
+  border-radius: 14px;
+  padding: 18px 16px;
+  text-align: center;
+`;
+
+const StatValue = styled.div`
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+  color: ${p => p.$green ? '#059669' : '#0F0F0F'};
+`;
+
+const StatLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #8C8C8C;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+`;
+
+const StatSub = styled.div`
+  font-size: 11px;
+  color: #8C8C8C;
+  margin-top: 3px;
+`;
+
+const RequirementsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const RequirementRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+`;
+
+const ReqIcon = styled.div`
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #F4F4F4;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #4B4B4B;
+`;
+
+const ReqLabel = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F0F0F;
+`;
+
+const ReqValue = styled.div`
+  font-size: 12.5px;
+  color: #8C8C8C;
+  margin-top: 2px;
+`;
+
+const SocialList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SocialRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #F4F4F4;
+  border-radius: 10px;
+`;
+
+const SocialIcon = styled.div`
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #E8E8E8;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #4B4B4B;
+`;
+
+const SocialHandle = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F0F0F;
+  flex: 1;
+`;
+
+const SocialFollowers = styled.span`
+  font-size: 12px;
+  color: #8C8C8C;
+`;
+
+const ActivityRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F4F4F4;
+  &:last-child { border-bottom: none; padding-bottom: 0; }
+`;
+
+const ActivityAvatar = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: ${p => p.$color || '#0F0F0F'};
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 11px;
+  flex-shrink: 0;
+`;
+
+const ActivityText = styled.div`
+  font-size: 12.5px;
+  color: #4B4B4B;
+  flex: 1;
+  strong { color: #0F0F0F; font-weight: 600; }
+  .got-response { color: #059669; font-weight: 600; }
+`;
+
+const ActivityTime = styled.div`
+  font-size: 11px;
+  color: #8C8C8C;
+`;
+
+// CTA Card
+const CtaCard = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(15,15,15,0.06), 0 1px 3px rgba(15,15,15,0.04);
+`;
+
+const CtaTop = styled.div`
+  padding: 22px 22px 0;
+`;
+
+const CtaBrandRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+`;
+
+const CtaBrandLogo = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 5px;
+  flex-shrink: 0;
+`;
+
+const CtaBrandName = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F0F0F;
+`;
+
+const CtaBrandSub = styled.div`
+  font-size: 12px;
+  color: #8C8C8C;
+  margin-top: 2px;
+`;
+
+const EmailTeaser = styled.div`
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const EmailTeaserIcon = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #E8E8E8;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #4B4B4B;
+`;
+
+const EmailTextWrap = styled.div`
+  flex: 1;
+  overflow: hidden;
+`;
+
+const EmailLabel = styled.div`
+  font-size: 10px;
+  color: #8C8C8C;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+`;
+
+const EmailBlurred = styled.div`
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0F0F0F;
+  filter: blur(4px);
+  user-select: none;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+`;
+
+const EmailUnlockBadge = styled.span`
+  background: #FFF1F3;
+  color: #E11D48;
+  border: 1px solid #FECDD3;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  flex-shrink: 0;
+  white-space: nowrap;
+`;
+
+const QuickStats = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+`;
+
+const QuickStat = styled.div`
+  background: #F4F4F4;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+`;
+
+const QuickStatVal = styled.div`
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: ${p => p.$green ? '#059669' : '#0F0F0F'};
+`;
+
+const QuickStatLbl = styled.div`
+  font-size: 10.5px;
+  color: #8C8C8C;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+`;
+
+const CtaBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #E11D48, #7C3AED);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(225,29,72,0.25);
+  margin-bottom: 14px;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(225,29,72,0.35);
+  }
+`;
+
+const CtaBtnContacted = styled(CtaBtn)`
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+  box-shadow: none;
+  cursor: default;
+  &:hover { transform: none; box-shadow: none; }
+`;
+
+const CtaBtnContact = styled(CtaBtn)`
+  background: #0F0F0F;
+  box-shadow: none;
+  &:hover { background: #1C1C1C; box-shadow: none; }
+`;
+
+const CtaHint = styled.div`
+  text-align: center;
+  font-size: 11.5px;
+  color: #8C8C8C;
+  margin-bottom: 20px;
+  a { color: #E11D48; font-weight: 600; text-decoration: none; }
+`;
+
+const CtaDivider = styled.hr`
+  border: none;
+  border-top: 1px solid #E8E8E8;
+  margin: 0 -22px 18px;
+`;
+
+const CtaBottom = styled.div`
+  padding: 0 22px 22px;
+`;
+
+const ValueProps = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ValueProp = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+`;
+
+const VPIcon = styled.div`
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #059669;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+`;
+
+const VPTitle = styled.div`
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0F0F0F;
+`;
+
+const VPSub = styled.div`
+  font-size: 11.5px;
+  color: #8C8C8C;
+  margin-top: 2px;
+`;
+
+const TrustCard = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+`;
+
+const TrustList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const TrustRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4B4B4B;
+`;
+
+const TrustCheck = styled.div`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #059669;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+`;
+
+const MoreBrands = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-align: center;
+  margin-top: 20px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+`;
+
+const MoreBrandsTitle = styled.h2`
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+  color: #0F0F0F;
+`;
+
+const MoreBrandsSub = styled.p`
+  font-size: 13px;
+  color: #8C8C8C;
+  margin: 0 0 20px 0;
+`;
+
+const BrandChips = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+`;
+
+const BrandChip = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F0F0F;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover { background: white; border-color: #D4D4D4; }
+`;
+
+const LiveDot = styled.span`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #059669;
+  flex-shrink: 0;
+`;
+
+const BrowseLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #E11D48;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  &:hover { color: #BE123C; }
+`;
 
 export default BrandProfilePage;

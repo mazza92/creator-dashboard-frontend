@@ -71,6 +71,18 @@ const NavTab = styled(Link)`
   svg { width: 16px; height: 16px; }
 `;
 
+const NewBadge = styled.span`
+  background: linear-gradient(135deg, #E11D48, #7C3AED);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-left: 2px;
+`;
+
 const NavRight = styled.div`
   display: flex;
   align-items: center;
@@ -165,8 +177,23 @@ const MobileTab = styled(Link)`
   font-size: 10px;
   flex: 1;
   font-family: inherit;
+  position: relative;
 
   svg { width: 20px; height: 20px; }
+`;
+
+const MobileNewBadge = styled.span`
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  background: linear-gradient(135deg, #E11D48, #7C3AED);
+  color: white;
+  font-size: 7px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
 `;
 
 const Content = styled.main`
@@ -297,7 +324,7 @@ const navItems = [
   { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
   { label: 'Saved',    icon: Bookmark, path: '/creator/dashboard/pr-pipeline' },
   { label: 'PR Offers', icon: Gift,    path: '/creator/dashboard/pr-offers' },
-  { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/media-kit' },
+  { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/media-kit', isNew: true },
 ];
 
 const CreatorDashboardLayout = () => {
@@ -407,10 +434,11 @@ const CreatorDashboardLayout = () => {
         <NavLeft>
           <Logo />
           <NavTabs>
-            {navItems.map(({ label, icon: Icon, path }) => (
+            {navItems.map(({ label, icon: Icon, path, isNew }) => (
               <NavTab key={path} to={path} $active={location.pathname === path}>
                 <Icon />
                 {label}
+                {isNew && <NewBadge>New</NewBadge>}
               </NavTab>
             ))}
           </NavTabs>
@@ -500,10 +528,11 @@ const CreatorDashboardLayout = () => {
       </Content>
 
       <MobileTabBar>
-        {navItems.map(({ label, icon: Icon, path }) => (
+        {navItems.map(({ label, icon: Icon, path, isNew }) => (
           <MobileTab key={path} to={path} $active={location.pathname === path}>
             <Icon />
             {label}
+            {isNew && <MobileNewBadge>New</MobileNewBadge>}
           </MobileTab>
         ))}
       </MobileTabBar>

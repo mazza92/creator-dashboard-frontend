@@ -115,6 +115,28 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   };
 
   const generatePitch = async (profile) => {
+    // Helper to append media kit link to pitch body
+    const appendMediaKitLink = (pitchData) => {
+      if (profile?.has_media_kit && profile?.media_kit_url && pitchData?.body) {
+        // Find where to insert (before "If you're open to it" or at end before signature)
+        const body = pitchData.body;
+        const insertPoint = body.indexOf('\nIf you\'re open to it');
+        if (insertPoint > -1) {
+          // Insert media kit link before the closing paragraph
+          pitchData.body = body.slice(0, insertPoint) + `\nMy media kit: ${profile.media_kit_url}` + body.slice(insertPoint);
+        } else {
+          // Fallback: append before signature (last 2 lines typically)
+          const lines = body.split('\n');
+          const signatureIndex = lines.findIndex(line => line.startsWith('Thanks,') || line.startsWith('Best,'));
+          if (signatureIndex > -1) {
+            lines.splice(signatureIndex, 0, `My media kit: ${profile.media_kit_url}`, '');
+            pitchData.body = lines.join('\n');
+          }
+        }
+      }
+      return pitchData;
+    };
+
     try {
       // Try AI endpoint first - send both brand_id and slug as fallback
       const response = await api.post('/api/pr-crm/generate-pitch', {
@@ -126,7 +148,9 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
         application_form_url: response.data.application_form_url,
         brand_name: response.data.brand_name
       });
-      setPitch(response.data);
+      // Append media kit link to the pitch body
+      const pitchWithMediaKit = appendMediaKitLink({ ...response.data });
+      setPitch(pitchWithMediaKit);
       // Store the email from API if available
       if (response.data.brand_email) {
         setFetchedBrandEmail(response.data.brand_email);
@@ -135,7 +159,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
       if (response.data.application_form_url) {
         setFetchedApplicationUrl(response.data.application_form_url);
       }
-      return response.data;
+      return pitchWithMediaKit;
     } catch (error) {
       console.error('[AIPitchModal] Generate pitch error:', error);
       // AI endpoint not ready - use the Golden Template with real data
@@ -184,7 +208,7 @@ Here's what I had in mind:
 - A ${platform === 'TikTok' ? 'TikTok' : 'Reel'} showing how I actually use the product (not a basic unboxing)
 - I can also send over the raw clips if your team wants to use them
 
-${socialUrl ? `My ${platform}: ${socialUrl}` : ''}${creatorId ? `\nMy profile & past work: https://newcollab.co/c/${creatorId}` : ''}
+${socialUrl ? `My ${platform}: ${socialUrl}` : ''}${creatorId ? `\nMy profile & past work: https://newcollab.co/c/${creatorId}` : ''}${profile?.has_media_kit && profile?.media_kit_url ? `\nMy media kit: ${profile.media_kit_url}` : ''}
 
 If you're open to it, I'd love to try some products and see if we can make something work. No pressure either way!
 

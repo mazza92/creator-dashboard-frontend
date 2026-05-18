@@ -412,7 +412,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   isExternal = true;
                 } else {
                   // Logged in + no form, no website: link to brand detail page
-                  applyUrl = `/brand/${brand.slug}`;
+                  applyUrl = `/creator/dashboard/brand/${brand.slug}`;
                   buttonText = 'View Details';
                   isExternal = false;
                 }
@@ -474,7 +474,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 return (
                   <BrandCard
                     key={brand.slug}
-                    to={`/brand/${brand.slug}`}
+                    to={`/creator/dashboard/brand/${brand.slug}`}
                   >
                     {brand.isFeatured && (
                       <FeaturedBadge>
@@ -643,35 +643,38 @@ const ContentWrapper = styled.div`
 `;
 
 const Hero = styled.div`
-  background: linear-gradient(135deg, #3B82F6 0%, #EC4899 100%);
-  color: white;
-  padding: 120px 24px 60px;
+  background: ${tokens.surface};
+  border-bottom: 1px solid ${tokens.border};
+  padding: 140px 24px 48px;
   text-align: center;
   margin-top: 0;
 
   @media (max-width: 768px) {
-    padding: 100px 24px 50px;
+    padding: 110px 20px 40px;
   }
 `;
 
 const HeroContent = styled.div`
-  max-width: 800px;
+  max-width: 720px;
   margin: 0 auto;
 
   h1 {
-    font-size: 42px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    line-height: 1.2;
+    font-size: 38px;
+    font-weight: 800;
+    color: ${tokens.textPrimary};
+    margin-bottom: 14px;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
 
     @media (max-width: 768px) {
-      font-size: 32px;
+      font-size: 28px;
     }
   }
 
   p {
-    font-size: 18px;
-    opacity: 0.95;
+    font-size: 16px;
+    color: ${tokens.textMuted};
+    line-height: 1.6;
     margin-bottom: 0;
   }
 `;
@@ -863,6 +866,7 @@ const FeaturedBadge = styled.div`
   position: absolute;
   top: 14px;
   left: 14px;
+  z-index: 10;
   background: #FEF3C7;
   color: #92400E;
   padding: 4px 9px;
@@ -1126,9 +1130,10 @@ const ResponsesCount = styled.span`
 const SignupCTA = styled.div`
   margin-top: 16px;
   padding: 10px 16px;
-  background: ${tokens.proGradient};
-  color: white;
-  border-radius: 10px;
+  background: transparent;
+  color: ${tokens.textPrimary};
+  border: 1px solid ${tokens.border};
+  border-radius: ${tokens.radiusBtn};
   font-size: 13px;
   font-weight: 600;
   text-align: center;
@@ -1136,10 +1141,22 @@ const SignupCTA = styled.div`
   align-items: center;
   justify-content: center;
   gap: 6px;
+  transition: all 0.15s;
+
+  &:hover {
+    background: ${tokens.action};
+    color: white;
+    border-color: ${tokens.action};
+  }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
+    color: ${tokens.textMuted};
+  }
+
+  &:hover svg {
+    color: white;
   }
 `;
 
@@ -1247,10 +1264,10 @@ const PaginationContainer = styled.div`
 const OpenPRSection = styled.section`
   margin-bottom: 20px;
   padding: 24px;
-  background: white;
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  background: ${tokens.surface};
+  border-radius: ${tokens.radiusCard};
+  border: 1px solid ${tokens.border};
+  box-shadow: ${tokens.shadowCard};
   position: relative;
   overflow: hidden;
 
@@ -1284,12 +1301,13 @@ const OpenPRHeader = styled.div`
 
   h2 {
     margin: 0;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
-    color: #111827;
+    color: ${tokens.textPrimary};
     display: flex;
     align-items: center;
     gap: 8px;
+    letter-spacing: -0.3px;
 
     svg {
       width: 20px;
@@ -1299,11 +1317,11 @@ const OpenPRHeader = styled.div`
   }
 
   .badge {
-    background: ${tokens.proGradient};
+    background: ${tokens.success};
     color: white;
     font-size: 10px;
     padding: 4px 10px;
-    border-radius: 999px;
+    border-radius: ${tokens.radiusPill};
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1321,12 +1339,12 @@ const OpenPRHeader = styled.div`
 
 const OpenPRSubtitle = styled.p`
   margin: 0 0 18px;
-  color: #6b7280;
-  font-size: 14px;
+  color: ${tokens.textMuted};
+  font-size: 13px;
   line-height: 1.5;
 
   @media (max-width: 480px) {
-    font-size: 13px;
+    font-size: 12px;
     margin-bottom: 14px;
   }
 `;
@@ -1348,19 +1366,20 @@ const OpenPRGrid = styled.div`
 `;
 
 const OpenPRCard = styled.div`
-  background: white;
+  background: ${tokens.surface};
+  border: 1px solid ${tokens.border};
   border-radius: 14px;
   padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.2s;
   min-width: 0;
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    border-color: ${tokens.borderHover};
+    box-shadow: ${tokens.shadowHover};
   }
 
   @media (max-width: 480px) {
@@ -1381,7 +1400,8 @@ const OpenPRLogo = styled.div`
   height: 40px;
   border-radius: 10px;
   overflow: hidden;
-  background: #f3f4f6;
+  background: ${tokens.subtle};
+  border: 1px solid ${tokens.border};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1407,7 +1427,7 @@ const OpenPRInfo = styled.div`
   .name {
     font-weight: 700;
     font-size: 14px;
-    color: #111827;
+    color: ${tokens.textPrimary};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1415,7 +1435,7 @@ const OpenPRInfo = styled.div`
 
   .category {
     font-size: 12px;
-    color: #6b7280;
+    color: ${tokens.textMuted};
   }
 
   @media (max-width: 480px) {
@@ -1429,26 +1449,33 @@ const ApplyButton = styled.a`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
+  background: transparent;
+  color: ${tokens.textPrimary};
+  border: 1px solid ${tokens.border};
+  padding: 9px 14px;
+  border-radius: ${tokens.radiusBtn};
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all 0.15s;
   white-space: nowrap;
 
   &:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-    transform: scale(1.02);
+    background: ${tokens.action};
+    border-color: ${tokens.action};
     color: white;
+    transform: translateY(-1px);
   }
 
   svg {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
+    color: ${tokens.textMuted};
+  }
+
+  &:hover svg {
+    color: white;
   }
 
   @media (max-width: 480px) {

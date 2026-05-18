@@ -2,25 +2,27 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
-import { Button, Spin, Tag, Modal, message } from 'antd';
-import {
-  CheckCircleOutlined,
-  MailOutlined,
-  LinkOutlined,
-  LockOutlined,
-  StarOutlined
-} from '@ant-design/icons';
+import { Spin, message } from 'antd';
 import axios from 'axios';
+import { ArrowLeft, Users, Mail, Music2, Target, Smartphone, Gift, Zap, Check } from 'lucide-react';
+import { FiInstagram } from 'react-icons/fi';
 import { UserContext } from '../contexts/UserContext';
 import { getRuntimeApiUrl } from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
+import BrandLogo from '../components/BrandLogo';
+import { formatFollowers } from '../utils/format';
 
 // Use shared API config with runtime detection
 const getApiBase = () => {
   const base = getRuntimeApiUrl();
-  return base.replace(/\/+$/, ''); // Remove trailing slashes to prevent double slashes
+  return base.replace(/\/+$/, '');
 };
+
+// Avatar colors for activity
+const AVATAR_COLORS = ['#E11D48','#7C3AED','#0F0F0F','#059669','#D97706'];
+const avatarColor = (name) =>
+  AVATAR_COLORS[name?.charCodeAt(0) % AVATAR_COLORS.length] || AVATAR_COLORS[0];
 
 const PublicBrandPage = () => {
   const { slug } = useParams();
@@ -33,40 +35,71 @@ const PublicBrandPage = () => {
   const [saved, setSaved] = useState(false);
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [pitchesSentThisWeek, setPitchesSentThisWeek] = useState(0);
+  const [pitchesSentThisMonth, setPitchesSentThisMonth] = useState(0);
   const [showPitchModal, setShowPitchModal] = useState(false);
+  const [hasPitched, setHasPitched] = useState(false);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [relatedBrands, setRelatedBrands] = useState([]);
 
-  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per month
+  const FREE_PITCH_LIMIT = 3;
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
-  const pitchesLeft = Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisWeek);
+  const pitchesLeft = Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisMonth);
+  const atLimit = !isPro && pitchesLeft === 0;
+  const isLocked = brand?.requires_pro && !isPro;
 
   useEffect(() => {
     fetchBrand();
   }, [slug]);
 
-  // Fetch subscription status when user is logged in
   useEffect(() => {
-    const fetchSubscriptionStatus = async () => {
-      if (!user) return;
-      try {
-        const apiBase = getApiBase();
-        const { data } = await axios.get(`${apiBase}/api/subscription/status`, {
-          withCredentials: true
-        });
-        setSubscriptionTier(data.tier || 'free');
-        setPitchesSentThisWeek(data.pitches_sent_this_week || 0);
-      } catch (error) {
-        console.error('Error fetching subscription:', error);
-      }
-    };
-    fetchSubscriptionStatus();
-  }, [user]);
+    if (user) {
+      fetchSubscriptionStatus();
+      checkIfPitched();
+    }
+  }, [user, slug]);
 
   const fetchBrand = async () => {
     try {
       const apiBase = getApiBase();
       const { data } = await axios.get(`${apiBase}/api/public/brands/${slug}`);
-      setBrand(data);
+
+      // Normalize brand data
+      const normalizedBrand = {
+        ...data,
+        brand_name: data.name || data.brand_name,
+        domain: data.domain || extractDomain(data.website),
+        is_accepting_pr: data.accepting_pr ?? data.is_accepting_pr ?? true,
+        response_rate: data.stats?.responseRate || data.response_rate || 0,
+        avg_response_days: data.stats?.avgResponseTime || data.avg_response_days || 7,
+        total_pitches: data.stats?.totalPitches || data.total_pitches || 0,
+        responses_received: data.stats?.totalResponses || data.responses_received || 0,
+        niches: parseArray(data.niches),
+        platforms: parseArray(data.platforms),
+        is_verified: data.is_verified ?? true,
+        is_free_to_apply: data.is_free_to_apply ?? true,
+      };
+
+      setBrand(normalizedBrand);
+
+      // Fetch related brands
+      if (normalizedBrand.category) {
+        try {
+          const { data: related } = await axios.get(
+            `${apiBase}/api/public/brands?category=${normalizedBrand.category}&limit=6`
+          );
+          setRelatedBrands((related.brands || related || []).filter(b => b.slug !== slug).slice(0, 5));
+        } catch (e) {
+          console.warn('Could not fetch related brands');
+        }
+      }
+
+      // Fetch recent activity
+      try {
+        const { data: activity } = await axios.get(`${apiBase}/api/public/brands/${slug}/activity`);
+        setRecentActivity(activity || []);
+      } catch (e) {
+        // Activity endpoint may not exist yet
+      }
     } catch (error) {
       console.error('Error fetching brand:', error);
       if (error.response?.status === 404) {
@@ -78,39 +111,73 @@ const PublicBrandPage = () => {
     }
   };
 
-  // Handle pitch brand click
-  const handlePitchBrand = () => {
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const apiBase = getApiBase();
+      const { data } = await axios.get(`${apiBase}/api/subscription/status`, { withCredentials: true });
+      setSubscriptionTier(data.tier || 'free');
+      setPitchesSentThisMonth(data.pitches_sent_this_week || data.pitches_sent_this_month || 0);
+    } catch (error) {
+      console.warn('Could not fetch subscription status');
+    }
+  };
+
+  const checkIfPitched = async () => {
+    try {
+      const apiBase = getApiBase();
+      const { data } = await axios.get(`${apiBase}/api/pr-crm/pipeline`, { withCredentials: true });
+      const pitched = (data.pipeline || data || []).find(p =>
+        p.slug === slug && p.status === 'pitched'
+      );
+      setHasPitched(!!pitched);
+    } catch (e) {
+      // Pipeline endpoint may fail for non-creators
+    }
+  };
+
+  const parseArray = (field) => {
+    if (Array.isArray(field)) return field;
+    if (typeof field === 'string') {
+      try { return JSON.parse(field); } catch { return []; }
+    }
+    return [];
+  };
+
+  const extractDomain = (url) => {
+    if (!url) return null;
+    try {
+      return new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '');
+    } catch { return null; }
+  };
+
+  const handleContactClick = () => {
     if (!user) {
       sessionStorage.setItem('brandReferral', slug);
-      sessionStorage.setItem('brandName', brand.name);
+      sessionStorage.setItem('brandName', brand?.brand_name);
       navigate('/register/creator');
       return;
     }
-
-    // Check pitch limit for free users
-    if (!isPro && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
+    if (hasPitched) return;
+    if (isLocked || atLimit) {
       setUpgradeModalVisible(true);
       return;
     }
-
     setShowPitchModal(true);
   };
 
-  // Handle pitch sent callback
   const handlePitchSent = () => {
-    setPitchesSentThisWeek(prev => prev + 1);
+    setPitchesSentThisMonth(prev => prev + 1);
+    setHasPitched(true);
     setShowPitchModal(false);
-    message.success('Email opened in your mail app!');
+    message.success('Pitch sent successfully!');
   };
 
-  // Handle save for later
   const handleSaveForLater = async () => {
     if (!user) {
       sessionStorage.setItem('brandReferral', slug);
       navigate('/register/creator');
       return;
     }
-
     setSaving(true);
     try {
       const apiBase = getApiBase();
@@ -120,411 +187,390 @@ const PublicBrandPage = () => {
         { withCredentials: true }
       );
       setSaved(true);
-      message.success(`${brand.name} saved to your pipeline!`);
+      message.success(`${brand.brand_name} saved to your pipeline!`);
     } catch (error) {
-      console.error('Error saving brand:', error);
       message.error('Failed to save brand');
     } finally {
       setSaving(false);
     }
   };
 
-  // Handle application link click
-  const handleApplicationLink = async () => {
-    if (!user) {
-      sessionStorage.setItem('brandReferral', slug);
-      navigate('/register/creator');
-      return;
-    }
-
-    try {
-      const apiBase = getApiBase();
-      const { data } = await axios.post(
-        `${apiBase}/api/public/brands/${slug}/unlock`,
-        { unlock_type: 'application' },
-        { withCredentials: true }
-      );
-      if (data.applicationUrl) {
-        window.open(data.applicationUrl, '_blank');
-      }
-    } catch (error) {
-      message.error('Failed to get application link');
-    }
-  };
-
-  const renderCTA = () => {
-    const hasApplication = brand.gated?.hasDirectLink;
-
-    // User not logged in
+  // CTA Render Logic
+  const renderCta = () => {
     if (!user) {
       return (
-        <CTABox>
-          <PitchIcon>📧</PitchIcon>
-          <h3>Contact {brand.name}</h3>
-          <p>Access direct PR contacts and tools to start your collaboration with {brand.name}.</p>
-
-          {/* Masked email teaser - creates desire to sign up */}
-          {brand.gated?.maskedEmail && (
-            <MaskedEmailTeaser>
-              <span style={{ marginRight: 6 }}>📧</span>
-              <span style={{
-                fontFamily: 'monospace',
-                color: '#94a3b8',
-                letterSpacing: '0.5px'
-              }}>
-                {brand.gated.maskedEmail}
-              </span>
-              <span style={{ marginLeft: 8, fontSize: 11, color: '#cbd5e1' }}>• Sign up to reveal</span>
-            </MaskedEmailTeaser>
-          )}
-
-          <PitchButton onClick={handlePitchBrand}>
-            ✨ Sign up to Contact {brand.name}
-          </PitchButton>
-          <FeatureList>
-            <li>✓ Direct PR team contacts</li>
-            <li>✓ Professional pitch tools</li>
-            <li>✓ Track your collaborations</li>
-          </FeatureList>
-        </CTABox>
+        <>
+          <CtaBtn onClick={handleContactClick}>
+            <Zap size={16} /> Sign up to Contact {brand.brand_name}
+          </CtaBtn>
+          <CtaHint>Already a member? <Link to="/login">Sign in</Link> · Free to start</CtaHint>
+        </>
       );
     }
 
-    // User logged in - show contact-focused CTA
+    if (hasPitched) {
+      return (
+        <>
+          <CtaBtnContacted disabled>
+            <Check size={16} /> Pitch Sent — Awaiting Reply
+          </CtaBtnContacted>
+          <CtaHint>Response rate: {brand.response_rate}% · Check your pipeline</CtaHint>
+        </>
+      );
+    }
+
+    if (isLocked || atLimit) {
+      return (
+        <>
+          <CtaBtn onClick={handleContactClick}>
+            <Zap size={16} /> Upgrade to Contact {brand.brand_name}
+          </CtaBtn>
+          <CtaHint>
+            {atLimit
+              ? 'Monthly limit reached · Upgrade for unlimited contacts'
+              : 'This brand is only accessible on Pro'}
+          </CtaHint>
+        </>
+      );
+    }
+
     return (
-      <CTABox>
-        <h3>Contact {brand.name}</h3>
-        <CTADescription>
-          Access direct PR contacts and tools to start your collaboration with {brand.name}.
-        </CTADescription>
-
-        {/* Masked email teaser - creates desire */}
-        {brand.gated?.maskedEmail && (
-          <MaskedEmailTeaser>
-            <span style={{ marginRight: 6 }}>📧</span>
-            <span style={{
-              fontFamily: 'monospace',
-              background: 'linear-gradient(90deg, #64748b 60%, transparent 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'blur(0.3px)'
-            }}>
-              {brand.gated.maskedEmail}
-            </span>
-            <span style={{ marginLeft: 8, fontSize: 11, color: '#94a3b8' }}>• Unlock to reveal</span>
-          </MaskedEmailTeaser>
-        )}
-
-        {/* Main Contact Button */}
-        <PitchButton onClick={handlePitchBrand} disabled={!isPro && pitchesLeft === 0}>
-          📧 Contact {brand.name}
-        </PitchButton>
-
-        {/* Contact limit info */}
-        <PitchLimitInfo $isPro={isPro} $hasQuota={pitchesLeft > 0}>
-          {isPro ? (
-            <>✨ Pro member - Unlimited brand contacts</>
-          ) : pitchesLeft > 0 ? (
-            <>{pitchesLeft} free contact{pitchesLeft !== 1 ? 's' : ''} left this month</>
-          ) : (
-            <>You've used your 3 free contacts. <span onClick={() => setUpgradeModalVisible(true)} style={{ color: '#92400E', textDecoration: 'underline', cursor: 'pointer' }}>Upgrade to Pro</span></>
-          )}
-        </PitchLimitInfo>
-
-        {/* Save for Later */}
-        <SaveButton onClick={handleSaveForLater} disabled={saving || saved}>
-          {saved ? '✓ Saved to your list' : '🔖 Save for Later'}
-        </SaveButton>
-
-        {/* Application Form Link (if available) */}
-        {hasApplication && (
-          <ApplicationLinkBox>
-            <div>
-              <ApplicationLinkTitle>📋 Application Form Available</ApplicationLinkTitle>
-              <ApplicationLinkSubtitle>Apply directly on brand's website</ApplicationLinkSubtitle>
-            </div>
-            <ApplicationLinkButton onClick={handleApplicationLink}>
-              Apply Now →
-            </ApplicationLinkButton>
-          </ApplicationLinkBox>
-        )}
-      </CTABox>
+      <>
+        <CtaBtnContact onClick={handleContactClick}>
+          <Mail size={16} /> Contact {brand.brand_name}
+        </CtaBtnContact>
+        <CtaHint>
+          {isPro
+            ? 'Unlimited contacts included in your Pro plan'
+            : `${pitchesLeft} free contact${pitchesLeft !== 1 ? 's' : ''} remaining this month`}
+        </CtaHint>
+      </>
     );
   };
 
   if (loading) {
     return (
-      <LoadingContainer>
-        <Spin size="large" />
-      </LoadingContainer>
+      <PageWrap>
+        <PageInner style={{ textAlign: 'center', paddingTop: 100 }}>
+          <Spin size="large" />
+        </PageInner>
+      </PageWrap>
     );
   }
 
   if (!brand) {
-    return null;
+    return (
+      <PageWrap>
+        <PageInner style={{ textAlign: 'center', paddingTop: 100 }}>
+          <div>Brand not found.</div>
+        </PageInner>
+      </PageWrap>
+    );
   }
 
   return (
     <>
       <Helmet>
-        <title>{brand.seo?.title || `${brand.name} PR List Application | NewCollab`}</title>
-        <meta name="description" content={brand.seo?.description || `Apply for ${brand.name} PR packages and collaborations.`} />
-        <meta name="keywords" content={brand.seo?.keywords || `${brand.name}, PR, influencer, collaboration`} />
-
-        {/* Open Graph */}
-        <meta property="og:title" content={brand.seo?.ogTitle || brand.seo?.title || `${brand.name} PR List`} />
-        <meta property="og:description" content={brand.seo?.ogDescription || brand.seo?.description || `Apply for ${brand.name} PR packages`} />
-        <meta property="og:image" content={brand.seo?.ogImage || brand.logo || 'https://newcollab.co/og-default.png'} />
-        <meta property="og:url" content={`https://newcollab.co/brand/${slug}`} />
-        <meta property="og:type" content="website" />
-
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={brand.seo?.ogTitle || brand.seo?.title || `${brand.name} PR List`} />
-        <meta name="twitter:description" content={brand.seo?.ogDescription || brand.seo?.description} />
-        <meta name="twitter:image" content={brand.seo?.ogImage || brand.logo} />
-
-        <link rel="canonical" content={brand.seo?.canonical || `https://newcollab.co/brand/${slug}`} />
-
-        {/* JobPosting structured data for SEO/GEO */}
-        {brand.structuredData && (
-          <script type="application/ld+json">
-            {JSON.stringify(brand.structuredData)}
-          </script>
-        )}
-
-        {/* FAQ structured data for GEO */}
-        {brand.faqs && brand.faqs.length > 0 && (
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "FAQPage",
-              "mainEntity": brand.faqs.map(faq => ({
-                "@type": "Question",
-                "name": faq.question,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": faq.answer
-                }
-              }))
-            })}
-          </script>
-        )}
+        <title>{brand.brand_name} PR Collaboration | NewCollab</title>
+        <meta name="description" content={`Apply for ${brand.brand_name} PR packages and collaborations. ${brand.description?.slice(0, 120)}`} />
+        <link rel="canonical" href={`https://newcollab.co/brand/${slug}`} />
       </Helmet>
 
-      <Container>
-        <Breadcrumb>
-          <Link to={user?.role === 'creator' ? '/creator/dashboard/pr-brands' : '/directory'}>
-            ← Back to Directory
-          </Link>
-        </Breadcrumb>
+      <PageWrap>
+        <PageInner>
+          {/* Back link */}
+          <BackLink onClick={() => navigate(user?.role === 'creator' ? '/creator/dashboard/pr-brands' : '/directory')}>
+            <ArrowLeft size={14} /> Back to Directory
+          </BackLink>
 
-        <Header>
-          <BrandLogo>
-            {brand.logo ? (
-              <img
-                src={brand.logo}
-                alt={brand.name}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222); border-radius: 16px;">${brand.name.charAt(0)}</div>`;
-                }}
-              />
-            ) : (
-              <PlaceholderLogo>{brand.name.charAt(0)}</PlaceholderLogo>
-            )}
-          </BrandLogo>
+          {/* Brand header */}
+          <BrandHeader>
+            <BrandLogoBox>
+              <BrandLogo brand={brand} />
+            </BrandLogoBox>
+            <BrandHeaderInfo>
+              <BrandName>{brand.brand_name}</BrandName>
+              <BrandMeta>
+                {brand.isFeatured && <FeaturedBadge>Featured</FeaturedBadge>}
+                {brand.category && <CategoryBadge>{brand.category.replace('_', ' ')}</CategoryBadge>}
+                {brand.website && (
+                  <WebsiteLink href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`} target="_blank" rel="noopener noreferrer">
+                    {brand.domain || 'Visit Website'} →
+                  </WebsiteLink>
+                )}
+              </BrandMeta>
+            </BrandHeaderInfo>
+            <BrandHeaderRight>
+              <PRStatusPill $open={brand.is_accepting_pr}>
+                <StatusDot $open={brand.is_accepting_pr} />
+                {brand.is_accepting_pr ? 'Accepting PR' : 'Not Accepting PR'}
+              </PRStatusPill>
+            </BrandHeaderRight>
+          </BrandHeader>
 
-          <BrandTitle>
-            <h1>{brand.name}</h1>
-            {brand.isFeatured && <StarBadge><StarOutlined /> Featured</StarBadge>}
-            <CategoryTag>{brand.category?.replace('_', ' ')}</CategoryTag>
-
-            {brand.website && (
-              <WebsiteLink href={brand.website} target="_blank" rel="noopener noreferrer">
-                Visit Website →
-              </WebsiteLink>
-            )}
-          </BrandTitle>
-        </Header>
-
-        <Content>
-          <MainColumn>
-            {/* Direct Answer Box for AI/SEO */}
-            <DirectAnswerBox>
-              <DirectAnswerTitle>Is {brand.name} accepting PR?</DirectAnswerTitle>
-              <DirectAnswerContent>
-                <StatusBadge accepting={brand.accepting_pr !== false}>
-                  {brand.accepting_pr !== false ? '✅ Open' : '⏸️ Paused'}
-                </StatusBadge>
-                <p>
-                  <strong>Yes</strong>, {brand.name} is {brand.accepting_pr !== false ? 'currently' : 'periodically'} accepting applications from creators
-                  {brand.min_followers > 0 && ` with ${brand.min_followers >= 1000 ? `${(brand.min_followers / 1000).toFixed(0)}K+` : brand.min_followers} followers`}.
-                  {brand.product_types && ` They typically send ${brand.product_types} packages.`}
-                </p>
-                {brand.application_url && (
-                  <DirectLink>
-                    <strong>Direct Link:</strong>{' '}
-                    {unlockedData ? (
-                      <a href={brand.application_url} target="_blank" rel="noopener noreferrer">
-                        Open Application Form →
-                      </a>
-                    ) : (
-                      <Button size="small" onClick={handleUnlock}>
-                        Unlock Application
-                      </Button>
+          <PageGrid>
+            {/* MAIN COLUMN */}
+            <MainCol>
+              {/* Social proof */}
+              {brand.total_pitches > 0 && (
+                <SocialProof>
+                  <SocialProofIcon><Users size={16} /></SocialProofIcon>
+                  <SocialProofText>
+                    <strong>{brand.total_pitches} creator{brand.total_pitches !== 1 ? 's' : ''}</strong> have contacted this brand
+                    {brand.responses_received > 0 && (
+                      <> · <span className="green">{brand.responses_received} got a response</span></>
                     )}
-                  </DirectLink>
-                )}
-              </DirectAnswerContent>
-            </DirectAnswerBox>
+                  </SocialProofText>
+                </SocialProof>
+              )}
 
-            {brand.description && (
-              <Section>
-                <SectionTitle>About {brand.name}</SectionTitle>
-                <Description>{brand.description}</Description>
-              </Section>
-            )}
+              {/* About */}
+              {brand.description && (
+                <Card>
+                  <CardTitle>About {brand.brand_name}</CardTitle>
+                  <p style={{ fontSize: 14, color: '#4B4B4B', lineHeight: 1.7, margin: 0 }}>
+                    {brand.description}
+                  </p>
+                </Card>
+              )}
 
-
-
-            {/* Pitch Stats Banner - Social Proof */}
-            {brand.stats && brand.stats.totalPitches > 0 && (
-              <PitchStatsBanner>
-                <span style={{ marginRight: 8 }}>👥</span>
-                <strong>{brand.stats.totalPitches}</strong> creator{brand.stats.totalPitches !== 1 ? 's' : ''} have contacted this brand
-                {brand.stats.totalResponses > 0 && (
-                  <span style={{ color: '#10b981', marginLeft: 8 }}>
-                    • <strong>{brand.stats.totalResponses}</strong> got responses
-                  </span>
-                )}
-              </PitchStatsBanner>
-            )}
-
-            {brand.stats && (brand.stats.responseRate || brand.stats.avgResponseTime) && (
-              <Section>
-                <SectionTitle>Brand Stats</SectionTitle>
+              {/* Stats */}
+              <Card>
+                <CardTitle>Brand Stats</CardTitle>
                 <StatsGrid>
-                  {brand.stats.responseRate && (
-                    <StatCard>
-                      <StatValue>{brand.stats.responseRate}%</StatValue>
-                      <StatLabel>Response Rate</StatLabel>
-                    </StatCard>
-                  )}
-                  {brand.stats.avgResponseTime && (
-                    <StatCard>
-                      <StatValue>~{brand.stats.avgResponseTime} days</StatValue>
-                      <StatLabel>Avg Response Time</StatLabel>
-                    </StatCard>
-                  )}
+                  <StatCard>
+                    <StatValue $green>{brand.response_rate}%</StatValue>
+                    <StatLabel>Response Rate</StatLabel>
+                    <StatSub>
+                      {brand.response_rate >= 40 ? 'Above average' : 'Industry average'}
+                    </StatSub>
+                  </StatCard>
+                  <StatCard>
+                    <StatValue>~{brand.avg_response_days}d</StatValue>
+                    <StatLabel>Avg. Response</StatLabel>
+                    <StatSub>When they reply</StatSub>
+                  </StatCard>
                 </StatsGrid>
-              </Section>
-            )}
+              </Card>
 
-            {(brand.instagram || brand.tiktok) && (
-              <Section>
-                <SectionTitle>Social Media</SectionTitle>
-                <SocialLinks>
-                  {brand.instagram && (
-                    <SocialLink
-                      href={`https://instagram.com/${brand.instagram.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      📷 @{brand.instagram.replace('@', '')}
-                    </SocialLink>
+              {/* What they're looking for */}
+              {(brand.min_followers || brand.niches?.length > 0 || brand.platforms?.length > 0 || brand.collab_type || brand.product_types) && (
+                <Card>
+                  <CardTitle>What They're Looking For</CardTitle>
+                  <RequirementsList>
+                    {brand.min_followers && (
+                      <RequirementRow>
+                        <ReqIcon><Users size={15} /></ReqIcon>
+                        <div>
+                          <ReqLabel>Minimum Followers</ReqLabel>
+                          <ReqValue>
+                            {brand.min_followers >= 1000
+                              ? `${(brand.min_followers / 1000).toFixed(0)}K+`
+                              : brand.min_followers}+ followers on any platform
+                          </ReqValue>
+                        </div>
+                      </RequirementRow>
+                    )}
+                    {brand.niches?.length > 0 && (
+                      <RequirementRow>
+                        <ReqIcon><Target size={15} /></ReqIcon>
+                        <div>
+                          <ReqLabel>Niche</ReqLabel>
+                          <ReqValue>{brand.niches.join(', ')}</ReqValue>
+                        </div>
+                      </RequirementRow>
+                    )}
+                    {brand.platforms?.length > 0 && (
+                      <RequirementRow>
+                        <ReqIcon><Smartphone size={15} /></ReqIcon>
+                        <div>
+                          <ReqLabel>Preferred Platforms</ReqLabel>
+                          <ReqValue>{brand.platforms.join(', ')}</ReqValue>
+                        </div>
+                      </RequirementRow>
+                    )}
+                    {(brand.collab_type || brand.product_types) && (
+                      <RequirementRow>
+                        <ReqIcon><Gift size={15} /></ReqIcon>
+                        <div>
+                          <ReqLabel>Collaboration Type</ReqLabel>
+                          <ReqValue>{brand.collab_type || brand.product_types}</ReqValue>
+                        </div>
+                      </RequirementRow>
+                    )}
+                  </RequirementsList>
+                </Card>
+              )}
+
+              {/* Social media */}
+              {(brand.instagram || brand.tiktok) && (
+                <Card>
+                  <CardTitle>Social Media</CardTitle>
+                  <SocialList>
+                    {brand.instagram && (
+                      <SocialRow>
+                        <SocialIconBox><FiInstagram size={14} /></SocialIconBox>
+                        <SocialHandle>@{brand.instagram.replace('@', '')}</SocialHandle>
+                        {brand.instagram_followers && (
+                          <SocialFollowers>
+                            {formatFollowers(brand.instagram_followers)} followers
+                          </SocialFollowers>
+                        )}
+                      </SocialRow>
+                    )}
+                    {brand.tiktok && (
+                      <SocialRow>
+                        <SocialIconBox><Music2 size={14} /></SocialIconBox>
+                        <SocialHandle>@{brand.tiktok.replace('@', '')}</SocialHandle>
+                        {brand.tiktok_followers && (
+                          <SocialFollowers>
+                            {formatFollowers(brand.tiktok_followers)} followers
+                          </SocialFollowers>
+                        )}
+                      </SocialRow>
+                    )}
+                  </SocialList>
+                </Card>
+              )}
+
+              {/* Recent creator activity */}
+              {recentActivity?.length > 0 && (
+                <Card>
+                  <CardTitle>Recent Creator Activity</CardTitle>
+                  {recentActivity.map((item, i) => (
+                    <ActivityRow key={i}>
+                      <ActivityAvatar $color={avatarColor(item.username)}>
+                        {item.username?.[0]?.toUpperCase() || 'C'}
+                      </ActivityAvatar>
+                      <ActivityText>
+                        <strong>{item.username}</strong> sent a pitch ·{' '}
+                        {item.got_response
+                          ? <span className="got-response">Got a response</span>
+                          : 'No response yet'}
+                      </ActivityText>
+                      <ActivityTime>{item.days_ago}d ago</ActivityTime>
+                    </ActivityRow>
+                  ))}
+                </Card>
+              )}
+            </MainCol>
+
+            {/* SIDEBAR */}
+            <Sidebar>
+              {/* CTA card */}
+              <CtaCard>
+                <CtaTop>
+                  <CtaBrandRow>
+                    <CtaBrandLogo>
+                      <BrandLogo brand={brand} small />
+                    </CtaBrandLogo>
+                    <div>
+                      <CtaBrandName>Contact {brand.brand_name}</CtaBrandName>
+                      <CtaBrandSub>Direct PR team access</CtaBrandSub>
+                    </div>
+                  </CtaBrandRow>
+
+                  {/* Email teaser */}
+                  <EmailTeaser>
+                    <EmailTeaserIcon><Mail size={15} /></EmailTeaserIcon>
+                    <EmailTextWrap>
+                      <EmailLabel>PR Contact Email</EmailLabel>
+                      <EmailBlurred>{brand.gated?.maskedEmail || 'pr@brandname.com'}</EmailBlurred>
+                    </EmailTextWrap>
+                    {!hasPitched && <EmailUnlockBadge>Unlock</EmailUnlockBadge>}
+                  </EmailTeaser>
+
+                  {/* Quick stats */}
+                  <QuickStats>
+                    <QuickStat>
+                      <QuickStatVal $green>{brand.response_rate}%</QuickStatVal>
+                      <QuickStatLbl>Response rate</QuickStatLbl>
+                    </QuickStat>
+                    <QuickStat>
+                      <QuickStatVal>~{brand.avg_response_days}d</QuickStatVal>
+                      <QuickStatLbl>Avg. reply time</QuickStatLbl>
+                    </QuickStat>
+                  </QuickStats>
+
+                  {/* CTA button */}
+                  {renderCta()}
+
+                  {/* Save for later */}
+                  {user && !hasPitched && (
+                    <SaveButton onClick={handleSaveForLater} disabled={saving || saved}>
+                      {saved ? '✓ Saved to Pipeline' : '🔖 Save for Later'}
+                    </SaveButton>
                   )}
-                  {brand.tiktok && (
-                    <SocialLink
-                      href={`https://tiktok.com/@${brand.tiktok.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      🎵 @{brand.tiktok.replace('@', '')}
-                    </SocialLink>
+                </CtaTop>
+
+                <CtaDivider />
+
+                <CtaBottom>
+                  <ValueProps>
+                    <ValueProp>
+                      <VPIcon><Check size={12} /></VPIcon>
+                      <div>
+                        <VPTitle>Direct PR team contact</VPTitle>
+                        <VPSub>Not a generic form — real email access</VPSub>
+                      </div>
+                    </ValueProp>
+                    <ValueProp>
+                      <VPIcon><Check size={12} /></VPIcon>
+                      <div>
+                        <VPTitle>AI-generated pitch email</VPTitle>
+                        <VPSub>Personalised to your profile in seconds</VPSub>
+                      </div>
+                    </ValueProp>
+                    <ValueProp>
+                      <VPIcon><Check size={12} /></VPIcon>
+                      <div>
+                        <VPTitle>Track your outreach</VPTitle>
+                        <VPSub>See opens, replies and follow-ups</VPSub>
+                      </div>
+                    </ValueProp>
+                  </ValueProps>
+                </CtaBottom>
+              </CtaCard>
+
+              {/* Trust badges */}
+              <TrustCard>
+                <TrustList>
+                  {brand.is_verified && (
+                    <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Verified Brand</TrustRow>
                   )}
-                </SocialLinks>
-              </Section>
-            )}
-          </MainColumn>
-
-          <Sidebar>
-            {renderCTA()}
-
-            <TrustSignals>
-              <TrustItem>
-                <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                Verified Brand
-              </TrustItem>
-              <TrustItem>
-                <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                Actively Reviewing Applications
-              </TrustItem>
-              <TrustItem>
-                <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                Free to Apply
-              </TrustItem>
-            </TrustSignals>
-          </Sidebar>
-        </Content>
-
-        {/* FAQ Section for GEO */}
-        {brand.faqs && brand.faqs.length > 0 && (
-          <FAQSection>
-            <FAQTitle>Frequently Asked Questions</FAQTitle>
-            <FAQList>
-              {brand.faqs.map((faq, index) => (
-                <FAQItem key={index}>
-                  <FAQQuestion>{faq.question}</FAQQuestion>
-                  <FAQAnswer>{faq.answer}</FAQAnswer>
-                </FAQItem>
-              ))}
-            </FAQList>
-          </FAQSection>
-        )}
-
-        {/* Similar Brands for Entity Linking */}
-        {brand.similarBrands && brand.similarBrands.length > 0 && (
-          <SimilarBrandsSection>
-            <SimilarBrandsTitle>Similar Brands Accepting PR</SimilarBrandsTitle>
-            <SimilarBrandsGrid>
-              {brand.similarBrands.map((similarBrand) => (
-                <SimilarBrandCard
-                  key={similarBrand.id}
-                  to={`/brand/${similarBrand.slug}`}
-                >
-                  {similarBrand.logo ? (
-                    <SimilarBrandLogo src={similarBrand.logo} alt={similarBrand.name} />
-                  ) : (
-                    <SimilarBrandPlaceholder>
-                      {similarBrand.name.charAt(0)}
-                    </SimilarBrandPlaceholder>
+                  {brand.is_accepting_pr && (
+                    <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Actively Reviewing Applications</TrustRow>
                   )}
-                  <SimilarBrandName>{similarBrand.name}</SimilarBrandName>
-                  {similarBrand.min_followers && similarBrand.min_followers > 0 && (
-                    <SimilarBrandFollowers>
-                      {similarBrand.min_followers >= 1000
-                        ? `${(similarBrand.min_followers / 1000).toFixed(0)}K+ followers`
-                        : `${similarBrand.min_followers}+ followers`}
-                    </SimilarBrandFollowers>
+                  {brand.is_free_to_apply && (
+                    <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Free to Apply</TrustRow>
                   )}
-                </SimilarBrandCard>
-              ))}
-            </SimilarBrandsGrid>
-            <SimilarBrandsFooter>
-              <em>Similar to {brand.name} in accepting creator applications and partnership opportunities.</em>
-            </SimilarBrandsFooter>
-          </SimilarBrandsSection>
-        )}
+                  <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Open to Nano & Micro Creators</TrustRow>
+                </TrustList>
+              </TrustCard>
+            </Sidebar>
+          </PageGrid>
 
-        <RelatedSection>
-          <h2>More Brands in {brand.category?.replace('_', ' ')}</h2>
-          <Link to={user?.role === 'creator' ? `/creator/dashboard/pr-brands?category=${brand.category}` : `/directory?category=${brand.category}`}>
-            <Button type="link">Browse All {brand.category?.replace('_', ' ')} Brands →</Button>
-          </Link>
-        </RelatedSection>
-      </Container>
-      
+          {/* More brands in category */}
+          {relatedBrands?.length > 0 && (
+            <MoreBrands>
+              <MoreBrandsTitle>More Brands in {brand.category?.replace('_', ' ')}</MoreBrandsTitle>
+              <MoreBrandsSub>Discover more brands open to creator collaborations</MoreBrandsSub>
+              <BrandChips>
+                {relatedBrands.map(b => (
+                  <BrandChip key={b.id} href={user?.role === 'creator' ? `/creator/dashboard/brand/${b.slug}` : `/brand/${b.slug}`}>
+                    <LiveDot />
+                    {b.name || b.brand_name}
+                  </BrandChip>
+                ))}
+              </BrandChips>
+              <BrowseLink href={user?.role === 'creator' ? `/creator/dashboard/pr-brands?category=${brand.category}` : `/directory?category=${brand.category}`}>
+                Browse all {brand.category?.replace('_', ' ')} brands →
+              </BrowseLink>
+            </MoreBrands>
+          )}
+        </PageInner>
+      </PageWrap>
+
       {/* AI Pitch Modal */}
       {showPitchModal && brand && (
         <AIPitchModal
@@ -533,20 +579,20 @@ const PublicBrandPage = () => {
           brand={{
             ...brand,
             brand_id: brand.id,
-            brand_name: brand.name,
+            brand_name: brand.brand_name || brand.name,
             logo_url: brand.logo,
-            slug: slug // Explicitly pass the slug from URL params
+            slug: slug
           }}
           onPitchSent={handlePitchSent}
         />
       )}
 
-      {/* Upgrade Modal - shown when quota exceeded */}
+      {/* Upgrade Modal */}
       {upgradeModalVisible && (
         <UpgradeModal
           isOpen={upgradeModalVisible}
           onClose={() => setUpgradeModalVisible(false)}
-          currentCount={pitchesSentThisWeek}
+          currentCount={pitchesSentThisMonth}
           limit={FREE_PITCH_LIMIT}
           feature="brand contacts"
         />
@@ -555,873 +601,726 @@ const PublicBrandPage = () => {
   );
 };
 
-// Styled Components
-const Container = styled.div`
+// ── STYLED COMPONENTS ───────────────────────────────────────────────
+
+const PageWrap = styled.div`
+  background: #F5F5F7;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 40px 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
 `;
 
-const Breadcrumb = styled.div`
-  max-width: 1200px;
-  margin: 0 auto 20px;
+const PageInner = styled.div`
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
 
-  a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 500;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  @media (max-width: 640px) { padding: 20px 16px 80px; }
 `;
 
-const Header = styled.div`
-  max-width: 1200px;
-  margin: 0 auto 40px;
+const BackLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8C8C8C;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: color 0.15s;
+  &:hover { color: #0F0F0F; }
+`;
+
+const BrandHeader = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 20px;
+  padding: 24px 28px;
   display: flex;
   align-items: center;
-  gap: 30px;
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  gap: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05), 0 1px 8px rgba(15,15,15,0.04);
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    text-align: center;
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    padding: 18px;
+    gap: 14px;
   }
 `;
 
-const BrandLogo = styled.div`
-  width: 120px;
-  height: 120px;
+const BrandLogoBox = styled.div`
+  width: 80px;
+  height: 80px;
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
   border-radius: 16px;
-  overflow: hidden;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e5e5e5;
+  overflow: hidden;
+  padding: 10px;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 8px;
-  }
+  @media (max-width: 640px) { width: 60px; height: 60px; border-radius: 12px; }
 `;
 
-const PlaceholderLogo = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-  font-weight: 700;
-  color: #667eea;
-  background: linear-gradient(135deg, #667eea22, #764ba222);
-`;
-
-const BrandTitle = styled.div`
+const BrandHeaderInfo = styled.div`
   flex: 1;
-
-  h1 {
-    font-size: 36px;
-    margin-bottom: 12px;
-
-    @media (max-width: 768px) {
-      font-size: 28px;
-    }
-  }
+  min-width: 0;
 `;
 
-const StarBadge = styled.span`
-  display: inline-block;
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #333;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  margin-right: 12px;
+const BrandName = styled.h1`
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 10px 0;
+  color: #0F0F0F;
+
+  @media (max-width: 640px) { font-size: 22px; }
 `;
 
-const CategoryTag = styled.span`
-  display: inline-block;
-  background: #667eea;
-  color: white;
-  padding: 6px 16px;
-  border-radius: 20px;
+const BrandMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 100px;
   font-size: 12px;
-  text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-right: 16px;
+`;
+
+const FeaturedBadge = styled(Badge)`
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  color: #78350F;
+  box-shadow: 0 2px 6px rgba(251,191,36,0.25);
+`;
+
+const CategoryBadge = styled(Badge)`
+  background: #F4F4F4;
+  color: #4B4B4B;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 11px;
 `;
 
 const WebsiteLink = styled.a`
-  display: inline-block;
-  margin-top: 16px;
-  color: #667eea;
-  text-decoration: none;
+  color: #8C8C8C;
+  font-size: 13px;
   font-weight: 500;
-  margin-left: 8px;
+  text-decoration: none;
+  transition: color 0.15s;
+  &:hover { color: #0F0F0F; }
+`;
 
-  &:hover {
-    text-decoration: underline;
+const BrandHeaderRight = styled.div`
+  flex-shrink: 0;
+  @media (max-width: 640px) { width: 100%; }
+`;
+
+const PRStatusPill = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  background: ${p => p.$open ? '#ECFDF5' : '#FEF2F2'};
+  color: ${p => p.$open ? '#059669' : '#DC2626'};
+  border: 1px solid ${p => p.$open ? '#A7F3D0' : '#FECACA'};
+`;
+
+const StatusDot = styled.span`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: ${p => p.$open ? 'pulse 2s infinite' : 'none'};
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
   }
 `;
 
-const Content = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
+const PageGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 30px;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  align-items: start;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 860px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const MainColumn = styled.div`
+const MainCol = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 `;
 
 const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
+  position: sticky;
+  top: 20px;
+
+  @media (max-width: 860px) {
+    position: static;
+    order: -1;
+  }
 `;
 
-const Section = styled.div`
-  background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+const Card = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05), 0 1px 8px rgba(15,15,15,0.04);
 `;
 
-const PitchStatsBanner = styled.div`
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  border: 1px solid #fbbf24;
+const CardTitle = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.2px;
+  color: #0F0F0F;
+`;
+
+const SocialProof = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 14px;
   padding: 14px 20px;
-  border-radius: 12px;
-  font-size: 14px;
-  color: #92400e;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05);
 `;
 
-const SectionTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 20px;
-`;
-
-const Description = styled.p`
-  font-size: 16px;
-  line-height: 1.7;
-  color: #444;
-`;
-
-const RequirementsGrid = styled.div`
+const SocialProofIcon = styled.div`
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
   display: grid;
-  gap: 16px;
+  place-items: center;
+  flex-shrink: 0;
+  color: #059669;
 `;
 
-const Requirement = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 12px;
-`;
-
-const RequirementIcon = styled.div`
-  font-size: 28px;
-`;
-
-const RequirementLabel = styled.div`
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-`;
-
-const RequirementValue = styled.div`
-  font-size: 16px;
-  color: #333;
-  font-weight: 500;
-`;
-
-const RequirementsExplanation = styled.div`
-  margin-top: 32px;
-  padding-top: 32px;
-  border-top: 2px solid #f0f0f0;
-
-  h4 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 12px;
-    margin-top: 24px;
-
-    &:first-child {
-      margin-top: 0;
-    }
-  }
-
-  p {
-    font-size: 15px;
-    line-height: 1.7;
-    color: #555;
-    margin-bottom: 16px;
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 16px 0;
-
-    li {
-      padding: 12px 16px;
-      background: #f9fafb;
-      border-left: 3px solid #667eea;
-      margin-bottom: 10px;
-      font-size: 15px;
-      line-height: 1.6;
-      color: #555;
-
-      strong {
-        color: #333;
-        display: inline-block;
-        margin-right: 6px;
-      }
-    }
-  }
+const SocialProofText = styled.div`
+  font-size: 13px;
+  color: #4B4B4B;
+  strong { color: #0F0F0F; font-weight: 700; }
+  .green { color: #059669; font-weight: 700; }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 `;
 
 const StatCard = styled.div`
+  background: #F4F4F4;
+  border-radius: 14px;
+  padding: 18px 16px;
   text-align: center;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 12px;
-  color: white;
 `;
 
 const StatValue = styled.div`
   font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+  color: ${p => p.$green ? '#059669' : '#0F0F0F'};
 `;
 
 const StatLabel = styled.div`
-  font-size: 13px;
-  opacity: 0.9;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8C8C8C;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 `;
 
-const SocialLinks = styled.div`
+const StatSub = styled.div`
+  font-size: 11px;
+  color: #8C8C8C;
+  margin-top: 3px;
+`;
+
+const RequirementsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
 `;
 
-const SocialLink = styled.a`
-  display: inline-block;
-  padding: 12px 16px;
-  background: #f9fafb;
+const RequirementRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+`;
+
+const ReqIcon = styled.div`
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
-  color: #333;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #667eea;
-    color: white;
-  }
+  background: #F4F4F4;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #4B4B4B;
 `;
 
-const CTABox = styled.div`
-  background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
-  position: sticky;
-  top: 20px;
-
-  h3 {
-    font-size: 22px;
-    margin-bottom: 12px;
-  }
-
-  p {
-    color: #666;
-    margin-bottom: 24px;
-  }
+const ReqLabel = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F0F0F;
 `;
 
-const LockIcon = styled.div`
-  font-size: 48px;
-  color: #667eea;
-  margin-bottom: 16px;
+const ReqValue = styled.div`
+  font-size: 12.5px;
+  color: #8C8C8C;
+  margin-top: 2px;
 `;
 
-const PitchIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 16px;
+const SocialList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
-const CTADescription = styled.p`
-  font-size: 14px;
-  color: #6B7280;
-  margin-bottom: 20px;
-  line-height: 1.5;
-`;
-
-const MaskedEmailTeaser = styled.div`
+const SocialRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  background: #f8fafc;
-  border: 1px dashed #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 14px;
-  color: #64748b;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #F4F4F4;
+  border-radius: 10px;
 `;
 
-const PitchButton = styled.button`
-  width: 100%;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
+const SocialIconBox = styled.div`
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #E8E8E8;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #4B4B4B;
+`;
+
+const SocialHandle = styled.span`
+  font-size: 13px;
   font-weight: 600;
+  color: #0F0F0F;
+  flex: 1;
+`;
+
+const SocialFollowers = styled.span`
+  font-size: 12px;
+  color: #8C8C8C;
+`;
+
+const ActivityRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F4F4F4;
+  &:last-child { border-bottom: none; padding-bottom: 0; }
+`;
+
+const ActivityAvatar = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: ${p => p.$color || '#0F0F0F'};
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 11px;
+  flex-shrink: 0;
+`;
+
+const ActivityText = styled.div`
+  font-size: 12.5px;
+  color: #4B4B4B;
+  flex: 1;
+  strong { color: #0F0F0F; font-weight: 600; }
+  .got-response { color: #059669; font-weight: 600; }
+`;
+
+const ActivityTime = styled.div`
+  font-size: 11px;
+  color: #8C8C8C;
+`;
+
+// CTA Card
+const CtaCard = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(15,15,15,0.06), 0 1px 3px rgba(15,15,15,0.04);
+`;
+
+const CtaTop = styled.div`
+  padding: 22px 22px 0;
+`;
+
+const CtaBrandRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+`;
+
+const CtaBrandLogo = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 5px;
+  flex-shrink: 0;
+`;
+
+const CtaBrandName = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F0F0F;
+`;
+
+const CtaBrandSub = styled.div`
+  font-size: 12px;
+  color: #8C8C8C;
+  margin-top: 2px;
+`;
+
+const EmailTeaser = styled.div`
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const EmailTeaserIcon = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #E8E8E8;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #4B4B4B;
+`;
+
+const EmailTextWrap = styled.div`
+  flex: 1;
+  overflow: hidden;
+`;
+
+const EmailLabel = styled.div`
+  font-size: 10px;
+  color: #8C8C8C;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+`;
+
+const EmailBlurred = styled.div`
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0F0F0F;
+  filter: blur(4px);
+  user-select: none;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+`;
+
+const EmailUnlockBadge = styled.span`
+  background: #FFF1F3;
+  color: #E11D48;
+  border: 1px solid #FECDD3;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  flex-shrink: 0;
+  white-space: nowrap;
+`;
+
+const QuickStats = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+`;
+
+const QuickStat = styled.div`
+  background: #F4F4F4;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+`;
+
+const QuickStatVal = styled.div`
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: ${p => p.$green ? '#059669' : '#0F0F0F'};
+`;
+
+const QuickStatLbl = styled.div`
+  font-size: 10.5px;
+  color: #8C8C8C;
+  margin-top: 2px;
+  text-transform: uppercase;
   letter-spacing: 0.3px;
-  cursor: pointer;
+  font-weight: 600;
+`;
+
+const CtaBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #E11D48, #7C3AED);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(225,29,72,0.25);
+  margin-bottom: 14px;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(225,29,72,0.35);
   }
 `;
 
-const PitchLimitInfo = styled.div`
-  margin-top: 12px;
-  padding: 10px 16px;
-  background: ${props => props.$isPro ? '#EFF6FF' : (props.$hasQuota ? '#FEF3C7' : '#FEE2E2')};
-  border: 1px solid ${props => props.$isPro ? '#BFDBFE' : (props.$hasQuota ? '#FDE68A' : '#FECACA')};
-  border-radius: 10px;
-  font-size: 13px;
-  color: ${props => props.$isPro ? '#1E40AF' : (props.$hasQuota ? '#92400E' : '#DC2626')};
+const CtaBtnContacted = styled(CtaBtn)`
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+  box-shadow: none;
+  cursor: default;
+  &:hover { transform: none; box-shadow: none; }
+`;
+
+const CtaBtnContact = styled(CtaBtn)`
+  background: #0F0F0F;
+  box-shadow: none;
+  &:hover { background: #1C1C1C; box-shadow: none; }
+`;
+
+const CtaHint = styled.div`
   text-align: center;
-  font-weight: 500;
+  font-size: 11.5px;
+  color: #8C8C8C;
+  margin-bottom: 20px;
+  a { color: #E11D48; font-weight: 600; text-decoration: none; }
 `;
 
 const SaveButton = styled.button`
   width: 100%;
-  margin-top: 12px;
-  padding: 12px 20px;
-  background: ${props => props.disabled ? '#F0FDF4' : '#F9FAFB'};
-  color: ${props => props.disabled ? '#15803D' : '#374151'};
-  border: ${props => props.disabled ? '2px solid #BBF7D0' : '1px solid #E5E7EB'};
+  padding: 12px;
+  background: ${p => p.disabled ? '#ECFDF5' : 'transparent'};
+  color: ${p => p.disabled ? '#059669' : '#4B4B4B'};
+  border: 1px solid ${p => p.disabled ? '#A7F3D0' : '#E8E8E8'};
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  cursor: ${props => props.disabled ? 'default' : 'pointer'};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
+  cursor: ${p => p.disabled ? 'default' : 'pointer'};
+  font-family: inherit;
+  transition: all 0.15s;
+  margin-bottom: 16px;
 
   &:hover:not(:disabled) {
-    background: #F3F4F6;
+    background: #F4F4F4;
+    border-color: #D4D4D4;
   }
 `;
 
-const ApplicationLinkBox = styled.div`
-  margin-top: 16px;
-  padding: 14px 16px;
-  background: #F0FDF4;
-  border: 2px solid #BBF7D0;
-  border-radius: 12px;
+const CtaDivider = styled.hr`
+  border: none;
+  border-top: 1px solid #E8E8E8;
+  margin: 0 -22px 18px;
+`;
+
+const CtaBottom = styled.div`
+  padding: 0 22px 22px;
+`;
+
+const ValueProps = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
 `;
 
-const ApplicationLinkTitle = styled.div`
-  font-weight: 600;
-  font-size: 14px;
-  color: #15803D;
+const ValueProp = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 `;
 
-const ApplicationLinkSubtitle = styled.div`
-  font-size: 12px;
-  color: #6B7280;
+const VPIcon = styled.div`
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #059669;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+`;
+
+const VPTitle = styled.div`
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0F0F0F;
+`;
+
+const VPSub = styled.div`
+  font-size: 11.5px;
+  color: #8C8C8C;
   margin-top: 2px;
 `;
 
-const ApplicationLinkButton = styled.button`
-  background: #10B981;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+const TrustCard = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+`;
+
+const TrustList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const TrustRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4B4B4B;
+`;
+
+const TrustCheck = styled.div`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #059669;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+`;
+
+const MoreBrands = styled.div`
+  background: #FFFFFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-align: center;
+  margin-top: 20px;
+  box-shadow: 0 1px 3px rgba(15,15,15,0.05);
+`;
+
+const MoreBrandsTitle = styled.h2`
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+  color: #0F0F0F;
+`;
+
+const MoreBrandsSub = styled.p`
+  font-size: 13px;
+  color: #8C8C8C;
+  margin: 0 0 20px 0;
+`;
+
+const BrandChips = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+`;
+
+const BrandChip = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: #F4F4F4;
+  border: 1px solid #E8E8E8;
+  border-radius: 100px;
   font-size: 13px;
   font-weight: 600;
-  white-space: nowrap;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #059669;
-  }
-`;
-
-const FeatureList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin-top: 20px;
-  text-align: left;
-
-  li {
-    padding: 8px 0;
-    color: #666;
-    font-size: 14px;
-  }
-`;
-
-const UnlockOptions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
-`;
-
-const UnlockOption = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: ${props => props.$unlocked ? '#f0fdf4' : (props.$disabled ? '#f5f5f5' : '#f9fafb')};
-  border: 2px solid ${props => props.$unlocked ? '#52c41a' : (props.$disabled ? '#ddd' : '#667eea')};
-  border-radius: 12px;
-  text-align: left;
-  opacity: ${props => props.$disabled ? 0.6 : 1};
-
-  div {
-    flex: 1;
-
-    strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    span {
-      font-size: 13px;
-      color: #666;
-    }
-  }
-`;
-
-const UnlockedBadge = styled.span`
-  background: #52c41a;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-`;
-
-const UnlockActions = styled.div`
-  margin-top: 20px;
-`;
-
-const UpgradeButton = styled(Button)`
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #f5f5f5 !important;
-  border-color: #ddd !important;
-  color: #666 !important;
-
-  &:hover {
-    background: #eee !important;
-    border-color: #ccc !important;
-  }
-`;
-
-const UpgradeTag = styled.span`
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #333;
-  padding: 2px 8px;
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  margin-left: 8px;
-`;
-
-const UnlockedAccess = styled.div`
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-`;
-
-const FreeBadge = styled.span`
-  background: #52c41a;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-`;
-
-const ProBadge = styled.span`
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #333;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-`;
-
-const LockedBadge = styled.span`
-  background: #ddd;
-  color: #666;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-`;
-
-const UpgradePrompt = styled.div`
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #eee;
-
-  p {
-    font-size: 14px;
-    margin-bottom: 8px;
-  }
-`;
-
-const UnlockedSection = styled.div`
-  background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-
-  h3 {
-    color: #52c41a;
-    margin-bottom: 24px;
-  }
-`;
-
-const AccessItem = styled.div`
-  margin-bottom: 24px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  button {
-    margin-top: 8px;
-  }
-`;
-
-const TrustSignals = styled.div`
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-`;
-
-const TrustItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  font-size: 14px;
-  color: #666;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid #eee;
-  }
-`;
-
-const RelatedSection = styled.div`
-  max-width: 1200px;
-  margin: 60px auto 0;
-  text-align: center;
-  padding: 40px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-
-  h2 {
-    font-size: 24px;
-    margin-bottom: 16px;
-  }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-`;
-
-// Direct Answer Box Styles
-const DirectAnswerBox = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 32px;
-  border-radius: 16px;
-  margin-bottom: 32px;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
-`;
-
-const DirectAnswerTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: white;
-`;
-
-const DirectAnswerContent = styled.div`
-  font-size: 16px;
-  line-height: 1.6;
-
-  p {
-    margin: 16px 0;
-    color: rgba(255, 255, 255, 0.95);
-  }
-
-  strong {
-    font-weight: 600;
-  }
-`;
-
-const StatusBadge = styled.span`
-  display: inline-block;
-  padding: 8px 16px;
-  background: ${props => props.accepting ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)'};
-  border: 2px solid ${props => props.accepting ? '#4CAF50' : '#FF9800'};
-  border-radius: 24px;
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 12px;
-`;
-
-const DirectLink = styled.div`
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-
-  a {
-    color: white;
-    text-decoration: underline;
-    font-weight: 600;
-
-    &:hover {
-      opacity: 0.8;
-    }
-  }
-
-  button {
-    background: white;
-    color: #667eea;
-    font-weight: 600;
-    border: none;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.9);
-    }
-  }
-`;
-
-// FAQ Section Styles
-const FAQSection = styled.div`
-  max-width: 1200px;
-  margin: 60px auto;
-  background: white;
-  padding: 48px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-`;
-
-const FAQTitle = styled.h2`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 32px;
-  text-align: center;
-`;
-
-const FAQList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-`;
-
-const FAQItem = styled.div`
-  padding: 24px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border-left: 4px solid #667eea;
-`;
-
-const FAQQuestion = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-`;
-
-const FAQAnswer = styled.p`
-  font-size: 15px;
-  line-height: 1.6;
-  color: #666;
-  margin: 0;
-`;
-
-// Similar Brands Section Styles
-const SimilarBrandsSection = styled.div`
-  max-width: 1200px;
-  margin: 60px auto;
-  background: white;
-  padding: 48px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-`;
-
-const SimilarBrandsTitle = styled.h2`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 32px;
-  text-align: center;
-`;
-
-const SimilarBrandsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 24px;
-  margin-bottom: 24px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 16px;
-  }
-`;
-
-const SimilarBrandCard = styled(Link)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 16px;
-  background: #f9fafb;
-  border-radius: 12px;
+  color: #0F0F0F;
   text-decoration: none;
-  transition: all 0.3s;
-  border: 2px solid transparent;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
-    border-color: #667eea;
-  }
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover { background: white; border-color: #D4D4D4; }
 `;
 
-const SimilarBrandLogo = styled.img`
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 12px;
-  border-radius: 8px;
+const LiveDot = styled.span`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #059669;
+  flex-shrink: 0;
 `;
 
-const SimilarBrandPlaceholder = styled.div`
-  width: 80px;
-  height: 80px;
-  display: flex;
+const BrowseLink = styled.a`
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 32px;
+  gap: 5px;
+  color: #E11D48;
+  font-size: 13.5px;
   font-weight: 700;
-  color: #667eea;
-  background: linear-gradient(135deg, #667eea22, #764ba222);
-  border-radius: 8px;
-  margin-bottom: 12px;
-`;
-
-const SimilarBrandName = styled.div`
-  font-size: 15px;
-  font-weight: 600;
-  color: #333;
-  text-align: center;
-  margin-bottom: 4px;
-`;
-
-const SimilarBrandFollowers = styled.div`
-  font-size: 12px;
-  color: #999;
-  text-align: center;
-`;
-
-const SimilarBrandsFooter = styled.div`
-  text-align: center;
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #eee;
-
-  em {
-    color: #999;
-    font-size: 14px;
-  }
+  text-decoration: none;
+  &:hover { color: #BE123C; }
 `;
 
 export default PublicBrandPage;

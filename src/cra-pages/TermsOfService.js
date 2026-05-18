@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Typography } from 'antd';
-import { Helmet } from 'react-helmet-async';
 
 const { Title, Paragraph } = Typography;
 
@@ -18,13 +17,7 @@ const Section = styled.section`
 
 const TermsOfService = () => {
   return (
-    <>
-      <Helmet>
-        <title>Terms of Service | Newcollab</title>
-        <meta name="description" content="Newcollab's terms of service - Learn about the rules and guidelines for using our creator-brand collaboration platform." />
-      </Helmet>
-
-      <Container>
+    <Container>
         <Title level={1}>Terms of Service</Title>
         <Paragraph>Last updated: {new Date().toLocaleDateString()}</Paragraph>
 
@@ -147,8 +140,7 @@ const TermsOfService = () => {
             Email: team@newcollab.co
           </Paragraph>
         </Section>
-      </Container>
-    </>
+    </Container>
   );
 };
 

@@ -466,6 +466,7 @@ function AppContent() {
                 <Route path='dashboard/pr-offers' element={<PROffers />} />
                 <Route path='dashboard/media-kit' element={<MediaKit />} />
                 <Route path='dashboard/settings' element={<AccountSettings />} />
+                <Route path='dashboard/brand/:slug' element={<PublicBrandPage />} />
                 <Route path='first-ad-slot' element={<FirstAdSlot />} />
                 <Route path='first-ad-slot/success' element={<FirstAdSlotSuccess />} />
                 {/* The profile/:id route is now handled by the wrapper */}
