@@ -975,12 +975,12 @@ const BrandLogo = styled.div`
   justify-content: center;
   margin-bottom: 14px;
   overflow: hidden;
-  padding: 16px 24px;
+  position: relative;
 `;
 
 const LogoImg = styled.img`
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 65%;
+  max-height: 60%;
   width: auto;
   height: auto;
   object-fit: contain;
