@@ -212,7 +212,7 @@ const PublicDirectory = () => {
                         alt={brand.name}
                         onError={(e) => {
                           e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222);">${brand.name.charAt(0)}</div>`;
+                          e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: #0F0F0F; background: #FAFAFA;">${brand.name.charAt(0)}</div>`;
                         }}
                       />
                     ) : (
@@ -289,36 +289,44 @@ const PublicDirectory = () => {
 
 const Container = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #FAFAFA;
 `;
 
 const Hero = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 80px 20px;
+  background: white;
+  border-bottom: 1px solid #E5E5E5;
+  padding: 140px 24px 48px;
   text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 110px 20px 40px;
+  }
 `;
 
 const HeroContent = styled.div`
-  max-width: 800px;
+  max-width: 720px;
   margin: 0 auto;
 
   h1 {
-    font-size: 48px;
-    font-weight: 700;
-    margin-bottom: 20px;
+    font-size: 38px;
+    font-weight: 800;
+    margin-bottom: 14px;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    color: #0F0F0F;
 
     @media (max-width: 768px) {
-      font-size: 32px;
+      font-size: 28px;
     }
   }
 
   p {
-    font-size: 20px;
-    opacity: 0.9;
+    font-size: 16px;
+    color: #6B6B6B;
+    line-height: 1.6;
 
     @media (max-width: 768px) {
-      font-size: 16px;
+      font-size: 15px;
     }
   }
 `;
@@ -330,22 +338,22 @@ const FiltersSection = styled.div`
 `;
 
 const SearchBar = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 
   .ant-input-affix-wrapper {
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    border: 1px solid #E5E5E5;
   }
 `;
 
 const FilterRow = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  gap: 12px;
   background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #E5E5E5;
 `;
 
 const FilterItem = styled.div`
@@ -400,31 +408,34 @@ const BrandGrid = styled.div`
 
 const BrandCard = styled(Link)`
   background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
+  border: 1px solid #E5E5E5;
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.2s ease;
   text-decoration: none;
   color: inherit;
   position: relative;
   overflow: hidden;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+    border-color: #D4D4D4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
 `;
 
 const FeaturedBadge = styled.span`
   position: absolute;
-  top: 12px;
-  right: 12px;
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #333;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  top: 14px;
+  right: 14px;
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 `;
 
 const BrandLogo = styled.div`
@@ -452,9 +463,9 @@ const PlaceholderLogo = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 32px;
-  font-weight: 700;
-  color: #667eea;
-  background: linear-gradient(135deg, #667eea22, #764ba222);
+  font-weight: 900;
+  color: #0F0F0F;
+  background: #FAFAFA;
 `;
 
 const BrandInfo = styled.div`
@@ -469,11 +480,11 @@ const BrandName = styled.h3`
 `;
 
 const BrandCategory = styled.div`
-  font-size: 12px;
-  color: #667eea;
+  font-size: 11px;
+  color: #6B6B6B;
   text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   margin-bottom: 12px;
 `;
 
@@ -509,13 +520,19 @@ const StatItem = styled.div`
 `;
 
 const ApplyButton = styled.div`
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #0F0F0F;
   color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 600;
   text-align: center;
   margin-top: 16px;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #262626;
+  }
 `;
 
 const EmptyState = styled.div`

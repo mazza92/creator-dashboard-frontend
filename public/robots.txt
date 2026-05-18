@@ -2,17 +2,22 @@
 User-agent: *
 Allow: /
 
-# Block URL parameters (tracking refs, search queries)
-Disallow: /*?ref=
-Disallow: /*?search=
+# Block URL parameters (tracking refs, search queries, source)
+Disallow: /*?ref=*
+Disallow: /*?search=*
+Disallow: /*?source=*
 Disallow: /blog?search=*
 
-# Block RSS/XML feeds from indexing
+# Block RSS feed from indexing (but NOT sitemaps)
 Disallow: /blog/rss.xml
-Disallow: *.xml$
 
 # Block missions pages (temporary/dynamic content)
 Disallow: /missions/
+
+# Block deprecated/orphaned pages
+Disallow: /ressources
+Disallow: /f50
+Disallow: /brands/send-pr-packages
 
 # Allow AI Search Crawlers
 User-agent: ChatGPT-User

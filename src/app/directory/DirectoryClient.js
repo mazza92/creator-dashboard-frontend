@@ -15,55 +15,65 @@ const API_BASE =
     : 'https://api.newcollab.co');
 
 const Page = styled.div`
-  background: #fafafa;
+  background: #FAFAFA;
   min-height: 100vh;
 `;
 
 const Hero = styled.div`
-  padding: 120px 24px 44px;
-  background: linear-gradient(135deg, #3b82f6 0%, #ec4899 100%);
-  color: white;
+  padding: 140px 24px 48px;
+  background: white;
+  border-bottom: 1px solid #E5E5E5;
   text-align: center;
 
   h1 {
-    margin: 0 0 12px 0;
-    font-size: 40px;
+    margin: 0 0 14px 0;
+    font-size: 38px;
     line-height: 1.15;
     font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #0F0F0F;
   }
 
   p {
     margin: 0 auto;
-    max-width: 860px;
-    opacity: 0.95;
-    font-size: 18px;
+    max-width: 720px;
+    color: #6B6B6B;
+    font-size: 16px;
     line-height: 1.6;
+    font-weight: 400;
   }
 
   @media (max-width: 768px) {
-    padding: 104px 18px 38px;
-    h1 { font-size: 30px; }
-    p { font-size: 16px; }
+    padding: 110px 20px 40px;
+    h1 { font-size: 28px; }
+    p { font-size: 15px; }
   }
 `;
 
 const QuickLinks = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 18px;
+  margin-top: 24px;
 `;
 
 const QuickLink = styled(Link)`
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: white;
+  background: #F5F5F5;
+  border: 1px solid #E5E5E5;
+  color: #0F0F0F;
   text-decoration: none;
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 100px;
+  font-weight: 600;
   font-size: 13px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #0F0F0F;
+    border-color: #0F0F0F;
+    color: white;
+  }
 `;
 
 const Container = styled.div`
@@ -82,9 +92,9 @@ const Container = styled.div`
 
 const Filters = styled.div`
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #E5E5E5;
+  padding: 16px;
   display: grid;
   grid-template-columns: 1.3fr 1fr 1fr auto;
   gap: 12px;
@@ -92,28 +102,32 @@ const Filters = styled.div`
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
+
+  .ant-input-affix-wrapper, .ant-select-selector {
+    border-radius: 10px !important;
+    border-color: #E5E5E5 !important;
+  }
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 18px;
-  margin-top: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
 `;
 
 const Card = styled.div`
   background: white;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid #E5E5E5;
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+    border-color: #D4D4D4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
 `;
 
@@ -125,56 +139,57 @@ const CardLink = styled(Link)`
 `;
 
 const Logo = styled.div`
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E5E5;
   overflow: hidden;
-  background: #f3f4f6;
+  background: #FAFAFA;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 
   img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 65%;
+    height: 60%;
+    object-fit: contain;
+    mix-blend-mode: multiply;
   }
 `;
 
 const Name = styled.div`
-  font-weight: 800;
+  font-weight: 700;
   font-size: 16px;
   margin-bottom: 6px;
-  color: #111827;
+  color: #0F0F0F;
 `;
 
 const Desc = styled.div`
   font-size: 13px;
-  line-height: 1.55;
-  color: #6b7280;
+  line-height: 1.5;
+  color: #6B6B6B;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 60px;
+  min-height: 40px;
 `;
 
 const MetaRow = styled.div`
   margin-top: 12px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 `;
 
 const Meta = styled.span`
   font-size: 11px;
-  background: #f3f4f6;
-  color: #374151;
+  background: #F5F5F5;
+  color: #525252;
   padding: 4px 10px;
-  border-radius: 999px;
-  font-weight: 600;
+  border-radius: 100px;
+  font-weight: 500;
 `;
 
 const CardCTA = styled.a`
@@ -182,19 +197,18 @@ const CardCTA = styled.a`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: #0F0F0F;
   color: white;
-  padding: 10px 14px;
+  padding: 11px 16px;
   border-radius: 10px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.15s ease;
-  margin-top: 14px;
+  transition: all 0.2s ease;
+  margin-top: 16px;
 
   &:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-    transform: scale(1.02);
+    background: #262626;
     color: white;
   }
 
@@ -216,9 +230,8 @@ const OpenPRSection = styled.section`
   margin: 28px 0 32px;
   padding: 24px;
   background: white;
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  border: 1px solid #E5E5E5;
   position: relative;
   overflow: hidden;
 
@@ -228,8 +241,8 @@ const OpenPRSection = styled.section`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3b82f6 0%, #ec4899 100%);
+    height: 3px;
+    background: #E11D48;
   }
 
   @media (max-width: 768px) {
@@ -239,7 +252,7 @@ const OpenPRSection = styled.section`
 
   @media (max-width: 380px) {
     padding: 16px 12px;
-    border-radius: 16px;
+    border-radius: 14px;
   }
 `;
 
@@ -248,42 +261,42 @@ const OpenPRHeader = styled.div`
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 
   h2 {
     margin: 0;
-    font-size: 20px;
-    font-weight: 800;
-    color: #111827;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0F0F0F;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
   .badge {
-    background: linear-gradient(135deg, #3b82f6 0%, #ec4899 100%);
+    background: #E11D48;
     color: white;
     font-size: 10px;
     padding: 4px 10px;
-    border-radius: 999px;
-    font-weight: 700;
+    border-radius: 100px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
   }
 
   @media (max-width: 768px) {
-    h2 { font-size: 17px; }
+    h2 { font-size: 16px; }
     gap: 8px;
   }
 
   @media (max-width: 380px) {
-    h2 { font-size: 16px; }
+    h2 { font-size: 15px; }
   }
 `;
 
 const OpenPRSubtitle = styled.p`
   margin: 0 0 18px;
-  color: #6b7280;
+  color: #6B6B6B;
   font-size: 14px;
   line-height: 1.5;
 
@@ -310,24 +323,24 @@ const OpenPRGrid = styled.div`
 `;
 
 const OpenPRCard = styled.div`
-  background: white;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background: #FAFAFA;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #E5E5E5;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  gap: 12px;
+  transition: all 0.2s ease;
   min-width: 0;
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    border-color: #D4D4D4;
+    background: white;
   }
 
   @media (max-width: 480px) {
-    padding: 14px;
-    border-radius: 12px;
+    padding: 12px;
+    border-radius: 10px;
   }
 `;
 
@@ -343,16 +356,18 @@ const OpenPRLogo = styled.div`
   height: 40px;
   border-radius: 10px;
   overflow: hidden;
-  background: #f3f4f6;
+  background: white;
+  border: 1px solid #E5E5E5;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
   img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+    mix-blend-mode: multiply;
   }
 
   @media (max-width: 480px) {
@@ -367,9 +382,9 @@ const OpenPRInfo = styled.div`
   min-width: 0;
 
   .name {
-    font-weight: 700;
+    font-weight: 600;
     font-size: 14px;
-    color: #111827;
+    color: #0F0F0F;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -377,7 +392,7 @@ const OpenPRInfo = styled.div`
 
   .category {
     font-size: 12px;
-    color: #6b7280;
+    color: #6B6B6B;
   }
 
   @media (max-width: 480px) {
@@ -391,31 +406,30 @@ const ApplyButton = styled.a`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: #0F0F0F;
   color: white;
   padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 
   &:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-    transform: scale(1.02);
+    background: #262626;
     color: white;
   }
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
     flex-shrink: 0;
   }
 
   @media (max-width: 480px) {
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 9px 12px;
+    font-size: 11px;
   }
 `;
 
@@ -699,7 +713,7 @@ export default function DirectoryClient({
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={logoUrl} alt={brand.name} />
                           ) : (
-                            <span style={{ fontWeight: 900, color: '#16a34a' }}>
+                            <span style={{ fontWeight: 900, color: '#0F0F0F' }}>
                               {(brand.name || 'B').slice(0, 1)}
                             </span>
                           )}
@@ -737,7 +751,7 @@ export default function DirectoryClient({
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={brand.logo} alt={brand.name || 'Brand'} />
                         ) : (
-                          <span style={{ fontWeight: 900, color: '#3b82f6' }}>
+                          <span style={{ fontWeight: 900, color: '#0F0F0F' }}>
                             {(brand.name || 'B').slice(0, 1)}
                           </span>
                         )}

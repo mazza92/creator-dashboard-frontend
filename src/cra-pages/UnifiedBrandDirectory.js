@@ -412,7 +412,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   isExternal = true;
                 } else {
                   // Logged in + no form, no website: link to brand detail page
-                  applyUrl = `/creator/dashboard/brand/${brand.slug}`;
+                  applyUrl = isDashboardView ? `/creator/dashboard/brand/${brand.slug}` : `/brand/${brand.slug}`;
                   buttonText = 'View Details';
                   isExternal = false;
                 }
@@ -424,7 +424,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                         {logoUrl ? (
                           <img src={logoUrl} alt={brand.name} />
                         ) : (
-                          <span style={{ fontWeight: 900, color: '#16a34a' }}>
+                          <span style={{ fontWeight: 900, color: '#0F0F0F' }}>
                             {(brand.name || 'B').slice(0, 1)}
                           </span>
                         )}
@@ -471,10 +471,15 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
                 const pitchesLeft = FREE_PITCH_LIMIT - pitchesSentThisWeek;
 
+                // Use dashboard route for logged-in creators in dashboard, public route otherwise
+                const brandUrl = isDashboardView && user
+                  ? `/creator/dashboard/brand/${brand.slug}`
+                  : `/brand/${brand.slug}`;
+
                 return (
                   <BrandCard
                     key={brand.slug}
-                    to={`/creator/dashboard/brand/${brand.slug}`}
+                    to={brandUrl}
                   >
                     {brand.isFeatured && (
                       <FeaturedBadge>
@@ -1197,17 +1202,17 @@ const PaginationContainer = styled.div`
     }
 
     &:hover {
-      border-color: #3B82F6;
+      border-color: #0F0F0F;
 
       a {
-        color: #3B82F6;
+        color: #0F0F0F;
       }
     }
   }
 
   .ant-pagination-item-active {
-    background: linear-gradient(135deg, #3B82F6, #6366F1);
-    border-color: transparent;
+    background: #0F0F0F;
+    border-color: #0F0F0F;
 
     a {
       color: white !important;
@@ -1277,8 +1282,8 @@ const OpenPRSection = styled.section`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3b82f6 0%, #ec4899 100%);
+    height: 3px;
+    background: #E11D48;
   }
 
   @media (max-width: 768px) {
@@ -1317,14 +1322,14 @@ const OpenPRHeader = styled.div`
   }
 
   .badge {
-    background: ${tokens.success};
+    background: #E11D48;
     color: white;
     font-size: 10px;
     padding: 4px 10px;
     border-radius: ${tokens.radiusPill};
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
   }
 
   @media (max-width: 768px) {

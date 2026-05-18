@@ -61,6 +61,46 @@ function isLowQualitySlug(slug, brandName) {
   return false;
 }
 
+/**
+ * Check if brand has enough content to be worth indexing.
+ * Pages with thin content get noindex to prevent quality issues.
+ */
+function hasThinContent(brand) {
+  if (!brand) return true;
+
+  let contentScore = 0;
+
+  // Description is critical - must have meaningful content
+  if (brand.description && brand.description.length >= 100) {
+    contentScore += 40;
+  } else if (brand.description && brand.description.length >= 50) {
+    contentScore += 25;
+  } else if (brand.description) {
+    contentScore += 10;
+  }
+
+  // Category provides context
+  if (brand.category) contentScore += 15;
+
+  // Logo provides visual uniqueness
+  if (brand.logo) contentScore += 15;
+
+  // Requirements add unique data
+  const platforms = brand.platforms || [];
+  const regions = brand.regions || [];
+  const niches = brand.niches || [];
+  if (platforms.length > 0) contentScore += 5;
+  if (regions.length > 0) contentScore += 5;
+  if (niches.length > 0) contentScore += 5;
+  if (brand.minFollowers > 0) contentScore += 5;
+
+  // Application method adds value
+  if (brand.applicationMethod || brand.application_url) contentScore += 10;
+
+  // Threshold: below 40 is thin content
+  return contentScore < 40;
+}
+
 async function fetchBrand(slug, retries = 2) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -129,12 +169,13 @@ export async function generateMetadata({ params }) {
     `Apply to ${brand.name} PR list. ${brand.description ? brand.description.slice(0, 120) : `Get free products and collaborate with ${brand.name}.`}`;
 
   // Check if this is a low-quality page that shouldn't be indexed
-  const shouldNoIndex = isLowQualitySlug(slug, brand.name);
+  // Either bad slug pattern OR thin content triggers noindex
+  const shouldNoIndex = isLowQualitySlug(slug, brand.name) || hasThinContent(brand);
 
   return {
     title,
     description,
-    // Add noindex for low-quality brand pages
+    // Add noindex for low-quality or thin-content brand pages
     ...(shouldNoIndex && { robots: { index: false, follow: true } }),
     alternates: { canonical: `https://newcollab.co/brand/${brand.slug}` },
     openGraph: {
