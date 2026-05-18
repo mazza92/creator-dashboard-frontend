@@ -1,5 +1,11 @@
 // Auto-generated post index — do not edit manually
 export const posts = [
+  "wellness-brands-for-creator-collaborations-2026",
+  "home-decor-brands-looking-for-influencers-2026",
+  "pet-brands-sending-pr-packages-2026",
+  "how-to-create-content-ideas-brands-bid-on-newcollab-2026",
+  "travel-brands-working-with-micro-influencers-2026",
+  "how-to-get-brand-deals-youtube-shorts-2026",
   "kids-and-parenting-brand-deals-2026",
   "whitelisting-influencer-content-2026",
   "ai-tools-for-creator-brand-deals-2026",
