@@ -484,17 +484,20 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
                     <BrandLogo>
                       {brand.logo ? (
-                        <img
+                        <LogoImg
                           src={brand.logo}
                           alt={brand.name}
                           onError={(e) => {
+                            e.target.onerror = null;
                             e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #667eea; background: linear-gradient(135deg, #667eea22, #764ba222); border-radius: 12px;">${brand.name.charAt(0)}</div>`;
+                            const placeholder = e.target.parentElement.querySelector('[data-placeholder]');
+                            if (placeholder) placeholder.style.display = 'flex';
                           }}
                         />
-                      ) : (
-                        <LogoPlaceholder>{brand.name.charAt(0)}</LogoPlaceholder>
-                      )}
+                      ) : null}
+                      <LogoPlaceholder data-placeholder style={{ display: brand.logo ? 'none' : 'flex' }}>
+                        {brand.name.charAt(0)}
+                      </LogoPlaceholder>
                     </BrandLogo>
 
                     <BrandInfo>
@@ -964,20 +967,26 @@ const SaveActionButton = styled.button`
 const BrandLogo = styled.div`
   width: 100%;
   aspect-ratio: 2.2 / 1;
-  background: ${tokens.bg};
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 16px;
+  background: #FFFFFF;
+  border: 1px solid #F0F0F0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
   overflow: hidden;
-  border: 1px solid ${tokens.border};
+  padding: 16px 24px;
+`;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 12px;
-  }
+const LogoImg = styled.img`
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  image-rendering: -webkit-optimize-contrast;
+  mix-blend-mode: multiply;
 `;
 
 const LogoPlaceholder = styled.div`
