@@ -29,6 +29,9 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [outreachStartedMethod, setOutreachStartedMethod] = useState(null); // email | form
   const MAX_REGENERATES = 3; // Limit regenerations to save API credits
 
+  // Check if this is a follow-up pitch
+  const isFollowup = brand?.isFollowup || false;
+
   // Fetch creator profile and generate pitch when modal opens
   useEffect(() => {
     if (isOpen && brand) {
@@ -145,12 +148,14 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
       // Try AI endpoint first - send both brand_id and slug as fallback
       const response = await api.post('/api/pr-crm/generate-pitch', {
         brand_id: brand.brand_id || brand.id,
-        slug: brand.slug
+        slug: brand.slug,
+        is_followup: isFollowup
       });
       console.log('[AIPitchModal] Generate pitch response:', {
         brand_email: response.data.brand_email,
         application_form_url: response.data.application_form_url,
-        brand_name: response.data.brand_name
+        brand_name: response.data.brand_name,
+        is_followup: isFollowup
       });
       // Append media kit link to the pitch body
       const pitchWithMediaKit = appendMediaKitLink({ ...response.data });
@@ -167,7 +172,9 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
     } catch (error) {
       console.error('[AIPitchModal] Generate pitch error:', error);
       // AI endpoint not ready - use the Golden Template with real data
-      const fallbackPitch = generateGoldenTemplate(brand, profile);
+      const fallbackPitch = isFollowup
+        ? generateFollowupTemplate(brand, profile)
+        : generateGoldenTemplate(brand, profile);
       setPitch(fallbackPitch);
       return fallbackPitch;
     }
@@ -227,6 +234,56 @@ ${creatorName}`;
         niche: niche,
         platform: platform
       }
+    };
+  };
+
+  /**
+   * Follow-up Template - For when the initial pitch hasn't received a response
+   * Shorter, friendlier, with a clear CTA
+   */
+  const generateFollowupTemplate = (brand, profile) => {
+    const creatorName = profile?.username || profile?.name || '';
+    const followers = formatFollowers(profile?.followers_count);
+    const niche = getNiche(profile);
+    const platform = getPrimaryPlatform(profile);
+    const creatorId = profile?.id || profile?.creator_id;
+
+    // Calculate days since pitched (from brand data if available)
+    const daysSince = brand?.days_since_pitched || 7;
+
+    // Build follow-up subject - reference the original email
+    const subject = `Following up - PR collab with ${brand.brand_name}`;
+
+    // Different follow-up openers
+    const openers = [
+      `Just wanted to bump this to the top of your inbox - I reached out about a week ago about a potential collab.`,
+      `Following up on my email from last week about working together.`,
+      `Hi! Wanted to check in on my collab inquiry from ${daysSince} days ago.`,
+      `Quick follow-up on my previous message - wanted to make sure it didn't get lost.`,
+    ];
+    const opener = openers[Math.floor(Math.random() * openers.length)];
+
+    const body = `Hi there,
+
+${opener}
+
+I'm still interested in creating content around ${brand.brand_name} products for my ${followers || ''} ${platform} followers${niche ? ` in the ${niche.toLowerCase()} space` : ''}.
+
+${profile?.has_media_kit && profile?.media_kit_url ? `Here's my media kit for reference: ${profile.media_kit_url}\n` : ''}${creatorId ? `Profile: https://newcollab.co/c/${creatorId}\n` : ''}
+Happy to chat more if you're interested - just let me know!
+
+Thanks,
+${creatorName}`;
+
+    return {
+      subject,
+      body,
+      creator_stats: {
+        followers: followers,
+        niche: niche,
+        platform: platform
+      },
+      is_followup: true
     };
   };
 
@@ -319,7 +376,8 @@ ${creatorName}`;
   };
 
   const handleSendEmail = async () => {
-    if (!pitchLimits.canPitch) {
+    // Follow-ups don't consume pitch credits (Pro only feature)
+    if (!isFollowup && !pitchLimits.canPitch) {
       message.warning('You\'ve used all your free contacts this month. Upgrade to continue!');
       return;
     }
@@ -327,8 +385,12 @@ ${creatorName}`;
     setSending(true);
 
     try {
-      await trackPitchUsage();
-      setOutreachStartedMethod('email');
+      // Only track pitch usage for initial outreach, not follow-ups
+      if (!isFollowup) {
+        await trackPitchUsage();
+      }
+      const method = isFollowup ? 'followup' : 'email';
+      setOutreachStartedMethod(method);
 
       // Open email client
       window.location.href = buildMailtoUrl();
@@ -337,7 +399,7 @@ ${creatorName}`;
 
       // Close modal after short delay (handleClose notifies parent)
       setTimeout(() => {
-        finishOutreach('email');
+        finishOutreach(method);
       }, 1000);
 
     } catch (error) {
@@ -480,8 +542,12 @@ ${creatorName}`;
                 )}
               </BrandLogo>
               <div>
-                <BrandName>Contact {brandName}</BrandName>
-                <BrandCategory>{brand.category}</BrandCategory>
+                <BrandName>{isFollowup ? `Follow up with ${brandName}` : `Contact ${brandName}`}</BrandName>
+                <BrandCategory>
+                  {isFollowup
+                    ? `${brand.days_since_pitched || 7}+ days since your pitch`
+                    : brand.category}
+                </BrandCategory>
               </div>
             </BrandInfo>
 
@@ -495,7 +561,7 @@ ${creatorName}`;
           {loading ? (
             <LoadingState>
               <Spin size="large" />
-              <LoadingText>Crafting your email...</LoadingText>
+              <LoadingText>{isFollowup ? 'Crafting your follow-up...' : 'Crafting your email...'}</LoadingText>
               <LoadingSubtext>Personalizing for {brandName}</LoadingSubtext>
             </LoadingState>
           ) : !pitchLimits.canPitch ? (
@@ -571,12 +637,13 @@ ${creatorName}`;
                     disabled={sending || !brandEmail}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    $isFollowup={isFollowup}
                   >
                     {sending ? (
                       <span>Opening Email...</span>
                     ) : (
                       <>
-                        <FiSend /> <span>Send Email to {brandName}</span>
+                        <FiSend /> <span>{isFollowup ? `Send Follow-up to ${brandName}` : `Send Email to ${brandName}`}</span>
                       </>
                     )}
                   </SendButton>
@@ -658,7 +725,9 @@ ${creatorName}`;
 
           {/* Footer tip */}
           <FooterTip>
-            💡 Personalized emails get 3x more responses than generic templates
+            💡 {isFollowup
+              ? 'Follow-ups double your reply rate - most brands just need a nudge!'
+              : 'Personalized emails get 3x more responses than generic templates'}
           </FooterTip>
         </Modal>
       </Overlay>
@@ -915,7 +984,9 @@ const Actions = styled.div`
 const SendButton = styled(motion.button)`
   width: 100%;
   padding: 16px 24px;
-  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
+  background: ${props => props.$isFollowup
+    ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #B45309 100%)'
+    : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%)'};
   color: white;
   border: none;
   border-radius: 12px;
@@ -928,7 +999,9 @@ const SendButton = styled(motion.button)`
   justify-content: center;
   gap: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+  box-shadow: ${props => props.$isFollowup
+    ? '0 4px 14px rgba(245, 158, 11, 0.25)'
+    : '0 4px 14px rgba(99, 102, 241, 0.25)'};
   position: relative;
   overflow: hidden;
 
@@ -939,7 +1012,9 @@ const SendButton = styled(motion.button)`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #818CF8 0%, #A78BFA 50%, #C084FC 100%);
+    background: ${props => props.$isFollowup
+      ? 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%)'
+      : 'linear-gradient(135deg, #818CF8 0%, #A78BFA 50%, #C084FC 100%)'};
     opacity: 0;
     transition: opacity 0.3s;
   }
@@ -952,7 +1027,9 @@ const SendButton = styled(motion.button)`
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+    box-shadow: ${props => props.$isFollowup
+      ? '0 8px 25px rgba(245, 158, 11, 0.35)'
+      : '0 8px 25px rgba(99, 102, 241, 0.35)'};
 
     &::before {
       opacity: 1;

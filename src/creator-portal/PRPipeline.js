@@ -65,6 +65,8 @@ const PRPipeline = () => {
   const [creatorUsername, setCreatorUsername] = useState('');
   const [editingNoteItem, setEditingNoteItem] = useState(null);
   const [noteText, setNoteText] = useState('');
+  const [receivingItem, setReceivingItem] = useState(null); // Track package value input
+  const [packageValue, setPackageValue] = useState('');
 
   // Fetch pipeline data on mount
   useEffect(() => {
@@ -164,16 +166,36 @@ const PRPipeline = () => {
       'saved': ['saved']
     };
     const stages = stageMap[activeFilter] || [activeFilter];
-    return items.filter(i => stages.includes(i.pipeline_stage));
+    let filtered = items.filter(i => stages.includes(i.pipeline_stage));
+
+    // For saved filter, sort by not-yet-contacted brands first (ready to pitch)
+    if (activeFilter === 'saved') {
+      filtered = [...filtered].sort((a, b) => {
+        // Explicit boolean conversion for reliable comparison
+        const aContacted = Boolean(a.send_confirmed) || Boolean(a.pitched_at);
+        const bContacted = Boolean(b.send_confirmed) || Boolean(b.pitched_at);
+        // Not contacted brands should appear first
+        if (!aContacted && bContacted) return -1;
+        if (aContacted && !bContacted) return 1;
+        // Then by saved date (newest first)
+        return new Date(b.saved_at || 0) - new Date(a.saved_at || 0);
+      });
+    }
+    return filtered;
   }, [items, activeFilter]);
 
-  // Nudge items: overdue follow-ups
+  // Nudge items: overdue follow-ups (7+ days since last contact)
   const nudgeItems = useMemo(() => {
-    return items.filter(i =>
-      (i.pipeline_stage === 'waiting' || i.pipeline_stage === 'pitched') &&
-      i.days_since_pitched >= 7 &&
-      (i.send_confirmed || i.pitched_at)
-    );
+    return items.filter(i => {
+      const stage = i.pipeline_stage;
+      // For follow-up stage, check days since follow-up; otherwise check days since pitch
+      if (stage === 'followup') {
+        return i.days_since_followup >= 7;
+      }
+      return (stage === 'waiting' || stage === 'pitched') &&
+        i.days_since_pitched >= 7 &&
+        (i.send_confirmed || i.pitched_at);
+    });
   }, [items]);
 
   // Count items by stage
@@ -213,6 +235,18 @@ const PRPipeline = () => {
   };
 
   const getConfirmationCopy = (method = 'email') => {
+    if (method === 'followup') {
+      return {
+        icon: '🔄',
+        title: 'Did you send the follow-up?',
+        subtitle: "Nice work staying on top of it! Confirm you sent it so we can track your progress.",
+        confirmLabel: '✓ Yes, I sent the follow-up',
+        laterLabel: "Not yet — I'll send later",
+        success: "✓ Follow-up sent! Most brands respond within a few days after a nudge.",
+        hint: "Follow-ups double your reply rate"
+      };
+    }
+
     if (method === 'form') {
       return {
         icon: '📋',
@@ -243,12 +277,22 @@ const PRPipeline = () => {
 
     try {
       const apiBase = getApiBase();
-      await axios.post(`${apiBase}/api/pr-crm/pipeline/${item.id}/confirm-send`, {
-        send_confirmation_email: true, // Request confirmation email
-        contact_method: method
-      }, {
-        withCredentials: true
-      });
+
+      if (method === 'followup') {
+        // Follow-up confirmation - update followup_count and followup_sent_at
+        await axios.post(`${apiBase}/api/pr-crm/pipeline/${item.id}/confirm-followup`, {}, {
+          withCredentials: true
+        });
+      } else {
+        // Initial contact confirmation
+        await axios.post(`${apiBase}/api/pr-crm/pipeline/${item.id}/confirm-send`, {
+          send_confirmation_email: true, // Request confirmation email
+          contact_method: method
+        }, {
+          withCredentials: true
+        });
+      }
+
       setConfirmingItem(null);
       // Show inline success on the card instead of toast
       showCardSuccess(item.id, copy.success);
@@ -293,15 +337,32 @@ const PRPipeline = () => {
     }
   };
 
-  // Handle mark as received
-  const handleMarkReceived = async (item) => {
+  // Handle mark as received - open modal to get package value
+  const handleMarkReceived = (item) => {
+    setReceivingItem(item);
+    setPackageValue(item.package_value ? String(item.package_value) : '');
+  };
+
+  // Actually mark as received with package value
+  const submitPackageReceived = async () => {
+    if (!receivingItem) return;
+
+    const value = parseInt(packageValue, 10) || 0;
+
     try {
-      await advanceStage(item.id, { stage: 'received', received_at: 'NOW()' });
+      await advanceStage(receivingItem.id, {
+        stage: 'received',
+        received_at: 'NOW()',
+        package_value: value
+      });
       message.success('Congratulations! Package marked as received!');
-      setCelebrationItem(item);
+      setCelebrationItem(receivingItem);
+      setReceivingItem(null);
+      setPackageValue('');
       fetchPipelineData();
     } catch (error) {
       console.error('Error marking received:', error);
+      message.error('Failed to mark as received');
     }
   };
 
@@ -431,7 +492,12 @@ const PRPipeline = () => {
   // Render brand card based on stage
   const renderBrandCard = (item) => {
     const stage = item.pipeline_stage || item.stage;
-    const isOverdue = item.days_since_pitched >= 7;
+    // For follow-up stage, check days since follow-up was sent; otherwise check days since original pitch
+    const isFollowupStage = stage === 'followup';
+    const daysSinceLastContact = isFollowupStage && item.days_since_followup != null
+      ? item.days_since_followup
+      : item.days_since_pitched;
+    const isOverdue = daysSinceLastContact >= 7;
     const isWaiting = ['waiting', 'followup', 'pitched'].includes(stage);
     const isWon = ['won', 'success'].includes(stage);
     const isReceived = stage === 'received';
@@ -477,10 +543,11 @@ const PRPipeline = () => {
             $won={isWon}
             $saved={isSaved}
             $replied={isReplied}
+            $followupSent={isFollowupStage && !isOverdue}
           >
             {isReplied && '💬 Replied!'}
-            {isWaiting && isOverdue && `⚠ ${item.days_since_pitched}d`}
-            {isWaiting && !isOverdue && '📧 Waiting'}
+            {isWaiting && isOverdue && `⚠ ${daysSinceLastContact}d`}
+            {isWaiting && !isOverdue && (isFollowupStage ? '🔄 Followed up' : '📧 Waiting')}
             {isWon && '🎁 Won'}
             {isSaved && '📌 Saved'}
             {isReceived && '✅ Received'}
@@ -502,10 +569,10 @@ const PRPipeline = () => {
         {(isWaiting || isSaved) && !cardSuccessStates[item.id] && (
           <InfoRow>
             {isWaiting && isOverdue && (
-              <InfoPill $warn>⚠ Follow-up overdue</InfoPill>
+              <InfoPill $warn>⚠ {isFollowupStage ? 'Time for another follow-up' : 'Follow-up overdue'}</InfoPill>
             )}
             {isWaiting && !isOverdue && (
-              <InfoPill>Brands usually reply in ~7 days</InfoPill>
+              <InfoPill>{isFollowupStage ? 'Follow-up sent - most brands reply within a week' : 'Brands usually reply in ~7 days'}</InfoPill>
             )}
             {item.response_rate && (
               <InfoPill $green={item.response_rate >= 40}>
@@ -883,6 +950,58 @@ const PRPipeline = () => {
           </ModalOverlay>
         )}
       </AnimatePresence>
+
+      {/* Package Value Modal */}
+      <AnimatePresence>
+        {receivingItem && (
+          <ModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setReceivingItem(null)}
+          >
+            <ModalContent
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ModalIcon>📦</ModalIcon>
+              <ModalTitle>Your {receivingItem.brand_name} package arrived!</ModalTitle>
+              <ModalSub>
+                {isPro
+                  ? "How much do you think the products are worth? This helps track your PR value."
+                  : "Log the estimated value to track your PR earnings."}
+              </ModalSub>
+
+              <ValueInputContainer>
+                <ValueInputPrefix>$</ValueInputPrefix>
+                <ValueInput
+                  type="number"
+                  placeholder="0"
+                  value={packageValue}
+                  onChange={(e) => setPackageValue(e.target.value)}
+                  autoFocus
+                />
+              </ValueInputContainer>
+
+              <ValueHint>💡 Estimate the retail value of all products received</ValueHint>
+
+              <ModalButtons>
+                <PrimaryBtn $win onClick={submitPackageReceived}>
+                  ✅ Mark as Received
+                </PrimaryBtn>
+                <ModalSecondaryBtn onClick={() => {
+                  setPackageValue('');
+                  submitPackageReceived();
+                }}>
+                  Skip for now
+                </ModalSecondaryBtn>
+              </ModalButtons>
+            </ModalContent>
+          </ModalOverlay>
+        )}
+      </AnimatePresence>
     </Container>
   );
 };
@@ -1241,6 +1360,12 @@ const StatusBadge = styled.div`
     background: #ECFDF5;
     color: #059669;
     border: 1px solid #A7F3D0;
+  `}
+
+  ${props => props.$followupSent && `
+    background: #FFF7ED;
+    color: #C2410C;
+    border: 1px solid #FED7AA;
   `}
 `;
 
@@ -1658,6 +1783,56 @@ const CelebUpgrade = styled.div`
   &:hover {
     text-decoration: underline;
   }
+`;
+
+const ValueInputContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 20px 0 12px;
+`;
+
+const ValueInputPrefix = styled.span`
+  font-size: 32px;
+  font-weight: 800;
+  color: #059669;
+`;
+
+const ValueInput = styled.input`
+  width: 120px;
+  font-size: 32px;
+  font-weight: 800;
+  color: #059669;
+  text-align: left;
+  border: none;
+  border-bottom: 3px solid #A7F3D0;
+  background: transparent;
+  outline: none;
+  padding: 4px 0;
+  font-family: inherit;
+
+  &::placeholder {
+    color: #D1FAE5;
+  }
+
+  &:focus {
+    border-color: #059669;
+  }
+
+  /* Hide number spinners */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
+`;
+
+const ValueHint = styled.div`
+  font-size: 12px;
+  color: #8C8C8C;
+  margin-bottom: 20px;
 `;
 
 export default PRPipeline;
