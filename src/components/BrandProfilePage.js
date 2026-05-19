@@ -169,11 +169,15 @@ const BrandProfilePage = () => {
     setShowPitchModal(true);
   };
 
-  const handlePitchSent = () => {
+  const handlePitchSent = (method) => {
     setPitchesSentThisMonth(prev => prev + 1);
     setHasPitched(true);
     setPitchDate(new Date().toISOString());
     setShowPitchModal(false);
+    window.dispatchEvent(new CustomEvent('savedBrandCountChanged'));
+    const brandId = brand?.id || id;
+    const contactMethod = method || 'email';
+    navigate(`/creator/dashboard/pr-pipeline?confirmBrand=${brandId}&method=${contactMethod}`);
   };
 
   // CTA Render Logic

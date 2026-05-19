@@ -196,6 +196,39 @@ const MobileNewBadge = styled.span`
   letter-spacing: 0.2px;
 `;
 
+const CountBadge = styled.span`
+  position: absolute;
+  top: 0;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  background: #E11D48;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(225, 29, 72, 0.4);
+`;
+
+const DesktopCountBadge = styled.span`
+  min-width: 18px;
+  height: 18px;
+  background: #E11D48;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 5px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+`;
+
 const Content = styled.main`
   min-height: calc(100vh - 60px);
 
@@ -334,6 +367,7 @@ const CreatorDashboardLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [savedCount, setSavedCount] = useState(0);
   const isFetching = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -379,6 +413,29 @@ const CreatorDashboardLayout = () => {
 
     fetchUserData();
   }, [navigate]);
+
+  // Fetch saved brands count for badge
+  useEffect(() => {
+    const fetchSavedCount = async () => {
+      try {
+        const response = await api.get('/api/pr-crm/pipeline/full');
+        if (response.data?.items) {
+          const saved = response.data.items.filter(item => item.pipeline_stage === 'saved');
+          setSavedCount(saved.length);
+        }
+      } catch (error) {
+        console.error('Error fetching saved count:', error);
+      }
+    };
+
+    if (!isLoading) {
+      fetchSavedCount();
+    }
+
+    // Re-fetch whenever a brand is saved/unsaved anywhere in the app
+    window.addEventListener('savedBrandCountChanged', fetchSavedCount);
+    return () => window.removeEventListener('savedBrandCountChanged', fetchSavedCount);
+  }, [isLoading, location.pathname]);
 
   const handleLogoutWithCleanup = async () => {
     try {
@@ -439,6 +496,7 @@ const CreatorDashboardLayout = () => {
                 <Icon />
                 {label}
                 {isNew && <NewBadge>New</NewBadge>}
+                {label === 'Saved' && savedCount > 0 && <DesktopCountBadge>{savedCount}</DesktopCountBadge>}
               </NavTab>
             ))}
           </NavTabs>
@@ -533,6 +591,7 @@ const CreatorDashboardLayout = () => {
             <Icon />
             {label}
             {isNew && <MobileNewBadge>New</MobileNewBadge>}
+            {label === 'Saved' && savedCount > 0 && <CountBadge>{savedCount}</CountBadge>}
           </MobileTab>
         ))}
       </MobileTabBar>

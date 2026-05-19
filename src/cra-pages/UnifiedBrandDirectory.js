@@ -181,6 +181,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           newSet.delete(brand.id);
           return newSet;
         });
+        window.dispatchEvent(new CustomEvent('savedBrandCountChanged'));
         message.success('Brand removed from saved list');
       } else {
         // Save
@@ -189,7 +190,16 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           { withCredentials: true }
         );
         setSavedBrandIds(prev => new Set([...prev, brand.id]));
-        message.success(`${brand.name} saved!`);
+        window.dispatchEvent(new CustomEvent('savedBrandCountChanged'));
+        message.success({
+          content: `✓ ${brand.name} saved to your Pipeline!`,
+          duration: 3,
+          style: {
+            marginTop: '10vh',
+            fontSize: '15px',
+            fontWeight: 600
+          }
+        });
       }
     } catch (error) {
       console.error('Error saving brand:', error);
@@ -219,10 +229,71 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     setShowPitchModal(true);
   };
 
-  const handlePitchSent = async () => {
+  const handleOpenPrApplyClick = async (brand, e, isExternal, applyUrl, isApplicationForm) => {
+    if (!user || !isExternal || !isApplicationForm) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+    if (!isPro && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
+      setUpgradeModalVisible(true);
+      return;
+    }
+
+    const formWindow = window.open('about:blank', '_blank');
+    if (formWindow) {
+      formWindow.opener = null;
+    }
+
+    setPitchedBrands(prev => new Set([...prev, brand.id]));
+    setSavedBrandIds(prev => new Set([...prev, brand.id]));
+
+    try {
+      await axios.post(`${API_BASE}/api/pr-crm/track-pitch`, {
+        brand_id: brand.id,
+        slug: brand.slug
+      }, { withCredentials: true });
+
+      const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setPitchesSentThisWeek(response.data.used || 0);
+      }
+    } catch (error) {
+      console.error('Error tracking PR form application:', error);
+      if (formWindow) {
+        formWindow.close();
+      }
+      setPitchedBrands(prev => {
+        const updated = new Set(prev);
+        updated.delete(brand.id);
+        return updated;
+      });
+      message.error('Could not track this application. Please try again.');
+      return;
+    }
+
+    if (formWindow) {
+      formWindow.location.href = applyUrl;
+    } else {
+      window.location.href = applyUrl;
+    }
+
+    setTimeout(() => {
+      navigate(`/creator/dashboard/pr-pipeline?confirmBrand=${brand.id}&method=form`);
+    }, 700);
+  };
+
+  const handlePitchSent = async (brandArg, context = {}) => {
+    const contactedBrand = brandArg || selectedBrandForPitch;
+    const method = context?.method || 'email';
+
     // Mark brand as contacted locally
-    if (selectedBrandForPitch) {
-      setPitchedBrands(prev => new Set([...prev, selectedBrandForPitch.id]));
+    if (contactedBrand) {
+      setPitchedBrands(prev => new Set([...prev, contactedBrand.id]));
+      setSavedBrandIds(prev => new Set([...prev, contactedBrand.id]));
     }
     setShowPitchModal(false);
     setSelectedBrandForPitch(null);
@@ -238,6 +309,18 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     } catch (error) {
       // Fallback to incrementing locally if API fails
       setPitchesSentThisWeek(prev => prev + 1);
+    }
+
+    if (contactedBrand) {
+      message.success(
+        method === 'form'
+          ? 'PR form opened. Confirm your application in Saved so we can track follow-ups.'
+          : 'Email opened. Confirm it in Saved so we can track follow-ups.'
+      );
+
+      navigate(
+        `/creator/dashboard/pr-pipeline?confirmBrand=${contactedBrand.id}&method=${method}`
+      );
     }
   };
 
@@ -305,19 +388,25 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         <ContentWrapper>
           {/* Monthly Contact Quota Tracker - Show for logged-in FREE users */}
           {user && subscriptionTier === 'free' && isDashboardView && (
-            <QuotaStrip>
-              <QuotaIconBox>
+            <QuotaStrip $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT}>
+              <QuotaIconBox $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT}>
                 <Mail size={20} />
               </QuotaIconBox>
               <QuotaBody>
-                <QuotaTitle>{pitchesSentThisWeek} of {FREE_PITCH_LIMIT} brand contacts used this month</QuotaTitle>
+                <QuotaTitle>
+                  {Math.min(pitchesSentThisWeek, FREE_PITCH_LIMIT)} of {FREE_PITCH_LIMIT} brand contacts used this month
+                </QuotaTitle>
                 <QuotaBarTrack>
-                  <QuotaBarFill style={{ width: `${(pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100}%` }} />
+                  <QuotaBarFill $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT} style={{ width: `${Math.min((pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100, 100)}%` }} />
                 </QuotaBarTrack>
-                <QuotaMeta>{FREE_PITCH_LIMIT - pitchesSentThisWeek} contacts remaining · Resets in 14 days</QuotaMeta>
+                <QuotaMeta $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT}>
+                  {pitchesSentThisWeek >= FREE_PITCH_LIMIT
+                    ? 'Limit reached · Upgrade to contact more brands'
+                    : `${FREE_PITCH_LIMIT - pitchesSentThisWeek} contacts remaining · Resets in 14 days`}
+                </QuotaMeta>
               </QuotaBody>
               <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
-                Upgrade to Pro
+                {pitchesSentThisWeek >= FREE_PITCH_LIMIT ? 'Unlock Unlimited' : 'Upgrade to Pro'}
               </QuotaCTA>
             </QuotaStrip>
           )}
@@ -394,7 +483,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 const logoUrl = brand.logo || getFaviconUrl(brand.website);
 
                 // Determine URL and button behavior based on login state
-                let applyUrl, buttonText, isExternal;
+                let applyUrl, buttonText, isExternal, isApplicationForm = false;
                 if (!user) {
                   // Not logged in: redirect to signup
                   applyUrl = '/register/creator';
@@ -405,6 +494,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   applyUrl = brand.application_url;
                   buttonText = 'Apply Now';
                   isExternal = true;
+                  isApplicationForm = true;
                 } else if (brand.website) {
                   // Logged in + no form but has website: link to website
                   applyUrl = brand.website.startsWith('http') ? brand.website : `https://${brand.website}`;
@@ -438,6 +528,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                       href={applyUrl}
                       target={isExternal ? "_blank" : "_self"}
                       rel={isExternal ? "noopener noreferrer" : undefined}
+                      onClick={(e) => handleOpenPrApplyClick(brand, e, isExternal, applyUrl, isApplicationForm)}
                     >
                       {user ? (
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -685,8 +776,8 @@ const HeroContent = styled.div`
 `;
 
 const QuotaStrip = styled.div`
-  background: ${tokens.surface};
-  border: 1px solid ${tokens.border};
+  background: ${props => props.$atLimit ? '#FEF2F2' : tokens.surface};
+  border: 1px solid ${props => props.$atLimit ? '#FECACA' : tokens.border};
   border-radius: 14px;
   padding: 14px 18px;
   margin-bottom: 20px;
@@ -704,11 +795,11 @@ const QuotaIconBox = styled.div`
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: ${tokens.subtle};
+  background: ${props => props.$atLimit ? '#FEE2E2' : tokens.subtle};
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  color: ${tokens.textSecondary};
+  color: ${props => props.$atLimit ? '#DC2626' : tokens.textSecondary};
 
   svg {
     width: 20px;
@@ -739,14 +830,15 @@ const QuotaBarTrack = styled.div`
 
 const QuotaBarFill = styled.div`
   height: 100%;
-  background: ${tokens.proGradient};
+  background: ${props => props.$atLimit ? '#DC2626' : tokens.proGradient};
   border-radius: 2px;
   transition: width 0.4s ease;
 `;
 
 const QuotaMeta = styled.div`
   font-size: 11px;
-  color: ${tokens.textMuted};
+  color: ${props => props.$atLimit ? '#DC2626' : tokens.textMuted};
+  font-weight: ${props => props.$atLimit ? '600' : '400'};
 `;
 
 const QuotaCTA = styled.button`

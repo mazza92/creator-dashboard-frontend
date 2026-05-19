@@ -5,7 +5,57 @@ import { FiX, FiCheck, FiZap } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 
-const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
+// Contextual upgrade copy for different paywall moments
+const UPGRADE_COPY = {
+  default: {
+    headline: "Unlock Unlimited Brand Pitches",
+    sub: "You have free pitches left this month.",
+    features: [
+      "Unlimited Brand Pitches (No monthly limits!)",
+      "Personalized emails that brands actually read",
+      "Direct access to PR manager emails",
+      "Pitch templates proven to get responses",
+      "Priority support"
+    ],
+    valueProp: "One PR package could get you $500 worth of free products. $12/month is a steal!"
+  },
+  followup: {
+    headline: "Double your reply rate with a Pro follow-up",
+    sub: "Get an AI-written follow-up email with your Media Kit auto-attached — the combo that gets brands to actually respond.",
+    features: [
+      "AI follow-up email personalized to your pitch",
+      "Media Kit auto-attached as a link",
+      "Unlimited contacts every month",
+      "Track all your brand conversations"
+    ],
+    valueProp: "Creators who send follow-ups are 2x more likely to get a response. Don't leave PR on the table!"
+  },
+  pr_value: {
+    headline: "Track your PR value with Pro",
+    sub: "See exactly how much free product you've earned through NewCollab — and never lose track of a collab again.",
+    features: [
+      "$PR Value Earned dashboard",
+      "Package value logging",
+      "Full pipeline history",
+      "Unlimited contacts every month"
+    ],
+    valueProp: "Know your worth! Pro creators track an average of $1,200+ in PR value their first year."
+  },
+  limit_reached: {
+    headline: "You've Used Your Free Pitches!",
+    sub: "You've sent all your brand pitches this month.",
+    features: [
+      "Unlimited Brand Pitches (No monthly limits!)",
+      "Personalized emails that brands actually read",
+      "Direct access to PR manager emails",
+      "Pitch templates proven to get responses",
+      "Priority support"
+    ],
+    valueProp: "One PR package could get you $500 worth of free products. $12/month is a steal!"
+  }
+};
+
+const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature }) => {
   const [loading, setLoading] = useState(false);
 
   const handleUpgrade = async (tier) => {
@@ -32,6 +82,16 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
 
   if (!isOpen) return null;
 
+  // Determine which copy to use
+  const limitReached = currentCount >= limit;
+  const copyKey = feature === 'followup' ? 'followup' :
+                  feature === 'pr_value' ? 'pr_value' :
+                  limitReached ? 'limit_reached' : 'default';
+  const copy = UPGRADE_COPY[copyKey];
+
+  // Show limit info only for pitch-related paywalls
+  const showLimitInfo = !feature || feature === 'pitch' || copyKey === 'limit_reached' || copyKey === 'default';
+
   return (
     <AnimatePresence>
       <Overlay
@@ -51,30 +111,34 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
           </CloseButton>
 
           <Header>
-            <Icon>
-              <FiZap />
+            <Icon $isValue={feature === 'pr_value'} $isFollowup={feature === 'followup'}>
+              {feature === 'pr_value' ? '💰' : feature === 'followup' ? '📧' : <FiZap />}
             </Icon>
-            <Title>{currentCount >= limit ? "You've Used Your Free Pitches!" : "Unlock Unlimited Brand Pitches"}</Title>
+            <Title>{copy.headline}</Title>
             <Subtitle>
-              {currentCount >= limit
+              {copyKey === 'limit_reached'
                 ? `You've sent ${currentCount} brand pitches this month.`
-                : `You have ${limit - currentCount} free pitches left this month.`}
+                : copyKey === 'default' && !limitReached
+                  ? `You have ${limit - currentCount} free pitches left this month.`
+                  : copy.sub}
             </Subtitle>
-            {currentCount >= limit && (
+            {limitReached && showLimitInfo && (
               <DailyResetNote>
                 ⏰ Resets next month, or upgrade now for unlimited pitches!
               </DailyResetNote>
             )}
           </Header>
 
-          <LimitInfo>
-            <LimitText>
-              {currentCount} / {limit} pitches used this month
-            </LimitText>
-            <ProgressBar>
-              <ProgressFill width={Math.min((currentCount / limit) * 100, 100)} />
-            </ProgressBar>
-          </LimitInfo>
+          {showLimitInfo && (
+            <LimitInfo>
+              <LimitText>
+                {currentCount} / {limit} pitches used this month
+              </LimitText>
+              <ProgressBar>
+                <ProgressFill width={Math.min((currentCount / limit) * 100, 100)} />
+              </ProgressBar>
+            </LimitInfo>
+          )}
 
           <PlansContainer>
             <Plan featured>
@@ -88,25 +152,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount, limit, feature }) => {
               </PlanHeader>
 
               <Features>
-                <Feature>
-                  <FiCheck /> <span><strong>Unlimited Brand Pitches</strong> (No monthly limits!)</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>Personalized emails that brands actually read</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>Direct access to PR manager emails</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>Pitch templates proven to get responses</span>
-                </Feature>
-                <Feature>
-                  <FiCheck /> <span>Priority support</span>
-                </Feature>
+                {copy.features.map((feat, idx) => (
+                  <Feature key={idx}>
+                    <FiCheck /> <span>{idx === 0 ? <strong>{feat}</strong> : feat}</span>
+                  </Feature>
+                ))}
               </Features>
 
               <ValueProp>
-                💡 One PR package could get you $500 worth of free products. $12/month is a steal!
+                💡 {copy.valueProp}
               </ValueProp>
 
               <UpgradeButton
@@ -191,7 +245,10 @@ const Header = styled.div`
 const Icon = styled.div`
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #3B82F6, #EC4899);
+  background: ${props =>
+    props.$isValue ? 'linear-gradient(135deg, #7C3AED, #EC4899)' :
+    props.$isFollowup ? 'linear-gradient(135deg, #F59E0B, #EC4899)' :
+    'linear-gradient(135deg, #3B82F6, #EC4899)'};
   border-radius: 50%;
   display: flex;
   align-items: center;

@@ -26,6 +26,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [fetchedApplicationUrl, setFetchedApplicationUrl] = useState(null); // Application form URL from API
   const [upgrading, setUpgrading] = useState(false); // Stripe checkout loading
   const [creditUsed, setCreditUsed] = useState(false); // Track if credit was deducted
+  const [outreachStartedMethod, setOutreachStartedMethod] = useState(null); // email | form
   const MAX_REGENERATES = 3; // Limit regenerations to save API credits
 
   // Fetch creator profile and generate pitch when modal opens
@@ -54,39 +55,42 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
     // Try AI endpoint, fall back to smart template
     const pitchData = await generatePitch(profile);
 
-    // Check if brand has any contact method (email or application form from API response or brand prop)
-    const hasEmail = pitchData?.brand_email || brand?.contact_email || brand?.email || brand?.pr_email;
-    const hasAppForm = pitchData?.application_form_url || brand?.application_form_url || brand?.applicationUrl;
-
-    // Only deduct credit if there's a way to contact the brand
-    if (hasEmail || hasAppForm) {
-      await trackPitchUsage();
-      // Refresh limits to show updated count
-      await fetchPitchLimits();
-    }
-
     setLoading(false);
   };
 
   const trackPitchUsage = async () => {
     try {
-      await api.post('/api/pr-crm/track-pitch', {
+      const response = await api.post('/api/pr-crm/track-pitch', {
         brand_id: brand.brand_id || brand.id,
         slug: brand.slug,
         pipeline_id: brand.id
       });
       // Credit deducted successfully
       setCreditUsed(true);
+      await fetchPitchLimits();
+      return response.data;
     } catch (error) {
-      // Silently fail - don't block the user
       console.error('Error tracking pitch:', error);
+      if (error.response?.data?.upgrade_required) {
+        message.warning(error.response.data.error || 'Monthly contact limit reached. Upgrade to continue!');
+      } else {
+        message.error('Could not track this contact. Please try again.');
+      }
+      throw error;
     }
   };
 
   // Handle modal close - notify parent if credit was used
   const handleClose = () => {
-    if (creditUsed && onPitchSent) {
-      onPitchSent(brand);
+    if ((creditUsed || outreachStartedMethod) && outreachStartedMethod && onPitchSent) {
+      onPitchSent(brand, { method: outreachStartedMethod });
+    }
+    onClose();
+  };
+
+  const finishOutreach = (method) => {
+    if (onPitchSent) {
+      onPitchSent(brand, { method });
     }
     onClose();
   };
@@ -323,25 +327,59 @@ ${creatorName}`;
     setSending(true);
 
     try {
-      // Build mailto URL
-      const mailtoUrl = buildMailtoUrl();
+      await trackPitchUsage();
+      setOutreachStartedMethod('email');
 
       // Open email client
-      window.location.href = mailtoUrl;
+      window.location.href = buildMailtoUrl();
 
       message.success('Opening your email app...');
 
       // Close modal after short delay (handleClose notifies parent)
       setTimeout(() => {
-        handleClose();
+        finishOutreach('email');
       }, 1000);
 
     } catch (error) {
-      // Still open email even if something fails
-      window.location.href = buildMailtoUrl();
-      handleClose();
+      // Tracking failed or the user hit the quota limit; don't move them forward.
+      return;
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleApplicationFormClick = async (e) => {
+    e.preventDefault();
+
+    if (!pitchLimits.canPitch) {
+      message.warning('You\'ve used all your free contacts this month. Upgrade to continue!');
+      return false;
+    }
+
+    const formWindow = window.open('about:blank', '_blank');
+    if (formWindow) {
+      formWindow.opener = null;
+    }
+
+    try {
+      await trackPitchUsage();
+      setOutreachStartedMethod('form');
+      if (formWindow) {
+        formWindow.location.href = applicationFormUrl;
+      } else {
+        window.location.href = applicationFormUrl;
+      }
+
+      // Give the browser a moment to open the new tab before moving the user to the pipeline.
+      setTimeout(() => {
+        finishOutreach('form');
+      }, 700);
+      return true;
+    } catch (error) {
+      if (formWindow) {
+        formWindow.close();
+      }
+      return false;
     }
   };
 
@@ -523,6 +561,7 @@ ${creatorName}`;
                     href={applicationFormUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={handleApplicationFormClick}
                   >
                     📋 <span>Open Application Form</span>
                   </PrimaryApplicationButton>
@@ -570,6 +609,7 @@ ${creatorName}`;
                     href={applicationFormUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={handleApplicationFormClick}
                   >
                     Open Form →
                   </ApplicationFormButton>
