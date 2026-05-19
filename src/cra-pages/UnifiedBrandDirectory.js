@@ -282,11 +282,11 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       {/* Only show default Helmet if not in collection mode */}
       {!collectionMode && (
         <Helmet>
-          <title>Direct PR Application Forms: 500+ Brand PR Lists (2026) | NewCollab</title>
-          <meta name="description" content="Access direct PR application forms for 500+ brands. Find PR list requirements, application links, and brands that send PR packages to small influencers. Filter by beauty, skincare, K-beauty, tech, and fashion." />
-          <meta name="keywords" content="pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, pr packages australia, brands that send pr to small influencers, influencer pr list requirements" />
-          <meta property="og:title" content="Direct PR Application Forms - 500+ Brand PR Lists" />
-          <meta property="og:description" content="Direct links to PR application forms and requirements for 500+ beauty, skincare, and lifestyle brands. Micro-influencer friendly." />
+          <title>500+ PR Forms for Brands (2026): Direct Application Links | NewCollab</title>
+          <meta name="description" content="Browse 500+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free." />
+          <meta name="keywords" content="pr forms for brands, pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, brands that send pr to small influencers, influencer pr list requirements" />
+          <meta property="og:title" content="500+ PR Forms for Brands: Direct Application Links" />
+          <meta property="og:description" content="Verified PR forms for brands with direct application links. 500+ beauty, skincare, and lifestyle brands—micro-influencer friendly. Start applying today." />
           <link rel="canonical" href="https://newcollab.co/directory" />
         </Helmet>
       )}
@@ -296,8 +296,8 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         {!isDashboardView && (
           <Hero>
             <HeroContent>
-              <h1>{collectionTitle || 'Direct PR Application Forms - 500+ Brand PR Lists'}</h1>
-              <p>{collectionDescription || `Access direct PR application forms and requirements for ${pagination.total}+ brands. Find brands that send PR to small influencers, skincare PR lists, K-beauty forms, and more.`}</p>
+              <h1>{collectionTitle || '500+ PR Forms for Brands: Direct Application Links'}</h1>
+              <p>{collectionDescription || `Browse verified PR forms for brands—${pagination.total}+ direct application links, PR requirements, and options for small creators in beauty, skincare, K-beauty, tech, and fashion.`}</p>
             </HeroContent>
           </Hero>
         )}

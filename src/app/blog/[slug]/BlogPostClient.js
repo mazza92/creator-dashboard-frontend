@@ -250,9 +250,12 @@ const RelatedPostMeta = styled.div`
   color: #888;
 `;
 
-export default function BlogPostClient({ post, relatedPosts }) {
+export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
+  const resolvedCanonical =
+    canonicalUrl || post.canonicalUrl || `https://newcollab.co/blog/${post.slug}`;
+
   return (
-    <LandingPageLayoutNext canonicalUrl={`https://newcollab.co/blog/${post.slug}`}>
+    <LandingPageLayoutNext canonicalUrl={resolvedCanonical}>
       <PageContainer>
         <Section>
           <BreadcrumbWrapper>

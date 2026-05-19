@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getPostBySlug, getAllPostSlugs, getRelatedPosts } from '../../../../lib/blog';
+import { getPostBySlug, getAllPostSlugs, getRelatedPosts, getPostCanonicalUrl } from '../../../../lib/blog';
 import BlogPostClient from './BlogPostClient';
 
 // Generate static params for all blog posts at build time (SSG)
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }) {
       'max-video-preview': -1,
     },
     alternates: {
-      canonical: `https://newcollab.co/blog/${post.slug}`,
+      canonical: getPostCanonicalUrl(post),
     },
   };
 }
@@ -173,7 +173,11 @@ export default async function BlogPostPage({ params }) {
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
         {post.title}
       </h1>
-      <BlogPostClient post={post} relatedPosts={relatedPosts} />
+      <BlogPostClient
+        post={post}
+        relatedPosts={relatedPosts}
+        canonicalUrl={getPostCanonicalUrl(post)}
+      />
     </>
   );
 }

@@ -501,7 +501,7 @@ const BlogPost = () => {
   };
 
   return (
-    <LandingPageLayout canonicalUrl={`https://newcollab.co/blog/${post.slug}`}>
+    <LandingPageLayout canonicalUrl={post.canonicalUrl || `https://newcollab.co/blog/${post.slug}`}>
       <>
         <Helmet>
           <title>{post.title} | Newcollab Creator Blog</title>

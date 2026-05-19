@@ -115,7 +115,7 @@
           "@type": "Question",
           "name": "What format should my media kit be?",
           "acceptedAnswer": {
-            "@type":"Answer",
+            "@type": "Answer",
             "text": "Always save and send your media kit as a PDF. This ensures that your formatting and design look the same on any device and that your links are clickable."
           }
         },
