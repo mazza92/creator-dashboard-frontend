@@ -1,18 +1,18 @@
 import DirectoryClient from './DirectoryClient';
 
 export const metadata = {
-  title: 'Brand PR Directory - Direct PR Application Forms (2026) | Newcollab',
+  title: '500+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
   description:
-    'Browse brands with PR application forms, requirements, and influencer-friendly programs. Filter by category and search by brand name.',
+    'Browse 500+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free.',
   keywords:
-    'brand pr list, pr application forms, brands that send pr, influencer pr directory, beauty pr list, skincare pr list, k-beauty pr list',
+    'pr forms for brands, pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, brands that send pr to small influencers, influencer pr list requirements',
   alternates: {
     canonical: 'https://newcollab.co/directory',
   },
   openGraph: {
-    title: 'Brand PR Directory - Direct PR Application Forms',
+    title: '500+ PR Forms for Brands: Direct Application Links',
     description:
-      'Browse brands with PR application forms, requirements, and influencer-friendly programs.',
+      'Verified PR forms for brands with direct application links. 500+ beauty, skincare, and lifestyle brands—micro-influencer friendly. Start applying today.',
     type: 'website',
     url: 'https://newcollab.co/directory',
     siteName: 'Newcollab',
@@ -31,7 +31,7 @@ export default function DirectoryPage() {
     <>
       {/* Server-rendered h1 for SEO - visually hidden, client component renders visible title */}
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
-        Direct PR Application Forms — Brand Directory
+        500+ PR Forms for Brands: Direct Application Links
       </h1>
       <DirectoryClient />
     </>

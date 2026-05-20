@@ -611,10 +611,10 @@ export default function DirectoryClient({
     <LandingPageLayoutNext canonicalUrl="https://newcollab.co/directory">
       <Page>
         <Hero>
-          <h1>{collectionTitle || 'Direct PR Application Forms — Brand Directory'}</h1>
+          <h1>{collectionTitle || '500+ PR Forms for Brands: Direct Application Links'}</h1>
           <p>
             {collectionDescription ||
-              'Browse brands with PR application forms, requirements, and influencer-friendly programs. Filter by category and search by brand name.'}
+              'Browse verified PR forms for brands—500+ direct application links, PR requirements, and options for small creators in beauty, skincare, K-beauty, tech, and fashion.'}
           </p>
           <QuickLinks>
             <QuickLink href="/directory/skincare">Skincare</QuickLink>
