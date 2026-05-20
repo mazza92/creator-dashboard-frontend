@@ -27,6 +27,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [upgrading, setUpgrading] = useState(false); // Stripe checkout loading
   const [creditUsed, setCreditUsed] = useState(false); // Track if credit was deducted
   const [outreachStartedMethod, setOutreachStartedMethod] = useState(null); // email | form
+  const [contactRevealed, setContactRevealed] = useState(false); // Track if contact info is revealed (quota consumed)
   const MAX_REGENERATES = 3; // Limit regenerations to save API credits
 
   // Check if this is a follow-up pitch
@@ -386,8 +387,10 @@ ${creatorName}`;
 
     try {
       // Only track pitch usage for initial outreach, not follow-ups
-      if (!isFollowup) {
+      // Also skip if contact was already revealed (quota already consumed)
+      if (!isFollowup && !contactRevealed) {
         await trackPitchUsage();
+        setContactRevealed(true); // Now show the real email
       }
       const method = isFollowup ? 'followup' : 'email';
       setOutreachStartedMethod(method);
@@ -424,7 +427,11 @@ ${creatorName}`;
     }
 
     try {
-      await trackPitchUsage();
+      // Skip tracking if contact was already revealed (quota already consumed)
+      if (!contactRevealed) {
+        await trackPitchUsage();
+        setContactRevealed(true); // Now show the real email
+      }
       setOutreachStartedMethod('form');
       if (formWindow) {
         formWindow.location.href = applicationFormUrl;
@@ -500,6 +507,19 @@ ${creatorName}`;
   // Check all possible field names for application form URL
   const applicationFormUrl = fetchedApplicationUrl || brand?.application_form_url || brand?.applicationUrl || brand?.application_url || null;
   const hasContactMethod = brandEmail || applicationFormUrl;
+
+  // Mask email until user commits to contacting (quota consumed)
+  const getMaskedEmail = (email) => {
+    if (!email) return null;
+    const [local, domain] = email.split('@');
+    if (!domain) return '••••@••••.com';
+    const maskedLocal = local.length > 2
+      ? local.charAt(0) + '••••' + local.charAt(local.length - 1)
+      : '••••';
+    return `${maskedLocal}@${domain}`;
+  };
+
+  const displayEmail = contactRevealed ? brandEmail : getMaskedEmail(brandEmail);
 
   // Debug logging
   console.log('[AIPitchModal] Render state:', {
@@ -591,7 +611,12 @@ ${creatorName}`;
               <EmailPreview>
                 <EmailHeader>
                   <EmailLabel>To:</EmailLabel>
-                  <EmailValue>{brandEmail || `${brandName} PR Team`}</EmailValue>
+                  <EmailValue $masked={!contactRevealed && brandEmail}>
+                    {brandEmail ? displayEmail : `${brandName} PR Team`}
+                    {!contactRevealed && brandEmail && (
+                      <EmailLockIcon><FiLock size={12} /></EmailLockIcon>
+                    )}
+                  </EmailValue>
                 </EmailHeader>
                 <EmailHeader>
                   <EmailLabel>Subject:</EmailLabel>
@@ -629,7 +654,7 @@ ${creatorName}`;
                     rel="noopener noreferrer"
                     onClick={handleApplicationFormClick}
                   >
-                    📋 <span>Open Application Form</span>
+                    📋 <span>{contactRevealed ? 'Open Application Form' : 'Use 1 contact · Open Form'}</span>
                   </PrimaryApplicationButton>
                 ) : (
                   <SendButton
@@ -643,15 +668,26 @@ ${creatorName}`;
                       <span>Opening Email...</span>
                     ) : (
                       <>
-                        <FiSend /> <span>{isFollowup ? `Send Follow-up to ${brandName}` : `Send Email to ${brandName}`}</span>
+                        <FiSend /> <span>
+                          {isFollowup
+                            ? `Send Follow-up to ${brandName}`
+                            : contactRevealed
+                              ? `Send Email to ${brandName}`
+                              : `Use 1 contact · Send to ${brandName}`
+                          }
+                        </span>
                       </>
                     )}
                   </SendButton>
                 )}
 
                 <SecondaryActions>
-                  <SecondaryButton onClick={handleCopyPitch}>
-                    <FiCopy /> {copied ? 'Copied!' : 'Copy Pitch'}
+                  <SecondaryButton
+                    onClick={handleCopyPitch}
+                    disabled={!contactRevealed && !isFollowup}
+                    title={!contactRevealed && !isFollowup ? 'Send email first to reveal contact' : ''}
+                  >
+                    <FiCopy /> {copied ? 'Copied!' : (!contactRevealed && !isFollowup ? 'Send to copy' : 'Copy Pitch')}
                   </SecondaryButton>
                   <SecondaryButton
                     onClick={handleRegenerate}
@@ -663,7 +699,8 @@ ${creatorName}`;
               </Actions>
 
               {/* Show application form as secondary if brand has BOTH email and application form */}
-              {brandEmail && applicationFormUrl && (
+              {/* Only show after contact is revealed (quota already consumed via email) */}
+              {brandEmail && applicationFormUrl && contactRevealed && (
                 <ApplicationFormBox>
                   <ApplicationFormHeader>
                     <span>📋</span>
@@ -676,7 +713,7 @@ ${creatorName}`;
                     href={applicationFormUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={handleApplicationFormClick}
+                    onClick={(e) => { e.preventDefault(); window.open(applicationFormUrl, '_blank', 'noopener,noreferrer'); }}
                   >
                     Open Form →
                   </ApplicationFormButton>
@@ -909,7 +946,23 @@ const EmailLabel = styled.span`
 
 const EmailValue = styled.span`
   font-size: 14px;
-  color: #111827;
+  color: ${props => props.$masked ? '#9CA3AF' : '#111827'};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ${props => props.$masked ? 'monospace' : 'inherit'};
+  letter-spacing: ${props => props.$masked ? '1px' : 'normal'};
+`;
+
+const EmailLockIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #FEF3C7;
+  border-radius: 4px;
+  color: #D97706;
 `;
 
 const EmailSubject = styled.span`
@@ -1121,8 +1174,14 @@ const SecondaryButton = styled.button`
   gap: 6px;
   transition: all 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #E5E7EB;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #F3F4F6;
   }
 
   svg {
