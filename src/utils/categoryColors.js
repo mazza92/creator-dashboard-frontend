@@ -31,9 +31,10 @@ const CATEGORY_COLORS = {
 
 const DEFAULT_COLORS = CATEGORY_COLORS.lifestyle;
 
+import { normalizeCategory } from '../constants/brandCategories';
+
 function normalizeCategoryKey(category) {
-  if (!category) return '';
-  return String(category).trim().toLowerCase();
+  return normalizeCategory(category) || '';
 }
 
 /** @returns {{ bg: string, text: string, border: string, label: string }} */

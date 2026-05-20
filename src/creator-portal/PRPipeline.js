@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getRuntimeApiUrl } from '../config/api';
 import AIPitchModal from './AIPitchModal';
 import UpgradeModal from './UpgradeModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Use shared API config
 const getApiBase = () => getRuntimeApiUrl();
@@ -785,7 +786,7 @@ const PRPipeline = () => {
       {/* Brand Cards */}
       <BrandList>
         {loading ? (
-          <LoadingText>Loading your pipeline...</LoadingText>
+          <LoadingSpinner text="Loading your pipeline..." minHeight="320px" />
         ) : filteredItems.length === 0 ? (
           <EmptyState>
             <EmptyEmoji>📋</EmptyEmoji>
@@ -1614,13 +1615,6 @@ const EmptyTitle = styled.div`
 const EmptyText = styled.div`
   font-size: 13px;
   color: #8C8C8C;
-`;
-
-const LoadingText = styled.div`
-  text-align: center;
-  color: #8C8C8C;
-  font-size: 14px;
-  padding: 40px;
 `;
 
 // Modal styles

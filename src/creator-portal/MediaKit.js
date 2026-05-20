@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { message, Spin } from 'antd';
+import LoadingSpinner from '../components/LoadingSpinner';
 import {
   FiZap, FiCheck, FiCopy, FiExternalLink, FiLock, FiPlus, FiTrash2,
   FiChevronDown, FiChevronUp, FiDollarSign, FiBriefcase, FiLink
@@ -262,12 +263,7 @@ const MediaKit = () => {
   };
 
   if (loading) {
-    return (
-      <LoadingContainer>
-        <Spin size="large" />
-        <LoadingText>Loading your media kit...</LoadingText>
-      </LoadingContainer>
-    );
+    return <LoadingSpinner fullScreen text="Loading your media kit..." />;
   }
 
   return (
@@ -618,20 +614,6 @@ const Container = styled.div`
     padding: 16px;
     width: 100%;
   }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: 16px;
-`;
-
-const LoadingText = styled.div`
-  color: #6B7280;
-  font-size: 16px;
 `;
 
 const Header = styled.div`

@@ -5,6 +5,7 @@ import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings } 
 import api from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const AccountSettings = () => {
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
@@ -84,7 +85,7 @@ const AccountSettings = () => {
   if (loading) {
     return (
       <Container>
-        <LoadingText>Loading subscription details...</LoadingText>
+        <LoadingSpinner text="Loading subscription details..." minHeight="320px" />
       </Container>
     );
   }
@@ -574,13 +575,6 @@ const UsageNote = styled.div`
   color: #9CA3AF;
   margin-top: 6px;
   font-style: italic;
-`;
-
-const LoadingText = styled.div`
-  text-align: center;
-  padding: 40px;
-  color: #6B7280;
-  font-size: 16px;
 `;
 
 export default AccountSettings;

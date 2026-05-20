@@ -16,7 +16,7 @@ export default function SkincareDirectoryClient() {
   useEffect(() => {
     // Set category filter to "Skincare" on mount if not already set
     if (!searchParams.get('category')) {
-      router.replace('/directory/skincare?category=Skincare');
+      router.replace('/directory/skincare?category=skincare');
     }
   }, [searchParams, router]);
 

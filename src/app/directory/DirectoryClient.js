@@ -3,11 +3,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Input, Select, Spin, Pagination } from 'antd';
+import { Input, Select, Pagination } from 'antd';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { SearchOutlined, LinkOutlined, MailOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
 import { getCategoryColors } from '../../utils/categoryColors';
+import { normalizeCategory, categoryLabel } from '../../constants/brandCategories';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -592,13 +594,7 @@ const ApplyButton = styled.a`
   }
 `;
 
-const formatCategoryLabel = (category) => {
-  if (!category) return '';
-  return String(category)
-    .split(/[\s_-]+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ');
-};
+const formatCategoryLabel = (category) => categoryLabel(category);
 
 const CONTACT_FILTER_OPTIONS = [
   { value: '', label: 'All brands', icon: null },
@@ -658,7 +654,7 @@ export default function DirectoryClient({
 
     if (!initialSearch && urlSearch) setSearch(urlSearch);
     if (!initialCategory && urlCategory) {
-      setCategory(urlCategory.trim());
+      setCategory(normalizeCategory(urlCategory) || urlCategory.trim());
     }
     if (urlActivity) setActivity(urlActivity);
     if (urlContactType) setContactType(urlContactType);
@@ -692,7 +688,8 @@ export default function DirectoryClient({
     }
     if (search) params.set('search', search);
     if (category) {
-      params.set('category', category.trim());
+      const canon = normalizeCategory(category) || category.trim();
+      params.set('category', canon);
     }
     if (activity) params.set('activity', activity);
     if (contactType) params.set('contact_type', contactType);
@@ -917,9 +914,7 @@ export default function DirectoryClient({
           )}
 
           {loading ? (
-            <Center>
-              <Spin size="large" />
-            </Center>
+            <LoadingSpinner text="Loading brands..." minHeight="400px" />
           ) : (
             <>
               <Grid>

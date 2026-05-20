@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../config/api';
 import { UserContext } from '../contexts/UserContext';
 import { FaTimes, FaGift, FaCheckCircle } from 'react-icons/fa';
+import LoadingSpinner from './LoadingSpinner';
 
 const PROfferForm = ({ creatorId, creatorUsername, onClose, onSuccess }) => {
   const { user, loading: userLoading } = useContext(UserContext);
@@ -252,9 +253,9 @@ const PROfferForm = ({ creatorId, creatorUsername, onClose, onSuccess }) => {
           background: '#fff',
           borderRadius: 16,
           padding: 32,
-          textAlign: 'center'
+          minWidth: 280,
         }}>
-          <div style={{ fontSize: 16, color: '#6B7280' }}>Loading...</div>
+          <LoadingSpinner text="Loading..." minHeight="120px" />
         </div>
       </div>
     );

@@ -9,8 +9,10 @@ import { UserContext } from '../contexts/UserContext';
 import { getRuntimeApiUrl } from '../config/api';
 import BrandLogo from './BrandLogo';
 import { formatFollowers } from '../utils/format';
+import { resolveBrandStats } from '../utils/brandStats';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import LoadingSpinner from './LoadingSpinner';
 
 // Use shared API config
 const getApiBase = () => {
@@ -76,10 +78,22 @@ const BrandProfilePage = () => {
         brand_name: data.brand_name || data.name,
         domain: data.domain || extractDomain(data.website),
         is_accepting_pr: data.is_accepting_pr ?? data.accepting_pr ?? true,
-        response_rate: data.response_rate || data.stats?.responseRate || 0,
-        avg_response_days: data.avg_response_days || data.stats?.avgResponseTime || 7,
-        total_pitches: data.total_pitches || data.stats?.totalPitches || 0,
-        responses_received: data.responses_received || data.stats?.totalResponses || 0,
+        ...(() => {
+          const s = resolveBrandStats({
+            slug: data.slug || String(id),
+            category: data.category,
+            responseRate: data.response_rate ?? data.stats?.responseRate,
+            avgResponseTime: data.avg_response_days ?? data.stats?.avgResponseTime,
+            totalPitches: data.total_pitches ?? data.stats?.totalPitches,
+            totalResponses: data.responses_received ?? data.stats?.totalResponses,
+          });
+          return {
+            response_rate: s.responseRate,
+            avg_response_days: s.avgResponseTime,
+            total_pitches: s.totalPitches,
+            responses_received: s.totalResponses,
+          };
+        })(),
       };
 
       setBrand(parsedBrand);
@@ -240,8 +254,8 @@ const BrandProfilePage = () => {
   if (loading) {
     return (
       <PageWrap>
-        <PageInner style={{ textAlign: 'center', paddingTop: 100 }}>
-          <div>Loading...</div>
+        <PageInner>
+          <LoadingSpinner text="Loading brand..." minHeight="400px" />
         </PageInner>
       </PageWrap>
     );

@@ -5,12 +5,14 @@ import styled from 'styled-components';
 import { Input, Select, Spin, Pagination, Button, Progress, message } from 'antd';
 import { Search, Crown, Lock, Users, Mail, Heart, Sparkles, Zap, Check, Target, Clock, ExternalLink, Link2 } from 'lucide-react';
 import { getCategoryColors } from '../utils/categoryColors';
+import { normalizeCategory, categoryLabel } from '../constants/brandCategories';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 import { tokens } from '../theme/tokens';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Normalize API base URL - remove trailing slash to prevent double slashes
 const getApiBase = () => {
@@ -337,9 +339,10 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       setUpgradeModalVisible(true);
       return;
     }
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const nextValue = key === 'category' && value ? (normalizeCategory(value) || value) : value;
+    setFilters(prev => ({ ...prev, [key]: nextValue }));
     setPagination(prev => ({ ...prev, page: 1 }));
-    updateURLParams({ [key]: value });
+    updateURLParams({ [key]: nextValue });
   };
 
   const updateURLParams = (newParams) => {
@@ -381,7 +384,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           <Hero>
             <HeroContent>
               <h1>{collectionTitle || '500+ PR Forms for Brands: Direct Application Links'}</h1>
-              <p>{collectionDescription || `Browse verified PR forms for brands—${pagination.total}+ direct application links, PR requirements, and options for small creators in beauty, skincare, K-beauty, tech, and fashion.`}</p>
+              <p>{collectionDescription || 'Browse verified PR forms for brands—500+ direct application links, PR requirements, and options for small creators in beauty, skincare, K-beauty, tech, and fashion.'}</p>
             </HeroContent>
           </Hero>
         )}
@@ -564,9 +567,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
           {/* Brand Grid */}
           {loading ? (
-            <LoadingContainer>
-              <Spin size="large" />
-            </LoadingContainer>
+            <LoadingSpinner text="Loading brands..." minHeight="400px" />
           ) : (
             <>
               <BrandGrid>
@@ -621,7 +622,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                           const catStyle = getCategoryColors(brand.category);
                           return (
                             <CategoryTag $bg={catStyle.bg} $color={catStyle.text} $border={catStyle.border}>
-                              {brand.category}
+                              {categoryLabel(brand.category)}
                             </CategoryTag>
                           );
                         })()}
@@ -1318,13 +1319,6 @@ const SignupCTA = styled.div`
   &:hover svg {
     color: white;
   }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
 `;
 
 const PaginationContainer = styled.div`

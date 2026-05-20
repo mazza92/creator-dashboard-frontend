@@ -16,7 +16,7 @@ export default function KBeautyDirectoryClient() {
   useEffect(() => {
     // Set category filter to "Beauty" on mount if not already set
     if (!searchParams.get('category')) {
-      router.replace('/directory/k-beauty?category=Beauty');
+      router.replace('/directory/k-beauty?category=skincare');
     }
   }, [searchParams, router]);
 

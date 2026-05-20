@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BrandUnlockClient from './BrandUnlockClient';
 import BrandPageLayout from './BrandPageLayout';
+import { resolveBrandStats } from '../../../utils/brandStats';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co';
 
@@ -251,10 +252,18 @@ export default async function BrandPage({ params }) {
   const niches = brand.niches || [];
   const minFollowers = requirements.minFollowers || brand.minFollowers;
   const maxFollowers = requirements.maxFollowers || brand.maxFollowers;
-  const responseRate = stats.responseRate || brand.responseRate || 0;
-  const avgResponseTime = stats.avgResponseTime || brand.avgResponseTime || 7;
-  const totalPitches = stats.totalPitches || brand.total_pitches || 0;
-  const responsesReceived = stats.totalResponses || brand.responses_received || 0;
+  const resolvedStats = resolveBrandStats({
+    slug: brand.slug,
+    category: brand.category,
+    responseRate: stats.responseRate ?? brand.responseRate,
+    avgResponseTime: stats.avgResponseTime ?? brand.avgResponseTime,
+    totalPitches: stats.totalPitches ?? brand.total_pitches,
+    totalResponses: stats.totalResponses ?? brand.responses_received,
+  });
+  const responseRate = resolvedStats.responseRate;
+  const avgResponseTime = resolvedStats.avgResponseTime;
+  const totalPitches = resolvedStats.totalPitches;
+  const responsesReceived = resolvedStats.totalResponses;
   const hasDirectLink = Boolean(brand?.gated?.hasDirectLink);
   const hasEmail = Boolean(brand?.gated?.hasEmailContact);
   const isAcceptingPR = brand.is_accepting_pr ?? brand.accepting_pr ?? true;

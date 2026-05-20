@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { Input, Select, Spin, Pagination, Button } from 'antd';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Normalize API base URL - remove trailing slash to prevent double slashes
 const getApiBase = () => {
@@ -186,9 +187,7 @@ const PublicDirectory = () => {
         </FiltersSection>
 
         {loading ? (
-          <LoadingContainer>
-            <Spin size="large" />
-          </LoadingContainer>
+          <LoadingSpinner text="Loading brands..." minHeight="400px" />
         ) : (
           <>
             <ResultsHeader>
@@ -363,13 +362,6 @@ const FilterItem = styled.div`
     font-weight: 500;
     color: #333;
   }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
 `;
 
 const ResultsHeader = styled.div`

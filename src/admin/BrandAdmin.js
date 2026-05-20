@@ -25,12 +25,9 @@ const ADMIN_EMAIL = 'team@newcollab.co';
 const ADMIN_PASSWORD = 'Ilovela1992!';
 
 // Category options
-const CATEGORY_OPTIONS = [
-  'skincare', 'beauty', 'fashion', 'wellness', 'fitness',
-  'food', 'travel', 'tech', 'gaming', 'lifestyle',
-  'home', 'pet', 'baby', 'jewelry', 'haircare',
-  'sustainable', 'luxury', 'activewear', 'supplements', 'other'
-];
+import { CATEGORY_OPTIONS } from '../constants/brandCategories';
+
+const CATEGORY_OPTION_VALUES = CATEGORY_OPTIONS.map((o) => o.value);
 
 // Platform options
 const PLATFORM_OPTIONS = ['Instagram', 'TikTok', 'YouTube', 'Twitter', 'Facebook', 'Pinterest'];
@@ -439,7 +436,7 @@ const BrandAdmin = () => {
       editable: true,
       width: 130,
       cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: CATEGORY_OPTIONS }
+      cellEditorParams: { values: CATEGORY_OPTION_VALUES }
     },
     {
       field: 'website',

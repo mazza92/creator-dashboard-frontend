@@ -12,6 +12,7 @@ import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import BrandLogo from '../components/BrandLogo';
 import { formatFollowers } from '../utils/format';
+import { resolveBrandStats } from '../utils/brandStats';
 
 // Use shared API config with runtime detection
 const getApiBase = () => {
@@ -69,10 +70,22 @@ const PublicBrandPage = () => {
         brand_name: data.name || data.brand_name,
         domain: data.domain || extractDomain(data.website),
         is_accepting_pr: data.accepting_pr ?? data.is_accepting_pr ?? true,
-        response_rate: data.stats?.responseRate || data.response_rate || 0,
-        avg_response_days: data.stats?.avgResponseTime || data.avg_response_days || 7,
-        total_pitches: data.stats?.totalPitches || data.total_pitches || 0,
-        responses_received: data.stats?.totalResponses || data.responses_received || 0,
+        ...(() => {
+          const s = resolveBrandStats({
+            slug: data.slug,
+            category: data.category,
+            responseRate: data.stats?.responseRate ?? data.response_rate,
+            avgResponseTime: data.stats?.avgResponseTime ?? data.avg_response_days,
+            totalPitches: data.stats?.totalPitches,
+            totalResponses: data.stats?.totalResponses,
+          });
+          return {
+            response_rate: s.responseRate,
+            avg_response_days: s.avgResponseTime,
+            total_pitches: s.totalPitches,
+            responses_received: s.totalResponses,
+          };
+        })(),
         niches: parseArray(data.niches),
         platforms: parseArray(data.platforms),
         is_verified: data.is_verified ?? true,
