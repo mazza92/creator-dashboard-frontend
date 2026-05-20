@@ -55,6 +55,7 @@ import PaymentsPage from './creator-portal/PaymentsPage';
 import CampaignInvites from './creator-portal/CampaignInvites';
 import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
+import ForYou from './cra-pages/ForYou';
 import MediaKit from './creator-portal/MediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
 import VerifyEmailPending from './components/VerifyEmailPending';
@@ -95,7 +96,7 @@ function OnboardingRouter() {
     const { user, loading } = useContext(UserContext);
 
     if (loading) {
-        return <LoadingSpinner />;
+        return <LoadingSpinner fullScreen />;
     }
 
     // If user is a brand with a brand_id, they've completed onboarding
@@ -341,7 +342,7 @@ function AppContent() {
                             location.pathname.startsWith('/creator/profile') ||
                             location.pathname.startsWith('/brand/profile');
 
-    if (loading && isProtectedRoute) return <LoadingSpinner />;
+    if (loading && isProtectedRoute) return <LoadingSpinner fullScreen />;
 
     const isPayPalFlow = location.pathname === '/payment-success' && location.search.includes('paymentId');
 
@@ -423,7 +424,7 @@ function AppContent() {
                 path='/dashboard'
                 element={
                     loading
-                        ? <LoadingSpinner />
+                        ? <LoadingSpinner fullScreen />
                         : user
                             ? <Navigate to={user.role === 'brand' ? '/brand/dashboard/overview' : '/creator/dashboard/pr-brands'} replace />
                             : <Navigate to='/login?redirect=/creator/dashboard/pr-brands' replace />
@@ -463,7 +464,7 @@ function AppContent() {
                 <Route path='dashboard/pr-brands' element={<UnifiedBrandDirectory />} />
                 <Route path='dashboard/pr-pipeline' element={<PRPipeline />} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
-                <Route path='dashboard/pr-offers' element={<PROffers />} />
+                <Route path='dashboard/for-you' element={<ForYou />} />
                 <Route path='dashboard/media-kit' element={<MediaKit />} />
                 <Route path='dashboard/settings' element={<AccountSettings />} />
                 <Route path='dashboard/brand/:slug' element={<PublicBrandPage />} />

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bookmark, Gift, FileText, Bell } from 'lucide-react';
+import { Search, Bookmark, Sparkles, FileText, Bell } from 'lucide-react';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import { UserContext } from '../contexts/UserContext';
 import { useNotification } from '../contexts/NotificationContext';
 import Logo from '../components/Logo';
 import api from '../config/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // ============================================================
 // STYLED COMPONENTS
@@ -356,7 +357,7 @@ const EmptyNotifications = styled.div`
 const navItems = [
   { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
   { label: 'Saved',    icon: Bookmark, path: '/creator/dashboard/pr-pipeline' },
-  { label: 'PR Offers', icon: Gift,    path: '/creator/dashboard/pr-offers' },
+  { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/media-kit', isNew: true },
 ];
 
@@ -471,16 +472,7 @@ const CreatorDashboardLayout = () => {
   if (isLoading) {
     return (
       <LayoutContainer>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '16px', color: '#6B7280' }}>Loading...</div>
-          </div>
-        </div>
+        <LoadingSpinner fullScreen text="Loading..." />
       </LayoutContainer>
     );
   }
