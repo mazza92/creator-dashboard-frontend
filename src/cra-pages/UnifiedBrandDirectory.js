@@ -3,7 +3,8 @@ import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-do
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
 import { Input, Select, Spin, Pagination, Button, Progress, message } from 'antd';
-import { Search, Crown, Lock, Users, Mail, Heart, Sparkles, Zap, Check, Target, Clock, ExternalLink } from 'lucide-react';
+import { Search, Crown, Lock, Users, Mail, Heart, Sparkles, Zap, Check, Target, Clock, ExternalLink, Link2 } from 'lucide-react';
+import { getCategoryColors } from '../utils/categoryColors';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
@@ -451,18 +452,31 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 High Response Rate {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
               </Select.Option>
             </Select>
-            <Select
-              size="large"
-              value={filters.contactType || undefined}
-              onChange={(value) => handleFilterChange('contactType', value)}
-              placeholder="Contact Type"
-              allowClear
-              style={{ minWidth: 160 }}
-            >
-              <Select.Option value="application">Has Application Form</Select.Option>
-              <Select.Option value="email">Has PR Email</Select.Option>
-            </Select>
           </SearchRow>
+          <ContactFilterBar>
+            <ContactFilterLabel>How to apply:</ContactFilterLabel>
+            <ContactPill
+              type="button"
+              $active={!filters.contactType}
+              onClick={() => handleFilterChange('contactType', '')}
+            >
+              All brands
+            </ContactPill>
+            <ContactPill
+              type="button"
+              $active={filters.contactType === 'application'}
+              onClick={() => handleFilterChange('contactType', 'application')}
+            >
+              <Link2 size={14} /> PR application form
+            </ContactPill>
+            <ContactPill
+              type="button"
+              $active={filters.contactType === 'email'}
+              onClick={() => handleFilterChange('contactType', 'email')}
+            >
+              <Mail size={14} /> PR email contact
+            </ContactPill>
+          </ContactFilterBar>
 
           {/* Open PR Applications - Featured Section */}
           {!filters.search && !filters.category && openPrBrands.length > 0 && (
@@ -603,7 +617,14 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                       )}
 
                       <CardTags>
-                        {brand.category && <Tag>{brand.category}</Tag>}
+                        {brand.category && (() => {
+                          const catStyle = getCategoryColors(brand.category);
+                          return (
+                            <CategoryTag $bg={catStyle.bg} $color={catStyle.text} $border={catStyle.border}>
+                              {brand.category}
+                            </CategoryTag>
+                          );
+                        })()}
                         {brand.minFollowers !== null && brand.minFollowers !== undefined && brand.minFollowers > 0 && (
                           <TagFollowers>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</TagFollowers>
                         )}
@@ -1136,14 +1157,56 @@ const CardTags = styled.div`
   flex-wrap: wrap;
 `;
 
-const Tag = styled.span`
-  background: ${tokens.subtle};
-  color: ${tokens.textSecondary};
+const CategoryTag = styled.span`
+  background: ${(p) => p.$bg};
+  color: ${(p) => p.$color};
+  border: 1px solid ${(p) => p.$border};
   padding: 4px 10px;
   border-radius: ${tokens.radiusPill};
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1px;
+  text-transform: capitalize;
+`;
+
+const ContactFilterBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: ${tokens.surface};
+  border: 1px solid ${tokens.border};
+  border-radius: 14px;
+`;
+
+const ContactFilterLabel = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${tokens.textSecondary};
+  margin-right: 4px;
+  white-space: nowrap;
+`;
+
+const ContactPill = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: ${tokens.radiusPill};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid ${(p) => (p.$active ? tokens.action : tokens.border)};
+  background: ${(p) => (p.$active ? tokens.action : tokens.surface)};
+  color: ${(p) => (p.$active ? '#FFFFFF' : tokens.textSecondary)};
+
+  &:hover {
+    border-color: ${tokens.action};
+    color: ${(p) => (p.$active ? '#FFFFFF' : tokens.textPrimary)};
+  }
 `;
 
 const TagFollowers = styled.span`

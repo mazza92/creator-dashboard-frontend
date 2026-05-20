@@ -4,9 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Input, Select, Spin, Pagination } from 'antd';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { SearchOutlined, LinkOutlined, MailOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
+import { getCategoryColors } from '../../utils/categoryColors';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -95,17 +96,64 @@ const Filters = styled.div`
   border-radius: 14px;
   border: 1px solid #E5E5E5;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  .ant-input-affix-wrapper, .ant-select-selector {
+    border-radius: 10px !important;
+    border-color: #E5E5E5 !important;
+  }
+`;
+
+const FilterRow = styled.div`
   display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr auto;
+  grid-template-columns: 1.4fr 1fr 1fr;
   gap: 12px;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
+`;
 
-  .ant-input-affix-wrapper, .ant-select-selector {
-    border-radius: 10px !important;
-    border-color: #E5E5E5 !important;
+const ContactFilterBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #EBEBEB;
+`;
+
+const ContactFilterLabel = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #525252;
+  margin-right: 4px;
+  white-space: nowrap;
+`;
+
+const ContactPill = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid ${(p) => (p.$active ? '#0F0F0F' : '#E5E5E5')};
+  background: ${(p) => (p.$active ? '#0F0F0F' : '#FFFFFF')};
+  color: ${(p) => (p.$active ? '#FFFFFF' : '#525252')};
+
+  &:hover {
+    border-color: #0F0F0F;
+    color: ${(p) => (p.$active ? '#FFFFFF' : '#0F0F0F')};
+  }
+
+  .anticon {
+    font-size: 14px;
   }
 `;
 
@@ -220,13 +268,15 @@ const TagRow = styled.div`
   flex-wrap: wrap;
 `;
 
-const Tag = styled.span`
-  background: #F4F4F4;
-  color: #4B4B4B;
+const CategoryTag = styled.span`
+  background: ${(p) => p.$bg};
+  color: ${(p) => p.$color};
+  border: 1px solid ${(p) => p.$border};
   padding: 4px 10px;
   border-radius: 100px;
   font-size: 11px;
   font-weight: 600;
+  text-transform: capitalize;
 `;
 
 const TagFollowers = styled.span`
@@ -542,6 +592,20 @@ const ApplyButton = styled.a`
   }
 `;
 
+const formatCategoryLabel = (category) => {
+  if (!category) return '';
+  return String(category)
+    .split(/[\s_-]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const CONTACT_FILTER_OPTIONS = [
+  { value: '', label: 'All brands', icon: null },
+  { value: 'application', label: 'PR application form', icon: LinkOutlined },
+  { value: 'email', label: 'PR email contact', icon: MailOutlined },
+];
+
 // Helper to generate favicon URL from website
 const getFaviconUrl = (website) => {
   if (!website) return null;
@@ -734,69 +798,76 @@ export default function DirectoryClient({
 
         <Container>
           <Filters>
-            <Input
-              size="large"
-              allowClear
-              placeholder="Search brands…"
-              prefix={<SearchOutlined />}
-              value={search}
-              onChange={(e) => {
-                const next = e.target.value || '';
-                setPage(1);
-                setSearch(next);
-                updateUrl({ search: next, page: 1 });
-              }}
-            />
-            <Select
-              size="large"
-              allowClear
-              placeholder="All categories"
-              value={category || undefined}
-              onChange={(val) => {
-                const next = val ? val.trim() : '';
-                setPage(1);
-                setCategory(next);
-                updateUrl({ category: next, page: 1 });
-              }}
-              options={(categories || []).map((c) => ({
-                value: c.value,
-                label: `${c.label}${typeof c.count === 'number' ? ` (${c.count})` : ''}`,
-              }))}
-            />
-            <Select
-              size="large"
-              allowClear
-              placeholder="All brands"
-              value={activity || undefined}
-              onChange={(val) => {
-                const next = val || '';
-                setPage(1);
-                setActivity(next);
-                updateUrl({ activity: next, page: 1 });
-              }}
-              options={[
-                { value: 'new', label: '🆕 Added This Week' },
-                { value: 'active', label: '⚡ Actively Reviewing' },
-                { value: 'responsive', label: '✨ High Response Rate' },
-              ]}
-            />
-            <Select
-              size="large"
-              value={contactType || undefined}
-              placeholder="All brands"
-              allowClear
-              onChange={(val) => {
-                const next = val || '';
-                setPage(1);
-                setContactType(next);
-                updateUrl({ contactType: next, page: 1 });
-              }}
-              options={[
-                { value: 'application', label: '🔗 Has Application Form' },
-                { value: 'email', label: '✉️ Has PR Email' },
-              ]}
-              suffixIcon={<FilterOutlined />}
-            />
+            <FilterRow>
+              <Input
+                size="large"
+                allowClear
+                placeholder="Search brands…"
+                prefix={<SearchOutlined />}
+                value={search}
+                onChange={(e) => {
+                  const next = e.target.value || '';
+                  setPage(1);
+                  setSearch(next);
+                  updateUrl({ search: next, page: 1 });
+                }}
+              />
+              <Select
+                size="large"
+                allowClear
+                placeholder="All categories"
+                value={category || undefined}
+                onChange={(val) => {
+                  const next = val ? val.trim() : '';
+                  setPage(1);
+                  setCategory(next);
+                  updateUrl({ category: next, page: 1 });
+                }}
+                options={(categories || []).map((c) => ({
+                  value: c.value,
+                  label: `${c.label}${typeof c.count === 'number' ? ` (${c.count})` : ''}`,
+                }))}
+              />
+              <Select
+                size="large"
+                allowClear
+                placeholder="All brands"
+                value={activity || undefined}
+                onChange={(val) => {
+                  const next = val || '';
+                  setPage(1);
+                  setActivity(next);
+                  updateUrl({ activity: next, page: 1 });
+                }}
+                options={[
+                  { value: 'new', label: 'Added this week' },
+                  { value: 'active', label: 'Actively reviewing' },
+                  { value: 'responsive', label: 'High response rate' },
+                ]}
+              />
+            </FilterRow>
+            <ContactFilterBar>
+              <ContactFilterLabel>How to apply:</ContactFilterLabel>
+              {CONTACT_FILTER_OPTIONS.map((opt) => {
+                const Icon = opt.icon;
+                const active = contactType === opt.value;
+                return (
+                  <ContactPill
+                    key={opt.value || 'all'}
+                    type="button"
+                    $active={active}
+                    onClick={() => {
+                      setPage(1);
+                      setContactType(opt.value);
+                      updateUrl({ contactType: opt.value, page: 1 });
+                    }}
+                  >
+                    {Icon ? <Icon /> : null}
+                    {opt.label}
+                  </ContactPill>
+                );
+              })}
+            </ContactFilterBar>
           </Filters>
 
           {/* Open PR Applications - Featured Section */}
@@ -873,7 +944,14 @@ export default function DirectoryClient({
                         <Desc>{brand.description}</Desc>
                       )}
                       <TagRow>
-                        {brand.category && <Tag>{brand.category}</Tag>}
+                        {brand.category && (() => {
+                          const catStyle = getCategoryColors(brand.category);
+                          return (
+                            <CategoryTag $bg={catStyle.bg} $color={catStyle.text} $border={catStyle.border}>
+                              {formatCategoryLabel(brand.category)}
+                            </CategoryTag>
+                          );
+                        })()}
                         {brand.minFollowers > 0 && (
                           <TagFollowers>{Math.round(brand.minFollowers / 1000)}K+ followers</TagFollowers>
                         )}

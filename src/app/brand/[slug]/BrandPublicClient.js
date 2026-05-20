@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { Button, Spin, Tag, message } from 'antd';
 import { LinkOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
+import { getCategoryColors } from '../../../utils/categoryColors';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -168,7 +169,14 @@ export default function BrandPublicClient({ brand }) {
           <div style={{ flex: 1, minWidth: 260 }}>
             <Title>{brand.name}</Title>
             <MetaRow>
-              {brand.category ? <Tag color="blue">{brand.category}</Tag> : null}
+              {brand.category ? (() => {
+                const cat = getCategoryColors(brand.category);
+                return (
+                  <Tag style={{ background: cat.bg, color: cat.text, border: `1px solid ${cat.border}`, fontWeight: 600 }}>
+                    {brand.category}
+                  </Tag>
+                );
+              })() : null}
               {brand.minFollowers ? <Tag>{Math.round(brand.minFollowers / 1000)}K+ followers</Tag> : null}
               {typeof brand.responseRate === 'number' ? <Tag color="green">{brand.responseRate}% response</Tag> : null}
             </MetaRow>
