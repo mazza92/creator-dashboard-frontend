@@ -116,80 +116,189 @@ const Grid = styled.div`
   margin-top: 24px;
 `;
 
-const Card = styled.div`
-  background: white;
-  border: 1px solid #E5E5E5;
-  border-radius: 14px;
+const Card = styled(Link)`
+  background: #FFFFFF;
+  border: 1px solid #EBEBEB;
+  border-radius: 20px;
   padding: 20px;
-  transition: all 0.2s ease;
+  position: relative;
+  transition: all 0.2s;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
+  color: inherit;
 
   &:hover {
     border-color: #D4D4D4;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 28px rgba(15,15,15,0.08);
   }
 `;
 
-const CardLink = styled(Link)`
-  text-decoration: none;
-  color: inherit;
-  display: block;
-  flex: 1;
+const FeaturedBadge = styled.div`
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 4px 9px;
+  border-radius: 100px;
+  border: 1px solid #FDE68A;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
-const Logo = styled.div`
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  border: 1px solid #E5E5E5;
-  overflow: hidden;
-  background: #FAFAFA;
+const LogoWrap = styled.div`
+  width: 100%;
+  aspect-ratio: 2.2 / 1;
+  background: #FFFFFF;
+  border: 1px solid #F0F0F0;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
+  overflow: hidden;
 
   img {
-    width: 65%;
-    height: 60%;
+    max-width: 65%;
+    max-height: 60%;
+    width: auto;
+    height: auto;
     object-fit: contain;
     mix-blend-mode: multiply;
   }
 `;
 
-const Name = styled.div`
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 6px;
+const LogoPlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #0F0F0F;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -1px;
 `;
 
-const Desc = styled.div`
-  font-size: 13px;
-  line-height: 1.5;
-  color: #6B6B6B;
+const BrandInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+`;
+
+const Name = styled.h3`
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin: 0 0 5px;
+  letter-spacing: -0.2px;
+  text-align: center;
+`;
+
+const Desc = styled.p`
+  font-size: 12.5px;
+  color: #8C8C8C;
+  line-height: 1.55;
+  margin: 0 0 14px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 40px;
+  text-align: center;
 `;
 
-const MetaRow = styled.div`
-  margin-top: 12px;
+const TagRow = styled.div`
   display: flex;
+  justify-content: center;
   gap: 6px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 `;
 
-const Meta = styled.span`
-  font-size: 11px;
-  background: #F5F5F5;
-  color: #525252;
+const Tag = styled.span`
+  background: #F4F4F4;
+  color: #4B4B4B;
   padding: 4px 10px;
   border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+`;
+
+const TagFollowers = styled.span`
+  background: #F5F3FF;
+  color: #7C3AED;
+  border: 1px solid #DDD6FE;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background: #EBEBEB;
+  margin: 0 -20px 14px;
+`;
+
+const StatsRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 14px;
+`;
+
+const StatItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+`;
+
+const StatValue = styled.div`
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #0F0F0F;
+
+  &.green { color: #059669; }
+`;
+
+const StatLabel = styled.div`
+  font-size: 10px;
+  color: #8C8C8C;
   font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+`;
+
+const StatDivider = styled.div`
+  width: 1px;
+  height: 28px;
+  background: #EBEBEB;
+`;
+
+const SocialProof = styled.div`
+  text-align: center;
+  font-size: 11.5px;
+  color: #8C8C8C;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+    color: #059669;
+    flex-shrink: 0;
+  }
 `;
 
 const CardCTA = styled.a`
@@ -205,7 +314,7 @@ const CardCTA = styled.a`
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease;
-  margin-top: 16px;
+  margin-top: auto;
 
   &:hover {
     background: #262626;
@@ -744,31 +853,66 @@ export default function DirectoryClient({
             <>
               <Grid>
                 {brands.map((brand) => (
-                  <Card key={brand.slug || brand.id}>
-                    <CardLink href={`/brand/${brand.slug}`}>
-                      <Logo>
-                        {brand.logo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={brand.logo} alt={brand.name || 'Brand'} />
-                        ) : (
-                          <span style={{ fontWeight: 900, color: '#0F0F0F' }}>
-                            {(brand.name || 'B').slice(0, 1)}
-                          </span>
-                        )}
-                      </Logo>
+                  <Card key={brand.slug || brand.id} href={`/brand/${brand.slug}`}>
+                    {brand.isFeatured && (
+                      <FeaturedBadge>
+                        ✦ Featured
+                      </FeaturedBadge>
+                    )}
+                    <LogoWrap>
+                      {brand.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={brand.logo} alt={brand.name || 'Brand'} />
+                      ) : (
+                        <LogoPlaceholder>{(brand.name || 'B').slice(0, 1)}</LogoPlaceholder>
+                      )}
+                    </LogoWrap>
+                    <BrandInfo>
                       <Name>{brand.name}</Name>
-                      <Desc>{brand.description || 'PR applications and influencer partnerships.'}</Desc>
-                      <MetaRow>
-                        {brand.category ? <Meta>{brand.category}</Meta> : null}
-                        {brand.minFollowers ? (
-                          <Meta>{Math.round(brand.minFollowers / 1000)}K+ followers</Meta>
-                        ) : null}
-                        {typeof brand.responseRate === 'number' ? (
-                          <Meta>{brand.responseRate}% response</Meta>
-                        ) : null}
-                      </MetaRow>
-                    </CardLink>
-                    <CardCTA href="https://app.newcollab.co/register/creator">
+                      {brand.description && (
+                        <Desc>{brand.description}</Desc>
+                      )}
+                      <TagRow>
+                        {brand.category && <Tag>{brand.category}</Tag>}
+                        {brand.minFollowers > 0 && (
+                          <TagFollowers>{Math.round(brand.minFollowers / 1000)}K+ followers</TagFollowers>
+                        )}
+                      </TagRow>
+                      {(typeof brand.responseRate === 'number' || (brand.pitchStats?.totalPitches > 0)) && (
+                        <>
+                          <Divider />
+                          <StatsRow>
+                            {typeof brand.responseRate === 'number' && (
+                              <>
+                                <StatItem>
+                                  <StatValue className="green">{brand.responseRate}%</StatValue>
+                                  <StatLabel>Response rate</StatLabel>
+                                </StatItem>
+                                {brand.pitchStats?.totalPitches > 0 && <StatDivider />}
+                              </>
+                            )}
+                            {brand.pitchStats?.totalPitches > 0 && (
+                              <StatItem>
+                                <StatValue>{brand.pitchStats.totalPitches}</StatValue>
+                                <StatLabel>Creators pitched</StatLabel>
+                              </StatItem>
+                            )}
+                          </StatsRow>
+                          {brand.pitchStats?.totalResponses > 0 && (
+                            <SocialProof>
+                              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <strong>{brand.pitchStats.totalResponses}</strong> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got a response
+                            </SocialProof>
+                          )}
+                        </>
+                      )}
+                    </BrandInfo>
+                    <CardCTA
+                      href="https://app.newcollab.co/register/creator"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
