@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings } from 'react-icons/fi';
@@ -8,6 +9,7 @@ import UpgradeModal from './UpgradeModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const AccountSettings = () => {
+  const [searchParams] = useSearchParams();
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -16,6 +18,13 @@ const AccountSettings = () => {
   useEffect(() => {
     fetchSubscriptionStatus();
   }, []);
+
+  // Email nudge CTA: /creator/dashboard/settings?upgrade=pro
+  useEffect(() => {
+    if (searchParams.get('upgrade') === 'pro') {
+      setShowUpgradeModal(true);
+    }
+  }, [searchParams]);
 
   const fetchSubscriptionStatus = async () => {
     try {
@@ -257,6 +266,7 @@ const AccountSettings = () => {
         <UpgradeModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
+          feature={searchParams.get('upgrade') === 'pro' ? 'limit_reached' : undefined}
           currentCount={subscriptionInfo?.contacts_used_this_week || 0}
           limit={subscriptionInfo?.contacts_limit || 3}
           feature="brand contacts"

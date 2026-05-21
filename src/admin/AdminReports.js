@@ -1,44 +1,46 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
-import {
-  Card, Statistic, Row, Col, Button, Form, Input, message, Tabs, Table, Tag,
-  Space, DatePicker, Select, Spin, Progress, Tooltip
-} from 'antd';
-import {
-  LockOutlined, UserOutlined, ReloadOutlined, LineChartOutlined,
-  TeamOutlined, RiseOutlined, DollarOutlined, FireOutlined,
-  TrophyOutlined, BarChartOutlined, FunnelPlotOutlined, CalendarOutlined,
-  ShopOutlined, LinkOutlined, MailOutlined, SendOutlined, ThunderboltOutlined
-} from '@ant-design/icons';
-import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend,
-  ResponsiveContainer, Funnel, FunnelChart, LabelList
-} from 'recharts';
+import React, { useState, useEffect } from 'react';
+import styled, { keyframes } from 'styled-components';
+import { Form, Input, message } from 'antd';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import api from '../config/api';
 
-// Admin credentials - same as BrandAdmin
+// Admin credentials
 const ADMIN_EMAIL = 'team@newcollab.co';
 const ADMIN_PASSWORD = 'Ilovela1992!';
 
-const COLORS = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'];
+// Color palette
+const colors = {
+  rose: '#E11D48',
+  black: '#0F0F0F',
+  violet: '#7C3AED',
+  green: '#059669',
+  amber: '#D97706',
+  bg: '#F5F5F7',
+  surface: '#FFFFFF',
+  border: '#E8E8E8',
+  text: '#0F0F0F',
+  text2: '#555',
+  text3: '#999'
+};
+
+// Traffic source colors
+const SOURCE_COLORS = {
+  Organic:  colors.green,
+  Direct:   colors.black,
+  Social:   colors.rose,
+  Referral: colors.violet,
+  Email:    '#2563EB',
+  Paid:     colors.amber,
+  Other:    colors.text3,
+};
 
 const AdminReports = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [overview, setOverview] = useState(null);
-  const [signups, setSignups] = useState(null);
-  const [dau, setDau] = useState(null);
-  const [engagement, setEngagement] = useState(null);
-  const [topUsers, setTopUsers] = useState([]);
-  const [quotaHits, setQuotaHits] = useState(null);
-  const [popularBrands, setPopularBrands] = useState([]);
-  const [retention, setRetention] = useState(null);
-  const [todayStats, setTodayStats] = useState(null);
-  const [brandAnalytics, setBrandAnalytics] = useState(null);
-  const [pitchAnalytics, setPitchAnalytics] = useState(null);
-  const [activeTab, setActiveTab] = useState('today');
-  const [dateRange, setDateRange] = useState(30);
+  const [data, setData] = useState(null);
+  const [nudgeSent, setNudgeSent] = useState({});
+  const [trafficRefreshing, setTrafficRefreshing] = useState(false);
+  const [lastFetched, setLastFetched] = useState(null);
 
   // Check auth on mount
   useEffect(() => {
@@ -51,7 +53,7 @@ const AdminReports = () => {
   // Load data when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      fetchAllData();
+      fetchDashboardData();
     }
   }, [isAuthenticated]);
 
@@ -59,134 +61,53 @@ const AdminReports = () => {
     headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' }
   });
 
-  const fetchAllData = async () => {
+  const fetchDashboardData = async (bustCache = false) => {
     setLoading(true);
     try {
-      await Promise.all([
-        fetchTodayStats(),
-        fetchOverview(),
-        fetchSignups(),
-        fetchDAU(),
-        fetchEngagement(),
-        fetchTopUsers(),
-        fetchQuotaHits(),
-        fetchPopularBrands(),
-        fetchRetention(),
-        fetchBrandAnalytics(),
-        fetchPitchAnalytics()
-      ]);
+      const url = bustCache
+        ? '/api/admin/reports/founder-dashboard?bust=1'
+        : '/api/admin/reports/founder-dashboard';
+      const { data: dashboardData } = await api.get(url, getApiConfig());
+      setData(dashboardData);
+      setLastFetched(new Date());
     } catch (error) {
-      console.error('Failed to fetch data:', error);
-      message.error('Failed to load some reports');
+      console.error('Failed to fetch dashboard data:', error);
+      message.error('Failed to load dashboard');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchTodayStats = async () => {
+  const refreshTraffic = async () => {
+    if (trafficRefreshing) return;
+    setTrafficRefreshing(true);
     try {
-      const { data } = await api.get('/api/admin/reports/today', getApiConfig());
-      setTodayStats(data);
+      const { data: dashboardData } = await api.get(
+        '/api/admin/reports/founder-dashboard?bust=1',
+        getApiConfig()
+      );
+      setData(dashboardData);
+      setLastFetched(new Date());
+      message.success('Traffic data refreshed');
     } catch (error) {
-      console.error('Failed to fetch today stats:', error);
+      message.error('Failed to refresh traffic');
+    } finally {
+      setTrafficRefreshing(false);
     }
   };
 
-  const fetchOverview = async () => {
-    try {
-      const { data } = await api.get('/api/admin/reports/overview', getApiConfig());
-      setOverview(data);
-    } catch (error) {
-      console.error('Failed to fetch overview:', error);
-    }
-  };
-
-  const fetchSignups = async () => {
-    try {
-      const { data } = await api.get(`/api/admin/reports/signups?days=${dateRange}`, getApiConfig());
-      setSignups(data);
-    } catch (error) {
-      console.error('Failed to fetch signups:', error);
-    }
-  };
-
-  const fetchDAU = async () => {
-    try {
-      const { data } = await api.get(`/api/admin/reports/dau?days=${dateRange}`, getApiConfig());
-      setDau(data);
-    } catch (error) {
-      console.error('Failed to fetch DAU:', error);
-    }
-  };
-
-  const fetchEngagement = async () => {
-    try {
-      const { data } = await api.get(`/api/admin/reports/engagement?days=${dateRange}`, getApiConfig());
-      setEngagement(data);
-    } catch (error) {
-      console.error('Failed to fetch engagement:', error);
-    }
-  };
-
-  const fetchTopUsers = async () => {
-    try {
-      const { data } = await api.get(`/api/admin/reports/top-users?limit=20&days=${dateRange}`, getApiConfig());
-      setTopUsers(data.users || []);
-    } catch (error) {
-      console.error('Failed to fetch top users:', error);
-    }
-  };
-
-  const fetchQuotaHits = async () => {
-    try {
-      const { data } = await api.get('/api/admin/reports/quota-hits', getApiConfig());
-      setQuotaHits(data);
-    } catch (error) {
-      console.error('Failed to fetch quota hits:', error);
-    }
-  };
-
-  const fetchPopularBrands = async () => {
-    try {
-      const { data } = await api.get(`/api/admin/reports/popular-brands?limit=15&days=${dateRange}`, getApiConfig());
-      setPopularBrands(data.brands || []);
-    } catch (error) {
-      console.error('Failed to fetch popular brands:', error);
-    }
-  };
-
-  const fetchRetention = async () => {
-    try {
-      const { data } = await api.get('/api/admin/reports/retention', getApiConfig());
-      setRetention(data);
-    } catch (error) {
-      console.error('Failed to fetch retention:', error);
-    }
-  };
-
-  const fetchBrandAnalytics = async () => {
-    try {
-      const { data } = await api.get(`/api/admin/reports/brand-analytics?days=${dateRange}&limit=20`, getApiConfig());
-      setBrandAnalytics(data);
-    } catch (error) {
-      console.error('Failed to fetch brand analytics:', error);
-    }
-  };
-
-  const fetchPitchAnalytics = async () => {
-    try {
-      const { data } = await api.get(`/api/admin/reports/pitch-analytics?days=${dateRange}`, getApiConfig());
-      setPitchAnalytics(data);
-    } catch (error) {
-      console.error('Failed to fetch pitch analytics:', error);
-    }
-  };
+  // Auto-refresh every 15 minutes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => fetchDashboardData(false), 15 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const handleLogin = (values) => {
     if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
       sessionStorage.setItem('adminReportsAuth', 'true');
       setIsAuthenticated(true);
-      message.success('Welcome to Admin Reports!');
+      message.success('Welcome to Founder Dashboard!');
     } else {
       message.error('Invalid credentials');
     }
@@ -197,1609 +118,1282 @@ const AdminReports = () => {
     setIsAuthenticated(false);
   };
 
-  // Top users table columns
-  const topUsersColumns = [
-    {
-      title: 'Rank',
-      key: 'rank',
-      width: 60,
-      render: (_, __, index) => (
-        <span style={{ fontWeight: 'bold', color: index < 3 ? COLORS[index] : '#666' }}>
-          #{index + 1}
-        </span>
-      )
-    },
-    {
-      title: 'Creator',
-      key: 'creator',
-      render: (_, record) => (
-        <div>
-          <strong>{record.username || '-'}</strong>
-          <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
-        </div>
-      )
-    },
-    {
-      title: 'Tier',
-      dataIndex: 'tier',
-      key: 'tier',
-      render: (tier) => (
-        <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
-          {tier}
-        </Tag>
-      )
-    },
-    {
-      title: 'Saves',
-      dataIndex: 'saves',
-      key: 'saves',
-      sorter: (a, b) => a.saves - b.saves,
-      render: (saves) => <span style={{ color: '#667eea' }}>{saves}</span>
-    },
-    {
-      title: 'Pitches',
-      dataIndex: 'pitches',
-      key: 'pitches',
-      sorter: (a, b) => a.pitches - b.pitches,
-      render: (pitches) => <strong style={{ color: '#52c41a' }}>{pitches}</strong>
-    },
-    {
-      title: 'This Week',
-      dataIndex: 'pitches_this_week',
-      key: 'pitches_this_week',
-      render: (count, record) => (
-        <span>
-          <strong>{count}</strong>
-          {record.tier === 'free' && <small style={{ color: '#999' }}>/3</small>}
-        </span>
-      )
-    },
-    {
-      title: 'Last Active',
-      dataIndex: 'last_activity',
-      key: 'last_activity',
-      render: (date) => date ? new Date(date).toLocaleDateString() : '-'
-    }
-  ];
+  const handleSendNudge = async (user) => {
+    try {
+      const response = await api.post('/api/admin/reports/send-nudge', {
+        creator_id: user.creator_id,
+        email: user.email
+      }, getApiConfig());
 
-  // Popular brands table columns
-  const popularBrandsColumns = [
-    {
-      title: 'Rank',
-      key: 'rank',
-      width: 60,
-      render: (_, __, index) => <strong>#{index + 1}</strong>
-    },
-    {
-      title: 'Brand',
-      dataIndex: 'brand_name',
-      key: 'brand_name'
-    },
-    {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-      render: (cat) => <Tag>{cat}</Tag>
-    },
-    {
-      title: 'Saves',
-      dataIndex: 'save_count',
-      key: 'save_count',
-      sorter: (a, b) => a.save_count - b.save_count,
-      render: (count) => <span style={{ color: '#667eea' }}>{count}</span>
-    },
-    {
-      title: 'Pitches',
-      dataIndex: 'pitch_count',
-      key: 'pitch_count',
-      render: (count) => <strong style={{ color: '#52c41a' }}>{count}</strong>
-    },
-    {
-      title: 'Unique Users',
-      dataIndex: 'unique_users',
-      key: 'unique_users'
+      if (response.data.success) {
+        setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'sent' }));
+        message.success(`Nudge sent to ${user.email}`);
+      } else if (response.data.reason === 'cooldown') {
+        setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'cooldown' }));
+        message.warning(response.data.message || 'User was emailed recently');
+      } else if (response.data.reason === 'smtp_not_configured') {
+        message.info('Email service not configured - check SMTP env vars');
+      } else {
+        message.error(response.data.message || 'Failed to send nudge');
+      }
+    } catch (error) {
+      message.error('Failed to send nudge');
     }
-  ];
+  };
 
-  // Quota hits table columns (now tracking pitch quota)
-  const quotaHitsColumns = [
-    {
-      title: 'Creator',
-      key: 'creator',
-      render: (_, record) => (
-        <div>
-          <strong>{record.username || '-'}</strong>
-          <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
-        </div>
-      )
-    },
-    {
-      title: 'Tier',
-      dataIndex: 'tier',
-      key: 'tier',
-      render: (tier) => (
-        <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
-          {tier}
-        </Tag>
-      )
-    },
-    {
-      title: 'Pitches This Week',
-      dataIndex: 'pitches_this_week',
-      key: 'pitches_this_week',
-      render: (count, record) => (
-        <Tag color={count >= 3 ? 'red' : 'orange'}>
-          {count}{record.tier === 'free' && '/3'}
-        </Tag>
-      )
-    },
-    {
-      title: 'Last Pitch',
-      dataIndex: 'last_pitch_at',
-      key: 'last_pitch_at',
-      render: (date) => date ? new Date(date).toLocaleDateString() : '-'
-    }
-  ];
+  // Sparkline component (for health metrics with daily objects)
+  const Sparkline = ({ data, color = 'black', isToday = false }) => {
+    const maxVal = Math.max(...data.map(d => d.count), 1);
+    return (
+      <SparkRow>
+        {data.map((d, i) => (
+          <SparkBar
+            key={i}
+            style={{ height: `${Math.max((d.count / maxVal) * 100, 10)}%` }}
+            $isToday={i === data.length - 1}
+            $color={color}
+          />
+        ))}
+      </SparkRow>
+    );
+  };
+
+  // Traffic sparkline (for GA4 data - simple array of numbers)
+  const TrafficSparkline = ({ data = [], color = '#0F0F0F' }) => {
+    const maxVal = Math.max(...data, 1);
+    return (
+      <SparkRow>
+        {data.map((val, i) => (
+          <SparkBar
+            key={i}
+            style={{ height: `${Math.max((val / maxVal) * 100, 10)}%`, background: i === data.length - 1 ? color : '#F0F0F0' }}
+          />
+        ))}
+      </SparkRow>
+    );
+  };
 
   // Login form
   if (!isAuthenticated) {
     return (
       <LoginContainer>
         <LoginCard>
-          <BarChartOutlined style={{ fontSize: 48, color: '#667eea', marginBottom: 24 }} />
-          <h2>Admin Reports</h2>
-          <p>Enter admin credentials to view analytics</p>
+          <LogoMark>N</LogoMark>
+          <h2>Founder Dashboard</h2>
+          <p>Enter admin credentials</p>
           <Form onFinish={handleLogin} layout="vertical">
             <Form.Item name="email" rules={[{ required: true }]}>
-              <Input prefix={<UserOutlined />} placeholder="Email" />
+              <StyledInput prefix={<UserOutlined />} placeholder="Email" />
             </Form.Item>
             <Form.Item name="password" rules={[{ required: true }]}>
-              <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+              <StyledInput.Password prefix={<LockOutlined />} placeholder="Password" />
             </Form.Item>
-            <Button type="primary" htmlType="submit" block size="large">
+            <LoginButton type="submit">
               Login
-            </Button>
+            </LoginButton>
           </Form>
         </LoginCard>
       </LoginContainer>
     );
   }
 
+  if (loading || !data) {
+    return (
+      <LoadingContainer>
+        <LogoMark>N</LogoMark>
+        <p>Loading dashboard...</p>
+      </LoadingContainer>
+    );
+  }
 
-  // Format subscription data for pie chart
-  const subscriptionData = overview?.subscription_breakdown
-    ? Object.entries(overview.subscription_breakdown).map(([name, value], index) => ({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        value,
-        fill: COLORS[index % COLORS.length]
-      }))
-    : [];
+  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month } = data;
+
+  // Calculate funnel percentages
+  const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
+  const savedPct = calcPct(funnel.saved_brand, funnel.signed_up);
+  const pitchPct = calcPct(funnel.sent_pitch, funnel.saved_brand);
+  const multiPct = calcPct(funnel.pitched_multiple, funnel.sent_pitch);
 
   return (
-    <Container>
+    <>
+      {/* Header */}
       <Header>
-        <div>
-          <h1><BarChartOutlined /> Admin Reports</h1>
-          <p>Creator usage analytics and monetization insights</p>
-        </div>
-        <Space>
-          <Select
-            value={dateRange}
-            onChange={(val) => setDateRange(val)}
-            style={{ width: 120 }}
-          >
-            <Select.Option value={7}>Last 7 days</Select.Option>
-            <Select.Option value={30}>Last 30 days</Select.Option>
-            <Select.Option value={90}>Last 90 days</Select.Option>
-          </Select>
-          <Button icon={<ReloadOutlined />} onClick={fetchAllData} loading={loading}>
-            Refresh
-          </Button>
-          <Button onClick={handleLogout}>Logout</Button>
-        </Space>
+        <Logo>
+          <LogoMark>N</LogoMark>
+          <LogoWord>new<span>collab</span></LogoWord>
+        </Logo>
+        <HeaderRight>
+          <Badge>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</Badge>
+          <RefreshBtn onClick={fetchDashboardData}>↻ Refresh</RefreshBtn>
+          <RefreshBtn onClick={handleLogout}>Logout</RefreshBtn>
+        </HeaderRight>
       </Header>
 
-      {loading && !overview ? (
-        <LoadingContainer>
-          <Spin size="large" />
-          <p>Loading reports...</p>
-        </LoadingContainer>
-      ) : (
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          {/* Today Tab - Daily Piloting */}
-          <Tabs.TabPane tab={<span><FireOutlined /> Today</span>} key="today">
-            <TodayHeader>
-              <h2>Daily Report - {todayStats?.date || new Date().toLocaleDateString()}</h2>
-              <p>Your daily snapshot for quick piloting decisions</p>
-            </TodayHeader>
+      <Main>
+        {/* 1. THE GOAL - MRR Card */}
+        <GoalCard>
+          <GoalEyebrow>Your progress to ${mrr.goal.toLocaleString()} MRR</GoalEyebrow>
+          <GoalRow>
+            <GoalLeft>
+              <GoalMRR>$<span>{mrr.current}</span></GoalMRR>
+              <GoalTarget>Monthly Recurring Revenue</GoalTarget>
+            </GoalLeft>
+            <GoalRight>
+              <GoalSubs>{mrr.total_paid}</GoalSubs>
+              <GoalSubsLabel>Pro subscribers</GoalSubsLabel>
+              <GoalNeeded>Need <strong>{mrr.subs_needed} more</strong> at ${mrr.pro_price}/mo</GoalNeeded>
+            </GoalRight>
+          </GoalRow>
 
-            {/* Today's Key Metrics with Comparison */}
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Signups Today"
-                    value={todayStats?.signups?.today || 0}
-                    prefix={<TeamOutlined />}
-                    valueStyle={{ color: '#667eea' }}
-                    suffix={
-                      <ChangeIndicator positive={todayStats?.signups?.change >= 0}>
-                        {todayStats?.signups?.change > 0 ? '+' : ''}{todayStats?.signups?.change || 0} vs yesterday
-                      </ChangeIndicator>
-                    }
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Active Users Today"
-                    value={todayStats?.active_users?.today || 0}
-                    prefix={<FireOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                    suffix={
-                      <ChangeIndicator positive={todayStats?.active_users?.change >= 0}>
-                        {todayStats?.active_users?.change > 0 ? '+' : ''}{todayStats?.active_users?.change || 0} vs yesterday
-                      </ChangeIndicator>
-                    }
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Unlocks Today"
-                    value={todayStats?.unlocks?.today || 0}
-                    prefix={<TrophyOutlined />}
-                    valueStyle={{ color: '#faad14' }}
-                    suffix={
-                      <ChangeIndicator positive={todayStats?.unlocks?.change >= 0}>
-                        {todayStats?.unlocks?.change > 0 ? '+' : ''}{todayStats?.unlocks?.change || 0} vs yesterday
-                      </ChangeIndicator>
-                    }
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Pipeline Saves"
-                    value={todayStats?.pipeline_saves_today || 0}
-                    prefix={<FunnelPlotOutlined />}
-                    valueStyle={{ color: '#eb2f96' }}
-                  />
-                </StatCard>
-              </Col>
-            </StatsRow>
+          <ProgressWrap>
+            <ProgressTrack>
+              <ProgressFill style={{ width: `${mrr.progress_pct}%` }} />
+            </ProgressTrack>
+            <ProgressLabels>
+              <span>$0</span>
+              <span>$250</span>
+              <span>$500</span>
+              <span>$750</span>
+              <span>$1,000</span>
+            </ProgressLabels>
+          </ProgressWrap>
 
-            {/* AI Pitch Credits Today */}
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="AI Pitches Today"
-                    value={pitchAnalytics?.today?.pitches_today || 0}
-                    prefix={<SendOutlined />}
-                    valueStyle={{ color: '#667eea' }}
-                    suffix={
-                      <ChangeIndicator positive={(pitchAnalytics?.today?.change || 0) >= 0}>
-                        {(pitchAnalytics?.today?.change || 0) > 0 ? '+' : ''}{pitchAnalytics?.today?.change || 0} vs yesterday
-                      </ChangeIndicator>
-                    }
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Pitch Users Today"
-                    value={pitchAnalytics?.today?.unique_users_today || 0}
-                    prefix={<UserOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
-                  <HelpText>Creators who used AI contact</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard highlight>
-                  <Statistic
-                    title="At Pitch Limit"
-                    value={pitchAnalytics?.quota?.at_limit || 0}
-                    prefix={<ThunderboltOutlined />}
-                    valueStyle={{ color: '#f5222d' }}
-                  />
-                  <HelpText>Free users maxed 3 pitches/week</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="New Pro Subscriptions"
-                    value={todayStats?.new_pro_subscriptions || 0}
-                    prefix={<TrophyOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
-                  <HelpText>Conversions to paid tier today</HelpText>
-                </StatCard>
-              </Col>
-            </StatsRow>
+          <MilestoneRow>
+            <Milestone>
+              <MilestoneLabel>Next milestone</MilestoneLabel>
+              <MilestoneVal>$120 MRR</MilestoneVal>
+              <MilestoneSub>10 Pro subscribers</MilestoneSub>
+            </Milestone>
+            <Milestone>
+              <MilestoneLabel>Conversion rate</MilestoneLabel>
+              <MilestoneVal>{mrr.conversion_rate}%</MilestoneVal>
+              <MilestoneSub>Target: 2% industry avg</MilestoneSub>
+            </Milestone>
+            <Milestone>
+              <MilestoneLabel>At-limit users</MilestoneLabel>
+              <MilestoneVal style={{ color: '#F59E0B' }}>{at_limit_count}</MilestoneVal>
+              <MilestoneSub>Hot leads this month</MilestoneSub>
+            </Milestone>
+          </MilestoneRow>
+        </GoalCard>
 
-            {/* Legacy Monetization Signals */}
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={8}>
-                <StatCard>
-                  <Statistic
-                    title="Users Hit Unlock Limit"
-                    value={todayStats?.quota?.at_limit || 0}
-                    prefix={<DollarOutlined />}
-                    valueStyle={{ color: '#faad14', fontSize: 28 }}
-                  />
-                  <HelpText>Free users who maxed out 5 unlocks</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={8}>
-                <StatCard>
-                  <Statistic
-                    title="Users Near Limit (3-4)"
-                    value={todayStats?.quota?.near_limit || 0}
-                    prefix={<RiseOutlined />}
-                    valueStyle={{ color: '#faad14', fontSize: 28 }}
-                  />
-                  <HelpText>One more session and they'll hit the paywall</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={8}>
-                <StatCard>
-                  <Statistic
-                    title="Pipeline Saves"
-                    value={todayStats?.pipeline_saves_today || 0}
-                    prefix={<FunnelPlotOutlined />}
-                    valueStyle={{ color: '#eb2f96', fontSize: 28 }}
-                  />
-                </StatCard>
-              </Col>
-            </StatsRow>
+        {/* 2. DO THIS TODAY */}
+        <SectionLabel>Do this today — highest chance of upgrade</SectionLabel>
 
-            {/* Today's Activity Tables */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3><SendOutlined /> Top Pitch Users Today</h3>
-                  <Table
-                    dataSource={pitchAnalytics?.today?.top_users || []}
-                    columns={[
-                      {
-                        title: 'Creator',
-                        key: 'creator',
-                        render: (_, record) => (
-                          <div>
-                            <strong>{record.username || '-'}</strong>
-                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
-                          </div>
-                        )
-                      },
-                      {
-                        title: 'Tier',
-                        dataIndex: 'tier',
-                        key: 'tier',
-                        render: (tier) => (
-                          <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
-                            {tier}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'Pitches Today',
-                        dataIndex: 'pitches_today',
-                        key: 'pitches_today',
-                        render: (count) => <Tag color="purple"><strong>{count}</strong></Tag>
-                      },
-                      {
-                        title: 'Week Total',
-                        dataIndex: 'pitches_this_week',
-                        key: 'pitches_this_week',
-                        render: (count, record) => (
-                          <span>
-                            {count}
-                            {record.tier === 'free' && <small style={{ color: '#999' }}>/3</small>}
-                          </span>
-                        )
-                      }
-                    ]}
-                    rowKey="creator_id"
-                    pagination={false}
-                    size="small"
-                    locale={{ emptyText: 'No pitches yet today' }}
-                  />
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3><ShopOutlined /> Top Pitched Brands Today</h3>
-                  <Table
-                    dataSource={pitchAnalytics?.today?.top_brands || []}
-                    columns={[
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name'
-                      },
-                      {
-                        title: 'Category',
-                        dataIndex: 'category',
-                        key: 'category',
-                        render: (cat) => <Tag>{cat}</Tag>
-                      },
-                      {
-                        title: 'Contact',
-                        dataIndex: 'contact_type',
-                        key: 'contact_type',
-                        render: (type) => (
-                          <Tag color={type === 'email' ? 'blue' : 'green'} size="small">
-                            {type === 'email' ? 'Email' : 'Form'}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'Pitches',
-                        dataIndex: 'pitch_count',
-                        key: 'pitch_count',
-                        render: (count) => <strong>{count}</strong>
-                      }
-                    ]}
-                    rowKey="brand_id"
-                    pagination={false}
-                    size="small"
-                    locale={{ emptyText: 'No pitches yet today' }}
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
+        <TodayCard>
+          <TodayHeader>
+            <TodayTitle>
+              <AmberDot />
+              Users who hit their pitch limit
+            </TodayTitle>
+            <TodaySubtitle>One email → could convert today</TodaySubtitle>
+          </TodayHeader>
 
-            {/* Legacy Tables - Unlocks */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3>Most Active Users Today (Saves)</h3>
-                  <Table
-                    dataSource={todayStats?.most_active_users_today || []}
-                    columns={[
-                      {
-                        title: 'Creator',
-                        key: 'creator',
-                        render: (_, record) => (
-                          <div>
-                            <strong>{record.username || '-'}</strong>
-                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
-                          </div>
-                        )
-                      },
-                      {
-                        title: 'Followers',
-                        dataIndex: 'followers_count',
-                        key: 'followers_count',
-                        render: (val) => val ? val.toLocaleString() : '-'
-                      },
-                      {
-                        title: 'Eng %',
-                        dataIndex: 'engagement_rate',
-                        key: 'engagement_rate',
-                        render: (val) => val ? `${val.toFixed(1)}%` : '-'
-                      },
-                      {
-                        title: 'Tier',
-                        dataIndex: 'tier',
-                        key: 'tier',
-                        render: (tier) => (
-                          <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
-                            {tier}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'Saves',
-                        dataIndex: 'unlocks_today',
-                        key: 'unlocks_today',
-                        render: (count) => <Tag color="green"><strong>{count}</strong></Tag>
-                      }
-                    ]}
-                    rowKey="creator_id"
-                    pagination={false}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3>Top Brands Unlocked Today</h3>
-                  <Table
-                    dataSource={todayStats?.top_brands_today || []}
-                    columns={[
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name'
-                      },
-                      {
-                        title: 'Category',
-                        dataIndex: 'category',
-                        key: 'category',
-                        render: (cat) => <Tag>{cat}</Tag>
-                      },
-                      {
-                        title: 'Unlocks',
-                        dataIndex: 'unlock_count',
-                        key: 'unlock_count',
-                        render: (count) => <strong>{count}</strong>
-                      }
-                    ]}
-                    rowKey="brand_name"
-                    pagination={false}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+          {at_limit_users.length === 0 ? (
+            <EmptyState>
+              <strong>No users at limit right now</strong>
+              <p>When free users max out their 3 weekly pitches, they'll appear here</p>
+            </EmptyState>
+          ) : (
+            at_limit_users.map(user => (
+              <UserRow key={user.creator_id}>
+                <Avatar>{(user.username || user.email)[0].toUpperCase()}</Avatar>
+                <UserInfo>
+                  <UserName>{user.username || 'Unknown'}</UserName>
+                  <UserDetail>
+                    {user.followers ? `${user.followers.toLocaleString()} followers · ` : ''}
+                    {user.niche ? `${user.niche} · ` : ''}
+                    {user.email}
+                  </UserDetail>
+                </UserInfo>
+                <UserStat>
+                  <UserPitches>{user.pitches_used}/3</UserPitches>
+                  <UserLimit>pitches used</UserLimit>
+                </UserStat>
+                <NudgeBtn
+                  $state={nudgeSent[user.creator_id] || 'default'}
+                  onClick={() => !nudgeSent[user.creator_id] && handleSendNudge(user)}
+                >
+                  {nudgeSent[user.creator_id] === 'sent' ? 'Sent ✓' :
+                   nudgeSent[user.creator_id] === 'cooldown' ? 'Recent email' :
+                   'Send nudge →'}
+                </NudgeBtn>
+              </UserRow>
+            ))
+          )}
+        </TodayCard>
 
-          {/* Overview Tab */}
-          <Tabs.TabPane tab={<span><LineChartOutlined /> Overview</span>} key="overview">
-            {/* KPI Cards */}
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Total Creators"
-                    value={overview?.total_creators || 0}
-                    prefix={<TeamOutlined />}
-                    valueStyle={{ color: '#667eea' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Active Today"
-                    value={overview?.active_today || 0}
-                    prefix={<FireOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Active (7d)"
-                    value={overview?.active_7d || 0}
-                    prefix={<CalendarOutlined />}
-                    valueStyle={{ color: '#1890ff' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Active (30d)"
-                    value={overview?.active_30d || 0}
-                    prefix={<RiseOutlined />}
-                    valueStyle={{ color: '#722ed1' }}
-                  />
-                </StatCard>
-              </Col>
-            </StatsRow>
+        {/* 3. HEALTH PULSE */}
+        <SectionLabel>This week's health</SectionLabel>
 
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Total Unlocks"
-                    value={overview?.total_unlocks || 0}
-                    prefix={<TrophyOutlined />}
-                    valueStyle={{ color: '#faad14' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Pipeline Saves"
-                    value={overview?.total_pipeline_saves || 0}
-                    prefix={<FunnelPlotOutlined />}
-                    valueStyle={{ color: '#eb2f96' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard highlight>
-                  <Statistic
-                    title="At Quota Today"
-                    value={quotaHits?.users_at_limit_today || 0}
-                    prefix={<DollarOutlined />}
-                    valueStyle={{ color: '#f5222d' }}
-                    suffix={<small style={{ fontSize: 14, color: '#999' }}> / {quotaHits?.users_near_limit_today || 0} near</small>}
-                  />
-                  <HelpText>Users hitting free tier limit = upsell opportunity</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Avg DAU"
-                    value={dau?.avg_dau || 0}
-                    prefix={<UserOutlined />}
-                    valueStyle={{ color: '#13c2c2' }}
-                  />
-                </StatCard>
-              </Col>
-            </StatsRow>
+        <HealthGrid>
+          <HealthCard>
+            <HcLabel>New signups</HcLabel>
+            <HcValue $color="black">{health.signups.this_week}</HcValue>
+            <HcDelta $up={health.signups.change >= 0}>
+              {health.signups.change >= 0 ? '↑' : '↓'} {health.signups.change >= 0 ? '+' : ''}{health.signups.change} vs last week
+            </HcDelta>
+            <Sparkline data={health.signups.daily} color="black" />
+          </HealthCard>
 
-            {/* Top Active Creators */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24}>
-                <ChartCard>
-                  <h3><UserOutlined /> Top Active Creators</h3>
-                  <Table
-                    dataSource={overview?.top_creators || []}
-                    columns={[
-                      {
-                        title: 'Creator',
-                        key: 'creator',
-                        width: 200,
-                        render: (_, record) => (
-                          <div>
-                            <strong>{record.username || '-'}</strong>
-                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
-                          </div>
-                        )
-                      },
-                      {
-                        title: 'Followers',
-                        dataIndex: 'followers_count',
-                        key: 'followers_count',
-                        sorter: (a, b) => (a.followers_count || 0) - (b.followers_count || 0),
-                        render: (val) => val ? val.toLocaleString() : '-'
-                      },
-                      {
-                        title: 'Eng. Rate',
-                        dataIndex: 'engagement_rate',
-                        key: 'engagement_rate',
-                        sorter: (a, b) => (a.engagement_rate || 0) - (b.engagement_rate || 0),
-                        render: (val) => val ? `${val.toFixed(1)}%` : '-'
-                      },
-                      {
-                        title: 'Tier',
-                        dataIndex: 'tier',
-                        key: 'tier',
-                        render: (tier) => (
-                          <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
-                            {tier}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'Saves (7d)',
-                        dataIndex: 'saves_7d',
-                        key: 'saves_7d',
-                        sorter: (a, b) => a.saves_7d - b.saves_7d,
-                        render: (count) => <Tag color="blue">{count}</Tag>
-                      },
-                      {
-                        title: 'Total Saves',
-                        dataIndex: 'total_saves',
-                        key: 'total_saves',
-                        sorter: (a, b) => a.total_saves - b.total_saves,
-                        render: (count) => <strong>{count}</strong>
-                      },
-                      {
-                        title: 'Daily Used',
-                        dataIndex: 'daily_unlocks_used',
-                        key: 'daily_unlocks_used',
-                        render: (val) => <span>{val || 0}/5</span>
-                      },
-                      {
-                        title: 'Last Active',
-                        dataIndex: 'last_activity',
-                        key: 'last_activity',
-                        render: (date) => date ? new Date(date).toLocaleDateString() : '-'
-                      }
-                    ]}
-                    rowKey="creator_id"
-                    pagination={{ pageSize: 15 }}
-                    size="small"
-                    scroll={{ x: 900 }}
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
+          <HealthCard>
+            <HcLabel>Pitches sent</HcLabel>
+            <HcValue $color="rose">{health.pitches.this_week}</HcValue>
+            <HcDelta $up={health.pitches.change >= 0}>
+              {health.pitches.change >= 0 ? '↑' : '↓'} {health.pitches.change >= 0 ? '+' : ''}{health.pitches.change} vs last week
+            </HcDelta>
+            <Sparkline data={health.pitches.daily} color="rose" />
+          </HealthCard>
 
-            {/* Charts Row */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={16}>
-                <ChartCard>
-                  <h3>Daily Active Users</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={dau?.daily || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      />
-                      <YAxis />
-                      <RechartsTooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="active_users"
-                        stroke="#667eea"
-                        fill="url(#colorGradient)"
-                        name="Active Users"
-                      />
-                      <defs>
-                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#667eea" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#667eea" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={8}>
-                <ChartCard>
-                  <h3>Subscription Distribution</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={subscriptionData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: ${value}`}
-                      >
-                        {subscriptionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+          <HealthCard>
+            <HcLabel>Active creators</HcLabel>
+            <HcValue $color="green">{health.active_creators.this_week}</HcValue>
+            <HcDelta $up={health.active_creators.change >= 0}>
+              {health.active_creators.change >= 0 ? '↑' : '↓'} {health.active_creators.change >= 0 ? '+' : ''}{health.active_creators.change} vs last week
+            </HcDelta>
+            <Sparkline data={health.active_creators.daily} color="green" />
+          </HealthCard>
+        </HealthGrid>
 
-          {/* Growth Tab */}
-          <Tabs.TabPane tab={<span><RiseOutlined /> Growth</span>} key="growth">
-            <Row gutter={[16, 16]}>
-              <Col xs={24}>
-                <ChartCard>
-                  <h3>Daily Signups (Last {dateRange} days)</h3>
-                  <p style={{ color: '#666', marginBottom: 16 }}>
-                    Total new signups: <strong>{signups?.total_period || 0}</strong>
-                  </p>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={signups?.daily || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      />
-                      <YAxis />
-                      <RechartsTooltip />
-                      <Bar dataKey="count" fill="#667eea" name="New Signups" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+        {/* 3.5. TRAFFIC */}
+        <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>
+            Traffic — last 7 days
+            {traffic?.connected && <GA4Badge>● GA4 live</GA4Badge>}
+            {traffic?.connected && traffic.cache_age_minutes !== undefined && (
+              <span style={{ fontSize: 11, color: colors.text3, fontWeight: 400, marginLeft: 8 }}>
+                updated {traffic.cache_age_minutes < 1 ? 'just now' : `${traffic.cache_age_minutes}m ago`}
+              </span>
+            )}
+          </span>
+          {traffic?.connected && (
+            <RefreshBtn
+              onClick={refreshTraffic}
+              disabled={trafficRefreshing}
+              style={{ fontSize: 12, padding: '4px 10px' }}
+            >
+              {trafficRefreshing ? '↻ Refreshing…' : '↻ Refresh'}
+            </RefreshBtn>
+          )}
+        </SectionLabel>
 
-          {/* Engagement Tab - User Activation & Journey */}
-          <Tabs.TabPane tab={<span><FunnelPlotOutlined /> Engagement</span>} key="engagement">
-            {/* Activation Metrics */}
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title={`Signups (${dateRange}d)`}
-                    value={engagement?.activation?.signups || 0}
-                    prefix={<UserOutlined />}
-                    valueStyle={{ color: '#667eea' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Saved a Brand"
-                    value={engagement?.activation?.saved_brand || 0}
-                    suffix={<small style={{ fontSize: 12, color: '#52c41a' }}>({engagement?.activation?.activation_rate || 0}%)</small>}
-                    prefix={<FireOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
-                  <HelpText>Users who saved at least 1 brand</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard highlight>
-                  <Statistic
-                    title="Pitched a Brand"
-                    value={engagement?.activation?.pitched_brand || 0}
-                    suffix={<small style={{ fontSize: 12, color: '#f5222d' }}>({engagement?.activation?.pitch_rate || 0}%)</small>}
-                    prefix={<SendOutlined />}
-                    valueStyle={{ color: '#f5222d' }}
-                  />
-                  <HelpText>Users who contacted at least 1 brand</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Power Users"
-                    value={engagement?.engagement?.power_users || 0}
-                    prefix={<TrophyOutlined />}
-                    valueStyle={{ color: '#faad14' }}
-                  />
-                  <HelpText>5+ pitches in period</HelpText>
-                </StatCard>
-              </Col>
-            </StatsRow>
+        {!traffic || !traffic.connected ? (
+          <NotConnectedBox>
+            <strong>Connect GA4 to see traffic data.</strong><br />
+            Add <code>GA4_PROPERTY_ID</code> and <code>GA4_SERVICE_ACCOUNT_PATH</code> to your environment variables,
+            then grant the service account Viewer access in GA4 Admin → Property Access Management.
+            See admintrafficdevbrief.md for full setup steps.
+          </NotConnectedBox>
+        ) : (
+          <>
+            <TrafficGrid>
+              {/* Unique visitors */}
+              <HealthCard>
+                <HcLabel>Unique visitors</HcLabel>
+                <HcValue $color="black">{traffic.visitors_this_week?.toLocaleString()}</HcValue>
+                <HcDelta $up={traffic.visitors_this_week >= traffic.visitors_last_week}>
+                  {traffic.visitors_this_week >= traffic.visitors_last_week ? '↑' : '↓'}{' '}
+                  {Math.abs(traffic.visitors_this_week - traffic.visitors_last_week)} vs last week
+                </HcDelta>
+                <TrafficSparkline data={traffic.daily_visitors_7d || []} />
+              </HealthCard>
 
-            <Row gutter={[16, 16]}>
-              {/* User Segments */}
-              <Col xs={24} lg={8}>
-                <ChartCard>
-                  <h3>User Segments</h3>
-                  <div style={{ marginTop: 16 }}>
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span>🔥 Power Users (5+ pitches)</span>
-                        <strong>{engagement?.user_segments?.power_user?.count || 0}</strong>
-                      </div>
-                      <Progress percent={Math.round((engagement?.user_segments?.power_user?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#f5222d" size="small" />
-                    </div>
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span>✨ Engaged (1+ pitches)</span>
-                        <strong>{engagement?.user_segments?.engaged?.count || 0}</strong>
-                      </div>
-                      <Progress percent={Math.round((engagement?.user_segments?.engaged?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#52c41a" size="small" />
-                    </div>
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span>👀 Exploring (1+ saves, no pitch)</span>
-                        <strong>{engagement?.user_segments?.exploring?.count || 0}</strong>
-                      </div>
-                      <Progress percent={Math.round((engagement?.user_segments?.exploring?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#faad14" size="small" />
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span>💤 Inactive (no activity)</span>
-                        <strong>{engagement?.user_segments?.inactive?.count || 0}</strong>
-                      </div>
-                      <Progress percent={Math.round((engagement?.user_segments?.inactive?.count || 0) / Math.max(engagement?.activation?.signups || 1, 1) * 100)} strokeColor="#999" size="small" />
-                    </div>
-                  </div>
-                </ChartCard>
-              </Col>
+              {/* Pageviews */}
+              <HealthCard>
+                <HcLabel>Pageviews</HcLabel>
+                <HcValue $color="black">{traffic.pageviews_this_week?.toLocaleString()}</HcValue>
+                <HcDelta $up={traffic.pageviews_this_week >= traffic.pageviews_last_week}>
+                  {traffic.pageviews_this_week >= traffic.pageviews_last_week ? '↑' : '↓'}{' '}
+                  {Math.abs(traffic.pageviews_this_week - traffic.pageviews_last_week)} vs last week
+                </HcDelta>
+                <TrafficSparkline data={traffic.daily_visitors_7d || []} color="#2563EB" />
+              </HealthCard>
 
-              {/* Time to Action */}
-              <Col xs={24} lg={8}>
-                <ChartCard>
-                  <h3>Time to First Action</h3>
-                  <div style={{ marginTop: 24 }}>
-                    <Statistic
-                      title="Avg Hours to First Save"
-                      value={engagement?.time_to_action?.avg_hours_to_save || 0}
-                      suffix="hours"
-                      valueStyle={{ fontSize: 28 }}
-                    />
-                    <div style={{ marginTop: 24 }}>
-                      <Statistic
-                        title="Avg Hours to First Pitch"
-                        value={engagement?.time_to_action?.avg_hours_to_pitch || 0}
-                        suffix="hours"
-                        valueStyle={{ fontSize: 28 }}
-                      />
-                    </div>
-                  </div>
-                </ChartCard>
-              </Col>
+              {/* Visitor → signup rate */}
+              <HealthCard>
+                <HcLabel>Visitor → Signup</HcLabel>
+                <HcValue $color={traffic.visitor_signup_rate >= 2 ? 'green' : 'rose'}>
+                  {traffic.visitor_signup_rate}%
+                </HcValue>
+                <HcDelta $flat style={{ color: colors.text3 }}>
+                  {traffic.signups_this_week} signups / {traffic.visitors_this_week?.toLocaleString()} visitors
+                </HcDelta>
+                <TrafficTip>
+                  Target: 2–3%
+                  {traffic.visitor_signup_rate < 2 && (
+                    <span style={{ color: colors.rose, fontWeight: 700 }}> — Improve signup CTA</span>
+                  )}
+                </TrafficTip>
+              </HealthCard>
 
-              {/* Engagement Metrics */}
-              <Col xs={24} lg={8}>
-                <ChartCard>
-                  <h3>Engagement Depth</h3>
-                  <div style={{ marginTop: 24 }}>
-                    <Statistic
-                      title="Avg Saves per User"
-                      value={engagement?.engagement?.avg_saves_per_user || 0}
-                      valueStyle={{ fontSize: 28, color: '#667eea' }}
-                    />
-                    <div style={{ marginTop: 24 }}>
-                      <Statistic
-                        title="Avg Pitches per Active User"
-                        value={engagement?.engagement?.avg_pitches_per_user || 0}
-                        valueStyle={{ fontSize: 28, color: '#52c41a' }}
-                      />
-                    </div>
-                  </div>
-                </ChartCard>
-              </Col>
-            </Row>
+              {/* Organic search % */}
+              <HealthCard>
+                <HcLabel>Organic search</HcLabel>
+                <HcValue $color="green">{traffic.organic_pct}%</HcValue>
+                <HcDelta $up={traffic.organic_pct >= 25}>
+                  {traffic.organic_pct >= 25 ? '↑ SEO working' : 'Grow organic traffic'}
+                </HcDelta>
+                <TrafficTip>
+                  of all traffic
+                  <span style={{ color: colors.green, fontWeight: 700 }}> — Best free acquisition</span>
+                </TrafficTip>
+              </HealthCard>
+            </TrafficGrid>
 
-            {/* Daily Engagement Chart */}
-            <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-              <Col xs={24}>
-                <ChartCard>
-                  <h3>Daily Engagement (Last {dateRange} days)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={engagement?.daily_engagement || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      />
-                      <YAxis />
-                      <RechartsTooltip />
-                      <Legend />
-                      <Area type="monotone" dataKey="saves" stroke="#667eea" fill="#667eea" fillOpacity={0.3} name="Saves" />
-                      <Area type="monotone" dataKey="pitches" stroke="#52c41a" fill="#52c41a" fillOpacity={0.3} name="Pitches" />
-                      <Area type="monotone" dataKey="active_users" stroke="#f5576c" fill="#f5576c" fillOpacity={0.2} name="Active Users" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+            <TrafficBottom>
+              {/* Traffic sources */}
+              <TrafficPanel>
+                <PanelTitle>Traffic sources</PanelTitle>
+                {traffic.sources?.map(s => (
+                  <SourceRow key={s.label}>
+                    <SourceDot $color={SOURCE_COLORS[s.label] || colors.text3} />
+                    <SourceLabel>{s.label}</SourceLabel>
+                    <SourceTrack>
+                      <SourceFill $pct={s.pct} $color={SOURCE_COLORS[s.label] || colors.text3} />
+                    </SourceTrack>
+                    <SourcePct $color={SOURCE_COLORS[s.label]}>{s.pct}%</SourcePct>
+                  </SourceRow>
+                ))}
+              </TrafficPanel>
 
-          {/* Power Users Tab */}
-          <Tabs.TabPane tab={<span><TrophyOutlined /> Power Users</span>} key="users">
-            <Row gutter={[16, 16]}>
-              <Col xs={24}>
-                <ChartCard>
-                  <h3>Top Users by Activity (Last {dateRange} days)</h3>
-                  <Table
-                    dataSource={topUsers}
-                    columns={topUsersColumns}
-                    rowKey="creator_id"
-                    pagination={{ pageSize: 15 }}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+              {/* Top pages */}
+              <TrafficPanel>
+                <PanelTitle>Top pages this week</PanelTitle>
+                {traffic.top_pages?.map(p => (
+                  <PageRow key={p.path}>
+                    <PagePath>{p.path.length > 22 ? p.path.slice(0, 22) + '…' : p.path}</PagePath>
+                    <span>
+                      <PageViews>{p.views?.toLocaleString()}</PageViews>
+                      {p.converts && <ConvertsBadge>converts</ConvertsBadge>}
+                    </span>
+                  </PageRow>
+                ))}
+              </TrafficPanel>
+            </TrafficBottom>
+          </>
+        )}
 
-          {/* Monetization Tab */}
-          <Tabs.TabPane tab={<span><DollarOutlined /> Monetization</span>} key="monetization">
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={12}>
-                <ChartCard highlight>
-                  <h3><ThunderboltOutlined /> Pitch Quota Limit Hits (Upsell Signal)</h3>
-                  <p style={{ color: '#666', marginBottom: 16 }}>
-                    Free users hitting their 3 pitches/week limit are prime upgrade candidates
-                  </p>
-                  <Row gutter={16} style={{ marginBottom: 16 }}>
-                    <Col span={12}>
-                      <Statistic
-                        title="At Pitch Limit"
-                        value={pitchAnalytics?.quota?.at_limit || 0}
-                        valueStyle={{ color: '#f5222d' }}
-                        prefix={<ThunderboltOutlined />}
-                      />
-                    </Col>
-                    <Col span={12}>
-                      <Statistic
-                        title="Near Limit (2/3)"
-                        value={pitchAnalytics?.quota?.near_limit || 0}
-                        valueStyle={{ color: '#faad14' }}
-                      />
-                    </Col>
-                  </Row>
-                  <Table
-                    dataSource={pitchAnalytics?.users_at_limit || []}
-                    columns={quotaHitsColumns}
-                    rowKey="creator_id"
-                    pagination={{ pageSize: 10 }}
-                    size="small"
-                    locale={{ emptyText: 'No users at pitch limit yet' }}
-                  />
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3>Popular Brands (Last {dateRange} days)</h3>
-                  <Table
-                    dataSource={popularBrands}
-                    columns={popularBrandsColumns}
-                    rowKey="brand_id"
-                    pagination={false}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+        {/* 4. FUNNEL */}
+        <SectionLabel>Where you're losing people</SectionLabel>
 
-          {/* Retention Tab */}
-          <Tabs.TabPane tab={<span><CalendarOutlined /> Retention</span>} key="retention">
-            <Row gutter={[16, 16]}>
-              <Col xs={24}>
-                <ChartCard>
-                  <h3>Weekly Cohort Retention</h3>
-                  <p style={{ color: '#666', marginBottom: 16 }}>
-                    Shows how many users from each signup week came back in subsequent weeks
-                  </p>
-                  <RetentionTable>
-                    <thead>
-                      <tr>
-                        <th>Signup Week</th>
-                        <th>Users</th>
-                        <th>Week 0</th>
-                        <th>Week 1</th>
-                        <th>Week 2</th>
-                        <th>Week 3</th>
-                        <th>Week 4</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {retention?.cohorts?.map((cohort, idx) => (
-                        <tr key={idx}>
-                          <td>{cohort.signup_week}</td>
-                          <td><strong>{cohort.total_users}</strong></td>
-                          <td>
-                            <RetentionCell rate={cohort.total_users ? (cohort.week_0 / cohort.total_users) * 100 : 0}>
-                              {cohort.week_0} ({cohort.total_users ? Math.round((cohort.week_0 / cohort.total_users) * 100) : 0}%)
-                            </RetentionCell>
-                          </td>
-                          <td>
-                            <RetentionCell rate={cohort.total_users ? (cohort.week_1 / cohort.total_users) * 100 : 0}>
-                              {cohort.week_1} ({cohort.total_users ? Math.round((cohort.week_1 / cohort.total_users) * 100) : 0}%)
-                            </RetentionCell>
-                          </td>
-                          <td>
-                            <RetentionCell rate={cohort.total_users ? (cohort.week_2 / cohort.total_users) * 100 : 0}>
-                              {cohort.week_2} ({cohort.total_users ? Math.round((cohort.week_2 / cohort.total_users) * 100) : 0}%)
-                            </RetentionCell>
-                          </td>
-                          <td>
-                            <RetentionCell rate={cohort.total_users ? (cohort.week_3 / cohort.total_users) * 100 : 0}>
-                              {cohort.week_3} ({cohort.total_users ? Math.round((cohort.week_3 / cohort.total_users) * 100) : 0}%)
-                            </RetentionCell>
-                          </td>
-                          <td>
-                            <RetentionCell rate={cohort.total_users ? (cohort.week_4 / cohort.total_users) * 100 : 0}>
-                              {cohort.week_4} ({cohort.total_users ? Math.round((cohort.week_4 / cohort.total_users) * 100) : 0}%)
-                            </RetentionCell>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </RetentionTable>
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+        <FunnelCard>
+          <FunnelTitle>Creator activation funnel — all time</FunnelTitle>
+          <FunnelSteps>
+            <FStep>
+              <FLabel>Signed up</FLabel>
+              <FBarTrack>
+                <FBarFill style={{ width: '100%', background: 'var(--black)' }}>
+                  {funnel.signed_up} creators
+                </FBarFill>
+              </FBarTrack>
+              <FCount>{funnel.signed_up}</FCount>
+            </FStep>
 
-          {/* Brands Tab */}
-          <Tabs.TabPane tab={<span><ShopOutlined /> Brands</span>} key="brands">
-            {/* Brand Overview Stats */}
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Total Brands"
-                    value={brandAnalytics?.overview?.total_brands || 0}
-                    prefix={<ShopOutlined />}
-                    valueStyle={{ color: '#667eea' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Brands with Form"
-                    value={brandAnalytics?.overview?.brands_with_form || 0}
-                    prefix={<LinkOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Brands with Email"
-                    value={brandAnalytics?.overview?.brands_with_email || 0}
-                    prefix={<MailOutlined />}
-                    valueStyle={{ color: '#1890ff' }}
-                  />
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title={`Unlocks (${dateRange}d)`}
-                    value={brandAnalytics?.overview?.total_unlocks_period || 0}
-                    prefix={<TrophyOutlined />}
-                    valueStyle={{ color: '#faad14' }}
-                  />
-                </StatCard>
-              </Col>
-            </StatsRow>
+            <FDrop $good={savedPct >= 50}>↓ {savedPct}% saved a brand — {savedPct >= 50 ? 'good' : 'needs work'}</FDrop>
 
-            {/* Unlocks by Category */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3>Unlocks by Category</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={brandAnalytics?.unlocks_by_category || []} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="category" width={100} />
-                      <RechartsTooltip />
-                      <Bar dataKey="unlock_count" fill="#667eea" name="Unlocks" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3>Recent Unlocks</h3>
-                  <Table
-                    dataSource={brandAnalytics?.recent_unlocks?.slice(0, 10) || []}
-                    columns={[
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name',
-                        ellipsis: true
-                      },
-                      {
-                        title: 'User',
-                        dataIndex: 'user_email',
-                        key: 'user_email',
-                        ellipsis: true,
-                        render: (email) => email?.split('@')[0] + '...'
-                      },
-                      {
-                        title: 'When',
-                        dataIndex: 'unlocked_at',
-                        key: 'unlocked_at',
-                        render: (date) => new Date(date).toLocaleString()
-                      }
-                    ]}
-                    rowKey="id"
-                    pagination={false}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
+            <FStep>
+              <FLabel>Saved a brand</FLabel>
+              <FBarTrack>
+                <FBarFill style={{ width: `${savedPct}%`, background: '#2563EB' }}>
+                  {funnel.saved_brand}
+                </FBarFill>
+              </FBarTrack>
+              <FCount>{funnel.saved_brand}</FCount>
+            </FStep>
 
-            {/* Top Brands Tables */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={8}>
-                <ChartCard>
-                  <h3>Top Unlocked Brands (All)</h3>
-                  <Table
-                    dataSource={brandAnalytics?.top_unlocked_brands || []}
-                    columns={[
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name',
-                        ellipsis: true
-                      },
-                      {
-                        title: 'Type',
-                        dataIndex: 'contact_type',
-                        key: 'contact_type',
-                        render: (type) => (
-                          <Tag color={type === 'form' ? 'green' : type === 'email' ? 'blue' : 'default'}>
-                            {type === 'form' ? 'Form' : type === 'email' ? 'Email' : 'None'}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'Unlocks',
-                        dataIndex: 'unlock_count',
-                        key: 'unlock_count',
-                        render: (count) => <strong>{count}</strong>
-                      }
-                    ]}
-                    rowKey="brand_id"
-                    pagination={{ pageSize: 10 }}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={8}>
-                <ChartCard>
-                  <h3><LinkOutlined /> Top Brands with Form</h3>
-                  <Table
-                    dataSource={brandAnalytics?.top_brands_with_form || []}
-                    columns={[
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name',
-                        ellipsis: true
-                      },
-                      {
-                        title: 'Category',
-                        dataIndex: 'category',
-                        key: 'category',
-                        render: (cat) => <Tag>{cat}</Tag>
-                      },
-                      {
-                        title: 'Unlocks',
-                        dataIndex: 'unlock_count',
-                        key: 'unlock_count',
-                        render: (count) => <strong>{count}</strong>
-                      }
-                    ]}
-                    rowKey="brand_id"
-                    pagination={{ pageSize: 10 }}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={8}>
-                <ChartCard>
-                  <h3><MailOutlined /> Top Brands (Email Only)</h3>
-                  <Table
-                    dataSource={brandAnalytics?.top_brands_email_only || []}
-                    columns={[
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name',
-                        ellipsis: true
-                      },
-                      {
-                        title: 'Category',
-                        dataIndex: 'category',
-                        key: 'category',
-                        render: (cat) => <Tag>{cat}</Tag>
-                      },
-                      {
-                        title: 'Unlocks',
-                        dataIndex: 'unlock_count',
-                        key: 'unlock_count',
-                        render: (count) => <strong>{count}</strong>
-                      }
-                    ]}
-                    rowKey="brand_id"
-                    pagination={{ pageSize: 10 }}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
+            <FDrop $good={pitchPct >= 30}>↓ only {pitchPct}% sent a pitch — {pitchPct < 30 ? 'this is the problem' : 'decent'}</FDrop>
 
-          {/* AI Pitches Tab - Track credit usage */}
-          <Tabs.TabPane tab={<span><SendOutlined /> AI Pitches</span>} key="pitches">
-            {/* Pitch Overview Stats */}
-            <StatsRow gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Pitches Today"
-                    value={pitchAnalytics?.today?.pitches_today || 0}
-                    prefix={<SendOutlined />}
-                    valueStyle={{ color: '#667eea' }}
-                  />
-                  <HelpText>AI credits used today</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title="Unique Users Today"
-                    value={pitchAnalytics?.today?.unique_users_today || 0}
-                    prefix={<UserOutlined />}
-                    valueStyle={{ color: '#52c41a' }}
-                  />
-                  <HelpText>Users who sent pitches today</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard highlight>
-                  <Statistic
-                    title="At Weekly Limit"
-                    value={pitchAnalytics?.quota?.at_limit || 0}
-                    prefix={<ThunderboltOutlined />}
-                    valueStyle={{ color: '#f5222d' }}
-                  />
-                  <HelpText>Free users who maxed 3 pitches/week</HelpText>
-                </StatCard>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <StatCard>
-                  <Statistic
-                    title={`Total Pitches (${dateRange}d)`}
-                    value={pitchAnalytics?.period?.total_pitches || 0}
-                    prefix={<TrophyOutlined />}
-                    valueStyle={{ color: '#faad14' }}
-                  />
-                </StatCard>
-              </Col>
-            </StatsRow>
+            <FStep>
+              <FLabel>Sent pitch</FLabel>
+              <FBarTrack>
+                <FBarFill style={{ width: `${calcPct(funnel.sent_pitch, funnel.signed_up)}%`, background: 'var(--violet)' }}>
+                  {funnel.sent_pitch}
+                </FBarFill>
+              </FBarTrack>
+              <FCount>{funnel.sent_pitch}</FCount>
+            </FStep>
 
-            {/* Daily Pitch Trend Chart */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24}>
-                <ChartCard>
-                  <h3>Daily Pitch Credits Used (Last {dateRange} days)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={pitchAnalytics?.daily || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      />
-                      <YAxis />
-                      <RechartsTooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="pitch_count"
-                        stroke="#667eea"
-                        fill="url(#pitchGradient)"
-                        name="Pitches Sent"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="unique_users"
-                        stroke="#52c41a"
-                        fill="url(#usersGradient)"
-                        name="Unique Users"
-                      />
-                      <defs>
-                        <linearGradient id="pitchGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#667eea" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#667eea" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="usersGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#52c41a" stopOpacity={0.6}/>
-                          <stop offset="95%" stopColor="#52c41a" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-              </Col>
-            </Row>
+            <FDrop $good={multiPct >= 50}>↓ {multiPct}% pitched more than once — {multiPct >= 50 ? 'sticky once started' : 'needs improvement'}</FDrop>
 
-            {/* Top Users and Top Brands Tables */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3><UserOutlined /> Top Users by Pitches Sent</h3>
-                  <Table
-                    dataSource={pitchAnalytics?.top_users || []}
-                    columns={[
-                      {
-                        title: 'Creator',
-                        key: 'creator',
-                        render: (_, record) => (
-                          <div>
-                            <strong>{record.username || '-'}</strong>
-                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
-                          </div>
-                        )
-                      },
-                      {
-                        title: 'Tier',
-                        dataIndex: 'tier',
-                        key: 'tier',
-                        render: (tier) => (
-                          <Tag color={tier === 'pro' ? 'gold' : tier === 'elite' ? 'purple' : 'default'}>
-                            {tier}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'This Week',
-                        dataIndex: 'pitches_this_week',
-                        key: 'pitches_this_week',
-                        render: (count, record) => (
-                          <span>
-                            <strong>{count}</strong>
-                            {record.tier === 'free' && <small style={{ color: '#999' }}>/3</small>}
-                          </span>
-                        )
-                      },
-                      {
-                        title: `Total (${dateRange}d)`,
-                        dataIndex: 'total_pitches',
-                        key: 'total_pitches',
-                        sorter: (a, b) => a.total_pitches - b.total_pitches,
-                        render: (count) => <Tag color="blue">{count}</Tag>
-                      }
-                    ]}
-                    rowKey="creator_id"
-                    pagination={{ pageSize: 10 }}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3><ShopOutlined /> Most Pitched Brands</h3>
-                  <Table
-                    dataSource={pitchAnalytics?.top_brands || []}
-                    columns={[
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name',
-                        ellipsis: true
-                      },
-                      {
-                        title: 'Category',
-                        dataIndex: 'category',
-                        key: 'category',
-                        render: (cat) => <Tag>{cat}</Tag>
-                      },
-                      {
-                        title: 'Contact Type',
-                        dataIndex: 'contact_type',
-                        key: 'contact_type',
-                        render: (type) => (
-                          <Tag color={type === 'email' ? 'blue' : type === 'form' ? 'green' : 'default'}>
-                            {type === 'email' ? 'Email' : type === 'form' ? 'Form' : 'Mixed'}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'Pitches',
-                        dataIndex: 'pitch_count',
-                        key: 'pitch_count',
-                        sorter: (a, b) => a.pitch_count - b.pitch_count,
-                        render: (count) => <strong>{count}</strong>
-                      },
-                      {
-                        title: 'Unique Users',
-                        dataIndex: 'unique_users',
-                        key: 'unique_users'
-                      }
-                    ]}
-                    rowKey="brand_id"
-                    pagination={{ pageSize: 10 }}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
+            <FStep>
+              <FLabel>Pitched 2+ brands</FLabel>
+              <FBarTrack>
+                <FBarFill style={{ width: `${calcPct(funnel.pitched_multiple, funnel.signed_up)}%`, background: 'var(--rose)' }}>
+                  {funnel.pitched_multiple}
+                </FBarFill>
+              </FBarTrack>
+              <FCount>{funnel.pitched_multiple}</FCount>
+            </FStep>
 
-            {/* Recent Pitches and Quota Hits */}
-            <Row gutter={[16, 16]}>
-              <Col xs={24} lg={12}>
-                <ChartCard>
-                  <h3>Recent Pitch Activity</h3>
-                  <Table
-                    dataSource={pitchAnalytics?.recent_pitches || []}
-                    columns={[
-                      {
-                        title: 'User',
-                        dataIndex: 'email',
-                        key: 'email',
-                        ellipsis: true,
-                        render: (email) => email?.split('@')[0] + '...'
-                      },
-                      {
-                        title: 'Brand',
-                        dataIndex: 'brand_name',
-                        key: 'brand_name',
-                        ellipsis: true
-                      },
-                      {
-                        title: 'Type',
-                        dataIndex: 'contact_type',
-                        key: 'contact_type',
-                        render: (type) => (
-                          <Tag color={type === 'email' ? 'blue' : 'green'} size="small">
-                            {type === 'email' ? 'Email' : 'Form'}
-                          </Tag>
-                        )
-                      },
-                      {
-                        title: 'When',
-                        dataIndex: 'pitched_at',
-                        key: 'pitched_at',
-                        render: (date) => {
-                          const d = new Date(date);
-                          const now = new Date();
-                          const diffMins = Math.floor((now - d) / 60000);
-                          if (diffMins < 60) return `${diffMins}m ago`;
-                          if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-                          return d.toLocaleDateString();
-                        }
-                      }
-                    ]}
-                    rowKey="id"
-                    pagination={false}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-              <Col xs={24} lg={12}>
-                <ChartCard highlight>
-                  <h3><ThunderboltOutlined /> Users at Weekly Pitch Limit (Upsell Opportunity)</h3>
-                  <Table
-                    dataSource={pitchAnalytics?.users_at_limit || []}
-                    columns={[
-                      {
-                        title: 'User',
-                        key: 'user',
-                        render: (_, record) => (
-                          <div>
-                            <strong>{record.username || '-'}</strong>
-                            <div style={{ fontSize: 11, color: '#999' }}>{record.email}</div>
-                          </div>
-                        )
-                      },
-                      {
-                        title: 'Used',
-                        dataIndex: 'pitches_this_week',
-                        key: 'pitches_this_week',
-                        render: (count) => <Tag color="red">{count}/3</Tag>
-                      },
-                      {
-                        title: 'Total Pitches',
-                        dataIndex: 'total_pitches',
-                        key: 'total_pitches'
-                      },
-                      {
-                        title: 'Last Pitch',
-                        dataIndex: 'last_pitch_at',
-                        key: 'last_pitch_at',
-                        render: (date) => date ? new Date(date).toLocaleDateString() : '-'
-                      }
-                    ]}
-                    rowKey="creator_id"
-                    pagination={{ pageSize: 10 }}
-                    size="small"
-                  />
-                </ChartCard>
-              </Col>
-            </Row>
-          </Tabs.TabPane>
-        </Tabs>
-      )}
-    </Container>
+            <FDrop $good={false}>↓ {funnel.got_package > 0 ? `${funnel.got_package} confirmed` : 'no data yet — pipeline tracking will fill this'}</FDrop>
+
+            <FStep>
+              <FLabel>Got a package</FLabel>
+              <FBarTrack>
+                <FBarFill style={{ width: `${Math.max(calcPct(funnel.got_package, funnel.signed_up), 1)}%`, background: 'var(--green)' }}>
+                  {funnel.got_package > 0 ? funnel.got_package : '??'}
+                </FBarFill>
+              </FBarTrack>
+              <FCount style={{ color: funnel.got_package > 0 ? 'inherit' : 'var(--text-3)' }}>
+                {funnel.got_package > 0 ? funnel.got_package : '??'}
+              </FCount>
+            </FStep>
+          </FunnelSteps>
+
+          <InsightBox>
+            <strong>The one thing to fix:</strong> {funnel.saved_brand - funnel.sent_pitch} people saved a brand but never pitched. That's your biggest growth lever. The "For You" tab + follow-up nudge emails target this gap directly — watch this number improve over the next 30 days.
+          </InsightBox>
+        </FunnelCard>
+
+        {/* 5. THIS MONTH */}
+        <SectionLabel>This month</SectionLabel>
+
+        <WeekGrid>
+          <WeekCard>
+            <WcTop>
+              <WcLabel>Hot leads (at limit)</WcLabel>
+              <WcDelta $up>nudge them</WcDelta>
+            </WcTop>
+            <WcValue style={{ color: 'var(--amber)' }}>{at_limit_count}</WcValue>
+            <WcSub>Free users who maxed 3 pitches — prime upgrade moment</WcSub>
+          </WeekCard>
+
+          <WeekCard>
+            <WcTop>
+              <WcLabel>Almost there (2/3)</WcLabel>
+              <WcDelta>watch them</WcDelta>
+            </WcTop>
+            <WcValue style={{ color: 'var(--black)' }}>{near_limit_count}</WcValue>
+            <WcSub>One more pitch and they hit the wall — will convert next</WcSub>
+          </WeekCard>
+
+          <WeekCard>
+            <WcTop>
+              <WcLabel>Total pitches sent</WcLabel>
+              <WcDelta $up>↑ vs last month</WcDelta>
+            </WcTop>
+            <WcValue>{this_month.pitches}</WcValue>
+            <WcSub>Lifetime · {this_month.unique_pitch_users} unique creators used AI contact</WcSub>
+          </WeekCard>
+
+          <WeekCard>
+            <WcTop>
+              <WcLabel>New signups</WcLabel>
+              <WcDelta $up>↑ growing</WcDelta>
+            </WcTop>
+            <WcValue>{this_month.signups}</WcValue>
+            <WcSub>This month · {this_month.total_signups} total since launch</WcSub>
+          </WeekCard>
+        </WeekGrid>
+
+      </Main>
+    </>
   );
 };
 
-// Styled Components
-const Container = styled.div`
-  padding: 24px;
-  background: #f5f7fa;
-  min-height: 100vh;
+// ============================================================================
+// STYLED COMPONENTS
+// ============================================================================
+
+// Animations
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 `;
 
+// Header
 const Header = styled.div`
+  background: #fff;
+  border-bottom: 1px solid ${colors.border};
+  padding: 0 28px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+`;
+
+const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 9px;
+`;
+
+const LogoMark = styled.div`
+  width: 26px;
+  height: 26px;
+  background: ${colors.black};
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 13px;
+`;
+
+const LogoWord = styled.span`
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  span { color: ${colors.rose}; }
+`;
+
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const Badge = styled.span`
+  background: ${colors.bg};
+  border: 1px solid ${colors.border};
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${colors.text2};
+`;
+
+const RefreshBtn = styled.button`
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid ${colors.border};
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: ${colors.text2};
+  &:hover { background: ${colors.bg}; }
+`;
+
+// Main
+const Main = styled.div`
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+  background: ${colors.bg};
+  min-height: calc(100vh - 54px);
+
+  --rose: ${colors.rose};
+  --black: ${colors.black};
+  --violet: ${colors.violet};
+  --green: ${colors.green};
+  --amber: ${colors.amber};
+  --text-3: ${colors.text3};
+`;
+
+// Goal Card
+const GoalCard = styled.div`
+  background: ${colors.black};
+  border-radius: 20px;
+  padding: 28px 32px;
+  margin-bottom: 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(225,29,72,.35) 0%, transparent 70%);
+    pointer-events: none;
+  }
+`;
+
+const GoalEyebrow = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 10px;
+`;
+
+const GoalRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+`;
+
+const GoalLeft = styled.div``;
+
+const GoalMRR = styled.div`
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1;
+  span { color: ${colors.rose}; }
+`;
+
+const GoalTarget = styled.div`
+  font-size: 14px;
+  opacity: 0.5;
+  margin-top: 5px;
+`;
+
+const GoalRight = styled.div`
+  text-align: right;
+`;
+
+const GoalSubs = styled.div`
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+`;
+
+const GoalSubsLabel = styled.div`
+  font-size: 12px;
+  opacity: 0.5;
+  margin-top: 2px;
+`;
+
+const GoalNeeded = styled.div`
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+  margin-top: 4px;
+  strong { color: rgba(255,255,255,.9); }
+`;
+
+// Progress bar
+const ProgressWrap = styled.div`
+  margin-bottom: 10px;
+`;
+
+const ProgressTrack = styled.div`
+  height: 10px;
+  background: rgba(255,255,255,.12);
+  border-radius: 10px;
+  overflow: hidden;
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, ${colors.rose}, #f472b6);
+  transition: width 0.6s ease;
+`;
+
+const ProgressLabels = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.5;
+`;
+
+// Milestones
+const MilestoneRow = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+`;
+
+const Milestone = styled.div`
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: 10px 14px;
+  flex: 1;
+`;
+
+const MilestoneLabel = styled.div`
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 4px;
+`;
+
+const MilestoneVal = styled.div`
+  font-size: 16px;
+  font-weight: 800;
+`;
+
+const MilestoneSub = styled.div`
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 2px;
+`;
+
+// Section Label
+const SectionLabel = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: ${colors.text3};
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${colors.border};
+  }
+`;
+
+// Today Card
+const TodayCard = styled.div`
+  background: #fff;
+  border: 1px solid ${colors.border};
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+`;
+
+const TodayHeader = styled.div`
+  padding: 14px 20px;
+  border-bottom: 1px solid ${colors.border};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const TodayTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+`;
+
+const AmberDot = styled.div`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${colors.amber};
+  animation: ${pulse} 2s infinite;
+  flex-shrink: 0;
+`;
+
+const TodaySubtitle = styled.div`
+  font-size: 12px;
+  color: ${colors.text3};
+`;
+
+const UserRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #F5F5F5;
+  transition: background 0.1s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: #FAFAFA; }
+`;
+
+const Avatar = styled.div`
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D97706, #F59E0B);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  flex-shrink: 0;
+`;
+
+const UserInfo = styled.div`
+  flex: 1;
+`;
+
+const UserName = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+`;
+
+const UserDetail = styled.div`
+  font-size: 11px;
+  color: ${colors.text3};
+  margin-top: 1px;
+`;
+
+const UserStat = styled.div`
+  text-align: right;
+  margin-right: 14px;
+`;
+
+const UserPitches = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  color: ${colors.amber};
+`;
+
+const UserLimit = styled.div`
+  font-size: 10px;
+  color: ${colors.text3};
+`;
+
+const NudgeBtn = styled.button`
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: ${props => {
+    if (props.$state === 'sent') return colors.green;
+    if (props.$state === 'cooldown') return colors.text3;
+    return colors.amber;
+  }};
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: ${props => props.$state !== 'default' ? 'default' : 'pointer'};
+  white-space: nowrap;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: ${props => props.$state !== 'default' ? 1 : 0.85}; }
+`;
+
+const EmptyState = styled.div`
+  padding: 28px 20px;
+  text-align: center;
+  color: ${colors.text3};
+  font-size: 13px;
+
+  strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: ${colors.text2};
+    margin-bottom: 4px;
+  }
+`;
+
+// Health Grid
+const HealthGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+const HealthCard = styled.div`
+  background: #fff;
+  border: 1px solid ${colors.border};
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+`;
+
+const HcLabel = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: ${colors.text3};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+`;
+
+const HcValue = styled.div`
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+  color: ${props => {
+    switch(props.$color) {
+      case 'green': return colors.green;
+      case 'rose': return colors.rose;
+      default: return colors.black;
+    }
+  }};
+`;
+
+const HcDelta = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${props => props.$up ? colors.green : colors.rose};
+`;
+
+// Sparkline
+const SparkRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 32px;
+  margin-top: 10px;
+`;
+
+const SparkBar = styled.div`
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: ${props => {
+    if (!props.$isToday) return '#F0F0F0';
+    switch(props.$color) {
+      case 'green': return colors.green;
+      case 'rose': return colors.rose;
+      default: return colors.black;
+    }
+  }};
+  min-height: 3px;
+`;
+
+// Funnel
+const FunnelCard = styled.div`
+  background: #fff;
+  border: 1px solid ${colors.border};
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+`;
+
+const FunnelTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+`;
+
+const FunnelSteps = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const FStep = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+`;
+
+const FLabel = styled.div`
+  width: 130px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${colors.text2};
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 90px;
+    font-size: 11px;
+  }
+`;
+
+const FBarTrack = styled.div`
+  flex: 1;
+  height: 26px;
+  background: #F5F5F7;
+  border-radius: 6px;
+  overflow: hidden;
+`;
+
+const FBarFill = styled.div`
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+`;
+
+const FCount = styled.div`
+  width: 40px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+`;
+
+const FDrop = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0 3px 144px;
+  font-size: 11px;
+  font-weight: 600;
+  color: ${props => props.$good ? colors.green : colors.rose};
+
+  @media (max-width: 640px) {
+    padding-left: 104px;
+  }
+`;
+
+const InsightBox = styled.div`
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #FFF7ED;
+  border: 1px solid #FDE68A;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: #92400E;
+  line-height: 1.5;
+
+  strong { font-weight: 700; }
+`;
+
+// Week Grid
+const WeekGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const WeekCard = styled.div`
+  background: #fff;
+  border: 1px solid ${colors.border};
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+`;
+
+const WcTop = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: 6px;
+`;
 
-  h1 {
-    margin: 0 0 4px 0;
-    font-size: 28px;
-    font-weight: 700;
-    color: #333;
-  }
+const WcLabel = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: ${colors.text3};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
 
-  p {
-    margin: 0;
-    color: #666;
+const WcValue = styled.div`
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+`;
+
+const WcSub = styled.div`
+  font-size: 11px;
+  color: ${colors.text3};
+`;
+
+const WcDelta = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: ${props => props.$up ? colors.green : colors.text3};
+`;
+
+// Traffic Section
+const TrafficGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr 1fr;
   }
+`;
+
+const TrafficBottom = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TrafficPanel = styled.div`
+  background: #fff;
+  border: 1px solid ${colors.border};
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+`;
+
+const PanelTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 14px;
+`;
+
+const SourceRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  &:last-child { margin-bottom: 0; }
+`;
+
+const SourceDot = styled.div`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${props => props.$color};
+  flex-shrink: 0;
+`;
+
+const SourceLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${colors.text2};
+  width: 80px;
+  flex-shrink: 0;
+`;
+
+const SourceTrack = styled.div`
+  flex: 1;
+  height: 8px;
+  background: #F0F0F0;
+  border-radius: 4px;
+  overflow: hidden;
+`;
+
+const SourceFill = styled.div`
+  height: 100%;
+  border-radius: 4px;
+  background: ${props => props.$color};
+  width: ${props => props.$pct}%;
+  transition: width 0.6s ease;
+`;
+
+const SourcePct = styled.div`
+  font-size: 12px;
+  font-weight: 800;
+  color: ${props => props.$color || colors.text};
+  width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+`;
+
+const PageRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid #F5F5F5;
+  &:last-child { border-bottom: none; }
+`;
+
+const PagePath = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${colors.text2};
+  font-family: monospace;
+`;
+
+const PageViews = styled.span`
+  font-size: 12px;
+  font-weight: 800;
+`;
+
+const ConvertsBadge = styled.span`
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: #ECFDF5;
+  color: ${colors.green};
+  margin-left: 6px;
+`;
+
+const GA4Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1D4ED8;
+  margin-left: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+`;
+
+const NotConnectedBox = styled.div`
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #1E3A5F;
+  line-height: 1.6;
+
+  strong { font-weight: 700; }
+  code {
+    background: rgba(37,99,235,.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+`;
+
+const TrafficTip = styled.div`
+  margin-top: 10px;
+  font-size: 11px;
+  color: ${colors.text3};
+  line-height: 1.5;
+`;
+
+// Login
+const LoginContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 100%);
+`;
+
+const LoginCard = styled.div`
+  background: white;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  text-align: center;
+  width: 400px;
+
+  h2 { margin: 16px 0 8px 0; }
+  p { color: ${colors.text3}; margin-bottom: 24px; }
+`;
+
+const StyledInput = styled(Input)`
+  height: 44px;
+  border-radius: 8px;
+`;
+
+const LoginButton = styled.button`
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  border: none;
+  background: ${colors.black};
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.9; }
 `;
 
 const LoadingContainer = styled.div`
@@ -1807,167 +1401,11 @@ const LoadingContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 400px;
-
-  p {
-    margin-top: 16px;
-    color: #666;
-  }
-`;
-
-const StatsRow = styled(Row)`
-  margin-bottom: 24px;
-`;
-
-const StatCard = styled(Card)`
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  ${props => props.highlight && `
-    border: 2px solid #f5222d;
-    background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
-  `}
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  }
-
-  .ant-statistic-title {
-    font-size: 14px;
-    font-weight: 500;
-  }
-`;
-
-const HelpText = styled.div`
-  font-size: 12px;
-  color: #999;
-  margin-top: 8px;
-`;
-
-const TodayHeader = styled.div`
-  margin-bottom: 24px;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  color: white;
-
-  h2 {
-    margin: 0 0 4px 0;
-    font-size: 24px;
-    font-weight: 700;
-  }
-
-  p {
-    margin: 0;
-    opacity: 0.9;
-  }
-`;
-
-const ChangeIndicator = styled.div`
-  display: block;
-  font-size: 12px;
-  margin-top: 4px;
-  color: ${props => props.positive ? '#52c41a' : '#f5222d'};
-  font-weight: 500;
-`;
-
-const ChartCard = styled(Card)`
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  margin-bottom: 16px;
-
-  ${props => props.highlight && `
-    border: 2px solid #f5222d;
-  `}
-
-  h3 {
-    margin: 0 0 16px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-  }
-`;
-
-const ConversionRates = styled.div`
-  padding: 24px 0;
-`;
-
-const ConversionItem = styled.div`
-  margin-bottom: 24px;
-
-  span {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #333;
-  }
-`;
-
-const RetentionTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-
-  th, td {
-    padding: 12px;
-    text-align: center;
-    border: 1px solid #f0f0f0;
-  }
-
-  th {
-    background: #fafafa;
-    font-weight: 600;
-  }
-
-  tr:hover td {
-    background: #f5f5f5;
-  }
-`;
-
-const RetentionCell = styled.span`
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: ${props => {
-    if (props.rate >= 50) return '#d4edda';
-    if (props.rate >= 30) return '#fff3cd';
-    if (props.rate >= 10) return '#ffeaa7';
-    return '#f8d7da';
-  }};
-  color: ${props => {
-    if (props.rate >= 50) return '#155724';
-    if (props.rate >= 30) return '#856404';
-    if (props.rate >= 10) return '#856404';
-    return '#721c24';
-  }};
-  font-size: 13px;
-`;
-
-const LoginContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-`;
+  background: ${colors.bg};
+  gap: 16px;
 
-const LoginCard = styled.div`
-  background: white;
-  padding: 48px;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  text-align: center;
-  width: 400px;
-
-  h2 {
-    margin: 0 0 8px 0;
-  }
-
-  p {
-    color: #666;
-    margin-bottom: 24px;
-  }
+  p { color: ${colors.text3}; }
 `;
 
 export default AdminReports;
