@@ -3,7 +3,7 @@ import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-do
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
 import { Input, Select, Spin, Pagination, Button, Progress, message } from 'antd';
-import { Search, Crown, Lock, Users, Mail, Heart, Sparkles, Zap, Check, Target, Clock, ExternalLink, Link2 } from 'lucide-react';
+import { Search, Crown, Lock, Users, Mail, Heart, Sparkles, Zap, Check, Target, Clock, ExternalLink, Link2, X } from 'lucide-react';
 import { getCategoryColors } from '../utils/categoryColors';
 import { normalizeCategory, categoryLabel } from '../constants/brandCategories';
 import axios from 'axios';
@@ -60,6 +60,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
   const [pitchedBrands, setPitchedBrands] = useState(new Set());
 
+  // V4: Welcome card for first-time users after onboarding
+  const [showWelcomeCard, setShowWelcomeCard] = useState(false);
+
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || '',
@@ -79,6 +82,16 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   useEffect(() => {
     fetchBrands();
   }, [pagination.page, filters]);
+
+  // V4: Check if user just completed onboarding (first login welcome experience)
+  useEffect(() => {
+    const justCompleted = sessionStorage.getItem('justCompletedOnboarding');
+    if (justCompleted === 'true' && isDashboardView) {
+      setShowWelcomeCard(true);
+      // Clear the flag so it only shows once
+      sessionStorage.removeItem('justCompletedOnboarding');
+    }
+  }, [isDashboardView]);
 
   const fetchOpenPrBrands = async () => {
     try {
@@ -390,6 +403,27 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         )}
 
         <ContentWrapper>
+          {/* V4: Welcome card for first-time users after onboarding */}
+          {showWelcomeCard && isDashboardView && (
+            <WelcomeCard>
+              <WelcomeClose onClick={() => setShowWelcomeCard(false)}>
+                <X size={16} />
+              </WelcomeClose>
+              <WelcomeGrid>
+                <div>
+                  <WelcomeTag>You're in!</WelcomeTag>
+                  <WelcomeTitle>Welcome to NewCollab</WelcomeTitle>
+                  <WelcomeSub>
+                    We found <strong>{pagination.total || 500}+ brands</strong> that match your niche and are actively working with creators like you.
+                  </WelcomeSub>
+                </div>
+                <WelcomeBtn onClick={() => setShowWelcomeCard(false)}>
+                  Start browsing
+                </WelcomeBtn>
+              </WelcomeGrid>
+            </WelcomeCard>
+          )}
+
           {/* Monthly Contact Quota Tracker - Show for logged-in FREE users */}
           {user && subscriptionTier === 'free' && isDashboardView && (
             <QuotaStrip $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT}>
@@ -757,6 +791,112 @@ const ContentWrapper = styled.div`
 
   @media (max-width: 768px) {
     padding: 20px 16px;
+  }
+`;
+
+// V4: Welcome Card for first-time users after onboarding
+const WelcomeCard = styled.div`
+  background: #0F0F0F;
+  border-radius: 18px;
+  padding: 24px 26px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(225,29,72,0.45) 0%, transparent 70%);
+    pointer-events: none;
+  }
+`;
+
+const WelcomeGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const WelcomeTag = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: #FDA4AF;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+`;
+
+const WelcomeTitle = styled.div`
+  font-size: 19px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.4px;
+  margin-bottom: 5px;
+`;
+
+const WelcomeSub = styled.div`
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+
+  strong {
+    color: rgba(255,255,255,0.85);
+  }
+`;
+
+const WelcomeBtn = styled.button`
+  background: #E11D48;
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #BE123C;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const WelcomeClose = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,0.6);
+  z-index: 2;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
   }
 `;
 

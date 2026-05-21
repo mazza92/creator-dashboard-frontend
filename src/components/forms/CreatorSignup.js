@@ -1,569 +1,554 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../../utils/api';
-import { useAuth } from '../../contexts/AuthContext';
-import { useAnalytics } from '../../contexts/AnalyticsContext';
-import PasswordStrengthBar from 'react-password-strength-bar';
-import { LoadingOutlined } from '@ant-design/icons';
 import { Helmet } from 'react-helmet-async';
+import { auth, firebaseConfigured } from '../firebase';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 
-const GradientBg = styled.div`
+// ============================================================================
+// V4 SIGNUP FLOW - Registration with first/last name, Google SSO
+// ============================================================================
+
+const colors = {
+  rose: '#E11D48',
+  black: '#0F0F0F',
+  violet: '#7C3AED',
+  green: '#059669',
+  amber: '#D97706',
+  border: '#EBEBEB',
+  text: '#0F0F0F',
+  text2: '#5A5A5A',
+  text3: '#A0A0A0',
+};
+
+const PageWrapper = styled.div`
   min-height: 100vh;
-  width: 100%;
-  background: #F5F7FA;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(225,29,72,.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 90%, rgba(124,58,237,.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 75% 5%, rgba(251,146,60,.08) 0%, transparent 40%),
+    #FBF8F6;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 0;
-  
-  @media (max-width: 768px) {
-    align-items: flex-start;
-    padding-top: 2rem;
-    min-height: 100vh;
-  }
-  
-  @media (max-width: 480px) {
-    padding-top: 1rem;
-    align-items: flex-start;
-  }
 `;
 
-const Container = styled.div`
+const TopBar = styled.div`
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   box-sizing: border-box;
-  
-  @media (max-width: 480px) {
-    padding: 1rem 0.5rem;
-    max-width: 100%;
-    margin: 0;
-  }
+`;
+
+const LogoLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+`;
+
+const LogoMark = styled.div`
+  width: 28px;
+  height: 28px;
+  background: ${colors.black};
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 13px;
+`;
+
+const LogoWord = styled.span`
+  font-size: 15px;
+  font-weight: 800;
+  color: ${colors.text};
+  letter-spacing: -0.3px;
+  em { color: ${colors.rose}; font-style: normal; }
+`;
+
+const TopBarLink = styled.span`
+  font-size: 13px;
+  color: ${colors.text2};
+  font-weight: 500;
+  a { color: ${colors.rose}; font-weight: 700; text-decoration: none; }
 `;
 
 const Card = styled.div`
-  background: #FFFFFF;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 2rem 1.5rem;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.07);
+  border-radius: 22px;
+  padding: 38px 36px;
   width: 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: stretch;
-  border: 1px solid #E5E7EB;
-  
-  @media (max-width: 768px) {
-    padding: 1.5rem 1rem;
-    border-radius: 8px;
-    margin: 0 0.5rem;
-  }
-  
+  max-width: 420px;
+  margin: 0 auto 40px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 8px 32px rgba(0,0,0,.07);
+
   @media (max-width: 480px) {
-    padding: 1.25rem 0.75rem;
-    border-radius: 6px;
-    gap: 0.875rem;
-    margin: 0 0.25rem;
-    min-height: auto;
+    padding: 28px 22px;
+    border-radius: 18px;
+    margin: 0 16px 32px;
+    width: auto;
   }
 `;
-// eslint-disable-next-line no-unused-vars
-const Logo = styled.img`
-  width: 56px;
-  height: 56px;
-  margin-bottom: 8px;
-`;
-const Title = styled.h2`
-  font-size: 1.75rem;
+
+const Eyebrow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: #111827;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
-  @media (max-width: 768px) {
-    font-size: 1.5rem;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 1.25rem;
-  }
+  color: ${colors.rose};
+  margin-bottom: 12px;
+  letter-spacing: 0.2px;
 `;
 
-const Subheading = styled.div`
-  color: #6B7280;
-  text-align: center;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.5;
-  
-  @media (max-width: 768px) {
-    font-size: 0.95rem;
-    margin-bottom: 1.25rem;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-  }
-`;
-const StyledInput = styled.input`
-  width: 100%;
-  max-width: 100%;
-  padding: 0.875rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #D1D5DB;
-  font-size: 16px; /* Prevent zoom on iOS */
-  margin-bottom: 0.25rem;
-  background: #FFFFFF;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: all 0.15s ease;
-  box-sizing: border-box;
-  -webkit-appearance: none; /* Remove default iOS styling */
-  -moz-appearance: none;
-  appearance: none;
-  
-  &:focus {
-    border-color: #8B5CF6;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-  }
-  
-  &.error {
-    border-color: #EF4444;
-  }
-  
-  &.success {
-    border-color: #10B981;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 0.75rem 0.875rem;
-    font-size: 16px; /* Keep 16px to prevent zoom */
-    border-radius: 6px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 0.625rem 0.75rem;
-    font-size: 16px; /* Keep 16px to prevent zoom */
-    border-radius: 6px;
-  }
-`;
-const Label = styled.label`
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.375rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  display: block;
-  
-  @media (max-width: 768px) {
-    font-size: 0.9rem;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 0.85rem;
-  }
+const EyebrowDot = styled.div`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${colors.rose};
 `;
 
-const Error = styled.div`
-  color: #EF4444;
-  font-size: 0.8rem;
-  margin-bottom: 0.25rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
-  @media (max-width: 480px) {
-    font-size: 0.75rem;
-  }
+const Headline = styled.h1`
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.7px;
+  line-height: 1.18;
+  margin-bottom: 10px;
+  color: ${colors.black};
+  em { font-style: normal; color: ${colors.rose}; }
 `;
-const TermsRow = styled.div`
+
+const Subline = styled.p`
+  font-size: 14px;
+  color: ${colors.text2};
+  line-height: 1.6;
+  margin-bottom: 22px;
+`;
+
+const Benefits = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #374151;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  margin-top: 0.5rem;
-  
-  @media (max-width: 480px) {
-    font-size: 0.8rem;
-    gap: 0.375rem;
-  }
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 22px;
 `;
-const CTAButton = styled.button`
-  width: 100%;
-  background: #8B5CF6;
-  color: #FFFFFF;
+
+const BenefitPill = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #F5F5F5;
+  border-radius: 20px;
+  padding: 6px 11px;
+  font-size: 12px;
   font-weight: 600;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  padding: 0.875rem 0;
-  margin-top: 1rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  opacity: ${props => props.disabled ? 0.5 : 1};
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-  min-height: 48px;
-  
-  &:hover:not(:disabled) {
-    background: #7C3AED;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-  }
-  
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-  
-  @media (max-width: 768px) {
-    font-size: 0.95rem;
-    padding: 0.75rem 0;
-    min-height: 44px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 0.9rem;
-    border-radius: 6px;
-    padding: 0.625rem 0;
-    margin-top: 0.75rem;
-    min-height: 40px;
-  }
+  color: ${colors.text2};
 `;
-// eslint-disable-next-line no-unused-vars
-const UsernamePreview = styled.div`
-  font-size: 0.97em;
-  color: #6b7280;
-  margin-bottom: 2px;
-  font-family: 'Inter', 'Poppins', sans-serif;
+
+const ProofRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F9F5FF;
+  border: 1px solid #E9D5FF;
+  border-radius: 12px;
+  padding: 11px 14px;
+  margin-bottom: 22px;
 `;
-const InputWrapper = styled.div`
-  position: relative;
+
+const ProofAvatars = styled.div`
+  display: flex;
+`;
+
+const ProofAv = styled.div`
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  margin-right: -6px;
+  font-size: 8.5px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: ${props => props.$bg || colors.rose};
+`;
+
+const ProofText = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #581C87;
+  line-height: 1.35;
+  margin-left: 9px;
+  span { color: #7C3AED; font-weight: 700; }
+`;
+
+const GoogleBtn = styled.button`
   width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid ${colors.border};
+  background: #fff;
+  color: ${colors.text};
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+
+  &:hover { background: #fafafa; }
+  &:active { transform: scale(0.98); }
 `;
-const ShowHide = styled.button`
+
+const OrBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: ${colors.text3};
+  font-weight: 600;
+  margin: 13px 0;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${colors.border};
+  }
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 12px;
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: ${colors.text};
+`;
+
+const InputWrap = styled.div`
+  position: relative;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid ${colors.border};
+  border-radius: 11px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: ${colors.text};
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: ${colors.black};
+    box-shadow: 0 0 0 3px rgba(15,15,15,.06);
+  }
+  &::placeholder { color: ${colors.text3}; }
+`;
+
+const InputSuffix = styled.span`
   position: absolute;
-  right: 0.75rem;
+  right: 13px;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${colors.text3};
+  cursor: pointer;
+  &:hover { color: ${colors.text}; }
+`;
+
+const SubmitBtn = styled.button`
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
   border: none;
-  color: #8B5CF6;
-  font-weight: 600;
+  background: ${colors.black};
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 0.8rem;
-  padding: 0.25rem 0.5rem;
-  z-index: 2;
-  border-radius: 4px;
-  transition: background-color 0.15s ease;
-  
-  &:hover {
-    background-color: rgba(139, 92, 246, 0.1);
-  }
-  
-  @media (max-width: 480px) {
-    right: 0.5rem;
-    font-size: 0.75rem;
-    padding: 0.2rem 0.4rem;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+  margin-top: 8px;
+  opacity: ${props => props.disabled ? 0.6 : 1};
+
+  &:hover:not(:disabled) { background: #1a1a1a; }
+  &:active:not(:disabled) { transform: scale(0.98); }
 `;
 
-const BackHomeButton = styled.button`
-  position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  background: none;
-  border: 1px solid #D1D5DB;
-  color: #6B7280;
-  font-size: 0.875rem;
+const Terms = styled.p`
+  font-size: 11.5px;
+  color: ${colors.text3};
+  text-align: center;
+  margin-top: 13px;
+  line-height: 1.55;
+  a { color: ${colors.text2}; font-weight: 600; text-decoration: underline; }
+`;
+
+const AltLink = styled.p`
+  font-size: 13px;
+  color: ${colors.text2};
   font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  z-index: 10;
-  
-  &:hover {
-    background: #F9FAFB;
-    border-color: #9CA3AF;
-    color: #374151;
-  }
-  
-  @media (max-width: 768px) {
-    top: 1rem;
-    left: 1rem;
-    font-size: 0.8rem;
-    padding: 0.375rem 0.75rem;
-  }
-  
-  @media (max-width: 480px) {
-    top: 0.5rem;
-    left: 0.5rem;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.625rem;
-    position: fixed;
-  }
+  text-align: center;
+  margin-top: 18px;
+  a { color: ${colors.rose}; font-weight: 700; text-decoration: none; }
 `;
 
-const initialState = {
-  firstName: '',
-  lastName: '',
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-  terms: false,
-};
+const NameRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+`;
+
+const ErrorMsg = styled.div`
+  color: ${colors.rose};
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+`;
 
 export default function CreatorSignup() {
-  const [form, setForm] = useState(initialState);
-  const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [signupError, setSignupError] = useState('');
-  // eslint-disable-next-line no-unused-vars
-  const { login } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { trackSignUp, trackFormSubmission } = useAnalytics();
 
-  // Check for PR list source parameter
-  useEffect(() => {
-    const source = searchParams.get('source');
-    if (source === 'pr-list') {
-      localStorage.setItem('pr_list_signup', 'true');
-    }
-  }, [searchParams]);
+  const googleEnabled = Boolean(firebaseConfigured && auth);
+  const isValid = firstName.trim().length > 0 && email.includes('@') && password.length >= 8;
 
-  // Validation
-  const validate = () => {
-    const errs = {};
-    if (!form.firstName.trim()) errs.firstName = 'First name is required.';
-    if (!form.lastName.trim()) errs.lastName = 'Last name is required.';
-    if (!form.email.trim()) errs.email = 'Email is required.';
-    else if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = 'Invalid email address.';
-    if (!form.password) errs.password = 'Password is required.';
-    else if (form.password.length < 8) errs.password = 'Password must be at least 8 characters.';
-    if (!form.confirmPassword) errs.confirmPassword = 'Please confirm your password.';
-    else if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match.';
-    if (!form.terms) errs.terms = 'You must accept the terms.';
-    return errs;
-  };
-
-  const allValid = Object.keys(validate()).length === 0;
-
-  const handleChange = e => {
-    const { name, value, type, checked } = e.target;
-    setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
-    setErrors(e => ({ ...e, [name]: undefined }));
-    setSignupError('');
-  };
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    const errs = validate();
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-    setLoading(true);
-    setSignupError('');
+  const doRedirect = (url) => {
     try {
-      // Check if user came from PR list post
-      const prListSignup = localStorage.getItem('pr_list_signup') === 'true';
-      
-      // Create account
-      const formData = new FormData();
-      formData.append('firstName', form.firstName.trim());
-      formData.append('lastName', form.lastName.trim());
-      formData.append('email', form.email.trim());
-      formData.append('password', form.password);
-      formData.append('role', 'creator');
-      if (prListSignup) {
-        formData.append('pr_list_signup', 'true');
-      }
-      const res = await apiClient.post('/register/creator/account', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      
-      // Track new account creation
-      trackSignUp('email', 'creator', {
-        email: form.email.trim(),
-        username: res.data?.username || null
-      });
-      trackFormSubmission('creator_signup', true);
-      
-      // If PR list signup, PDF will be sent automatically by backend
-      // Clear the flag after successful signup
-      if (prListSignup) {
-        localStorage.removeItem('pr_list_signup');
-        console.log('PR list signup detected - PDF will be sent by backend');
-      }
-      
-      // Save account fields for onboarding (optional, if needed later)
-      localStorage.setItem('onboarding_firstName', form.firstName.trim());
-      localStorage.setItem('onboarding_lastName', form.lastName.trim());
-      localStorage.setItem('onboarding_email', form.email.trim());
-      localStorage.setItem('onboarding_password', form.password);
-      // Redirect to verify email pending page
-      let redirectUrl = res.data?.redirect_url || '/verify-email-pending';
-      
-      // Always extract just the pathname to avoid URL concatenation issues
-      try {
-        const urlObj = new URL(redirectUrl, window.location.origin);
-        redirectUrl = urlObj.pathname + urlObj.search + urlObj.hash;
-        console.log('🔄 Redirecting to:', redirectUrl);
-      } catch (e) {
-        console.log('🔄 Using fallback redirect:', redirectUrl);
-      }
-      
-      navigate(redirectUrl);
+      const urlObj = new URL(url, window.location.origin);
+      navigate(urlObj.pathname + urlObj.search + urlObj.hash);
+    } catch {
+      navigate(url);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!firstName.trim()) { setError('First name is required'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
+
+    setLoading(true);
+    try {
+      const res = await apiClient.post('/register/creator/account', {
+        email: email.trim().toLowerCase(),
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        terms_accepted: true,
+      }, { headers: { 'Content-Type': 'application/json' } });
+
+      doRedirect(res.data?.redirect_url || '/verify-email-pending');
     } catch (err) {
-      setSignupError(err.response?.data?.error || 'Failed to create account.');
-      trackFormSubmission('creator_signup', false);
+      setError(err.response?.data?.error || 'Something went wrong');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSSO = async () => {
+    if (!googleEnabled) {
+      setError('Google sign-in is unavailable. Please use email.');
+      return;
+    }
+    setGoogleLoading(true);
+    setError('');
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+
+      const response = await apiClient.post('/google-signup', {
+        idToken,
+        email: result.user.email,
+        name: result.user.displayName,
+      });
+
+      const redirectUrl = response.data?.redirect_url ||
+        (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/pr-brands');
+      doRedirect(redirectUrl);
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Google sign-in failed';
+      if (err.response?.status === 404 && msg.includes('register')) {
+        setError('No account found. Please sign up with email first.');
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
   return (
     <>
       <Helmet>
-        <title>Sign Up as a Creator | Newcollab</title>
-        <meta name="description" content="Create your Newcollab creator account in seconds. Start receiving brand bids and unlock your creator dashboard." />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>Sign Up | NewCollab - Get Brand Deals</title>
+        <meta name="description" content="Join NewCollab free. Find brands, write the perfect pitch, and track your outreach. 500+ brand contacts, AI pitch writer, and more." />
         <link rel="canonical" href="https://newcollab.co/register/creator" />
-        <meta property="og:title" content="Sign Up as a Creator | Newcollab" />
-        <meta property="og:description" content="Create your Newcollab creator account in seconds. Start receiving brand bids and unlock your creator dashboard." />
-        <meta property="og:url" content="https://newcollab.co/register/creator" />
-        <meta property="og:image" content="https://newcollab.co/og-image.jpg" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Newcollab" />
       </Helmet>
-      <GradientBg>
-        <BackHomeButton type="button" onClick={() => navigate('/')}>
-          ← Back Home
-        </BackHomeButton>
-        <Container>
-          <Card as="form" onSubmit={handleSubmit} autoComplete="off">
-                         <Title>Start receiving bids <span style={{ background: 'none', WebkitBackgroundClip: 'initial', WebkitTextFillColor: 'initial', backgroundClip: 'initial' }}>💸</span></Title>
-            <Subheading>Join Newcollab and unlock your creator profile in seconds</Subheading>
+
+      <PageWrapper>
+        <TopBar>
+          <LogoLink to="/">
+            <LogoMark>N</LogoMark>
+            <LogoWord>new<em>collab</em></LogoWord>
+          </LogoLink>
+          <TopBarLink>
+            Already a member? <Link to="/login">Sign in</Link>
+          </TopBarLink>
+        </TopBar>
+
+        <Card as="form" onSubmit={handleSubmit}>
+          <Eyebrow>
+            <EyebrowDot />
+            Free to start · No credit card
+          </Eyebrow>
+
+          <Headline>
+            The tool that gets<br />you <em>brand deals.</em>
+          </Headline>
+
+          <Subline>
+            You know how to create content. We handle everything else — finding brands,
+            writing the perfect pitch, tracking your outreach, reminding you to follow up.
+          </Subline>
+
+          <Benefits>
+            <BenefitPill>500+ brand contacts</BenefitPill>
+            <BenefitPill>AI pitch writer</BenefitPill>
+            <BenefitPill>Track all outreach</BenefitPill>
+            <BenefitPill>New brand alerts</BenefitPill>
+          </Benefits>
+
+          <ProofRow>
+            <ProofAvatars>
+              <ProofAv $bg={colors.rose}>C</ProofAv>
+              <ProofAv $bg={colors.violet}>M</ProofAv>
+              <ProofAv $bg={colors.green}>Z</ProofAv>
+              <ProofAv $bg={colors.amber}>A</ProofAv>
+            </ProofAvatars>
+            <ProofText>
+              <span>carolstyle</span> landed Rhode Skin 3 days after joining.
+              <br />900+ creators are already pitching brands.
+            </ProofText>
+          </ProofRow>
+
+          <GoogleBtn type="button" onClick={handleGoogleSSO} disabled={googleLoading || loading}>
+            {googleLoading ? 'Signing in...' : (
+              <>
+                <svg width="17" height="17" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                Continue with Google
+              </>
+            )}
+          </GoogleBtn>
+
+          <OrBar>or</OrBar>
+
+          <NameRow>
             <div>
-              <Label htmlFor="firstName">First Name</Label>
-              <InputWrapper>
-                <StyledInput
-                  id="firstName"
-                  name="firstName"
-                  value={form.firstName}
-                  onChange={handleChange}
-                  autoComplete="given-name"
-                  disabled={loading}
-                  inputMode="text"
-                />
-              </InputWrapper>
-              {errors.firstName && <Error>{errors.firstName}</Error>}
-            </div>
-            <div>
-              <Label htmlFor="lastName">Last Name</Label>
-              <InputWrapper>
-                <StyledInput
-                  id="lastName"
-                  name="lastName"
-                  value={form.lastName}
-                  onChange={handleChange}
-                  autoComplete="family-name"
-                  disabled={loading}
-                  inputMode="text"
-                />
-              </InputWrapper>
-              {errors.lastName && <Error>{errors.lastName}</Error>}
-            </div>
-            <div>
-              {/* Username field removed; now only asked in onboarding */}
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <InputWrapper>
-                <StyledInput
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  autoComplete="email"
-                  disabled={loading}
-                  inputMode="email"
-                />
-              </InputWrapper>
-              {errors.email && <Error>{errors.email}</Error>}
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <InputWrapper>
-                <StyledInput
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={form.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  disabled={loading}
-                  style={{ marginBottom: 0 }}
-                  inputMode="text"
-                />
-                <ShowHide type="button" tabIndex={-1} onClick={() => setShowPassword(s => !s)}>{showPassword ? 'Hide' : 'Show'}</ShowHide>
-              </InputWrapper>
-              <PasswordStrengthBar password={form.password} style={{ marginTop: 4, marginBottom: 2 }} />
-              {errors.password && <Error>{errors.password}</Error>}
-            </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <InputWrapper>
-                <StyledInput
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirm ? 'text' : 'password'}
-                  value={form.confirmPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  disabled={loading}
-                  style={{ marginBottom: 0 }}
-                  inputMode="text"
-                />
-                <ShowHide type="button" tabIndex={-1} onClick={() => setShowConfirm(s => !s)}>{showConfirm ? 'Hide' : 'Show'}</ShowHide>
-              </InputWrapper>
-              {errors.confirmPassword && <Error>{errors.confirmPassword}</Error>}
-            </div>
-            <TermsRow>
-              <input
-                type="checkbox"
-                id="terms"
-                name="terms"
-                checked={form.terms}
-                onChange={handleChange}
+              <FormLabel>First name</FormLabel>
+              <FormInput
+                type="text"
+                placeholder="Alex"
+                value={firstName}
+                onChange={(e) => { setFirstName(e.target.value); setError(''); }}
                 disabled={loading}
-                                 style={{ accentColor: '#8B5CF6', width: 18, height: 18 }}
+                autoComplete="given-name"
               />
-                             <label htmlFor="terms" style={{ cursor: 'pointer' }}>
-                 I accept the <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" style={{ color: '#8B5CF6', textDecoration: 'underline' }}>Terms and Conditions</a>
-               </label>
-            </TermsRow>
-            {errors.terms && <Error>{errors.terms}</Error>}
-            {signupError && <Error>{signupError}</Error>}
-            <CTAButton type="submit" disabled={!allValid || loading} style={{ position: 'relative' }}>
-              {loading && (
-                <LoadingOutlined spin style={{ position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)', fontSize: 20, color: '#8B5CF6' }} />
-              )}
-              <span style={{ opacity: loading ? 0.5 : 1 }}>Create My Account</span>
-            </CTAButton>
-          </Card>
-        </Container>
-      </GradientBg>
+            </div>
+            <div>
+              <FormLabel>Last name</FormLabel>
+              <FormInput
+                type="text"
+                placeholder="Johnson"
+                value={lastName}
+                onChange={(e) => { setLastName(e.target.value); setError(''); }}
+                disabled={loading}
+                autoComplete="family-name"
+              />
+            </div>
+          </NameRow>
+
+          <FormGroup>
+            <FormLabel>Email address</FormLabel>
+            <FormInput
+              type="email"
+              placeholder="you@gmail.com"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(''); }}
+              disabled={loading}
+              autoComplete="email"
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <FormLabel>Password</FormLabel>
+            <InputWrap>
+              <FormInput
+                type={showPw ? 'text' : 'password'}
+                placeholder="Min. 8 characters"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                disabled={loading}
+                autoComplete="new-password"
+              />
+              <InputSuffix onClick={() => setShowPw(!showPw)}>
+                {showPw ? 'Hide' : 'Show'}
+              </InputSuffix>
+            </InputWrap>
+          </FormGroup>
+
+          {error && <ErrorMsg>{error}</ErrorMsg>}
+
+          <SubmitBtn type="submit" disabled={!isValid || loading || googleLoading}>
+            {loading ? 'Creating account...' : 'Create my free account →'}
+          </SubmitBtn>
+
+          <Terms>
+            By signing up you agree to our{' '}
+            <Link to="/terms-of-service">Terms</Link> and{' '}
+            <Link to="/privacy-policy">Privacy Policy</Link>.
+          </Terms>
+
+          <AltLink>
+            Already a member? <Link to="/login">Sign in</Link>
+          </AltLink>
+        </Card>
+      </PageWrapper>
     </>
   );
-} 
+}

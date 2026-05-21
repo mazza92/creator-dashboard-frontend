@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../utils/api';
+import { UserContext } from '../../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { FaInstagram, FaTiktok, FaYoutube, FaPinterest, FaXTwitter } from 'react-icons/fa6';
 import { HiOutlinePencilSquare } from 'react-icons/hi2';
@@ -396,6 +397,42 @@ const CharCount = styled.span`
   margin-top: 4px;
 `;
 
+const AvatarUpload = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+`;
+
+const AvatarCircle = styled.div`
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: ${props => props.$hasPhoto ? 'transparent' : '#F3F3F3'};
+  border: 2px dashed ${props => props.$hasPhoto ? colors.black : colors.border};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+  &:hover { border-color: ${colors.black}; }
+`;
+
+const AvatarImg = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+`;
+
+const AvatarHint = styled.div`
+  font-size: 13px;
+  color: ${colors.text2};
+  line-height: 1.5;
+  strong { display: block; font-size: 13px; font-weight: 700; color: ${colors.text}; margin-bottom: 2px; }
+`;
+
 const ErrorMsg = styled.div`
   color: ${colors.rose};
   font-size: 12px;
@@ -436,6 +473,17 @@ const AGE_RANGES = [
   { id: '55+',   label: '55+' },
 ];
 
+const REGIONS = [
+  { id: 'US',     label: '🇺🇸 United States' },
+  { id: 'UK',     label: '🇬🇧 United Kingdom' },
+  { id: 'Canada', label: '🇨🇦 Canada' },
+  { id: 'Europe', label: '🇪🇺 Europe' },
+  { id: 'LATAM',  label: '🌎 Latin America' },
+  { id: 'MENA',   label: '🌍 Middle East & Africa' },
+  { id: 'Asia',   label: '🌏 Asia Pacific' },
+  { id: 'Global', label: '🌐 Global' },
+];
+
 export default function CreatorOnboarding() {
   const [step, setStep] = useState(1);
   // Step 1
@@ -445,12 +493,16 @@ export default function CreatorOnboarding() {
   // Step 2
   const [bio, setBio] = useState('');
   const [ageRange, setAgeRange] = useState('');
+  const [regions, setRegions] = useState([]);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   // Step 3
   const [niches, setNiches] = useState([]);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { refreshUser } = useContext(UserContext);
 
   const selectedPlatform = PLATFORMS.find(p => p.id === platform);
 
@@ -465,12 +517,13 @@ export default function CreatorOnboarding() {
     setError('');
     if (!username.trim()) { setError('Username is required'); return; }
     if (!platform) { setError('Please select your main platform'); return; }
+    if (!followers || parseInt(followers) <= 0) { setError('Please enter your follower count'); return; }
     setLoading(true);
     try {
       await apiClient.post('/api/user/onboarding/step1', {
         username: username.trim(),
         platform,
-        followers: parseInt(followers) || 0,
+        followers: parseInt(followers),
       });
       setStep(2);
     } catch (err) {
@@ -480,13 +533,39 @@ export default function CreatorOnboarding() {
     }
   };
 
+  const toggleRegion = (id) => {
+    setRegions(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+    setError('');
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setError('');
+  };
+
   const handleStep2 = async () => {
     setError('');
+    if (!photoFile) { setError('Please upload a profile photo'); return; }
+    if (!bio.trim()) { setError('Please write a short bio'); return; }
+    if (!ageRange) { setError('Please select your audience age range'); return; }
+    if (regions.length === 0) { setError('Please select at least one region'); return; }
     setLoading(true);
     try {
+      // Upload photo first
+      if (photoFile) {
+        const formData = new FormData();
+        formData.append('image', photoFile);
+        await apiClient.post('/profile/update-image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
       await apiClient.post('/api/user/onboarding/step2', {
         bio: bio.trim(),
         primary_age_range: ageRange,
+        regions,
       });
       setStep(3);
     } catch (err) {
@@ -502,6 +581,9 @@ export default function CreatorOnboarding() {
     setLoading(true);
     try {
       const res = await apiClient.post('/api/user/onboarding/step3', { niches });
+      // Refresh user context so creator_id is set before navigating to dashboard
+      // This prevents the incomplete-profile guard from redirecting back to /onboarding
+      await refreshUser();
       sessionStorage.setItem('justCompletedOnboarding', 'true');
       const redirectUrl = res.data?.redirect || '/creator/dashboard/pr-brands';
       try {
@@ -595,7 +677,7 @@ export default function CreatorOnboarding() {
             {error && <ErrorMsg>{error}</ErrorMsg>}
 
             <BtnRow>
-              <ContinueBtn onClick={handleStep1} disabled={loading || !username.trim() || !platform}>
+              <ContinueBtn onClick={handleStep1} disabled={loading || !username.trim() || !platform || !followers || parseInt(followers) <= 0}>
                 {loading ? 'Saving...' : 'Continue →'}
               </ContinueBtn>
             </BtnRow>
@@ -615,10 +697,33 @@ export default function CreatorOnboarding() {
             </ProgressWrap>
 
             <Headline>Tell brands about yourself</Headline>
-            <Subline>A short bio and your audience age helps brands decide if you're the right fit.</Subline>
+            <Subline>Complete your profile so brands know who they're working with.</Subline>
 
             <FormGroup>
-              <FormLabel>Your bio <span style={{ color: colors.text3, fontWeight: 400 }}>(optional)</span></FormLabel>
+              <FormLabel>Profile photo</FormLabel>
+              <AvatarUpload htmlFor="avatar-upload">
+                <AvatarCircle $hasPhoto={!!photoPreview}>
+                  {photoPreview
+                    ? <AvatarImg src={photoPreview} alt="preview" />
+                    : <span style={{ fontSize: 24, color: colors.text3 }}>+</span>
+                  }
+                </AvatarCircle>
+                <AvatarHint>
+                  <strong>{photoPreview ? 'Photo selected ✓' : 'Upload a photo'}</strong>
+                  JPG, PNG or WebP · max 5 MB
+                </AvatarHint>
+              </AvatarUpload>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={handlePhotoChange}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>Your bio</FormLabel>
               <Textarea
                 placeholder="e.g. Beauty & skincare creator based in NYC. I help brands connect with women 25–34 who care about clean ingredients."
                 value={bio}
@@ -629,7 +734,7 @@ export default function CreatorOnboarding() {
             </FormGroup>
 
             <FormGroup>
-              <FormLabel>Audience age range <span style={{ color: colors.text3, fontWeight: 400 }}>(optional)</span></FormLabel>
+              <FormLabel>Audience age range</FormLabel>
               <AgeGrid>
                 {AGE_RANGES.map(a => (
                   <AgeChip
@@ -643,17 +748,29 @@ export default function CreatorOnboarding() {
               </AgeGrid>
             </FormGroup>
 
+            <FormGroup>
+              <FormLabel>Audience region(s)</FormLabel>
+              <AgeGrid>
+                {REGIONS.map(r => (
+                  <AgeChip
+                    key={r.id}
+                    $selected={regions.includes(r.id)}
+                    onClick={() => toggleRegion(r.id)}
+                  >
+                    {r.label}
+                  </AgeChip>
+                ))}
+              </AgeGrid>
+            </FormGroup>
+
             {error && <ErrorMsg>{error}</ErrorMsg>}
 
             <BtnRow>
               <BackBtn onClick={() => setStep(1)} disabled={loading}>← Back</BackBtn>
-              <ContinueBtn onClick={handleStep2} disabled={loading}>
+              <ContinueBtn onClick={handleStep2} disabled={loading || !photoFile || !bio.trim() || !ageRange || regions.length === 0}>
                 {loading ? 'Saving...' : 'Continue →'}
               </ContinueBtn>
             </BtnRow>
-            <SkipLink onClick={() => { setBio(''); setAgeRange(''); handleStep2(); }}>
-              Skip for now
-            </SkipLink>
           </Card>
         )}
 

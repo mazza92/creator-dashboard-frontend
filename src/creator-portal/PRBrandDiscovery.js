@@ -7,6 +7,7 @@ import { message } from 'antd';
 import PROnboarding from '../components/PROnboarding';
 import UpgradeModal from './UpgradeModal';
 import AIPitchModal from './AIPitchModal';
+import ProfileCompleteness from '../components/ProfileCompleteness';
 
 // Brand colors
 const primaryBlue = '#3B82F6';
@@ -196,6 +197,112 @@ const Title = styled.h1`
 
   @media (max-width: 768px) {
     font-size: 18px;
+  }
+`;
+
+// V4: Welcome Card for first-time users after onboarding
+const WelcomeCard = styled.div`
+  background: #0F0F0F;
+  border-radius: 18px;
+  padding: 24px 26px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(225,29,72,0.45) 0%, transparent 70%);
+    pointer-events: none;
+  }
+`;
+
+const WelcomeGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const WelcomeTag = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: #FDA4AF;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+`;
+
+const WelcomeTitle = styled.div`
+  font-size: 19px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.4px;
+  margin-bottom: 5px;
+`;
+
+const WelcomeSub = styled.div`
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+
+  strong {
+    color: rgba(255,255,255,0.85);
+  }
+`;
+
+const WelcomeBtn = styled.button`
+  background: #E11D48;
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #BE123C;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const WelcomeClose = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,0.6);
+  z-index: 2;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
   }
 `;
 
@@ -704,8 +811,20 @@ const PRBrandDiscovery = () => {
   const [fetchingMore, setFetchingMore] = useState(false);
   const [showPitchModal, setShowPitchModal] = useState(false);
   const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
-                    
+  const [showWelcomeCard, setShowWelcomeCard] = useState(false);
+  const [brandMatchCount, setBrandMatchCount] = useState(0);
+
   // Using centralized api client from config/api.js
+
+  // V4: Check if user just completed onboarding (first login experience)
+  useEffect(() => {
+    const justCompleted = sessionStorage.getItem('justCompletedOnboarding');
+    if (justCompleted === 'true') {
+      setShowWelcomeCard(true);
+      // Clear the flag so it only shows once
+      sessionStorage.removeItem('justCompletedOnboarding');
+    }
+  }, []);
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem('prOnboardingCompleted');
@@ -798,6 +917,8 @@ const PRBrandDiscovery = () => {
             : brand.niches,
         }));
         setBrands(parsedBrands);
+        // V4: Set brand match count for welcome card
+        setBrandMatchCount(response.data.total_count || parsedBrands.length);
         // Track these brand IDs as seen
         const newSeenIds = new Set([...Array.from(seenBrandIds), ...parsedBrands.map(b => b.id)]);
         setSeenBrandIds(newSeenIds);
@@ -892,6 +1013,30 @@ const PRBrandDiscovery = () => {
   return (
     <Container>
       <PROnboarding visible={showOnboarding} onClose={() => setShowOnboarding(false)} />
+
+      {/* V4: Welcome card for first-time users + Profile completeness widget */}
+      <div style={{ padding: '16px 16px 0', maxWidth: '900px', margin: '0 auto' }}>
+        {showWelcomeCard && (
+          <WelcomeCard>
+            <WelcomeClose onClick={() => setShowWelcomeCard(false)}>
+              <FiX size={16} />
+            </WelcomeClose>
+            <WelcomeGrid>
+              <div>
+                <WelcomeTag>You're in!</WelcomeTag>
+                <WelcomeTitle>Welcome to NewCollab</WelcomeTitle>
+                <WelcomeSub>
+                  We found <strong>{brandMatchCount}+ brands</strong> that match your niche and are actively working with creators like you.
+                </WelcomeSub>
+              </div>
+              <WelcomeBtn onClick={() => setShowWelcomeCard(false)}>
+                Start pitching
+              </WelcomeBtn>
+            </WelcomeGrid>
+          </WelcomeCard>
+        )}
+        <ProfileCompleteness />
+      </div>
 
       <PageHeader>
         <Title>Discover Brands</Title>

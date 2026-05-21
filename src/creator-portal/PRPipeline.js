@@ -57,6 +57,7 @@ const PRPipeline = () => {
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [showPitchModal, setShowPitchModal] = useState(false);
   const [confirmingItem, setConfirmingItem] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [replyingItem, setReplyingItem] = useState(null);
   const [celebrationItem, setCelebrationItem] = useState(null);
   const [isPro, setIsPro] = useState(false);
@@ -273,9 +274,12 @@ const PRPipeline = () => {
 
   // Handle confirm send/application
   const handleConfirmSend = async (item) => {
+    if (confirmLoading) return; // Prevent double-clicks
+
     const method = item._confirmMethod || 'email';
     const copy = getConfirmationCopy(method);
 
+    setConfirmLoading(true);
     try {
       const apiBase = getApiBase();
 
@@ -302,6 +306,8 @@ const PRPipeline = () => {
     } catch (error) {
       console.error('Error confirming send:', error);
       message.error('Failed to confirm send');
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -844,10 +850,15 @@ const PRPipeline = () => {
                 {confirmationCopy.subtitle}
               </ModalSub>
               <ModalButtons>
-                <PrimaryBtn $contact onClick={() => handleConfirmSend(confirmingItem)}>
-                  {confirmationCopy.confirmLabel}
+                <PrimaryBtn
+                  $contact
+                  onClick={() => handleConfirmSend(confirmingItem)}
+                  disabled={confirmLoading}
+                  style={{ opacity: confirmLoading ? 0.7 : 1, cursor: confirmLoading ? 'not-allowed' : 'pointer' }}
+                >
+                  {confirmLoading ? 'Confirming...' : confirmationCopy.confirmLabel}
                 </PrimaryBtn>
-                <ModalSecondaryBtn onClick={() => setConfirmingItem(null)}>
+                <ModalSecondaryBtn onClick={() => !confirmLoading && setConfirmingItem(null)} disabled={confirmLoading}>
                   {confirmationCopy.laterLabel}
                 </ModalSecondaryBtn>
               </ModalButtons>
