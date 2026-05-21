@@ -538,12 +538,50 @@ export default function CreatorOnboarding() {
     setError('');
   };
 
-  const handlePhotoChange = (e) => {
+  const compressImage = (file, maxSizeBytes = 3 * 1024 * 1024) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        // Scale down if too large
+        const MAX_DIM = 1200;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        // Try progressively lower quality until under maxSizeBytes
+        let quality = 0.85;
+        const tryCompress = () => {
+          canvas.toBlob((blob) => {
+            if (blob.size <= maxSizeBytes || quality <= 0.3) {
+              resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+            } else {
+              quality -= 0.1;
+              tryCompress();
+            }
+          }, 'image/jpeg', quality);
+        };
+        tryCompress();
+      };
+      img.src = url;
+    });
+  };
+
+  const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
     setError('');
+    // Compress before storing — keeps upload under Vercel's 4.5MB limit
+    const compressed = await compressImage(file);
+    setPhotoFile(compressed);
+    setPhotoPreview(URL.createObjectURL(compressed));
   };
 
   const handleStep2 = async () => {
@@ -710,7 +748,7 @@ export default function CreatorOnboarding() {
                 </AvatarCircle>
                 <AvatarHint>
                   <strong>{photoPreview ? 'Photo selected ✓' : 'Upload a photo'}</strong>
-                  JPG, PNG or WebP · max 5 MB
+                  JPG, PNG or WebP · auto-compressed
                 </AvatarHint>
               </AvatarUpload>
               <input
