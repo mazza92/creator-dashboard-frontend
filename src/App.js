@@ -42,6 +42,7 @@ import BlogPost from './cra-pages/BlogPost';
 import ContactPage from './cra-pages/ContactPage';
 import PrivacyPolicy from './cra-pages/PrivacyPolicy';
 import TermsOfService from './cra-pages/TermsOfService';
+import Unsubscribed from './cra-pages/Unsubscribed';
 import BrandPRPackagesPage from './cra-pages/BrandPRPackagesPage';
 // eslint-disable-next-line no-unused-vars
 import LandingPageLayout from './Layouts/LandingPageLayout';
@@ -367,6 +368,7 @@ function AppContent() {
             <Route path='/contact' element={<ContactPage />} />
             <Route path='/privacy-policy' element={<PrivacyPolicy />} />
             <Route path='/terms-of-service' element={<TermsOfService />} />
+            <Route path='/unsubscribed' element={<Unsubscribed />} />
             {/* Blog routes - Next.js has /app/blog, but keep CRA routes for dev/fallback */}
             <Route path='/blog' element={<BlogPage />} />
             <Route path='/blog/:slug' element={<BlogPost />} />
