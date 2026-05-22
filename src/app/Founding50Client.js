@@ -1626,9 +1626,9 @@ const Founding50 = () => {
           <HeroSection>
             <HeroTwoColumn>
               <HeroLeft>
-                <HeroHeadline>Get PR packages & paid partnerships from brands</HeroHeadline>
+                <HeroHeadline>Land brand deals.<br />On repeat.<br /><em style={{ color: '#E11D48', fontStyle: 'italic' }}>No guessing.</em></HeroHeadline>
                 <HeroSub>
-                  Join 10,000+ creators receiving free PR packages and paid brand sponsorships. Get your free link in bio, connect with 1,000+ brands, and start monetizing your content today.
+                  500+ brands with open PR forms. AI pitch emails. Auto media kit. Deal tracking. All in one place.
                 </HeroSub>
                 <HeroVideoMobile>
                   <ModernPhoneMockup>
@@ -1734,7 +1734,7 @@ const Founding50 = () => {
           </HeroSection>
 
                      {/* INSTRUCTIONS SECTION */}
-           <Section>
+           <Section id="how-it-works">
              <SectionHeadline style={{ textAlign: 'center', marginBottom: '1rem' }}>
                Get PR packages & paid partnerships in 3 steps
              </SectionHeadline>
@@ -2273,7 +2273,7 @@ const Founding50 = () => {
             </BlogSection>
 
             {/* DATA & STATISTICS SECTION */}
-            <Section>
+            <Section id="features">
               <SectionHeadline>Platform Performance Metrics</SectionHeadline>
               <BodyCopy style={{ textAlign: 'center', marginBottom: '3rem' }}>
                 Real results from creators using Newcollab
@@ -2556,7 +2556,7 @@ const Founding50 = () => {
           </Section>
 
           {/* TESTIMONIALS SECTION */}
-          <Section>
+          <Section id="brands">
             <SectionHeadline>Creator Success Stories</SectionHeadline>
             <BodyCopy style={{ textAlign: 'center', marginBottom: '3rem' }}>
               Real creators sharing their Newcollab success
@@ -2947,7 +2947,7 @@ const Founding50 = () => {
           </Section>
 
           {/* SOURCES & CITATIONS SECTION */}
-          <Section>
+          <Section id="pricing">
             <SectionHeadline>Why Creators Choose Newcollab</SectionHeadline>
             <BodyCopy style={{ textAlign: 'center', marginBottom: '3rem' }}>
               The platform advantages that set us apart

@@ -3,14 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from 'antd';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { MenuOutlined, CloseOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import styled, { createGlobalStyle } from 'styled-components';
 import { FaLinkedin, FaTwitter, FaInstagram } from 'react-icons/fa';
 import { FaTiktok } from 'react-icons/fa6';
 import CookieSettings from '../../components/CookieSettings';
 
-const logoPath = '/NEWCOLLAB-BRAND.png';
+const logoPath = '/newcollab-logo-dark.png';
+
+// Primary rose color to match CRA layout
+const primaryRose = '#E11D48';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -251,6 +254,40 @@ const NavLinkA = styled.a`
 
     &::after {
       width: 80%;
+    }
+  }
+`;
+
+const HashNavLink = styled.a`
+  color: ${props => props.$isSignupPage ? '#ffffff' : darkCharcoal};
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: transparent;
+  position: relative;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: ${primaryRose};
+    transition: all 0.2s ease;
+    transform: translateX(-50%);
+    border-radius: 1px;
+  }
+
+  &:hover {
+    color: ${props => props.$isSignupPage ? '#ffffff' : primaryRose};
+
+    &::after {
+      width: 60%;
     }
   }
 `;
@@ -598,6 +635,22 @@ const MobileNavLinkA = styled.a`
   }
 `;
 
+const MobileHashNavLink = styled.a`
+  color: ${darkCharcoal};
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.1);
+  background: transparent;
+  cursor: pointer;
+  display: block;
+
+  &:hover {
+    color: ${primaryRose};
+  }
+`;
+
 const MobileAuthButtons = styled.div`
   display: flex;
   flex-direction: column;
@@ -765,6 +818,19 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
   const [isMobile, setIsMobile] = useState(false);
   const [showCookieSettings, setShowCookieSettings] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Hash navigation for landing page sections
+  const handleNavClick = (hash) => {
+    if (pathname !== '/') {
+      router.push('/');
+      setTimeout(() => {
+        window.location.hash = hash;
+      }, 100);
+    } else {
+      window.location.hash = hash;
+    }
+  };
 
   const isSignupPage = pathname === '/register';
   const isLoginPage = pathname === '/login';
@@ -868,15 +934,11 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
             <Logo src={logoPath} alt="NewCollab" />
           </Link>
           <NavLinks>
-            <NavLinkA href="/marketplace" $isSignupPage={isTransparentHeader}>Marketplace</NavLinkA>
-            {isNextRoute('/directory') ? (
-              <NavLink href="/directory" prefetch={false} $isSignupPage={isTransparentHeader}>Directory</NavLink>
-            ) : (
-              <NavLinkA href="/directory" $isSignupPage={isTransparentHeader}>Directory</NavLinkA>
-            )}
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('brands')}>Brands</HashNavLink>
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
             <NavLinkA href="/about" $isSignupPage={isTransparentHeader}>About</NavLinkA>
-            <NavLink href="/blog" prefetch={false} $isSignupPage={isTransparentHeader}>Blog</NavLink>
-            <NavLinkA href="/contact" $isSignupPage={isTransparentHeader}>Contact</NavLinkA>
           </NavLinks>
           <AuthButtons>
             <LoginButtonA href="/login" $isSignupPage={isTransparentHeader}>Log in</LoginButtonA>
@@ -918,10 +980,19 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
         </MobileMenuHeader>
         <div>
           <MobileNavLinks>
-            <MobileNavLinkA href="/marketplace" onClick={closeMobileMenu}>Marketplace</MobileNavLinkA>
-            <MobileNavLink href="/directory" prefetch={false} onClick={closeMobileMenu}>Directory</MobileNavLink>
+            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
+              Features
+            </MobileHashNavLink>
+            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('brands'); }}>
+              Brands
+            </MobileHashNavLink>
+            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('how-it-works'); }}>
+              How It Works
+            </MobileHashNavLink>
+            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('pricing'); }}>
+              Pricing
+            </MobileHashNavLink>
             <MobileNavLinkA href="/about" onClick={closeMobileMenu}>About</MobileNavLinkA>
-            <MobileNavLink href="/blog" prefetch={false} onClick={closeMobileMenu}>Blog</MobileNavLink>
             <MobileNavLinkA href="/contact" onClick={closeMobileMenu}>Contact</MobileNavLinkA>
           </MobileNavLinks>
           <MobileAuthButtons>
