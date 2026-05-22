@@ -1,3126 +1,2726 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Button, Row, Col, Typography, Card, Avatar, Tag, Carousel } from 'antd';
-import { DollarCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import styled from 'styled-components';
-import { MdOutlineLiveTv, MdOutlineAudiotrack } from 'react-icons/md';
-import { FiImage, FiVideo, FiFilm } from 'react-icons/fi';
+import styled, { keyframes } from 'styled-components';
 import { Helmet } from 'react-helmet-async';
-import { useScroll } from 'framer-motion';
-import moment from 'moment';
 import {
-  FaInstagram,
-  FaYoutube,
-  FaTwitter,
-  FaFacebook,
-  FaTiktok,
-  FaSnapchat,
-  FaLinkedin,
-  FaPinterest,
-  FaTwitch,
-  FaCamera,
-  FaVideo,
-  FaNewspaper
-} from 'react-icons/fa';
+  FiSearch,
+  FiFileText,
+  FiEdit3,
+  FiBarChart2,
+  FiGift
+} from 'react-icons/fi';
+import { FaLinkedin, FaInstagram } from 'react-icons/fa';
+import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 
-const { Title, Paragraph } = Typography;
+// ═══════════════════════════════════════════════════════════════════
+// DESIGN TOKENS
+// ═══════════════════════════════════════════════════════════════════
+const colors = {
+  rose: '#E11D48',
+  roseLight: '#FFF1F3',
+  roseMid: '#FDA4AF',
+  violet: '#7C3AED',
+  green: '#059669',
+  greenLight: '#ECFDF5',
+  greenMid: '#6EE7B7',
+  amber: '#D97706',
+  black: '#0F0F0F',
+  bg: '#FAFAF9',
+  white: '#FFFFFF',
+  border: '#EBEBEB',
+  text: '#0F0F0F',
+  text2: '#4A4A4A',
+  text3: '#8A8A8A',
+};
 
-// Palette from Founding50.js
-const primaryBlue = '#3B82F6';
-const brightMagenta = '#EC4899';
-const warmOrange = '#F59E0B';
-const offWhite = '#F9FAFB';
-const darkCharcoal = '#1F2937';
-const white = '#FFFFFF';
-const lightGray = '#E5E7EB';
-const midGray = '#6B7280';
+const shadows = {
+  sm: '0 1px 4px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.06)',
+  lg: '0 8px 40px rgba(0,0,0,.10)',
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// ANIMATIONS
+// ═══════════════════════════════════════════════════════════════════
+const float = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+`;
+
+const ticker = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+`;
+
+const slideIn = keyframes`
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// BASE COMPONENTS
+// ═══════════════════════════════════════════════════════════════════
+const PageContainer = styled.div`
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: ${colors.bg};
+  color: ${colors.text};
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+`;
 
 const Container = styled.div`
-  min-height: 100vh;
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
-  background-color: ${offWhite};
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  scroll-behavior: smooth;
-  position: relative;
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
-    z-index: -1;
-    opacity: 0.2;
-  }
-  &::before {
-    width: 600px;
-    height: 600px;
-    background: ${primaryBlue};
-    top: 5%;
-    left: -300px;
-  }
-  &::after {
-    width: 500px;
-    height: 500px;
-    background: ${brightMagenta};
-    bottom: 15%;
-    right: -250px;
-  }
-`;
-
-const HeroSection = styled.section`
-  background: transparent;
-  min-height: 600px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: ${darkCharcoal};
-  position: relative;
-  overflow: hidden;
-  padding: 180px 0 120px;
-  width: 100%;
-  margin: 0;
-  font-family: 'Inter', Arial, sans-serif;
-  contain: layout style paint;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 800px;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-
-  @media (max-width: 768px) {
-    padding: 140px 0 100px;
-    min-height: calc(100vh - 80px);
-    contain-intrinsic-size: 0 600px;
-  }
-`;
-
-const HeroContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  position: relative;
-  z-index: 1;
   padding: 0 24px;
-  width: 100%;
-  contain: layout style paint;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 400px;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  transform-style: preserve-3d;
 
   @media (max-width: 768px) {
     padding: 0 16px;
-    contain-intrinsic-size: 0 300px;
   }
 `;
 
-const HeroTitle = styled(Title)`
-  font-size: 64px;
-  font-weight: 800;
-  margin-bottom: 24px;
-  color: ${darkCharcoal};
-  line-height: 1.2;
-  font-display: swap;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  contain: content;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 80px;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-
-  @media (max-width: 768px) {
-    font-size: 36px;
-    margin-bottom: 16px;
-    contain-intrinsic-size: 0 50px;
-  }
-`;
-
-const HeroSubtitle = styled(Paragraph)`
-  font-size: 24px;
-  opacity: 0.95;
-  margin-bottom: 40px;
-  color: ${darkCharcoal};
-  line-height: 1.6;
-  font-display: swap;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  contain: content;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 60px;
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-    margin-bottom: 32px;
-    contain-intrinsic-size: 0 40px;
-  }
-`;
-
-const StyledButton = styled(Button)`
-  height: 56px;
-  padding: 0 40px;
-  font-size: 18px;
-  font-weight: 600;
-  border-radius: 28px;
-  margin: 0 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    height: 48px;
-    padding: 0 24px;
-    font-size: 16px;
-    margin: 8px;
-    width: calc(100% - 16px);
-    max-width: 280px;
-  }
-
-  &.primary {
-    background: linear-gradient(135deg, ${primaryBlue}, ${brightMagenta});
-    color: ${white};
-    border: none;
-    box-shadow: 0 4px 15px rgba(38, 166, 154, 0.3);
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, ${brightMagenta}, ${primaryBlue});
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    &:hover {
-      background: linear-gradient(135deg, ${primaryBlue}, ${brightMagenta});
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(38, 166, 154, 0.4);
-
-      &::before {
-        opacity: 1;
-      }
-    }
-
-    &:active {
-      transform: translateY(1px);
-      box-shadow: 0 2px 10px rgba(38, 166, 154, 0.3);
-    }
-  }
-
-  &.secondary {
-    background: transparent;
-    color: ${darkCharcoal};
-    border: 2px solid ${darkCharcoal};
-    box-shadow: 0 4px 15px rgba(30, 41, 59, 0.1);
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(30, 41, 59, 0.05);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    &:hover {
-      background: transparent;
-      transform: translateY(-2px);
-      border-color: ${primaryBlue};
-      color: ${primaryBlue};
-      box-shadow: 0 8px 25px rgba(38, 166, 154, 0.15);
-
-      &::before {
-        opacity: 1;
-      }
-    }
-
-    &:active {
-      transform: translateY(1px);
-      box-shadow: 0 2px 10px rgba(38, 166, 154, 0.1);
-    }
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
-  }
-`;
-
-const PlatformSection = styled.section`
-  padding: 80px 0;
-  background: transparent;
-  text-align: center;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    padding: 60px 0;
-  }
-`;
-
-const PlatformTitle = styled(Title)`
-  font-size: 36px;
-  font-weight: 700;
-  color: ${darkCharcoal};
-  margin-bottom: 48px;
-  text-align: center;
-  width: 100%;
-
-  @media (max-width: 768px) {
-    font-size: 28px;
-    margin-bottom: 32px;
-  }
-`;
-
-const PlatformGrid = styled(Row)`
-  max-width: 800px;
+const ContainerSm = styled.div`
+  max-width: 680px;
   margin: 0 auto;
   padding: 0 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 24px;
-  width: 100%;
 
   @media (max-width: 768px) {
     padding: 0 16px;
-    gap: 16px;
   }
 `;
 
-const PlatformCard = styled(Col)`
-  padding: 0;
+const SectionCenter = styled.div`
   text-align: center;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 48px;
+`;
+
+const Eyebrow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: ${colors.text3};
+  margin-bottom: 16px;
+`;
+
+const EyebrowDot = styled.div`
+  width: 6px;
+  height: 6px;
+  background: ${colors.rose};
+  border-radius: 50%;
+`;
+
+const BtnBlack = styled.a`
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: auto !important;
-  flex: 0 0 auto;
-  margin: 0;
-
-  @media (max-width: 768px) {
-    padding: 0;
-  }
+  gap: 6px;
+  background: ${colors.black};
+  color: ${colors.white};
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 
   &:hover {
-    transform: translateY(-8px);
+    background: #1a1a1a;
+    transform: translateY(-1px);
   }
 `;
 
-const PlatformIcon = styled.div`
-  font-size: 32px;
-  display: flex;
+const BtnOutline = styled.a`
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: ${props => props.$bgColor};
-  color: ${props => props.$color};
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin: 0;
+  gap: 6px;
+  background: transparent;
+  color: ${colors.text};
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1.5px solid ${colors.border};
+  cursor: pointer;
+  transition: all 0.2s ease;
 
-  @media (max-width: 768px) {
-    font-size: 24px;
-    width: 48px;
-    height: 48px;
-  }
-
-  svg {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  &:hover {
+    border-color: ${colors.black};
   }
 `;
 
-const TestimonialSection = styled.section`
-  padding: 120px 0;
-  background: transparent;
-  text-align: center;
+const BtnRose = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: ${colors.rose};
+  color: ${colors.white};
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #BE123C;
+    transform: translateY(-1px);
+  }
+`;
+
+const TagPro = styled.span`
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, ${colors.rose}, ${colors.violet});
+  color: ${colors.white};
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// HERO SECTION
+// ═══════════════════════════════════════════════════════════════════
+const HeroSection = styled.section`
+  padding: 100px 0 60px;
+  background: ${colors.bg};
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(38, 166, 154, 0.2), transparent);
-  }
-
-  @media (max-width: 768px) {
-    padding: 80px 0;
+  @media (max-width: 800px) {
+    padding: 80px 0 40px;
   }
 `;
 
-const TestimonialGrid = styled(Row)`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-  position: relative;
-`;
+const HeroGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
 
-const TestimonialText = styled(Paragraph)`
-  font-size: 24px;
-  color: ${midGray};
-  font-style: italic;
-  margin-bottom: 24px;
-  line-height: 1.5;
-  position: relative;
-  padding: 0;
-  transition: all 0.3s ease;
-  font-weight: 400;
-
-  &::before {
-    content: '"';
-    position: absolute;
-    top: -20px;
-    left: -8px;
-    font-size: 60px;
-    color: ${primaryBlue};
-    opacity: 0.1;
-    font-family: serif;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 20px;
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
   }
 `;
 
-const TestimonialAuthor = styled.div`
-  font-weight: 600;
-  color: ${midGray};
-  font-size: 16px;
+const HeroText = styled.div`
+  @media (max-width: 800px) {
+    text-align: center;
+    order: 2;
+  }
+`;
+
+const HeroH1 = styled.h1`
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  color: ${colors.text};
+  margin: 0 0 24px;
+
+  em {
+    font-style: italic;
+    color: ${colors.rose};
+  }
+`;
+
+const HeroSubline = styled.p`
+  font-size: 18px;
+  color: ${colors.text2};
+  line-height: 1.6;
+  margin: 0 0 32px;
+  max-width: 480px;
+
+  @media (max-width: 800px) {
+    margin: 0 auto 32px;
+  }
+`;
+
+const HeroCTARow = styled.div`
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+
+  @media (max-width: 800px) {
+    justify-content: center;
+  }
+`;
+
+const HeroProof = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: color 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 13px;
+  color: ${colors.text3};
 
-  &::before {
-    content: '';
-    display: inline-block;
-    width: 4px;
-    height: 4px;
-    background: ${primaryBlue};
+  @media (max-width: 800px) {
+    justify-content: center;
+  }
+`;
+
+const AvatarStack = styled.div`
+  display: flex;
+
+  div {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-  }
+    border: 2px solid ${colors.white};
+    margin-left: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: ${colors.white};
 
-  @media (max-width: 768px) {
-    font-size: 14px;
-  }
-`;
-
-const TestimonialAvatar = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-    margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(38, 166, 154, 0.15);
-  transition: all 0.3s ease;
-  background: white;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
+    &:first-child {
+      margin-left: 0;
+    }
   }
 `;
 
-const TestimonialCard = styled(Col)`
-  padding: 0;
-  margin-bottom: 40px;
+const HeroVisual = styled.div`
   position: relative;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(38, 166, 154, 0.03) 0%, transparent 100%);
-    border-radius: 16px;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-
-    &::before {
-      opacity: 1;
-    }
-
-    ${TestimonialText} {
-      color: ${darkCharcoal};
-    }
-
-    ${TestimonialAuthor} {
-  color: ${primaryBlue};
-    }
-
-    ${TestimonialAvatar} {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(38, 166, 154, 0.2);
-    }
-  }
-
-  @media (max-width: 768px) {
-    margin-bottom: 32px;
+  @media (max-width: 800px) {
+    order: 1;
   }
 `;
 
-const CTASection = styled.section`
-  padding: 80px 24px;
-  background: transparent;
-  text-align: center;
-  color: ${darkCharcoal};
-
-  @media (max-width: 768px) {
-    padding: 60px 16px;
-  }
-`;
-
-const CTATitle = styled(Title)`
-  font-size: 48px;
-  font-weight: 700;
-  color: ${darkCharcoal};
-  margin-bottom: 32px;
-
-  @media (max-width: 768px) {
-    font-size: 32px;
-    margin-bottom: 24px;
-  }
-`;
-
-// eslint-disable-next-line no-unused-vars
-const _Footer = styled.footer`
-  padding: 60px 24px;
-  background: ${darkCharcoal};
-  color: ${white};
-  text-align: center;
-
-  @media (max-width: 768px) {
-    padding: 40px 16px;
-  }
-`;
-
-// eslint-disable-next-line no-unused-vars
-const _FooterLinks = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    gap: 24px;
-  }
-`;
-
-// eslint-disable-next-line no-unused-vars
-const _FooterLink = styled.a`
-  color: ${white};
-  text-decoration: none;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  opacity: 0.8;
-  cursor: pointer;
-
-  &:hover {
-    color: ${primaryBlue};
-    opacity: 1;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 14px;
-  }
-`;
-
-// eslint-disable-next-line no-unused-vars
-const _SocialIcon = styled.div`
-  font-size: 24px;
-  color: ${white};
-  margin: 0 12px;
-  cursor: pointer;
-  transition: color 0.3s ease;
-  display: inline-block;
-
-  @media (max-width: 768px) {
-    font-size: 20px;
-    margin: 0 8px;
-  }
-
-  &:hover {
-    color: ${primaryBlue};
-  }
-`;
-
-const HeroImage = styled.div`
-  margin-top: 48px;
-  width: 100%;
-  max-width: 1400px;
+const HeroGifWrap = styled.div`
   position: relative;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  margin-left: auto;
-  margin-right: auto;
-  background: ${offWhite};
-  aspect-ratio: 1400/800;
-  contain: layout size style;
+  border-radius: 16px;
+  box-shadow: ${shadows.lg};
+  background: ${colors.white};
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 100px;
-    background: linear-gradient(to bottom, transparent, rgba(252, 251, 249, 0.8));
-    pointer-events: none;
-  }
-
-  img {
+  video, img {
     width: 100%;
-    height: 100%;
+    height: auto;
     display: block;
-    border-radius: 24px;
-    object-fit: cover;
-  }
-
-  @media (max-width: 768px) {
-    margin-top: 32px;
     border-radius: 16px;
-    aspect-ratio: 16/9;
-    
-    &::after {
-      height: 60px;
-    }
-    
-    img {
-      border-radius: 16px;
-    }
   }
 `;
 
-const HowItWorksSection = styled.section`
-  padding: 100px 0;
-  background: transparent;
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-  min-height: 100vh;
+const FloatingBadge = styled.div`
+  position: absolute;
+  background: ${colors.white};
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: ${shadows.sm};
+  font-size: 12px;
+  font-weight: 600;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  scroll-behavior: smooth;
+  gap: 8px;
+  animation: ${float} 3s ease-in-out infinite;
+  z-index: 10;
 
-  @media (max-width: 768px) {
-    padding: 60px 0;
-    min-height: auto;
-    position: relative;
+  &.bottom-left {
+    bottom: 16px;
+    left: 12px;
+    animation-delay: 0s;
   }
-`;
 
-const SectionHeader = styled.div`
-  width: 100%;
-  text-align: center;
-  margin-bottom: 80px;
-  padding: 0 24px;
-  position: relative;
-  z-index: 2;
-
-  @media (max-width: 768px) {
-    margin-bottom: 40px;
-    padding: 0 16px;
+  &.top-right {
+    top: 16px;
+    right: 12px;
+    animation-delay: 1.5s;
   }
-`;
 
-const HowItWorksContainer = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 24px;
-  width: 100%;
-  position: relative;
-  height: 100vh;
-  overflow-y: auto;
-  scroll-snap-type: y proximity;
-  scroll-behavior: smooth;
-  &::-webkit-scrollbar {
+  @media (max-width: 400px) {
     display: none;
   }
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  @media (max-width: 768px) {
-    height: auto;
-    overflow-y: visible;
-    padding: 0 16px;
-  }
 `;
 
-const StepContainer = styled(motion.div)`
+// ═══════════════════════════════════════════════════════════════════
+// TICKER SECTION
+// ═══════════════════════════════════════════════════════════════════
+const TickerSection = styled.section`
+  background: ${colors.black};
+  padding: 14px 0;
+  overflow: hidden;
+`;
+
+const TickerInner = styled.div`
+  display: flex;
+  animation: ${ticker} 35s linear infinite;
+  width: max-content;
+`;
+
+const TickerItem = styled.span`
+  color: ${colors.white};
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 0 32px;
   display: flex;
   align-items: center;
-  gap: 60px;
-  margin-bottom: 80px;
-  position: relative;
-  min-height: 100vh;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
-  padding: 40px 0;
-  opacity: 0.4;
-  transition: opacity 0.5s ease;
+  gap: 8px;
 
-  &.active {
-    opacity: 1;
+  &::after {
+    content: '·';
+    margin-left: 32px;
+    color: ${colors.text3};
   }
+`;
 
-  &:last-child {
-    margin-bottom: 0;
+// ═══════════════════════════════════════════════════════════════════
+// CLARITY STRIP
+// ═══════════════════════════════════════════════════════════════════
+const ClaritySection = styled.section`
+  padding: 60px 0;
+  background: ${colors.white};
+`;
+
+const ClarityGrid = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: 580px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
+`;
 
-  @media (max-width: 1024px) {
+const ClarityItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: ${colors.bg};
+  border-radius: 12px;
+  min-width: 200px;
+
+  @media (max-width: 580px) {
+    min-width: auto;
     flex-direction: column;
-    gap: 40px;
-    margin-bottom: 60px;
-    min-height: auto;
-    padding: 20px 0;
-  }
-
-  @media (max-width: 768px) {
-    gap: 32px;
-    margin-bottom: 40px;
-    padding: 16px 0;
-  }
-`;
-
-const StepContent = styled(motion.div)`
-  flex: 1;
-  max-width: 400px;
-  position: relative;
-  z-index: 2;
-
-  @media (max-width: 1024px) {
-    max-width: 100%;
     text-align: center;
-    padding: 0 20px;
-  }
-
-  @media (max-width: 768px) {
-    padding: 0 16px;
+    padding: 20px 16px;
   }
 `;
 
-const StepNumber = styled.div`
-  font-size: 32px;
-  font-weight: 900;
-  color: ${primaryBlue};
-  margin-bottom: 24px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  line-height: 1;
-  width: 64px;
-  height: 64px;
+const ClarityIcon = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: ${colors.white};
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${white};
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(38, 166, 154, 0.15);
-  border: 2px solid ${primaryBlue};
+  font-size: 20px;
+  color: ${colors.text};
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+`;
+
+const ClarityText = styled.div`
+  .label {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${colors.text};
+    margin-bottom: 2px;
+  }
+
+  .sub {
+    font-size: 12px;
+    color: ${colors.text3};
+  }
+`;
+
+const ClarityArrow = styled.div`
+  font-size: 18px;
+  color: ${colors.border};
+
+  @media (max-width: 580px) {
+    display: none;
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// PROBLEM SECTION
+// ═══════════════════════════════════════════════════════════════════
+const ProblemSection = styled.section`
+  padding: 80px 0;
+  background: ${colors.bg};
+`;
+
+const ProblemGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 32px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ProblemCard = styled.div`
+  background: ${colors.white};
+  border: 1px solid ${colors.border};
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${shadows.sm};
+  }
+
+  .headline {
+    font-size: 17px;
+    font-weight: 700;
+    color: ${colors.text};
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .body {
+    font-size: 14px;
+    color: ${colors.text2};
+    line-height: 1.6;
+  }
+`;
+
+const ProblemCTA = styled.div`
+  background: ${colors.black};
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+
+  .text {
+    font-size: 17px;
+    font-weight: 700;
+    color: ${colors.white};
+  }
+
+  @media (max-width: 560px) {
+    flex-direction: column;
+    text-align: center;
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// SOLUTION FLOW (DARK SECTION)
+// ═══════════════════════════════════════════════════════════════════
+const SolutionSection = styled.section`
+  padding: 80px 0;
+  background: ${colors.black};
+`;
+
+const SolutionGrid = styled.div`
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scroll-snap-type: x mandatory;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+  }
+`;
+
+const SolutionStep = styled.div`
+  flex: 0 0 200px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 24px;
+  scroll-snap-align: start;
   position: relative;
 
-  &::after {
-    content: '';
+  .step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: ${props => props.$iconBg || 'rgba(255,255,255,0.1)'};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    position: relative;
+
+    svg {
+      font-size: 22px;
+      color: ${colors.white};
+    }
+  }
+
+  .step-num {
     position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
+    top: -6px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    background: ${colors.rose};
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(38, 166, 154, 0.1), rgba(43, 187, 173, 0.1));
-    z-index: -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: ${colors.white};
   }
 
-  @media (max-width: 768px) {
-    font-size: 28px;
-    width: 56px;
-    height: 56px;
-    margin-bottom: 20px;
+  .step-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: ${colors.white};
+    margin-bottom: 8px;
   }
-`;
 
-const StepTitle = styled(Title)`
-  font-size: 36px;
-  font-weight: 700;
-  color: ${darkCharcoal};
-  margin-bottom: 16px;
-  line-height: 1.2;
-
-  @media (max-width: 768px) {
-    font-size: 28px;
-    margin-bottom: 12px;
-  }
-`;
-
-const StepDescription = styled(Paragraph)`
-  font-size: 20px;
-  color: ${midGray};
-  line-height: 1.6;
-  margin: 0;
-
-  @media (max-width: 768px) {
-    font-size: 16px;
+  .step-body {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
     line-height: 1.5;
   }
 `;
 
-const StepVisual = styled(motion.div)`
-  flex: 1;
-  position: relative;
+// ═══════════════════════════════════════════════════════════════════
+// BRAND DIRECTORY
+// ═══════════════════════════════════════════════════════════════════
+const DirectorySection = styled.section`
+  padding: 80px 0;
+  background: ${colors.bg};
+`;
+
+const DirectoryBox = styled.div`
+  background: ${colors.white};
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: ${shadows.sm};
+`;
+
+const FilterTabs = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  max-width: 900px;
-  padding-right: 200px;
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  will-change: transform;
-
-  img {
-    width: 100%;
-    max-width: 800px;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
-    transform: translateZ(0);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-    backface-visibility: hidden;
-  }
-
-  &.step-1 img {
-    max-width: 400px;
-  }
-
-  .notification {
-    position: absolute;
-    top: 20%;
-    right: 0;
-    max-width: 500px;
-    width: 100%;
-    transform-origin: top right;
-    animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    opacity: 0;
-    transform: translateZ(20px);
-    will-change: transform, opacity;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-    backface-visibility: hidden;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-    object-fit: contain;
-    transform: scale(0.8);
-    transform-origin: top right;
-  }
-
-  @keyframes slideIn {
-    0% {
-      transform: translateX(50px) scale(0.7) translateZ(20px);
-      opacity: 0;
-    }
-    100% {
-      transform: translateX(0) scale(0.8) translateZ(20px);
-      opacity: 1;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    max-width: 100%;
-    padding-right: 160px;
-    
-    img {
-      max-width: 700px;
-    }
-
-    &.step-1 img {
-      max-width: 360px;
-    }
-
-    .notification {
-      right: 0;
-      max-width: 440px;
-      transform: scale(0.7);
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding-right: 0;
-    width: 100%;
-    
-    img {
-      max-width: 100%;
-      border-radius: 12px;
-    }
-
-    &.step-1 img {
-      max-width: 100%;
-    }
-
-    .notification {
-      position: absolute;
-      top: 40%;
-      right: -5%;
-      max-width: 95%;
-      transform-origin: top right;
-      transform: scale(1);
-    }
-  }
-
-  @media (max-width: 480px) {
-    .notification {
-      position: absolute;
-      top: 45%;
-      right: 0;
-      max-width: 100%;
-      transform: scale(1);
-    }
-  }
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 `;
 
-const SectionTitle = styled(Title)`
-  font-size: 36px;
-  font-weight: 700;
-  color: ${darkCharcoal};
-  text-align: center;
-  margin-bottom: 16px;
-
-  @media (max-width: 768px) {
-    font-size: 28px;
-  }
-`;
-
-const SectionSubtitle = styled(Paragraph)`
-  font-size: 18px;
-  color: ${midGray};
-  text-align: center;
-  max-width: 600px;
-  margin: 0 auto 64px;
-  line-height: 1.6;
-
-  @media (max-width: 768px) {
-    font-size: 16px;
-    margin-bottom: 48px;
-  }
-`;
-
-const FeaturesSection = styled.section`
-  padding: 120px 0;
-  background: transparent;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(38, 166, 154, 0.2), transparent);
-  }
-
-  @media (max-width: 768px) {
-    padding: 80px 0;
-  }
-`;
-
-const FeaturesContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-`;
-
-const FeaturesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 24px;
-  margin-top: 80px;
-  position: relative;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(8, 1fr);
-    gap: 20px;
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-top: 48px;
-  }
-`;
-
-const BrandsSection = styled.section`
-  padding: 120px 0;
-  background: transparent;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(38, 166, 154, 0.2), transparent);
-  }
-
-  @media (max-width: 768px) {
-    padding: 80px 0;
-  }
-`;
-
-const BrandsContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-`;
-
-const BrandsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 24px;
-  margin-top: 60px;
-  justify-items: center;
-  align-items: center;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-
-  @media (max-width: 1200px) {
-    gap: 20px;
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-top: 40px;
-    padding: 0 16px;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    padding: 0 12px;
-  }
-`;
-
-const BrandLogo = styled(motion.div)`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: ${white};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 6px 16px rgba(0, 0, 0, 0.06),
-    0 2px 6px rgba(38, 166, 154, 0.08);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+const FilterTab = styled.button`
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid ${colors.border};
+  background: ${props => props.$active ? colors.black : colors.white};
+  color: ${props => props.$active ? colors.white : colors.text2};
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transform-style: preserve-3d;
-  perspective: 2000px;
-  will-change: transform;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(38, 166, 154, 0.08) 0%, transparent 100%);
-    opacity: 0;
-    transition: all 0.5s ease;
-    transform: translateZ(40px);
-    border-radius: 50%;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
-    opacity: 0;
-    transition: all 0.5s ease;
-    transform: translateZ(20px);
-    border-radius: 50%;
-  }
-
-  img {
-    width: 65%;
-    height: 65%;
-    object-fit: contain;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateZ(50px);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
-    opacity: 0.85;
-    mix-blend-mode: multiply;
-  }
+  transition: all 0.2s ease;
 
   &:hover {
-    transform: 
-      translateY(-12px) 
-      rotateX(15deg) 
-      rotateY(15deg) 
-      scale(1.05);
-    box-shadow: 
-      0 12px 24px rgba(0, 0, 0, 0.08),
-      0 6px 12px rgba(38, 166, 154, 0.1),
-      0 0 0 1px rgba(38, 166, 154, 0.06);
-
-    &::before {
-      opacity: 1;
-      transform: translateZ(60px);
-      background: linear-gradient(135deg, rgba(38, 166, 154, 0.12) 0%, transparent 100%);
-    }
-
-    &::after {
-      opacity: 1;
-      transform: translateZ(40px);
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
-    }
-
-    img {
-      transform: translateZ(80px) scale(1.15);
-      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.1));
-      opacity: 1;
-    }
-  }
-
-  @media (max-width: 768px) {
-    width: 80px;
-    height: 80px;
-    
-    &:hover {
-      transform: 
-        translateY(-8px) 
-        rotateX(10deg) 
-        rotateY(10deg) 
-        scale(1.03);
-    }
-  }
-
-  @media (max-width: 480px) {
-    width: 70px;
-    height: 70px;
+    border-color: ${colors.black};
   }
 `;
 
-const FeatureIcon = styled.div`
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: ${props => props.$bgColor || primaryBlue};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 32px;
-  color: ${white};
-  font-size: 32px;
-  transition: all 0.4s ease;
-  box-shadow: 0 8px 24px ${props => `${props.$bgColor || primaryBlue}40`};
-`;
-
-const FeatureCard = styled(motion.div)`
-  background: ${white};
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(38, 166, 154, 0.1);
-  grid-column: ${props => props.span || 'span 4'};
-  grid-row: ${props => props.height || 'span 1'};
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 6px;
-    height: 100%;
-    background: ${props => props.$bgColor || primaryBlue};
-    opacity: 0;
-    transition: all 0.4s ease;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, ${props => props.bgColor || primaryBlue}10 0%, transparent 100%);
-    opacity: 0;
-    transition: all 0.4s ease;
-  }
-
-  &:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
-
-    &::before {
-      opacity: 1;
-    }
-
-    &::after {
-      opacity: 1;
-    }
-
-    ${FeatureIcon} {
-      transform: scale(1.1);
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 32px;
-    grid-column: span 4;
-  }
-`;
-
-const FeatureTitle = styled.h3`
-  font-size: 24px;
-  font-weight: 700;
-  color: ${darkCharcoal};
-  margin-bottom: 16px;
-  letter-spacing: -0.5px;
-`;
-
-const FeatureDescription = styled.p`
-  font-size: 16px;
-  color: ${midGray};
-  line-height: 1.7;
-  margin: 0;
-  font-weight: 400;
-`;
-
-const StepsCTA = styled.div`
-  text-align: center;
-  margin-top: 60px;
-  margin-bottom: 40px;
-
-  @media (max-width: 768px) {
-    margin-top: 40px;
-    margin-bottom: 20px;
-  }
-`;
-
-const StepsCTAText = styled.p`
-  font-style: italic;
-  color: ${midGray};
-  margin-top: 16px;
-  font-size: 18px;
-
-  @media (max-width: 768px) {
-    font-size: 16px;
-    margin-top: 12px;
-  }
-`;
-
-const TrustSignalsSection = styled.section`
-  padding: 100px 0;
-  background: transparent;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(38, 166, 154, 0.2), transparent);
-  }
-
-  @media (max-width: 768px) {
-    padding: 80px 0;
-  }
-`;
-
-const StatsContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+const BrandGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-bottom: 60px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 680px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 420px) {
     grid-template-columns: 1fr;
-    gap: 20px;
-    margin-bottom: 40px;
   }
 `;
 
-const StatCard = styled(motion.div)`
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  padding: 32px 24px;
-  border-radius: 24px;
-  box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.05),
-    0 0 0 1px rgba(38, 166, 154, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, ${primaryBlue}, ${brightMagenta});
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
+const BrandCard = styled.div`
+  background: ${colors.bg};
+  border: 1px solid ${colors.border};
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  display: ${props => props.$hidden ? 'none' : 'block'};
 
   &:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 
-      0 12px 30px rgba(38, 166, 154, 0.15),
-      0 0 0 1px rgba(38, 166, 154, 0.2);
+    transform: translateY(-2px);
+    box-shadow: ${shadows.sm};
+  }
+`;
 
-    &::before {
-      opacity: 1;
+const BrandLogoBlock = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: ${props => (props.$isImage ? colors.white : (props.$bg || colors.rose))};
+  border: ${props => (props.$isImage ? `1px solid ${colors.border}` : 'none')};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: ${colors.white};
+  margin-bottom: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 5px;
+  }
+`;
+
+const BrandName = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  color: ${colors.text};
+  margin-bottom: 4px;
+`;
+
+const BrandCat = styled.div`
+  font-size: 12px;
+  color: ${colors.text3};
+  margin-bottom: 12px;
+`;
+
+const BrandMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+`;
+
+const ReplyRate = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: ${props => props.$hi ? colors.green : colors.amber};
+`;
+
+const LockBtn = styled.button`
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: ${colors.bg};
+  color: ${colors.text2};
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${colors.roseLight};
+    color: ${colors.rose};
+  }
+`;
+
+const LockedCard = styled.div`
+  background: linear-gradient(135deg, ${colors.roseLight}, #F5F3FF);
+  border: 1px dashed ${colors.border};
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+
+  .lock-icon {
+    font-size: 26px;
+    margin-bottom: 8px;
+  }
+
+  .lock-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: ${colors.text};
+    margin-bottom: 4px;
+  }
+
+  .lock-sub {
+    font-size: 11.5px;
+    color: ${colors.text3};
+    margin-bottom: 12px;
+  }
+`;
+
+const DirectoryFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid ${colors.border};
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .count {
+    font-size: 13px;
+    color: ${colors.text3};
+
+    strong {
+      color: ${colors.text};
     }
   }
 `;
 
-const StatNumber = styled.div`
-  font-size: 42px;
-  font-weight: 800;
-  background: linear-gradient(135deg, ${primaryBlue}, ${brightMagenta});
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 12px;
-  line-height: 1.2;
-  letter-spacing: -1px;
+// ═══════════════════════════════════════════════════════════════════
+// FEATURE SECTIONS
+// ═══════════════════════════════════════════════════════════════════
+const FeatureSection = styled.section`
+  padding: 80px 0;
+  background: ${props => props.$bg || colors.bg};
+`;
 
-  @media (max-width: 768px) {
-    font-size: 36px;
+const FeatureRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+
+  &.reverse {
+    direction: rtl;
+
+    > * {
+      direction: ltr;
+    }
+  }
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+
+    &.reverse {
+      direction: ltr;
+    }
   }
 `;
 
-const StatLabel = styled.div`
-  font-size: 16px;
-  color: ${darkCharcoal};
+const FeatureText = styled.div``;
+
+const FeatureTag = styled.div`
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${colors.rose};
+  background: ${colors.roseLight};
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+`;
+
+const FeatureH3 = styled.h3`
+  font-size: 28px;
+  font-weight: 700;
+  color: ${colors.text};
+  line-height: 1.3;
+  margin: 0 0 16px;
+`;
+
+const FeatureP = styled.p`
+  font-size: 15px;
+  color: ${colors.text2};
+  line-height: 1.7;
+  margin: 0 0 24px;
+`;
+
+const FeatureBullet = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const FeatureBulletItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: ${colors.text2};
+
+  &::before {
+    content: '✓';
+    width: 20px;
+    height: 20px;
+    background: ${colors.greenLight};
+    color: ${colors.green};
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+`;
+
+const FeatureCallout = styled.div`
+  background: ${colors.bg};
+  border-left: 3px solid ${colors.rose};
+  padding: 14px 18px;
+  border-radius: 0 10px 10px 0;
+  font-size: 14px;
+  color: ${colors.text2};
+  font-style: italic;
+  margin-bottom: 24px;
+`;
+
+const FeatureVisual = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
+const MockupCard = styled.div`
+  background: ${colors.white};
+  border-radius: 16px;
+  box-shadow: ${shadows.lg};
+  overflow: hidden;
+  max-width: 400px;
+  width: 100%;
+`;
+
+const MockupHeader = styled.div`
+  background: ${colors.bg};
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid ${colors.border};
+`;
+
+const MockupDots = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const MockupDot = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${props => props.$color};
+`;
+
+const MockupTitle = styled.div`
+  font-size: 12px;
   font-weight: 600;
+  color: ${colors.text3};
+`;
+
+const MockupBody = styled.div`
+  padding: 20px;
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// SOCIAL PROOF
+// ═══════════════════════════════════════════════════════════════════
+const ProofSection = styled.section`
+  padding: 80px 0;
+  background: ${colors.white};
+`;
+
+const NotifWall = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+`;
+
+const NotifPill = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: ${colors.bg};
+  border: 1px solid ${colors.border};
+  border-radius: 100px;
+  padding: 10px 18px;
+  font-size: 13px;
+  animation: ${slideIn} 0.5s ease forwards;
+  animation-delay: ${props => props.$delay || '0s'};
+  opacity: 0;
+
+  .notif-icon {
+    font-size: 16px;
+  }
+
+  strong {
+    font-weight: 700;
+    color: ${colors.text};
+  }
+
+  span {
+    color: ${colors.text3};
+    font-size: 11px;
+  }
+`;
+
+const StatsRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 48px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+`;
+
+const StatCard = styled.div`
+  background: ${colors.bg};
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+
+  .stat-num {
+    font-size: 32px;
+    font-weight: 800;
+    color: ${props => props.$color || colors.text};
+    margin-bottom: 6px;
+  }
+
+  .stat-lbl {
+    font-size: 13px;
+    color: ${colors.text3};
+  }
+`;
+
+const TestimonialGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TestimonialCard = styled.div`
+  background: ${colors.bg};
+  border-radius: 16px;
+  padding: 24px;
+`;
+
+const TestimonialCreator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+`;
+
+const TestimonialAvatar = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: ${props => props.$bg};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: ${colors.white};
+`;
+
+const TestimonialInfo = styled.div`
+  .name {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${colors.text};
+  }
+
+  .meta {
+    font-size: 12px;
+    color: ${colors.text3};
+  }
+`;
+
+const TestimonialStars = styled.div`
+  color: #FBBF24;
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+`;
+
+const TestimonialResult = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: ${colors.greenLight};
+  color: ${colors.green};
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+`;
+
+const TestimonialQuote = styled.div`
+  font-size: 14px;
+  color: ${colors.text2};
+  font-style: italic;
+  line-height: 1.6;
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// HOW IT WORKS
+// ═══════════════════════════════════════════════════════════════════
+const HowSection = styled.section`
+  padding: 80px 0;
+  background: ${colors.bg};
+`;
+
+const HowSteps = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-bottom: 48px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const HowStep = styled.div`
+  text-align: center;
+
+  .how-num {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: ${colors.black};
+    color: ${colors.white};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 auto 20px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: ${colors.text};
+    margin: 0 0 12px;
+  }
+
+  p {
+    font-size: 14px;
+    color: ${colors.text2};
+    line-height: 1.6;
+    margin: 0;
+  }
+`;
+
+const HowCTA = styled.div`
+  text-align: center;
+
+  .sub {
+    margin-top: 12px;
+    font-size: 13px;
+    color: ${colors.text3};
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// PRICING
+// ═══════════════════════════════════════════════════════════════════
+const PricingSection = styled.section`
+  padding: 80px 0;
+  background: ${colors.white};
+`;
+
+const PricingGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PricingCard = styled.div`
+  background: ${colors.bg};
+  border: ${props => props.$featured ? `2px solid ${colors.black}` : `1px solid ${colors.border}`};
+  border-radius: 20px;
+  padding: 32px;
+  position: relative;
+
+  &.featured {
+    background: ${colors.white};
+    box-shadow: ${shadows.lg};
+  }
+`;
+
+const PricingBadge = styled.div`
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: ${colors.black};
+  color: ${colors.white};
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
 
-const PaymentBadgesContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 32px;
-  margin-top: 40px;
-  flex-wrap: wrap;
+const PricingTier = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${props => props.$rose ? colors.rose : colors.text3};
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+`;
 
-  @media (max-width: 768px) {
-    gap: 20px;
+const PricingPrice = styled.div`
+  font-size: 48px;
+  font-weight: 800;
+  color: ${colors.text};
+  margin-bottom: 4px;
+
+  sup {
+    font-size: 24px;
+    font-weight: 700;
+    vertical-align: super;
+  }
+
+  &.gradient {
+    background: linear-gradient(135deg, ${colors.rose}, ${colors.violet});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 `;
 
-const PaymentBadge = styled.div`
+const PricingPriceSub = styled.div`
+  font-size: 13px;
+  color: ${colors.text3};
+  margin-bottom: 24px;
+`;
+
+const PricingFeatures = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+`;
+
+const PricingFeatureItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 28px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.05),
-    0 0 0 1px rgba(38, 166, 154, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 10px;
+  font-size: 14px;
+  color: ${colors.text2};
 
-  &:hover {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 
-      0 8px 30px rgba(38, 166, 154, 0.15),
-      0 0 0 1px rgba(38, 166, 154, 0.2);
+  .pf-check {
+    color: ${colors.green};
+    font-weight: 700;
   }
+
+  .pf-cross {
+    color: ${colors.text3};
+  }
+
+  .pf-lock {
+    color: ${colors.text3};
+  }
+
+  strong {
+    font-weight: 700;
+    color: ${colors.text};
+  }
+`;
+
+const PricingBtn = styled.a`
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.outline {
+    background: transparent;
+    border: 1.5px solid ${colors.border};
+    color: ${colors.text};
+
+    &:hover {
+      border-color: ${colors.black};
+    }
+  }
+
+  &.black {
+    background: ${colors.black};
+    border: none;
+    color: ${colors.white};
+
+    &:hover {
+      background: #1a1a1a;
+    }
+  }
+`;
+
+const PricingNote = styled.div`
+  text-align: center;
+  font-size: 12px;
+  color: ${colors.text3};
+  margin-top: 12px;
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// FAQ
+// ═══════════════════════════════════════════════════════════════════
+const FAQSection = styled.section`
+  padding: 80px 0;
+  background: ${colors.bg};
+`;
+
+const FAQList = styled.div`
+  max-width: 700px;
+  margin: 0 auto;
+`;
+
+const FAQItem = styled.details`
+  background: ${colors.white};
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+
+  &[open] {
+    .faq-icon {
+      transform: rotate(45deg);
+    }
+  }
+`;
+
+const FAQSummary = styled.summary`
+  padding: 20px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  color: ${colors.text};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-icon {
+    font-size: 18px;
+    color: ${colors.text3};
+    transition: transform 0.2s ease;
+  }
+`;
+
+const FAQAnswer = styled.div`
+  padding: 0 24px 20px;
+  font-size: 14px;
+  color: ${colors.text2};
+  line-height: 1.7;
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// FINAL CTA
+// ═══════════════════════════════════════════════════════════════════
+const FinalCTASection = styled.section`
+  padding: 100px 0;
+  background: ${colors.black};
+  text-align: center;
+`;
+
+const FinalH2 = styled.h2`
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800;
+  color: ${colors.white};
+  line-height: 1.2;
+  margin: 0 0 16px;
+
+  em {
+    font-style: italic;
+    color: ${colors.roseMid};
+  }
+`;
+
+const FinalSubline = styled.p`
+  font-size: 16px;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 32px;
+`;
+
+const FinalCTAActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+`;
+
+const FinalTrust = styled.div`
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// FOOTER
+// ═══════════════════════════════════════════════════════════════════
+const Footer = styled.footer`
+  background: ${colors.black};
+  padding: 60px 0 32px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+`;
+
+const FooterInner = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+`;
+
+const FooterTop = styled.div`
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+`;
+
+const FooterLogo = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
 
   img {
     height: 28px;
     width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  }
-
-  span {
-    font-size: 15px;
-    font-weight: 600;
-    color: ${darkCharcoal};
-    letter-spacing: 0.3px;
+    display: block;
   }
 `;
 
-const BlogSection = styled.section`
-  padding: 100px 0;
-  background: linear-gradient(180deg, ${offWhite} 0%, rgba(249, 250, 251, 0.5) 100%);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(38, 166, 154, 0.2), transparent);
-  }
-
-  @media (max-width: 768px) {
-    padding: 80px 0;
-  }
-`;
-
-const BlogContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-  position: relative;
-  z-index: 1;
-
-  @media (max-width: 768px) {
-    padding: 0 16px;
-  }
-`;
-
-const BlogGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  margin-top: 48px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 24px;
-    margin-top: 32px;
-  }
-`;
-
-const BlogCard = styled(motion.a)`
+const FooterSocials = styled.div`
   display: flex;
-  flex-direction: column;
-  background: ${white};
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  text-decoration: none;
-  color: inherit;
-  height: 100%;
-  position: relative;
+  align-items: center;
+  gap: 14px;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(236, 72, 153, 0.05));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 0;
-  }
+  a {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, transform 0.2s ease;
 
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-
-    &::before {
-      opacity: 1;
-    }
-
-    .blog-image {
-      transform: scale(1.05);
+    &:hover {
+      color: ${colors.white};
+      transform: scale(1.08);
     }
   }
-
-  &:active {
-    transform: translateY(-4px);
-  }
 `;
 
-const BlogImageWrapper = styled.div`
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  position: relative;
-  background: linear-gradient(135deg, #f0f9f7 0%, #f8fafc 100%);
-
-  @media (max-width: 768px) {
-    height: 180px;
-  }
-`;
-
-const BlogImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 1;
-`;
-
-const BlogCardContent = styled.div`
-  padding: 24px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 1;
-
-  @media (max-width: 768px) {
-    padding: 20px;
-  }
-`;
-
-const BlogCategory = styled.span`
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #26A69A;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
-  background: rgba(38, 166, 154, 0.1);
-  padding: 4px 12px;
-  border-radius: 12px;
-  width: fit-content;
-`;
-
-const BlogTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  color: ${darkCharcoal};
-  margin: 0 0 12px 0;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  transition: color 0.3s ease;
-
-  ${BlogCard}:hover & {
-    color: #26A69A;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-  }
-`;
-
-const BlogExcerpt = styled.p`
-  font-size: 14px;
-  color: ${midGray};
+const FooterDesc = styled.div`
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
   line-height: 1.6;
-  margin: 0 0 16px 0;
-  flex: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 `;
 
-const BlogMeta = styled.div`
+const FooterColTitle = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+`;
+
+const FooterLinks = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  a {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: ${colors.white};
+    }
+  }
+`;
+
+const FooterBottom = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
-  color: ${midGray};
-  padding-top: 16px;
-  border-top: 1px solid ${lightGray};
-`;
-
-const BlogReadTime = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const ViewAllButton = styled(StyledButton)`
-  margin-top: 48px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 200px;
-
-  @media (max-width: 768px) {
-    margin-top: 32px;
-    width: 100%;
-    max-width: 280px;
-  }
-`;
-
-const OffersCarouselSection = styled.section`
-  padding: 80px 0;
-  background: transparent;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(38, 166, 154, 0.2), transparent);
-  }
-`;
-
-const OffersContainer = styled.div`
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 40px;
-  margin-top: 40px;
-  margin-bottom: 40px;
-`;
-
-const OfferCard = styled(Card)`
-  border-radius: 16px;
-  overflow: hidden;
-  background: #fff;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: all 0.2s ease-in-out;
-  height: 100%;
-  min-height: 520px;
-  display: flex;
-  flex-direction: column;
-  
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-
-  .ant-card-body {
-    padding: 1.5rem;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-`;
-
-const CardTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  width: 100%;
-  position: relative;
-  padding-left: 0.5rem;
-`;
-
-const CardContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  flex: 1;
-  min-height: 0; // Important for flex child
-`;
-
-const CreatorAvatar = styled(Avatar)`
-  border: 2px solid #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
-  position: absolute;
-  left: -0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-`;
-
-const CreatorName = styled.div`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-left: 2.5rem;
-`;
-
-const CardSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 0;
-  padding-bottom: ${props => props.isContentBrief ? '2rem' : '0'};
-  flex: ${props => props.isContentBrief ? '1' : '0 0 auto'};
-  min-height: 0; // Important for flex child
-`;
-
-const CardSectionTitle = styled.span`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-`;
-
-const ContentBadge = styled(Tag)`
-  margin: 6px 8px 6px 0;
-  border-radius: 16px;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${props => props.gradient};
-  border: none;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: transform 0.2s ease;
-  &:hover {
-    transform: scale(1.05);
-  }
-`;
-
-const BidHighlight = styled.div`
-  background: linear-gradient(135deg, ${primaryBlue}, ${brightMagenta});
-  padding: 8px 12px;
-  border-radius: 12px;
-  margin: 12px 0;
-  color: ${white};
-  font-weight: 600;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const DeadlineTimer = styled.div`
-  color: ${brightMagenta};
-  font-weight: 600;
-  font-size: 14px;
-  margin: 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: transparent;
-  border-radius: 6px;
-`;
-
-const StyledCarousel = styled(Carousel)`
-  .slick-dots li button {
-    background: ${primaryBlue};
-    opacity: 0.3;
-  }
-  .slick-dots li.slick-active button {
-    opacity: 1;
-  }
-
-  .slick-slide {
-    padding: 0 16px;
-    height: auto;
-  }
-
-  .slick-list {
-    margin: 0 -16px;
-  }
-
-  .slick-track {
-    display: flex;
-    align-items: stretch;
-  }
-
-  .slick-slide > div {
-    height: 100%;
-    display: flex;
-  }
-`;
-
-const platformLogos = {
-  Instagram: <FaInstagram style={{ color: '#E1306C', fontSize: '24px' }} />,
-  YouTube: <FaYoutube style={{ color: '#FF0000', fontSize: '24px' }} />,
-  Twitter: <FaTwitter style={{ color: '#1DA1F2', fontSize: '24px' }} />,
-  Facebook: <FaFacebook style={{ color: '#1877F2', fontSize: '24px' }} />,
-  TikTok: <FaTiktok style={{ color: '#000000', fontSize: '24px' }} />,
-  Snapchat: <FaSnapchat style={{ color: '#FFFC00', fontSize: '24px' }} />,
-  LinkedIn: <FaLinkedin style={{ color: '#0077B5', fontSize: '24px' }} />,
-  Pinterest: <FaPinterest style={{ color: '#E60023', fontSize: '24px' }} />,
-  Twitch: <FaTwitch style={{ color: '#9146FF', fontSize: '24px' }} />
-};
-
-const PlatformIcons = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 12px 0;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.1);
   flex-wrap: wrap;
+  gap: 16px;
 `;
 
-const PlatformSocialIcon = styled.div`
+const FooterCopy = styled.div`
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+`;
+
+const FooterBottomLinks = styled.div`
+  display: flex;
+  gap: 24px;
+
+  a {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    text-decoration: none;
+
+    &:hover {
+      color: ${colors.white};
+    }
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// MEDIA KIT MOCKUP
+// ═══════════════════════════════════════════════════════════════════
+const KitCard = styled.div`
+  background: ${colors.bg};
+  border: 1px solid ${colors.border};
+  border-radius: 12px;
+  padding: 16px;
+`;
+
+const KitHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+const KitAvatar = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: ${colors.rose};
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease;
-  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  color: ${colors.white};
+`;
 
-  &:hover {
-    transform: translateY(-2px);
+const KitName = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${colors.text};
+`;
+
+const KitHandle = styled.div`
+  font-size: 12px;
+  color: ${colors.text3};
+`;
+
+const KitStats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+`;
+
+const KitStat = styled.div`
+  text-align: center;
+
+  .val {
+    font-size: 16px;
+    font-weight: 800;
+    color: ${colors.text};
+  }
+
+  .lbl {
+    font-size: 10px;
+    color: ${colors.text3};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 `;
 
-// eslint-disable-next-line no-unused-vars
-const _PlatformBadge = styled(Tag)`
-  margin: 6px 8px 6px 0;
-  border-radius: 16px;
-  padding: 8px 12px;
-  font-size: 12px;
+const KitNiches = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+`;
+
+const KitNiche = styled.span`
+  font-size: 11px;
   font-weight: 600;
-  background: ${white};
-  border: 1px solid ${lightGray};
-  color: ${darkCharcoal};
+  padding: 4px 10px;
+  background: ${colors.white};
+  border: 1px solid ${colors.border};
+  border-radius: 20px;
+  color: ${colors.text2};
+`;
+
+const KitAttachedBadge = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
+  gap: 6px;
+  background: ${colors.greenLight};
+  color: ${colors.green};
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
 `;
 
-// Sample offers data
-const sampleOffers = [
-  {
-    id: 1,
-    name: "Tech Review Pro",
-    image_profile: "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/tech%20avatar.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdGVjaCBhdmF0YXIuanBlZyIsImlhdCI6MTc0ODk2NjE3OCwiZXhwIjoxNzgwNTAyMTc4fQ._1Yrk3t9VMR5UpNUeujx4Ft1kozWVDSmVRoYboECGmE",
-    package_name: "iPhone 15 Pro Max Review",
-    description: "Comprehensive review of the latest iPhone with focus on camera capabilities and battery life. Perfect for tech enthusiasts and potential buyers.",
-    min_bid: 1500,
-    bidding_deadline: "2024-03-15",
-    platforms: ["YouTube", "Instagram"],
-    content_format: ["10min+ Videos", "Static Posts"],
-    projected_views: 50000,
-    social_links: {
-      youtube: "https://youtube.com/@techreview",
-      instagram: "https://instagram.com/techreview"
-    }
-  },
-  {
-    id: 2,
-    name: "Fitness Journey",
-    image_profile: "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/fitness%20avatar.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvZml0bmVzcyBhdmF0YXIuanBlZyIsImlhdCI6MTc0ODk2NjE5MCwiZXhwIjoxNzgwNTAyMTkwfQ.uPWR68D_ZuMZ7ckeyxAR7K0KTiOYEBxdRmLbaY_Oc3w",
-    package_name: "30-Day Workout Challenge",
-    description: "Engaging fitness challenge series showcasing workout routines, nutrition tips, and transformation stories. Great for fitness brands and supplements.",
-    min_bid: 2000,
-    bidding_deadline: "2024-03-20",
-    platforms: ["TikTok", "Instagram"],
-    content_format: ["Short Videos", "Stories"],
-    projected_views: 75000,
-    social_links: {
-      tiktok: "https://tiktok.com/@fitnessjourney",
-      instagram: "https://instagram.com/fitnessjourney"
-    }
-  },
-  {
-    id: 3,
-    name: "Food Explorer",
-    image_profile: "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/foodie.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvZm9vZGllLmpwZWciLCJpYXQiOjE3NDg5NjYyMDIsImV4cCI6MTc4MDUwMjIwMn0.yXmaTAolUTDhbe9vNYo3jZ5tYmIrRcj-9vS3Eew3dQQ",
-    package_name: "Global Cuisine Series",
-    description: "Authentic cooking series featuring international recipes, restaurant reviews, and food culture exploration. Perfect for food brands and kitchen equipment.",
-    min_bid: 1800,
-    bidding_deadline: "2024-03-25",
-    platforms: ["YouTube", "Instagram", "TikTok"],
-    content_format: ["10min+ Videos", "Short Videos", "Static Posts"],
-    projected_views: 100000,
-    social_links: {
-      youtube: "https://youtube.com/@foodexplorer",
-      instagram: "https://instagram.com/foodexplorer",
-      tiktok: "https://tiktok.com/@foodexplorer"
-    }
+// ═══════════════════════════════════════════════════════════════════
+// BRANDS DATA
+// ═══════════════════════════════════════════════════════════════════
+const getApiBase = () => {
+  const base = process.env.REACT_APP_BACKEND_URL
+    || process.env.REACT_APP_API_BASE
+    || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co');
+  return base.replace(/\/+$/, '');
+};
+
+// Extract hostname from a URL string, return null on failure
+const extractDomain = (url) => {
+  if (!url) return null;
+  try {
+    const withProto = url.startsWith('http') ? url : `https://${url}`;
+    return new URL(withProto).hostname.replace(/^www\./, '');
+  } catch {
+    return null;
   }
+};
+
+// Map API response (_format_public_brand_list_item returns: name, logo, website, category, responseRate, avgResponseTime)
+const mapApiBrand = (b) => {
+  const name = b.name || '';
+  const replyRate = Math.round(b.responseRate || b.response_rate || 0);
+  const replyDays = b.avgResponseTime || b.avg_response_time_days;
+  const replyTime = replyDays ? `Replies in ${replyDays} days` : 'Replies in 3–5 days';
+  const cat = (() => {
+    const c = (b.category || '').toLowerCase();
+    if (c.includes('fashion') || c.includes('apparel')) return 'fashion';
+    if (c.includes('skincare')) return 'skincare';
+    if (c.includes('food') || c.includes('beverage') || c.includes('drink') || c.includes('wellness')) return 'food';
+    return 'beauty';
+  })();
+
+  // Use stored logo_url, or derive from website via Clearbit
+  const domain = extractDomain(b.website);
+  const logo = b.logo || (domain ? `https://logo.clearbit.com/${domain}?size=128` : null);
+
+  return {
+    name,
+    slug: b.slug,
+    initials: name.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+    bg: '#F5F5F4',
+    logo,
+    cat,
+    catLabel: b.category || 'Brand',
+    replyTime,
+    replyRate: replyRate || 40,
+    hi: replyRate >= 40,
+  };
+};
+
+function LandingBrandLogo({ brand, style }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (!brand.logo || imgFailed) {
+    return (
+      <BrandLogoBlock $bg={brand.bg} style={style}>
+        {brand.initials}
+      </BrandLogoBlock>
+    );
+  }
+
+  return (
+    <BrandLogoBlock $isImage style={style}>
+      <img src={brand.logo} alt={brand.name} onError={() => setImgFailed(true)} />
+    </BrandLogoBlock>
+  );
+}
+
+// Static fallback — shown until the API responds
+const brandsDataFallback = [
+  { name: 'Rhode Skin', slug: 'rhode-skin', initials: 'RS', bg: '#B5002D', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2–3 days', replyRate: 52, hi: true },
+  { name: 'Anua', slug: 'anua', initials: 'AN', bg: '#2E7D4F', logo: null, cat: 'beauty', catLabel: 'K-Beauty', replyTime: 'Replies in 3–5 days', replyRate: 38, hi: true },
+  { name: 'Oh Polly', slug: 'oh-polly', initials: 'OP', bg: '#1A1A2E', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 5–7 days', replyRate: 29, hi: false },
+  { name: 'Fenty Beauty', slug: 'fenty-beauty', initials: 'FB', bg: '#8B4513', logo: null, cat: 'beauty', catLabel: 'Beauty', replyTime: 'Replies in 3–5 days', replyRate: 44, hi: true },
+  { name: 'Nopalera', slug: 'nopalera', initials: 'NP', bg: '#2D5016', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2–3 days', replyRate: 61, hi: true },
+  { name: 'Aura Bora', slug: 'aura-bora', initials: 'AB', bg: '#7C3AED', logo: null, cat: 'food', catLabel: 'Beverages', replyTime: 'Replies in 1–2 days', replyRate: 72, hi: true },
+  { name: 'Glow Recipe', slug: 'glow-recipe', initials: 'GR', bg: '#EC4899', logo: null, cat: 'skincare', catLabel: 'Skincare', replyTime: 'Replies in 3–5 days', replyRate: 45, hi: true },
+  { name: 'Princess Polly', slug: 'princess-polly', initials: 'PP', bg: '#6D28D9', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 3–5 days', replyRate: 47, hi: true },
 ];
 
-const getTagColor = (contentType) => {
-  switch (contentType) {
-    case 'Stories':
-    case 'Static Posts':
-      return 'linear-gradient(135deg, #ff9a00, #ff6f00)';
-    case 'Live Streaming':
-    case 'Live':
-      return 'linear-gradient(135deg, #22c55e, #16a34a)';
-    case 'Short Videos':
-    case 'Reels':
-      return 'linear-gradient(135deg, #ec4899, #db2777)';
-    case '10min+ Videos':
-      return 'linear-gradient(135deg, #3b82f6, #2563eb)';
-    case 'Audio Content':
-    case 'Podcast':
-      return 'linear-gradient(135deg, #78716c, #57534e)';
-    case 'Newsletter':
-      return 'linear-gradient(135deg, #eab308, #ca8a04)';
-    case 'Sponsored Content':
-      return 'linear-gradient(135deg, #ff6b6b, #ff8e53)';
-    default:
-      return 'linear-gradient(135deg, #9ca3af, #6b7280)';
-  }
-};
+// ═══════════════════════════════════════════════════════════════════
+// TICKER DATA
+// ═══════════════════════════════════════════════════════════════════
+const tickerItems = [
+  { icon: '📦', text: 'carolstyle landed Rhode Skin — 3 days after joining' },
+  { icon: '💬', text: 'glowwith_m got 2 brand replies in 48 hours' },
+  { icon: '📦', text: 'zionne019 received an Anua PR package this week' },
+  { icon: '✍️', text: 'sarahlooks pitched 8 brands in one afternoon' },
+  { icon: '📦', text: 'dailybyzoe landed Oh Polly with media kit auto-attached' },
+  { icon: '🎉', text: 'plates.co got a food brand collab after first pitch' },
+];
 
-const getTagIcon = (contentType) => {
-  switch (contentType) {
-    case 'Stories':
-    case 'Static Posts':
-      return <FaCamera style={{ fontSize: '16px' }} />;
-    case 'Live Streaming':
-    case 'Live':
-      return <MdOutlineLiveTv style={{ fontSize: '16px' }} />;
-    case 'Short Videos':
-    case 'Reels':
-      return <FaVideo style={{ fontSize: '16px' }} />;
-    case '10min+ Videos':
-      return <FiFilm style={{ fontSize: '16px' }} />;
-    case 'Audio Content':
-    case 'Podcast':
-      return <MdOutlineAudiotrack style={{ fontSize: '16px' }} />;
-    case 'Sponsored Content':
-      return <FiVideo style={{ fontSize: '16px' }} />;
-    case 'Newsletter':
-      return <FaNewspaper style={{ fontSize: '16px' }} />;
-    default:
-      return <FiImage style={{ fontSize: '16px' }} />;
-  }
-};
-
-// Lazy-load CookieSettings and any other heavy components
-const CookieSettings = lazy(() => import('../components/CookieSettings'));
-
+// ═══════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════
 const LandingPage = () => {
-  const { scrollY } = useScroll();
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeFilter, setActiveFilter] = useState('all');
   const [isVisible, setIsVisible] = useState(false);
-  const [showCookieSettings, setShowCookieSettings] = useState(false);
-  const [featuredPosts, setFeaturedPosts] = useState([]);
-  const [postsLoading, setPostsLoading] = useState(true);
+  const [brands, setBrands] = useState(brandsDataFallback);
 
-  // Preload fonts and critical assets
   useEffect(() => {
-    // Preload Inter font
-    const fontPreload = document.createElement('link');
-    fontPreload.rel = 'preload';
-    fontPreload.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
-    fontPreload.as = 'style';
-    document.head.appendChild(fontPreload);
-  }, []);
-
-  // Optimize intersection observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { 
-        threshold: 0.1,
-        rootMargin: '50px 0px 0px 0px'
-      }
-    );
-
-    const heroSection = document.querySelector('.hero-section');
-    if (heroSection) {
-      observer.observe(heroSection);
-    }
-
-    return () => {
-      if (heroSection) {
-        observer.unobserve(heroSection);
-      }
-    };
+    setIsVisible(true);
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      const windowHeight = window.innerHeight;
-      // eslint-disable-next-line no-unused-vars
-      const _documentHeight = document.documentElement.scrollHeight;
-      
-      if (scrollPosition > windowHeight * 0.5) {
-        setActiveStep(1);
-      }
-      if (scrollPosition > windowHeight * 1.5) {
-        setActiveStep(2);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Load featured blog posts (strategically selected new posts)
-  useEffect(() => {
-    const loadFeaturedPosts = async () => {
+    let cancelled = false;
+    (async () => {
       try {
-        setPostsLoading(true);
-        // Strategically select the 3 new posts we just created
-        const featuredSlugs = [
-          'us-brands-send-pr-micro-influencers-2026-list',
-          'skincare-pr-list-small-creators-2026',
-          'how-to-get-gaming-sponsorships-small-streamers-2026-guide'
-        ];
-
-        const postPromises = featuredSlugs.map(async (slug) => {
-          try {
-            const postData = await import(`../content/posts/${slug}.json`);
-            return postData.default;
-          } catch (error) {
-            console.warn(`Post ${slug} not found, skipping...`);
-            return null;
-          }
-        });
-
-        const loadedPosts = (await Promise.all(postPromises))
-          .filter(post => post !== null);
-        
-        setFeaturedPosts(loadedPosts);
-      } catch (error) {
-        console.error('Error loading featured posts:', error);
-        setFeaturedPosts([]);
-      } finally {
-        setPostsLoading(false);
+        // Fetch featured brands first (more likely to have logos), fall back to any brands
+        const url = `${getApiBase()}/api/public/brands?limit=16&page=1`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = Array.isArray(data.brands) ? data.brands : [];
+        // Prefer brands that have a logo or website (for Clearbit fallback), take first 8
+        const withLogos = list.filter(b => b.logo || b.website);
+        const chosen = withLogos.length >= 8
+          ? withLogos.slice(0, 8)
+          : list.slice(0, 8);
+        if (!cancelled && chosen.length > 0) {
+          setBrands(chosen.map(mapApiBrand));
+        }
+      } catch (err) {
+        // silently fall back to static data
       }
-    };
-
-    loadFeaturedPosts();
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const structuredData = {
+  const filteredBrands = brands.filter(brand =>
+    activeFilter === 'all' || brand.cat === activeFilter
+  );
+
+  // JSON-LD Schemas
+  const websiteSchema = {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "NewCollab - Creator & Brand Collaboration Platform",
-    "description": "Connect with brands and creators, build meaningful partnerships, and grow your influence together on NewCollab's collaboration platform.",
-    "applicationCategory": "BusinessApplication",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "featureList": [
-      "Creator-Brand Matching",
-      "Campaign Management",
-      "Analytics Dashboard",
-      "Secure Payments",
-      "Multi-platform Support"
-    ],
-    "mainEntity": {
-      "@type": "ItemList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Content Monetization",
-          "description": "Post your content projects and let brands bid to sponsor them"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Brand Partnerships",
-          "description": "Connect with premium brands ready to invest in creator content"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Secure Payments",
-          "description": "Get paid securely through our trusted payment system"
-        }
-      ]
+    "@type": "WebSite",
+    "name": "newcollab",
+    "url": "https://newcollab.co",
+    "description": "PR forms directory and brand outreach tool for nano and micro creators — 500+ brands with open PR application forms, AI pitch emails, and auto media kit.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://newcollab.co/brands?q={search_term_string}",
+      "query-input": "required name=search_term_string"
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const _handleOpenCookieSettings = (e) => {
-    e.preventDefault();
-    setShowCookieSettings(true);
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I get my first brand deal as a small creator?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks — the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need a media kit to pitch brands?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How many followers do you need to work with brands?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No minimum. 63% of brands prefer working with nano and micro creators (1K–50K followers) — engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a PR package?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A PR package is when a brand sends you their products for free in exchange for content on your channels — a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where can I find PR forms for brands?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. You can filter by niche and send a personalised AI pitch in one click — no need to hunt for contact emails or application URLs."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a brand PR application form?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A brand PR application form is a public submission page where creators apply to receive gifted products (PR packages) in exchange for social media content. Brands use these forms to vet creators by niche, follower count, and engagement rate. newcollab lists brands with open PR forms and lets you apply with an AI-generated pitch and auto-attached media kit."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is newcollab free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard."
+        }
+      }
+    ]
   };
 
   return (
     <>
       <Helmet>
-        <title>Find brands to sponsor your content | Newcollab Content Creator Platform</title>
-        <meta name="description" content="Join Newcollab to monetize your content or spark authentic brand campaigns. Creators post ideas, brands bid or send invites, and partnerships thrive. Start now!" />
-        <meta name="keywords" content="content creator platform, monetize content, brand collaborations, influencer partnerships, campaign invites, content bidding, creator monetization, brand sponsorships, content creator platform, influencer marketing" />
-        <meta property="og:title" content="Find brands to sponsor your content | Newcollab Content Creator Platform" />
-        <meta property="og:description" content="Join Newcollab to monetize your content or spark authentic brand campaigns. Creators post ideas, brands bid or send invites, and partnerships thrive. Start now!" />
+        <title>newcollab — PR Forms for Brands &amp; Brand Outreach Tool for Micro Creators</title>
+        <meta name="description" content="Browse 500+ brands with open PR forms and direct application links. Send AI pitch emails, auto-generate your media kit, and track every outreach. The complete PR forms directory and brand deal system for micro creators." />
+        <meta name="keywords" content="PR forms for brands, brand PR forms, PR application forms for influencers, brands with open PR forms, how to get brand deals, PR packages for micro creators, brand outreach tool, media kit for content creators, micro influencer brand deals, brand collaboration forms" />
+        <meta property="og:title" content="newcollab — 500+ Brand PR Forms &amp; Outreach Tool for Micro Creators" />
+        <meta property="og:description" content="Browse brands with open PR forms and application links. AI pitch emails, auto media kit, deal tracking — all in one place for nano and micro creators." />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab%20-%20create%20and%20secure%20meaningful%20collaborations.png" />
         <meta property="og:url" content="https://newcollab.co" />
-        <meta property="og:site_name" content="Newcollab" />
+        <meta property="og:site_name" content="newcollab" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Find brands to sponsor your content | Newcollab Content Creator Platform" />
-        <meta name="twitter:description" content="Join Newcollab to monetize your content or spark authentic brand campaigns. Creators post ideas, brands bid or send invites, and partnerships thrive. Start now!" />
-        <meta name="twitter:image" content="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab%20-%20create%20and%20secure%20meaningful%20collaborations.png" />
+        <meta name="twitter:title" content="newcollab — Brand Outreach for Micro Creators" />
+        <meta name="twitter:description" content="The complete brand deal system for nano and micro creators." />
         <link rel="canonical" href="https://newcollab.co/" />
-        <link rel="icon" type="image/png" href="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/NEWCOLLAB-BRAND_fav_google.png" />
-        <meta name="robots" content="index, follow" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="language" content="English" />
-        <meta name="revisit-after" content="7 days" />
-        <meta name="author" content="Newcollab" />
-        {/* Preload critical assets */}
-        <link 
-          rel="preload" 
-          href="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab%20-%20create%20and%20secure%20meaningful%20collaborations_hero1.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmV3Y29sbGFiIC0gY3JlYXRlIGFuZCBzZWN1cmUgbWVhbmluZ2Z1bCBjb2xsYWJvcmF0aW9uc19oZXJvMS5wbmciLCJpYXQiOjE3NDg5NjgyNjgsImV4cCI6MTc4MDUwNDI2OH0.sT9ChYAbpbjtAyMNyHg0rdk3Cthh3IZEfzPps3PcFsQ" 
-          as="image" 
-          type="image/png"
-          fetchpriority="high"
-        />
-        <link 
-          rel="preconnect" 
-          href="https://kyawgtojxoglvlhzsotm.supabase.co"
-          crossOrigin="anonymous"
-        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
+          {JSON.stringify(websiteSchema)}
         </script>
-        <link 
-          rel="preload" 
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" 
-          as="style"
-        />
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" 
-          rel="stylesheet"
-        />
-        <style>
-          {`
-            @font-face {
-              font-family: 'Inter';
-              font-style: normal;
-              font-weight: 800;
-              font-display: swap;
-              src: url(https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2) format('woff2');
-              unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-            }
-          `}
-        </style>
+        <script type="application/ld+json">
+          {JSON.stringify(faqSchema)}
+        </script>
       </Helmet>
 
-      <Container>
-        <HeroSection className="hero-section">
-          <HeroContent>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* Primary H1 tag for SEO - visible and properly structured */}
-              <h1 style={{ 
-                fontSize: '64px', 
-                fontWeight: '800', 
-                marginBottom: '24px', 
-                color: '#1F2937', 
-                lineHeight: '1.2',
-                margin: '0 0 24px 0',
-                textAlign: 'center',
-                maxWidth: '800px'
-              }}>
-                The Bidding Marketplace for Creators & Brands - Newcollab
-              </h1>
-              <HeroTitle level={2} style={{ display: 'none' }}>
-                <b>The bidding marketplace for Creators & Brands</b>.
-              </HeroTitle>
-              <HeroSubtitle>
-                The first platform for creators to monetize their ideas and brands to spark authentic campaigns.
-                <div> Get brands to <b>bid on your next viral content</b>, accept the best offers and grow your partnerships.</div> 
-              </HeroSubtitle>
-              <div>
-                <StyledButton
-                  type="primary"
-                  className="primary"
-                  size="large"
-                  href="/register/creator"
-                  aria-label="Join as Content Creator"
+      <PageContainer>
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* HERO */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <HeroSection>
+          <Container>
+            <HeroGrid>
+              <HeroText>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.5 }}
                 >
-                  Join as Content Creator
-                </StyledButton>
-                <StyledButton
-                  className="secondary"
-                  size="large"
-                  href="/register/brand"
-                  aria-label="Join as Brand"
+                  <HeroH1>
+                    Land brand deals.<br />
+                    On repeat.<br />
+                    <em>No guessing.</em>
+                  </HeroH1>
+                  <HeroSubline>
+                    500+ brands with open PR forms. AI pitch emails. Auto media kit. Deal tracking. All in one place.
+                  </HeroSubline>
+                  <HeroCTARow>
+                    <BtnBlack href="/register/creator">Start for free →</BtnBlack>
+                    <BtnOutline href="/directory">See brands</BtnOutline>
+                  </HeroCTARow>
+                  <HeroProof>
+                    <AvatarStack>
+                      <div style={{ background: colors.rose }}>C</div>
+                      <div style={{ background: colors.violet }}>M</div>
+                      <div style={{ background: colors.green }}>Z</div>
+                      <div style={{ background: colors.amber }}>S</div>
+                      <div style={{ background: '#3B82F6' }}>D</div>
+                    </AvatarStack>
+                    <span>900+ creators already getting brand deals · Free · No credit card</span>
+                  </HeroProof>
+                </motion.div>
+              </HeroText>
+              <HeroVisual>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                  transition={{ duration: 0.5, delay: 0.2 }}
                 >
-                  Join as Brand
-                </StyledButton>
-              </div>
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <HeroImage>
-                  <picture>
-                    <source srcSet="/assets/newcollab-create-and-secure-meaningful-collaborations_hero1.webp" type="image/webp" />
-                    <img 
-                      src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab%20-%20create%20and%20secure%20meaningful%20collaborations_hero1.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmV3Y29sbGFiIC0gY3JlYXRlIGFuZCBzZWN1cmUgbWVhbmluZ2Z1bCBjb2xsYWJvcmF0aW9uc19oZXJvMS5wbmciLCJpYXQiOjE3NDg5NjgyNjgsImV4cCI6MTc4MDUwNDI2OH0.sT9ChYAbpbjtAyMNyHg0rdk3Cthh3IZEfzPps3PcFsQ"
-                      alt="Newcollab platform interface showing content creator and brand collaboration features"
-                      width="1400"
-                      height="800"
-                      fetchpriority="high"
-                      loading="eager"
-                      decoding="async"
-                      style={{ width: '100%', height: 'auto' }}
+                  <HeroGifWrap>
+                    <video
+                      src="https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '16px' }}
                     />
-                  </picture>
-                </HeroImage>
-              </motion.div>
-            </motion.div>
-          </HeroContent>
+                    <FloatingBadge className="bottom-left">
+                      <span>📦</span>
+                      <div>
+                        <div style={{ fontWeight: 700 }}>Package received!</div>
+                        <div style={{ fontSize: 11, color: colors.text3 }}>Rhode Skin → @carolstyle</div>
+                      </div>
+                    </FloatingBadge>
+                    <FloatingBadge className="top-right">
+                      <span>✨</span>
+                      <span>6 pitches sent today</span>
+                    </FloatingBadge>
+                  </HeroGifWrap>
+                </motion.div>
+              </HeroVisual>
+            </HeroGrid>
+          </Container>
         </HeroSection>
 
-        {/* Marketplace CTA Section */}
-        <PlatformSection style={{ padding: '60px 0', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%)' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5 }}
-            >
-              <Title level={2} style={{ fontSize: '36px', fontWeight: 700, marginBottom: '16px', color: darkCharcoal }}>
-                Discover Top Creators Ready for Collaboration
-              </Title>
-              <Paragraph style={{ fontSize: '18px', color: midGray, marginBottom: '32px', maxWidth: '700px', margin: '0 auto 32px auto', lineHeight: 1.6 }}>
-                Browse our curated marketplace of vetted creators. Filter by niche, engagement rate, and audience size. Find the perfect match for your brand and send PR packages instantly.
-              </Paragraph>
-              <StyledButton
-                type="primary"
-                className="primary"
-                size="large"
-                href="/marketplace"
-                style={{ margin: '0 12px' }}
-              >
-                Browse Creator Marketplace
-              </StyledButton>
-            </motion.div>
-          </div>
-        </PlatformSection>
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* TICKER */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <TickerSection>
+          <TickerInner>
+            {[...tickerItems, ...tickerItems].map((item, i) => (
+              <TickerItem key={i}>
+                <span>{item.icon}</span>
+                {item.text}
+              </TickerItem>
+            ))}
+          </TickerInner>
+        </TickerSection>
 
-        <OffersCarouselSection aria-labelledby="featured-offers-title">
-          <OffersContainer>
-            <SectionHeader>
-              <SectionTitle level={2} id="featured-offers-title">Monetize Your Content & Connect with Premium Brands</SectionTitle>
-              <SectionSubtitle>
-                Showcase your content ideas to brands ready to invest. Set your price, choose your platforms, and let brands compete to collaborate with you.
-              </SectionSubtitle>
-            </SectionHeader>
-            <StyledCarousel
-              autoplay
-              autoplaySpeed={5000}
-              dots={true}
-              slidesToShow={3}
-              slidesToScroll={1}
-              responsive={[
-                {
-                  breakpoint: 1024,
-                  settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 1,
-                  }
-                },
-                {
-                  breakpoint: 768,
-                  settings: {
-                    slidesToShow: 1,
-                    slidesToScroll: 1,
-                  }
-                }
-              ]}
-              aria-label="Featured content opportunities carousel"
-            >
-              {sampleOffers.map((offer) => (
-                <article key={offer.id} itemScope itemType="https://schema.org/CreativeWork">
-                  <OfferCard>
-                    <CardTitle>
-                      <CreatorAvatar 
-                        src={offer.image_profile} 
-                        size={48} 
-                        alt={`${offer.name}'s profile picture`}
-                      />
-                      <CreatorName itemProp="author">{offer.name}</CreatorName>
-                    </CardTitle>
-                    <CardContent>
-                      <CardSection isContentBrief>
-                        <CardSectionTitle>Content Package</CardSectionTitle>
-                        <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: '#1e293b' }} itemProp="name">
-                          {offer.package_name}
-                        </h3>
-                        <p style={{ margin: 0, color: '#64748b', fontSize: '0.875rem' }} itemProp="description">
-                          {offer.description}
-                        </p>
-                      </CardSection>
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* CLARITY STRIP */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <ClaritySection>
+          <Container>
+            <ClarityGrid>
+              <ClarityItem>
+                <ClarityIcon><FiSearch /></ClarityIcon>
+                <ClarityText>
+                  <div className="label">Find brands</div>
+                  <div className="sub">500+ PR contacts, your niche</div>
+                </ClarityText>
+              </ClarityItem>
+              <ClarityArrow>→</ClarityArrow>
+              <ClarityItem>
+                <ClarityIcon><FiFileText /></ClarityIcon>
+                <ClarityText>
+                  <div className="label">Auto media kit</div>
+                  <div className="sub">Generated, always ready</div>
+                </ClarityText>
+              </ClarityItem>
+              <ClarityArrow>→</ClarityArrow>
+              <ClarityItem>
+                <ClarityIcon><FiEdit3 /></ClarityIcon>
+                <ClarityText>
+                  <div className="label">AI pitch email</div>
+                  <div className="sub">Personalised in 60 seconds</div>
+                </ClarityText>
+              </ClarityItem>
+              <ClarityArrow>→</ClarityArrow>
+              <ClarityItem>
+                <ClarityIcon><FiBarChart2 /></ClarityIcon>
+                <ClarityText>
+                  <div className="label">Track everything</div>
+                  <div className="sub">Pipeline · follow-ups · wins</div>
+                </ClarityText>
+              </ClarityItem>
+            </ClarityGrid>
+          </Container>
+        </ClaritySection>
 
-                      <CardSection>
-                        <CardSectionTitle>Platforms & Format</CardSectionTitle>
-                        <PlatformIcons aria-label="Available platforms">
-                          {offer.platforms.map((platform) => (
-                            <PlatformSocialIcon 
-                              key={platform}
-                              aria-label={`${platform} platform`}
-                            >
-                              {platformLogos[platform]}
-                            </PlatformSocialIcon>
-                          ))}
-                        </PlatformIcons>
-                        <div aria-label="Content formats">
-                          {offer.content_format.map((format) => (
-                            <ContentBadge 
-                              key={format} 
-                              gradient={getTagColor(format)}
-                              aria-label={`${format} content format`}
-                            >
-                              {getTagIcon(format)}
-                              {format}
-                            </ContentBadge>
-                          ))}
-                        </div>
-                      </CardSection>
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* PROBLEM SECTION */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <ProblemSection>
+          <Container>
+            <SectionCenter>
+              <Eyebrow><EyebrowDot /> The struggle is real</Eyebrow>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.text, margin: 0 }}>
+                Getting brand deals feels impossible.<br />
+                <em style={{ color: colors.rose }}>It doesn't have to.</em>
+              </h2>
+            </SectionCenter>
+            <ProblemGrid>
+              <ProblemCard>
+                <div className="headline">"Where do I even find brand PR emails?"</div>
+                <div className="body">Googled it for hours. No real contacts, no idea who's open to new creators.</div>
+              </ProblemCard>
+              <ProblemCard>
+                <div className="headline">"They want a media kit and I don't have one."</div>
+                <div className="body">Brands expect your stats, demographics, niche. Most creators lose deals here.</div>
+              </ProblemCard>
+              <ProblemCard>
+                <div className="headline">"I open a blank email and freeze every time."</div>
+                <div className="body">Too formal? Too casual? Most creators spend hours on one pitch — or never send it.</div>
+              </ProblemCard>
+              <ProblemCard>
+                <div className="headline">"I sent emails last month and forgot to follow up."</div>
+                <div className="body">No system. No visibility. Warm leads went cold. Not laziness — just no tool.</div>
+              </ProblemCard>
+            </ProblemGrid>
+            <ProblemCTA>
+              <div className="text">newcollab handles all of this — automatically.</div>
+              <BtnRose href="/register/creator">Get started free →</BtnRose>
+            </ProblemCTA>
+          </Container>
+        </ProblemSection>
 
-                      <CardSection>
-                        <BidHighlight>
-                          <DollarCircleOutlined />
-                          Min Bid: €{offer.min_bid}
-                        </BidHighlight>
-                        <DeadlineTimer>
-                          <ClockCircleOutlined />
-                          Bidding ends: {moment(offer.bidding_deadline).format('MMM D, YYYY')}
-                        </DeadlineTimer>
-                      </CardSection>
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* SOLUTION FLOW (DARK) */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <SolutionSection>
+          <Container>
+            <SectionCenter>
+              <Eyebrow style={{ color: colors.roseMid }}><EyebrowDot style={{ background: colors.roseMid }} /> The newcollab way</Eyebrow>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.white, margin: 0 }}>
+                Not just a tool.<br />
+                <em style={{ color: colors.roseMid }}>The complete outreach flow.</em>
+              </h2>
+            </SectionCenter>
+            <SolutionGrid>
+              <SolutionStep $iconBg="rgba(225, 29, 72, 0.2)">
+                <div className="step-icon">
+                  <FiSearch />
+                  <span className="step-num">1</span>
+                </div>
+                <div className="step-title">Discover</div>
+                <div className="step-body">500+ brand PR contacts filtered to your niche</div>
+              </SolutionStep>
+              <SolutionStep $iconBg="rgba(124, 58, 237, 0.2)">
+                <div className="step-icon">
+                  <FiFileText />
+                  <span className="step-num">2</span>
+                </div>
+                <div className="step-title">Prepare</div>
+                <div className="step-body">Auto-generated media kit from your profile</div>
+              </SolutionStep>
+              <SolutionStep $iconBg="rgba(5, 150, 105, 0.2)">
+                <div className="step-icon">
+                  <FiEdit3 />
+                  <span className="step-num">3</span>
+                </div>
+                <div className="step-title">Pitch</div>
+                <div className="step-body">AI email + media kit attached · batch-send 10 at once</div>
+              </SolutionStep>
+              <SolutionStep $iconBg="rgba(217, 119, 6, 0.2)">
+                <div className="step-icon">
+                  <FiBarChart2 />
+                  <span className="step-num">4</span>
+                </div>
+                <div className="step-title">Track</div>
+                <div className="step-body">Pipeline + auto follow-up reminders at day 7</div>
+              </SolutionStep>
+              <SolutionStep $iconBg="rgba(236, 72, 153, 0.2)">
+                <div className="step-icon">
+                  <FiGift />
+                  <span className="step-num">5</span>
+                </div>
+                <div className="step-title">Win</div>
+                <div className="step-body">Package arrives · log your PR value · repeat</div>
+              </SolutionStep>
+            </SolutionGrid>
+          </Container>
+        </SolutionSection>
 
-                      <Button
-                        type="primary"
-                        size="large"
-                        block
-                        href="/register"
-                        style={{
-                          background: 'linear-gradient(135deg, #26A69A, #4DB6AC)',
-                          border: 'none',
-                          height: '48px',
-                          borderRadius: '24px',
-                          marginTop: 'auto'
-                        }}
-                        aria-label={`Place a bid for ${offer.package_name}`}
-                      >
-                        Place a Bid
-                      </Button>
-                    </CardContent>
-                  </OfferCard>
-                </article>
-              ))}
-            </StyledCarousel>
-          </OffersContainer>
-        </OffersCarouselSection>
-
-        <PlatformSection id="platform">
-          <PlatformTitle level={2}>Built for creators of all platforms</PlatformTitle>
-          <PlatformGrid gutter={[32, 32]} justify="center">
-            <PlatformCard xs={24} sm={12} md={8} lg={6}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <PlatformIcon $bgColor="#E1306C" $color="#FFFFFF">
-                  <FaInstagram />
-                </PlatformIcon>
-              </motion.div>
-            </PlatformCard>
-            <PlatformCard xs={24} sm={12} md={8} lg={6}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <PlatformIcon $bgColor="#FF0000" $color="#FFFFFF">
-                  <FaYoutube />
-                </PlatformIcon>
-              </motion.div>
-            </PlatformCard>
-            <PlatformCard xs={24} sm={12} md={8} lg={6}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <PlatformIcon $bgColor="#000000" $color="#FFFFFF">
-                  <FaTiktok />
-                </PlatformIcon>
-              </motion.div>
-            </PlatformCard>
-            <PlatformCard xs={24} sm={12} md={8} lg={6}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <PlatformIcon $bgColor="#9146FF" $color="#FFFFFF">
-                  <FaTwitch />
-                </PlatformIcon>
-              </motion.div>
-            </PlatformCard>
-            <PlatformCard xs={24} sm={12} md={8} lg={6}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <PlatformIcon $bgColor="#1DA1F2" $color="#FFFFFF">
-                  <FaTwitter />
-                </PlatformIcon>
-              </motion.div>
-            </PlatformCard>
-            <PlatformCard xs={24} sm={12} md={8} lg={6}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
-                <PlatformIcon $bgColor="#FFFC00" $color="#000000">
-                  <FaSnapchat />
-                </PlatformIcon>
-              </motion.div>
-            </PlatformCard>
-          </PlatformGrid>
-        </PlatformSection>
-
-        <HowItWorksSection id="platform">
-          <SectionHeader>
-            <SectionTitle level={2}>Secure Content Monetization & Brand Partnerships</SectionTitle>
-            <SectionSubtitle>
-              In just three steps, content creators can <b>attract their dream brands</b> and brands can find the <b>perfect content with the right creators</b>.
-              <div>Discover how Newcollab makes collaboration simple, secure, and rewarding.</div>
-            </SectionSubtitle>
-          </SectionHeader>
-
-          <HowItWorksContainer className="how-it-works-container">
-            <StepContainer
-              className={activeStep === 0 ? 'active' : ''}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <StepContent
-                initial={{ x: -50 }}
-                whileInView={{ x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <StepNumber>1</StepNumber>
-                <StepTitle level={3}>Secure Content Monetization: Post Your Next Project</StepTitle>
-                <StepDescription>
-                  It's simple, share your next content project on Newcollab in minutes. Upload your idea, pick your platforms (e.g., TikTok, Instagram, YouTube), and set a minimum bid. Your project instantly reaches brands ready to collaborate, making it effortless to kickstart your campaign with the right sponsor.
-                </StepDescription>
-              </StepContent>
-              <StepVisual
-                className="step-1"
-                initial={{ x: 50 }}
-                whileInView={{ x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                style={{
-                  transform: `translateY(${scrollY.get() * 0.05}px)`
-                }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab_create_content_draft_2.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmV3Y29sbGFiX2NyZWF0ZV9jb250ZW50X2RyYWZ0XzIucG5nIiwiaWF0IjoxNzQ3MjM1Mjc2LCJleHAiOjE4NDE4NDMyNzZ9.g3bgWP4ijqh7qkTXlBgN5hLTr6AZiZhyXFwFpwzVi04"
-                  alt="Newcollab's simple content project submission form for creators to monetize ideas."
-                  loading="lazy"
-                  decoding="async"
-                  width="800"
-                  height="600"
-                  style={{ width: '100%', height: 'auto', imageRendering: 'crisp-edges' }}
-                />
-              </StepVisual>
-            </StepContainer>
-
-            <StepContainer
-              className={activeStep === 1 ? 'active' : ''}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <StepContent
-                initial={{ x: -50 }}
-                whileInView={{ x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <StepNumber>2</StepNumber>
-                <StepTitle level={3}>Brand Bidding & Partnership Opportunities</StepTitle>
-                <StepDescription>
-                  Watch brands compete to be involved in your content with the right offer. Review their bids and accept the right brand for your project.
-                </StepDescription>
-              </StepContent>
-              <StepVisual
-                initial={{ x: 50 }}
-                whileInView={{ x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                style={{
-                  transform: `translateY(${scrollY.get() * 0.08}px)`
-                }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/creator%20platform%20bidding%20newcollab.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvY3JlYXRvciBwbGF0Zm9ybSBiaWRkaW5nIG5ld2NvbGxhYi5wbmciLCJpYXQiOjE3NDg5NjE4MDMsImV4cCI6MTc4MDQ5NzgwM30.phXlWgOo0CJLMxAunr1R9oxjqqTDGSIkjdUwO39Q5k4"
-                  alt="Newcollab bidding dashboard with brands competing for creator content projects."
-                  loading="lazy"
-                  decoding="async"
-                  width="800"
-                  height="600"
-                  style={{ width: '100%', height: 'auto', imageRendering: 'crisp-edges' }}
-                />
-                <img 
-                  className="notification"
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/creator%20platform%20bidding.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvY3JlYXRvciBwbGF0Zm9ybSBiaWRkaW5nLnBuZyIsImlhdCI6MTc0ODk2MTgyMywiZXhwIjoxNzgwNDk3ODIzfQ.Qn2rb6RKO7Qp8QlcSC4EjZS2yUrznGvzbov44gsutXI"
-                  alt="Accept or reject a brand's bid on your content project."
-                  loading="lazy"
-                  decoding="async"
-                  width="500"
-                  height="300"
-                  style={{ 
-                    animationDelay: '1s',
-                    imageRendering: 'crisp-edges',
-                    transform: 'scale(0.85)',
-                    transformOrigin: 'top right',
-                    width: '100%',
-                    height: 'auto'
-                  }}
-                />
-              </StepVisual>
-            </StepContainer>
-
-            <StepContainer
-              className={activeStep === 2 ? 'active' : ''}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <StepContent
-                initial={{ x: -50 }}
-                whileInView={{ x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <StepNumber>3</StepNumber>
-                <StepTitle level={3}>Secure Payment & Partnership Acceptance</StepTitle>
-                <StepDescription>
-                  No more long negotiations — just accept brands that match your content and audience. Create your content, get paid securely through our trusted system and start building long-term relationships with brands you love.
-                </StepDescription>
-              </StepContent>
-              <StepVisual
-                initial={{ x: 50 }}
-                whileInView={{ x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                style={{
-                  transform: `translateY(${scrollY.get() * 0.12}px)`
-                }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/creator%20brand%20content%20platform%20bidding.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvY3JlYXRvciBicmFuZCBjb250ZW50IHBsYXRmb3JtIGJpZGRpbmcucG5nIiwiaWF0IjoxNzQ4OTYxODU3LCJleHAiOjE3ODA0OTc4NTd9.Fm8JuFCSjt64pQWNotHQhep8j9L8UnZwNEqLWj6QByY"
-                  alt="Receive offers from brands on Newcollab and accept the right one for authentic content and collaboration."
-                  loading="eager"
-                  decoding="async"
-                  style={{ imageRendering: 'crisp-edges' }}
-                />
-                <img 
-                  className="notification"
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ui_bid_accept_1.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWlfYmlkX2FjY2VwdF8xLnBuZyIsImlhdCI6MTc0NzIzNzQyMywiZXhwIjoxODQxODQ1NDIzfQ.pHzgFcYm0psBRK-MK9TLT0MDDV2n4VxgiiVaUB61eWw"
-                  alt="Creator quickly accepting a brand offer on Newcollab for fast collaboration."
-                  style={{ 
-                    animationDelay: '1s',
-                    imageRendering: 'crisp-edges',
-                    transform: 'scale(0.85)',
-                    transformOrigin: 'top right'
-                  }}
-                  loading="eager"
-                  decoding="async"
-                />
-              </StepVisual>
-            </StepContainer>
-          </HowItWorksContainer>
-          <StepsCTA>
-            <StyledButton
-              type="primary"
-              className="primary"
-              size="large"
-              href="/register"
-            >
-              Join Newcollab
-            </StyledButton>
-            <StepsCTAText>It's free! 🎉</StepsCTAText>
-          </StepsCTA>
-        </HowItWorksSection>
-
-        <FeaturesSection id="features">
-          <FeaturesContainer>
-            <SectionHeader>
-              <SectionTitle level={2}>Content Creator Platform Features & Tools</SectionTitle>
-              <SectionSubtitle>
-                Powerful features to help content creators attract more partnership opportunities and brands to find contents that stand out.
-              </SectionSubtitle>
-            </SectionHeader>
-            <FeaturesGrid>
-              <FeatureCard
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5 }}
-                bgColor={primaryBlue}
-                span="span 5"
-                height="span 1"
-              >
-                <FeatureIcon bgColor={primaryBlue}>
-                  <span role="img" aria-label="Auction">⚡</span>
-                </FeatureIcon>
-                <FeatureTitle>Content Monetization & Bidding System</FeatureTitle>
-                <FeatureDescription>
-                Post your content projects and let brands bid to sponsor them. Set your price, choose your platforms, and select the offer that fit with your values and audience.
-                </FeatureDescription>
-              </FeatureCard>
-
-              <FeatureCard
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                bgColor="#3B82F6"
-                span="span 7"
-                height="span 2"
-              >
-                <FeatureIcon bgColor="#3B82F6">
-                  <span role="img" aria-label="Bell">🔔</span>
-                </FeatureIcon>
-                <FeatureTitle>Brand Campaign & Partnership Invites</FeatureTitle>
-                <FeatureDescription>
-                No more cold outreach. Receive exclusive invites for collabs that fit your content, streamlining partnerships that feel authentic.
-                </FeatureDescription>
-              </FeatureCard>
-
-              <FeatureCard
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                bgColor="#8B5CF6"
-                span="span 4"
-                height="span 2"
-              >
-                <FeatureIcon bgColor="#8B5CF6">
-                  <span role="img" aria-label="Eye">👁️</span>
-                </FeatureIcon>
-                <FeatureTitle>Secure Content Collaboration & Approval Flow</FeatureTitle>
-                <FeatureDescription>
-                From submitting draft content to getting final approval, we are making Creators and Brands work seamlessly in one platform, with secure payments to seal the deal.
-                </FeatureDescription>
-              </FeatureCard>
-
-              <FeatureCard
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                bgColor={brightMagenta}
-                span="span 8"
-                height="span 1"
-              >
-                <FeatureIcon bgColor={brightMagenta}>
-                  <span role="img" aria-label="Messaging">💬</span>
-                </FeatureIcon>
-                <FeatureTitle>Real-time Brand Communication & Messaging</FeatureTitle>
-                <FeatureDescription>
-                  Communicate directly with brands through our secure messaging system. Share ideas and feedback in real-time.
-                </FeatureDescription>
-              </FeatureCard>
-
-              <FeatureCard
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                bgColor="#10B981"
-                span="span 6"
-                height="span 1"
-              >
-                <FeatureIcon bgColor="#10B981">
-                  <span role="img" aria-label="Payment">🔒</span>
-                </FeatureIcon>
-                <FeatureTitle>Secure Creator Payment & Transaction System</FeatureTitle>
-                <FeatureDescription>
-                  Once approved & posted get paid securely through our trusted payment system. No more chasing payments or dealing with payment delays. 
-                </FeatureDescription>
-              </FeatureCard>
-
-              <FeatureCard
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-                bgColor={warmOrange}
-                span="span 6"
-                height="span 2"
-              >
-                <FeatureIcon bgColor={warmOrange}>
-                  <span role="img" aria-label="Curated">✨</span>
-                </FeatureIcon>
-                <FeatureTitle>Verified Creator & Brand Network</FeatureTitle>
-                <FeatureDescription>
-                  Connect with verified creators and brands. Our curation ensures quality partnerships and authentic collaborations.
-                </FeatureDescription>
-              </FeatureCard>
-            </FeaturesGrid>
-          </FeaturesContainer>
-        </FeaturesSection>
-
-        <BlogSection>
-          <BlogContainer>
-            <SectionHeader>
-              <SectionTitle level={2}>Latest Creator Resources & Guides</SectionTitle>
-              <SectionSubtitle>
-                Discover proven strategies, brand lists, and step-by-step guides to grow your creator business and land your dream collaborations.
-              </SectionSubtitle>
-            </SectionHeader>
-            
-            {!postsLoading && featuredPosts.length > 0 && (
-              <BlogGrid>
-                {featuredPosts.map((post, index) => (
-                  <BlogCard
-                    key={post.slug}
-                    href={`/blog/${post.slug}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* BRAND DIRECTORY */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <DirectorySection id="brands">
+          <Container>
+            <SectionCenter>
+              <Eyebrow><EyebrowDot /> PR forms &amp; brand directory</Eyebrow>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.text, margin: '0 0 8px' }}>
+                500+ brands with open PR forms.<br />
+                <em style={{ color: colors.rose }}>Apply in one click.</em>
+              </h2>
+              <p style={{ fontSize: 16, color: colors.text2, margin: '0 0 12px' }}>
+                Direct PR application links, verified email contacts, and reply rates — filtered by your niche. Skip the Googling.
+              </p>
+              <p style={{ fontSize: 13, color: colors.text3, margin: 0 }}>
+                Looking for a specific brand? See the full{' '}
+                <a href="/directory" style={{ color: colors.rose, fontWeight: 600, textDecoration: 'none' }}>brand PR forms directory →</a>
+              </p>
+            </SectionCenter>
+            <DirectoryBox>
+              <FilterTabs>
+                {['all', 'beauty', 'fashion', 'skincare', 'food'].map(cat => (
+                  <FilterTab
+                    key={cat}
+                    $active={activeFilter === cat}
+                    onClick={() => setActiveFilter(cat)}
                   >
-                    <BlogImageWrapper>
-                      <BlogImage
-                        className="blog-image"
-                        src={post.image}
-                        alt={post.title}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </BlogImageWrapper>
-                    <BlogCardContent>
-                      {post.category && (
-                        <BlogCategory>{post.category}</BlogCategory>
-                      )}
-                      <BlogTitle>{post.title}</BlogTitle>
-                      {post.excerpt && (
-                        <BlogExcerpt>{post.excerpt}</BlogExcerpt>
-                      )}
-                      <BlogMeta>
-                        {post.readTime && (
-                          <BlogReadTime>
-                            <ClockCircleOutlined style={{ fontSize: '12px' }} />
-                            {post.readTime}
-                          </BlogReadTime>
-                        )}
-                        {post.date && (
-                          <span>{new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        )}
-                      </BlogMeta>
-                    </BlogCardContent>
-                  </BlogCard>
+                    {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </FilterTab>
                 ))}
-              </BlogGrid>
-            )}
+              </FilterTabs>
+              <BrandGrid>
+                {filteredBrands.map((brand, i) => (
+                  <BrandCard key={i}>
+                    <LandingBrandLogo brand={brand} />
+                    <BrandName>{brand.name}</BrandName>
+                    <BrandCat>{brand.catLabel} · {brand.replyTime}</BrandCat>
+                    <BrandMeta>
+                      <ReplyRate $hi={brand.hi}>{brand.replyRate}% reply</ReplyRate>
+                      <LockBtn onClick={() => window.location.href = '/register/creator'}>🔒 Sign up</LockBtn>
+                    </BrandMeta>
+                  </BrandCard>
+                ))}
+                <LockedCard>
+                  <div className="lock-icon">🔒</div>
+                  <div className="lock-title">492 more brands</div>
+                  <div className="lock-sub">Sign up free to unlock all</div>
+                  <BtnBlack href="/register/creator" style={{ padding: '10px 20px', fontSize: 13 }}>Get access →</BtnBlack>
+                </LockedCard>
+              </BrandGrid>
+              <DirectoryFooter>
+                <div className="count">Showing <strong>8 of 500+</strong> brands · Updated weekly</div>
+                <BtnBlack href="/register/creator" style={{ padding: '10px 20px', fontSize: 13 }}>Unlock all contacts →</BtnBlack>
+              </DirectoryFooter>
+            </DirectoryBox>
+          </Container>
+        </DirectorySection>
 
-            {postsLoading && (
-              <div style={{ textAlign: 'center', padding: '60px 0', color: midGray }}>
-                Loading resources...
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FEATURE 1: MEDIA KIT */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <FeatureSection $bg={colors.bg} id="features">
+          <Container>
+            <FeatureRow>
+              <FeatureText>
+                <FeatureTag>Auto Media Kit</FeatureTag>
+                <FeatureH3>Your media kit, generated automatically. Every pitch looks pro.</FeatureH3>
+                <FeatureP>Brands won't reply without one. newcollab builds your media kit from your profile — stats, audience, niche — and attaches it to every pitch automatically. No Canva. No design skills. Done in 30 seconds.</FeatureP>
+                <FeatureBullet>
+                  <FeatureBulletItem>Stats pulled live from your profile</FeatureBulletItem>
+                  <FeatureBulletItem>Audience age, niche, platform included</FeatureBulletItem>
+                  <FeatureBulletItem>Auto-attached to every AI pitch</FeatureBulletItem>
+                  <FeatureBulletItem>Always up to date — no manual edits</FeatureBulletItem>
+                </FeatureBullet>
+              </FeatureText>
+              <FeatureVisual>
+                <MockupCard>
+                  <MockupHeader>
+                    <MockupDots>
+                      <MockupDot $color="#FF5F57" />
+                      <MockupDot $color="#FFBD2E" />
+                      <MockupDot $color="#28CA41" />
+                    </MockupDots>
+                    <MockupTitle>My Media Kit — newcollab</MockupTitle>
+                  </MockupHeader>
+                  <MockupBody>
+                    <KitCard>
+                      <KitHeader>
+                        <KitAvatar>C</KitAvatar>
+                        <div>
+                          <KitName>carolstyle</KitName>
+                          <KitHandle>@carolstyle · Fashion & Lifestyle</KitHandle>
+                        </div>
+                      </KitHeader>
+                      <KitStats>
+                        <KitStat>
+                          <div className="val">17K</div>
+                          <div className="lbl">Followers</div>
+                        </KitStat>
+                        <KitStat>
+                          <div className="val">6.2%</div>
+                          <div className="lbl">Eng. Rate</div>
+                        </KitStat>
+                        <KitStat>
+                          <div className="val">18–34</div>
+                          <div className="lbl">Audience Age</div>
+                        </KitStat>
+                      </KitStats>
+                      <KitNiches>
+                        <KitNiche>Fashion</KitNiche>
+                        <KitNiche>Lifestyle</KitNiche>
+                        <KitNiche>Beauty</KitNiche>
+                      </KitNiches>
+                    </KitCard>
+                    <div style={{ marginTop: 12 }}>
+                      <KitAttachedBadge>
+                        <span>📎</span>
+                        <span>Auto-attached to your pitch email</span>
+                      </KitAttachedBadge>
+                    </div>
+                  </MockupBody>
+                </MockupCard>
+              </FeatureVisual>
+            </FeatureRow>
+          </Container>
+        </FeatureSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FEATURE 2: AI PITCH */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <FeatureSection $bg={colors.white}>
+          <Container>
+            <FeatureRow className="reverse">
+              <FeatureText>
+                <FeatureTag>AI Pitch Writer</FeatureTag>
+                <FeatureH3>Perfect pitch in 60 seconds. Send to 10 brands at once.</FeatureH3>
+                <FeatureP>AI writes a personalised email for each brand — their name, their niche, why you're the right fit. Media kit attaches automatically. Batch-pitch up to 10 brands in one session on Pro.</FeatureP>
+                <FeatureBullet>
+                  <FeatureBulletItem>Personalised per brand — not a generic template</FeatureBulletItem>
+                  <FeatureBulletItem>Media kit auto-attached every time</FeatureBulletItem>
+                  <FeatureBulletItem>Batch-pitch 10 brands in one session <TagPro>Pro</TagPro></FeatureBulletItem>
+                  <FeatureBulletItem>AI follow-up at day 7 <TagPro>Pro</TagPro></FeatureBulletItem>
+                </FeatureBullet>
+              </FeatureText>
+              <FeatureVisual>
+                <MockupCard>
+                  <MockupHeader>
+                    <MockupDots>
+                      <MockupDot $color="#FF5F57" />
+                      <MockupDot $color="#FFBD2E" />
+                      <MockupDot $color="#28CA41" />
+                    </MockupDots>
+                    <MockupTitle>AI Pitch Generator</MockupTitle>
+                  </MockupHeader>
+                  <MockupBody>
+                    <div style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 10, padding: 12, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <BrandLogoBlock $bg="#B5002D" style={{ width: 36, height: 36, margin: 0, fontSize: 11 }}>RS</BrandLogoBlock>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 800 }}>Rhode Skin</div>
+                        <div style={{ fontSize: 11, color: colors.green, fontWeight: 700 }}>52% reply rate</div>
+                      </div>
+                    </div>
+                    <div style={{ background: colors.white, border: `1.5px solid ${colors.black}`, borderRadius: 10, padding: 12, fontSize: 12, color: colors.text2, lineHeight: 1.6 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI-Generated Pitch</div>
+                      Hi Rhode Skin team,<br /><br />
+                      I'm <strong style={{ color: colors.text }}>@carolstyle</strong>, a fashion & beauty creator with <strong style={{ color: colors.text }}>17K followers</strong> (6.2% engagement). My audience is 85% female, 18–34 — a strong fit for your skincare launches...<br /><br />
+                      <span style={{ color: colors.text3, fontSize: 11 }}>Media kit attached for your review.</span>
+                    </div>
+                    <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                      <KitAttachedBadge style={{ flex: 1 }}>📎 Kit attached</KitAttachedBadge>
+                      <BtnBlack href="/register/creator" style={{ padding: '10px 18px', fontSize: 12 }}>Send →</BtnBlack>
+                    </div>
+                  </MockupBody>
+                </MockupCard>
+              </FeatureVisual>
+            </FeatureRow>
+          </Container>
+        </FeatureSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FEATURE 3: PIPELINE */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <FeatureSection $bg={colors.bg}>
+          <Container>
+            <FeatureRow>
+              <FeatureText>
+                <FeatureTag>PR Pipeline</FeatureTag>
+                <FeatureH3>Track every pitch. Follow up before it goes cold.</FeatureH3>
+                <FeatureP>Every brand you contact lives in your pipeline. We remind you to follow up at day 7 — when most brands respond. Never lose a warm lead again.</FeatureP>
+                <FeatureCallout>
+                  <em>Creators who follow up are 3× more likely to land the deal.</em> We make sure you never forget.
+                </FeatureCallout>
+                <FeatureBullet>
+                  <FeatureBulletItem>Stages: Saved → Waiting → Replied → Won</FeatureBulletItem>
+                  <FeatureBulletItem>Auto day-7 follow-up reminder</FeatureBulletItem>
+                  <FeatureBulletItem>Log replies, packages, $PR value <TagPro>Pro</TagPro></FeatureBulletItem>
+                </FeatureBullet>
+              </FeatureText>
+              <FeatureVisual>
+                <MockupCard>
+                  <MockupHeader>
+                    <MockupDots>
+                      <MockupDot $color="#FF5F57" />
+                      <MockupDot $color="#FFBD2E" />
+                      <MockupDot $color="#28CA41" />
+                    </MockupDots>
+                    <MockupTitle>My PR Pipeline</MockupTitle>
+                  </MockupHeader>
+                  <MockupBody>
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.amber, marginBottom: 8 }}>⚡ Action needed <span style={{ background: colors.amber, color: colors.white, padding: '2px 6px', borderRadius: 10, fontSize: 10, marginLeft: 4 }}>1</span></div>
+                      <div style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderLeft: `3px solid ${colors.amber}`, borderRadius: 10, padding: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <BrandLogoBlock $bg="#B5002D" style={{ width: 28, height: 28, margin: 0, fontSize: 9 }}>RS</BrandLogoBlock>
+                            <span style={{ fontWeight: 700, fontSize: 13 }}>Rhode Skin</span>
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: colors.amber, background: 'rgba(217, 119, 6, 0.1)', padding: '3px 8px', borderRadius: 6 }}>Waiting</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: colors.text3, marginBottom: 6 }}>Pitched 7 days ago</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: colors.amber }}>⏰ Time to follow up</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.green, marginBottom: 8 }}>✅ Replied <span style={{ background: colors.green, color: colors.white, padding: '2px 6px', borderRadius: 10, fontSize: 10, marginLeft: 4 }}>2</span></div>
+                      <div style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <BrandLogoBlock $bg="#2E7D4F" style={{ width: 28, height: 28, margin: 0, fontSize: 9 }}>AN</BrandLogoBlock>
+                            <span style={{ fontWeight: 700, fontSize: 13 }}>Anua</span>
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: colors.green }}>Replied ✓</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: colors.text3, marginTop: 4 }}>Package confirmed · coming in 5 days</div>
+                      </div>
+                    </div>
+                  </MockupBody>
+                </MockupCard>
+              </FeatureVisual>
+            </FeatureRow>
+          </Container>
+        </FeatureSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FEATURE 4: FOR YOU FEED */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <FeatureSection $bg={colors.white}>
+          <Container>
+            <FeatureRow className="reverse">
+              <FeatureText>
+                <FeatureTag>For You Feed</FeatureTag>
+                <FeatureH3>The right brands, delivered to you every week.</FeatureH3>
+                <FeatureP>Based on your niche, platform, and following — newcollab surfaces the brands most likely to reply to you right now. Hot this week. Seasonal campaigns. Brands that just responded to creators like you.</FeatureP>
+                <FeatureBullet>
+                  <FeatureBulletItem>Matched to your niche + follower count</FeatureBulletItem>
+                  <FeatureBulletItem>Seasonal alerts — pitch before everyone else</FeatureBulletItem>
+                  <FeatureBulletItem>Full personalised feed <TagPro>Pro</TagPro></FeatureBulletItem>
+                </FeatureBullet>
+              </FeatureText>
+              <FeatureVisual>
+                <MockupCard>
+                  <MockupHeader>
+                    <MockupDots>
+                      <MockupDot $color="#FF5F57" />
+                      <MockupDot $color="#FFBD2E" />
+                      <MockupDot $color="#28CA41" />
+                    </MockupDots>
+                    <MockupTitle>For You</MockupTitle>
+                  </MockupHeader>
+                  <MockupBody>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>🔥 Hot this week — Beauty</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: colors.bg, borderRadius: 10, padding: 10 }}>
+                        <BrandLogoBlock $bg="#B5002D" style={{ width: 36, height: 36, margin: 0, fontSize: 11 }}>RS</BrandLogoBlock>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700 }}>Rhode Skin</div>
+                          <div style={{ fontSize: 11, color: colors.text3 }}>Skincare · 52% reply rate</div>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', padding: '4px 8px', borderRadius: 6 }}>🔥 Hot</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: colors.bg, borderRadius: 10, padding: 10 }}>
+                        <BrandLogoBlock $bg="#2E7D4F" style={{ width: 36, height: 36, margin: 0, fontSize: 11 }}>AN</BrandLogoBlock>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700 }}>Anua</div>
+                          <div style={{ fontSize: 11, color: colors.text3 }}>K-Beauty · 38% reply rate</div>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(124, 58, 237, 0.1)', color: colors.violet, padding: '4px 8px', borderRadius: 6 }}>✨ Match</span>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 14, background: `linear-gradient(135deg, ${colors.roseLight}, #F5F3FF)`, borderRadius: 10, padding: 12, textAlign: 'center', fontSize: 12, fontWeight: 600, color: colors.text2 }}>
+                      🔒 5 more matches · <a href="/register/creator" style={{ color: colors.rose, fontWeight: 700, textDecoration: 'none' }}>Upgrade to Pro →</a>
+                    </div>
+                  </MockupBody>
+                </MockupCard>
+              </FeatureVisual>
+            </FeatureRow>
+          </Container>
+        </FeatureSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* SOCIAL PROOF */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <ProofSection>
+          <Container>
+            <SectionCenter>
+              <Eyebrow><EyebrowDot /> Creator stories</Eyebrow>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.text, margin: 0 }}>
+                Real results. Real creators.<br />
+                <em style={{ color: colors.rose }}>Just like you.</em>
+              </h2>
+            </SectionCenter>
+
+            <NotifWall>
+              <NotifPill $delay="0s">
+                <span className="notif-icon">📦</span>
+                <span><strong>@carolstyle</strong> received a Rhode Skin PR package <span>· 2 hours ago</span></span>
+              </NotifPill>
+              <NotifPill $delay="0.1s">
+                <span className="notif-icon">💬</span>
+                <span><strong>@glowwith_m</strong> got a reply from Anua <span>· 5 hours ago</span></span>
+              </NotifPill>
+              <NotifPill $delay="0.2s">
+                <span className="notif-icon">✍️</span>
+                <span><strong>@sarahlooks</strong> pitched 8 brands in one afternoon <span>· today</span></span>
+              </NotifPill>
+              <NotifPill $delay="0.3s">
+                <span className="notif-icon">🎉</span>
+                <span><strong>@zionne019</strong> landed her first brand deal — 5.3K followers <span>· yesterday</span></span>
+              </NotifPill>
+            </NotifWall>
+
+            <StatsRow>
+              <StatCard $color={colors.rose}>
+                <div className="stat-num">900+</div>
+                <div className="stat-lbl">Active creators</div>
+              </StatCard>
+              <StatCard>
+                <div className="stat-num">500+</div>
+                <div className="stat-lbl">Brand PR contacts</div>
+              </StatCard>
+              <StatCard $color={colors.green}>
+                <div className="stat-num">52%</div>
+                <div className="stat-lbl">Top reply rate</div>
+              </StatCard>
+              <StatCard $color={colors.violet}>
+                <div className="stat-num">363</div>
+                <div className="stat-lbl">Pitches sent this month</div>
+              </StatCard>
+            </StatsRow>
+
+            <TestimonialGrid>
+              <TestimonialCard>
+                <TestimonialCreator>
+                  <TestimonialAvatar $bg={colors.rose}>C</TestimonialAvatar>
+                  <TestimonialInfo>
+                    <div className="name">@carolstyle</div>
+                    <div className="meta">17K · Fashion · London</div>
+                  </TestimonialInfo>
+                </TestimonialCreator>
+                <TestimonialStars>★★★★★</TestimonialStars>
+                <TestimonialResult>
+                  <span>📦</span>
+                  Landed Rhode Skin within 3 days. The auto media kit made me look so professional — they actually commented on it.
+                </TestimonialResult>
+                <TestimonialQuote>"I'd spent months DMing brands on IG. Nothing. This changed everything."</TestimonialQuote>
+              </TestimonialCard>
+              <TestimonialCard>
+                <TestimonialCreator>
+                  <TestimonialAvatar $bg={colors.violet}>M</TestimonialAvatar>
+                  <TestimonialInfo>
+                    <div className="name">@glowwith_m</div>
+                    <div className="meta">8.9K · Skincare · Paris</div>
+                  </TestimonialInfo>
+                </TestimonialCreator>
+                <TestimonialStars>★★★★★</TestimonialStars>
+                <TestimonialResult>
+                  <span>💬</span>
+                  Pitched 6 brands in one afternoon. 2 replied in 48 hours. The pipeline keeps me on top of everything.
+                </TestimonialResult>
+                <TestimonialQuote>"I finally feel like a professional creator, not just a girl sending emails into the void."</TestimonialQuote>
+              </TestimonialCard>
+              <TestimonialCard>
+                <TestimonialCreator>
+                  <TestimonialAvatar $bg={colors.green}>Z</TestimonialAvatar>
+                  <TestimonialInfo>
+                    <div className="name">@zionne019</div>
+                    <div className="meta">5.3K · Beauty · NYC</div>
+                  </TestimonialInfo>
+                </TestimonialCreator>
+                <TestimonialStars>★★★★★</TestimonialStars>
+                <TestimonialResult>
+                  <span>🎉</span>
+                  First PR package arrived 2 weeks after signing up. Found Anua in the For You feed — they actively wanted micro creators.
+                </TestimonialResult>
+                <TestimonialQuote>"I thought you needed 100K followers. I had 5K and it still worked."</TestimonialQuote>
+              </TestimonialCard>
+            </TestimonialGrid>
+          </Container>
+        </ProofSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* HOW IT WORKS */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <HowSection id="how-it-works">
+          <Container>
+            <SectionCenter>
+              <Eyebrow><EyebrowDot /> Simple process</Eyebrow>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.text, margin: 0 }}>
+                Your first brand deal<br />
+                <em style={{ color: colors.rose }}>in 3 steps.</em>
+              </h2>
+            </SectionCenter>
+            <HowSteps>
+              <HowStep>
+                <div className="how-num">1</div>
+                <h3>Find your brands</h3>
+                <p>Browse 500+ PR contacts by niche and reply speed. Or check your For You feed — matched brands, every week. Save the ones you want to pitch.</p>
+              </HowStep>
+              <HowStep>
+                <div className="how-num">2</div>
+                <h3>Send a complete pitch</h3>
+                <p>AI writes a personalised email. Media kit auto-attached. Hit send. Pitch one brand — or ten — in the same session.</p>
+              </HowStep>
+              <HowStep>
+                <div className="how-num">3</div>
+                <h3>Track, follow up, win</h3>
+                <p>Your pipeline tracks everything. Day-7 reminder fires automatically. Brand replies? Log it. Package ships? Mark it won.</p>
+              </HowStep>
+            </HowSteps>
+            <HowCTA>
+              <BtnBlack href="/register/creator">Start landing brand deals →</BtnBlack>
+              <div className="sub">Free plan · No credit card · Ready in 2 minutes</div>
+            </HowCTA>
+          </Container>
+        </HowSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* PRICING */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <PricingSection id="pricing">
+          <Container>
+            <SectionCenter>
+              <Eyebrow><EyebrowDot /> Pricing</Eyebrow>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.text, margin: '0 0 8px' }}>
+                Free to start.<br />
+                <em style={{ color: colors.rose }}>Upgrade when you're ready.</em>
+              </h2>
+              <p style={{ fontSize: 16, color: colors.text2, margin: 0 }}>Most creators land their first deal on the free plan.</p>
+            </SectionCenter>
+            <PricingGrid>
+              <PricingCard>
+                <PricingTier>Free</PricingTier>
+                <PricingPrice><sup>$</sup>0</PricingPrice>
+                <PricingPriceSub>Forever free · No credit card</PricingPriceSub>
+                <PricingFeatures>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Brand directory — full access</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> For You feed — top 3 brands/week</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> AI pitch writer — 3 per month</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Auto media kit</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> PR Pipeline</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">Batch pitching</span></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">AI follow-up writer</span></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">$PR Value dashboard</span></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">Full For You feed</span></PricingFeatureItem>
+                </PricingFeatures>
+                <PricingBtn className="outline" href="/register/creator">Get started free</PricingBtn>
+              </PricingCard>
+              <PricingCard $featured className="featured">
+                <PricingBadge>Most popular</PricingBadge>
+                <PricingTier $rose>Pro</PricingTier>
+                <PricingPrice className="gradient"><sup>$</sup>12</PricingPrice>
+                <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
+                <PricingFeatures>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Unlimited AI pitches</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong> — 10 brands at once</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>AI follow-up writer</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Full For You feed</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Priority brand alerts</PricingFeatureItem>
+                </PricingFeatures>
+                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro — $12/mo</PricingBtn>
+                <PricingNote>Cancel anytime · No contracts</PricingNote>
+              </PricingCard>
+            </PricingGrid>
+          </Container>
+        </PricingSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FAQ */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <FAQSection>
+          <Container>
+            <SectionCenter>
+              <Eyebrow><EyebrowDot /> FAQ</Eyebrow>
+              <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.text, margin: 0 }}>Quick answers.</h2>
+            </SectionCenter>
+            <FAQList>
+              <FAQItem>
+                <FAQSummary>
+                  How do I get my first brand deal as a small creator?
+                  <span className="faq-icon">+</span>
+                </FAQSummary>
+                <FAQAnswer>
+                  Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks — the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start.
+                </FAQAnswer>
+              </FAQItem>
+              <FAQItem>
+                <FAQSummary>
+                  Do I need a media kit to pitch brands?
+                  <span className="faq-icon">+</span>
+                </FAQSummary>
+                <FAQAnswer>
+                  Yes — it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed.
+                </FAQAnswer>
+              </FAQItem>
+              <FAQItem>
+                <FAQSummary>
+                  How many followers do you need to work with brands?
+                  <span className="faq-icon">+</span>
+                </FAQSummary>
+                <FAQAnswer>
+                  No minimum. 63% of brands prefer working with nano and micro creators (1K–50K followers) — engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities.
+                </FAQAnswer>
+              </FAQItem>
+              <FAQItem>
+                <FAQSummary>
+                  What is a PR package?
+                  <span className="faq-icon">+</span>
+                </FAQSummary>
+                <FAQAnswer>
+                  A PR package is when a brand sends you their products for free in exchange for content on your channels — a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply.
+                </FAQAnswer>
+              </FAQItem>
+              <FAQItem>
+                <FAQSummary>
+                  Where can I find PR forms for brands?
+                  <span className="faq-icon">+</span>
+                </FAQSummary>
+                <FAQAnswer>
+                  newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. Filter by niche and send an AI pitch in one click — no hunting for contact emails or application URLs. See the full{' '}
+                  <a href="/directory" style={{ color: colors.rose, textDecoration: 'none', fontWeight: 600 }}>PR forms directory</a>.
+                </FAQAnswer>
+              </FAQItem>
+              <FAQItem>
+                <FAQSummary>
+                  What is a brand PR application form?
+                  <span className="faq-icon">+</span>
+                </FAQSummary>
+                <FAQAnswer>
+                  A brand PR application form is a public submission page where creators apply to receive gifted products in exchange for social media content. Brands use these forms to vet creators by niche, follower count, and engagement rate. newcollab lists brands with open PR forms and lets you apply with an AI-generated pitch and auto-attached media kit.
+                </FAQAnswer>
+              </FAQItem>
+              <FAQItem>
+                <FAQSummary>
+                  Is newcollab free?
+                  <span className="faq-icon">+</span>
+                </FAQSummary>
+                <FAQAnswer>
+                  Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
+                </FAQAnswer>
+              </FAQItem>
+            </FAQList>
+          </Container>
+        </FAQSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FINAL CTA */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <FinalCTASection>
+          <ContainerSm>
+            <Eyebrow style={{ color: colors.roseMid, justifyContent: 'center' }}>
+              <EyebrowDot style={{ background: colors.roseMid }} /> Start today
+            </Eyebrow>
+            <FinalH2>
+              Your first brand deal<br />
+              is one pitch <em>away.</em>
+            </FinalH2>
+            <FinalSubline>Join 900+ creators who stopped guessing — and started getting brand deals.</FinalSubline>
+            <FinalCTAActions>
+              <BtnRose href="/register/creator">Start for free — no credit card →</BtnRose>
+              <FinalTrust>Free plan · 3 AI pitches · Media kit included · Pro cancel anytime</FinalTrust>
+            </FinalCTAActions>
+          </ContainerSm>
+        </FinalCTASection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FOOTER */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <Footer>
+          <FooterInner>
+            <FooterTop>
+              <div>
+                <FooterLogo>
+                  <img src="/newcollab-logo.png" alt="newcollab" />
+                </FooterLogo>
+                <FooterDesc>The complete brand outreach tool for nano and micro creators.</FooterDesc>
               </div>
-            )}
-
-            {!postsLoading && featuredPosts.length > 0 && (
-              <ViewAllButton
-                className="secondary"
-                href="/blog"
-                size="large"
-              >
-                View All Articles
-              </ViewAllButton>
-            )}
-          </BlogContainer>
-        </BlogSection>
-
-        <TrustSignalsSection>
-          <SectionHeader>
-            <SectionTitle level={2}>Trusted by Leading Creators & Brands ✨</SectionTitle>
-            <SectionSubtitle>
-              Join a thriving community of innovative creators and forward-thinking brands shaping the future of content 🚀
-            </SectionSubtitle>
-          </SectionHeader>
-          
-          <StatsContainer>
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <StatNumber>1.5K+</StatNumber>
-              <StatLabel>Active Creators 👥</StatLabel>
-            </StatCard>
-            
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <StatNumber>€200K+</StatNumber>
-              <StatLabel>Creator Revenue 💎</StatLabel>
-            </StatCard>
-            
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <StatNumber>500+</StatNumber>
-              <StatLabel>Brand Partners 🤝</StatLabel>
-            </StatCard>
-            
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <StatNumber>98%</StatNumber>
-              <StatLabel>Creator Satisfaction ⭐</StatLabel>
-            </StatCard>
-          </StatsContainer>
-
-          <PaymentBadgesContainer>
-            <PaymentBadge>
-              <img 
-                src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/stripe%20secure%20payment.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvc3RyaXBlIHNlY3VyZSBwYXltZW50LnBuZyIsImlhdCI6MTc0NzMxNTIyMiwiZXhwIjoxNzc4ODUxMjIyfQ.Vnv2vL0bhrKmmw5ZK3Ss3NxFZ5KN-nseUXK8gUw2-vQ" 
-                alt="Stripe secure payment badge"
-              />
-              <span>Enterprise-Grade Security 🔒</span>
-            </PaymentBadge>
-            <PaymentBadge>
-              <img 
-                src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/paypal%20secure%20payment.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvcGF5cGFsIHNlY3VyZSBwYXltZW50LnBuZyIsImlhdCI6MTc0NzMxNTIzMiwiZXhwIjoxNzc4ODUxMjMyfQ.jhiSkFkUoAdUtsboOBiJxPUbBLaC6EdnWJzpAbVGLt4" 
-                alt="PayPal secure payment badge"
-              />
-              <span>Protected Transactions 🛡️</span>
-            </PaymentBadge>
-          </PaymentBadgesContainer>
-        </TrustSignalsSection>
-
-        <BrandsSection>
-          <BrandsContainer>
-            <SectionHeader>
-              <SectionTitle level={2}>Premium Brand Partnerships & Collaborations</SectionTitle>
-              <SectionSubtitle>
-                Connect with brands from all sizes eager to invest in quality and authentic content.
-              </SectionSubtitle>
-            </SectionHeader>
-            <BrandsGrid>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/Xiaomi-logo-content.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvWGlhb21pLWxvZ28tY29udGVudC5qcGciLCJpYXQiOjE3NDczMDE0MjYsImV4cCI6MTg0MTkwOTQyNn0.kTPEyB-QE5a-8KH2MLszZ2uqCcA6BtVKYeMnpMSoEZg"
-                  alt="Xiaomi brand logo on Newcollab platform - Tech and lifestyle brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/Lacoste-logo-content2.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvTGFjb3N0ZS1sb2dvLWNvbnRlbnQyLnBuZyIsImlhdCI6MTc0NzMwMjU2OCwiZXhwIjoxNzc4ODM4NTY4fQ.AowyGfPbNyUeh8FIkVl97CNfghBhExQuN-hVWupy1d8"
-                  alt="Lacoste brand logo on Newcollab platform - Fashion and lifestyle brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/adidas-logo-1.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvYWRpZGFzLWxvZ28tMS5wbmciLCJpYXQiOjE3NDczMDI1ODMsImV4cCI6MTc3ODgzODU4M30.HpNH9-vaCaxpT51tVHXm3V5m_S96eyp5XSgcYc10yz4"
-                  alt="Adidas brand logo on Newcollab platform - Sports and lifestyle brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/microsoft-logo-content2.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbWljcm9zb2Z0LWxvZ28tY29udGVudDIucG5nIiwiaWF0IjoxNzQ3MzAyNzIzLCJleHAiOjE3Nzg4Mzg3MjN9.KRJ6iWrjgUO-a07XyIqPVTxuHBANmgCwYaCqf22l7aY"
-                  alt="Microsoft brand logo on Newcollab platform - Technology and innovation brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/nike-logo-content.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmlrZS1sb2dvLWNvbnRlbnQuanBnIiwiaWF0IjoxNzQ3MzAxNDc3LCJleHAiOjE3Nzg4Mzc0Nzd9.8TNBtA4qRXSxObTiXkiYibfbhYbTNmHrFAH_OCRVTcc"
-                  alt="Nike brand logo on Newcollab platform - Sports and lifestyle brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/apple-logo-content1.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvYXBwbGUtbG9nby1jb250ZW50MS5wbmciLCJpYXQiOjE3NDczMDI3NDYsImV4cCI6MTc3ODgzODc0Nn0.fXq3bmAS0AQhWoGy_4u2zpb-jWzSpesd8nclHDyZBwI"
-                  alt="Apple brand logo on Newcollab platform - Technology and innovation brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/amazon-logo-content1.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvYW1hem9uLWxvZ28tY29udGVudDEucG5nIiwiaWF0IjoxNzQ3MzAyNzYyLCJleHAiOjE3Nzg4Mzg3NjJ9.84S-nlSOTrFFAVKBxlRpA5cESpABMBxTXrYrrpZL2ps"
-                  alt="Amazon brand logo on Newcollab platform - E-commerce and technology brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-              <BrandLogo
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-              >
-                <img 
-                  src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/Asos-logo-content.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvQXNvcy1sb2dvLWNvbnRlbnQucG5nIiwiaWF0IjoxNzQ3MzAxNTA5LCJleHAiOjE3Nzg4Mzc1MDl9.HHs2fKdjfI-FvTUJkrTJUk9703tfDWrZkE8egiyfjAM"
-                  alt="ASOS brand logo on Newcollab platform - Fashion and lifestyle brand partner"
-                  loading="lazy"
-                  decoding="async"
-                  width="120"
-                  height="120"
-                  style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-                />
-              </BrandLogo>
-            </BrandsGrid>
-          </BrandsContainer>
-        </BrandsSection>
-
-        <TestimonialSection>
-          <SectionHeader>
-            <SectionTitle level={2}>Creator Success Stories & Brand Partnerships</SectionTitle>
-            <SectionSubtitle>
-              They are using Newcollab and signed their first partnerships with amazing brands.
-            </SectionSubtitle>
-          </SectionHeader>
-          <TestimonialGrid gutter={[48, 48]} justify="center">
-            <TestimonialCard xs={24} sm={12}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <TestimonialAvatar>
-                  <img 
-                    src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/@justavatar.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvQGp1c3RhdmF0YXIucG5nIiwiaWF0IjoxNzQ3MzA1MDQ2LCJleHAiOjE3Nzg4NDEwNDZ9.hMDrqPvugJ8Kr4HI723GwHZvV2v4rAHuA3tl5q1lds4" 
-                    alt="Mia K., TikTok creator testimonial on Newcollab - Lifestyle content creator"
-                    loading="lazy"
-                    decoding="async"
-                    width="64"
-                    height="64"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </TestimonialAvatar>
-                <TestimonialText>
-                  Newcollab made monetizing my TikTok content so easy. I posted a project, got multiple brand bids in days, and doubled my earnings!
-                </TestimonialText>
-                <TestimonialAuthor>@justlivingit</TestimonialAuthor>
-              </motion.div>
-            </TestimonialCard>
-            <TestimonialCard xs={24} sm={12}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <TestimonialAvatar>
-                  <img 
-                    src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/@fitspace.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJuZXdjb2xsYWIvQGZpdHNwYWNlLnBuZyIsImlhdCI6MTc0NzMwNTA1NCwiZXhwIjoxNzc4ODQxMDU0fQ.RdDnWE33Ak8kf7TqFmzuLB7vqly6usvKvC6ip8wSXtM" 
-                    alt="Alex M., YouTube creator testimonial on Newcollab - Fitness and wellness content creator"
-                    loading="lazy"
-                    decoding="async"
-                    width="64"
-                    height="64"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </TestimonialAvatar>
-                <TestimonialText>
-                  The campaign invites I get on Newcollab are tailored to my YouTube audience. I found my 1st brand collab on the platform and it helped me kickstart my brand collab journey.
-                </TestimonialText>
-                <TestimonialAuthor>@fitspace_ny</TestimonialAuthor>
-              </motion.div>
-            </TestimonialCard>
-          </TestimonialGrid>
-        </TestimonialSection>
-
-        <CTASection>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <CTATitle level={2}>Start Your Creator Journey & Secure Brand Partnerships</CTATitle>
-            <div>
-              <StyledButton
-                type="primary"
-                className="primary"
-                size="large"
-                href="/register/creator"
-              >
-                Join as Creator
-              </StyledButton>
-              <StyledButton
-                className="secondary"
-                size="large"
-                href="/register/brand"
-              >
-                Partner as Brand
-              </StyledButton>
-            </div>
-          </motion.div>
-        </CTASection>
-      </Container>
-
-      <Suspense fallback={null}>
-        {showCookieSettings && <CookieSettings onClose={() => setShowCookieSettings(false)} />}
-      </Suspense>
+              <div>
+                <FooterColTitle>Product</FooterColTitle>
+                <FooterLinks>
+                  <a href="/directory">Brand Directory</a>
+                  <a href="/register/creator">AI Pitch Writer</a>
+                  <a href="/register/creator">PR Pipeline</a>
+                  <a href="/register/creator">For You Feed</a>
+                  <a href="/register/creator">Media Kit Builder</a>
+                </FooterLinks>
+              </div>
+              <div>
+                <FooterColTitle>Company</FooterColTitle>
+                <FooterLinks>
+                  <a href="/about">About</a>
+                  <a href="/blog">Blog</a>
+                  <a href="#pricing">Pricing</a>
+                  <a href="mailto:hello@newcollab.co">Contact</a>
+                </FooterLinks>
+              </div>
+              <div>
+                <FooterColTitle>Guides</FooterColTitle>
+                <FooterLinks>
+                  <a href="/blog/ultimate-2026-directory-brands-with-open-pr-application-forms">PR forms for brands</a>
+                  <a href="/blog/how-to-get-brand-deals">How to get brand deals</a>
+                  <a href="/blog/media-kit-guide">Media kit guide</a>
+                  <a href="/blog/pitch-email-templates">Pitch email templates</a>
+                  <a href="/blog/micro-influencer-tips">Micro creator tips</a>
+                </FooterLinks>
+              </div>
+            </FooterTop>
+            <FooterBottom>
+              <FooterCopy>© 2026 newcollab.co · All rights reserved</FooterCopy>
+              <FooterSocials>
+                <a href="https://www.linkedin.com/company/newcollab/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                  <FaLinkedin />
+                </a>
+                <a href="https://x.com/newcollab_" target="_blank" rel="noopener noreferrer" aria-label="X">
+                  <FaXTwitter />
+                </a>
+                <a href="https://www.instagram.com/newcollab.co/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <FaInstagram />
+                </a>
+                <a href="https://www.tiktok.com/@newcollabco" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                  <FaTiktok />
+                </a>
+              </FooterSocials>
+              <FooterBottomLinks>
+                <a href="/privacy-policy">Privacy</a>
+                <a href="/terms-of-service">Terms</a>
+              </FooterBottomLinks>
+            </FooterBottom>
+          </FooterInner>
+        </Footer>
+      </PageContainer>
     </>
   );
 };
 
-export default React.memo(LandingPage);
+export default LandingPage;
