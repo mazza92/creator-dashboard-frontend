@@ -33,7 +33,6 @@ import PaymentSuccess from './PaymentSuccess';
 import PaymentFailed from './PaymentFailed';
 import SponsorOpportunities from './components/SponsorOpportunities';
 import SponsorOffers from './creator-portal/SponsorOffers';
-// eslint-disable-next-line no-unused-vars
 import LandingPage from './cra-pages/LandingPage';
 import AboutPage from './cra-pages/AboutPage';
 // Blog routes - Next.js has /app/blog, but keep CRA routes for dev/fallback
@@ -49,6 +48,7 @@ import LandingPageLayout from './Layouts/LandingPageLayout';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 // Homepage - Next.js has /app/page.js, but keep CRA route for development and as fallback
+// eslint-disable-next-line no-unused-vars
 import Founding50 from './cra-pages/Founding50';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
@@ -434,7 +434,7 @@ function AppContent() {
             />
 
             {/* Homepage - Next.js handles in production, but keep CRA route for dev/fallback */}
-            <Route path='/' element={<Founding50 />} />
+            <Route path='/' element={<LandingPageLayout hideFooter><LandingPage /></LandingPageLayout>} />
 
             {/* Brand dashboard routes with layout */}
             <Route

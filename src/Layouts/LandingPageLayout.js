@@ -7,8 +7,8 @@ import { Helmet } from 'react-helmet-async';
 // Logo now uses /logo.png from public folder
 // eslint-disable-next-line no-unused-vars
 import Header from '../components/Header';
-import { FaLinkedin, FaTwitter, FaInstagram } from 'react-icons/fa';
-import { FaTiktok } from 'react-icons/fa6';
+import { FaLinkedin, FaInstagram } from 'react-icons/fa';
+import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 import CookieSettings from '../components/CookieSettings';
 import { tokens } from '../theme/tokens';
 
@@ -125,64 +125,31 @@ const ContentContainer = styled.div`
 const ContentWrapper = styled.main`
   background: transparent;
   width: 100%;
-  max-width: ${props => props.$isLandingPage ? '1200px' : '100%'};
-  margin: 0 auto;
-  padding: ${props => props.$isLandingPage ? '0 24px' : '0'};
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   position: relative;
-
-  @media (max-width: 768px) {
-    padding: ${props => props.$isLandingPage ? '0 16px' : '0'};
-  }
 `;
 
 const LogoContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
   margin-left: 48px;
   text-decoration: none;
 
   @media (max-width: 768px) {
     margin-left: 24px;
-    gap: 8px;
   }
 `;
 
-const LogoMark = styled.div`
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+const LogoImg = styled.img`
+  height: 30px;
+  width: auto;
+  display: block;
 
   @media (max-width: 768px) {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-  }
-`;
-
-const LogoWordmark = styled.span`
-  font-size: 18px;
-  font-weight: 800;
-  color: ${tokens.textPrimary};
-  letter-spacing: -0.5px;
-  font-family: 'Inter', sans-serif;
-
-  span {
-    color: ${tokens.primary};
-    font-weight: 900;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 16px;
+    height: 26px;
   }
 `;
 
@@ -209,6 +176,40 @@ const NavLink = styled(Link)`
   border-radius: ${tokens.radiusBtn};
   background: transparent;
   position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: ${tokens.primary};
+    transition: all 0.2s ease;
+    transform: translateX(-50%);
+    border-radius: 1px;
+  }
+
+  &:hover {
+    color: ${props => props.$isSignupPage ? '#ffffff' : tokens.primary};
+
+    &::after {
+      width: 60%;
+    }
+  }
+`;
+
+const HashNavLink = styled.a`
+  color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: ${tokens.radiusBtn};
+  background: transparent;
+  position: relative;
+  cursor: pointer;
 
   &::after {
     content: '';
@@ -379,6 +380,22 @@ const MobileNavLink = styled(Link)`
   }
 `;
 
+const MobileHashNavLink = styled.a`
+  color: ${tokens.textPrimary};
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 14px 0;
+  border-bottom: 1px solid ${tokens.border};
+  background: transparent;
+  cursor: pointer;
+  display: block;
+
+  &:hover {
+    color: ${tokens.primary};
+  }
+`;
+
 const MobileAuthButtons = styled.div`
   display: flex;
   flex-direction: column;
@@ -488,7 +505,7 @@ const SocialIcon = styled.div`
   }
 `;
 
-export default function LandingPageLayout({ hideHeader, children, canonicalUrl: customCanonicalUrl }) {
+export default function LandingPageLayout({ hideHeader, hideFooter, children, canonicalUrl: customCanonicalUrl }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -552,7 +569,6 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // eslint-disable-next-line no-unused-vars
   const handleNavClick = (hash) => {
     if (location.pathname !== '/') {
       navigate('/');
@@ -606,18 +622,15 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
         <HeaderWrapper $isMobile={isMobile} $isScrolled={isScrolled}>
           <Link to="/" style={{ textDecoration: 'none' }}>
             <LogoContainer>
-              <LogoMark>
-                <img src="/logo.png" alt="NewCollab" />
-              </LogoMark>
-              <LogoWordmark>new<span>collab</span></LogoWordmark>
+              <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
             </LogoContainer>
           </Link>
           <NavLinks>
-            <NavLink to="/marketplace" $isSignupPage={isTransparentHeader}>Marketplace</NavLink>
-            <NavLink to="/directory" $isSignupPage={isTransparentHeader}>Directory</NavLink>
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('brands')}>Brands</HashNavLink>
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
+            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
             <NavLink to="/about" $isSignupPage={isTransparentHeader}>About</NavLink>
-            <NavLink to="/blog" $isSignupPage={isTransparentHeader}>Blog</NavLink>
-            <NavLink to="/contact" $isSignupPage={isTransparentHeader}>Contact</NavLink>
           </NavLinks>
           <AuthButtons>
             <LoginButton to="/login" $isSignupPage={isTransparentHeader}>Log in</LoginButton>
@@ -649,10 +662,7 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
         <MobileMenuHeader>
           <Link to="/" onClick={closeMobileMenu} style={{ textDecoration: 'none' }}>
             <LogoContainer style={{ marginLeft: 0 }}>
-              <LogoMark>
-                <img src="/logo.png" alt="NewCollab" />
-              </LogoMark>
-              <LogoWordmark>new<span>collab</span></LogoWordmark>
+              <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
             </LogoContainer>
           </Link>
           <MobileMenuButton
@@ -662,17 +672,20 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
           />
         </MobileMenuHeader>
         <MobileNavLinks>
-          <MobileNavLink to="/marketplace" onClick={closeMobileMenu}>
-            Marketplace
-          </MobileNavLink>
-          <MobileNavLink to="/directory" onClick={closeMobileMenu}>
-            Directory
-          </MobileNavLink>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
+            Features
+          </MobileHashNavLink>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('brands'); }}>
+            Brands
+          </MobileHashNavLink>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('how-it-works'); }}>
+            How It Works
+          </MobileHashNavLink>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('pricing'); }}>
+            Pricing
+          </MobileHashNavLink>
           <MobileNavLink to="/about" onClick={closeMobileMenu}>
             About
-          </MobileNavLink>
-          <MobileNavLink to="/blog" onClick={closeMobileMenu}>
-            Blog
           </MobileNavLink>
           <MobileNavLink to="/contact" onClick={closeMobileMenu}>
             Contact
@@ -687,7 +700,7 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
           </SignupButton>
         </MobileAuthButtons>
       </MobileMenu>
-      <Footer>
+      {!hideFooter && <Footer>
         <FooterLinks>
           <FooterLink href="/about">About us</FooterLink>
           <FooterLink href="/blog">Blog</FooterLink>
@@ -703,8 +716,8 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
             </a>
           </SocialIcon>
           <SocialIcon>
-            <a href="https://x.com/newcollab_" target="_blank" rel="noopener noreferrer">
-              <FaTwitter />
+            <a href="https://x.com/newcollab_" target="_blank" rel="noopener noreferrer" aria-label="X">
+              <FaXTwitter />
             </a>
           </SocialIcon>
           <SocialIcon>
@@ -719,7 +732,7 @@ export default function LandingPageLayout({ hideHeader, children, canonicalUrl: 
           </SocialIcon>
         </div>
         <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
-      </Footer>
+      </Footer>}
       <CookieSettings 
         isVisible={showCookieSettings}
         onClose={() => setShowCookieSettings(false)}

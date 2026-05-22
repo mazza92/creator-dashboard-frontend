@@ -119,6 +119,9 @@ const AdminReports = () => {
   };
 
   const handleSendNudge = async (user) => {
+    // Mark as sending immediately for instant UI feedback
+    setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'sending' }));
+
     try {
       const response = await api.post('/api/admin/reports/send-nudge', {
         creator_id: user.creator_id,
@@ -132,14 +135,23 @@ const AdminReports = () => {
         setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'cooldown' }));
         message.warning(response.data.message || 'User was emailed recently');
       } else if (response.data.reason === 'smtp_not_configured') {
+        setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'default' }));
         message.info('Email service not configured - check SMTP env vars');
       } else {
+        setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'default' }));
         message.error(response.data.message || 'Failed to send nudge');
       }
     } catch (error) {
+      setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'default' }));
       message.error('Failed to send nudge');
     }
   };
+
+  // Filter out users who have been successfully nudged this session
+  const visibleAtLimitUsers = data?.at_limit_users?.filter(
+    user => nudgeSent[user.creator_id] !== 'sent'
+  ) || [];
+  const nudgedCount = Object.values(nudgeSent).filter(s => s === 'sent').length;
 
   // Sparkline component (for health metrics with daily objects)
   const Sparkline = ({ data, color = 'black', isToday = false }) => {
@@ -285,17 +297,24 @@ const AdminReports = () => {
             <TodayTitle>
               <AmberDot />
               Users who hit their pitch limit
+              {nudgedCount > 0 && (
+                <span style={{ marginLeft: 12, fontSize: 12, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 12 }}>
+                  {nudgedCount} nudged ✓
+                </span>
+              )}
             </TodayTitle>
             <TodaySubtitle>One email → could convert today</TodaySubtitle>
           </TodayHeader>
 
-          {at_limit_users.length === 0 ? (
+          {visibleAtLimitUsers.length === 0 ? (
             <EmptyState>
-              <strong>No users at limit right now</strong>
-              <p>When free users max out their 3 weekly pitches, they'll appear here</p>
+              <strong>{nudgedCount > 0 ? 'All users nudged!' : 'No users at limit right now'}</strong>
+              <p>{nudgedCount > 0
+                ? `You've sent ${nudgedCount} nudge email${nudgedCount > 1 ? 's' : ''} this session`
+                : 'When free users max out their 3 weekly pitches, they\'ll appear here'}</p>
             </EmptyState>
           ) : (
-            at_limit_users.map(user => (
+            visibleAtLimitUsers.map(user => (
               <UserRow key={user.creator_id}>
                 <Avatar>{(user.username || user.email)[0].toUpperCase()}</Avatar>
                 <UserInfo>
@@ -312,9 +331,10 @@ const AdminReports = () => {
                 </UserStat>
                 <NudgeBtn
                   $state={nudgeSent[user.creator_id] || 'default'}
-                  onClick={() => !nudgeSent[user.creator_id] && handleSendNudge(user)}
+                  onClick={() => nudgeSent[user.creator_id] !== 'sending' && nudgeSent[user.creator_id] !== 'cooldown' && handleSendNudge(user)}
+                  disabled={nudgeSent[user.creator_id] === 'sending'}
                 >
-                  {nudgeSent[user.creator_id] === 'sent' ? 'Sent ✓' :
+                  {nudgeSent[user.creator_id] === 'sending' ? 'Sending...' :
                    nudgeSent[user.creator_id] === 'cooldown' ? 'Recent email' :
                    'Send nudge →'}
                 </NudgeBtn>

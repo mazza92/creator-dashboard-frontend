@@ -50,24 +50,10 @@ const LogoLink = styled(Link)`
   text-decoration: none;
 `;
 
-const LogoMark = styled.div`
-  width: 28px;
-  height: 28px;
-  background: ${colors.black};
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-weight: 900;
-  font-size: 13px;
-`;
-
-const LogoWord = styled.span`
-  font-size: 15px;
-  font-weight: 800;
-  color: ${colors.text};
-  letter-spacing: -0.3px;
-  em { color: ${colors.rose}; font-style: normal; }
+const LogoImg = styled.img`
+  height: 24px;
+  width: auto;
+  display: block;
 `;
 
 const TopBarLink = styled.span`
@@ -419,8 +405,7 @@ export default function CreatorSignup() {
       <PageWrapper>
         <TopBar>
           <LogoLink to="/">
-            <LogoMark>N</LogoMark>
-            <LogoWord>new<em>collab</em></LogoWord>
+            <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
           </LogoLink>
           <TopBarLink>
             Already a member? <Link to="/login">Sign in</Link>
