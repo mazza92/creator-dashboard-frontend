@@ -1712,39 +1712,48 @@ const LandingPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [isVisible, setIsVisible] = useState(false);
   const [brands, setBrands] = useState(brandsDataFallback);
+  const [loadingBrands, setLoadingBrands] = useState(false);
+  const brandCache = React.useRef({});
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
+  // Fetch brands for the active filter tab, with per-category caching
   useEffect(() => {
     let cancelled = false;
+    const cacheKey = activeFilter;
+    if (brandCache.current[cacheKey]) {
+      setBrands(brandCache.current[cacheKey]);
+      return;
+    }
+    setLoadingBrands(true);
     (async () => {
       try {
-        // Fetch featured brands first (more likely to have logos), fall back to any brands
-        const url = `${getApiBase()}/api/public/brands?limit=16&page=1`;
+        const cat = activeFilter === 'all' ? '' : `&category=${activeFilter}`;
+        const url = `${getApiBase()}/api/public/brands?limit=16&page=1${cat}`;
         const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json();
         const list = Array.isArray(data.brands) ? data.brands : [];
-        // Prefer brands that have a logo or website (for Clearbit fallback), take first 8
-        const withLogos = list.filter(b => b.logo || b.website);
-        const chosen = withLogos.length >= 8
-          ? withLogos.slice(0, 8)
-          : list.slice(0, 8);
+        // Prefer brands with a logo or website, cap at 8
+        const withMedia = list.filter(b => b.logo || b.website);
+        const chosen = (withMedia.length >= 8 ? withMedia : list).slice(0, 8);
         if (!cancelled && chosen.length > 0) {
-          setBrands(chosen.map(mapApiBrand));
+          const mapped = chosen.map(mapApiBrand);
+          brandCache.current[cacheKey] = mapped;
+          setBrands(mapped);
         }
       } catch (err) {
         // silently fall back to static data
+      } finally {
+        if (!cancelled) setLoadingBrands(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [activeFilter]);
 
-  const filteredBrands = brands.filter(brand =>
-    activeFilter === 'all' || brand.cat === activeFilter
-  );
+  const filteredBrands = brands;
 
   // JSON-LD Schemas
   const websiteSchema = {
@@ -2098,9 +2107,9 @@ const LandingPage = () => {
                   </FilterTab>
                 ))}
               </FilterTabs>
-              <BrandGrid>
+              <BrandGrid style={{ opacity: loadingBrands ? 0.5 : 1, transition: 'opacity 0.2s' }}>
                 {filteredBrands.map((brand, i) => (
-                  <BrandCard key={i}>
+                  <BrandCard key={brand.slug || i}>
                     <LandingBrandLogo brand={brand} />
                     <BrandName>{brand.name}</BrandName>
                     <BrandCat>{brand.catLabel} · {brand.replyTime}</BrandCat>
