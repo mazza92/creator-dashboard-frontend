@@ -1,10 +1,8 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
-// eslint-disable-next-line no-unused-vars
-import Link from 'next/link';
 import {
   FiSearch,
   FiFileText,
@@ -14,11 +12,10 @@ import {
 } from 'react-icons/fi';
 import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
-import LandingPageLayoutNext from './components/LandingPageLayoutNext';
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // DESIGN TOKENS
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const colors = {
   rose: '#E11D48',
   roseLight: '#FFF1F3',
@@ -42,9 +39,9 @@ const shadows = {
   lg: '0 8px 40px rgba(0,0,0,.10)',
 };
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // ANIMATIONS
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const float = keyframes`
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
@@ -60,9 +57,9 @@ const slideIn = keyframes`
   100% { opacity: 1; transform: translateY(0); }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // BASE COMPONENTS
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const PageContainer = styled.div`
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -196,9 +193,9 @@ const TagPro = styled.span`
   letter-spacing: 0.5px;
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HERO SECTION
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const HeroSection = styled.section`
   padding: 100px 0 60px;
   background: ${colors.bg};
@@ -355,9 +352,9 @@ const FloatingBadge = styled.div`
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // TICKER SECTION
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const TickerSection = styled.section`
   background: ${colors.black};
   padding: 14px 0;
@@ -381,15 +378,15 @@ const TickerItem = styled.span`
   gap: 8px;
 
   &::after {
-    content: '·';
+    content: 'Â·';
     margin-left: 32px;
     color: ${colors.text3};
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CLARITY STRIP
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const ClaritySection = styled.section`
   padding: 60px 0;
   background: ${colors.white};
@@ -462,9 +459,9 @@ const ClarityArrow = styled.div`
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PROBLEM SECTION
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const ProblemSection = styled.section`
   padding: 80px 0;
   background: ${colors.bg};
@@ -530,9 +527,9 @@ const ProblemCTA = styled.div`
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // SOLUTION FLOW (DARK SECTION)
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const SolutionSection = styled.section`
   padding: 80px 0;
   background: ${colors.black};
@@ -616,9 +613,9 @@ const SolutionStep = styled.div`
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // BRAND DIRECTORY
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const DirectorySection = styled.section`
   padding: 80px 0;
   background: ${colors.bg};
@@ -795,9 +792,9 @@ const DirectoryFooter = styled.div`
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // FEATURE SECTIONS
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const FeatureSection = styled.section`
   padding: 80px 0;
   background: ${props => props.$bg || colors.bg};
@@ -869,7 +866,7 @@ const FeatureBulletItem = styled.div`
   color: ${colors.text2};
 
   &::before {
-    content: '✓';
+    content: 'âœ“';
     width: 20px;
     height: 20px;
     background: ${colors.greenLight};
@@ -940,9 +937,9 @@ const MockupBody = styled.div`
   padding: 20px;
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // SOCIAL PROOF
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const ProofSection = styled.section`
   padding: 80px 0;
   background: ${colors.white};
@@ -1090,9 +1087,9 @@ const TestimonialQuote = styled.div`
   line-height: 1.6;
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HOW IT WORKS
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const HowSection = styled.section`
   padding: 80px 0;
   background: ${colors.bg};
@@ -1151,9 +1148,9 @@ const HowCTA = styled.div`
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PRICING
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const PricingSection = styled.section`
   padding: 80px 0;
   background: ${colors.white};
@@ -1307,9 +1304,9 @@ const PricingNote = styled.div`
   margin-top: 12px;
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // FAQ
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const FAQSection = styled.section`
   padding: 80px 0;
   background: ${colors.bg};
@@ -1363,9 +1360,9 @@ const FAQAnswer = styled.div`
   line-height: 1.7;
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // FINAL CTA
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const FinalCTASection = styled.section`
   padding: 100px 0;
   background: ${colors.black};
@@ -1403,9 +1400,9 @@ const FinalTrust = styled.div`
   color: rgba(255,255,255,0.5);
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // FOOTER
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const Footer = styled.footer`
   background: ${colors.black};
   padding: 60px 0 32px;
@@ -1524,9 +1521,9 @@ const FooterBottomLinks = styled.div`
   }
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MEDIA KIT MOCKUP
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const KitCard = styled.div`
   background: ${colors.bg};
   border: 1px solid ${colors.border};
@@ -1617,9 +1614,9 @@ const KitAttachedBadge = styled.div`
   font-weight: 600;
 `;
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // BRANDS DATA
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const getApiBase = () => {
   const base = process.env.REACT_APP_BACKEND_URL
     || process.env.REACT_APP_API_BASE
@@ -1643,7 +1640,7 @@ const mapApiBrand = (b) => {
   const name = b.name || '';
   const replyRate = Math.round(b.responseRate || b.response_rate || 0);
   const replyDays = b.avgResponseTime || b.avg_response_time_days;
-  const replyTime = replyDays ? `Replies in ${replyDays} days` : 'Replies in 3–5 days';
+  const replyTime = replyDays ? `Replies in ${replyDays} days` : 'Replies in 3â€“5 days';
   const cat = (() => {
     const c = (b.category || '').toLowerCase();
     if (c.includes('fashion') || c.includes('apparel')) return 'fashion';
@@ -1688,33 +1685,34 @@ function LandingBrandLogo({ brand, style }) {
   );
 }
 
-// Static fallback — shown until the API responds
+// Static fallback â€” shown until the API responds
 const brandsDataFallback = [
-  { name: 'Rhode Skin', slug: 'rhode-skin', initials: 'RS', bg: '#B5002D', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2–3 days', replyRate: 52, hi: true },
-  { name: 'Anua', slug: 'anua', initials: 'AN', bg: '#2E7D4F', logo: null, cat: 'beauty', catLabel: 'K-Beauty', replyTime: 'Replies in 3–5 days', replyRate: 38, hi: true },
-  { name: 'Oh Polly', slug: 'oh-polly', initials: 'OP', bg: '#1A1A2E', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 5–7 days', replyRate: 29, hi: false },
-  { name: 'Fenty Beauty', slug: 'fenty-beauty', initials: 'FB', bg: '#8B4513', logo: null, cat: 'beauty', catLabel: 'Beauty', replyTime: 'Replies in 3–5 days', replyRate: 44, hi: true },
-  { name: 'Nopalera', slug: 'nopalera', initials: 'NP', bg: '#2D5016', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2–3 days', replyRate: 61, hi: true },
-  { name: 'Aura Bora', slug: 'aura-bora', initials: 'AB', bg: '#7C3AED', logo: null, cat: 'food', catLabel: 'Beverages', replyTime: 'Replies in 1–2 days', replyRate: 72, hi: true },
-  { name: 'Glow Recipe', slug: 'glow-recipe', initials: 'GR', bg: '#EC4899', logo: null, cat: 'skincare', catLabel: 'Skincare', replyTime: 'Replies in 3–5 days', replyRate: 45, hi: true },
-  { name: 'Princess Polly', slug: 'princess-polly', initials: 'PP', bg: '#6D28D9', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 3–5 days', replyRate: 47, hi: true },
+  { name: 'Rhode Skin', slug: 'rhode-skin', initials: 'RS', bg: '#B5002D', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2â€“3 days', replyRate: 52, hi: true },
+  { name: 'Anua', slug: 'anua', initials: 'AN', bg: '#2E7D4F', logo: null, cat: 'beauty', catLabel: 'K-Beauty', replyTime: 'Replies in 3â€“5 days', replyRate: 38, hi: true },
+  { name: 'Oh Polly', slug: 'oh-polly', initials: 'OP', bg: '#1A1A2E', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 5â€“7 days', replyRate: 29, hi: false },
+  { name: 'Fenty Beauty', slug: 'fenty-beauty', initials: 'FB', bg: '#8B4513', logo: null, cat: 'beauty', catLabel: 'Beauty', replyTime: 'Replies in 3â€“5 days', replyRate: 44, hi: true },
+  { name: 'Nopalera', slug: 'nopalera', initials: 'NP', bg: '#2D5016', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2â€“3 days', replyRate: 61, hi: true },
+  { name: 'Aura Bora', slug: 'aura-bora', initials: 'AB', bg: '#7C3AED', logo: null, cat: 'food', catLabel: 'Beverages', replyTime: 'Replies in 1â€“2 days', replyRate: 72, hi: true },
+  { name: 'Glow Recipe', slug: 'glow-recipe', initials: 'GR', bg: '#EC4899', logo: null, cat: 'skincare', catLabel: 'Skincare', replyTime: 'Replies in 3â€“5 days', replyRate: 45, hi: true },
+  { name: 'Princess Polly', slug: 'princess-polly', initials: 'PP', bg: '#6D28D9', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 3â€“5 days', replyRate: 47, hi: true },
 ];
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // TICKER DATA
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const tickerItems = [
-  { icon: '📦', text: 'carolstyle landed Rhode Skin — 3 days after joining' },
-  { icon: '💬', text: 'glowwith_m got 2 brand replies in 48 hours' },
-  { icon: '📦', text: 'zionne019 received an Anua PR package this week' },
-  { icon: '✍️', text: 'sarahlooks pitched 8 brands in one afternoon' },
-  { icon: '📦', text: 'dailybyzoe landed Oh Polly with media kit auto-attached' },
-  { icon: '🎉', text: 'plates.co got a food brand collab after first pitch' },
+  { icon: 'ðŸ“¦', text: 'carolstyle landed Rhode Skin â€” 3 days after joining' },
+  { icon: 'ðŸ’¬', text: 'glowwith_m got 2 brand replies in 48 hours' },
+  { icon: 'ðŸ“¦', text: 'zionne019 received an Anua PR package this week' },
+  { icon: 'âœï¸', text: 'sarahlooks pitched 8 brands in one afternoon' },
+  { icon: 'ðŸ“¦', text: 'dailybyzoe landed Oh Polly with media kit auto-attached' },
+  { icon: 'ðŸŽ‰', text: 'plates.co got a food brand collab after first pitch' },
 ];
 
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAIN COMPONENT
-const LandingPageClient = () => {
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const LandingPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [isVisible, setIsVisible] = useState(false);
   const [brands, setBrands] = useState(brandsDataFallback);
@@ -1761,14 +1759,13 @@ const LandingPageClient = () => {
 
   const filteredBrands = brands;
 
-  // JSON-LD Schemas (kept for reference - metadata handled in page.js)
-  // eslint-disable-next-line no-unused-vars
+  // JSON-LD Schemas
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "newcollab",
     "url": "https://newcollab.co",
-    "description": "PR forms directory and brand outreach tool for nano and micro creators — 500+ brands with open PR application forms, AI pitch emails, and auto media kit.",
+    "description": "PR forms directory and brand outreach tool for nano and micro creators â€” 500+ brands with open PR application forms, AI pitch emails, and auto media kit.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://newcollab.co/brands?q={search_term_string}",
@@ -1776,7 +1773,6 @@ const LandingPageClient = () => {
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -1786,7 +1782,7 @@ const LandingPageClient = () => {
         "name": "How do I get my first brand deal as a small creator?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks — the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start."
+          "text": "Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks â€” the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start."
         }
       },
       {
@@ -1794,7 +1790,7 @@ const LandingPageClient = () => {
         "name": "Do I need a media kit to pitch brands?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed."
+          "text": "Yes â€” it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed."
         }
       },
       {
@@ -1802,7 +1798,7 @@ const LandingPageClient = () => {
         "name": "How many followers do you need to work with brands?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No minimum. 63% of brands prefer working with nano and micro creators (1K–50K followers) — engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities."
+          "text": "No minimum. 63% of brands prefer working with nano and micro creators (1Kâ€“50K followers) â€” engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities."
         }
       },
       {
@@ -1810,7 +1806,7 @@ const LandingPageClient = () => {
         "name": "What is a PR package?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A PR package is when a brand sends you their products for free in exchange for content on your channels — a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply."
+          "text": "A PR package is when a brand sends you their products for free in exchange for content on your channels â€” a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply."
         }
       },
       {
@@ -1818,7 +1814,7 @@ const LandingPageClient = () => {
         "name": "Where can I find PR forms for brands?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. You can filter by niche and send a personalised AI pitch in one click — no need to hunt for contact emails or application URLs."
+          "text": "newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. You can filter by niche and send a personalised AI pitch in one click â€” no need to hunt for contact emails or application URLs."
         }
       },
       {
@@ -1834,18 +1830,20 @@ const LandingPageClient = () => {
         "name": "Is newcollab free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard."
+          "text": "Yes â€” free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard."
         }
       }
     ]
   };
 
   return (
-    <LandingPageLayoutNext>
+    <>
+      
+
       <PageContainer>
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* HERO */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <HeroSection>
           <Container>
             <HeroGrid>
@@ -1864,7 +1862,7 @@ const LandingPageClient = () => {
                     500+ brands with open PR forms. AI pitch emails. Auto media kit. Deal tracking. All in one place.
                   </HeroSubline>
                   <HeroCTARow>
-                    <BtnBlack href="/register/creator">Start for free →</BtnBlack>
+                    <BtnBlack href="/register/creator">Start for free â†’</BtnBlack>
                     <BtnOutline href="/directory">See brands</BtnOutline>
                   </HeroCTARow>
                   <HeroProof>
@@ -1875,7 +1873,7 @@ const LandingPageClient = () => {
                       <div style={{ background: colors.amber }}>S</div>
                       <div style={{ background: '#3B82F6' }}>D</div>
                     </AvatarStack>
-                    <span>900+ creators already getting brand deals · Free · No credit card</span>
+                    <span>900+ creators already getting brand deals Â· Free Â· No credit card</span>
                   </HeroProof>
                 </motion.div>
               </HeroText>
@@ -1895,14 +1893,14 @@ const LandingPageClient = () => {
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '16px' }}
                     />
                     <FloatingBadge className="bottom-left">
-                      <span>📦</span>
+                      <span>ðŸ“¦</span>
                       <div>
                         <div style={{ fontWeight: 700 }}>Package received!</div>
-                        <div style={{ fontSize: 11, color: colors.text3 }}>Rhode Skin → @carolstyle</div>
+                        <div style={{ fontSize: 11, color: colors.text3 }}>Rhode Skin â†’ @carolstyle</div>
                       </div>
                     </FloatingBadge>
                     <FloatingBadge className="top-right">
-                      <span>✨</span>
+                      <span>âœ¨</span>
                       <span>6 pitches sent today</span>
                     </FloatingBadge>
                   </HeroGifWrap>
@@ -1912,9 +1910,9 @@ const LandingPageClient = () => {
           </Container>
         </HeroSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* TICKER */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <TickerSection>
           <TickerInner>
             {[...tickerItems, ...tickerItems].map((item, i) => (
@@ -1926,9 +1924,9 @@ const LandingPageClient = () => {
           </TickerInner>
         </TickerSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* CLARITY STRIP */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <ClaritySection>
           <Container>
             <ClarityGrid>
@@ -1939,7 +1937,7 @@ const LandingPageClient = () => {
                   <div className="sub">500+ PR contacts, your niche</div>
                 </ClarityText>
               </ClarityItem>
-              <ClarityArrow>→</ClarityArrow>
+              <ClarityArrow>â†’</ClarityArrow>
               <ClarityItem>
                 <ClarityIcon><FiFileText /></ClarityIcon>
                 <ClarityText>
@@ -1947,7 +1945,7 @@ const LandingPageClient = () => {
                   <div className="sub">Generated, always ready</div>
                 </ClarityText>
               </ClarityItem>
-              <ClarityArrow>→</ClarityArrow>
+              <ClarityArrow>â†’</ClarityArrow>
               <ClarityItem>
                 <ClarityIcon><FiEdit3 /></ClarityIcon>
                 <ClarityText>
@@ -1955,21 +1953,21 @@ const LandingPageClient = () => {
                   <div className="sub">Personalised in 60 seconds</div>
                 </ClarityText>
               </ClarityItem>
-              <ClarityArrow>→</ClarityArrow>
+              <ClarityArrow>â†’</ClarityArrow>
               <ClarityItem>
                 <ClarityIcon><FiBarChart2 /></ClarityIcon>
                 <ClarityText>
                   <div className="label">Track everything</div>
-                  <div className="sub">Pipeline · follow-ups · wins</div>
+                  <div className="sub">Pipeline Â· follow-ups Â· wins</div>
                 </ClarityText>
               </ClarityItem>
             </ClarityGrid>
           </Container>
         </ClaritySection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* PROBLEM SECTION */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <ProblemSection>
           <Container>
             <SectionCenter>
@@ -1990,23 +1988,23 @@ const LandingPageClient = () => {
               </ProblemCard>
               <ProblemCard>
                 <div className="headline">"I open a blank email and freeze every time."</div>
-                <div className="body">Too formal? Too casual? Most creators spend hours on one pitch — or never send it.</div>
+                <div className="body">Too formal? Too casual? Most creators spend hours on one pitch â€” or never send it.</div>
               </ProblemCard>
               <ProblemCard>
                 <div className="headline">"I sent emails last month and forgot to follow up."</div>
-                <div className="body">No system. No visibility. Warm leads went cold. Not laziness — just no tool.</div>
+                <div className="body">No system. No visibility. Warm leads went cold. Not laziness â€” just no tool.</div>
               </ProblemCard>
             </ProblemGrid>
             <ProblemCTA>
-              <div className="text">newcollab handles all of this — automatically.</div>
-              <BtnRose href="/register/creator">Get started free →</BtnRose>
+              <div className="text">newcollab handles all of this â€” automatically.</div>
+              <BtnRose href="/register/creator">Get started free â†’</BtnRose>
             </ProblemCTA>
           </Container>
         </ProblemSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* SOLUTION FLOW (DARK) */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <SolutionSection>
           <Container>
             <SectionCenter>
@@ -2039,7 +2037,7 @@ const LandingPageClient = () => {
                   <span className="step-num">3</span>
                 </div>
                 <div className="step-title">Pitch</div>
-                <div className="step-body">AI email + media kit attached · batch-send 10 at once</div>
+                <div className="step-body">AI email + media kit attached Â· batch-send 10 at once</div>
               </SolutionStep>
               <SolutionStep $iconBg="rgba(217, 119, 6, 0.2)">
                 <div className="step-icon">
@@ -2055,15 +2053,15 @@ const LandingPageClient = () => {
                   <span className="step-num">5</span>
                 </div>
                 <div className="step-title">Win</div>
-                <div className="step-body">Package arrives · log your PR value · repeat</div>
+                <div className="step-body">Package arrives Â· log your PR value Â· repeat</div>
               </SolutionStep>
             </SolutionGrid>
           </Container>
         </SolutionSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* BRAND DIRECTORY */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <DirectorySection id="brands">
           <Container>
             <SectionCenter>
@@ -2073,11 +2071,11 @@ const LandingPageClient = () => {
                 <em style={{ color: colors.rose }}>Apply in one click.</em>
               </h2>
               <p style={{ fontSize: 16, color: colors.text2, margin: '0 0 12px' }}>
-                Direct PR application links, verified email contacts, and reply rates — filtered by your niche. Skip the Googling.
+                Direct PR application links, verified email contacts, and reply rates â€” filtered by your niche. Skip the Googling.
               </p>
               <p style={{ fontSize: 13, color: colors.text3, margin: 0 }}>
                 Looking for a specific brand? See the full{' '}
-                <a href="/directory" style={{ color: colors.rose, fontWeight: 600, textDecoration: 'none' }}>brand PR forms directory →</a>
+                <a href="/directory" style={{ color: colors.rose, fontWeight: 600, textDecoration: 'none' }}>brand PR forms directory â†’</a>
               </p>
             </SectionCenter>
             <DirectoryBox>
@@ -2097,43 +2095,43 @@ const LandingPageClient = () => {
                   <BrandCard key={brand.slug || i}>
                     <LandingBrandLogo brand={brand} />
                     <BrandName>{brand.name}</BrandName>
-                    <BrandCat>{brand.catLabel} · {brand.replyTime}</BrandCat>
+                    <BrandCat>{brand.catLabel} Â· {brand.replyTime}</BrandCat>
                     <BrandMeta>
                       <ReplyRate $hi={brand.hi}>{brand.replyRate}% reply</ReplyRate>
-                      <LockBtn onClick={() => window.location.href = '/register/creator'}>🔒 Sign up</LockBtn>
+                      <LockBtn onClick={() => window.location.href = '/register/creator'}>ðŸ”’ Sign up</LockBtn>
                     </BrandMeta>
                   </BrandCard>
                 ))}
                 <LockedCard>
-                  <div className="lock-icon">🔒</div>
+                  <div className="lock-icon">ðŸ”’</div>
                   <div className="lock-title">492 more brands</div>
                   <div className="lock-sub">Sign up free to unlock all</div>
-                  <BtnBlack href="/register/creator" style={{ padding: '10px 20px', fontSize: 13 }}>Get access →</BtnBlack>
+                  <BtnBlack href="/register/creator" style={{ padding: '10px 20px', fontSize: 13 }}>Get access â†’</BtnBlack>
                 </LockedCard>
               </BrandGrid>
               <DirectoryFooter>
-                <div className="count">Showing <strong>8 of 500+</strong> brands · Updated weekly</div>
-                <BtnBlack href="/register/creator" style={{ padding: '10px 20px', fontSize: 13 }}>Unlock all contacts →</BtnBlack>
+                <div className="count">Showing <strong>8 of 500+</strong> brands Â· Updated weekly</div>
+                <BtnBlack href="/register/creator" style={{ padding: '10px 20px', fontSize: 13 }}>Unlock all contacts â†’</BtnBlack>
               </DirectoryFooter>
             </DirectoryBox>
           </Container>
         </DirectorySection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* FEATURE 1: MEDIA KIT */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <FeatureSection $bg={colors.bg} id="features">
           <Container>
             <FeatureRow>
               <FeatureText>
                 <FeatureTag>Auto Media Kit</FeatureTag>
                 <FeatureH3>Your media kit, generated automatically. Every pitch looks pro.</FeatureH3>
-                <FeatureP>Brands won't reply without one. newcollab builds your media kit from your profile — stats, audience, niche — and attaches it to every pitch automatically. No Canva. No design skills. Done in 30 seconds.</FeatureP>
+                <FeatureP>Brands won't reply without one. newcollab builds your media kit from your profile â€” stats, audience, niche â€” and attaches it to every pitch automatically. No Canva. No design skills. Done in 30 seconds.</FeatureP>
                 <FeatureBullet>
                   <FeatureBulletItem>Stats pulled live from your profile</FeatureBulletItem>
                   <FeatureBulletItem>Audience age, niche, platform included</FeatureBulletItem>
                   <FeatureBulletItem>Auto-attached to every AI pitch</FeatureBulletItem>
-                  <FeatureBulletItem>Always up to date — no manual edits</FeatureBulletItem>
+                  <FeatureBulletItem>Always up to date â€” no manual edits</FeatureBulletItem>
                 </FeatureBullet>
               </FeatureText>
               <FeatureVisual>
@@ -2144,7 +2142,7 @@ const LandingPageClient = () => {
                       <MockupDot $color="#FFBD2E" />
                       <MockupDot $color="#28CA41" />
                     </MockupDots>
-                    <MockupTitle>My Media Kit — newcollab</MockupTitle>
+                    <MockupTitle>My Media Kit â€” newcollab</MockupTitle>
                   </MockupHeader>
                   <MockupBody>
                     <KitCard>
@@ -2152,7 +2150,7 @@ const LandingPageClient = () => {
                         <KitAvatar>C</KitAvatar>
                         <div>
                           <KitName>carolstyle</KitName>
-                          <KitHandle>@carolstyle · Fashion & Lifestyle</KitHandle>
+                          <KitHandle>@carolstyle Â· Fashion & Lifestyle</KitHandle>
                         </div>
                       </KitHeader>
                       <KitStats>
@@ -2165,7 +2163,7 @@ const LandingPageClient = () => {
                           <div className="lbl">Eng. Rate</div>
                         </KitStat>
                         <KitStat>
-                          <div className="val">18–34</div>
+                          <div className="val">18â€“34</div>
                           <div className="lbl">Audience Age</div>
                         </KitStat>
                       </KitStats>
@@ -2177,7 +2175,7 @@ const LandingPageClient = () => {
                     </KitCard>
                     <div style={{ marginTop: 12 }}>
                       <KitAttachedBadge>
-                        <span>📎</span>
+                        <span>ðŸ“Ž</span>
                         <span>Auto-attached to your pitch email</span>
                       </KitAttachedBadge>
                     </div>
@@ -2188,18 +2186,18 @@ const LandingPageClient = () => {
           </Container>
         </FeatureSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* FEATURE 2: AI PITCH */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <FeatureSection $bg={colors.white}>
           <Container>
             <FeatureRow className="reverse">
               <FeatureText>
                 <FeatureTag>AI Pitch Writer</FeatureTag>
                 <FeatureH3>Perfect pitch in 60 seconds. Send to 10 brands at once.</FeatureH3>
-                <FeatureP>AI writes a personalised email for each brand — their name, their niche, why you're the right fit. Media kit attaches automatically. Batch-pitch up to 10 brands in one session on Pro.</FeatureP>
+                <FeatureP>AI writes a personalised email for each brand â€” their name, their niche, why you're the right fit. Media kit attaches automatically. Batch-pitch up to 10 brands in one session on Pro.</FeatureP>
                 <FeatureBullet>
-                  <FeatureBulletItem>Personalised per brand — not a generic template</FeatureBulletItem>
+                  <FeatureBulletItem>Personalised per brand â€” not a generic template</FeatureBulletItem>
                   <FeatureBulletItem>Media kit auto-attached every time</FeatureBulletItem>
                   <FeatureBulletItem>Batch-pitch 10 brands in one session <TagPro>Pro</TagPro></FeatureBulletItem>
                   <FeatureBulletItem>AI follow-up at day 7 <TagPro>Pro</TagPro></FeatureBulletItem>
@@ -2226,12 +2224,12 @@ const LandingPageClient = () => {
                     <div style={{ background: colors.white, border: `1.5px solid ${colors.black}`, borderRadius: 10, padding: 12, fontSize: 12, color: colors.text2, lineHeight: 1.6 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI-Generated Pitch</div>
                       Hi Rhode Skin team,<br /><br />
-                      I'm <strong style={{ color: colors.text }}>@carolstyle</strong>, a fashion & beauty creator with <strong style={{ color: colors.text }}>17K followers</strong> (6.2% engagement). My audience is 85% female, 18–34 — a strong fit for your skincare launches...<br /><br />
+                      I'm <strong style={{ color: colors.text }}>@carolstyle</strong>, a fashion & beauty creator with <strong style={{ color: colors.text }}>17K followers</strong> (6.2% engagement). My audience is 85% female, 18â€“34 â€” a strong fit for your skincare launches...<br /><br />
                       <span style={{ color: colors.text3, fontSize: 11 }}>Media kit attached for your review.</span>
                     </div>
                     <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                      <KitAttachedBadge style={{ flex: 1 }}>📎 Kit attached</KitAttachedBadge>
-                      <BtnBlack href="/register/creator" style={{ padding: '10px 18px', fontSize: 12 }}>Send →</BtnBlack>
+                      <KitAttachedBadge style={{ flex: 1 }}>ðŸ“Ž Kit attached</KitAttachedBadge>
+                      <BtnBlack href="/register/creator" style={{ padding: '10px 18px', fontSize: 12 }}>Send â†’</BtnBlack>
                     </div>
                   </MockupBody>
                 </MockupCard>
@@ -2240,21 +2238,21 @@ const LandingPageClient = () => {
           </Container>
         </FeatureSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* FEATURE 3: PIPELINE */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <FeatureSection $bg={colors.bg}>
           <Container>
             <FeatureRow>
               <FeatureText>
                 <FeatureTag>PR Pipeline</FeatureTag>
                 <FeatureH3>Track every pitch. Follow up before it goes cold.</FeatureH3>
-                <FeatureP>Every brand you contact lives in your pipeline. We remind you to follow up at day 7 — when most brands respond. Never lose a warm lead again.</FeatureP>
+                <FeatureP>Every brand you contact lives in your pipeline. We remind you to follow up at day 7 â€” when most brands respond. Never lose a warm lead again.</FeatureP>
                 <FeatureCallout>
-                  <em>Creators who follow up are 3× more likely to land the deal.</em> We make sure you never forget.
+                  <em>Creators who follow up are 3Ã— more likely to land the deal.</em> We make sure you never forget.
                 </FeatureCallout>
                 <FeatureBullet>
-                  <FeatureBulletItem>Stages: Saved → Waiting → Replied → Won</FeatureBulletItem>
+                  <FeatureBulletItem>Stages: Saved â†’ Waiting â†’ Replied â†’ Won</FeatureBulletItem>
                   <FeatureBulletItem>Auto day-7 follow-up reminder</FeatureBulletItem>
                   <FeatureBulletItem>Log replies, packages, $PR value <TagPro>Pro</TagPro></FeatureBulletItem>
                 </FeatureBullet>
@@ -2271,7 +2269,7 @@ const LandingPageClient = () => {
                   </MockupHeader>
                   <MockupBody>
                     <div style={{ marginBottom: 16 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.amber, marginBottom: 8 }}>⚡ Action needed <span style={{ background: colors.amber, color: colors.white, padding: '2px 6px', borderRadius: 10, fontSize: 10, marginLeft: 4 }}>1</span></div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.amber, marginBottom: 8 }}>âš¡ Action needed <span style={{ background: colors.amber, color: colors.white, padding: '2px 6px', borderRadius: 10, fontSize: 10, marginLeft: 4 }}>1</span></div>
                       <div style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderLeft: `3px solid ${colors.amber}`, borderRadius: 10, padding: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2281,20 +2279,20 @@ const LandingPageClient = () => {
                           <span style={{ fontSize: 11, fontWeight: 700, color: colors.amber, background: 'rgba(217, 119, 6, 0.1)', padding: '3px 8px', borderRadius: 6 }}>Waiting</span>
                         </div>
                         <div style={{ fontSize: 11, color: colors.text3, marginBottom: 6 }}>Pitched 7 days ago</div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: colors.amber }}>⏰ Time to follow up</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: colors.amber }}>â° Time to follow up</div>
                       </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.green, marginBottom: 8 }}>✅ Replied <span style={{ background: colors.green, color: colors.white, padding: '2px 6px', borderRadius: 10, fontSize: 10, marginLeft: 4 }}>2</span></div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.green, marginBottom: 8 }}>âœ… Replied <span style={{ background: colors.green, color: colors.white, padding: '2px 6px', borderRadius: 10, fontSize: 10, marginLeft: 4 }}>2</span></div>
                       <div style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <BrandLogoBlock $bg="#2E7D4F" style={{ width: 28, height: 28, margin: 0, fontSize: 9 }}>AN</BrandLogoBlock>
                             <span style={{ fontWeight: 700, fontSize: 13 }}>Anua</span>
                           </div>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: colors.green }}>Replied ✓</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: colors.green }}>Replied âœ“</span>
                         </div>
-                        <div style={{ fontSize: 11, color: colors.text3, marginTop: 4 }}>Package confirmed · coming in 5 days</div>
+                        <div style={{ fontSize: 11, color: colors.text3, marginTop: 4 }}>Package confirmed Â· coming in 5 days</div>
                       </div>
                     </div>
                   </MockupBody>
@@ -2304,19 +2302,19 @@ const LandingPageClient = () => {
           </Container>
         </FeatureSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* FEATURE 4: FOR YOU FEED */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <FeatureSection $bg={colors.white}>
           <Container>
             <FeatureRow className="reverse">
               <FeatureText>
                 <FeatureTag>For You Feed</FeatureTag>
                 <FeatureH3>The right brands, delivered to you every week.</FeatureH3>
-                <FeatureP>Based on your niche, platform, and following — newcollab surfaces the brands most likely to reply to you right now. Hot this week. Seasonal campaigns. Brands that just responded to creators like you.</FeatureP>
+                <FeatureP>Based on your niche, platform, and following â€” newcollab surfaces the brands most likely to reply to you right now. Hot this week. Seasonal campaigns. Brands that just responded to creators like you.</FeatureP>
                 <FeatureBullet>
                   <FeatureBulletItem>Matched to your niche + follower count</FeatureBulletItem>
-                  <FeatureBulletItem>Seasonal alerts — pitch before everyone else</FeatureBulletItem>
+                  <FeatureBulletItem>Seasonal alerts â€” pitch before everyone else</FeatureBulletItem>
                   <FeatureBulletItem>Full personalised feed <TagPro>Pro</TagPro></FeatureBulletItem>
                 </FeatureBullet>
               </FeatureText>
@@ -2331,27 +2329,27 @@ const LandingPageClient = () => {
                     <MockupTitle>For You</MockupTitle>
                   </MockupHeader>
                   <MockupBody>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>🔥 Hot this week — Beauty</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>ðŸ”¥ Hot this week â€” Beauty</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: colors.bg, borderRadius: 10, padding: 10 }}>
                         <BrandLogoBlock $bg="#B5002D" style={{ width: 36, height: 36, margin: 0, fontSize: 11 }}>RS</BrandLogoBlock>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 700 }}>Rhode Skin</div>
-                          <div style={{ fontSize: 11, color: colors.text3 }}>Skincare · 52% reply rate</div>
+                          <div style={{ fontSize: 11, color: colors.text3 }}>Skincare Â· 52% reply rate</div>
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', padding: '4px 8px', borderRadius: 6 }}>🔥 Hot</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', padding: '4px 8px', borderRadius: 6 }}>ðŸ”¥ Hot</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: colors.bg, borderRadius: 10, padding: 10 }}>
                         <BrandLogoBlock $bg="#2E7D4F" style={{ width: 36, height: 36, margin: 0, fontSize: 11 }}>AN</BrandLogoBlock>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 700 }}>Anua</div>
-                          <div style={{ fontSize: 11, color: colors.text3 }}>K-Beauty · 38% reply rate</div>
+                          <div style={{ fontSize: 11, color: colors.text3 }}>K-Beauty Â· 38% reply rate</div>
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(124, 58, 237, 0.1)', color: colors.violet, padding: '4px 8px', borderRadius: 6 }}>✨ Match</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(124, 58, 237, 0.1)', color: colors.violet, padding: '4px 8px', borderRadius: 6 }}>âœ¨ Match</span>
                       </div>
                     </div>
                     <div style={{ marginTop: 14, background: `linear-gradient(135deg, ${colors.roseLight}, #F5F3FF)`, borderRadius: 10, padding: 12, textAlign: 'center', fontSize: 12, fontWeight: 600, color: colors.text2 }}>
-                      🔒 5 more matches · <a href="/register/creator" style={{ color: colors.rose, fontWeight: 700, textDecoration: 'none' }}>Upgrade to Pro →</a>
+                      ðŸ”’ 5 more matches Â· <a href="/register/creator" style={{ color: colors.rose, fontWeight: 700, textDecoration: 'none' }}>Upgrade to Pro â†’</a>
                     </div>
                   </MockupBody>
                 </MockupCard>
@@ -2360,9 +2358,9 @@ const LandingPageClient = () => {
           </Container>
         </FeatureSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* SOCIAL PROOF */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <ProofSection>
           <Container>
             <SectionCenter>
@@ -2375,20 +2373,20 @@ const LandingPageClient = () => {
 
             <NotifWall>
               <NotifPill $delay="0s">
-                <span className="notif-icon">📦</span>
-                <span><strong>@carolstyle</strong> received a Rhode Skin PR package <span>· 2 hours ago</span></span>
+                <span className="notif-icon">ðŸ“¦</span>
+                <span><strong>@carolstyle</strong> received a Rhode Skin PR package <span>Â· 2 hours ago</span></span>
               </NotifPill>
               <NotifPill $delay="0.1s">
-                <span className="notif-icon">💬</span>
-                <span><strong>@glowwith_m</strong> got a reply from Anua <span>· 5 hours ago</span></span>
+                <span className="notif-icon">ðŸ’¬</span>
+                <span><strong>@glowwith_m</strong> got a reply from Anua <span>Â· 5 hours ago</span></span>
               </NotifPill>
               <NotifPill $delay="0.2s">
-                <span className="notif-icon">✍️</span>
-                <span><strong>@sarahlooks</strong> pitched 8 brands in one afternoon <span>· today</span></span>
+                <span className="notif-icon">âœï¸</span>
+                <span><strong>@sarahlooks</strong> pitched 8 brands in one afternoon <span>Â· today</span></span>
               </NotifPill>
               <NotifPill $delay="0.3s">
-                <span className="notif-icon">🎉</span>
-                <span><strong>@zionne019</strong> landed her first brand deal — 5.3K followers <span>· yesterday</span></span>
+                <span className="notif-icon">ðŸŽ‰</span>
+                <span><strong>@zionne019</strong> landed her first brand deal â€” 5.3K followers <span>Â· yesterday</span></span>
               </NotifPill>
             </NotifWall>
 
@@ -2417,13 +2415,13 @@ const LandingPageClient = () => {
                   <TestimonialAvatar $bg={colors.rose}>C</TestimonialAvatar>
                   <TestimonialInfo>
                     <div className="name">@carolstyle</div>
-                    <div className="meta">17K · Fashion · London</div>
+                    <div className="meta">17K Â· Fashion Â· London</div>
                   </TestimonialInfo>
                 </TestimonialCreator>
-                <TestimonialStars>★★★★★</TestimonialStars>
+                <TestimonialStars>â˜…â˜…â˜…â˜…â˜…</TestimonialStars>
                 <TestimonialResult>
-                  <span>📦</span>
-                  Landed Rhode Skin within 3 days. The auto media kit made me look so professional — they actually commented on it.
+                  <span>ðŸ“¦</span>
+                  Landed Rhode Skin within 3 days. The auto media kit made me look so professional â€” they actually commented on it.
                 </TestimonialResult>
                 <TestimonialQuote>"I'd spent months DMing brands on IG. Nothing. This changed everything."</TestimonialQuote>
               </TestimonialCard>
@@ -2432,12 +2430,12 @@ const LandingPageClient = () => {
                   <TestimonialAvatar $bg={colors.violet}>M</TestimonialAvatar>
                   <TestimonialInfo>
                     <div className="name">@glowwith_m</div>
-                    <div className="meta">8.9K · Skincare · Paris</div>
+                    <div className="meta">8.9K Â· Skincare Â· Paris</div>
                   </TestimonialInfo>
                 </TestimonialCreator>
-                <TestimonialStars>★★★★★</TestimonialStars>
+                <TestimonialStars>â˜…â˜…â˜…â˜…â˜…</TestimonialStars>
                 <TestimonialResult>
-                  <span>💬</span>
+                  <span>ðŸ’¬</span>
                   Pitched 6 brands in one afternoon. 2 replied in 48 hours. The pipeline keeps me on top of everything.
                 </TestimonialResult>
                 <TestimonialQuote>"I finally feel like a professional creator, not just a girl sending emails into the void."</TestimonialQuote>
@@ -2447,13 +2445,13 @@ const LandingPageClient = () => {
                   <TestimonialAvatar $bg={colors.green}>Z</TestimonialAvatar>
                   <TestimonialInfo>
                     <div className="name">@zionne019</div>
-                    <div className="meta">5.3K · Beauty · NYC</div>
+                    <div className="meta">5.3K Â· Beauty Â· NYC</div>
                   </TestimonialInfo>
                 </TestimonialCreator>
-                <TestimonialStars>★★★★★</TestimonialStars>
+                <TestimonialStars>â˜…â˜…â˜…â˜…â˜…</TestimonialStars>
                 <TestimonialResult>
-                  <span>🎉</span>
-                  First PR package arrived 2 weeks after signing up. Found Anua in the For You feed — they actively wanted micro creators.
+                  <span>ðŸŽ‰</span>
+                  First PR package arrived 2 weeks after signing up. Found Anua in the For You feed â€” they actively wanted micro creators.
                 </TestimonialResult>
                 <TestimonialQuote>"I thought you needed 100K followers. I had 5K and it still worked."</TestimonialQuote>
               </TestimonialCard>
@@ -2461,9 +2459,9 @@ const LandingPageClient = () => {
           </Container>
         </ProofSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* HOW IT WORKS */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <HowSection id="how-it-works">
           <Container>
             <SectionCenter>
@@ -2477,12 +2475,12 @@ const LandingPageClient = () => {
               <HowStep>
                 <div className="how-num">1</div>
                 <h3>Find your brands</h3>
-                <p>Browse 500+ PR contacts by niche and reply speed. Or check your For You feed — matched brands, every week. Save the ones you want to pitch.</p>
+                <p>Browse 500+ PR contacts by niche and reply speed. Or check your For You feed â€” matched brands, every week. Save the ones you want to pitch.</p>
               </HowStep>
               <HowStep>
                 <div className="how-num">2</div>
                 <h3>Send a complete pitch</h3>
-                <p>AI writes a personalised email. Media kit auto-attached. Hit send. Pitch one brand — or ten — in the same session.</p>
+                <p>AI writes a personalised email. Media kit auto-attached. Hit send. Pitch one brand â€” or ten â€” in the same session.</p>
               </HowStep>
               <HowStep>
                 <div className="how-num">3</div>
@@ -2491,15 +2489,15 @@ const LandingPageClient = () => {
               </HowStep>
             </HowSteps>
             <HowCTA>
-              <BtnBlack href="/register/creator">Start landing brand deals →</BtnBlack>
-              <div className="sub">Free plan · No credit card · Ready in 2 minutes</div>
+              <BtnBlack href="/register/creator">Start landing brand deals â†’</BtnBlack>
+              <div className="sub">Free plan Â· No credit card Â· Ready in 2 minutes</div>
             </HowCTA>
           </Container>
         </HowSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* PRICING */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <PricingSection id="pricing">
           <Container>
             <SectionCenter>
@@ -2514,17 +2512,17 @@ const LandingPageClient = () => {
               <PricingCard>
                 <PricingTier>Free</PricingTier>
                 <PricingPrice><sup>$</sup>0</PricingPrice>
-                <PricingPriceSub>Forever free · No credit card</PricingPriceSub>
+                <PricingPriceSub>Forever free Â· No credit card</PricingPriceSub>
                 <PricingFeatures>
-                  <PricingFeatureItem><span className="pf-check">✓</span> Brand directory — full access</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> For You feed — top 3 brands/week</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> AI pitch writer — 3 per month</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> Auto media kit</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> PR Pipeline</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">Batch pitching</span></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">AI follow-up writer</span></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">$PR Value dashboard</span></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">Full For You feed</span></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> Brand directory â€” full access</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> For You feed â€” top 3 brands/week</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> AI pitch writer â€” 3 per month</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> Auto media kit</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> PR Pipeline</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">â€”</span> <span className="pf-lock">Batch pitching</span></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">â€”</span> <span className="pf-lock">AI follow-up writer</span></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">â€”</span> <span className="pf-lock">$PR Value dashboard</span></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-cross">â€”</span> <span className="pf-lock">Full For You feed</span></PricingFeatureItem>
                 </PricingFeatures>
                 <PricingBtn className="outline" href="/register/creator">Get started free</PricingBtn>
               </PricingCard>
@@ -2532,26 +2530,26 @@ const LandingPageClient = () => {
                 <PricingBadge>Most popular</PricingBadge>
                 <PricingTier $rose>Pro</PricingTier>
                 <PricingPrice className="gradient"><sup>$</sup>12</PricingPrice>
-                <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
+                <PricingPriceSub>per month Â· Cancel anytime</PricingPriceSub>
                 <PricingFeatures>
-                  <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Unlimited AI pitches</strong></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong> — 10 brands at once</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>AI follow-up writer</strong></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Full For You feed</strong></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> Priority brand alerts</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> Everything in Free</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> <strong>Unlimited AI pitches</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> <strong>Batch pitching</strong> â€” 10 brands at once</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> <strong>AI follow-up writer</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> <strong>Full For You feed</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">âœ“</span> Priority brand alerts</PricingFeatureItem>
                 </PricingFeatures>
-                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro — $12/mo</PricingBtn>
-                <PricingNote>Cancel anytime · No contracts</PricingNote>
+                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro â€” $12/mo</PricingBtn>
+                <PricingNote>Cancel anytime Â· No contracts</PricingNote>
               </PricingCard>
             </PricingGrid>
           </Container>
         </PricingSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* FAQ */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <FAQSection>
           <Container>
             <SectionCenter>
@@ -2565,7 +2563,7 @@ const LandingPageClient = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks — the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start.
+                  Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks â€” the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2574,7 +2572,7 @@ const LandingPageClient = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes — it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed.
+                  Yes â€” it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2583,7 +2581,7 @@ const LandingPageClient = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  No minimum. 63% of brands prefer working with nano and micro creators (1K–50K followers) — engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities.
+                  No minimum. 63% of brands prefer working with nano and micro creators (1Kâ€“50K followers) â€” engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2592,7 +2590,7 @@ const LandingPageClient = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  A PR package is when a brand sends you their products for free in exchange for content on your channels — a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply.
+                  A PR package is when a brand sends you their products for free in exchange for content on your channels â€” a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2601,7 +2599,7 @@ const LandingPageClient = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. Filter by niche and send an AI pitch in one click — no hunting for contact emails or application URLs. See the full{' '}
+                  newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. Filter by niche and send an AI pitch in one click â€” no hunting for contact emails or application URLs. See the full{' '}
                   <a href="/directory" style={{ color: colors.rose, textDecoration: 'none', fontWeight: 600 }}>PR forms directory</a>.
                 </FAQAnswer>
               </FAQItem>
@@ -2620,16 +2618,16 @@ const LandingPageClient = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
+                  Yes â€” free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>
           </Container>
         </FAQSection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* FINAL CTA */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <FinalCTASection>
           <ContainerSm>
             <Eyebrow style={{ color: colors.roseMid, justifyContent: 'center' }}>
@@ -2639,17 +2637,17 @@ const LandingPageClient = () => {
               Your first brand deal<br />
               is one pitch <em>away.</em>
             </FinalH2>
-            <FinalSubline>Join 900+ creators who stopped guessing — and started getting brand deals.</FinalSubline>
+            <FinalSubline>Join 900+ creators who stopped guessing â€” and started getting brand deals.</FinalSubline>
             <FinalCTAActions>
-              <BtnRose href="/register/creator">Start for free — no credit card →</BtnRose>
-              <FinalTrust>Free plan · 3 AI pitches · Media kit included · Pro cancel anytime</FinalTrust>
+              <BtnRose href="/register/creator">Start for free â€” no credit card â†’</BtnRose>
+              <FinalTrust>Free plan Â· 3 AI pitches Â· Media kit included Â· Pro cancel anytime</FinalTrust>
             </FinalCTAActions>
           </ContainerSm>
         </FinalCTASection>
 
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {/* FOOTER */}
-        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         <Footer>
           <FooterInner>
             <FooterTop>
@@ -2690,7 +2688,7 @@ const LandingPageClient = () => {
               </div>
             </FooterTop>
             <FooterBottom>
-              <FooterCopy>© 2026 newcollab.co · All rights reserved</FooterCopy>
+              <FooterCopy>Â© 2026 newcollab.co Â· All rights reserved</FooterCopy>
               <FooterSocials>
                 <a href="https://www.linkedin.com/company/newcollab/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
                   <FaLinkedin />
@@ -2713,8 +2711,12 @@ const LandingPageClient = () => {
           </FooterInner>
         </Footer>
       </PageContainer>
-    </LandingPageLayoutNext>
+    </>
   );
 };
 
-export default LandingPageClient;
+export default LandingPage;
+// Next.js named export alias
+export { LandingPage as default }
+
+
