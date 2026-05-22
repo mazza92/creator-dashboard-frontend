@@ -332,19 +332,22 @@ const FloatingBadge = styled.div`
   z-index: 10;
 
   &.bottom-left {
-    bottom: 16px;
-    left: 12px;
+    bottom: 12px;
+    left: 10px;
     animation-delay: 0s;
   }
 
   &.top-right {
-    top: 16px;
-    right: 12px;
+    top: 12px;
+    right: 10px;
     animation-delay: 1.5s;
   }
 
-  @media (max-width: 400px) {
-    display: none;
+  @media (max-width: 480px) {
+    padding: 8px 10px;
+    font-size: 11px;
+    gap: 6px;
+    border-radius: 10px;
   }
 `;
 
