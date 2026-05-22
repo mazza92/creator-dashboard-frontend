@@ -2716,7 +2716,5 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-// Next.js named export alias
-export { LandingPage as default }
 
 
