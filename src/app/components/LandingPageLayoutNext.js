@@ -1,19 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from 'antd';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { MenuOutlined, CloseOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import styled, { createGlobalStyle } from 'styled-components';
-import { FaLinkedin, FaTwitter, FaInstagram } from 'react-icons/fa';
-import { FaTiktok } from 'react-icons/fa6';
+import { FaLinkedin, FaInstagram } from 'react-icons/fa';
+import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 import CookieSettings from '../../components/CookieSettings';
-
-const logoPath = '/newcollab-logo-dark.png';
-
-// Primary rose color to match CRA layout
-const primaryRose = '#E11D48';
+import { tokens } from '../../theme/tokens';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -43,12 +39,11 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// Palette from CRA LandingPageLayout.js
-const primaryBlue = '#3B82F6';
-const brightMagenta = '#EC4899';
-const offWhite = '#F9FAFB';
-const warmOrange = '#FF9F43';
-const darkCharcoal = '#1e293b';
+// V5 Palette
+const primaryRose = tokens.primary;
+const accentViolet = tokens.accent;
+const offWhite = tokens.bg;
+const darkCharcoal = tokens.textPrimary;
 
 const LayoutWrapper = styled.div`
   display: flex;
@@ -67,38 +62,25 @@ const LayoutWrapper = styled.div`
     content: '';
     position: fixed;
     border-radius: 50%;
-    filter: blur(120px);
+    filter: blur(140px);
     z-index: -1;
-    opacity: 0.18;
+    opacity: 0.08;
     pointer-events: none;
   }
   &::before {
-    width: 600px;
-    height: 600px;
-    background: ${primaryBlue};
-    top: 5%;
-    left: -300px;
-  }
-  &::after {
     width: 500px;
     height: 500px;
-    background: ${brightMagenta};
-    bottom: 15%;
-    right: -250px;
+    background: ${primaryRose};
+    top: 5%;
+    left: -200px;
   }
-`;
-
-const OrangeBlur = styled.div`
-  position: fixed;
-  width: 400px;
-  height: 400px;
-  left: 60%;
-  top: 60%;
-  background: radial-gradient(circle, ${warmOrange} 0%, transparent 70%);
-  opacity: 0.12;
-  filter: blur(60px);
-  z-index: -1;
-  pointer-events: none;
+  &::after {
+    width: 400px;
+    height: 400px;
+    background: ${accentViolet};
+    bottom: 20%;
+    right: -150px;
+  }
 `;
 
 const HeaderWrapper = styled.header`
@@ -107,7 +89,7 @@ const HeaderWrapper = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: ${props => (props.$isMobile ? 'fixed' : 'absolute')};
+  position: ${props => props.$isMobile ? 'fixed' : 'absolute'};
   top: 0;
   left: 0;
   right: 0;
@@ -119,9 +101,9 @@ const HeaderWrapper = styled.header`
   @media (max-width: 768px) {
     height: 96px;
     padding-right: 0;
-    backdrop-filter: ${props => (props.$isScrolled ? 'blur(10px)' : 'none')};
-    background: ${props => (props.$isScrolled ? 'rgba(255, 255, 255, 0.8)' : 'transparent')} !important;
-    box-shadow: ${props => (props.$isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.05)' : 'none')};
+    backdrop-filter: ${props => props.$isScrolled ? 'blur(10px)' : 'none'};
+    background: ${props => props.$isScrolled ? 'rgba(255, 255, 255, 0.8)' : 'transparent'} !important;
+    box-shadow: ${props => props.$isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.05)' : 'none'};
   }
 `;
 
@@ -130,48 +112,40 @@ const ContentContainer = styled.div`
   background: transparent;
   margin: 0;
   padding: 0;
-  min-height: ${props => (props.$hideHeader ? '100vh' : 'auto')};
+  min-height: ${props => props.$hideHeader ? '100vh' : 'auto'};
   overflow-x: hidden;
   position: relative;
   box-sizing: border-box;
-  padding-top: ${props => (props.$hideHeader ? '0' : '140px')};
-
-  @media (max-width: 768px) {
-    padding-top: ${props => (props.$hideHeader ? '0' : '96px')};
-  }
 `;
 
 const ContentWrapper = styled.main`
   background: transparent;
   width: 100%;
-  max-width: ${props => (props.$isLandingPage ? '1200px' : '100%')};
-  margin: 0 auto;
-  padding: ${props => (props.$isLandingPage ? '0 24px' : '0')};
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   position: relative;
+`;
+
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: 48px;
+  text-decoration: none;
 
   @media (max-width: 768px) {
-    padding: ${props => (props.$isLandingPage ? '0 16px' : '0')};
+    margin-left: 24px;
   }
 `;
 
-const Logo = styled.img`
-  height: 120px;
+const LogoImg = styled.img`
+  height: 30px;
   width: auto;
-  max-width: 100%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: 48px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(38, 166, 154, 0.1));
-
-  &:hover {
-    transform: scale(1.02);
-    filter: drop-shadow(0 4px 8px rgba(38, 166, 154, 0.2));
-  }
+  display: block;
 
   @media (max-width: 768px) {
-    height: 90px;
-    margin-left: 24px;
+    height: 26px;
   }
 `;
 
@@ -189,83 +163,46 @@ const NavLinks = styled.div`
 `;
 
 const NavLink = styled(Link)`
-  color: ${props => (props.$isSignupPage ? '#ffffff' : '#1e293b')};
-  font-size: 16px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: transparent;
-  position: relative;
-  overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #26A69A, #4CAF50, #26A69A);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-50%);
-  }
-
-  &:hover {
-    background: ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : 'rgba(38, 166, 154, 0.05)')};
-    transform: translateY(-1px);
-    color: ${props => (props.$isSignupPage ? '#ffffff' : '#26A69A')};
-
-    &::after {
-      width: 80%;
-    }
-  }
-`;
-
-const NavLinkA = styled.a`
-  color: ${props => (props.$isSignupPage ? '#ffffff' : '#1e293b')};
-  font-size: 16px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: transparent;
-  position: relative;
-  overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #26A69A, #4CAF50, #26A69A);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-50%);
-  }
-
-  &:hover {
-    background: ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : 'rgba(38, 166, 154, 0.05)')};
-    transform: translateY(-1px);
-    color: ${props => (props.$isSignupPage ? '#ffffff' : '#26A69A')};
-
-    &::after {
-      width: 80%;
-    }
-  }
-`;
-
-const HashNavLink = styled.a`
-  color: ${props => props.$isSignupPage ? '#ffffff' : darkCharcoal};
+  color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: ${tokens.radiusBtn};
+  background: transparent;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: ${tokens.primary};
+    transition: all 0.2s ease;
+    transform: translateX(-50%);
+    border-radius: 1px;
+  }
+
+  &:hover {
+    color: ${props => props.$isSignupPage ? '#ffffff' : tokens.primary};
+
+    &::after {
+      width: 60%;
+    }
+  }
+`;
+
+const HashNavLink = styled.a`
+  color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: ${tokens.radiusBtn};
   background: transparent;
   position: relative;
   cursor: pointer;
@@ -277,14 +214,14 @@ const HashNavLink = styled.a`
     left: 50%;
     width: 0;
     height: 2px;
-    background: ${primaryRose};
+    background: ${tokens.primary};
     transition: all 0.2s ease;
     transform: translateX(-50%);
     border-radius: 1px;
   }
 
   &:hover {
-    color: ${props => props.$isSignupPage ? '#ffffff' : primaryRose};
+    color: ${props => props.$isSignupPage ? '#ffffff' : tokens.primary};
 
     &::after {
       width: 60%;
@@ -305,242 +242,61 @@ const AuthButtons = styled.div`
 `;
 
 const LoginButton = styled(Link)`
-  color: ${props => (props.$isSignupPage ? '#ffffff' : '#1e293b')};
-  font-size: 15px;
-  font-weight: 700;
+  color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
+  font-size: 14px;
+  font-weight: 600;
   text-decoration: none;
-  padding: 10px 24px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.3)' : '#FF6B6B')};
+  padding: 10px 20px;
+  border-radius: ${tokens.radiusBtn};
+  transition: all 0.15s ease;
+  border: 1px solid ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.3)' : tokens.border};
   background: transparent;
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.5px;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 107, 107, 0.05)')};
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.5)' : '#FF8E53')};
-    color: ${props => (props.$isSignupPage ? '#ffffff' : '#FF6B6B')};
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
-  &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
-  }
-`;
-
-const LoginButtonA = styled.a`
-  color: ${props => (props.$isSignupPage ? '#ffffff' : '#1e293b')};
-  font-size: 15px;
-  font-weight: 700;
-  text-decoration: none;
-  padding: 10px 24px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.3)' : '#FF6B6B')};
-  background: transparent;
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.5px;
-  display: inline-block;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 107, 107, 0.05)')};
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    border-color: ${props => (props.$isSignupPage ? 'rgba(255, 255, 255, 0.5)' : '#FF8E53')};
-    color: ${props => (props.$isSignupPage ? '#ffffff' : '#FF6B6B')};
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
-  &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
+    border-color: ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.5)' : tokens.borderHover};
+    color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
+    background: ${props => props.$isSignupPage ? 'rgba(255, 255, 255, 0.1)' : tokens.subtle};
   }
 `;
 
 const SignupButton = styled(Link)`
   color: #ffffff;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   text-decoration: none;
-  padding: 10px 24px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border-radius: ${tokens.radiusBtn};
+  background: ${tokens.action};
+  transition: all 0.15s ease;
   display: block;
   text-align: center;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #FF8E53, #FF6B6B);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+    background: ${tokens.actionHover};
     color: #ffffff;
-
-    &::before {
-      opacity: 1;
-    }
+    transform: translateY(-1px);
   }
 
   &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
-  }
-`;
-
-const SignupButtonA = styled.a`
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 700;
-  text-decoration: none;
-  padding: 10px 24px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.5px;
-  display: block;
-  text-align: center;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #FF8E53, #FF6B6B);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
-    color: #ffffff;
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
-  &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
+    transform: translateY(0);
   }
 `;
 
 const MobileCTAButton = styled(Link)`
   display: none;
-  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+  background: ${tokens.action};
   color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   text-decoration: none;
   padding: 8px 16px;
-  border-radius: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  border-radius: ${tokens.radiusBtn};
+  transition: all 0.15s ease;
   margin-right: 16px;
   white-space: nowrap;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
-    color: #ffffff;
-  }
-
-  @media (max-width: 768px) {
-    display: block;
-  }
-`;
-
-const MobileCTAButtonA = styled.a`
-  display: none;
-  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-  margin-right: 16px;
-  white-space: nowrap;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    background: ${tokens.actionHover};
     color: #ffffff;
   }
 
@@ -574,7 +330,7 @@ const MobileMenu = styled.div`
   background: rgba(255, 255, 255, 0.98);
   z-index: 1001;
   padding: 24px;
-  transform: translateX(${props => (props.$isOpen ? '0' : '100%')});
+  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
   transition: transform 0.3s ease;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -607,47 +363,32 @@ const MobileNavLinks = styled.div`
 `;
 
 const MobileNavLink = styled(Link)`
-  color: #1e293b;
-  font-size: 20px;
-  font-weight: 500;
-  text-decoration: none;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(30, 41, 59, 0.1);
-  background: transparent;
-
-  &:hover {
-    color: #26A69A;
-  }
-`;
-
-const MobileNavLinkA = styled.a`
-  color: #1e293b;
-  font-size: 20px;
-  font-weight: 500;
-  text-decoration: none;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(30, 41, 59, 0.1);
-  background: transparent;
-  display: block;
-
-  &:hover {
-    color: #26A69A;
-  }
-`;
-
-const MobileHashNavLink = styled.a`
-  color: ${darkCharcoal};
+  color: ${tokens.textPrimary};
   font-size: 18px;
   font-weight: 600;
   text-decoration: none;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(30, 41, 59, 0.1);
+  border-bottom: 1px solid ${tokens.border};
+  background: transparent;
+
+  &:hover {
+    color: ${tokens.primary};
+  }
+`;
+
+const MobileHashNavLink = styled.a`
+  color: ${tokens.textPrimary};
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 14px 0;
+  border-bottom: 1px solid ${tokens.border};
   background: transparent;
   cursor: pointer;
   display: block;
 
   &:hover {
-    color: ${primaryRose};
+    color: ${tokens.primary};
   }
 `;
 
@@ -665,32 +406,32 @@ const ScrollToTopButton = styled.button`
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #26A69A, #2BBBAD);
+  background: ${tokens.action};
   border: none;
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: ${props => (props.$visible ? '1' : '0')};
-  visibility: ${props => (props.$visible ? 'visible' : 'hidden')};
-  transform: translateY(${props => (props.$visible ? '0' : '20px')});
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(38, 166, 154, 0.3);
+  opacity: ${props => props.$visible ? '1' : '0'};
+  visibility: ${props => props.$visible ? 'visible' : 'hidden'};
+  transform: translateY(${props => props.$visible ? '0' : '20px'});
+  transition: all 0.2s ease;
+  box-shadow: ${tokens.shadowCard};
   z-index: 999;
 
   &:hover {
+    background: ${tokens.actionHover};
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(38, 166, 154, 0.4);
+    box-shadow: ${tokens.shadowHover};
   }
 
   &:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 10px rgba(38, 166, 154, 0.3);
+    transform: translateY(0);
   }
 
   @media (max-width: 768px) {
@@ -698,107 +439,56 @@ const ScrollToTopButton = styled.button`
     right: 16px;
     width: 40px;
     height: 40px;
-    font-size: 18px;
+    font-size: 16px;
   }
 `;
 
 const Footer = styled.footer`
+  width: 100%;
   padding: 48px 24px 32px 24px;
-  background: transparent;
+  background: ${tokens.surface};
   color: ${darkCharcoal};
   text-align: center;
-  border-top: 1px solid rgba(60,60,60,0.06);
-  box-shadow: 0 -8px 32px 0 rgba(60,60,60,0.03);
-  font-size: 16px;
+  border-top: 1px solid ${tokens.border};
+  font-size: 14px;
   @media (max-width: 768px) {
-    padding: 32px 8px 24px 8px;
-    font-size: 14px;
+    padding: 32px 16px 24px 16px;
   }
 `;
-
 const FooterLinks = styled.div`
   display: flex;
   justify-content: center;
-  gap: 28px;
+  gap: 24px;
   margin-bottom: 24px;
   flex-wrap: wrap;
   @media (max-width: 768px) {
-    gap: 16px;
+    gap: 12px;
   }
 `;
-
 const FooterLink = styled.a`
-  color: ${primaryBlue};
+  color: ${tokens.textSecondary};
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  transition: color 0.2s, opacity 0.2s;
-  opacity: 0.85;
+  transition: color 0.15s;
   cursor: pointer;
+  padding: 4px 8px;
   border-radius: 6px;
-  padding: 4px 10px;
-  display: inline-block;
-
   &:hover {
-    color: ${brightMagenta};
-    background: rgba(236, 72, 153, 0.07);
-    opacity: 1;
+    color: ${tokens.primary};
+    background: ${tokens.primaryLight};
   }
   @media (max-width: 768px) {
-    font-size: 14px;
+    font-size: 13px;
     padding: 4px 6px;
   }
 `;
-
-const FooterLinkNext = styled(Link)`
-  color: ${primaryBlue};
-  text-decoration: none;
-  font-size: 16px;
-  font-weight: 500;
-  transition: color 0.2s, opacity 0.2s;
-  opacity: 0.85;
-  cursor: pointer;
-  border-radius: 6px;
-  padding: 4px 10px;
-  &:hover {
-    color: ${brightMagenta};
-    background: rgba(236, 72, 153, 0.07);
-    opacity: 1;
-  }
-  @media (max-width: 768px) {
-    font-size: 14px;
-    padding: 4px 6px;
-  }
-`;
-
-const FooterCookieLink = styled.button`
-  color: ${primaryBlue};
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  font-weight: 500;
-  transition: color 0.2s, opacity 0.2s;
-  opacity: 0.85;
-  cursor: pointer;
-  border-radius: 6px;
-  padding: 4px 10px;
-  &:hover {
-    color: ${brightMagenta};
-    background: rgba(236, 72, 153, 0.07);
-    opacity: 1;
-  }
-  @media (max-width: 768px) {
-    font-size: 14px;
-    padding: 4px 6px;
-  }
-`;
-
 const SocialIcon = styled.div`
-  font-size: 22px;
-  color: ${primaryBlue};
-  margin: 0 10px;
+  font-size: 20px;
+  color: ${tokens.textSecondary};
+  margin: 0 8px;
   cursor: pointer;
-  transition: color 0.2s, transform 0.2s;
+  transition: color 0.15s, transform 0.15s;
   display: inline-block;
   vertical-align: middle;
   @media (max-width: 768px) {
@@ -806,61 +496,43 @@ const SocialIcon = styled.div`
     margin: 0 6px;
   }
   &:hover {
-    color: ${brightMagenta};
-    transform: scale(1.15);
+    color: ${tokens.primary};
+    transform: scale(1.1);
   }
 `;
 
-export default function LandingPageLayoutNext({ hideHeader, children, canonicalUrl: customCanonicalUrl }) {
+export default function LandingPageLayoutNext({ hideHeader, hideFooter, children, canonicalUrl: customCanonicalUrl }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showCookieSettings, setShowCookieSettings] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || '/';
   const router = useRouter();
-
-  // Hash navigation for landing page sections
-  const handleNavClick = (hash) => {
-    if (pathname !== '/') {
-      router.push('/');
-      setTimeout(() => {
-        window.location.hash = hash;
-      }, 100);
-    } else {
-      window.location.hash = hash;
-    }
-  };
 
   const isSignupPage = pathname === '/register';
   const isLoginPage = pathname === '/login';
   const isTransparentHeader = isSignupPage || isLoginPage;
-  const isLandingPage = pathname === '/';
 
-  // Generate canonical URL (stripping query parameters)
   const canonicalUrl =
     customCanonicalUrl || `https://newcollab.co${pathname === '/' ? '' : pathname}`;
 
-  // Inject canonical link tag for SEO (Next.js compatible)
+  // Inject canonical link tag for SEO
   useEffect(() => {
     if (typeof window === 'undefined' || !document.head) return;
 
-    const existingCanonicals = document.querySelectorAll('link[rel="canonical"]');
-    existingCanonicals.forEach((canonical) => {
-      try {
-        canonical?.remove?.();
-      } catch (_) {}
+    const existing = document.querySelectorAll('link[rel="canonical"]');
+    existing.forEach((el) => {
+      try { el.remove(); } catch (_) {}
     });
 
-    const linkElement = document.createElement('link');
-    linkElement.rel = 'canonical';
-    linkElement.href = canonicalUrl;
-    document.head.appendChild(linkElement);
+    const link = document.createElement('link');
+    link.rel = 'canonical';
+    link.href = canonicalUrl;
+    document.head.appendChild(link);
 
     return () => {
-      try {
-        linkElement?.remove?.();
-      } catch (_) {}
+      try { link.remove(); } catch (_) {}
     };
   }, [canonicalUrl]);
 
@@ -868,7 +540,6 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -880,29 +551,46 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
       setIsScrolled(scrollPosition > 50);
       setShowScrollTop(scrollPosition > 300);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Prevent background scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
     }
-
-    // Cleanup on unmount
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [mobileMenuOpen]);
 
-  // Close mobile menu on navigation
   useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const element = document.querySelector(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleNavClick = (hash) => {
+    if (pathname !== '/') {
+      router.push('/');
+      setTimeout(() => {
+        window.location.hash = hash;
+      }, 100);
+    } else {
+      window.location.hash = hash;
+    }
+  };
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
@@ -910,10 +598,7 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
   };
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenCookieSettings = (e) => {
@@ -921,30 +606,30 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
     setShowCookieSettings(true);
   };
 
-  const isNextRoute = (href) =>
-    href === '/' || href.startsWith('/blog') || href.startsWith('/directory');
-
   return (
     <LayoutWrapper>
-      <OrangeBlur />
       <GlobalStyle />
       {!hideHeader && (
         <HeaderWrapper $isMobile={isMobile} $isScrolled={isScrolled}>
-          <Link href="/" prefetch={false}>
-            <Logo src={logoPath} alt="NewCollab" />
+          <Link href="/" prefetch={false} style={{ textDecoration: 'none' }}>
+            <LogoContainer>
+              <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
+            </LogoContainer>
           </Link>
           <NavLinks>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('brands')}>Brands</HashNavLink>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
-            <NavLinkA href="/about" $isSignupPage={isTransparentHeader}>About</NavLinkA>
+            <NavLink href="/about" prefetch={false} $isSignupPage={isTransparentHeader}>About</NavLink>
           </NavLinks>
           <AuthButtons>
-            <LoginButtonA href="/login" $isSignupPage={isTransparentHeader}>Log in</LoginButtonA>
-            <SignupButtonA href="/register">Sign up</SignupButtonA>
+            <LoginButton href="/login" prefetch={false} $isSignupPage={isTransparentHeader}>Log in</LoginButton>
+            <SignupButton href="/register/creator" prefetch={false}>Sign up</SignupButton>
           </AuthButtons>
-          <MobileCTAButtonA href="/register/creator">Sign up free</MobileCTAButtonA>
+          <MobileCTAButton href="/register/creator" prefetch={false}>
+            Sign up free
+          </MobileCTAButton>
           <MobileMenuButton
             type="text"
             icon={mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
@@ -952,13 +637,11 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
           />
         </HeaderWrapper>
       )}
-
       <ContentContainer $hideHeader={hideHeader}>
-        <ContentWrapper $isLandingPage={isLandingPage}>
+        <ContentWrapper>
           {children}
         </ContentWrapper>
       </ContentContainer>
-
       <ScrollToTopButton
         $visible={showScrollTop}
         onClick={scrollToTop}
@@ -966,11 +649,12 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
       >
         <ArrowUpOutlined />
       </ScrollToTopButton>
-
       <MobileMenu $isOpen={mobileMenuOpen}>
         <MobileMenuHeader>
-          <Link href="/" prefetch={false} onClick={closeMobileMenu}>
-            <Logo src={logoPath} alt="NewCollab" />
+          <Link href="/" prefetch={false} onClick={closeMobileMenu} style={{ textDecoration: 'none' }}>
+            <LogoContainer style={{ marginLeft: 0 }}>
+              <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
+            </LogoContainer>
           </Link>
           <MobileMenuButton
             type="text"
@@ -978,64 +662,70 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
             onClick={closeMobileMenu}
           />
         </MobileMenuHeader>
-        <div>
-          <MobileNavLinks>
-            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
-              Features
-            </MobileHashNavLink>
-            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('brands'); }}>
-              Brands
-            </MobileHashNavLink>
-            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('how-it-works'); }}>
-              How It Works
-            </MobileHashNavLink>
-            <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('pricing'); }}>
-              Pricing
-            </MobileHashNavLink>
-            <MobileNavLinkA href="/about" onClick={closeMobileMenu}>About</MobileNavLinkA>
-            <MobileNavLinkA href="/contact" onClick={closeMobileMenu}>Contact</MobileNavLinkA>
-          </MobileNavLinks>
-          <MobileAuthButtons>
-            <LoginButtonA href="/login" onClick={closeMobileMenu}>Log in</LoginButtonA>
-            <SignupButtonA href="/register" onClick={closeMobileMenu}>Sign up</SignupButtonA>
-          </MobileAuthButtons>
-        </div>
+        <MobileNavLinks>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
+            Features
+          </MobileHashNavLink>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('brands'); }}>
+            Brands
+          </MobileHashNavLink>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('how-it-works'); }}>
+            How It Works
+          </MobileHashNavLink>
+          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('pricing'); }}>
+            Pricing
+          </MobileHashNavLink>
+          <MobileNavLink href="/about" prefetch={false} onClick={closeMobileMenu}>
+            About
+          </MobileNavLink>
+          <MobileNavLink href="/contact" prefetch={false} onClick={closeMobileMenu}>
+            Contact
+          </MobileNavLink>
+        </MobileNavLinks>
+        <MobileAuthButtons>
+          <LoginButton href="/login" prefetch={false} onClick={closeMobileMenu}>
+            Log in
+          </LoginButton>
+          <SignupButton href="/register/creator" prefetch={false} onClick={closeMobileMenu}>
+            Sign up
+          </SignupButton>
+        </MobileAuthButtons>
       </MobileMenu>
-
-      <Footer>
-        <FooterLinks>
-          <FooterLink href="/about">About us</FooterLink>
-          <FooterLinkNext href="/blog" prefetch={false}>Blog</FooterLinkNext>
-          <FooterLink href="/contact">Contact</FooterLink>
-          <FooterLink href="/privacy-policy">Privacy</FooterLink>
-          <FooterLink href="/terms-of-service">Terms</FooterLink>
-          <FooterCookieLink onClick={handleOpenCookieSettings}>Cookie Settings</FooterCookieLink>
-        </FooterLinks>
-        <div style={{ marginBottom: '32px' }}>
-          <SocialIcon>
-            <a href="https://www.linkedin.com/company/newcollab/" target="_blank" rel="noopener noreferrer">
-              <FaLinkedin />
-            </a>
-          </SocialIcon>
-          <SocialIcon>
-            <a href="https://x.com/newcollab_" target="_blank" rel="noopener noreferrer">
-              <FaTwitter />
-            </a>
-          </SocialIcon>
-          <SocialIcon>
-            <a href="https://www.instagram.com/newcollab.co/" target="_blank" rel="noopener noreferrer">
-              <FaInstagram />
-            </a>
-          </SocialIcon>
-          <SocialIcon>
-            <a href="https://www.tiktok.com/@newcollabco" target="_blank" rel="noopener noreferrer">
-              <FaTiktok />
-            </a>
-          </SocialIcon>
-        </div>
-        <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
-      </Footer>
-
+      {!hideFooter && (
+        <Footer>
+          <FooterLinks>
+            <FooterLink href="/about">About us</FooterLink>
+            <FooterLink href="/blog">Blog</FooterLink>
+            <FooterLink href="/contact">Contact</FooterLink>
+            <FooterLink href="/privacy-policy">Privacy</FooterLink>
+            <FooterLink href="/terms-of-service">Terms</FooterLink>
+            <FooterLink onClick={handleOpenCookieSettings}>Cookie Settings</FooterLink>
+          </FooterLinks>
+          <div style={{ marginBottom: '32px' }}>
+            <SocialIcon>
+              <a href="https://www.linkedin.com/company/newcollab/" target="_blank" rel="noopener noreferrer">
+                <FaLinkedin />
+              </a>
+            </SocialIcon>
+            <SocialIcon>
+              <a href="https://x.com/newcollab_" target="_blank" rel="noopener noreferrer" aria-label="X">
+                <FaXTwitter />
+              </a>
+            </SocialIcon>
+            <SocialIcon>
+              <a href="https://www.instagram.com/newcollab.co/" target="_blank" rel="noopener noreferrer">
+                <FaInstagram />
+              </a>
+            </SocialIcon>
+            <SocialIcon>
+              <a href="https://www.tiktok.com/@newcollabco" target="_blank" rel="noopener noreferrer">
+                <FaTiktok />
+              </a>
+            </SocialIcon>
+          </div>
+          <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
+        </Footer>
+      )}
       <CookieSettings
         isVisible={showCookieSettings}
         onClose={() => setShowCookieSettings(false)}
@@ -1043,4 +733,3 @@ export default function LandingPageLayoutNext({ hideHeader, children, canonicalU
     </LayoutWrapper>
   );
 }
-
