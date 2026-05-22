@@ -1714,7 +1714,7 @@ const tickerItems = [
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
-const LandingPage = () => {
+const LandingPageClient = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [isVisible, setIsVisible] = useState(false);
   const [brands, setBrands] = useState(brandsDataFallback);
