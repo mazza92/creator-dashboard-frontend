@@ -627,7 +627,7 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
           </Link>
           <NavLinks>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
-            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('brands')}>Brands</HashNavLink>
+            <NavLink to="/directory" $isSignupPage={isTransparentHeader}>Brands</NavLink>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
             <NavLink to="/about" $isSignupPage={isTransparentHeader}>About</NavLink>
@@ -675,9 +675,9 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
           <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
             Features
           </MobileHashNavLink>
-          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('brands'); }}>
+          <MobileNavLink to="/directory" onClick={closeMobileMenu}>
             Brands
-          </MobileHashNavLink>
+          </MobileNavLink>
           <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('how-it-works'); }}>
             How It Works
           </MobileHashNavLink>
