@@ -89,7 +89,21 @@
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
   </url>
-  
+
+  <url>
+    <loc>https://newcollab.co/blog/brand-pitch-email-templates-micro-creators-2026</loc>
+    <lastmod>2026-05-23T00:00:00.000Z</lastmod>
+    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://newcollab.co/blog/list-of-companies-that-send-pr-packages-2026</loc>
+    <lastmod>2026-05-23T00:00:00.000Z</lastmod>
+    <priority>0.9</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
   <url>
     <loc>https://newcollab.co/blog/kids-and-parenting-brand-deals-2026</loc>
     <lastmod>2026-04-26T00:00:00.000Z</lastmod>

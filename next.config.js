@@ -110,6 +110,12 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
+      // SEO: Redirect old 2025 PR packages post to new 2026 pillar post
+      {
+        source: '/blog/list-of-companies-that-send-pr-packages-2025',
+        destination: '/blog/list-of-companies-that-send-pr-packages-2026',
+        permanent: true,
+      },
     ];
   },
   
