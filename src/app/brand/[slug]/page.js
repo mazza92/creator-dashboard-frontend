@@ -297,7 +297,13 @@ export default async function BrandPage({ params }) {
         .bp-page {
           max-width: 1160px;
           margin: 0 auto;
-          padding: 28px 24px 80px;
+          /* 140px desktop nav height + 24px breathing room */
+          padding: 164px 24px 80px;
+        }
+
+        @media (max-width: 768px) {
+          /* 96px mobile nav height + 20px breathing room */
+          .bp-page { padding: 116px 20px 80px; }
         }
 
         /* Back link */
@@ -860,7 +866,7 @@ export default async function BrandPage({ params }) {
         }
 
         @media (max-width: 640px) {
-          .bp-page { padding: 20px 16px 80px; }
+          .bp-page { padding: 116px 16px 80px; }
           .bp-header {
             flex-wrap: wrap;
             padding: 18px;
