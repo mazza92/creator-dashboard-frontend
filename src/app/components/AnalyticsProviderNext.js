@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 const AnalyticsContext = createContext();
@@ -8,7 +8,6 @@ const AnalyticsContext = createContext();
 export const useAnalytics = () => {
   const context = useContext(AnalyticsContext);
   if (!context) {
-    // Return a no-op analytics object if not in provider (for Next.js pages)
     return {
       trackButtonClick: () => {},
       trackConversion: () => {},
@@ -20,20 +19,26 @@ export const useAnalytics = () => {
   return context;
 };
 
-export const AnalyticsProviderNext = ({ children }) => {
+// Isolated component — only this component suspends due to useSearchParams.
+// It returns null so it never blocks SSR of page content.
+function AnalyticsPageTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Track page views automatically
   useEffect(() => {
     if (typeof window !== 'undefined' && window.gtag) {
       const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
       window.gtag('config', 'G-5RET5C6MZ8', {
         page_path: fullPath,
-        page_title: document.title
+        page_title: document.title,
       });
     }
   }, [pathname, searchParams]);
+
+  return null;
+}
+
+export const AnalyticsProviderNext = ({ children }) => {
 
   /**
    * GA4 Recommended Event: sign_up
@@ -159,6 +164,11 @@ export const AnalyticsProviderNext = ({ children }) => {
   return (
     <AnalyticsContext.Provider value={value}>
       {children}
+      {/* Tracker is isolated in its own Suspense so useSearchParams never
+          causes the page content tree to bail out to client-side rendering */}
+      <Suspense fallback={null}>
+        <AnalyticsPageTracker />
+      </Suspense>
     </AnalyticsContext.Provider>
   );
 };

@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import StyledComponentsRegistry from './registry';
@@ -16,9 +15,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={inter.className}>
         <StyledComponentsRegistry>
-          <Suspense fallback={null}>
-            <AnalyticsProviderNext>{children}</AnalyticsProviderNext>
-          </Suspense>
+          {/* AnalyticsProviderNext handles its own internal Suspense for
+              useSearchParams — children are NOT inside a Suspense boundary,
+              so Next.js fully SSRs every page. */}
+          <AnalyticsProviderNext>{children}</AnalyticsProviderNext>
         </StyledComponentsRegistry>
       </body>
     </html>

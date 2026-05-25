@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import SkincareDirectoryClient from './SkincareDirectoryClient';
 
 // SEO metadata for Skincare Directory
@@ -30,7 +31,9 @@ export default function SkincareDirectoryPage() {
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
         Skincare Brand PR Application Forms
       </h1>
-      <SkincareDirectoryClient />
+      <Suspense fallback={null}>
+        <SkincareDirectoryClient />
+      </Suspense>
     </>
   );
 }
