@@ -797,11 +797,15 @@ export default function DirectoryClient({
           <h1>{collectionTitle || '500+ PR Forms for Brands: Direct Application Links'}</h1>
           <p>
             {collectionDescription ||
-              'Browse verified PR forms for brands—500+ direct application links, PR requirements, and options for small creators in beauty, skincare, K-beauty, tech, and fashion.'}
+              'Browse 500+ verified brand PR forms with direct application links, response rates, and follower requirements. Find brands that reply to micro-influencer pitches in beauty, skincare, K-beauty, fashion, wellness, and more.'}
           </p>
           <QuickLinks>
+            <QuickLink href="/directory/beauty">Beauty</QuickLink>
             <QuickLink href="/directory/skincare">Skincare</QuickLink>
             <QuickLink href="/directory/k-beauty">K-Beauty</QuickLink>
+            <QuickLink href="/directory/fashion">Fashion</QuickLink>
+            <QuickLink href="/directory/wellness">Wellness</QuickLink>
+            <QuickLink href="/directory/lifestyle">Lifestyle</QuickLink>
             <QuickLink href="/directory/australia">Australia</QuickLink>
           </QuickLinks>
         </Hero>
@@ -960,8 +964,16 @@ export default function DirectoryClient({
                             </CategoryTag>
                           );
                         })()}
-                        {brand.minFollowers > 0 && (
-                          <TagFollowers>{Math.round(brand.minFollowers / 1000)}K+ followers</TagFollowers>
+                        {brand.minFollowers > 0 ? (
+                          <TagFollowers>
+                            {brand.minFollowers < 1000
+                              ? `${brand.minFollowers}+ followers`
+                              : `${Math.round(brand.minFollowers / 1000)}K+ followers`}
+                          </TagFollowers>
+                        ) : (
+                          <TagFollowers style={{ background: '#F0FDF4', color: '#166534', borderColor: '#BBF7D0' }}>
+                            open to all creators
+                          </TagFollowers>
                         )}
                       </TagRow>
                       {(typeof brand.responseRate === 'number' || (brand.pitchStats?.totalPitches > 0)) && (
@@ -972,7 +984,7 @@ export default function DirectoryClient({
                               <>
                                 <StatItem>
                                   <StatValue className="green">{brand.responseRate}%</StatValue>
-                                  <StatLabel>Response rate</StatLabel>
+                                  <StatLabel>reply to creator pitches</StatLabel>
                                 </StatItem>
                                 {brand.pitchStats?.totalPitches > 0 && <StatDivider />}
                               </>

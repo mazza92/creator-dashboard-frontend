@@ -42,7 +42,7 @@ export default async function DirectoryPage() {
   let initialTotal = 0;
   try {
     const res = await fetch(
-      'https://api.newcollab.co/api/public/brands?page=1&limit=24',
+      'https://api.newcollab.co/api/public/brands?page=1&limit=48',
       { next: { revalidate: 3600 } }
     );
     if (res.ok) {
