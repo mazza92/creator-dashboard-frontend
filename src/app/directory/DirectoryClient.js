@@ -619,19 +619,25 @@ export default function DirectoryClient({
   initialCategory,
   initialSearch,
   initialCountry,
+  // Server-fetched brands — passed from the server component so the first
+  // render contains real brand cards in the HTML (crawlable, no JS needed)
+  initialBrands,
+  initialTotal,
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const didInitFromUrl = useRef(false);
+  // Skip the first client fetch when the server already supplied brand data
+  const skipFirstFetch = useRef(!!(initialBrands && initialBrands.length > 0));
 
-  const [loading, setLoading] = useState(true);
-  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(!(initialBrands && initialBrands.length > 0));
+  const [brands, setBrands] = useState(initialBrands || []);
   const [categories, setCategories] = useState([]);
   const [openPrBrands, setOpenPrBrands] = useState([]);
 
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(initialTotal || 0);
 
   const [search, setSearch] = useState(initialSearch || '');
   // Keep category case-sensitive to match API values
@@ -734,6 +740,13 @@ export default function DirectoryClient({
   }, []);
 
   useEffect(() => {
+    // If the server pre-fetched brands for the initial render, skip the first
+    // client-side fetch. Any subsequent filter/page change will run normally.
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false;
+      return;
+    }
+
     let cancelled = false;
     async function loadBrands() {
       setLoading(true);

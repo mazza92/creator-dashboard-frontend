@@ -27,15 +27,38 @@ export const metadata = {
   },
 };
 
-export default function DirectoryPage() {
+// Revalidate every hour — brand list is stable but gets weekly updates
+export const revalidate = 3600;
+
+const srOnly = {
+  position: 'absolute', width: '1px', height: '1px', padding: 0,
+  margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)',
+  whiteSpace: 'nowrap', border: 0,
+};
+
+export default async function DirectoryPage() {
+  // Fetch first page of brands server-side so they appear in the initial HTML for crawlers
+  let initialBrands = [];
+  let initialTotal = 0;
+  try {
+    const res = await fetch(
+      'https://api.newcollab.co/api/public/brands?page=1&limit=24',
+      { next: { revalidate: 3600 } }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      initialBrands = Array.isArray(data.brands) ? data.brands : [];
+      initialTotal = data?.pagination?.total || 0;
+    }
+  } catch (_) {
+    // fall back to client-side fetching — DirectoryClient handles this gracefully
+  }
+
   return (
     <>
-      {/* Server-rendered h1 for SEO - visually hidden, client component renders visible title */}
-      <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
-        500+ PR Forms for Brands: Direct Application Links
-      </h1>
+      <h1 style={srOnly}>500+ PR Forms for Brands: Direct Application Links</h1>
       <Suspense fallback={null}>
-        <DirectoryClient />
+        <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>
     </>
   );
