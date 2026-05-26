@@ -11,13 +11,13 @@ const UPGRADE_COPY = {
     headline: "Unlock Unlimited Brand Pitches",
     sub: "You have free pitches left this month.",
     features: [
-      "Unlimited Brand Pitches (No monthly limits!)",
-      "Personalized emails that brands actually read",
-      "Direct access to PR manager emails",
-      "Pitch templates proven to get responses",
-      "Priority support"
+      "Unlimited pitches. Every brand, every month.",
+      "Custom outreach emails written for each brand",
+      "Direct PR manager contacts for 500+ brands",
+      "Your media kit and portfolio in one shareable link",
+      "Personal creator assistant for follow-ups and deal negotiations"
     ],
-    valueProp: "One PR package could get you $500 worth of free products. $12/month is a steal!"
+    valueProp: "Most creators land their first gifted package within 30 days. That covers your $12 back in product."
   },
   followup: {
     headline: "Double your reply rate with a Pro follow-up",
@@ -42,16 +42,16 @@ const UPGRADE_COPY = {
     valueProp: "Know your worth! Pro creators track an average of $1,200+ in PR value their first year."
   },
   limit_reached: {
-    headline: "You've Used Your Free Pitches!",
+    headline: "You're on a roll. Keep going.",
     sub: "You've sent all your brand pitches this month.",
     features: [
-      "Unlimited Brand Pitches (No monthly limits!)",
-      "Personalized emails that brands actually read",
-      "Direct access to PR manager emails",
-      "Pitch templates proven to get responses",
-      "Priority support"
+      "Unlimited pitches. Every brand, every month.",
+      "Custom outreach emails written for each brand",
+      "Direct PR manager contacts for 500+ brands",
+      "Your media kit and portfolio in one shareable link",
+      "Personal creator assistant for follow-ups and deal negotiations"
     ],
-    valueProp: "One PR package could get you $500 worth of free products. $12/month is a steal!"
+    valueProp: "Most creators land their first gifted package within 30 days. That covers your $12 back in product."
   }
 };
 
@@ -117,16 +117,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
             <Title>{copy.headline}</Title>
             <Subtitle>
               {copyKey === 'limit_reached'
-                ? `You've sent ${currentCount} brand pitches this month.`
+                ? `You've sent ${currentCount} pitches this month. Don't stop now.`
                 : copyKey === 'default' && !limitReached
                   ? `You have ${limit - currentCount} free pitches left this month.`
                   : copy.sub}
             </Subtitle>
-            {limitReached && showLimitInfo && (
-              <DailyResetNote>
-                ⏰ Resets next month, or upgrade now for unlimited pitches!
-              </DailyResetNote>
-            )}
           </Header>
 
           {showLimitInfo && (
@@ -142,13 +137,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
 
           <PlansContainer>
             <Plan featured>
-              <Badge>Impulse Buy Pricing</Badge>
               <PlanHeader>
                 <PlanName>Pro</PlanName>
                 <PlanPrice>
                   $12<PlanPeriod>/month</PlanPeriod>
                 </PlanPrice>
-                <PriceNote>Less than a Spotify subscription!</PriceNote>
+                <PriceNote>One gifted package covers your Pro for the year.</PriceNote>
               </PlanHeader>
 
               <Features>
@@ -170,13 +164,13 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {loading ? 'Processing...' : 'Upgrade Now for $12/month'}
+                {loading ? 'Processing...' : 'Unlock Pro for $12/month'}
               </UpgradeButton>
             </Plan>
           </PlansContainer>
 
           <Footer>
-            <FooterText>30-day money-back guarantee • Cancel anytime</FooterText>
+            <FooterText>Cancel anytime</FooterText>
           </Footer>
         </Modal>
       </Overlay>
@@ -319,20 +313,6 @@ const Plan = styled.div`
   width: 100%;
 `;
 
-const Badge = styled.div`
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, #3B82F6, #EC4899);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-`;
-
 const PlanHeader = styled.div`
   margin-bottom: 20px;
 `;
@@ -411,17 +391,6 @@ const FooterText = styled.p`
   font-size: 13px;
   color: #6B7280;
   margin: 0;
-`;
-
-const DailyResetNote = styled.p`
-  font-size: 14px;
-  color: #F59E0B;
-  margin: 12px 0 0 0;
-  font-weight: 500;
-  padding: 8px 16px;
-  background: #FEF3C7;
-  border-radius: 8px;
-  display: inline-block;
 `;
 
 const PriceNote = styled.p`

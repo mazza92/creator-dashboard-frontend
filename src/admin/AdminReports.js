@@ -41,6 +41,8 @@ const AdminReports = () => {
   const [nudgeSent, setNudgeSent] = useState({});
   const [trafficRefreshing, setTrafficRefreshing] = useState(false);
   const [lastFetched, setLastFetched] = useState(null);
+  const [atLimitPage, setAtLimitPage] = useState(1);
+  const AT_LIMIT_PER_PAGE = 10;
 
   // Check auth on mount
   useEffect(() => {
@@ -64,9 +66,11 @@ const AdminReports = () => {
   const fetchDashboardData = async (bustCache = false) => {
     setLoading(true);
     try {
-      const url = bustCache
-        ? '/api/admin/reports/founder-dashboard?bust=1'
-        : '/api/admin/reports/founder-dashboard';
+      // Request all at-limit users (up to 200) for proper pagination
+      const params = new URLSearchParams();
+      if (bustCache) params.append('bust', '1');
+      params.append('at_limit_limit', '200');
+      const url = `/api/admin/reports/founder-dashboard?${params.toString()}`;
       const { data: dashboardData } = await api.get(url, getApiConfig());
       setData(dashboardData);
       setLastFetched(new Date());
@@ -131,9 +135,15 @@ const AdminReports = () => {
       if (response.data.success) {
         setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'sent' }));
         message.success(`Nudge sent to ${user.email}`);
+        // Refresh data to fetch any additional at-limit users
+        // This ensures the list repopulates with remaining users
+        fetchDashboardData(false);
       } else if (response.data.reason === 'cooldown') {
         setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'cooldown' }));
-        message.warning(response.data.message || 'User was emailed recently');
+        message.warning(response.data.message || 'User was emailed recently (cron or manual)');
+      } else if (response.data.reason === 'unsubscribed') {
+        setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'unsubscribed' }));
+        message.warning('User has unsubscribed from emails');
       } else if (response.data.reason === 'smtp_not_configured') {
         setNudgeSent(prev => ({ ...prev, [user.creator_id]: 'default' }));
         message.info('Email service not configured - check SMTP env vars');
@@ -147,11 +157,29 @@ const AdminReports = () => {
     }
   };
 
-  // Filter out users who have been successfully nudged this session
-  const visibleAtLimitUsers = data?.at_limit_users?.filter(
-    user => nudgeSent[user.creator_id] !== 'sent'
-  ) || [];
+  // Filter out users who have been successfully nudged, on cooldown, or unsubscribed
+  const allAtLimitUsers = data?.at_limit_users || [];
+  const visibleAtLimitUsers = allAtLimitUsers.filter(
+    user => !['sent', 'cooldown', 'unsubscribed'].includes(nudgeSent[user.creator_id])
+  );
   const nudgedCount = Object.values(nudgeSent).filter(s => s === 'sent').length;
+  const cooldownCount = Object.values(nudgeSent).filter(s => s === 'cooldown').length;
+  const totalAtLimit = data?.at_limit_count || 0;
+
+  // Pagination for at-limit users
+  const totalPages = Math.ceil(visibleAtLimitUsers.length / AT_LIMIT_PER_PAGE) || 1;
+  const safePage = Math.min(atLimitPage, totalPages);
+  const paginatedAtLimitUsers = visibleAtLimitUsers.slice(
+    (safePage - 1) * AT_LIMIT_PER_PAGE,
+    safePage * AT_LIMIT_PER_PAGE
+  );
+
+  // Reset page if it becomes invalid (e.g., after filtering out nudged users)
+  useEffect(() => {
+    if (atLimitPage > totalPages && totalPages > 0) {
+      setAtLimitPage(totalPages);
+    }
+  }, [atLimitPage, totalPages]);
 
   // Sparkline component (for health metrics with daily objects)
   const Sparkline = ({ data, color = 'black', isToday = false }) => {
@@ -297,49 +325,93 @@ const AdminReports = () => {
             <TodayTitle>
               <AmberDot />
               Users who hit their pitch limit
+              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
+                {totalAtLimit} total
+              </span>
               {nudgedCount > 0 && (
-                <span style={{ marginLeft: 12, fontSize: 12, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 12 }}>
+                <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 12 }}>
                   {nudgedCount} nudged ✓
                 </span>
               )}
+              {cooldownCount > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
+                  {cooldownCount} recently emailed
+                </span>
+              )}
             </TodayTitle>
-            <TodaySubtitle>One email → could convert today</TodaySubtitle>
+            <TodaySubtitle>One email → could convert today · Skips users emailed in last 48h</TodaySubtitle>
           </TodayHeader>
 
           {visibleAtLimitUsers.length === 0 ? (
             <EmptyState>
               <strong>{nudgedCount > 0 ? 'All users nudged!' : 'No users at limit right now'}</strong>
               <p>{nudgedCount > 0
-                ? `You've sent ${nudgedCount} nudge email${nudgedCount > 1 ? 's' : ''} this session`
+                ? `You've sent ${nudgedCount} nudge email${nudgedCount > 1 ? 's' : ''} this session.`
                 : 'When free users max out their 3 weekly pitches, they\'ll appear here'}</p>
+              {cooldownCount > 0 && (
+                <p style={{ marginTop: 8, fontSize: 11, color: '#9CA3AF' }}>
+                  {cooldownCount} user{cooldownCount > 1 ? 's' : ''} skipped — already emailed by cron job
+                </p>
+              )}
             </EmptyState>
           ) : (
-            visibleAtLimitUsers.map(user => (
-              <UserRow key={user.creator_id}>
-                <Avatar>{(user.username || user.email)[0].toUpperCase()}</Avatar>
-                <UserInfo>
-                  <UserName>{user.username || 'Unknown'}</UserName>
-                  <UserDetail>
-                    {user.followers ? `${user.followers.toLocaleString()} followers · ` : ''}
-                    {user.niche ? `${user.niche} · ` : ''}
-                    {user.email}
-                  </UserDetail>
-                </UserInfo>
-                <UserStat>
-                  <UserPitches>{user.pitches_used}/3</UserPitches>
-                  <UserLimit>pitches used</UserLimit>
-                </UserStat>
-                <NudgeBtn
-                  $state={nudgeSent[user.creator_id] || 'default'}
-                  onClick={() => nudgeSent[user.creator_id] !== 'sending' && nudgeSent[user.creator_id] !== 'cooldown' && handleSendNudge(user)}
-                  disabled={nudgeSent[user.creator_id] === 'sending'}
-                >
-                  {nudgeSent[user.creator_id] === 'sending' ? 'Sending...' :
-                   nudgeSent[user.creator_id] === 'cooldown' ? 'Recent email' :
-                   'Send nudge →'}
-                </NudgeBtn>
-              </UserRow>
-            ))
+            <>
+              {paginatedAtLimitUsers.map(user => (
+                <UserRow key={user.creator_id}>
+                  <Avatar>{(user.username || user.email)[0].toUpperCase()}</Avatar>
+                  <UserInfo>
+                    <UserName>{user.username || 'Unknown'}</UserName>
+                    <UserDetail>
+                      {user.followers ? `${user.followers.toLocaleString()} followers · ` : ''}
+                      {user.niche ? `${user.niche} · ` : ''}
+                      {user.email}
+                    </UserDetail>
+                  </UserInfo>
+                  <UserStat>
+                    <UserPitches>{user.pitches_used}/3</UserPitches>
+                    <UserLimit>pitches used</UserLimit>
+                  </UserStat>
+                  <NudgeBtn
+                    $state={nudgeSent[user.creator_id] || 'default'}
+                    onClick={() => nudgeSent[user.creator_id] !== 'sending' && handleSendNudge(user)}
+                    disabled={nudgeSent[user.creator_id] === 'sending'}
+                  >
+                    {nudgeSent[user.creator_id] === 'sending' ? 'Sending...' : 'Send nudge →'}
+                  </NudgeBtn>
+                </UserRow>
+              ))}
+              {/* Pagination - show if multiple pages OR if backend has more users than loaded */}
+              <PaginationRow>
+                <PaginationInfo>
+                  {totalPages > 1 ? (
+                    <>Showing {(safePage - 1) * AT_LIMIT_PER_PAGE + 1}–{Math.min(safePage * AT_LIMIT_PER_PAGE, visibleAtLimitUsers.length)} of {visibleAtLimitUsers.length}</>
+                  ) : (
+                    <>Showing {visibleAtLimitUsers.length} users</>
+                  )}
+                  {totalAtLimit > allAtLimitUsers.length && (
+                    <span style={{ marginLeft: 8, color: '#D97706' }}>
+                      ({totalAtLimit - allAtLimitUsers.length} more not loaded — backend needs at_limit_limit param)
+                    </span>
+                  )}
+                </PaginationInfo>
+                {totalPages > 1 && (
+                  <PaginationButtons>
+                    <PaginationBtn
+                      onClick={() => setAtLimitPage(p => Math.max(1, p - 1))}
+                      disabled={safePage === 1}
+                    >
+                      ← Prev
+                    </PaginationBtn>
+                    <PaginationBtn
+                      onClick={() => setAtLimitPage(p => Math.min(totalPages, p + 1))}
+                      disabled={safePage === totalPages}
+                    >
+                      Next →
+                    </PaginationBtn>
+                  </PaginationButtons>
+                )}
+              </PaginationRow>
+            </>
           )}
         </TodayCard>
 
@@ -990,6 +1062,48 @@ const EmptyState = styled.div`
     font-weight: 700;
     color: ${colors.text2};
     margin-bottom: 4px;
+  }
+`;
+
+// Pagination
+const PaginationRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid #F0F0F0;
+  background: #FAFAFA;
+`;
+
+const PaginationInfo = styled.div`
+  font-size: 12px;
+  color: ${colors.text3};
+`;
+
+const PaginationButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const PaginationBtn = styled.button`
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid ${colors.border};
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: ${colors.text2};
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: ${colors.bg};
+    border-color: ${colors.text3};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 `;
 
