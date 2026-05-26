@@ -1,25 +1,47 @@
-# Allow all crawlers
+# Allow all legitimate crawlers
 User-agent: *
 Allow: /
 
-# Block URL parameters (tracking refs, search queries, source)
+# Block URL parameters that create duplicate content
 Disallow: /*?ref=*
-Disallow: /*?search=*
 Disallow: /*?source=*
 Disallow: /blog?search=*
 
-# Block RSS feed from indexing (but NOT sitemaps)
+# Block RSS feed
 Disallow: /blog/rss.xml
 
-# Block missions pages (temporary/dynamic content)
+# Block temporary / orphaned pages
 Disallow: /missions/
-
-# Block deprecated/orphaned pages
 Disallow: /ressources
 Disallow: /f50
 Disallow: /brands/send-pr-packages
 
-# Allow AI Search Crawlers
+# Block private / auth routes
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /settings/
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Explicitly allow all public content
+Allow: /blog/
+Allow: /blog/*
+Allow: /about
+Allow: /contact
+Allow: /directory
+Allow: /directory/*
+Allow: /brand/
+Allow: /brand/*
+Allow: /brands/
+Allow: /brands/*
+Allow: /register
+Allow: /register/creator
+Allow: /register/brand
+
+# AI search crawlers
 User-agent: ChatGPT-User
 Allow: /
 
@@ -35,65 +57,15 @@ Allow: /
 User-agent: GeminiBot
 Allow: /
 
-# Disallow admin and private routes
-Disallow: /admin/
-Disallow: /private/
-Disallow: /api/
-Disallow: /dashboard/
-Disallow: /settings/
-Disallow: /login
-# Disallow: /register  # <-- Commented out to allow registration pages
-Disallow: /forgot-password
-Disallow: /reset-password
-
-# Allow crawling of blog content
-Allow: /blog/
-Allow: /blog/*
-Allow: /about
-Allow: /features
-Allow: /contact
-Allow: /marketplace
-Allow: /directory
-Allow: /directory/*
-Allow: /brand/
-Allow: /brand/*
-Allow: /brands/
-Allow: /brands/*
-Allow: /register
-Allow: /register/creator
-Allow: /register/brand
-
-# Specific rules for major search engines
+# Googlebot — no crawl-delay (Google ignores it; manage budget in GSC instead)
 User-agent: Googlebot
-Allow: /blog/
-Allow: /blog/*
-Allow: /marketplace
-Allow: /register
-Allow: /register/creator
-Allow: /register/brand
-Crawl-delay: 5
+Allow: /
 
 User-agent: Bingbot
-Allow: /blog/
-Allow: /blog/*
-Allow: /register
-Allow: /register/creator
-Allow: /register/brand
 Crawl-delay: 5
 
 User-agent: Slurp
-Allow: /blog/
-Allow: /blog/*
-Allow: /register
-Allow: /register/creator
-Allow: /register/brand
 Crawl-delay: 5
 
-# Sitemaps
+# Sitemap
 Sitemap: https://newcollab.co/sitemap.xml
-Sitemap: https://newcollab.co/sitemap-brands.xml
-Sitemap: https://newcollab.co/sitemap-images.xml
-Sitemap: https://newcollab.co/video-sitemap.xml
-
-# Crawl-delay for other bots
-Crawl-delay: 10 

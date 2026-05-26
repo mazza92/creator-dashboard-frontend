@@ -215,7 +215,7 @@ function JsonLd({ brand }) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Directory', item: 'https://newcollab.co/directory' },
       ...(brand.category
-        ? [{ '@type': 'ListItem', position: 2, name: brand.category.charAt(0).toUpperCase() + brand.category.slice(1), item: `https://newcollab.co/directory?category=${brand.category}` }]
+        ? [{ '@type': 'ListItem', position: 2, name: brand.category.charAt(0).toUpperCase() + brand.category.slice(1), item: `https://newcollab.co${categoryDirectoryUrl(brand.category)}` }]
         : []),
       { '@type': 'ListItem', position: brand.category ? 3 : 2, name: brand.name, item: `https://newcollab.co/brand/${brand.slug}` },
     ],
@@ -227,6 +227,27 @@ function JsonLd({ brand }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
     </>
   );
+}
+
+/**
+ * Categories that have a dedicated static directory page.
+ * These get clean /directory/{slug} URLs instead of ?category= params
+ * so Googlebot can crawl them without JS.
+ */
+const STATIC_CATEGORY_PAGES = {
+  beauty:    '/directory/beauty',
+  fashion:   '/directory/fashion',
+  wellness:  '/directory/wellness',
+  lifestyle: '/directory/lifestyle',
+  skincare:  '/directory/skincare',
+  'k-beauty':'/directory/k-beauty',
+  australia: '/directory/australia',
+};
+
+function categoryDirectoryUrl(category) {
+  if (!category) return '/directory';
+  const key = category.toLowerCase();
+  return STATIC_CATEGORY_PAGES[key] || `/directory?category=${encodeURIComponent(category)}`;
 }
 
 // Format follower counts
@@ -1236,7 +1257,7 @@ export default async function BrandPage({ params }) {
                   );
                 })}
               </div>
-              <Link href={`/directory?category=${brand.category}`} className="bp-browse-link">
+              <Link href={categoryDirectoryUrl(brand.category)} className="bp-browse-link">
                 Browse all {categoryLabel || ''} brands →
               </Link>
             </section>
