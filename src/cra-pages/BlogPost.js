@@ -8,12 +8,12 @@ import { Link, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getPostContentHtml } from '../../lib/blogContent';
+import { getPostContentHtml } from '../lib/blogContent';
 import {
   buildBlogPostingSchema,
   buildFaqPageSchema,
   buildBlogBreadcrumbSchema,
-} from '../../lib/blogStructuredData';
+} from '../lib/blogStructuredData';
 
 const { Title, Paragraph } = Typography;
 const { Panel } = Collapse;

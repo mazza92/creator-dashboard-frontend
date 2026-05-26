@@ -6,7 +6,7 @@ import { HomeOutlined, CalendarOutlined, ClockCircleOutlined, QuestionCircleOutl
 import Link from 'next/link';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
-import { getPostContentHtml } from '../../../../lib/blogContent';
+import { getPostContentHtml } from '../../../lib/blogContent';
 
 const { Title, Paragraph } = Typography;
 const { Panel } = Collapse;

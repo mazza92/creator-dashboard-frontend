@@ -4,7 +4,7 @@ import {
   buildBlogPostingSchema,
   buildFaqPageSchema,
   buildBlogBreadcrumbSchema,
-} from '../../../../lib/blogStructuredData';
+} from '../../../lib/blogStructuredData';
 import BlogPostClient from './BlogPostClient';
 
 // Generate static params for all blog posts at build time (SSG)
