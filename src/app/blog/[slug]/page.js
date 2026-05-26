@@ -1,10 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getPostBySlug, getAllPostSlugs, getRelatedPosts, getPostCanonicalUrl } from '../../../../lib/blog';
-import {
-  buildBlogPostingSchema,
-  buildFaqPageSchema,
-  buildBlogBreadcrumbSchema,
-} from '../../../lib/blogStructuredData';
+import { buildBlogPostingSchema, buildBlogBreadcrumbSchema } from '../../../lib/blogStructuredData';
+import BlogFaqSchemaScript from './BlogFaqSchemaScript';
 import BlogPostClient from './BlogPostClient';
 
 // Generate static params for all blog posts at build time (SSG)
@@ -80,7 +77,6 @@ export default async function BlogPostPage({ params }) {
   const relatedPosts = getRelatedPosts(slug, post, 3);
 
   const blogPostingSchema = buildBlogPostingSchema(post);
-  const faqPageSchema = buildFaqPageSchema(post);
   const breadcrumbData = buildBlogBreadcrumbSchema(post);
 
   return (
@@ -89,12 +85,7 @@ export default async function BlogPostPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
       />
-      {faqPageSchema && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageSchema) }}
-        />
-      )}
+      <BlogFaqSchemaScript faq={post.faq} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
