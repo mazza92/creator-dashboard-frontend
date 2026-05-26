@@ -6,6 +6,7 @@ import { HomeOutlined, CalendarOutlined, ClockCircleOutlined, QuestionCircleOutl
 import Link from 'next/link';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
+import { getPostContentHtml } from '../../../../lib/blogContent';
 
 const { Title, Paragraph } = Typography;
 const { Panel } = Collapse;
@@ -293,7 +294,7 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
             </Space>
           </BlogHeader>
 
-          <BlogContent dangerouslySetInnerHTML={{ __html: post.content }} />
+          <BlogContent dangerouslySetInnerHTML={{ __html: getPostContentHtml(post) }} />
 
           {/* Testimonials Section */}
           {post.testimonials && post.testimonials.length > 0 && (

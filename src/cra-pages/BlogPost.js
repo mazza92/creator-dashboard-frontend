@@ -8,6 +8,12 @@ import { Link, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getPostContentHtml } from '../../lib/blogContent';
+import {
+  buildBlogPostingSchema,
+  buildFaqPageSchema,
+  buildBlogBreadcrumbSchema,
+} from '../../lib/blogStructuredData';
 
 const { Title, Paragraph } = Typography;
 const { Panel } = Collapse;
@@ -440,65 +446,9 @@ const BlogPost = () => {
     );
   }
 
-  // Create structured data for SEO
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "headline": post.title,
-    "image": [
-      {
-        "@type": "ImageObject",
-        "url": post.image,
-        "width": 1200,
-        "height": 630
-      }
-    ],
-    "datePublished": post.date,
-    "dateModified": post.date || post.date,
-    "author": {
-      "@type": "Person",
-      "name": post.author.name,
-      "jobTitle": post.author.role,
-      "image": post.author.image,
-      "url": `https://newcollab.co/blog`,
-      ...(post.author.description && { "description": post.author.description })
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Newcollab",
-      "url": "https://newcollab.co",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://newcollab.co/logo.png",
-        "width": 600,
-        "height": 60
-      }
-    },
-    "description": post.metaDescription || post.excerpt,
-    "keywords": post.keywords?.join(', ') || post.tags?.join(', '),
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": `https://newcollab.co/blog/${post.slug}`
-    },
-    "url": `https://newcollab.co/blog/${post.slug}`,
-    "wordCount": post.content?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0,
-    "articleSection": post.category,
-    "articleBody": post.content?.replace(/<[^>]*>/g, '').substring(0, 500) || post.excerpt,
-    // Add FAQ schema if available
-    ...(post.faq && post.faq.length > 0 && {
-      "mainEntity": {
-        "@type": "FAQPage",
-        "mainEntity": post.faq.map(faq => ({
-          "@type": "Question",
-          "name": faq.question,
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": faq.answer
-          }
-        }))
-      }
-    })
-  };
+  const blogPostingSchema = buildBlogPostingSchema(post);
+  const faqPageSchema = buildFaqPageSchema(post);
+  const breadcrumbData = buildBlogBreadcrumbSchema(post);
 
   return (
     <LandingPageLayout canonicalUrl={post.canonicalUrl || `https://newcollab.co/blog/${post.slug}`}>
@@ -546,35 +496,15 @@ const BlogPost = () => {
 
           {/* Structured Data */}
           <script type="application/ld+json">
-            {JSON.stringify(structuredData)}
+            {JSON.stringify(blogPostingSchema)}
           </script>
-          
-          {/* Breadcrumb Structured Data */}
+          {faqPageSchema && (
+            <script type="application/ld+json">
+              {JSON.stringify(faqPageSchema)}
+            </script>
+          )}
           <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "BreadcrumbList",
-              "itemListElement": [
-                {
-                  "@type": "ListItem",
-                  "position": 1,
-                  "name": "Home",
-                  "item": "https://newcollab.co/"
-                },
-                {
-                  "@type": "ListItem",
-                  "position": 2,
-                  "name": "Blog",
-                  "item": "https://newcollab.co/blog"
-                },
-                {
-                  "@type": "ListItem",
-                  "position": 3,
-                  "name": post.title,
-                  "item": `https://newcollab.co/blog/${post.slug}`
-                }
-              ]
-            })}
+            {JSON.stringify(breadcrumbData)}
           </script>
         </Helmet>
 
@@ -619,7 +549,7 @@ const BlogPost = () => {
               </Space>
             </BlogHeader>
 
-            <BlogContent dangerouslySetInnerHTML={{ __html: post.content }} />
+            <BlogContent dangerouslySetInnerHTML={{ __html: getPostContentHtml(post) }} />
 
             {/* AI-Optimized Testimonials Section */}
             {post.testimonials && post.testimonials.length > 0 && (
