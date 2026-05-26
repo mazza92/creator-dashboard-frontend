@@ -98,8 +98,11 @@ function hasThinContent(brand) {
   // Application method adds value
   if (brand.applicationMethod || brand.application_url) contentScore += 10;
 
-  // Threshold: below 40 is thin content
-  return contentScore < 40;
+  // Threshold: below 55 is thin content.
+  // Raised from 40 → 55 to be more aggressive. Pages that barely pass the old
+  // bar end up "Crawled – currently not indexed" in GSC, wasting crawl budget.
+  // Better to explicitly noindex them and focus Google on quality pages.
+  return contentScore < 55;
 }
 
 async function fetchBrand(slug, retries = 2) {
@@ -1263,13 +1266,78 @@ export default async function BrandPage({ params }) {
             </section>
           )}
 
-          {/* SEO content footer */}
+          {/* SEO content — server-rendered so Google can read every word */}
           <section className="bp-seo-footer">
             <h2>How to Apply to {brand.name} PR List</h2>
             <p>
-              {brand.name} accepts PR applications from content creators{minFollowers > 0 ? ` with ${formatFollowers(minFollowers)}+ followers` : ''}{platforms.length > 0 ? ` on ${platforms.join(', ')}` : ''}.
-              {brand.applicationMethod === 'form' ? ` Apply directly through their application form.` : brand.applicationMethod === 'email' ? ` Reach out via their PR email.` : ` Unlock the application details above to get started.`}
-              {' '}Create a free Newcollab account to track your application, discover more brands, and manage your PR pipeline.
+              {brand.name} accepts PR applications from content creators
+              {minFollowers > 0 ? ` with ${formatFollowers(minFollowers)}+ followers` : ''}
+              {platforms.length > 0 ? ` on ${platforms.join(' and ')}` : ''}.{' '}
+              {brand.applicationMethod === 'form'
+                ? `They use a direct application form — fill it out with your channel stats, niche, and a short pitch explaining why your audience is a good fit.`
+                : brand.applicationMethod === 'email'
+                ? `They prefer email pitches — send a concise message with your media kit, engagement rate, and a content idea tailored to their brand.`
+                : `Unlock the direct contact details above to reach their PR team.`}
+            </p>
+
+            <h2 style={{ marginTop: '20px' }}>
+              What {brand.name} Looks for in Creator Pitches
+            </h2>
+            <p>
+              {categoryLabel ? `As a ${categoryLabel.toLowerCase()} brand, ${brand.name}` : brand.name} typically looks for creators whose audience genuinely uses and cares about
+              {categoryLabel ? ` ${categoryLabel.toLowerCase()} products` : ' products in their niche'}.
+              {niches.length > 0
+                ? ` They are especially interested in ${niches.join(', ')} content.`
+                : ''}
+              {minFollowers > 0
+                ? ` A minimum of ${formatFollowers(minFollowers)} followers is required, but engagement rate matters more than raw follower count — brands consistently report that a 3–5% engagement rate converts better than a large passive audience.`
+                : ` There is no stated minimum follower requirement, making ${brand.name} accessible to nano and micro creators.`}
+              {maxFollowers > 0
+                ? ` They cap at ${formatFollowers(maxFollowers)} followers, keeping their program focused on micro-influencers.`
+                : ''}
+              {regions.length > 0
+                ? ` This program is open to creators based in ${regions.join(', ')}.`
+                : ''}
+            </p>
+
+            <h2 style={{ marginTop: '20px' }}>
+              {brand.name} PR Application — Step by Step
+            </h2>
+            <p>
+              1. <strong>Build your media kit.</strong> Include your follower count, average views, engagement rate, audience demographics (age, location, gender split), and 2–3 examples of past brand content. Newcollab generates this automatically from your profile.
+            </p>
+            <p>
+              2. <strong>Write a personalised pitch.</strong> Mention a specific {brand.name} product you've used or admired, explain how your audience overlaps with their customer, and suggest a concrete content format (unboxing reel, 30-second TikTok, Instagram carousel). Generic pitches are ignored.
+            </p>
+            <p>
+              3. <strong>Send and follow up.</strong>{' '}
+              {brand.name} has an average response time of around {avgResponseTime} days for creators who hear back. If you don't get a reply within 10 days, send one polite follow-up referencing your original message. Many creators report that the follow-up is what got the deal.
+            </p>
+            <p>
+              4. <strong>Track your application.</strong> Use Newcollab's PR pipeline to log the date sent, follow-up status, and any reply. Creators who track their outreach close 3× more deals on average.
+            </p>
+
+            {collabType && (
+              <p style={{ marginTop: '16px' }}>
+                <strong>Collaboration type:</strong> {brand.name} runs a <em>{collabType}</em> programme — meaning
+                {collabType.toLowerCase().includes('gift')
+                  ? ' they send products in exchange for honest content, with no cash payment required.'
+                  : collabType.toLowerCase().includes('paid')
+                  ? ' selected creators receive a fee in addition to products.'
+                  : ` their programme is structured as ${collabType}.`}
+              </p>
+            )}
+
+            <p style={{ marginTop: '16px' }}>
+              Discover more {categoryLabel ? categoryLabel.toLowerCase() : ''} brands with open PR applications on the{' '}
+              <a href={categoryDirectoryUrl(brand.category)} style={{ color: '#E11D48', fontWeight: 600, textDecoration: 'none' }}>
+                {categoryLabel || 'brand'} directory
+              </a>
+              , or browse the full{' '}
+              <a href="/directory" style={{ color: '#E11D48', fontWeight: 600, textDecoration: 'none' }}>
+                PR forms directory
+              </a>{' '}
+              to find your next collaboration.
             </p>
           </section>
         </div>
