@@ -79,6 +79,11 @@ export default async function BlogPostPage({ params }) {
   const blogPostingSchema = buildBlogPostingSchema(post);
   const breadcrumbData = buildBlogBreadcrumbSchema(post);
 
+  // Strip fields that are unused by the client but bloat the RSC payload and
+  // contain nested JSON-LD fragments (post.schema has mainEntity: FAQPage which
+  // Google can extract from the serialised RSC flight data).
+  const { schema: _unusedSchema, ...postForClient } = post;
+
   return (
     <>
       <script
@@ -95,7 +100,7 @@ export default async function BlogPostPage({ params }) {
         {post.title}
       </h1>
       <BlogPostClient
-        post={post}
+        post={postForClient}
         relatedPosts={relatedPosts}
         canonicalUrl={getPostCanonicalUrl(post)}
       />
