@@ -65,25 +65,35 @@ export default async function sitemap() {
     console.error('[sitemap] Failed to read blog posts:', err);
   }
 
-  // --- Brand pages (fetch from API, filter junk slugs) ---
+  // --- Brand pages (paginate through API — hard cap is 100/page, 444 total) ---
   let brandEntries = [];
   try {
-    const res = await fetch(
-      'https://api.newcollab.co/api/public/brands?limit=600',
-      { next: { revalidate } },
-    );
-    if (res.ok) {
+    const PAGE_SIZE = 100;
+    let page = 1;
+    let totalPages = 1;
+    const allBrands = [];
+
+    do {
+      const res = await fetch(
+        `https://api.newcollab.co/api/public/brands?page=${page}&limit=${PAGE_SIZE}`,
+        { next: { revalidate } },
+      );
+      if (!res.ok) break;
       const data = await res.json();
       const brands = Array.isArray(data.brands) ? data.brands : (Array.isArray(data) ? data : []);
-      brandEntries = brands
-        .filter(b => isGoodSlug(b.slug))
-        .map(b => ({
-          url: `${BASE}/brand/${b.slug}`,
-          lastModified: now,
-          changeFrequency: 'weekly',
-          priority: 0.8,
-        }));
-    }
+      allBrands.push(...brands);
+      totalPages = data.pagination?.totalPages ?? 1;
+      page++;
+    } while (page <= totalPages);
+
+    brandEntries = allBrands
+      .filter(b => isGoodSlug(b.slug))
+      .map(b => ({
+        url: `${BASE}/brand/${b.slug}`,
+        lastModified: now,
+        changeFrequency: 'weekly',
+        priority: 0.8,
+      }));
   } catch (err) {
     console.error('[sitemap] Failed to fetch brands:', err);
   }
