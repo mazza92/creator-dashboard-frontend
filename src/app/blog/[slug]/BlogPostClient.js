@@ -8,6 +8,22 @@ import styled from 'styled-components';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { getPostContentHtml } from '../../../lib/blogContent';
 
+const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/**
+ * Formats a date string using UTC methods so the output is identical
+ * regardless of the server's or browser's local timezone.
+ * toLocaleDateString() is timezone-sensitive: "2026-05-18T00:00:00.000Z"
+ * renders as "May 17" for clients in UTC-6 but "May 18" on the UTC server,
+ * causing React hydration error #418 and a full CSR bailout.
+ */
+function formatDate(dateStr, monthFormat = 'long') {
+  const d = new Date(dateStr);
+  const months = monthFormat === 'long' ? MONTHS_LONG : MONTHS_SHORT;
+  return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
 const { Title, Paragraph } = Typography;
 const { Panel } = Collapse;
 
@@ -281,11 +297,7 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
               </Space>
               <Space>
                 <CalendarOutlined />
-                {new Date(post.date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+                {formatDate(post.date, 'long')}
               </Space>
               <Space>
                 <ClockCircleOutlined />
@@ -424,11 +436,7 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
                       <RelatedPostMeta>
                         <Space>
                           <CalendarOutlined />
-                          {new Date(relatedPost.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
+                          {formatDate(relatedPost.date, 'short')}
                         </Space>
                         <span>•</span>
                         <span>{relatedPost.readTime}</span>
