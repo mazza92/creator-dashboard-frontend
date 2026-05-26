@@ -40,6 +40,27 @@ function isGoodSlug(slug) {
   return !JUNK_PATTERNS.some(p => p.test(slug));
 }
 
+// Mirrors hasThinContent() in brand/[slug]/page.js.
+// Only submit pages that will actually be indexed (score >= 55).
+function hasEnoughContent(brand) {
+  let score = 0;
+  const desc = brand.description || '';
+  if (desc.length >= 100) score += 40;
+  else if (desc.length >= 50) score += 25;
+  else if (desc.length > 0) score += 10;
+  if (brand.category) score += 15;
+  if (brand.logo) score += 15;
+  const platforms = Array.isArray(brand.platforms) ? brand.platforms : [];
+  const regions   = Array.isArray(brand.regions)   ? brand.regions   : [];
+  const niches    = Array.isArray(brand.niches)     ? brand.niches    : [];
+  if (platforms.length > 0) score += 5;
+  if (regions.length > 0)   score += 5;
+  if (niches.length > 0)    score += 5;
+  if ((brand.minFollowers || 0) > 0) score += 5;
+  if (brand.applicationMethod || brand.application_url) score += 10;
+  return score >= 55;
+}
+
 export default async function sitemap() {
   const now = new Date().toISOString();
 
@@ -52,15 +73,25 @@ export default async function sitemap() {
   }));
 
   // --- Blog posts (read from filesystem) ---
+  // Always use the post's own /blog/<slug> URL — not canonicalUrl — so the
+  // sitemap has no duplicate entries. The canonical <link> tag on each page
+  // is the correct signal for Google to consolidate duplicate/redirected posts.
   let blogEntries = [];
   try {
     const posts = getAllPosts();
-    blogEntries = posts.map(post => ({
-      url: post.canonicalUrl || `${BASE}/blog/${post.slug}`,
-      lastModified: post.date ? new Date(post.date).toISOString() : now,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    }));
+    const seen = new Set();
+    blogEntries = posts
+      .map(post => ({
+        url: `${BASE}/blog/${post.slug}`,
+        lastModified: post.date ? new Date(post.date).toISOString() : now,
+        changeFrequency: 'monthly',
+        priority: 0.8,
+      }))
+      .filter(entry => {
+        if (seen.has(entry.url)) return false;
+        seen.add(entry.url);
+        return true;
+      });
   } catch (err) {
     console.error('[sitemap] Failed to read blog posts:', err);
   }
@@ -87,7 +118,7 @@ export default async function sitemap() {
     } while (page <= totalPages);
 
     brandEntries = allBrands
-      .filter(b => isGoodSlug(b.slug))
+      .filter(b => isGoodSlug(b.slug) && hasEnoughContent(b))
       .map(b => ({
         url: `${BASE}/brand/${b.slug}`,
         lastModified: now,
