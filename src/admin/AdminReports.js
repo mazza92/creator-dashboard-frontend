@@ -34,6 +34,16 @@ const SOURCE_COLORS = {
   Other:    colors.text3,
 };
 
+// Period options for date range selector
+const PERIOD_OPTIONS = [
+  { key: '7d', label: 'Last 7 days' },
+  { key: '14d', label: 'Last 14 days' },
+  { key: '30d', label: 'Last 30 days' },
+  { key: '90d', label: 'Last 90 days' },
+  { key: '180d', label: 'Last 180 days' },
+  { key: 'all', label: 'All time' },
+];
+
 const AdminReports = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,6 +52,7 @@ const AdminReports = () => {
   const [trafficRefreshing, setTrafficRefreshing] = useState(false);
   const [lastFetched, setLastFetched] = useState(null);
   const [atLimitPage, setAtLimitPage] = useState(1);
+  const [selectedPeriod, setSelectedPeriod] = useState('7d');
   const AT_LIMIT_PER_PAGE = 10;
 
   // Check auth on mount
@@ -52,12 +63,12 @@ const AdminReports = () => {
     }
   }, []);
 
-  // Load data when authenticated
+  // Load data when authenticated or period changes
   useEffect(() => {
     if (isAuthenticated) {
       fetchDashboardData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, selectedPeriod]);
 
   const getApiConfig = () => ({
     headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' }
@@ -70,6 +81,7 @@ const AdminReports = () => {
       const params = new URLSearchParams();
       if (bustCache) params.append('bust', '1');
       params.append('at_limit_limit', '200');
+      params.append('period', selectedPeriod);
       const url = `/api/admin/reports/founder-dashboard?${params.toString()}`;
       const { data: dashboardData } = await api.get(url, getApiConfig());
       setData(dashboardData);
@@ -263,8 +275,16 @@ const AdminReports = () => {
           <LogoWord>new<span>collab</span></LogoWord>
         </Logo>
         <HeaderRight>
+          <PeriodSelector
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+          >
+            {PERIOD_OPTIONS.map(opt => (
+              <option key={opt.key} value={opt.key}>{opt.label}</option>
+            ))}
+          </PeriodSelector>
           <Badge>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</Badge>
-          <RefreshBtn onClick={fetchDashboardData}>↻ Refresh</RefreshBtn>
+          <RefreshBtn onClick={() => fetchDashboardData(true)}>↻ Refresh</RefreshBtn>
           <RefreshBtn onClick={handleLogout}>Logout</RefreshBtn>
         </HeaderRight>
       </Header>
@@ -339,7 +359,7 @@ const AdminReports = () => {
                 </span>
               )}
             </TodayTitle>
-            <TodaySubtitle>One email → could convert today · Skips users emailed in last 48h</TodaySubtitle>
+            <TodaySubtitle>⚡ 7+ days = needs follow-up nudge · Skips users emailed in last 48h</TodaySubtitle>
           </TodayHeader>
 
           {visibleAtLimitUsers.length === 0 ? (
@@ -371,6 +391,14 @@ const AdminReports = () => {
                     <UserPitches>{user.pitches_used}/3</UserPitches>
                     <UserLimit>pitches used</UserLimit>
                   </UserStat>
+                  {user.days_since_limit !== null && (
+                    <HitLimitDate $urgent={user.needs_followup}>
+                      {user.days_since_limit === 0 ? 'Today' :
+                       user.days_since_limit === 1 ? '1 day ago' :
+                       `${user.days_since_limit}d ago`}
+                      {user.needs_followup && ' ⚡'}
+                    </HitLimitDate>
+                  )}
                   <NudgeBtn
                     $state={nudgeSent[user.creator_id] || 'default'}
                     onClick={() => nudgeSent[user.creator_id] !== 'sending' && handleSendNudge(user)}
@@ -416,14 +444,21 @@ const AdminReports = () => {
         </TodayCard>
 
         {/* 3. HEALTH PULSE */}
-        <SectionLabel>This week's health</SectionLabel>
+        <SectionLabel>
+          {data.period?.label || 'This week'}'s health
+          {data.period?.days > 7 && (
+            <span style={{ fontWeight: 400, marginLeft: 6 }}>
+              ({data.period.start_date} → {data.period.end_date})
+            </span>
+          )}
+        </SectionLabel>
 
         <HealthGrid>
           <HealthCard>
             <HcLabel>New signups</HcLabel>
             <HcValue $color="black">{health.signups.this_week}</HcValue>
             <HcDelta $up={health.signups.change >= 0}>
-              {health.signups.change >= 0 ? '↑' : '↓'} {health.signups.change >= 0 ? '+' : ''}{health.signups.change} vs last week
+              {health.signups.change >= 0 ? '↑' : '↓'} {health.signups.change >= 0 ? '+' : ''}{health.signups.change} vs prev period
             </HcDelta>
             <Sparkline data={health.signups.daily} color="black" />
           </HealthCard>
@@ -432,7 +467,7 @@ const AdminReports = () => {
             <HcLabel>Pitches sent</HcLabel>
             <HcValue $color="rose">{health.pitches.this_week}</HcValue>
             <HcDelta $up={health.pitches.change >= 0}>
-              {health.pitches.change >= 0 ? '↑' : '↓'} {health.pitches.change >= 0 ? '+' : ''}{health.pitches.change} vs last week
+              {health.pitches.change >= 0 ? '↑' : '↓'} {health.pitches.change >= 0 ? '+' : ''}{health.pitches.change} vs prev period
             </HcDelta>
             <Sparkline data={health.pitches.daily} color="rose" />
           </HealthCard>
@@ -441,7 +476,7 @@ const AdminReports = () => {
             <HcLabel>Active creators</HcLabel>
             <HcValue $color="green">{health.active_creators.this_week}</HcValue>
             <HcDelta $up={health.active_creators.change >= 0}>
-              {health.active_creators.change >= 0 ? '↑' : '↓'} {health.active_creators.change >= 0 ? '+' : ''}{health.active_creators.change} vs last week
+              {health.active_creators.change >= 0 ? '↑' : '↓'} {health.active_creators.change >= 0 ? '+' : ''}{health.active_creators.change} vs prev period
             </HcDelta>
             <Sparkline data={health.active_creators.daily} color="green" />
           </HealthCard>
@@ -760,6 +795,21 @@ const RefreshBtn = styled.button`
   &:hover { background: ${colors.bg}; }
 `;
 
+const PeriodSelector = styled.select`
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid ${colors.border};
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: ${colors.text};
+  outline: none;
+
+  &:hover { border-color: ${colors.text3}; }
+  &:focus { border-color: ${colors.rose}; }
+`;
+
 // Main
 const Main = styled.div`
   max-width: 860px;
@@ -1029,6 +1079,18 @@ const UserPitches = styled.div`
 const UserLimit = styled.div`
   font-size: 10px;
   color: ${colors.text3};
+`;
+
+const HitLimitDate = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${props => props.$urgent ? colors.rose : colors.text3};
+  background: ${props => props.$urgent ? '#FEF2F2' : '#F3F4F6'};
+  border: 1px solid ${props => props.$urgent ? '#FECACA' : 'transparent'};
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-right: 8px;
+  white-space: nowrap;
 `;
 
 const NudgeBtn = styled.button`

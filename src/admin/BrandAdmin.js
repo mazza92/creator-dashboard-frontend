@@ -262,6 +262,33 @@ const BrandAdmin = () => {
     message.success('Exported to CSV');
   };
 
+  // Batch fill missing logos from Clearbit
+  const fillMissingLogos = async () => {
+    const brandsToFill = rowData.filter(b => b.website && !b.logo);
+    if (brandsToFill.length === 0) {
+      message.info('All brands with websites already have logos');
+      return;
+    }
+
+    message.loading({ content: `Filling logos for ${brandsToFill.length} brands...`, key: 'logos', duration: 0 });
+
+    let filled = 0;
+    for (const brand of brandsToFill) {
+      try {
+        const url = new URL(brand.website.startsWith('http') ? brand.website : `https://${brand.website}`);
+        const domain = url.hostname.replace('www.', '');
+        const logoUrl = `https://logo.clearbit.com/${domain}`;
+
+        await api.patch(`/api/admin/brands/${brand.id}`, { logo: logoUrl }, getApiConfig());
+        brand.logo = logoUrl;
+        filled++;
+      } catch (e) { /* skip invalid URLs */ }
+    }
+
+    gridRef.current?.api?.refreshCells({ force: true });
+    message.success({ content: `Filled ${filled} logos`, key: 'logos' });
+  };
+
   // Import from clipboard (paste handler)
   const handlePaste = useCallback(async (e) => {
     // Skip bulk import if user is editing a cell or input field
@@ -368,22 +395,65 @@ const BrandAdmin = () => {
     );
   };
 
+  // Scrape OpenGraph data from website
+  const scrapeWebsiteData = async (brand, refreshRow) => {
+    if (!brand.website) {
+      message.warning('No website URL to scrape');
+      return;
+    }
+
+    try {
+      message.loading({ content: 'Fetching website data...', key: 'scrape' });
+      const { data } = await api.post(
+        '/api/admin/brands/scrape-og',
+        { url: brand.website },
+        getApiConfig()
+      );
+
+      if (data.success) {
+        const updates = {};
+        if (data.title && !brand.name) updates.name = data.title;
+        if (data.description && !brand.description) updates.description = data.description;
+        if (data.image && !brand.cover_image_url) updates.cover_image_url = data.image;
+        if (data.instagram && !brand.instagram) updates.instagram = data.instagram;
+
+        if (Object.keys(updates).length > 0) {
+          await api.patch(`/api/admin/brands/${brand.id}`, updates, getApiConfig());
+          Object.assign(brand, updates);
+          refreshRow();
+          message.success({ content: `Filled ${Object.keys(updates).length} fields`, key: 'scrape' });
+        } else {
+          message.info({ content: 'No empty fields to fill', key: 'scrape' });
+        }
+      } else {
+        message.warning({ content: 'Could not fetch website data', key: 'scrape' });
+      }
+    } catch (error) {
+      message.error({ content: 'Scrape failed', key: 'scrape' });
+    }
+  };
+
   // Actions cell renderer
   const ActionsCellRenderer = (params) => {
+    const refreshRow = () => {
+      params.api.refreshCells({ rowNodes: [params.node], force: true });
+    };
+
     return (
       <Space size="small">
+        <Tooltip title="Auto-fill from website">
+          <Button
+            size="small"
+            icon={<ImportOutlined />}
+            onClick={() => scrapeWebsiteData(params.data, refreshRow)}
+            disabled={!params.data.website}
+          />
+        </Tooltip>
         <Tooltip title="Edit Details">
           <Button
             size="small"
             icon={<EyeOutlined />}
             onClick={() => openDetailDrawer(params.data)}
-          />
-        </Tooltip>
-        <Tooltip title="Duplicate">
-          <Button
-            size="small"
-            icon={<CopyOutlined />}
-            onClick={() => duplicateBrand(params.data)}
           />
         </Tooltip>
         <Tooltip title="View Live">
@@ -442,13 +512,56 @@ const BrandAdmin = () => {
       field: 'website',
       headerName: 'Website',
       editable: true,
-      width: 200
+      width: 200,
+      // Auto-fill logo from Clearbit when website changes
+      onCellValueChanged: (params) => {
+        if (params.newValue && params.newValue !== params.oldValue) {
+          try {
+            const url = new URL(params.newValue.startsWith('http') ? params.newValue : `https://${params.newValue}`);
+            const domain = url.hostname.replace('www.', '');
+            const logoUrl = `https://logo.clearbit.com/${domain}`;
+            // Only auto-fill if logo is empty
+            if (!params.data.logo) {
+              params.data.logo = logoUrl;
+              params.api.refreshCells({ rowNodes: [params.node], columns: ['logo'], force: true });
+              // Save logo to backend
+              api.patch(`/api/admin/brands/${params.data.id}`, { logo: logoUrl }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            }
+          } catch (e) { /* invalid URL, skip */ }
+        }
+      }
+    },
+    // PR Contact fields - most important for data entry
+    {
+      field: 'contact_email',
+      headerName: '📧 PR Email',
+      editable: true,
+      width: 200,
+      cellStyle: { backgroundColor: '#fffbe6' }
+    },
+    {
+      field: 'application_url',
+      headerName: '🔗 PR Form URL',
+      editable: true,
+      width: 220,
+      cellStyle: { backgroundColor: '#fffbe6' }
     },
     {
       field: 'logo',
       headerName: 'Logo URL',
       editable: true,
-      width: 150
+      width: 150,
+      cellRenderer: (params) => {
+        if (params.value) {
+          return (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <img src={params.value} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} onError={(e) => e.target.style.display = 'none'} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{params.value}</span>
+            </span>
+          );
+        }
+        return null;
+      }
     },
     {
       field: 'cover_image_url',
@@ -525,19 +638,7 @@ const BrandAdmin = () => {
       width: 150,
       valueFormatter: (params) => Array.isArray(params.value) ? params.value.join(', ') : params.value || ''
     },
-    // Application info
-    {
-      field: 'application_url',
-      headerName: 'Application URL',
-      editable: true,
-      width: 200
-    },
-    {
-      field: 'contact_email',
-      headerName: 'Contact Email',
-      editable: true,
-      width: 180
-    },
+    // Application info (PR Email and PR Form URL moved to top)
     {
       field: 'has_application_form',
       headerName: 'Has App Form',
@@ -813,7 +914,7 @@ const BrandAdmin = () => {
     },
     {
       headerName: 'Actions',
-      width: 140,
+      width: 120,
       pinned: 'right',
       cellRenderer: ActionsCellRenderer,
       sortable: false,
@@ -953,6 +1054,9 @@ const BrandAdmin = () => {
             style={{ width: 250 }}
             allowClear
           />
+          <Button onClick={fillMissingLogos}>
+            Fill Missing Logos
+          </Button>
           <Button icon={<ReloadOutlined />} onClick={fetchBrands}>
             Refresh
           </Button>
