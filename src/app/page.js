@@ -38,6 +38,20 @@ const websiteSchema = {
   },
 };
 
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'newcollab',
+  url: 'https://newcollab.co',
+  logo: 'https://newcollab.co/logo.png',
+  description: 'Newcollab helps creators in the US, Canada, Australia, and UK land brand PR packages with direct application forms, AI pitch emails, and auto-generated media kits.',
+  areaServed: ['US', 'CA', 'AU', 'GB'],
+  sameAs: [
+    'https://instagram.com/newcollab',
+    'https://twitter.com/newcollab',
+    'https://tiktok.com/@newcollab'
+  ]
+};
 
 const srOnly = {
   position: 'absolute',
@@ -58,6 +72,10 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
       <HomeFaqSchemaScript />
       {/* Visually hidden H1 — crawlers read it, client component renders the visible version */}

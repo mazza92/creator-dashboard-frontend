@@ -1795,7 +1795,7 @@ const LandingPage = () => {
                       <div style={{ background: colors.amber }}>S</div>
                       <div style={{ background: '#3B82F6' }}>D</div>
                     </AvatarStack>
-                    <span>900+ creators already getting brand deals · Free · No credit card</span>
+                    <span>Trusted by creators in US, UK, Australia & Canada · Free · No credit card</span>
                   </HeroProof>
                 </motion.div>
               </HeroText>
@@ -1993,11 +1993,19 @@ const LandingPage = () => {
                 <em style={{ color: colors.rose }}>Apply in one click.</em>
               </h2>
               <p style={{ fontSize: 16, color: colors.text2, margin: '0 0 12px' }}>
-                Direct PR application links, verified email contacts, and reply rates — filtered by your niche. Skip the Googling.
+                Direct PR application links, verified email contacts, and reply rates — filtered by your niche. US, UK, Australian & Canadian brands.
               </p>
               <p style={{ fontSize: 13, color: colors.text3, margin: 0 }}>
                 Looking for a specific brand? See the full{' '}
-                <a href="/directory" style={{ color: colors.rose, fontWeight: 600, textDecoration: 'none' }}>brand PR forms directory →</a>
+                <a href="/directory" style={{ color: colors.rose, fontWeight: 600, textDecoration: 'none' }}>brand PR forms directory</a>
+                {' · '}
+                <a href="/directory/us" style={{ color: colors.text3, textDecoration: 'none' }}>US brands</a>
+                {' · '}
+                <a href="/directory/uk" style={{ color: colors.text3, textDecoration: 'none' }}>UK</a>
+                {' · '}
+                <a href="/directory/australia" style={{ color: colors.text3, textDecoration: 'none' }}>Australia</a>
+                {' · '}
+                <a href="/directory/canada" style={{ color: colors.text3, textDecoration: 'none' }}>Canada</a>
               </p>
             </SectionCenter>
             <DirectoryBox>
@@ -2032,7 +2040,7 @@ const LandingPage = () => {
                 </LockedCard>
               </BrandGrid>
               <DirectoryFooter>
-                <div className="count">Showing <strong>8 of 500+</strong> brands · Updated weekly</div>
+                <div className="count">Showing <strong>8 of 500+</strong> brands · 300+ US brands · Updated weekly</div>
                 <BtnBlack href="/register/creator" style={{ padding: '10px 20px', fontSize: 13 }}>Unlock all contacts →</BtnBlack>
               </DirectoryFooter>
             </DirectoryBox>
