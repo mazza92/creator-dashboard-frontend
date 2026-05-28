@@ -155,6 +155,7 @@ export const posts = [
   "k-beauty-korean-skincare-brands-pr-list-small-creators-2026",
   "how-to-get-pr-packages-under-1000-followers-2026",
   "how-to-post-brand-collabs-without-being-salesy-agencies-2026",
-  "pr-agencies-vs-influencer-marketing-agencies-creators-guide-2026"
+  "pr-agencies-vs-influencer-marketing-agencies-creators-guide-2026",
+  "canadian-brands-pr-packages-influencers-2026"
 ];
 export default posts;

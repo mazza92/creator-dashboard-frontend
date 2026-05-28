@@ -79,6 +79,65 @@ const QuickLink = styled(Link)`
   }
 `;
 
+const QuickLinkButton = styled.button`
+  background: ${(p) => (p.$active ? '#0F0F0F' : '#F5F5F5')};
+  border: 1px solid ${(p) => (p.$active ? '#0F0F0F' : '#E5E5E5')};
+  color: ${(p) => (p.$active ? 'white' : '#0F0F0F')};
+  padding: 10px 18px;
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #0F0F0F;
+    border-color: #0F0F0F;
+    color: white;
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 60px 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E5E5;
+  margin-top: 24px;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0F0F0F;
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: #6B6B6B;
+    margin: 0 0 20px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  a {
+    display: inline-block;
+    background: #0F0F0F;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #262626;
+    }
+  }
+`;
+
 const Container = styled.div`
   max-width: 1200px;
   margin: -22px auto 0;
@@ -684,14 +743,8 @@ export default function DirectoryClient({
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
-    // For region-based filtering (client-side), fetch more brands
-    if (initialCountry) {
-      params.set('page', '1');
-      params.set('limit', '500');
-    } else {
-      params.set('page', String(page));
-      params.set('limit', String(limit));
-    }
+    params.set('page', String(page));
+    params.set('limit', String(limit));
     if (search) params.set('search', search);
     if (category) {
       const canon = normalizeCategory(category) || category.trim();
@@ -699,6 +752,8 @@ export default function DirectoryClient({
     }
     if (activity) params.set('activity', activity);
     if (contactType) params.set('contact_type', contactType);
+    // Server-side region filtering
+    if (initialCountry) params.set('region', initialCountry);
     return params.toString();
   }, [page, search, category, activity, contactType, initialCountry]);
 
@@ -757,18 +812,10 @@ export default function DirectoryClient({
         }
         const data = await res.json();
         if (cancelled) return;
-        let brandsList = Array.isArray(data.brands) ? data.brands : [];
-
-        // Client-side region filtering (API doesn't support this natively)
-        if (initialCountry) {
-          brandsList = brandsList.filter(brand =>
-            Array.isArray(brand.regions) &&
-            brand.regions.some(r => r.toLowerCase() === initialCountry.toLowerCase())
-          );
-        }
+        const brandsList = Array.isArray(data.brands) ? data.brands : [];
 
         setBrands(brandsList);
-        setTotal(initialCountry ? brandsList.length : (data?.pagination?.total || 0));
+        setTotal(data?.pagination?.total || 0);
 
         // Log for debugging if no brands found with filters
         if (brandsList.length === 0 && (category || initialCountry || search)) {
@@ -799,15 +846,54 @@ export default function DirectoryClient({
             {collectionDescription ||
               'Browse 500+ verified brand PR forms with direct application links, response rates, and follower requirements. Find brands that reply to micro-influencer pitches in beauty, skincare, K-beauty, fashion, wellness, and more.'}
           </p>
-          <QuickLinks>
-            <QuickLink href="/directory/beauty">Beauty</QuickLink>
-            <QuickLink href="/directory/skincare">Skincare</QuickLink>
-            <QuickLink href="/directory/k-beauty">K-Beauty</QuickLink>
-            <QuickLink href="/directory/fashion">Fashion</QuickLink>
-            <QuickLink href="/directory/wellness">Wellness</QuickLink>
-            <QuickLink href="/directory/lifestyle">Lifestyle</QuickLink>
-            <QuickLink href="/directory/australia">Australia</QuickLink>
-          </QuickLinks>
+          {/* Only show QuickLinks when there are brands to filter, or when not on a country page */}
+          {(!initialCountry || total > 0 || loading) && (
+            <QuickLinks>
+              {initialCountry ? (
+                // On country pages: category filter buttons
+                <>
+                  <QuickLinkButton
+                    $active={!category}
+                    onClick={() => {
+                      setPage(1);
+                      setCategory('');
+                      updateUrl({ category: '', page: 1 });
+                    }}
+                  >
+                    All
+                  </QuickLinkButton>
+                  {['Beauty', 'Skincare', 'K-Beauty', 'Fashion', 'Wellness', 'Lifestyle'].map((cat) => (
+                    <QuickLinkButton
+                      key={cat}
+                      $active={category?.toLowerCase() === cat.toLowerCase()}
+                      onClick={() => {
+                        const newCat = category?.toLowerCase() === cat.toLowerCase() ? '' : cat;
+                        setPage(1);
+                        setCategory(newCat);
+                        updateUrl({ category: newCat, page: 1 });
+                      }}
+                    >
+                      {cat}
+                    </QuickLinkButton>
+                  ))}
+                </>
+              ) : (
+                // On main directory: navigation links
+                <>
+                  <QuickLink href="/directory/beauty">Beauty</QuickLink>
+                  <QuickLink href="/directory/skincare">Skincare</QuickLink>
+                  <QuickLink href="/directory/k-beauty">K-Beauty</QuickLink>
+                  <QuickLink href="/directory/fashion">Fashion</QuickLink>
+                  <QuickLink href="/directory/wellness">Wellness</QuickLink>
+                  <QuickLink href="/directory/lifestyle">Lifestyle</QuickLink>
+                  <QuickLink href="/directory/us">US</QuickLink>
+                  <QuickLink href="/directory/uk">UK</QuickLink>
+                  <QuickLink href="/directory/canada">Canada</QuickLink>
+                  <QuickLink href="/directory/australia">Australia</QuickLink>
+                </>
+              )}
+            </QuickLinks>
+          )}
         </Hero>
 
         <Container>
@@ -932,6 +1018,18 @@ export default function DirectoryClient({
 
           {loading ? (
             <LoadingSpinner text="Loading brands..." minHeight="400px" />
+          ) : brands.length === 0 ? (
+            <EmptyState>
+              <h3>No brands found{initialCountry ? ` in ${initialCountry}` : ''}</h3>
+              <p>
+                {category
+                  ? `No ${category} brands available${initialCountry ? ` for ${initialCountry}` : ''} yet. Try a different category or browse all brands.`
+                  : initialCountry
+                  ? `We're adding more ${initialCountry} brands soon. Browse our full directory in the meantime.`
+                  : 'Try adjusting your filters or search term.'}
+              </p>
+              <a href="/directory">Browse All Brands</a>
+            </EmptyState>
           ) : (
             <>
               <Grid>
@@ -943,12 +1041,20 @@ export default function DirectoryClient({
                       </FeaturedBadge>
                     )}
                     <LogoWrap>
-                      {brand.logo ? (
+                      {brand.logo && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={brand.logo} alt={brand.name || 'Brand'} />
-                      ) : (
-                        <LogoPlaceholder>{(brand.name || 'B').slice(0, 1)}</LogoPlaceholder>
+                        <img
+                          src={brand.logo}
+                          alt={brand.name || 'Brand'}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
                       )}
+                      <LogoPlaceholder style={brand.logo ? { display: 'none' } : undefined}>
+                        {(brand.name || 'B').slice(0, 1)}
+                      </LogoPlaceholder>
                     </LogoWrap>
                     <BrandInfo>
                       <Name>{brand.name}</Name>
