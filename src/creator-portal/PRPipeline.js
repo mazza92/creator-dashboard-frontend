@@ -37,6 +37,70 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+// ── Pipeline helpers ──────────────────────────────────────────
+const getDaysSincePitched = (pitchedAt) => {
+  if (!pitchedAt) return 0;
+  return Math.floor((Date.now() - new Date(pitchedAt)) / (1000 * 60 * 60 * 24));
+};
+
+const getCountdownLabel = (pitchedAt) => {
+  const days = getDaysSincePitched(pitchedAt);
+  const remaining = 14 - days;
+  if (remaining <= 0) return { text: 'Window closed', urgent: true };
+  if (remaining <= 2) return { text: `Window closes in ${remaining} day${remaining === 1 ? '' : 's'}`, urgent: true };
+  return { text: `Window closes in ${remaining} days`, urgent: false };
+};
+
+const getPulseSignal = (responseRate) => {
+  if (!responseRate) return null;
+  if (responseRate >= 40) return { color: '#10B981', textColor: '#059669', label: 'Active this week' };
+  if (responseRate >= 20) return { color: '#F59E0B', textColor: '#D97706', label: 'Moderate activity' };
+  return { color: '#EF4444', textColor: '#DC2626', label: 'Quiet this week' };
+};
+
+const computePipelineHealth = (items) => {
+  const pitchedItems = items.filter(i =>
+    ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage) || i.pitched_at
+  );
+  if (!pitchedItems.length) return 0;
+  let score = 0;
+  const total = pitchedItems.length;
+  // More pitches = higher score (up to 40 points)
+  score += Math.min(total * 15, 40);
+  // Penalize overdue items not followed up
+  const overdueNotFollowedUp = pitchedItems.filter(i =>
+    i.days_since_pitched >= 7 && i.pipeline_stage !== 'followup'
+  ).length;
+  score -= overdueNotFollowedUp * 10;
+  // Bonus for replies
+  const replied = items.filter(i => i.pipeline_stage === 'replied').length;
+  score += replied * 20;
+  // Bonus for wins
+  const won = items.filter(i => ['won', 'received', 'success'].includes(i.pipeline_stage)).length;
+  score += won * 15;
+  return Math.max(10, Math.min(100, score));
+};
+
+const getBestMove = (items) => {
+  // Find overdue items that need follow-up, sorted by response rate
+  const overdue = items
+    .filter(i => {
+      const stage = i.pipeline_stage;
+      return (stage === 'waiting' || stage === 'pitched') &&
+        i.days_since_pitched >= 7 &&
+        (i.send_confirmed || i.pitched_at);
+    })
+    .sort((a, b) => (b.response_rate || 0) - (a.response_rate || 0));
+  return overdue[0] || null;
+};
+
+// Static platform activity — replace with real API in Phase 3
+const MOCK_ACTIVITY = [
+  { icon: '💌', text: 'A creator got a reply from a skincare brand · 2h ago', type: 'green' },
+  { icon: '🔥', text: 'Reply rates are up 18% in Beauty this week', type: 'amber' },
+  { icon: '📦', text: '4 packages landed in Wellness this week', type: 'green' },
+];
+
 // Stage filter options
 const STAGE_FILTERS = [
   { key: 'all', label: 'All' },
@@ -572,15 +636,44 @@ const PRPipeline = () => {
           </SuccessMessage>
         )}
 
-        {/* Info pills */}
-        {(isWaiting || isSaved) && !cardSuccessStates[item.id] && (
+        {/* Pulse signal for waiting/pitched items */}
+        {isWaiting && !cardSuccessStates[item.id] && (() => {
+          const pulse = getPulseSignal(item.response_rate);
+          return pulse ? (
+            <BrandPulseRow>
+              <PulseDotSmall $color={pulse.color} />
+              <PulseText $color={pulse.textColor}>
+                {pulse.label}
+                {item.response_rate ? ` · ${item.response_rate}% reply rate` : ''}
+              </PulseText>
+            </BrandPulseRow>
+          ) : null;
+        })()}
+
+        {/* Countdown bar for overdue items */}
+        {isWaiting && isOverdue && !cardSuccessStates[item.id] && (() => {
+          const countdown = getCountdownLabel(item.pitched_at);
+          return (
+            <CountdownBar $urgent={countdown.urgent}>
+              <CountdownLeft>⏳ {countdown.text}</CountdownLeft>
+              <CountdownSub>Reply chance drops after day 14</CountdownSub>
+            </CountdownBar>
+          );
+        })()}
+
+        {/* Waiting state info for non-overdue */}
+        {isWaiting && !isOverdue && !cardSuccessStates[item.id] && (
+          <WaitingDetail>
+            <WaitingDetailLeft>
+              📅 {isFollowupStage ? 'Follow-up sent' : `Follow-up ready in ${Math.max(0, 7 - daysSinceLastContact)} days`}
+            </WaitingDetailLeft>
+            <WaitingDetailRight>Draft prepared</WaitingDetailRight>
+          </WaitingDetail>
+        )}
+
+        {/* Info pills for saved items */}
+        {isSaved && !cardSuccessStates[item.id] && (
           <InfoRow>
-            {isWaiting && isOverdue && (
-              <InfoPill $warn>⚠ {isFollowupStage ? 'Time for another follow-up' : 'Follow-up overdue'}</InfoPill>
-            )}
-            {isWaiting && !isOverdue && (
-              <InfoPill>{isFollowupStage ? 'Follow-up sent - most brands reply within a week' : 'Brands usually reply in ~7 days'}</InfoPill>
-            )}
             {item.response_rate && (
               <InfoPill $green={item.response_rate >= 40}>
                 {item.response_rate}% response rate {item.response_rate >= 50 ? '🔥' : ''}
@@ -590,6 +683,14 @@ const PRPipeline = () => {
               <InfoPill>📋 Has PR form</InfoPill>
             )}
           </InfoRow>
+        )}
+
+        {/* Replied celebration banner */}
+        {isReplied && !cardSuccessStates[item.id] && (
+          <RepliedBanner>
+            <RepliedBannerText>🎉 They replied to your pitch!</RepliedBannerText>
+            <RepliedBannerSub>Check your email to continue the conversation</RepliedBannerSub>
+          </RepliedBanner>
         )}
 
         {/* Won card value display */}
@@ -705,11 +806,11 @@ const PRPipeline = () => {
     <Container>
       {/* Journey Header */}
       <JourneyHeader>
-        <JourneyGreeting>Your PR Journey ✨</JourneyGreeting>
+        <JourneyGreeting>My Pitches</JourneyGreeting>
         <JourneySub>
           {stats.total_contacted === 0
             ? "Contact your first brand to get started"
-            : "Keep going — most creators land their first package within 3 pitches"}
+            : `${stageCounts.waiting} active · ${nudgeItems.length} need follow-up`}
         </JourneySub>
         <JourneyStats>
           <JStat>
@@ -739,6 +840,54 @@ const PRPipeline = () => {
         </JourneyStats>
       </JourneyHeader>
 
+      {/* Live Activity Strip */}
+      {stats.total_contacted > 0 && (
+        <LiveStrip>
+          <LiveStripInner>
+            {MOCK_ACTIVITY.map((item, i) => (
+              <LivePill key={i} $type={item.type}>
+                {i === 0 && <LiveLabel>Live</LiveLabel>}
+                <PulseDot $type={item.type} />
+                {item.icon} {item.text}
+              </LivePill>
+            ))}
+          </LiveStripInner>
+        </LiveStrip>
+      )}
+
+      {/* Pipeline Health Card */}
+      {stats.total_contacted > 0 && (() => {
+        const score = computePipelineHealth(items);
+        const healthLabel = score >= 70 ? 'Looking strong' : score >= 40 ? 'Needs attention' : 'At risk';
+        const healthColor = score >= 70 ? '#059669' : score >= 40 ? '#D97706' : '#7C3AED';
+        const circumference = 2 * Math.PI * 21;
+        const offset = circumference - (score / 100) * circumference;
+        return (
+          <HealthCard>
+            <HealthRing>
+              <svg width="52" height="52" viewBox="0 0 52 52">
+                <circle cx="26" cy="26" r="21" fill="none" stroke="#F3F4F6" strokeWidth="5"/>
+                <circle cx="26" cy="26" r="21" fill="none" stroke={healthColor} strokeWidth="5"
+                  strokeDasharray={circumference} strokeDashoffset={offset}
+                  strokeLinecap="round" style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}/>
+              </svg>
+              <HealthScoreText style={{ color: healthColor }}>{score}</HealthScoreText>
+            </HealthRing>
+            <HealthInfo>
+              <HealthLabel>Pipeline Health</HealthLabel>
+              <HealthTitle>{healthLabel}</HealthTitle>
+              <HealthTip>
+                {nudgeItems.length > 0
+                  ? <><strong>Send {nudgeItems.length} overdue follow-up{nudgeItems.length > 1 ? 's' : ''}</strong> to improve your score</>
+                  : items.filter(i => i.pipeline_stage === 'saved').length > 0
+                    ? <><strong>Contact your saved brands</strong> to grow your pipeline</>
+                    : <><strong>Add more pitches</strong> to strengthen your pipeline</>}
+              </HealthTip>
+            </HealthInfo>
+          </HealthCard>
+        );
+      })()}
+
       {/* Progress Path */}
       <ProgressPath>
         <PathStep $filled>
@@ -758,17 +907,67 @@ const PRPipeline = () => {
         </PathStep>
       </ProgressPath>
 
-      {/* Nudge Banner for Overdue Follow-ups */}
-      {nudgeItems.length > 0 && activeFilter === 'all' && (
-        <NudgeBanner onClick={() => setActiveFilter('action')}>
-          <NudgeIcon>⏰</NudgeIcon>
-          <NudgeText>
-            <NudgeTitle>{nudgeItems[0].brand_name} hasn't replied in {nudgeItems[0].days_since_pitched} days</NudgeTitle>
-            <NudgeSub>A quick follow-up doubles your chances. Tap to send.</NudgeSub>
-          </NudgeText>
-          <NudgeArrow>›</NudgeArrow>
-        </NudgeBanner>
-      )}
+      {/* Best Move Card */}
+      {(() => {
+        const bestMove = getBestMove(items);
+        if (!bestMove || activeFilter !== 'all') return null;
+        const countdown = getCountdownLabel(bestMove.pitched_at);
+        const pulse = getPulseSignal(bestMove.response_rate);
+        const days = bestMove.days_since_pitched || getDaysSincePitched(bestMove.pitched_at);
+        const progressPercent = Math.min(100, (days / 14) * 100);
+
+        return (
+          <BestMoveCard>
+            <BestMoveLabel>🎯 Best move right now</BestMoveLabel>
+            <BestMoveBrand>
+              <BrandLogo style={{ width: 40, height: 40, borderRadius: 10 }}>
+                <LogoImg
+                  src={getBrandLogoUrl(bestMove)}
+                  alt={bestMove.brand_name}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <LogoFallback style={{ display: 'none' }}>
+                  {bestMove.brand_name.substring(0, 2).toUpperCase()}
+                </LogoFallback>
+              </BrandLogo>
+              <BestMoveInfo>
+                <BestMoveName>{bestMove.brand_name}</BestMoveName>
+                <BestMoveMeta>{bestMove.category} · Pitched {formatDate(bestMove.pitched_at)}</BestMoveMeta>
+              </BestMoveInfo>
+              <StatusBadge $overdue>⚠ {days}d</StatusBadge>
+            </BestMoveBrand>
+
+            {pulse && (
+              <BrandPulseRow>
+                <PulseDotSmall $color={pulse.color} />
+                <PulseText $color={pulse.textColor}>
+                  {pulse.label}
+                  {bestMove.response_rate ? ` · ${bestMove.response_rate}% reply rate` : ''}
+                </PulseText>
+              </BrandPulseRow>
+            )}
+
+            <CountdownBar $urgent={countdown.urgent}>
+              <CountdownLeft>⏳ {countdown.text}</CountdownLeft>
+              <CountdownSub>Reply chance drops 60% after day 14</CountdownSub>
+            </CountdownBar>
+
+            <ProgressTrack>
+              <ProgressFill style={{ width: `${progressPercent}%` }} />
+            </ProgressTrack>
+
+            <PrimaryBtn $followup onClick={() => handleFollowup(bestMove)}>
+              ✉ Send Follow-up — Draft Ready
+            </PrimaryBtn>
+            <SecondaryBtnGreen onClick={() => setReplyingItem(bestMove)}>
+              ✓ They Replied
+            </SecondaryBtnGreen>
+          </BestMoveCard>
+        );
+      })()}
 
       {/* Filter Tabs */}
       <FilterTabs>
@@ -809,6 +1008,21 @@ const PRPipeline = () => {
           <AnimatePresence>
             {filteredItems.map(item => renderBrandCard(item))}
           </AnimatePresence>
+        )}
+
+        {/* Pro Nudge at bottom of list */}
+        {!isPro && filteredItems.length > 0 && (activeFilter === 'all' || activeFilter === 'waiting') && (
+          <ProNudge onClick={() => {
+            setUpgradeReason('limit_reached');
+            setShowUpgradeModal(true);
+          }}>
+            <ProNudgeIcon>🔒</ProNudgeIcon>
+            <ProNudgeText>
+              <ProNudgeTitle>Pitch more brands this month</ProNudgeTitle>
+              <ProNudgeSub>You've used {pitchLimits.used} of {pitchLimits.limit} free contacts. Pro removes the limit.</ProNudgeSub>
+            </ProNudgeText>
+            <ProNudgeCTA>$12/mo</ProNudgeCTA>
+          </ProNudge>
         )}
       </BrandList>
 
@@ -1838,6 +2052,358 @@ const ValueHint = styled.div`
   font-size: 12px;
   color: #8C8C8C;
   margin-bottom: 20px;
+`;
+
+// ── New Pipeline Redesign styled components ─────────────────────────────────────
+
+const LiveStrip = styled.div`
+  background: #fff;
+  border: 1px solid #E8E8E8;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  overflow: hidden;
+`;
+
+const LiveStripInner = styled.div`
+  padding: 12px 0 12px 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+  display: flex;
+  gap: 8px;
+  padding-right: 16px;
+  &::-webkit-scrollbar { display: none; }
+`;
+
+const LivePill = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  color: #374151;
+  white-space: nowrap;
+  flex-shrink: 0;
+`;
+
+const LiveLabel = styled.span`
+  font-size: 10px;
+  font-weight: 700;
+  color: #10B981;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-right: 4px;
+`;
+
+const PulseDot = styled.span`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: ${p => p.$type === 'amber' ? '#F59E0B' : p.$type === 'red' ? '#EF4444' : '#10B981'};
+  display: inline-block;
+  flex-shrink: 0;
+  animation: pulseDot 2s infinite;
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+`;
+
+const HealthCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #E8E8E8;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(15, 15, 15, 0.04);
+`;
+
+const HealthRing = styled.div`
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+`;
+
+const HealthScoreText = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  font-weight: 800;
+`;
+
+const HealthInfo = styled.div`
+  flex: 1;
+`;
+
+const HealthLabel = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+`;
+
+const HealthTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  margin-top: 2px;
+`;
+
+const HealthTip = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 3px;
+  strong { color: #7C3AED; }
+`;
+
+const BestMoveCard = styled.div`
+  background: linear-gradient(135deg, #FFF7ED, #FFFBEB);
+  border: 1.5px solid #FCD34D;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(251,191,36,0.15), transparent);
+    border-radius: 50%;
+  }
+`;
+
+const BestMoveLabel = styled.div`
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #D97706;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+`;
+
+const BestMoveBrand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+`;
+
+const BestMoveInfo = styled.div`
+  flex: 1;
+`;
+
+const BestMoveName = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+`;
+
+const BestMoveMeta = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 1px;
+`;
+
+const BrandPulseRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+`;
+
+const PulseDotSmall = styled.span`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${p => p.$color || '#10B981'};
+  flex-shrink: 0;
+  animation: pulseDot 2s infinite;
+`;
+
+const PulseText = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${p => p.$color || '#059669'};
+`;
+
+const CountdownBar = styled.div`
+  background: ${p => p.$urgent ? '#FEF3C7' : '#F3F4F6'};
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+`;
+
+const CountdownLeft = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400E;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+`;
+
+const CountdownSub = styled.div`
+  font-size: 11px;
+  color: #B45309;
+  margin-top: 2px;
+`;
+
+const ProgressTrack = styled.div`
+  height: 4px;
+  background: #E5E7EB;
+  border-radius: 2px;
+  margin-bottom: 12px;
+  overflow: hidden;
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #F59E0B, #EF4444);
+  transition: width 0.3s;
+`;
+
+const SecondaryBtnGreen = styled.button`
+  width: 100%;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1.5px solid #D1FAE5;
+  background: #F0FDF4;
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  margin-top: 8px;
+
+  &:hover {
+    background: #D1FAE5;
+    border-color: #059669;
+  }
+`;
+
+const WaitingDetail = styled.div`
+  background: #EFF6FF;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const WaitingDetailLeft = styled.span`
+  font-size: 12px;
+  color: #1E40AF;
+  font-weight: 500;
+`;
+
+const WaitingDetailRight = styled.span`
+  font-size: 11.5px;
+  color: #3B82F6;
+  font-weight: 600;
+`;
+
+const RepliedBanner = styled.div`
+  background: #D1FAE5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+`;
+
+const RepliedBannerText = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #065F46;
+`;
+
+const RepliedBannerSub = styled.div`
+  font-size: 11px;
+  color: #059669;
+  margin-top: 2px;
+`;
+
+const ProNudge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #FAF5FF, #FDF2F8);
+  border: 1.5px solid #DDD6FE;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #C4B5FD;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+  }
+`;
+
+const ProNudgeIcon = styled.div`
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #7C3AED, #E11D48);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+`;
+
+const ProNudgeText = styled.div`
+  flex: 1;
+`;
+
+const ProNudgeTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+`;
+
+const ProNudgeSub = styled.div`
+  font-size: 11.5px;
+  color: #6B7280;
+  margin-top: 2px;
+`;
+
+const ProNudgeCTA = styled.button`
+  background: linear-gradient(135deg, #7C3AED, #E11D48);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  }
 `;
 
 export default PRPipeline;
