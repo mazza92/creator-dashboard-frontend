@@ -133,6 +133,7 @@ const PRPipeline = () => {
   const [noteText, setNoteText] = useState('');
   const [receivingItem, setReceivingItem] = useState(null); // Track package value input
   const [packageValue, setPackageValue] = useState('');
+  const [expandedSections, setExpandedSections] = useState({}); // Track expanded won/completed sections
 
   // Fetch pipeline data on mount
   useEffect(() => {
@@ -218,7 +219,41 @@ const PRPipeline = () => {
 
   // Filter items based on active filter
   const filteredItems = useMemo(() => {
-    if (activeFilter === 'all') return items;
+    if (activeFilter === 'all') {
+      // Smart sorting: prioritize items that drive engagement
+      return [...items].sort((a, b) => {
+        // Priority function: lower number = higher priority
+        const getPriority = (item) => {
+          const stage = item.pipeline_stage;
+          const isContacted = Boolean(item.send_confirmed) || Boolean(item.pitched_at);
+
+          // Priority 1: Ready to Contact (saved but not contacted) - drives credit usage
+          if (stage === 'saved' && !isContacted) return 1;
+
+          // Priority 2: Action Needed (replied or overdue)
+          if (stage === 'replied') return 2;
+          if ((stage === 'waiting' || stage === 'pitched') && item.days_since_pitched >= 7) return 2;
+          if (stage === 'followup' && item.days_since_followup >= 7) return 2;
+
+          // Priority 3: Waiting for response (active pitches)
+          if (['waiting', 'followup', 'pitched'].includes(stage)) return 3;
+
+          // Priority 4: Won/Completed
+          if (['won', 'received', 'success'].includes(stage)) return 4;
+
+          // Priority 5: Everything else (including contacted saved items)
+          return 5;
+        };
+
+        const priorityDiff = getPriority(a) - getPriority(b);
+        if (priorityDiff !== 0) return priorityDiff;
+
+        // Within same priority, sort by most recent activity
+        const aDate = new Date(a.pitched_at || a.saved_at || 0);
+        const bDate = new Date(b.pitched_at || b.saved_at || 0);
+        return bDate - aDate;
+      });
+    }
     if (activeFilter === 'action') {
       return items.filter(i =>
         i.pipeline_stage === 'replied' ||
@@ -276,6 +311,42 @@ const PRPipeline = () => {
       saved: items.filter(i => i.pipeline_stage === 'saved').length,
     };
   }, [items]);
+
+  // Group items by section for 'all' view
+  const groupedItems = useMemo(() => {
+    if (activeFilter !== 'all') return null;
+
+    const getSection = (item) => {
+      const stage = item.pipeline_stage;
+      const isContacted = Boolean(item.send_confirmed) || Boolean(item.pitched_at);
+
+      if (stage === 'saved' && !isContacted) return 'ready';
+      if (stage === 'replied') return 'action';
+      if ((stage === 'waiting' || stage === 'pitched') && item.days_since_pitched >= 7) return 'action';
+      if (stage === 'followup' && item.days_since_followup >= 7) return 'action';
+      if (['waiting', 'followup', 'pitched'].includes(stage)) return 'waiting';
+      if (['won', 'received', 'success'].includes(stage)) return 'completed';
+      return 'other';
+    };
+
+    const groups = { ready: [], action: [], waiting: [], completed: [], other: [] };
+    filteredItems.forEach(item => {
+      const section = getSection(item);
+      groups[section].push(item);
+    });
+
+    return groups;
+  }, [filteredItems, activeFilter]);
+
+  const SECTION_CONFIG = {
+    ready: { emoji: '📌', title: 'Ready to Contact', priority: 1 },
+    action: { emoji: '⚡', title: 'Action Needed', priority: 2 },
+    waiting: { emoji: '⏳', title: 'Waiting', priority: 3 },
+    completed: { emoji: '🎁', title: 'Completed', priority: 4 },
+    other: { emoji: '📋', title: 'Other', priority: 5 }
+  };
+
+  const COMPLETED_LIMIT = 3; // Show only 3 completed items by default
 
   // Update pipeline item
   const advanceStage = useCallback(async (itemId, updates) => {
@@ -821,20 +892,23 @@ const PRPipeline = () => {
             <JStatVal $green>{stats.total_responded || 0}</JStatVal>
             <JStatLabel>Responded</JStatLabel>
           </JStat>
-          <JStat>
-            <JStatVal
-              $purple
-              $locked={!isPro}
-              onClick={() => {
-                if (!isPro) {
-                  setUpgradeReason('pr_value');
-                  setShowUpgradeModal(true);
-                }
-              }}
-            >
-              {isPro ? `$${stats.pr_value_earned || 0}` : '$??'}
-              {!isPro && <SmallLock>🔒</SmallLock>}
-            </JStatVal>
+          <JStat
+            $clickable={!isPro}
+            onClick={() => {
+              if (!isPro) {
+                setUpgradeReason('pr_value');
+                setShowUpgradeModal(true);
+              }
+            }}
+          >
+            {isPro ? (
+              <JStatVal $purple>${stats.pr_value_earned || 0}</JStatVal>
+            ) : (
+              <LockedValue>
+                <LockedIcon>📊</LockedIcon>
+                <UnlockLabel>Unlock</UnlockLabel>
+              </LockedValue>
+            )}
             <JStatLabel>PR Value</JStatLabel>
           </JStat>
         </JourneyStats>
@@ -1004,6 +1078,44 @@ const PRPipeline = () => {
               {activeFilter === 'all' && 'Save some brands from Discover to get started'}
             </EmptyText>
           </EmptyState>
+        ) : activeFilter === 'all' && groupedItems ? (
+          // Sectioned view for 'all' filter
+          <AnimatePresence>
+            {['ready', 'action', 'waiting', 'completed'].map((sectionKey, sectionIdx) => {
+              const sectionItems = groupedItems[sectionKey];
+              if (!sectionItems || sectionItems.length === 0) return null;
+
+              const config = SECTION_CONFIG[sectionKey];
+              const isCompleted = sectionKey === 'completed';
+              const isExpanded = expandedSections[sectionKey];
+              const visibleItems = isCompleted && !isExpanded
+                ? sectionItems.slice(0, COMPLETED_LIMIT)
+                : sectionItems;
+              const hiddenCount = isCompleted ? sectionItems.length - COMPLETED_LIMIT : 0;
+
+              return (
+                <React.Fragment key={sectionKey}>
+                  <SectionHeader $first={sectionIdx === 0}>
+                    <SectionEmoji>{config.emoji}</SectionEmoji>
+                    <SectionTitle>{config.title}</SectionTitle>
+                    <SectionCount>({sectionItems.length})</SectionCount>
+                    <SectionDivider />
+                  </SectionHeader>
+                  {visibleItems.map(item => renderBrandCard(item))}
+                  {isCompleted && hiddenCount > 0 && !isExpanded && (
+                    <ShowMoreBtn onClick={() => setExpandedSections(prev => ({ ...prev, completed: true }))}>
+                      Show {hiddenCount} more completed
+                    </ShowMoreBtn>
+                  )}
+                  {isCompleted && isExpanded && sectionItems.length > COMPLETED_LIMIT && (
+                    <ShowMoreBtn onClick={() => setExpandedSections(prev => ({ ...prev, completed: false }))}>
+                      Show less
+                    </ShowMoreBtn>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </AnimatePresence>
         ) : (
           <AnimatePresence>
             {filteredItems.map(item => renderBrandCard(item))}
@@ -1275,6 +1387,15 @@ const JStat = styled.div`
   padding: 12px 8px;
   border-radius: 12px;
   background: #F4F4F4;
+  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
+  transition: all 0.15s ease;
+
+  ${props => props.$clickable && `
+    &:hover {
+      background: #ECECEC;
+      transform: scale(1.02);
+    }
+  `}
 `;
 
 const JStatVal = styled.div`
@@ -1300,6 +1421,26 @@ const JStatLabel = styled.div`
 
 const SmallLock = styled.span`
   font-size: 12px;
+`;
+
+const LockedValue = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+`;
+
+const LockedIcon = styled.div`
+  font-size: 20px;
+  opacity: 0.8;
+`;
+
+const UnlockLabel = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  color: #7C3AED;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 `;
 
 const ProgressPath = styled.div`
@@ -1465,6 +1606,63 @@ const BrandList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0 8px;
+  margin-top: ${props => props.$first ? '0' : '8px'};
+`;
+
+const SectionEmoji = styled.span`
+  font-size: 16px;
+`;
+
+const SectionTitle = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const SectionCount = styled.span`
+  font-size: 12px;
+  color: #9CA3AF;
+  font-weight: 500;
+`;
+
+const SectionDivider = styled.div`
+  flex: 1;
+  height: 1px;
+  background: #E5E7EB;
+  margin-left: 8px;
+`;
+
+const ShowMoreBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 4px;
+  background: #F9FAFB;
+  border: 1px dashed #D1D5DB;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #F3F4F6;
+    border-color: #9CA3AF;
+    color: #374151;
+  }
 `;
 
 const BrandCard = styled(motion.div)`
