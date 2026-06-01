@@ -686,45 +686,34 @@ export default function DirectoryClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const didInitFromUrl = useRef(false);
   // Skip the first client fetch when the server already supplied brand data
-  const skipFirstFetch = useRef(!!(initialBrands && initialBrands.length > 0));
+  // BUT only if there are no URL filters that need to be applied
+  const hasUrlFilters = searchParams?.get('activity') || searchParams?.get('search') ||
+    searchParams?.get('contactType') || (searchParams?.get('category') && !initialCategory);
+  const skipFirstFetch = useRef(!!(initialBrands && initialBrands.length > 0) && !hasUrlFilters);
 
-  const [loading, setLoading] = useState(!(initialBrands && initialBrands.length > 0));
+  // Show loading if no initial brands OR if we have URL filters that need fetching
+  const [loading, setLoading] = useState(!(initialBrands && initialBrands.length > 0) || hasUrlFilters);
   const [brands, setBrands] = useState(initialBrands || []);
   const [categories, setCategories] = useState([]);
   const [openPrBrands, setOpenPrBrands] = useState([]);
 
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
   const [total, setTotal] = useState(initialTotal || 0);
 
-  const [search, setSearch] = useState(initialSearch || '');
+  // Initialize state directly from URL params to avoid timing issues with fetch
+  const [search, setSearch] = useState(initialSearch || searchParams?.get('search') || '');
   // Keep category case-sensitive to match API values
-  const [category, setCategory] = useState(initialCategory ? initialCategory.trim() : '');
-  const [activity, setActivity] = useState(''); // 'new', 'active', 'responsive'
-  const [contactType, setContactType] = useState(''); // 'application', 'email', or '' for all
+  const [category, setCategory] = useState(
+    initialCategory ? initialCategory.trim() : (normalizeCategory(searchParams?.get('category') || '') || '')
+  );
+  const [activity, setActivity] = useState(searchParams?.get('activity') || ''); // 'new', 'active', 'responsive'
+  const [contactType, setContactType] = useState(searchParams?.get('contactType') || ''); // 'application', 'email', or '' for all
 
   const limit = 24;
 
-  // Initialize filters from URL (but let explicit props win)
-  useEffect(() => {
-    if (didInitFromUrl.current) return;
-    didInitFromUrl.current = true;
-
-    const urlSearch = searchParams?.get('search') || '';
-    const urlCategory = searchParams?.get('category') || '';
-    const urlActivity = searchParams?.get('activity') || '';
-    const urlContactType = searchParams?.get('contactType') || '';
-    const urlPage = Number(searchParams?.get('page') || '1');
-
-    if (!initialSearch && urlSearch) setSearch(urlSearch);
-    if (!initialCategory && urlCategory) {
-      setCategory(normalizeCategory(urlCategory) || urlCategory.trim());
-    }
-    if (urlActivity) setActivity(urlActivity);
-    if (urlContactType) setContactType(urlContactType);
-    if (Number.isFinite(urlPage) && urlPage > 1) setPage(urlPage);
-  }, [searchParams, initialSearch, initialCategory]);
+  // Note: Filters are now initialized directly from URL params in useState above,
+  // so no separate useEffect needed for URL initialization
 
   const updateUrl = (next) => {
     const params = new URLSearchParams(searchParams?.toString() || '');
