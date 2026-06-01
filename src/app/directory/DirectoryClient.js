@@ -929,7 +929,7 @@ export default function DirectoryClient({
                   updateUrl({ activity: next, page: 1 });
                 }}
                 options={[
-                  { value: 'new', label: 'Added this week' },
+                  { value: 'new', label: 'Added recently' },
                   { value: 'active', label: 'Actively reviewing' },
                   { value: 'responsive', label: 'High response rate' },
                 ]}
