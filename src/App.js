@@ -82,7 +82,7 @@ import PublicBrandPage from './cra-pages/PublicBrandPage';
 import SkincareDirectory from './cra-pages/SkincareDirectory';
 import KBeautyDirectory from './cra-pages/KBeautyDirectory';
 import AustraliaDirectory from './cra-pages/AustraliaDirectory';
-// UnifiedBrandDirectory used in dashboard (/creator/dashboard/pr-brands) and public directory
+// UnifiedBrandDirectory used in dashboard (/creator/dashboard/for-you) and public directory
 import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
 import BrandAdmin from './admin/BrandAdmin';
@@ -255,7 +255,7 @@ function AppContent() {
                 console.log('🟢 Redirecting unauthenticated user to /login');
                 navigate('/login', { replace: true });
             } else if (user) {
-                const correctBasePath = user.role === 'creator' ? '/creator/dashboard/pr-brands' : '/brand/dashboard/overview';
+                const correctBasePath = user.role === 'creator' ? '/creator/dashboard/for-you' : '/brand/dashboard/overview';
                 
                 // A brand user is allowed to visit a creator's profile page.
                 const isViewingCreatorProfileAsBrand = user.role === 'brand' && location.pathname.startsWith('/creator/profile/');
@@ -393,7 +393,7 @@ function AppContent() {
             <Route
                 path='/directory'
                 element={
-                    user ? <Navigate to='/creator/dashboard/pr-brands' replace /> : <UnifiedBrandDirectory />
+                    user ? <Navigate to='/creator/dashboard/for-you' replace /> : <UnifiedBrandDirectory />
                 }
             />
             <Route path='/directory/skincare' element={<SkincareDirectory />} />
@@ -428,8 +428,8 @@ function AppContent() {
                     loading
                         ? <LoadingSpinner fullScreen />
                         : user
-                            ? <Navigate to={user.role === 'brand' ? '/brand/dashboard/overview' : '/creator/dashboard/pr-brands'} replace />
-                            : <Navigate to='/login?redirect=/creator/dashboard/pr-brands' replace />
+                            ? <Navigate to={user.role === 'brand' ? '/brand/dashboard/overview' : '/creator/dashboard/for-you'} replace />
+                            : <Navigate to='/login?redirect=/creator/dashboard/for-you' replace />
                 }
             />
 
@@ -457,6 +457,8 @@ function AppContent() {
                 path='/creator'
                 element={user ? <CreatorDashboardLayout /> : <Navigate to='/login' replace />}
             >
+                <Route index element={<Navigate to='/creator/dashboard/for-you' replace />} />
+                <Route path='dashboard' element={<Navigate to='/creator/dashboard/for-you' replace />} />
                 <Route path='dashboard/overview' element={<CreatorOverview />} />
                 <Route path='dashboard/bookings' element={<CreatorBookings />} />
                 <Route path='dashboard/campaign-invites' element={<CampaignInvites />} />
