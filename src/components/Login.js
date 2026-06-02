@@ -43,6 +43,15 @@ const Container = styled.div`
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   padding: 24px;
   position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
 `;
 
 const LoginCard = styled.div`
@@ -54,10 +63,16 @@ const LoginCard = styled.div`
   width: 100%;
   max-width: 420px;
   z-index: 2;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
     padding: 28px 24px;
     max-width: 100%;
+    border-radius: 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 24px 20px;
     border-radius: 16px;
   }
 `;
@@ -102,6 +117,11 @@ const TitleH1 = styled.h1`
   letter-spacing: -0.8px;
   line-height: 1.1;
   margin: 0 0 8px 0;
+  word-wrap: break-word;
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -109,6 +129,12 @@ const Subtitle = styled.p`
   color: ${colors.text2};
   line-height: 1.5;
   margin: 0 0 28px 0;
+  word-wrap: break-word;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    margin: 0 0 24px 0;
+  }
 `;
 
 const HeaderBlock = styled.div`
@@ -313,6 +339,14 @@ const FootRow = styled.div`
   margin-top: 20px;
   font-size: 13.5px;
   color: ${colors.text2};
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 13px;
+  }
 `;
 
 const TextBtn = styled.button`
