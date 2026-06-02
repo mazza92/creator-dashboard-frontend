@@ -1225,16 +1225,10 @@ const PRBrandDiscovery = () => {
                     </ResponseRate>
                   )}
 
-                  {/* Estimated package value */}
-                  {currentBrand.avg_product_value ? (
+                  {/* Estimated package value - uses API value or DB value */}
+                  {(currentBrand.avg_product_value || currentBrand.estimated_value) && (
                     <EstimatedValue>
-                      💝 ~${currentBrand.avg_product_value} package value
-                    </EstimatedValue>
-                  ) : currentBrand.category && (
-                    <EstimatedValue>
-                      💝 ~${
-                        { beauty: 85, skincare: 120, fashion: 150, wellness: 95, fitness: 80, food: 60, lifestyle: 100, tech: 200 }[currentBrand.category.toLowerCase()] || 100
-                      } est. value
+                      💝 ~${currentBrand.avg_product_value || currentBrand.estimated_value} value
                     </EstimatedValue>
                   )}
 
