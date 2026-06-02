@@ -25,10 +25,13 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [fetchedBrandEmail, setFetchedBrandEmail] = useState(null); // Email from API
   const [fetchedApplicationUrl, setFetchedApplicationUrl] = useState(null); // Application form URL from API
   const [upgrading, setUpgrading] = useState(false); // Stripe checkout loading
-  const [creditUsed, setCreditUsed] = useState(false); // Track if credit was deducted
-  const [outreachStartedMethod, setOutreachStartedMethod] = useState(null); // email | form
-  const [contactRevealed, setContactRevealed] = useState(false); // Track if contact info is revealed (quota consumed)
-  const MAX_REGENERATES = 3; // Limit regenerations to save API credits
+  const [creditUsed, setCreditUsed] = useState(false);
+  const [outreachStartedMethod, setOutreachStartedMethod] = useState(null);
+  const [contactRevealed, setContactRevealed] = useState(false);
+  const [editedSubject, setEditedSubject] = useState('');
+  const [editedBody, setEditedBody] = useState('');
+  const [contactMethod, setContactMethod] = useState('email'); // 'email' | 'form'
+  const [pitchSent, setPitchSent] = useState(false);
 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
@@ -161,6 +164,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
       // Append media kit link to the pitch body
       const pitchWithMediaKit = appendMediaKitLink({ ...response.data });
       setPitch(pitchWithMediaKit);
+      setEditedSubject(pitchWithMediaKit.subject || '');
+      setEditedBody(pitchWithMediaKit.body || '');
       // Store the email from API if available
       if (response.data.brand_email) {
         setFetchedBrandEmail(response.data.brand_email);
@@ -177,6 +182,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
         ? generateFollowupTemplate(brand, profile)
         : generateGoldenTemplate(brand, profile);
       setPitch(fallbackPitch);
+      setEditedSubject(fallbackPitch.subject || '');
+      setEditedBody(fallbackPitch.body || '');
       return fallbackPitch;
     }
   };
@@ -201,12 +208,18 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
     // Generate content series name based on niche
     const seriesName = generateSeriesName(niche, brand.category);
 
-    // Build the personalized subject - clean, no brackets or quotes
+    // Specific subject — uses creator niche and followers for a cleaner signal
     const nicheDisplay = niche || brand.category || 'content';
-    const subject = `PR collab idea for ${brand.brand_name}`;
+    const followersShort = followers || null;
+    const subjectNiche = niche
+      ? niche.charAt(0).toUpperCase() + niche.slice(1)
+      : (brand.category || 'Content');
+    const subject = followersShort
+      ? `${subjectNiche} content idea — ${followersShort} ${platform} audience`
+      : `Content collab idea — ${brand.brand_name}`;
 
-    // Pick a random opener variation to avoid pattern detection
-    const openers = getHumanOpeners(brand.brand_name, brand.category);
+    // Pass creator niche — not brand category — so the opener reflects the creator's identity
+    const openers = getHumanOpeners(brand.brand_name, niche);
     const opener = openers[Math.floor(Math.random() * openers.length)];
 
     // Build the human-sounding body - no buzzwords, natural flow
@@ -306,14 +319,15 @@ ${creatorName}`;
     return null;
   };
 
-  // Human-sounding openers - varies to avoid AI detection
-  const getHumanOpeners = (brandName, category) => {
+  // Human-sounding openers — always uses creator's own niche, not the brand's category
+  const getHumanOpeners = (brandName, creatorNiche) => {
+    const nicheLabel = creatorNiche?.toLowerCase() || 'content';
     const openers = [
-      `I've been using ${brandName} products for a bit now and wanted to reach out about a collab idea.`,
-      `Found ${brandName} a few months back and it's become a staple in my routine - figured I'd shoot my shot.`,
-      `Quick intro - I'm a ${category?.toLowerCase() || 'content'} creator and I've had my eye on ${brandName} for a while.`,
-      `Hope this finds the right person! I create ${category?.toLowerCase() || ''} content and ${brandName} keeps coming up in my comments.`,
-      `I've been wanting to reach out for a while - ${brandName} fits really well with the content I make.`
+      `I've been following ${brandName} for a while and wanted to reach out about a collab idea.`,
+      `Found ${brandName} a few months back and it fits really well with the content I make.`,
+      `Quick intro — I make ${nicheLabel} content and I've had my eye on ${brandName} for a while.`,
+      `Hope this finds the right person! I make ${nicheLabel} content and ${brandName} keeps coming up in my comments.`,
+      `I've been wanting to reach out for a while — ${brandName} fits naturally into what I already post.`
     ];
     return openers;
   };
@@ -398,12 +412,8 @@ ${creatorName}`;
       // Open email client
       window.location.href = buildMailtoUrl();
 
-      message.success('Opening your email app...');
-
-      // Close modal after short delay (handleClose notifies parent)
-      setTimeout(() => {
-        finishOutreach(method);
-      }, 1000);
+      // Show success screen — don't close immediately
+      setPitchSent(true);
 
     } catch (error) {
       // Tracking failed or the user hit the quota limit; don't move them forward.
@@ -454,15 +464,14 @@ ${creatorName}`;
 
   const buildMailtoUrl = () => {
     const email = brandEmail || '';
-    const subject = encodeURIComponent(pitch?.subject || `PR collab idea for ${brand.brand_name}`);
-    const body = encodeURIComponent(pitch?.body || '');
-
+    const subject = encodeURIComponent(editedSubject || pitch?.subject || '');
+    const body = encodeURIComponent(editedBody || pitch?.body || '');
     return `mailto:${email}?subject=${subject}&body=${body}`;
   };
 
   const handleCopyPitch = async () => {
     try {
-      const fullPitch = `Subject: ${pitch?.subject}\n\n${pitch?.body}`;
+      const fullPitch = `Subject: ${editedSubject || pitch?.subject}\n\n${editedBody || pitch?.body}`;
       await navigator.clipboard.writeText(fullPitch);
       setCopied(true);
       message.success('Email copied to clipboard!');
@@ -473,10 +482,6 @@ ${creatorName}`;
   };
 
   const handleRegenerate = () => {
-    if (regenerateCount >= MAX_REGENERATES) {
-      message.warning(`You can only regenerate ${MAX_REGENERATES} times per pitch`);
-      return;
-    }
     setRegenerateCount(prev => prev + 1);
     initializePitch();
   };
@@ -551,34 +556,107 @@ ${creatorName}`;
             <FiX />
           </CloseButton>
 
-          {/* Header */}
-          <Header>
-            <BrandInfo>
-              <BrandLogo>
-                {brandLogo ? (
-                  <img src={brandLogo} alt={brandName} />
-                ) : (
-                  <span>{brandName?.charAt(0)}</span>
+          {/* Success state — replaces entire modal content */}
+          {pitchSent ? (
+            <SuccessScreen
+              as={motion.div}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <SuccessHero>
+                <SuccessIconWrap>
+                  <FiSend />
+                </SuccessIconWrap>
+                <SuccessTitle>Pitch sent to {brandName}</SuccessTitle>
+                <SuccessSub>
+                  Your pitch is in their inbox. Here's what to do next.
+                </SuccessSub>
+              </SuccessHero>
+
+              <SuccessPipelineCard>
+                <SuccessBrandLogo>
+                  {brandLogo
+                    ? <img src={brandLogo} alt={brandName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 13 }} />
+                    : <span>{brandName?.charAt(0)}</span>
+                  }
+                </SuccessBrandLogo>
+                <SuccessPipelineInfo>
+                  <SuccessPipelineBrand>{brandName}</SuccessPipelineBrand>
+                  <SuccessPipelineMeta>Added to your pipeline</SuccessPipelineMeta>
+                </SuccessPipelineInfo>
+                <SuccessWindowBadge>
+                  <SuccessWindowDays>14</SuccessWindowDays>
+                  <SuccessWindowLabel>day window</SuccessWindowLabel>
+                </SuccessWindowBadge>
+              </SuccessPipelineCard>
+
+              <SuccessTips>
+                <SuccessTip>
+                  <SuccessTipIcon><FiZap /></SuccessTipIcon>
+                  <SuccessTipText>
+                    <strong>Follow-up reminder set.</strong> We'll remind you in 7 days if you haven't heard back — that's when reply rates are highest.
+                  </SuccessTipText>
+                </SuccessTip>
+                {brand.response_rate > 0 && (
+                  <SuccessTip>
+                    <SuccessTipIcon>📊</SuccessTipIcon>
+                    <SuccessTipText>
+                      <strong>{brandName} replies to {brand.response_rate}% of pitches.</strong> Creators who follow up on day 7 are 2x more likely to get a response.
+                    </SuccessTipText>
+                  </SuccessTip>
                 )}
-              </BrandLogo>
-              <div>
-                <BrandName>{isFollowup ? `Follow up with ${brandName}` : `Contact ${brandName}`}</BrandName>
-                <BrandCategory>
-                  {isFollowup
-                    ? `${brand.days_since_pitched || 7}+ days since your pitch`
-                    : brand.category}
-                </BrandCategory>
-              </div>
-            </BrandInfo>
+              </SuccessTips>
 
-            <PitchCounter canPitch={pitchLimits.canPitch}>
-              <FiZap />
-              <span>{pitchLimits.limit - pitchLimits.used} / {pitchLimits.limit} contacts left</span>
-            </PitchCounter>
-          </Header>
+              <SuccessKitNudge>
+                <SuccessKitText>
+                  <SuccessKitTitle>Build your media kit before they reply</SuccessKitTitle>
+                  <SuccessKitSub>Brands ask for it when they're interested. Be ready.</SuccessKitSub>
+                </SuccessKitText>
+                <SuccessKitBtn onClick={() => { handleClose(); navigate('/creator/dashboard/media-kit'); }}>
+                  Build kit
+                </SuccessKitBtn>
+              </SuccessKitNudge>
 
-          {/* Content */}
-          {loading ? (
+              <SuccessActions>
+                <PrimaryBtn as="button" onClick={() => { finishOutreach('email'); }}>
+                  Pitch another brand
+                </PrimaryBtn>
+                <SuccessSecondaryBtn onClick={() => { finishOutreach('email'); navigate('/creator/dashboard/pr-pipeline'); }}>
+                  View my pipeline
+                </SuccessSecondaryBtn>
+              </SuccessActions>
+            </SuccessScreen>
+          ) : (
+            <>
+              {/* Header */}
+              <Header>
+                <BrandInfo>
+                  <BrandLogo>
+                    {brandLogo ? (
+                      <img src={brandLogo} alt={brandName} />
+                    ) : (
+                      <span>{brandName?.charAt(0)}</span>
+                    )}
+                  </BrandLogo>
+                  <div>
+                    <BrandName>{brandName}</BrandName>
+                    <BrandMeta>
+                      {isFollowup
+                        ? `${brand.days_since_pitched || 7}+ days since pitch`
+                        : brand.category}
+                      {brand.match_score && (
+                        <MatchChip score={brand.match_score}>
+                          {brand.match_score}% match
+                        </MatchChip>
+                      )}
+                    </BrandMeta>
+                  </div>
+                </BrandInfo>
+              </Header>
+
+              {/* Content */}
+              {loading ? (
             <LoadingState>
               <Spin size="large" />
               <LoadingText>{isFollowup ? 'Crafting your follow-up...' : 'Crafting your email...'}</LoadingText>
@@ -607,165 +685,137 @@ ${creatorName}`;
             </UpgradePrompt>
           ) : (
             <>
-              {/* Email Preview */}
+              {/* Flow tab switcher — only show when brand has both email and form */}
+              {brandEmail && applicationFormUrl && (
+                <FlowTabs>
+                  <FlowTab
+                    active={contactMethod === 'email'}
+                    onClick={() => setContactMethod('email')}
+                  >
+                    Email pitch
+                  </FlowTab>
+                  <FlowTab
+                    active={contactMethod === 'form'}
+                    onClick={() => setContactMethod('form')}
+                  >
+                    Application form
+                  </FlowTab>
+                </FlowTabs>
+              )}
+
+              {/* Email fields */}
               <EmailPreview>
-                <EmailHeader>
-                  <EmailLabel>To:</EmailLabel>
-                  <EmailValue $masked={!contactRevealed && brandEmail}>
-                    {brandEmail ? displayEmail : `${brandName} PR Team`}
-                    {!contactRevealed && brandEmail && (
-                      <EmailLockIcon><FiLock size={12} /></EmailLockIcon>
-                    )}
-                  </EmailValue>
-                </EmailHeader>
-                <EmailHeader>
-                  <EmailLabel>Subject:</EmailLabel>
-                  <EmailSubject>{pitch?.subject}</EmailSubject>
-                </EmailHeader>
-                <EmailDivider />
-                <EmailBody>{pitch?.body}</EmailBody>
+                <EmailFieldRow>
+                  <FieldLabel>To</FieldLabel>
+                  <FieldValue>{brandEmail || `${brandName} PR Team`}</FieldValue>
+                </EmailFieldRow>
+                <EmailFieldRow>
+                  <FieldLabel>Subject</FieldLabel>
+                  <SubjectInput
+                    value={editedSubject}
+                    onChange={e => setEditedSubject(e.target.value)}
+                    placeholder="Subject line"
+                  />
+                </EmailFieldRow>
               </EmailPreview>
 
-              {/* Creator Stats Badge */}
+              {/* Editable pitch body */}
+              <PitchBodyWrap>
+                <PitchBodyHeader>
+                  Pitch
+                  <EditHint>Tap to edit</EditHint>
+                </PitchBodyHeader>
+                <PitchTextarea
+                  value={editedBody}
+                  onChange={e => setEditedBody(e.target.value)}
+                  rows={8}
+                />
+              </PitchBodyWrap>
+
+              {/* Personalization confirmation */}
               {pitch?.creator_stats && (pitch.creator_stats.followers || pitch.creator_stats.niche) && (
-                <StatsBadge>
-                  <StatsTitle><FiUser /> Personalized with your data:</StatsTitle>
-                  <StatsRow>
+                <PersonalizationBar>
+                  <PersonalizationLabel>Written for your profile</PersonalizationLabel>
+                  <PersonalizationTags>
                     {pitch.creator_stats.followers && (
-                      <Stat>📊 {pitch.creator_stats.followers} followers</Stat>
+                      <PersonalizationTag>{pitch.creator_stats.followers} followers</PersonalizationTag>
                     )}
                     {pitch.creator_stats.niche && (
-                      <Stat>🎯 {pitch.creator_stats.niche}</Stat>
+                      <PersonalizationTag>{pitch.creator_stats.niche}</PersonalizationTag>
                     )}
                     {pitch.creator_stats.platform && (
-                      <Stat>📱 {pitch.creator_stats.platform}</Stat>
+                      <PersonalizationTag>{pitch.creator_stats.platform}</PersonalizationTag>
                     )}
-                  </StatsRow>
-                </StatsBadge>
+                  </PersonalizationTags>
+                </PersonalizationBar>
               )}
 
-              {/* Action Buttons */}
+              {/* Primary CTA */}
               <Actions>
-                {/* Primary action: Application Form if no email, or Send Email if email exists */}
-                {!brandEmail && applicationFormUrl ? (
-                  <PrimaryApplicationButton
-                    href={applicationFormUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleApplicationFormClick}
-                  >
-                    📋 <span>{contactRevealed ? 'Open Application Form' : 'Use 1 contact · Open Form'}</span>
-                  </PrimaryApplicationButton>
-                ) : (
-                  <SendButton
+                {/* Case 1: Form selected OR only form available (no email) */}
+                {(contactMethod === 'form' || !brandEmail) && applicationFormUrl ? (
+                  <>
+                    <PrimaryBtn
+                      as="a"
+                      href={applicationFormUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={handleApplicationFormClick}
+                    >
+                      Open form · 1 contact
+                    </PrimaryBtn>
+                    <FormTip>
+                      💡 Use the pitch above as a reference when filling out the form
+                    </FormTip>
+                  </>
+                ) : brandEmail ? (
+                  /* Case 2: Email available */
+                  <PrimaryBtn
+                    as={motion.button}
                     onClick={handleSendEmail}
-                    disabled={sending || !brandEmail}
-                    whileHover={{ scale: 1.02 }}
+                    disabled={sending}
                     whileTap={{ scale: 0.98 }}
-                    $isFollowup={isFollowup}
                   >
-                    {sending ? (
-                      <span>Opening Email...</span>
-                    ) : (
-                      <>
-                        <FiSend /> <span>
-                          {isFollowup
-                            ? `Send Follow-up to ${brandName}`
-                            : contactRevealed
-                              ? `Send Email to ${brandName}`
-                              : `Use 1 contact · Send to ${brandName}`
-                          }
-                        </span>
-                      </>
-                    )}
-                  </SendButton>
+                    {sending ? 'Opening email app...' : `Open in email app · Use 1 contact`}
+                  </PrimaryBtn>
+                ) : (
+                  /* Case 3: No contact info at all */
+                  <NoContactNote>
+                    No contact info on file yet. Copy the pitch and send via DM.
+                  </NoContactNote>
                 )}
 
-                <SecondaryActions>
-                  <SecondaryButton
-                    onClick={handleCopyPitch}
-                    disabled={!contactRevealed && !isFollowup}
-                    title={!contactRevealed && !isFollowup ? 'Send email first to reveal contact' : ''}
-                  >
-                    <FiCopy /> {copied ? 'Copied!' : (!contactRevealed && !isFollowup ? 'Send to copy' : 'Copy Pitch')}
-                  </SecondaryButton>
-                  <SecondaryButton
-                    onClick={handleRegenerate}
-                    disabled={regenerateCount >= MAX_REGENERATES}
-                  >
-                    <FiRefreshCw /> {regenerateCount >= MAX_REGENERATES ? 'Limit reached' : `Regenerate (${MAX_REGENERATES - regenerateCount} left)`}
-                  </SecondaryButton>
-                </SecondaryActions>
+                <SecondaryRow>
+                  <SecondaryBtn onClick={handleCopyPitch}>
+                    {copied ? 'Copied' : 'Copy pitch'}
+                  </SecondaryBtn>
+                  <SecondaryBtn onClick={handleRegenerate}>
+                    Rewrite pitch
+                  </SecondaryBtn>
+                </SecondaryRow>
+
+                {/* Subtle quota line — informational only */}
+                <QuotaLine>
+                  Contact {pitchLimits.used} of {pitchLimits.limit} used this month
+                </QuotaLine>
               </Actions>
 
-              {/* Show application form as secondary if brand has BOTH email and application form */}
-              {/* Only show after contact is revealed (quota already consumed via email) */}
-              {brandEmail && applicationFormUrl && contactRevealed && (
-                <ApplicationFormBox>
-                  <ApplicationFormHeader>
-                    <span>📋</span>
-                    <div>
-                      <ApplicationFormTitle>Application Form Available</ApplicationFormTitle>
-                      <ApplicationFormSubtitle>You can also apply directly on their website</ApplicationFormSubtitle>
-                    </div>
-                  </ApplicationFormHeader>
-                  <ApplicationFormButton
-                    href={applicationFormUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => { e.preventDefault(); window.open(applicationFormUrl, '_blank', 'noopener,noreferrer'); }}
-                  >
-                    Open Form →
-                  </ApplicationFormButton>
-                </ApplicationFormBox>
-              )}
-
-              {/* Tip for using the pitch when application form is primary */}
-              {!brandEmail && applicationFormUrl && (
-                <PitchTip>
-                  💡 Use the pitch above as a reference when filling out the application form
-                </PitchTip>
-              )}
-
-              {/* No email and no application form */}
-              {!brandEmail && !applicationFormUrl && (
-                <NoEmailWarning>
-                  <FiMail /> No contact info found. Copy the pitch and send via Instagram DM instead!
-                </NoEmailWarning>
+              {/* Media kit nudge — only in compose state */}
+              {!loading && creatorProfile && !creatorProfile.has_media_kit && (
+                <MediaKitNudge>
+                  <MediaKitNudgeText>
+                    <MediaKitNudgeTitle>Attach your media kit</MediaKitNudgeTitle>
+                    <MediaKitNudgeSub>Creators with a media kit get 3x more replies</MediaKitNudgeSub>
+                  </MediaKitNudgeText>
+                  <MediaKitNudgeBtn onClick={() => { onClose(); navigate('/creator/dashboard/media-kit'); }}>
+                    Build kit
+                  </MediaKitNudgeBtn>
+                </MediaKitNudge>
               )}
             </>
           )}
-
-          {/* Media Kit CTA - show if creator doesn't have one */}
-          {!loading && creatorProfile && !creatorProfile.has_media_kit && (
-            <MediaKitCTA>
-              <FiFileText />
-              <MediaKitCTAText>
-                <strong>Boost your response rate!</strong> Create a Media Kit to share with brands.
-              </MediaKitCTAText>
-              <MediaKitCTAButton onClick={() => { onClose(); navigate('/creator/dashboard/media-kit'); }}>
-                Build Media Kit
-              </MediaKitCTAButton>
-            </MediaKitCTA>
+            </>
           )}
-
-          {/* Show media kit link if creator has one */}
-          {!loading && creatorProfile && creatorProfile.has_media_kit && creatorProfile.media_kit_url && (
-            <MediaKitLink>
-              <FiFileText />
-              <span>Your Media Kit: <a href={creatorProfile.media_kit_url} target="_blank" rel="noopener noreferrer">{creatorProfile.media_kit_url}</a></span>
-              <CopyMediaKitButton onClick={() => { navigator.clipboard.writeText(creatorProfile.media_kit_url); message.success('Media kit link copied!'); }}>
-                Copy
-              </CopyMediaKitButton>
-            </MediaKitLink>
-          )}
-
-          {/* Footer tip */}
-          <FooterTip>
-            💡 {isFollowup
-              ? 'Follow-ups double your reply rate - most brands just need a nudge!'
-              : 'Personalized emails get 3x more responses than generic templates'}
-          </FooterTip>
         </Modal>
       </Overlay>
     </AnimatePresence>
@@ -786,6 +836,11 @@ const Overlay = styled(motion.div)`
   justify-content: center;
   z-index: 10000;
   padding: 20px;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    align-items: flex-end;
+  }
 `;
 
 const Modal = styled(motion.div)`
@@ -798,8 +853,8 @@ const Modal = styled(motion.div)`
   position: relative;
 
   @media (max-width: 768px) {
-    border-radius: 20px;
-    max-height: 95vh;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
   }
 `;
 
@@ -835,8 +890,7 @@ const Header = styled.div`
   gap: 16px;
 
   @media (max-width: 768px) {
-    padding: 20px 20px 12px;
-    flex-direction: column;
+    padding: 16px 16px 10px;
   }
 `;
 
@@ -1028,9 +1082,15 @@ const Stat = styled.span`
 
 const Actions = styled.div`
   padding: 20px 24px;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 16px;
+    padding: 12px 14px;
+  }
+
+  @media (max-width: 380px) {
+    padding: 10px 12px;
   }
 `;
 
@@ -1502,6 +1562,518 @@ const FooterTip = styled.div`
   font-size: 13px;
   color: #6B7280;
   border-radius: 0 0 24px 24px;
+`;
+
+// ── New styled components ─────────────────────────────────────
+
+const BrandMeta = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+`;
+
+const MatchChip = styled.span`
+  background: ${p => p.score >= 80 ? '#D1FAE5' : p.score >= 60 ? '#FEF3C7' : '#F3F4F6'};
+  color: ${p => p.score >= 80 ? '#065F46' : p.score >= 60 ? '#92400E' : '#6B7280'};
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+`;
+
+const FlowTabs = styled.div`
+  display: flex;
+  margin: 0 24px 12px;
+  background: #F3F4F6;
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+  @media (max-width: 768px) { margin: 0 16px 10px; }
+`;
+
+const FlowTab = styled.button`
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: ${p => p.active ? '#fff' : 'transparent'};
+  color: ${p => p.active ? '#0F0F0F' : '#9CA3AF'};
+  box-shadow: ${p => p.active ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'};
+`;
+
+const EmailFieldRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #F3F4F6;
+  background: #fff;
+  &:last-child { border-bottom: none; }
+`;
+
+const FieldLabel = styled.span`
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #9CA3AF;
+  width: 52px;
+  flex-shrink: 0;
+`;
+
+const FieldValue = styled.span`
+  font-size: 13px;
+  color: #0F0F0F;
+  flex: 1;
+`;
+
+const SubjectInput = styled.input`
+  flex: 1;
+  font-size: 13px;
+  color: #0F0F0F;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+`;
+
+const PitchBodyWrap = styled.div`
+  margin: 10px 24px 0;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  overflow: hidden;
+  @media (max-width: 768px) { margin: 10px 16px 0; }
+`;
+
+const PitchBodyHeader = styled.div`
+  padding: 8px 14px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #F9FAFB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const EditHint = styled.span`
+  font-size: 10px;
+  font-weight: 600;
+  color: #C4B5FD;
+  background: #F5F3FF;
+  padding: 2px 8px;
+  border-radius: 6px;
+`;
+
+const PitchTextarea = styled.textarea`
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  background: #fff;
+  min-height: 160px;
+  max-height: 220px;
+
+  @media (max-width: 768px) {
+    padding: 10px 12px;
+    font-size: 12px;
+    min-height: 120px;
+    max-height: 160px;
+  }
+`;
+
+const PersonalizationBar = styled.div`
+  margin: 10px 24px 0;
+  background: #F0FDF4;
+  border: 1px solid #A7F3D0;
+  border-radius: 11px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    margin: 8px 16px 0;
+    padding: 6px 10px;
+    gap: 6px;
+  }
+`;
+
+const PersonalizationLabel = styled.span`
+  font-size: 10px;
+  font-weight: 700;
+  color: #059669;
+  white-space: nowrap;
+`;
+
+const PersonalizationTags = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+`;
+
+const PersonalizationTag = styled.span`
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #065F46;
+  background: #D1FAE5;
+  padding: 2px 8px;
+  border-radius: 8px;
+  text-transform: capitalize;
+`;
+
+const PrimaryBtn = styled.button`
+  width: 100%;
+  padding: 15px 20px;
+  background: #0F0F0F;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+  box-sizing: border-box;
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover:not(:disabled) { opacity: 0.88; }
+
+  @media (max-width: 768px) {
+    padding: 13px 16px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 12px;
+    padding: 12px 14px;
+  }
+`;
+
+const SecondaryRow = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+const SecondaryBtn = styled.button`
+  flex: 1;
+  padding: 10px;
+  background: #F3F4F6;
+  color: #374151;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  &:hover { background: #E5E7EB; }
+
+  @media (max-width: 768px) {
+    padding: 9px 8px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+`;
+
+const QuotaLine = styled.div`
+  text-align: center;
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-top: 10px;
+`;
+
+const NoContactNote = styled.div`
+  padding: 13px 16px;
+  background: #FEF3C7;
+  color: #92400E;
+  border-radius: 12px;
+  font-size: 13px;
+  text-align: center;
+`;
+
+const FormTip = styled.div`
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #1E40AF;
+  text-align: center;
+  line-height: 1.4;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+    padding: 8px 10px;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 11px;
+    padding: 8px;
+  }
+`;
+
+const MediaKitNudge = styled.div`
+  margin: 12px 24px 20px;
+  background: #F5F3FF;
+  border: 1px solid #DDD6FE;
+  border-radius: 13px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  @media (max-width: 768px) {
+    margin: 10px 16px 16px;
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: 11px;
+  }
+`;
+
+const MediaKitNudgeText = styled.div`
+  flex: 1;
+`;
+
+const MediaKitNudgeTitle = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F0F0F;
+`;
+
+const MediaKitNudgeSub = styled.div`
+  font-size: 11px;
+  color: #6B7280;
+  margin-top: 1px;
+`;
+
+const MediaKitNudgeBtn = styled.button`
+  background: #7C3AED;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+`;
+
+// ── Success screen ─────────────────────────────────────────────
+
+const SuccessScreen = styled.div`
+  padding-bottom: 24px;
+`;
+
+const SuccessHero = styled.div`
+  padding: 32px 24px 20px;
+  text-align: center;
+`;
+
+const SuccessIconWrap = styled.div`
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #D1FAE5;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 14px;
+`;
+
+const SuccessTitle = styled.div`
+  font-size: 20px;
+  font-weight: 900;
+  color: #0F0F0F;
+  margin-bottom: 6px;
+`;
+
+const SuccessSub = styled.div`
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.5;
+`;
+
+const SuccessPipelineCard = styled.div`
+  margin: 0 24px 14px;
+  background: #F0FDF4;
+  border: 1.5px solid #A7F3D0;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  @media (max-width: 768px) { margin: 0 16px 14px; }
+`;
+
+const SuccessBrandLogo = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #5B21B6, #7C3AED);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  color: #fff;
+  font-size: 16px;
+  flex-shrink: 0;
+  overflow: hidden;
+`;
+
+const SuccessPipelineInfo = styled.div`
+  flex: 1;
+`;
+
+const SuccessPipelineBrand = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F0F0F;
+`;
+
+const SuccessPipelineMeta = styled.div`
+  font-size: 11.5px;
+  color: #059669;
+  font-weight: 600;
+  margin-top: 2px;
+`;
+
+const SuccessWindowBadge = styled.div`
+  background: #D1FAE5;
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+  flex-shrink: 0;
+`;
+
+const SuccessWindowDays = styled.div`
+  font-size: 20px;
+  font-weight: 900;
+  color: #059669;
+  line-height: 1;
+`;
+
+const SuccessWindowLabel = styled.div`
+  font-size: 9px;
+  color: #065F46;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+`;
+
+const SuccessTips = styled.div`
+  margin: 0 24px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  @media (max-width: 768px) { margin: 0 16px 14px; }
+`;
+
+const SuccessTip = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 12px 13px;
+`;
+
+const SuccessTipIcon = styled.div`
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #6B7280;
+`;
+
+const SuccessTipText = styled.div`
+  font-size: 12.5px;
+  color: #374151;
+  line-height: 1.5;
+  strong { color: #0F0F0F; }
+`;
+
+const SuccessKitNudge = styled.div`
+  margin: 0 24px 16px;
+  background: #0F0F0F;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  @media (max-width: 768px) { margin: 0 16px 16px; }
+`;
+
+const SuccessKitText = styled.div`
+  flex: 1;
+`;
+
+const SuccessKitTitle = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 3px;
+`;
+
+const SuccessKitSub = styled.div`
+  font-size: 11px;
+  color: #9CA3AF;
+`;
+
+const SuccessKitBtn = styled.button`
+  background: #fff;
+  color: #0F0F0F;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+`;
+
+const SuccessActions = styled.div`
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  @media (max-width: 768px) { padding: 0 16px; }
+`;
+
+const SuccessSecondaryBtn = styled.button`
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  color: #6B7280;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-align: center;
 `;
 
 export default AIPitchModal;

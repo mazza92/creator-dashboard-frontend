@@ -268,50 +268,17 @@ const ForYou = () => {
           Matches refresh every Monday · Last updated today
         </RefreshHint>
 
-        {/* Section 1: Hot This Week */}
-        <Section>
-          <SectionHeader>
-            <SectionLeft>
-              <SectionIcon $bg="#FFF7ED">🔥</SectionIcon>
-              <SectionTitleWrap>
-                <SectionTitle>Hot This Week</SectionTitle>
-                <SectionDesc>Brands where creators are landing collabs right now</SectionDesc>
-              </SectionTitleWrap>
-            </SectionLeft>
-          </SectionHeader>
-
-          <CardGrid $cols={3}>
-            {data?.hot?.map(brand => (
-              <BrandCard
-                key={brand.id}
-                brand={brand}
-                isPro={isPro}
-                hasPitched={pitchedIds.has(brand.id)}
-                isSaved={savedIds.has(brand.id)}
-                atLimit={atLimit}
-                onPitch={() => handlePitchNow(brand)}
-                onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
-                badge={brand.wins_this_week > 0
-                  ? { type: 'hot', label: `🔥 ${brand.wins_this_week} wins this week` }
-                  : { type: 'hot', label: '🔥 Rising fast' }
-                }
-                showMomentum
-              />
-            ))}
-          </CardGrid>
-        </Section>
-
-        {/* Section 2: Matched for You (Pro gate) */}
+        {/* Section 1: Matched for You (Pro gate) */}
         <Section>
           <SectionHeader>
             <SectionLeft>
               <SectionIcon $bg="#F5F3FF">🎯</SectionIcon>
               <SectionTitleWrap>
                 <SectionTitle>Matched for You</SectionTitle>
-                <SectionDesc>Scored by fit with your niche, following and pitch history</SectionDesc>
+                <SectionDesc>{data?.matched?.length || 0} brands match your profile</SectionDesc>
               </SectionTitleWrap>
             </SectionLeft>
-            <ProLabel>⚡ Pro</ProLabel>
+            {!isPro && <ProLabel>⚡ Pro</ProLabel>}
           </SectionHeader>
 
           {isPro ? (
@@ -332,66 +299,99 @@ const ForYou = () => {
               ))}
             </CardGrid>
           ) : (
-            /* Free users: 1 visible card + paywall */
-            <MatchedSection>
-              {/* First visible card */}
-              {data?.matched?.[0] && (
-                <VisibleCard>
+            /* Free users: 2 visible cards + locked cards with visible stats */
+            <>
+              {/* Section header for unlocked */}
+              <MatchSectionLabel>🔓 You can pitch ({Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisMonth)} left)</MatchSectionLabel>
+
+              {/* First 2 visible cards */}
+              <CardGrid $cols={2} style={{ marginBottom: 20 }}>
+                {data?.matched?.slice(0, 2).map(brand => (
                   <BrandCard
-                    brand={data.matched[0]}
+                    key={brand.id}
+                    brand={brand}
                     isPro={isPro}
-                    hasPitched={pitchedIds.has(data.matched[0].id)}
-                    isSaved={savedIds.has(data.matched[0].id)}
+                    hasPitched={pitchedIds.has(brand.id)}
+                    isSaved={savedIds.has(brand.id)}
                     atLimit={atLimit}
-                    onPitch={() => handlePitchNow(data.matched[0])}
+                    onPitch={() => handlePitchNow(brand)}
                     onUpgrade={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}
-                    matchScore={data.matched[0].match_score}
+                    matchScore={brand.match_score}
                   />
-                </VisibleCard>
+                ))}
+              </CardGrid>
+
+              {/* Locked matches section */}
+              {data?.matched?.length > 2 && (
+                <>
+                  <MatchSectionLabel>🔒 Pro matches ({(data?.matched?.length || 0) - 2} brands)</MatchSectionLabel>
+
+                  {/* Locked match cards - show visible stats, hidden names */}
+                  <LockedMatchList>
+                    {data?.matched?.slice(2, 5).map((brand, i) => (
+                      <LockedMatchCard key={brand.id || i}>
+                        <LockedMatchLogo>
+                          {['🛁', '✨', '🌿', '💄', '💪', '🌸'][i % 6]}
+                        </LockedMatchLogo>
+                        <LockedMatchInfo>
+                          <LockedMatchNameBar />
+                          <LockedMatchMetaBar />
+                        </LockedMatchInfo>
+                        <LockedMatchRight>
+                          {brand.response_rate > 0 && (
+                            <LockedVisibleStat>🔥 {brand.response_rate}% reply</LockedVisibleStat>
+                          )}
+                          <LockedIcon>🔒</LockedIcon>
+                        </LockedMatchRight>
+                      </LockedMatchCard>
+                    ))}
+                  </LockedMatchList>
+
+                  {data?.matched?.length > 5 && (
+                    <MoreLockedText>+{(data?.matched?.length || 0) - 5} more matched brands</MoreLockedText>
+                  )}
+
+                  {/* Upgrade CTA */}
+                  <UnlockBanner onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
+                    <UnlockBannerText>
+                      <UnlockBannerTitle>Unlock {(data?.matched?.length || 0) - 2} matched brands</UnlockBannerTitle>
+                      <UnlockBannerSub>Brands ready to work with creators your size</UnlockBannerSub>
+                    </UnlockBannerText>
+                    <UnlockBannerBtn>$12/mo →</UnlockBannerBtn>
+                  </UnlockBanner>
+                </>
               )}
-
-              {/* Blurred preview + Paywall overlay */}
-              <PaywallArea>
-                {/* Blurred cards preview - desktop only */}
-                <BlurredPreview>
-                  {data?.matched?.slice(1, 3).map(brand => (
-                    <BlurredCard key={brand.id}>
-                      <BrandCard
-                        brand={brand}
-                        isPro={isPro}
-                        hasPitched={false}
-                        isSaved={false}
-                        atLimit={true}
-                        onPitch={() => {}}
-                        onUpgrade={() => {}}
-                        matchScore={brand.match_score}
-                      />
-                    </BlurredCard>
-                  ))}
-                </BlurredPreview>
-
-                {/* Paywall card overlay */}
-                <PaywallOverlay>
-                  <PaywallCard>
-                    <PaywallIcon>🎯</PaywallIcon>
-                    <PaywallTitle>Unlock your brand matches</PaywallTitle>
-                    <PaywallSub>
-                      {(data?.matched?.length || 8) - 1} more brands matched to your niche and following
-                    </PaywallSub>
-                    <PaywallFeatures>
-                      <PaywallFeature><PaywallCheck>✓</PaywallCheck> Match score for each brand</PaywallFeature>
-                      <PaywallFeature><PaywallCheck>✓</PaywallCheck> 8 matches, refreshed weekly</PaywallFeature>
-                      <PaywallFeature><PaywallCheck>✓</PaywallCheck> Unlimited contacts</PaywallFeature>
-                    </PaywallFeatures>
-                    <UpgradeBtn onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
-                      ⚡ Upgrade to Pro — $12/mo
-                    </UpgradeBtn>
-                    <PaywallHint>Land your first collab within 2 weeks</PaywallHint>
-                  </PaywallCard>
-                </PaywallOverlay>
-              </PaywallArea>
-            </MatchedSection>
+            </>
           )}
+        </Section>
+
+        {/* Section 2: Most Contacted Brands */}
+        <Section>
+          <SectionHeader>
+            <SectionLeft>
+              <SectionIcon $bg="#FFF7ED">🔥</SectionIcon>
+              <SectionTitleWrap>
+                <SectionTitle>Most contacted brands</SectionTitle>
+                <SectionDesc>Top brands creators are pitching right now</SectionDesc>
+              </SectionTitleWrap>
+            </SectionLeft>
+          </SectionHeader>
+
+          <CardGrid $cols={3}>
+            {data?.hot?.map(brand => (
+              <BrandCard
+                key={brand.id}
+                brand={brand}
+                isPro={isPro}
+                hasPitched={pitchedIds.has(brand.id)}
+                isSaved={savedIds.has(brand.id)}
+                atLimit={atLimit}
+                onPitch={() => handlePitchNow(brand)}
+                onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
+                showMomentum
+              />
+            ))}
+          </CardGrid>
         </Section>
 
         {/* Section 3: Right Season */}
@@ -569,6 +569,8 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, atLimit, onPitch, onUpgr
 const PageWrap = styled.div`
   background: #F5F5F7;
   min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
 `;
 
 const PageInner = styled.div`
@@ -588,6 +590,12 @@ const PageHeader = styled.div`
   margin-bottom: 28px;
   gap: 16px;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 `;
 
 const PageTitleWrap = styled.div``;
@@ -610,6 +618,10 @@ const PageTitle = styled.h1`
   letter-spacing: -0.5px;
   margin: 0 0 4px;
   color: ${tokens.textPrimary};
+
+  @media (max-width: 640px) {
+    font-size: 20px;
+  }
 `;
 
 const PageSub = styled.p`
@@ -628,6 +640,11 @@ const ProfilePill = styled.div`
   padding: 10px 16px;
   box-shadow: ${tokens.shadowCard};
   flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    padding: 10px 14px;
+  }
 `;
 
 const ProfileAvatar = styled.div`
@@ -672,6 +689,10 @@ const ProfileEdit = styled.button`
 
 const Section = styled.div`
   margin-bottom: 36px;
+
+  @media (max-width: 640px) {
+    margin-bottom: 28px;
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -679,6 +700,10 @@ const SectionHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+
+  @media (max-width: 640px) {
+    margin-bottom: 12px;
+  }
 `;
 
 const SectionLeft = styled.div`
@@ -704,6 +729,10 @@ const SectionTitle = styled.div`
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.2px;
+
+  @media (max-width: 640px) {
+    font-size: 15px;
+  }
 `;
 
 const SectionDesc = styled.div`
@@ -786,16 +815,24 @@ const Card = styled.div`
   border: 1px solid ${tokens.border};
   border-radius: 18px;
   padding: 18px;
+  padding-top: 22px;
   position: relative;
   transition: all 0.2s;
   box-shadow: ${tokens.shadowCard};
   display: flex;
   flex-direction: column;
+  overflow: visible;
 
   &:hover {
     border-color: #D4D4D4;
     box-shadow: ${tokens.shadowHover};
     transform: translateY(-2px);
+  }
+
+  @media (max-width: 640px) {
+    padding: 12px;
+    padding-top: 18px;
+    border-radius: 14px;
   }
 `;
 
@@ -809,8 +846,13 @@ const LogoBox = styled.div`
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+
+  @media (max-width: 640px) {
+    height: 70px;
+    border-radius: 10px;
+  }
 `;
 
 const LogoImg = styled.img`
@@ -831,8 +873,8 @@ const LogoText = styled.div`
 
 const LogoBadge = styled.div`
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: -8px;
+  left: 8px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -845,19 +887,38 @@ const LogoBadge = styled.div`
   background: ${p => p.$type === 'hot' ? '#FFF7ED' : '#ECFDF5'};
   color: ${p => p.$type === 'hot' ? '#C2410C' : '#059669'};
   border: 1px solid ${p => p.$type === 'hot' ? '#FED7AA' : '#A7F3D0'};
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+  @media (max-width: 640px) {
+    top: -6px;
+    left: 6px;
+    font-size: 9px;
+    padding: 3px 7px;
+  }
 `;
 
 const MatchBadge = styled.div`
   position: absolute;
-  top: 10px;
+  top: -10px;
   right: 10px;
-  background: ${tokens.action};
+  background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #D946EF 100%);
   color: #fff;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
-  padding: 4px 9px;
+  padding: 6px 12px;
   border-radius: 100px;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35), 0 1px 3px rgba(0,0,0,0.1);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+
+  @media (max-width: 640px) {
+    top: -8px;
+    right: 8px;
+    font-size: 11px;
+    padding: 5px 10px;
+  }
 `;
 
 const CardName = styled.div`
@@ -866,6 +927,11 @@ const CardName = styled.div`
   text-align: center;
   margin-bottom: 4px;
   letter-spacing: -0.2px;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 14px;
+  }
 `;
 
 const CardDesc = styled.div`
@@ -1033,6 +1099,12 @@ const SeasonalCard = styled.div`
     border-color: #D4D4D4;
     box-shadow: ${tokens.shadowHover};
   }
+
+  @media (max-width: 640px) {
+    padding: 14px;
+    gap: 12px;
+    border-radius: 14px;
+  }
 `;
 
 const SeasonalLogoBox = styled.div`
@@ -1053,6 +1125,13 @@ const SeasonalLogoBox = styled.div`
     object-fit: contain;
     mix-blend-mode: multiply;
   }
+
+  @media (max-width: 640px) {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    padding: 6px;
+  }
 `;
 
 const SeasonalLogoText = styled.div`
@@ -1071,6 +1150,11 @@ const SeasonalName = styled.div`
   font-size: 15px;
   font-weight: 700;
   margin-bottom: 2px;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 14px;
+  }
 `;
 
 const SeasonalReason = styled.div`
@@ -1078,12 +1162,23 @@ const SeasonalReason = styled.div`
   color: ${tokens.textMuted};
   margin-bottom: 8px;
   line-height: 1.4;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
 `;
 
 const SeasonalStats = styled.div`
   display: flex;
   gap: 12px;
   margin-bottom: 12px;
+
+  @media (max-width: 640px) {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
 `;
 
 const SeasonalStatVal = styled.div`
@@ -1119,6 +1214,12 @@ const SeasonalBtn = styled.button`
 
   &:hover:not(:disabled) {
     background: ${p => p.$pitched ? tokens.successLight : '#1C1C1C'};
+  }
+
+  @media (max-width: 640px) {
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 8px;
   }
 `;
 
@@ -1237,6 +1338,163 @@ const PaywallHint = styled.div`
   color: ${tokens.textMuted};
 `;
 
+// New Conversion Design - Locked Match Cards
+const MatchSectionLabel = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: ${tokens.textSecondary};
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const LockedMatchList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+`;
+
+const LockedMatchCard = styled.div`
+  background: #F9FAFB;
+  border: 1.5px dashed #E5E7EB;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 640px) {
+    padding: 10px 12px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+`;
+
+const LockedMatchLogo = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+`;
+
+const LockedMatchInfo = styled.div`
+  flex: 1;
+`;
+
+const LockedMatchNameBar = styled.div`
+  height: 12px;
+  width: 100px;
+  background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 6px;
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+const LockedMatchMetaBar = styled.div`
+  height: 10px;
+  width: 70px;
+  background: #F3F4F6;
+  border-radius: 5px;
+`;
+
+const LockedMatchRight = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+`;
+
+const LockedVisibleStat = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: ${tokens.success};
+  white-space: nowrap;
+`;
+
+const LockedIcon = styled.div`
+  font-size: 16px;
+  color: #9CA3AF;
+`;
+
+const MoreLockedText = styled.div`
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9CA3AF;
+  padding: 6px 0 12px;
+`;
+
+const UnlockBanner = styled.div`
+  background: linear-gradient(135deg, #7C3AED, #E11D48);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    text-align: center;
+    padding: 18px 16px;
+    gap: 12px;
+  }
+`;
+
+const UnlockBannerText = styled.div`
+  flex: 1;
+`;
+
+const UnlockBannerTitle = styled.div`
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 2px;
+`;
+
+const UnlockBannerSub = styled.div`
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+`;
+
+const UnlockBannerBtn = styled.div`
+  background: #fff;
+  color: #7C3AED;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 9px 16px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+`;
+
 // Profile Prompt Styles
 const ProfilePromptCard = styled.div`
   background: #fff;
@@ -1320,6 +1578,13 @@ const QuotaCompact = styled.div`
   font-size: 13px;
   color: ${tokens.textSecondary};
 
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    padding: 12px 14px;
+  }
+
   span {
     display: flex;
     align-items: center;
@@ -1347,6 +1612,11 @@ const RefreshHint = styled.div`
   font-size: 12px;
   color: ${tokens.textMuted};
   margin-bottom: 32px;
+
+  @media (max-width: 640px) {
+    margin-bottom: 24px;
+    font-size: 11px;
+  }
 `;
 
 const RefreshDot = styled.span`

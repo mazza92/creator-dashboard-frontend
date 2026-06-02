@@ -651,6 +651,16 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                         <BrandDescription>{brand.description}</BrandDescription>
                       )}
 
+                      {/* Quick Wins - Match Score & Value Badges */}
+                      <QuickWinBadges>
+                        {brand.responseRate >= 40 && (
+                          <MatchBadge>🔥 {brand.responseRate}% reply rate</MatchBadge>
+                        )}
+                        {brand.estimatedValue && (
+                          <ValueBadge>💝 ~${brand.estimatedValue} value</ValueBadge>
+                        )}
+                      </QuickWinBadges>
+
                       <CardTags>
                         {brand.category && (() => {
                           const catStyle = getCategoryColors(brand.category);
@@ -687,7 +697,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
                       {brand.pitchStats && brand.pitchStats.totalResponses > 0 && (
                         <ResponsesLine>
-                          <Users size={12} /> <ResponsesCount>{brand.pitchStats.totalResponses}</ResponsesCount> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got a response
+                          <PulsingDot /> <ResponsesCount>{brand.pitchStats.totalResponses}</ResponsesCount> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got a reply recently
                         </ResponsesLine>
                       )}
 
@@ -1290,6 +1300,41 @@ const BrandDescription = styled.p`
   text-align: center;
 `;
 
+// Quick Wins Badges
+const QuickWinBadges = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+`;
+
+const MatchBadge = styled.span`
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  color: #92400E;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #FCD34D;
+`;
+
+const ValueBadge = styled.span`
+  background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+  color: #065F46;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #A7F3D0;
+`;
+
 const CardTags = styled.div`
   display: flex;
   justify-content: center;
@@ -1420,6 +1465,20 @@ const ResponsesLine = styled.div`
   svg {
     width: 12px;
     height: 12px;
+  }
+`;
+
+const PulsingDot = styled.span`
+  width: 8px;
+  height: 8px;
+  background: #10B981;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
   }
 `;
 

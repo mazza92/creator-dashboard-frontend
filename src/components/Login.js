@@ -522,7 +522,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
       const redirectUrl =
         data.redirect_url ||
         (data.user_role === 'creator'
-          ? '/creator/dashboard/pr-brands'
+          ? '/creator/dashboard/for-you'
           : '/brand/dashboard/overview');
       console.log('🔄 Navigating to:', redirectUrl);
       navigate(redirectUrl, { replace: true });
