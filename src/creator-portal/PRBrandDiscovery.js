@@ -593,6 +593,76 @@ const ResponseRate = styled.div`
   margin-bottom: 10px;
 `;
 
+// Quick Win Components
+const MatchScoreBadge = styled.div`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  z-index: 5;
+`;
+
+const RecentActivityBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #166534;
+  font-weight: 500;
+`;
+
+const PulseDot = styled.span`
+  width: 6px;
+  height: 6px;
+  background: #22C55E;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+`;
+
+const EstimatedValue = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  color: #92400E;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #FCD34D;
+  margin-right: 8px;
+`;
+
+const FollowUpHint = styled.div`
+  text-align: center;
+  font-size: 11px;
+  color: #7C3AED;
+  background: #F5F3FF;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 12px;
+  font-weight: 500;
+`;
+
 const Description = styled.p`
   font-size: 13px;
   line-height: 1.5;
@@ -1080,6 +1150,13 @@ const PRBrandDiscovery = () => {
                 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               >
+                {/* Match Score Badge - shows high response rate */}
+                {currentBrand.response_rate >= 40 && (
+                  <MatchScoreBadge>
+                    🔥 {currentBrand.response_rate}% reply rate
+                  </MatchScoreBadge>
+                )}
+
                 <BrandImage>
                   {/* Cover Image */}
                   <img
@@ -1148,8 +1225,28 @@ const PRBrandDiscovery = () => {
                     </ResponseRate>
                   )}
 
+                  {/* Estimated package value */}
+                  {currentBrand.avg_product_value ? (
+                    <EstimatedValue>
+                      💝 ~${currentBrand.avg_product_value} package value
+                    </EstimatedValue>
+                  ) : currentBrand.category && (
+                    <EstimatedValue>
+                      💝 ~${
+                        { beauty: 85, skincare: 120, fashion: 150, wellness: 95, fitness: 80, food: 60, lifestyle: 100, tech: 200 }[currentBrand.category.toLowerCase()] || 100
+                      } est. value
+                    </EstimatedValue>
+                  )}
+
                   {currentBrand.pitch_advice && (
                     <Description>💡 {currentBrand.pitch_advice}</Description>
+                  )}
+
+                  {/* Follow-up tip for medium response brands */}
+                  {currentBrand.response_rate >= 20 && currentBrand.response_rate < 50 && (
+                    <FollowUpHint>
+                      💡 Pro tip: Follow up in 7 days to double your reply chance
+                    </FollowUpHint>
                   )}
 
                   <ContactInfo>

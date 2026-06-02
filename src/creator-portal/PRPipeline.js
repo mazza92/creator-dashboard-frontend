@@ -1255,13 +1255,26 @@ const PRPipeline = () => {
             onClick={() => setCelebrationItem(null)}
           >
             <CelebrationModal
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
               <CelebEmoji>🎉</CelebEmoji>
               <CelebTitle>You landed a collab with {celebrationItem.brand_name}!</CelebTitle>
+              <CelebSubtitle>Your pitch worked! Time to celebrate 🥳</CelebSubtitle>
+
+              <CelebStats>
+                <CelebStatItem>
+                  <CelebStatValue>{stageCounts.won + 1}</CelebStatValue>
+                  <CelebStatLabel>Packages Won</CelebStatLabel>
+                </CelebStatItem>
+                <CelebStatItem>
+                  <CelebStatValue>${celebrationItem.package_value || stats.pr_value_earned || '??'}</CelebStatValue>
+                  <CelebStatLabel>PR Value</CelebStatLabel>
+                </CelebStatItem>
+              </CelebStats>
+
               {isPro ? (
                 <CelebStat>
                   You've earned <strong>${stats.pr_value_earned || 0} in PR value</strong> through NewCollab
@@ -1272,18 +1285,39 @@ const PRPipeline = () => {
                   setUpgradeReason('pr_value');
                   setShowUpgradeModal(true);
                 }}>
-                  Upgrade to Pro to track your total PR value earned →
+                  🔓 Unlock PR Value tracking with Pro →
                 </CelebUpgrade>
               )}
+
               <PrimaryBtn $contact onClick={() => {
                 setCelebrationItem(null);
                 window.location.href = '/creator/dashboard/pr-brands';
               }}>
-                🔍 Find Your Next Brand
+                🔥 Find Your Next Brand
               </PrimaryBtn>
-              <SecondaryBtn onClick={() => setCelebrationItem(null)}>
-                📲 Share your win
-              </SecondaryBtn>
+
+              <ShareRow>
+                <ShareButton
+                  className="twitter"
+                  onClick={() => {
+                    const text = encodeURIComponent(`Just landed a PR package from ${celebrationItem.brand_name}! 🎁✨ Found them on @newcollab_co`);
+                    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+                  }}
+                  title="Share on X/Twitter"
+                >
+                  𝕏
+                </ShareButton>
+                <ShareButton
+                  className="copy"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`Just landed a PR package from ${celebrationItem.brand_name}! 🎁 Found them on newcollab.co`);
+                    message.success('Copied to clipboard!');
+                  }}
+                  title="Copy to clipboard"
+                >
+                  📋
+                </ShareButton>
+              </ShareRow>
             </CelebrationModal>
           </ModalOverlay>
         )}
@@ -2161,23 +2195,87 @@ const ReplySub = styled.div`
 
 const CelebrationModal = styled(motion.div)`
   background: linear-gradient(135deg, #FFF1F3 0%, #F5F3FF 100%);
-  border-radius: 20px;
-  max-width: 400px;
+  border-radius: 24px;
+  max-width: 420px;
   width: 100%;
-  padding: 32px 24px;
+  padding: 40px 28px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '🎊';
+    position: absolute;
+    top: -20px;
+    left: 20px;
+    font-size: 80px;
+    opacity: 0.15;
+    transform: rotate(-15deg);
+  }
+
+  &::after {
+    content: '✨';
+    position: absolute;
+    bottom: -10px;
+    right: 20px;
+    font-size: 60px;
+    opacity: 0.15;
+    transform: rotate(15deg);
+  }
 `;
 
 const CelebEmoji = styled.div`
-  font-size: 64px;
+  font-size: 72px;
   margin-bottom: 16px;
+  animation: bounce 0.6s ease-out;
+
+  @keyframes bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
 `;
 
 const CelebTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 16px 0;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
   color: #0F0F0F;
+  line-height: 1.3;
+`;
+
+const CelebSubtitle = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0 0 20px 0;
+`;
+
+const CelebStats = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+`;
+
+const CelebStatItem = styled.div`
+  text-align: center;
+`;
+
+const CelebStatValue = styled.div`
+  font-size: 24px;
+  font-weight: 800;
+  color: #7C3AED;
+`;
+
+const CelebStatLabel = styled.div`
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
 const CelebStat = styled.div`
@@ -2199,6 +2297,45 @@ const CelebUpgrade = styled.div`
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+const ShareRow = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+`;
+
+const ShareButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.2s ease;
+
+  &.twitter {
+    background: #1DA1F2;
+    color: white;
+  }
+
+  &.instagram {
+    background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    color: white;
+  }
+
+  &.copy {
+    background: #F3F4F6;
+    color: #374151;
+  }
+
+  &:hover {
+    transform: scale(1.1);
   }
 `;
 

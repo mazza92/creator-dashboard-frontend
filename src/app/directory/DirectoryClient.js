@@ -412,6 +412,76 @@ const SocialProof = styled.div`
   }
 `;
 
+// Quick Win Components - Match Score, Value, Social Proof
+const MatchBadge = styled.div`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+  z-index: 2;
+`;
+
+const ValueBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  color: #92400E;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #FCD34D;
+`;
+
+const RecentActivity = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: #166534;
+  font-weight: 500;
+`;
+
+const PulseDot = styled.span`
+  width: 6px;
+  height: 6px;
+  background: #22C55E;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+`;
+
+const FollowUpTip = styled.div`
+  text-align: center;
+  font-size: 11px;
+  color: #7C3AED;
+  background: #F5F3FF;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  font-weight: 500;
+`;
+
 const CardCTA = styled.a`
   display: flex;
   align-items: center;
@@ -1029,6 +1099,12 @@ export default function DirectoryClient({
                         ✦ Featured
                       </FeaturedBadge>
                     )}
+                    {/* Match Score Badge - shows high response rate brands */}
+                    {brand.responseRate >= 40 && (
+                      <MatchBadge>
+                        🔥 {brand.responseRate}% reply
+                      </MatchBadge>
+                    )}
                     <LogoWrap>
                       {brand.logo && (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -1070,6 +1146,12 @@ export default function DirectoryClient({
                             open to all creators
                           </TagFollowers>
                         )}
+                        {/* Estimated Package Value */}
+                        {brand.estimatedValue && (
+                          <ValueBadge>
+                            💝 ~${brand.estimatedValue} value
+                          </ValueBadge>
+                        )}
                       </TagRow>
                       {(typeof brand.responseRate === 'number' || (brand.pitchStats?.totalPitches > 0)) && (
                         <>
@@ -1092,12 +1174,16 @@ export default function DirectoryClient({
                             )}
                           </StatsRow>
                           {brand.pitchStats?.totalResponses > 0 && (
-                            <SocialProof>
-                              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                              </svg>
-                              <strong>{brand.pitchStats.totalResponses}</strong> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got a response
-                            </SocialProof>
+                            <RecentActivity>
+                              <PulseDot />
+                              <strong>{brand.pitchStats.totalResponses}</strong> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got replies recently
+                            </RecentActivity>
+                          )}
+                          {/* Follow-up tip for high-response brands */}
+                          {brand.responseRate >= 30 && brand.responseRate < 50 && (
+                            <FollowUpTip>
+                              💡 Creators who follow up are 2× more likely to get a reply
+                            </FollowUpTip>
                           )}
                         </>
                       )}
