@@ -355,9 +355,9 @@ const EmptyNotifications = styled.div`
 // ============================================================
 
 const navItems = [
+  { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
   { label: 'Saved',    icon: Bookmark, path: '/creator/dashboard/pr-pipeline' },
-  { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/media-kit', isNew: true },
 ];
 
