@@ -419,15 +419,16 @@ const MatchBadge = styled.div`
   right: 12px;
   background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
   color: white;
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 4px;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
-  z-index: 2;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+  z-index: 5;
+  pointer-events: none;
 `;
 
 const ValueBadge = styled.div`
