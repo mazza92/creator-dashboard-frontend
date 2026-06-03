@@ -238,15 +238,15 @@ const MediaKitClient = ({ mediaKit, username }) => {
           <KitMetricsSection>
             {avgViews > 0 && (
               <KitMetricCard>
-                <KitMetricValue>{formatNumber(avgViews)}</KitMetricValue>
-                <KitMetricLabel>Avg Reel views</KitMetricLabel>
+                <KitMetricValue style={{ color: '#0F0F0F' }}>{formatNumber(avgViews)}</KitMetricValue>
+                <KitMetricLabel style={{ color: '#6B7280' }}>Avg Reel views</KitMetricLabel>
                 <KitMetricBadge color="#10B981">Top 8% in {primaryNiche}</KitMetricBadge>
               </KitMetricCard>
             )}
             {parseFloat(saveRate) > 0 && (
-              <KitMetricCard dark>
-                <KitMetricValue>{saveRate}%</KitMetricValue>
-                <KitMetricLabel>Save rate on Reels</KitMetricLabel>
+              <KitMetricCard $dark>
+                <KitMetricValue style={{ color: '#fff' }}>{saveRate}%</KitMetricValue>
+                <KitMetricLabel style={{ color: 'rgba(255,255,255,0.7)' }}>Save rate on Reels</KitMetricLabel>
                 <KitMetricBadge color="#10B981">High purchase intent</KitMetricBadge>
               </KitMetricCard>
             )}
@@ -615,30 +615,22 @@ const KitMetricsSection = styled.div`
 `;
 
 const KitMetricCard = styled.div`
-  background: ${p => p.dark ? '#1F2937' : '#fff'};
+  background: ${p => p.$dark ? '#1F2937' : '#fff'};
   border-radius: 16px;
   padding: 20px;
-  ${p => !p.dark && 'border: 1px solid #E5E7EB;'}
+  ${p => !p.$dark && 'border: 1px solid #E5E7EB;'}
 `;
 
 const KitMetricValue = styled.div`
   font-size: 36px;
   font-weight: 800;
-  color: #0F0F0F;
   line-height: 1;
   margin-bottom: 4px;
-  ${KitMetricCard}[dark] & {
-    color: #fff;
-  }
 `;
 
 const KitMetricLabel = styled.div`
   font-size: 13px;
-  color: #6B7280;
   margin-bottom: 8px;
-  ${KitMetricCard}[dark] & {
-    color: rgba(255,255,255,0.7);
-  }
 `;
 
 const KitMetricBadge = styled.div`
