@@ -31,7 +31,7 @@ const PLATFORM_LABEL = { instagram: 'IG', tiktok: 'TikTok', youtube: 'YT' };
 const PLATFORM_DISPLAY = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
 const POST_TYPE_LABEL = {
   reel: 'Reel', photo: 'Photo', story: 'Story',
-  tiktok: 'TikTok', youtube: 'Video', short: 'Short',
+  tiktok: 'Video', youtube: 'Video', short: 'Short',
 };
 const COLLAB_COLOR = {
   paid:    { bg: '#D1FAE5', color: '#065F46' },
@@ -104,7 +104,9 @@ const MediaKitClient = ({ mediaKit, username }) => {
   const tiktokPercent = Math.round((tiktokPosts.length / totalPosts) * 100);
   const photoPercent = Math.round((photoPosts.length / totalPosts) * 100);
   const hasContentMix = posts.length > 0;
-  const primaryNiche = niches[0] || 'creators';
+  // Clean niche display - strip JSON formatting
+  const rawNiche = niches[0] || 'creators';
+  const primaryNiche = String(rawNiche).replace(/[\[\]"]/g, '').trim();
 
   return (
     <KitPage>
@@ -233,58 +235,6 @@ const MediaKitClient = ({ mediaKit, username }) => {
           )}
         </KitStatsSection>
 
-        {/* Performance Metrics */}
-        {(avgViews > 0 || parseFloat(saveRate) > 0 || hasContentMix) && (
-          <KitMetricsSection>
-            {avgViews > 0 && (
-              <KitMetricCard>
-                <KitMetricValue style={{ color: '#0F0F0F' }}>{formatNumber(avgViews)}</KitMetricValue>
-                <KitMetricLabel style={{ color: '#6B7280' }}>Avg Reel views</KitMetricLabel>
-                <KitMetricBadge color="#10B981">Top 8% in {primaryNiche}</KitMetricBadge>
-              </KitMetricCard>
-            )}
-            {parseFloat(saveRate) > 0 && (
-              <KitMetricCard $dark>
-                <KitMetricValue style={{ color: '#fff' }}>{saveRate}%</KitMetricValue>
-                <KitMetricLabel style={{ color: 'rgba(255,255,255,0.7)' }}>Save rate on Reels</KitMetricLabel>
-                <KitMetricBadge color="#10B981">High purchase intent</KitMetricBadge>
-              </KitMetricCard>
-            )}
-            {hasContentMix && (
-              <KitContentMixCard>
-                <KitContentMixTitle>CONTENT MIX</KitContentMixTitle>
-                {reelPercent > 0 && (
-                  <KitContentMixRow>
-                    <KitContentMixLabel>Reels</KitContentMixLabel>
-                    <KitContentMixBar>
-                      <KitContentMixFill style={{ width: `${reelPercent}%` }} />
-                    </KitContentMixBar>
-                    <KitContentMixPercent>{reelPercent}%</KitContentMixPercent>
-                  </KitContentMixRow>
-                )}
-                {tiktokPercent > 0 && (
-                  <KitContentMixRow>
-                    <KitContentMixLabel>TikTok</KitContentMixLabel>
-                    <KitContentMixBar>
-                      <KitContentMixFill style={{ width: `${tiktokPercent}%` }} />
-                    </KitContentMixBar>
-                    <KitContentMixPercent>{tiktokPercent}%</KitContentMixPercent>
-                  </KitContentMixRow>
-                )}
-                {photoPercent > 0 && (
-                  <KitContentMixRow>
-                    <KitContentMixLabel>Photo</KitContentMixLabel>
-                    <KitContentMixBar>
-                      <KitContentMixFill style={{ width: `${photoPercent}%` }} />
-                    </KitContentMixBar>
-                    <KitContentMixPercent>{photoPercent}%</KitContentMixPercent>
-                  </KitContentMixRow>
-                )}
-              </KitContentMixCard>
-            )}
-          </KitMetricsSection>
-        )}
-
         {/* Portfolio grid */}
         {posts.length > 0 && (
           <>
@@ -323,6 +273,58 @@ const MediaKitClient = ({ mediaKit, username }) => {
               })}
             </KitGrid>
           </>
+        )}
+
+        {/* Performance Metrics - after portfolio */}
+        {(avgViews > 0 || parseFloat(saveRate) > 0 || hasContentMix) && (
+          <KitMetricsSection>
+            {avgViews > 0 && (
+              <KitMetricCard>
+                <KitMetricValue>{formatNumber(avgViews)}</KitMetricValue>
+                <KitMetricLabel>Avg Reel views</KitMetricLabel>
+                <KitMetricBadge>Top 8% in {primaryNiche}</KitMetricBadge>
+              </KitMetricCard>
+            )}
+            {parseFloat(saveRate) > 0 && (
+              <KitMetricCard>
+                <KitMetricValue>{saveRate}%</KitMetricValue>
+                <KitMetricLabel>Save rate on Reels</KitMetricLabel>
+                <KitMetricBadge>High purchase intent</KitMetricBadge>
+              </KitMetricCard>
+            )}
+            {hasContentMix && (
+              <KitContentMixCard>
+                <KitContentMixTitle>CONTENT MIX</KitContentMixTitle>
+                {reelPercent > 0 && (
+                  <KitContentMixRow>
+                    <KitContentMixLabel>Reels</KitContentMixLabel>
+                    <KitContentMixBar>
+                      <KitContentMixFill style={{ width: `${reelPercent}%` }} />
+                    </KitContentMixBar>
+                    <KitContentMixPercent>{reelPercent}%</KitContentMixPercent>
+                  </KitContentMixRow>
+                )}
+                {tiktokPercent > 0 && (
+                  <KitContentMixRow>
+                    <KitContentMixLabel>TikTok</KitContentMixLabel>
+                    <KitContentMixBar>
+                      <KitContentMixFill style={{ width: `${tiktokPercent}%` }} />
+                    </KitContentMixBar>
+                    <KitContentMixPercent>{tiktokPercent}%</KitContentMixPercent>
+                  </KitContentMixRow>
+                )}
+                {photoPercent > 0 && (
+                  <KitContentMixRow>
+                    <KitContentMixLabel>Photo</KitContentMixLabel>
+                    <KitContentMixBar>
+                      <KitContentMixFill style={{ width: `${photoPercent}%` }} />
+                    </KitContentMixBar>
+                    <KitContentMixPercent>{photoPercent}%</KitContentMixPercent>
+                  </KitContentMixRow>
+                )}
+              </KitContentMixCard>
+            )}
+          </KitMetricsSection>
         )}
 
         {/* Brands worked with */}
@@ -605,95 +607,96 @@ const KitPlatformStatValue = styled.div`
 
 // Performance Metrics Section
 const KitMetricsSection = styled.div`
-  padding: 16px;
+  padding: 12px 16px 16px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   @media (max-width: 480px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 `;
 
 const KitMetricCard = styled.div`
-  background: ${p => p.$dark ? '#1F2937' : '#fff'};
-  border-radius: 16px;
-  padding: 20px;
-  ${p => !p.$dark && 'border: 1px solid #E5E7EB;'}
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 14px 16px;
 `;
 
 const KitMetricValue = styled.div`
-  font-size: 36px;
+  font-size: 24px;
   font-weight: 800;
+  color: #0F0F0F;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 `;
 
 const KitMetricLabel = styled.div`
-  font-size: 13px;
-  margin-bottom: 8px;
+  font-size: 11px;
+  color: #6B7280;
+  margin-bottom: 6px;
 `;
 
 const KitMetricBadge = styled.div`
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  color: ${p => p.color || '#10B981'};
+  color: #10B981;
 `;
 
 const KitContentMixCard = styled.div`
-  background: #fff;
-  border: 1px solid #E5E7EB;
-  border-radius: 16px;
-  padding: 20px;
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 14px 16px;
   grid-column: span 2;
   @media (max-width: 480px) {
-    grid-column: span 1;
+    grid-column: span 2;
   }
 `;
 
 const KitContentMixTitle = styled.div`
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   color: #9CA3AF;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 `;
 
 const KitContentMixRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 6px;
   &:last-child { margin-bottom: 0; }
 `;
 
 const KitContentMixLabel = styled.div`
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #374151;
-  width: 60px;
+  width: 50px;
 `;
 
 const KitContentMixBar = styled.div`
   flex: 1;
-  height: 8px;
-  background: #F3F4F6;
-  border-radius: 4px;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
   overflow: hidden;
 `;
 
 const KitContentMixFill = styled.div`
   height: 100%;
   background: #0F0F0F;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: width 0.3s ease;
 `;
 
 const KitContentMixPercent = styled.div`
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: #6B7280;
-  width: 40px;
+  width: 36px;
   text-align: right;
 `;
 
