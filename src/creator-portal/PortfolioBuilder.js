@@ -315,12 +315,9 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
               )}
             </PublishSection>
           )}
-          <ShareChip onClick={() => {
-            navigator.clipboard.writeText(`https://${kitUrl}`);
-            message.success('Link copied');
-          }}>
-            {kitUrl}
-          </ShareChip>
+          <ViewKitBtn onClick={() => window.open(`https://${kitUrl}`, '_blank')}>
+            View my portfolio
+          </ViewKitBtn>
         </DashActions>
       </DashHeader>
 
@@ -1013,20 +1010,20 @@ const PublishNudgeDismiss = styled.button`
   &:hover { color: white; }
 `;
 
-const ShareChip = styled.button`
+const ViewKitBtn = styled.button`
   background: #F3F4F6;
-  color: #6B7280;
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 7px 12px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  @media (max-width: 380px) { max-width: 130px; }
+  transition: all 0.15s ease;
+  &:hover {
+    background: #E5E7EB;
+    color: #0F0F0F;
+  }
 `;
 
 const ViewsCard = styled.div`
