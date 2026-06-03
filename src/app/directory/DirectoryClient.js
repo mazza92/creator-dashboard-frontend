@@ -1180,12 +1180,6 @@ export default function DirectoryClient({
                               <strong>{brand.pitchStats.totalResponses}</strong> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got replies recently
                             </RecentActivity>
                           )}
-                          {/* Follow-up tip for high-response brands */}
-                          {brand.responseRate >= 30 && brand.responseRate < 50 && (
-                            <FollowUpTip>
-                              💡 Creators who follow up are 2× more likely to get a reply
-                            </FollowUpTip>
-                          )}
                         </>
                       )}
                     </BrandInfo>

@@ -52,6 +52,28 @@ const UPGRADE_COPY = {
       "Personal creator assistant for follow-ups and deal negotiations"
     ],
     valueProp: "Most creators land their first gifted package within 30 days. That covers your $12 back in product."
+  },
+  kit_views: {
+    headline: "See who's viewing your Media Kit",
+    sub: "Track kit views and know when brands are checking you out.",
+    features: [
+      "Kit views counter on your public page",
+      "Weekly view analytics in your dashboard",
+      "Unlimited portfolio posts",
+      "Your media kit and portfolio in one shareable link"
+    ],
+    valueProp: "Pro creators know when to follow up — because they can see when brands are interested!"
+  },
+  portfolio_limit: {
+    headline: "Showcase your best work",
+    sub: "You've added 3 posts to your portfolio. Upgrade to add unlimited content.",
+    features: [
+      "Unlimited portfolio posts",
+      "Kit views counter on your public page",
+      "Your media kit and portfolio in one shareable link",
+      "Unlimited brand pitches every month"
+    ],
+    valueProp: "More posts = more proof. Pro creators showcase their full range of work to land bigger deals."
   }
 };
 
@@ -86,11 +108,13 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
   const limitReached = currentCount >= limit;
   const copyKey = feature === 'followup' ? 'followup' :
                   feature === 'pr_value' ? 'pr_value' :
+                  feature === 'kit_views' ? 'kit_views' :
+                  feature === 'portfolio_limit' ? 'portfolio_limit' :
                   limitReached ? 'limit_reached' : 'default';
   const copy = UPGRADE_COPY[copyKey];
 
-  // Show limit info only for pitch-related paywalls
-  const showLimitInfo = !feature || feature === 'pitch' || copyKey === 'limit_reached' || copyKey === 'default';
+  // Show limit info only for pitch-related and portfolio limit paywalls
+  const showLimitInfo = !feature || feature === 'pitch' || feature === 'portfolio_limit' || copyKey === 'limit_reached' || copyKey === 'default';
 
   return (
     <AnimatePresence>
@@ -111,8 +135,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
           </CloseButton>
 
           <Header>
-            <Icon $isValue={feature === 'pr_value'} $isFollowup={feature === 'followup'}>
-              {feature === 'pr_value' ? '💰' : feature === 'followup' ? '📧' : <FiZap />}
+            <Icon $isValue={feature === 'pr_value'} $isFollowup={feature === 'followup'} $isPortfolio={feature === 'kit_views' || feature === 'portfolio_limit'}>
+              {feature === 'pr_value' ? '💰' : feature === 'followup' ? '📧' : feature === 'kit_views' ? '👁️' : feature === 'portfolio_limit' ? '📸' : <FiZap />}
             </Icon>
             <Title>{copy.headline}</Title>
             <Subtitle>
@@ -127,7 +151,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
           {showLimitInfo && (
             <LimitInfo>
               <LimitText>
-                {currentCount} / {limit} pitches used this month
+                {currentCount} / {limit} {feature === 'portfolio_limit' ? 'portfolio posts' : 'pitches'} {feature === 'portfolio_limit' ? 'used' : 'used this month'}
               </LimitText>
               <ProgressBar>
                 <ProgressFill width={Math.min((currentCount / limit) * 100, 100)} />
@@ -242,6 +266,7 @@ const Icon = styled.div`
   background: ${props =>
     props.$isValue ? 'linear-gradient(135deg, #7C3AED, #EC4899)' :
     props.$isFollowup ? 'linear-gradient(135deg, #F59E0B, #EC4899)' :
+    props.$isPortfolio ? 'linear-gradient(135deg, #10B981, #3B82F6)' :
     'linear-gradient(135deg, #3B82F6, #EC4899)'};
   border-radius: 50%;
   display: flex;

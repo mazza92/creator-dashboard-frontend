@@ -50,7 +50,7 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
   async function handlePitchBrand() {
     if (!isLoggedIn) {
       // Redirect to signup with return URL
-      window.location.href = `/register/creator?redirect=/creator/dashboard/pr-brands&brand=${slug}`;
+      window.location.href = `/register/creator?redirect=/creator/dashboard/for-you&brand=${slug}`;
       return;
     }
 
@@ -69,7 +69,7 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
     } catch (error) {
       console.error('Error:', error);
       // Still redirect even if save fails
-      window.location.href = `/creator/dashboard/pr-brands`;
+      window.location.href = `/creator/dashboard/for-you`;
     } finally {
       setSaving(false);
     }

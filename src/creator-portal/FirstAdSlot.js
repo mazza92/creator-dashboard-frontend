@@ -516,7 +516,7 @@ const FirstAdSlot = () => {
 
       message.success('Your first ad slot has been created successfully!');
       // UPDATED: Redirect to Discover dashboard instead of success page
-      navigate('/creator/dashboard/pr-brands');
+      navigate('/creator/dashboard/for-you');
     } catch (error) {
       console.error('Error creating ad slot:', error);
       message.error('Failed to create ad slot: ' + (error.response?.data?.error || 'Unknown error'));
@@ -527,7 +527,7 @@ const FirstAdSlot = () => {
 
   const handleSkip = () => {
     // UPDATED: Redirect to Discover dashboard instead of overview
-    navigate('/creator/dashboard/pr-brands');
+    navigate('/creator/dashboard/for-you');
   };
 
   if (loading) {

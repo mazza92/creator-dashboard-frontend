@@ -74,7 +74,7 @@ const SubscriptionSuccess = () => {
 
         <ButtonGroup>
           <PrimaryButton
-            onClick={() => navigate('/creator/dashboard/pr-brands')}
+            onClick={() => navigate('/creator/dashboard/for-you')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >

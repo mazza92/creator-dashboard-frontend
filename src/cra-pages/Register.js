@@ -400,7 +400,7 @@ export default function Register() {
       });
 
       const data = response.data;
-      const redirectUrl = data.redirect_url || (data.needs_onboarding ? '/onboarding' : '/creator/dashboard/pr-brands');
+      const redirectUrl = data.redirect_url || (data.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
       try {
         const urlObj = new URL(redirectUrl, window.location.origin);
         navigate(urlObj.pathname + urlObj.search + urlObj.hash);

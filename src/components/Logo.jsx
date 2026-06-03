@@ -14,7 +14,7 @@ const LogoImg = styled.img`
 
 export default function Logo() {
   return (
-    <LogoWrap href="/creator/dashboard/pr-brands">
+    <LogoWrap href="/creator/dashboard/for-you">
       <LogoImg src="/newcollab-logo-dark.png" alt="NEWCOLLAB" />
     </LogoWrap>
   );

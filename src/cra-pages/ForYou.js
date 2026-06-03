@@ -9,7 +9,7 @@ import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import { getCategoryColors } from '../utils/categoryColors';
-import { categoryLabel } from '../constants/brandCategories';
+import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { tokens } from '../theme/tokens';
 
@@ -22,10 +22,8 @@ const API_BASE = getApiBase();
 
 const FREE_PITCH_LIMIT = 3;
 
-const NICHE_OPTIONS = [
-  'beauty', 'fashion', 'lifestyle', 'fitness',
-  'food', 'travel', 'home', 'skincare', 'haircare', 'jewelry'
-];
+// Use all canonical categories from database (excluding 'other')
+const NICHE_OPTIONS = CANONICAL_CATEGORIES.filter(c => c !== 'other');
 
 const ForYou = () => {
   const { user } = useContext(UserContext);
@@ -206,7 +204,7 @@ const ForYou = () => {
             <ProfilePill>
               <ProfileAvatar>{user?.name?.charAt(0) || 'C'}</ProfileAvatar>
               <ProfileInfo>
-                <ProfileName>{user?.name || 'Creator'} · {selectedNiches.slice(0, 2).join(' & ')}</ProfileName>
+                <ProfileName>{user?.name || 'Creator'} · {selectedNiches.slice(0, 2).map(n => CATEGORY_LABELS[n] || n).join(' & ')}</ProfileName>
                 <ProfileNiche>
                   {parseInt(followerCount) >= 1000
                     ? `${(parseInt(followerCount) / 1000).toFixed(0)}K followers`
@@ -238,7 +236,7 @@ const ForYou = () => {
                     prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n]
                   )}
                 >
-                  {n}
+                  {CATEGORY_LABELS[n] || n}
                 </NicheChip>
               ))}
             </NicheGrid>

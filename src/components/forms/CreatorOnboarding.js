@@ -435,19 +435,27 @@ const PLATFORMS = [
   { id: 'blog', icon: <HiOutlinePencilSquare color="#6B7280" />, name: 'Blog', label: 'Readers/mo' },
 ];
 
+// Keep in sync with CANONICAL_CATEGORIES in constants/brandCategories.js
 const NICHES = [
   { id: 'beauty', label: '💄 Beauty' },
+  { id: 'skincare', label: '🧴 Skincare' },
+  { id: 'haircare', label: '💇 Haircare' },
   { id: 'fashion', label: '👗 Fashion' },
-  { id: 'food', label: '🍽️ Food' },
+  { id: 'jewelry', label: '💍 Jewelry' },
+  { id: 'activewear', label: '🏃 Activewear' },
   { id: 'fitness', label: '💪 Fitness' },
+  { id: 'wellness', label: '🌿 Wellness' },
+  { id: 'supplements', label: '💊 Supplements' },
+  { id: 'food', label: '🍽️ Food & Beverage' },
   { id: 'travel', label: '✈️ Travel' },
   { id: 'lifestyle', label: '🏠 Lifestyle' },
+  { id: 'home', label: '🏡 Home & Living' },
   { id: 'tech', label: '💻 Tech' },
-  { id: 'wellness', label: '🌿 Wellness' },
-  { id: 'education', label: '📚 Education' },
   { id: 'gaming', label: '🎮 Gaming' },
-  { id: 'pets', label: '🐾 Pets' },
-  { id: 'parenting', label: '🍼 Parenting' },
+  { id: 'pet', label: '🐾 Pet' },
+  { id: 'baby', label: '🍼 Baby & Parenting' },
+  { id: 'sustainable', label: '♻️ Sustainable' },
+  { id: 'luxury', label: '✨ Luxury' },
 ];
 
 const AGE_RANGES = [
@@ -609,12 +617,12 @@ export default function CreatorOnboarding() {
       // This prevents the incomplete-profile guard from redirecting back to /onboarding
       await refreshUser();
       sessionStorage.setItem('justCompletedOnboarding', 'true');
-      const redirectUrl = res.data?.redirect || '/creator/dashboard/pr-brands';
+      const redirectUrl = res.data?.redirect || '/creator/dashboard/for-you';
       try {
         const urlObj = new URL(redirectUrl, window.location.origin);
         navigate(urlObj.pathname + urlObj.search + urlObj.hash, { replace: true });
       } catch (e) {
-        navigate('/creator/dashboard/pr-brands', { replace: true });
+        navigate('/creator/dashboard/for-you', { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');

@@ -380,7 +380,7 @@ export default function CreatorSignup() {
       });
 
       const redirectUrl = response.data?.redirect_url ||
-        (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/pr-brands');
+        (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
       doRedirect(redirectUrl);
     } catch (err) {
       const msg = err.response?.data?.error || err.message || 'Google sign-in failed';

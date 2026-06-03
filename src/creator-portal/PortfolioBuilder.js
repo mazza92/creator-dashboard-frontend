@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { message } from 'antd';
-import { apiClient } from '../config/api';
+import { apiClient, getRuntimeApiUrl } from '../config/api';
+import { FaInstagram, FaTiktok, FaYoutube, FaLock, FaEye, FaCamera } from 'react-icons/fa';
+import UpgradeModal from './UpgradeModal';
+
+const FREE_POST_LIMIT = 3;
 
 // ── Niche product suggestions ──────────────────────────────────
 const NICHE_PRODUCTS = {
@@ -24,9 +28,9 @@ const SCRIPT_HOOKS = {
 };
 
 const PLATFORMS = [
-  { id: 'instagram', label: 'Instagram', types: ['reel', 'photo', 'story'] },
-  { id: 'tiktok',    label: 'TikTok',    types: ['tiktok'] },
-  { id: 'youtube',   label: 'YouTube',   types: ['youtube', 'short'] },
+  { id: 'instagram', label: 'Instagram', icon: FaInstagram, color: '#E4405F', types: ['reel', 'photo', 'story'] },
+  { id: 'tiktok',    label: 'TikTok',    icon: FaTiktok,    color: '#000000', types: ['tiktok'] },
+  { id: 'youtube',   label: 'YouTube',   icon: FaYoutube,   color: '#FF0000', types: ['youtube', 'short'] },
 ];
 
 const POST_TYPE_LABELS = {
@@ -49,7 +53,7 @@ const formatNumber = (n) => {
 };
 
 // ── Component ──────────────────────────────────────────────────
-const PortfolioBuilder = ({ currentUser }) => {
+const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
   const [view, setView]           = useState('dashboard'); // dashboard | add | guide
   const [step, setStep]           = useState(1);
   const [posts, setPosts]         = useState([]);
@@ -57,6 +61,9 @@ const PortfolioBuilder = ({ currentUser }) => {
   const [kitViews, setKitViews]   = useState({ views_this_week: 0, recent: [] });
   const [saving, setSaving]       = useState(false);
   const [showRates, setShowRates] = useState(false);
+  const [kitSettings, setKitSettings] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState(null);
 
   // Step form state
   const [postUrl, setPostUrl]       = useState('');
@@ -65,13 +72,22 @@ const PortfolioBuilder = ({ currentUser }) => {
   const [brandName, setBrandName]   = useState('');
   const [collabType, setCollabType] = useState('gifted');
   const [stats, setStats]           = useState({ views: '', likes: '', comments: '', shares: '' });
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [urlDetecting, setUrlDetecting] = useState(false);
 
   const niche = (currentUser?.niches?.[0] || currentUser?.niche || 'default').toLowerCase();
+  const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  const atPostLimit = !isPro && posts.length >= FREE_POST_LIMIT;
+
+  const handleUpgradeClick = (feature) => {
+    setUpgradeFeature(feature);
+    setShowUpgradeModal(true);
+  };
 
   useEffect(() => {
     fetchPosts();
     fetchKitViews();
+    fetchKitSettings();
   }, []);
 
   const fetchPosts = async () => {
@@ -92,42 +108,96 @@ const PortfolioBuilder = ({ currentUser }) => {
     } catch (e) { /* silent */ }
   };
 
+  const fetchKitSettings = async () => {
+    try {
+      const res = await apiClient.get('/api/portfolio/settings');
+      setKitSettings(res.data);
+    } catch (e) { /* silent */ }
+  };
+
   const handleUrlChange = async (url) => {
     setPostUrl(url);
     if (!url.includes('http')) return;
     setUrlDetecting(true);
     try {
-      const res = await apiClient.post('/api/portfolio/detect-url', { url });
+      // Use oEmbed endpoint to get thumbnail + platform detection
+      const res = await apiClient.post('/api/portfolio/oembed', { url });
       setPlatform(res.data.platform);
       setPostType(res.data.post_type);
-    } catch (e) { /* silent */ }
+      if (res.data.thumbnail_url) {
+        setThumbnailUrl(res.data.thumbnail_url);
+      }
+    } catch (e) {
+      // Fallback to simple URL detection
+      try {
+        const res = await apiClient.post('/api/portfolio/detect-url', { url });
+        setPlatform(res.data.platform);
+        setPostType(res.data.post_type);
+      } catch (e2) { /* silent */ }
+    }
     finally { setUrlDetecting(false); }
   };
 
   const resetForm = () => {
     setPostUrl(''); setPlatform('instagram'); setPostType('reel');
-    setBrandName(''); setCollabType('gifted');
+    setBrandName(''); setCollabType('gifted'); setThumbnailUrl('');
     setStats({ views: '', likes: '', comments: '', shares: '' });
     setStep(1);
   };
 
   const handleSavePost = async () => {
+    // Validate Step 1 fields
     if (!platform || !postType) {
       message.error('Select a platform and post type');
       return;
     }
+
+    // Validate Step 2 fields
+    if (collabType !== 'own' && !brandName.trim()) {
+      message.error('Please enter a brand name');
+      return;
+    }
+    if (!collabType) {
+      message.error('Please select a collab type');
+      return;
+    }
+
+    // Validate Step 3 fields - all engagement stats required
+    const viewsNum = parseInt(stats.views.replace(/[^0-9]/g, '')) || 0;
+    const likesNum = parseInt(stats.likes.replace(/[^0-9]/g, '')) || 0;
+    const commentsNum = parseInt(stats.comments.replace(/[^0-9]/g, '')) || 0;
+    const sharesNum = parseInt(stats.shares.replace(/[^0-9]/g, '')) || 0;
+
+    if (!stats.views.trim()) {
+      message.error('Please enter the number of views');
+      return;
+    }
+    if (!stats.likes.trim()) {
+      message.error('Please enter the number of likes');
+      return;
+    }
+    if (!stats.comments.trim()) {
+      message.error('Please enter the number of comments');
+      return;
+    }
+    if (!stats.shares.trim()) {
+      message.error('Please enter the number of shares');
+      return;
+    }
+
     setSaving(true);
     try {
       await apiClient.post('/api/portfolio/posts', {
         post_url:    postUrl,
         platform,
         post_type:   postType,
-        brand_name:  brandName || null,
+        brand_name:  collabType === 'own' ? null : brandName.trim(),
         collab_type: collabType,
-        views:       parseInt(stats.views.replace(/[^0-9]/g, '')) || 0,
-        likes:       parseInt(stats.likes.replace(/[^0-9]/g, '')) || 0,
-        comments:    parseInt(stats.comments.replace(/[^0-9]/g, '')) || 0,
-        shares:      parseInt(stats.shares.replace(/[^0-9]/g, '')) || 0,
+        thumbnail_url: thumbnailUrl || null,
+        views:       viewsNum,
+        likes:       likesNum,
+        comments:    commentsNum,
+        shares:      sharesNum,
         display_order: posts.length,
       });
       await fetchPosts();
@@ -146,6 +216,7 @@ const PortfolioBuilder = ({ currentUser }) => {
       await apiClient.patch('/api/portfolio/settings', { publish: true });
       message.success('Kit published');
       fetchPosts();
+      fetchKitSettings(); // Refresh to get the kit_slug
     } catch (e) {
       message.error('Failed to publish');
     }
@@ -160,7 +231,7 @@ const PortfolioBuilder = ({ currentUser }) => {
     }
   };
 
-  const kitUrl = `newcollab.co/kit/${currentUser?.username || ''}`;
+  const kitUrl = `newcollab.co/kit/${kitSettings?.kit_slug || currentUser?.username || ''}`;
 
   // ── VIEWS ───────────────────────────────────────────────────
 
@@ -188,6 +259,8 @@ const PortfolioBuilder = ({ currentUser }) => {
       setCollabType={setCollabType}
       stats={stats}
       setStats={setStats}
+      thumbnailUrl={thumbnailUrl}
+      setThumbnailUrl={setThumbnailUrl}
       urlDetecting={urlDetecting}
       saving={saving}
       onSave={handleSavePost}
@@ -215,8 +288,8 @@ const PortfolioBuilder = ({ currentUser }) => {
         </DashActions>
       </DashHeader>
 
-      {/* Kit view stats */}
-      {kitViews.views_this_week > 0 && (
+      {/* Kit view stats - Pro feature */}
+      {isPro && kitViews.views_this_week > 0 && (
         <ViewsCard>
           <ViewsLeft>
             <ViewsNum>{kitViews.views_this_week}</ViewsNum>
@@ -240,6 +313,20 @@ const PortfolioBuilder = ({ currentUser }) => {
         </ViewsCard>
       )}
 
+      {/* Kit views teaser for free users */}
+      {!isPro && (
+        <ViewsTeaserCard onClick={() => handleUpgradeClick('kit_views')}>
+          <ViewsTeaserLeft>
+            <FaEye size={18} style={{ color: '#9CA3AF' }} />
+            <ViewsTeaserText>
+              <ViewsTeaserTitle>Track your kit views</ViewsTeaserTitle>
+              <ViewsTeaserSub>See when brands are checking out your portfolio</ViewsTeaserSub>
+            </ViewsTeaserText>
+          </ViewsTeaserLeft>
+          <ProBadge><FaLock size={10} /> Pro</ProBadge>
+        </ViewsTeaserCard>
+      )}
+
       {/* Empty state */}
       {posts.length === 0 && !loading && (
         <EmptyState>
@@ -261,9 +348,14 @@ const PortfolioBuilder = ({ currentUser }) => {
           <PostGrid>
             {posts.map(post => (
               <PostThumb key={post.id}>
-                <PostThumbImg niche={niche}>
-                  <PostThumbEmoji>{getPlatformEmoji(post.platform)}</PostThumbEmoji>
+                <PostThumbImg niche={niche} hasThumbnail={!!post.thumbnail_url}>
+                  {post.thumbnail_url ? (
+                    <PostThumbImage src={post.thumbnail_url} alt={post.brand_name || 'Post'} />
+                  ) : (
+                    <PostThumbEmoji><PlatformIcon platform={post.platform} size={28} /></PostThumbEmoji>
+                  )}
                   <PostThumbBadge>{POST_TYPE_LABELS[post.post_type] || post.post_type}</PostThumbBadge>
+                  <PostThumbPlatform><PlatformIcon platform={post.platform} size={14} /></PostThumbPlatform>
                 </PostThumbImg>
                 <PostThumbInfo>
                   <PostThumbBrand>{post.brand_name || 'My own content'}</PostThumbBrand>
@@ -275,10 +367,19 @@ const PortfolioBuilder = ({ currentUser }) => {
                 <PostThumbDelete onClick={() => handleDeletePost(post.id)}>✕</PostThumbDelete>
               </PostThumb>
             ))}
-            <AddPostCard onClick={() => { resetForm(); setView('add'); }}>
-              <AddPostIcon>+</AddPostIcon>
-              <AddPostLabel>Add post</AddPostLabel>
-            </AddPostCard>
+            {atPostLimit ? (
+              <AddPostCard locked onClick={() => handleUpgradeClick('portfolio_limit')}>
+                <AddPostIcon><FaLock size={16} /></AddPostIcon>
+                <AddPostLabel>Upgrade to add more</AddPostLabel>
+                <AddPostLimit>{posts.length}/{FREE_POST_LIMIT} posts</AddPostLimit>
+              </AddPostCard>
+            ) : (
+              <AddPostCard onClick={() => { resetForm(); setView('add'); }}>
+                <AddPostIcon>+</AddPostIcon>
+                <AddPostLabel>Add post</AddPostLabel>
+                {!isPro && <AddPostLimit>{posts.length}/{FREE_POST_LIMIT} free</AddPostLimit>}
+              </AddPostCard>
+            )}
           </PostGrid>
 
           {/* Rate card */}
@@ -287,10 +388,19 @@ const PortfolioBuilder = ({ currentUser }) => {
               <SectionLabel style={{ margin: 0 }}>Packages & Rates</SectionLabel>
               <ToggleIcon>{showRates ? '▲' : '▼'}</ToggleIcon>
             </RatesSectionHeader>
-            {showRates && <RatesEditor currentUser={currentUser} />}
+            {showRates && <RatesEditor kitSettings={kitSettings} onSaved={fetchKitSettings} />}
           </RatesSection>
         </>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentCount={posts.length}
+        limit={FREE_POST_LIMIT}
+        feature={upgradeFeature}
+      />
     </Container>
   );
 };
@@ -299,8 +409,64 @@ const PortfolioBuilder = ({ currentUser }) => {
 const AddPostView = ({
   step, setStep, postUrl, setPostUrl, platform, setPlatform,
   postType, setPostType, brandName, setBrandName, collabType,
-  setCollabType, stats, setStats, urlDetecting, saving, onSave, onBack
+  setCollabType, stats, setStats, thumbnailUrl, setThumbnailUrl,
+  urlDetecting, saving, onSave, onBack
 }) => {
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      message.error('Please upload an image (PNG, JPG, GIF, or WebP)');
+      return;
+    }
+
+    // Max 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('Image must be under 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const baseUrl = getRuntimeApiUrl();
+      const response = await fetch(`${baseUrl}/api/portfolio/upload-thumbnail`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+      if (data.thumbnail_url) {
+        setThumbnailUrl(data.thumbnail_url);
+        message.success('Thumbnail uploaded');
+      } else {
+        throw new Error(data.error || 'Upload failed');
+      }
+    } catch (err) {
+      console.error('Thumbnail upload error:', err);
+      message.error('Failed to upload thumbnail');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Determine if we should show upload prompt (no auto-thumbnail found)
+  const showUploadPrompt = postUrl && !urlDetecting && !thumbnailUrl;
+  const isInstagram = platform === 'instagram';
+
   return (
     <Container>
       <StepNav>
@@ -331,13 +497,63 @@ const AddPostView = ({
                 />
                 {urlDetecting && <UrlSpinner>...</UrlSpinner>}
               </UrlInner>
-              {postUrl && platform && (
-                <UrlDetected>
+              {postUrl && platform && !urlDetecting && (
+                <UrlDetected hasThumbnail={!!thumbnailUrl}>
                   <UrlDot />
-                  <UrlDetectedText>{platform.charAt(0).toUpperCase() + platform.slice(1)} detected</UrlDetectedText>
+                  <UrlDetectedText>
+                    {platform.charAt(0).toUpperCase() + platform.slice(1)} detected
+                    {thumbnailUrl && ' • Thumbnail found'}
+                  </UrlDetectedText>
                 </UrlDetected>
               )}
             </UrlInputWrap>
+
+            {/* Hidden file input for thumbnail upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+              onChange={handleThumbnailUpload}
+              style={{ display: 'none' }}
+            />
+
+            {/* Thumbnail preview or upload prompt */}
+            {showUploadPrompt && (
+              <ThumbnailUploadSection>
+                <ThumbnailPlaceholder onClick={() => fileInputRef.current?.click()}>
+                  {uploading ? (
+                    <ThumbnailSpinner>Uploading...</ThumbnailSpinner>
+                  ) : (
+                    <>
+                      <ThumbnailPlaceholderIcon>
+                        {isInstagram ? <FaInstagram size={32} color="#E4405F" /> : <FaCamera size={28} color="#9CA3AF" />}
+                      </ThumbnailPlaceholderIcon>
+                      <ThumbnailPlaceholderText>
+                        {isInstagram
+                          ? "Instagram thumbnails can't be auto-fetched"
+                          : "No thumbnail found"}
+                      </ThumbnailPlaceholderText>
+                      <ThumbnailUploadBtn>
+                        <FaCamera size={12} /> Add thumbnail
+                      </ThumbnailUploadBtn>
+                    </>
+                  )}
+                </ThumbnailPlaceholder>
+              </ThumbnailUploadSection>
+            )}
+
+            {/* Show uploaded/detected thumbnail */}
+            {thumbnailUrl && !urlDetecting && (
+              <ThumbnailPreviewSection>
+                <ThumbnailPreviewSmall src={thumbnailUrl} alt="Thumbnail" />
+                <ThumbnailPreviewInfo>
+                  <ThumbnailPreviewCheck>✓ Thumbnail ready</ThumbnailPreviewCheck>
+                  <ThumbnailChangeBtn onClick={() => fileInputRef.current?.click()}>
+                    Change
+                  </ThumbnailChangeBtn>
+                </ThumbnailPreviewInfo>
+              </ThumbnailPreviewSection>
+            )}
 
             <FieldLabel style={{ marginTop: 20, marginBottom: 10 }}>Platform</FieldLabel>
             <PlatformGrid>
@@ -347,7 +563,9 @@ const AddPostView = ({
                   selected={platform === p.id}
                   onClick={() => setPlatform(p.id)}
                 >
-                  <PlatformEmoji>{getPlatformEmoji(p.id)}</PlatformEmoji>
+                  <PlatformIconWrap selected={platform === p.id}>
+                    <PlatformIcon platform={p.id} size={24} />
+                  </PlatformIconWrap>
                   <PlatformLabel selected={platform === p.id}>{p.label}</PlatformLabel>
                 </PlatformChip>
               ))}
@@ -371,14 +589,27 @@ const AddPostView = ({
             <StepQ>Brand and collab type</StepQ>
             <StepSub>No brand? Select "My own content" — original posts count too.</StepSub>
 
-            <FieldLabel>Brand name</FieldLabel>
+            {/* Show auto-detected thumbnail preview */}
+            {thumbnailUrl && (
+              <ThumbnailPreviewWrap>
+                <ThumbnailPreviewImg src={thumbnailUrl} alt="Post preview" />
+                <ThumbnailPreviewLabel>Thumbnail auto-detected</ThumbnailPreviewLabel>
+              </ThumbnailPreviewWrap>
+            )}
+
+            <FieldLabel>
+              Brand name {collabType !== 'own' && <RequiredStar>*</RequiredStar>}
+            </FieldLabel>
             <TextInput
               value={brandName}
               onChange={e => setBrandName(e.target.value)}
-              placeholder="e.g. Kopari Beauty"
+              placeholder={collabType === 'own' ? 'Optional for own content' : 'e.g. Kopari Beauty'}
+              disabled={collabType === 'own'}
             />
 
-            <FieldLabel style={{ marginTop: 16, marginBottom: 10 }}>Collab type</FieldLabel>
+            <FieldLabel style={{ marginTop: 16, marginBottom: 10 }}>
+              Collab type <RequiredStar>*</RequiredStar>
+            </FieldLabel>
             <CollabPills>
               {COLLAB_TYPES.map(c => (
                 <CollabPill key={c.id} selected={collabType === c.id} onClick={() => setCollabType(c.id)}>
@@ -387,14 +618,20 @@ const AddPostView = ({
               ))}
             </CollabPills>
 
-            <PrimaryBtn style={{ marginTop: 24 }} onClick={() => setStep(3)}>Next</PrimaryBtn>
+            <PrimaryBtn
+              style={{ marginTop: 20 }}
+              onClick={() => setStep(3)}
+              disabled={collabType !== 'own' && !brandName.trim()}
+            >
+              Next
+            </PrimaryBtn>
           </StepPanel>
         )}
 
         {step === 3 && (
           <StepPanel key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <StepQ>Engagement numbers</StepQ>
-            <StepSub>Add what you can. These are shown to brands as proof of performance. All optional.</StepSub>
+            <StepSub>All fields are required. These are shown to brands as proof of performance.</StepSub>
 
             <StatGrid>
               {[
@@ -403,8 +640,8 @@ const AddPostView = ({
                 { key: 'comments', label: 'Comments' },
                 { key: 'shares',   label: 'Shares' },
               ].map(({ key, label }) => (
-                <StatInputWrap key={key}>
-                  <StatInputLabel>{label}</StatInputLabel>
+                <StatInputWrap key={key} hasValue={!!stats[key].trim()}>
+                  <StatInputLabel>{label} <RequiredStar>*</RequiredStar></StatInputLabel>
                   <StatInput
                     value={stats[key]}
                     onChange={e => setStats(s => ({ ...s, [key]: e.target.value }))}
@@ -417,8 +654,12 @@ const AddPostView = ({
             {/* Preview card */}
             <PreviewLabel>Preview</PreviewLabel>
             <PostPreviewCard>
-              <PostPreviewImg niche="default">
-                <PostPreviewEmoji>{getPlatformEmoji(platform)}</PostPreviewEmoji>
+              <PostPreviewImg niche="default" hasThumbnail={!!thumbnailUrl}>
+                {thumbnailUrl ? (
+                  <PostPreviewThumb src={thumbnailUrl} alt="Preview" />
+                ) : (
+                  <PostPreviewEmoji><PlatformIcon platform={platform} size={36} /></PostPreviewEmoji>
+                )}
                 <PostPreviewBadge>{POST_TYPE_LABELS[postType] || postType}</PostPreviewBadge>
               </PostPreviewImg>
               <PostPreviewBody>
@@ -434,7 +675,11 @@ const AddPostView = ({
               </PostPreviewBody>
             </PostPreviewCard>
 
-            <PrimaryBtn style={{ marginTop: 16 }} onClick={onSave} disabled={saving}>
+            <PrimaryBtn
+              style={{ marginTop: 16 }}
+              onClick={onSave}
+              disabled={saving || !stats.views.trim() || !stats.likes.trim() || !stats.comments.trim() || !stats.shares.trim()}
+            >
               {saving ? 'Saving...' : 'Save to my portfolio'}
             </PrimaryBtn>
             <SecondaryBtn style={{ marginTop: 8 }} onClick={() => setStep(2)}>Edit details</SecondaryBtn>
@@ -510,12 +755,24 @@ const GuideView = ({ niche, onBack, onDone }) => {
 };
 
 // ── Rates editor ───────────────────────────────────────────────
-const RatesEditor = ({ currentUser }) => {
-  const [reel, setReel]     = useState(currentUser?.rates_reel || '');
-  const [tiktok, setTiktok] = useState(currentUser?.rates_tiktok || '');
-  const [photo, setPhoto]   = useState(currentUser?.rates_photo || '');
-  const [gifted, setGifted] = useState(currentUser?.rates_gifted !== false);
+const RatesEditor = ({ kitSettings, onSaved }) => {
+  const [reel, setReel]     = useState('');
+  const [tiktok, setTiktok] = useState('');
+  const [photo, setPhoto]   = useState('');
+  const [gifted, setGifted] = useState(true);
   const [saved, setSaved]   = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load from kitSettings when available
+  useEffect(() => {
+    if (kitSettings && !loaded) {
+      setReel(kitSettings.rates_reel || '');
+      setTiktok(kitSettings.rates_tiktok || '');
+      setPhoto(kitSettings.rates_photo || '');
+      setGifted(kitSettings.rates_gifted !== false);
+      setLoaded(true);
+    }
+  }, [kitSettings, loaded]);
 
   const save = async () => {
     try {
@@ -527,6 +784,7 @@ const RatesEditor = ({ currentUser }) => {
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      if (onSaved) onSaved();
     } catch (e) { message.error('Failed to save rates'); }
   };
 
@@ -560,10 +818,11 @@ const RatesEditor = ({ currentUser }) => {
 };
 
 // ── Helpers ────────────────────────────────────────────────────
-const getPlatformEmoji = (platform) => {
-  if (platform === 'tiktok') return '▶';
-  if (platform === 'youtube') return '▶';
-  return '📸';
+const PlatformIcon = ({ platform, size = 22 }) => {
+  const p = PLATFORMS.find(x => x.id === platform);
+  if (!p) return <FaInstagram size={size} color="#E4405F" />;
+  const Icon = p.icon;
+  return <Icon size={size} color={p.color} />;
 };
 
 // ── Styled components ──────────────────────────────────────────
@@ -687,6 +946,55 @@ const ViewTime = styled.span`
   color: #9CA3AF;
 `;
 
+const ViewsTeaserCard = styled.div`
+  margin: 0 16px 16px;
+  background: linear-gradient(135deg, #F9FAFB, #F3F4F6);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1.5px dashed #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    border-color: #7C3AED;
+    background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+  }
+`;
+
+const ViewsTeaserLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const ViewsTeaserText = styled.div``;
+
+const ViewsTeaserTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+`;
+
+const ViewsTeaserSub = styled.div`
+  font-size: 12px;
+  color: #9CA3AF;
+`;
+
+const ProBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #7C3AED, #EC4899);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+`;
+
 const EmptyState = styled.div`
   margin: 16px 16px;
   border: 2px dashed #E5E7EB;
@@ -745,12 +1053,21 @@ const PostThumb = styled.div`
 const PostThumbImg = styled.div`
   padding-top: 100%;
   position: relative;
-  background: ${p =>
+  overflow: hidden;
+  background: ${p => p.hasThumbnail ? '#000' :
     p.niche === 'beauty' || p.niche === 'skincare' ? 'linear-gradient(135deg,#FDF2F8,#F5F3FF)' :
     p.niche === 'fitness' || p.niche === 'wellness' ? 'linear-gradient(135deg,#F0FDF4,#ECFDF5)' :
     p.niche === 'food' ? 'linear-gradient(135deg,#FFFBEB,#FEF3C7)' :
     'linear-gradient(135deg,#EFF6FF,#F5F3FF)'
   };
+`;
+
+const PostThumbImage = styled.img`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;
 
 const PostThumbEmoji = styled.div`
@@ -760,6 +1077,19 @@ const PostThumbEmoji = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 28px;
+`;
+
+const PostThumbPlatform = styled.div`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const PostThumbBadge = styled.div`
@@ -812,7 +1142,7 @@ const PostThumbDelete = styled.button`
 `;
 
 const AddPostCard = styled.div`
-  border: 2px dashed #E5E7EB;
+  border: 2px dashed ${p => p.locked ? '#E5E7EB' : '#E5E7EB'};
   border-radius: 14px;
   display: flex;
   flex-direction: column;
@@ -820,20 +1150,33 @@ const AddPostCard = styled.div`
   justify-content: center;
   min-height: 120px;
   cursor: pointer;
-  transition: border-color 0.15s;
-  &:hover { border-color: #7C3AED; }
+  transition: all 0.15s;
+  background: ${p => p.locked ? 'linear-gradient(135deg, #F9FAFB, #F3F4F6)' : 'transparent'};
+  &:hover {
+    border-color: ${p => p.locked ? '#7C3AED' : '#7C3AED'};
+    background: ${p => p.locked ? 'linear-gradient(135deg, #F5F3FF, #EDE9FE)' : 'transparent'};
+  }
 `;
 
 const AddPostIcon = styled.div`
   font-size: 24px;
   color: #9CA3AF;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const AddPostLabel = styled.div`
   font-size: 11px;
   font-weight: 600;
   color: #9CA3AF;
+`;
+
+const AddPostLimit = styled.div`
+  font-size: 10px;
+  color: #D1D5DB;
+  margin-top: 4px;
 `;
 
 const RatesSection = styled.div`
@@ -981,6 +1324,50 @@ const FieldLabel = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const RequiredStar = styled.span`
+  color: #E11D48;
+  font-weight: 700;
+`;
+
+const OptionalTag = styled.span`
+  font-size: 9px;
+  font-weight: 600;
+  color: #D1D5DB;
+  text-transform: lowercase;
+  letter-spacing: 0;
+`;
+
+const ThumbnailPreviewWrap = styled.div`
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid #E5E7EB;
+`;
+
+const ThumbnailPreviewImg = styled.img`
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+`;
+
+const ThumbnailPreviewLabel = styled.div`
+  padding: 8px 12px;
+  background: #F0FDF4;
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  &::before {
+    content: '✓';
+  }
 `;
 
 const UrlInputWrap = styled.div`
@@ -1041,6 +1428,96 @@ const UrlDetectedText = styled.div`
   color: #059669;
 `;
 
+const ThumbnailUploadSection = styled.div`
+  margin-top: 16px;
+`;
+
+const ThumbnailPlaceholder = styled.div`
+  border: 2px dashed #E5E7EB;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #FAFAFA;
+  &:hover {
+    border-color: #7C3AED;
+    background: #F5F3FF;
+  }
+`;
+
+const ThumbnailPlaceholderIcon = styled.div`
+  margin-bottom: 8px;
+`;
+
+const ThumbnailPlaceholderText = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 10px;
+`;
+
+const ThumbnailUploadBtn = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #0F0F0F;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+`;
+
+const ThumbnailSpinner = styled.div`
+  font-size: 13px;
+  color: #7C3AED;
+  font-weight: 600;
+  padding: 20px;
+`;
+
+const ThumbnailPreviewSection = styled.div`
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #F0FDF4;
+  border: 1.5px solid #A7F3D0;
+  border-radius: 12px;
+`;
+
+const ThumbnailPreviewSmall = styled.img`
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+`;
+
+const ThumbnailPreviewInfo = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ThumbnailPreviewCheck = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+`;
+
+const ThumbnailChangeBtn = styled.button`
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #6B7280;
+  cursor: pointer;
+  text-decoration: underline;
+  &:hover {
+    color: #374151;
+  }
+`;
+
 const PlatformGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1061,8 +1538,15 @@ const PlatformChip = styled.div`
   transition: all 0.15s;
 `;
 
-const PlatformEmoji = styled.div`
-  font-size: 22px;
+const PlatformIconWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: ${p => p.selected ? 'rgba(255,255,255,0.15)' : '#F9FAFB'};
+  transition: all 0.15s;
 `;
 
 const PlatformLabel = styled.div`
@@ -1130,10 +1614,11 @@ const StatGrid = styled.div`
 `;
 
 const StatInputWrap = styled.div`
-  background: #F9FAFB;
-  border: 1.5px solid #E5E7EB;
+  background: ${p => p.hasValue ? '#F0FDF4' : '#F9FAFB'};
+  border: 1.5px solid ${p => p.hasValue ? '#A7F3D0' : '#E5E7EB'};
   border-radius: 12px;
   padding: 11px 13px;
+  transition: all 0.2s;
 `;
 
 const StatInputLabel = styled.div`
@@ -1143,6 +1628,9 @@ const StatInputLabel = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 `;
 
 const StatInput = styled.input`
@@ -1175,11 +1663,18 @@ const PostPreviewCard = styled.div`
 
 const PostPreviewImg = styled.div`
   height: 100px;
-  background: linear-gradient(135deg, #F5F3FF, #FDF2F8);
+  background: ${p => p.hasThumbnail ? '#000' : 'linear-gradient(135deg, #F5F3FF, #FDF2F8)'};
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
+`;
+
+const PostPreviewThumb = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;
 
 const PostPreviewEmoji = styled.div`

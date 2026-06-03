@@ -516,7 +516,7 @@ const CreatorDashboardLayout = () => {
             exit={{ opacity: 0, y: -10 }}
           >
             <MenuItem onClick={() => {
-              navigate(`/creator/profile/${userData?.creator_id}`);
+              window.open(`/kit/${userData?.username}`, '_blank');
               setShowUserMenu(false);
             }}>
               <UserOutlined />
@@ -529,6 +529,7 @@ const CreatorDashboardLayout = () => {
               <SettingOutlined />
               Account Settings
             </MenuItem>
+            {/* Hidden for now - Stripe Dashboard not needed yet
             <MenuItem onClick={() => {
               window.open('https://dashboard.stripe.com', '_blank');
               setShowUserMenu(false);
@@ -536,6 +537,7 @@ const CreatorDashboardLayout = () => {
               <CheckCircleOutlined />
               Stripe Dashboard
             </MenuItem>
+            */}
             <MenuDivider />
             <MenuItem $danger onClick={handleLogoutWithCleanup}>
               <LogoutOutlined />

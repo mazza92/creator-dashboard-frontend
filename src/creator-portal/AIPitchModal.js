@@ -613,7 +613,7 @@ ${creatorName}`;
                   <SuccessKitTitle>Build your media kit before they reply</SuccessKitTitle>
                   <SuccessKitSub>Brands ask for it when they're interested. Be ready.</SuccessKitSub>
                 </SuccessKitText>
-                <SuccessKitBtn onClick={() => { handleClose(); navigate('/creator/dashboard/media-kit'); }}>
+                <SuccessKitBtn onClick={() => { handleClose(); navigate('/creator/dashboard/my-kit'); }}>
                   Build kit
                 </SuccessKitBtn>
               </SuccessKitNudge>
@@ -810,7 +810,7 @@ ${creatorName}`;
                     <MediaKitNudgeTitle>Attach your media kit</MediaKitNudgeTitle>
                     <MediaKitNudgeSub>Creators with a media kit get 3x more replies</MediaKitNudgeSub>
                   </MediaKitNudgeText>
-                  <MediaKitNudgeBtn onClick={() => { onClose(); navigate('/creator/dashboard/media-kit'); }}>
+                  <MediaKitNudgeBtn onClick={() => { onClose(); navigate('/creator/dashboard/my-kit'); }}>
                     Build kit
                   </MediaKitNudgeBtn>
                 </MediaKitNudge>

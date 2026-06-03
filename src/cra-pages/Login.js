@@ -160,7 +160,7 @@ const Login = () => {
         // Add a small delay to ensure state is updated
         await new Promise(resolve => setTimeout(resolve, 100));
         console.log("✅ Token should be set now, navigating to dashboard...");
-        navigate('/creator/dashboard/pr-brands', { replace: true });
+        navigate('/creator/dashboard/for-you', { replace: true });
       } else {
         console.error("❌ Login failed");
         setError('Login failed. Please check your credentials and try again.');

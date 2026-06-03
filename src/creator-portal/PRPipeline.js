@@ -616,7 +616,7 @@ const PRPipeline = () => {
         .then(() => message.success({ content: '✓ Media kit link copied!', duration: 3 }))
         .catch(() => window.open(url, '_blank'));
     } else {
-      window.open('/creator/dashboard/media-kit', '_blank');
+      window.open('/creator/dashboard/my-kit', '_blank');
     }
   };
 
@@ -1291,7 +1291,7 @@ const PRPipeline = () => {
 
               <PrimaryBtn $contact onClick={() => {
                 setCelebrationItem(null);
-                window.location.href = '/creator/dashboard/pr-brands';
+                window.location.href = '/creator/dashboard/for-you';
               }}>
                 🔥 Find Your Next Brand
               </PrimaryBtn>
