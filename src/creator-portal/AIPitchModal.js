@@ -707,7 +707,10 @@ ${creatorName}`;
               <EmailPreview>
                 <EmailFieldRow>
                   <FieldLabel>To</FieldLabel>
-                  <FieldValue>{brandEmail || `${brandName} PR Team`}</FieldValue>
+                  <FieldValue $masked={!contactRevealed && brandEmail}>
+                    {displayEmail || `${brandName} PR Team`}
+                    {!contactRevealed && brandEmail && <LockIcon>🔒</LockIcon>}
+                  </FieldValue>
                 </EmailFieldRow>
                 <EmailFieldRow>
                   <FieldLabel>Subject</FieldLabel>
@@ -1628,8 +1631,17 @@ const FieldLabel = styled.span`
 
 const FieldValue = styled.span`
   font-size: 13px;
-  color: #0F0F0F;
+  color: ${p => p.$masked ? '#9CA3AF' : '#0F0F0F'};
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: ${p => p.$masked ? '0.5px' : 'normal'};
+`;
+
+const LockIcon = styled.span`
+  font-size: 11px;
+  opacity: 0.7;
 `;
 
 const SubjectInput = styled.input`

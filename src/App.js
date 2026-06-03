@@ -58,6 +58,8 @@ import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
 import ForYou from './cra-pages/ForYou';
 import MediaKit from './creator-portal/MediaKit';
+import PortfolioBuilder from './creator-portal/PortfolioBuilder';
+import PublicMediaKit from './cra-pages/PublicMediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
 import VerifyEmailPending from './components/VerifyEmailPending';
 import VerifyEmail from './components/VerifyEmail';
@@ -90,6 +92,12 @@ import AdminReports from './admin/AdminReports';
 import AdminEmail from './admin/AdminEmail';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
+
+// Public media kit wrapper - extracts username from route params
+function PublicMediaKitWrapper() {
+    const { username } = useParams();
+    return <PublicMediaKit username={username} />;
+}
 
 // Role-aware onboarding router - brands complete onboarding during registration,
 // so if they end up here, redirect them to their dashboard
@@ -209,6 +217,7 @@ function AppContent() {
                 '/brands/send-pr-packages',
                 '/marketplace',
                 '/c/',
+                '/kit/',
                 '/creator/dashboard/subscription/success',
                 '/creator/dashboard/subscription/cancel'
             ];
@@ -403,6 +412,8 @@ function AppContent() {
             <Route path='/brand/:slug' element={<PublicBrandPage />} />
             {/* Creator profiles - Next.js has /app/c/[username], but keep CRA route for dev/fallback */}
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
+            {/* Public media kit page */}
+            <Route path='/kit/:username' element={<PublicMediaKitWrapper />} />
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<OnboardingRouter />} />
             <Route path='/test-indexnow' element={<IndexNowTest />} />
@@ -470,6 +481,7 @@ function AppContent() {
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
                 <Route path='dashboard/for-you' element={<ForYou />} />
                 <Route path='dashboard/media-kit' element={<MediaKit />} />
+                <Route path='dashboard/my-kit' element={<PortfolioBuilder currentUser={user} />} />
                 <Route path='dashboard/settings' element={<AccountSettings />} />
                 <Route path='dashboard/brand/:slug' element={<PublicBrandPage />} />
                 <Route path='first-ad-slot' element={<FirstAdSlot />} />
