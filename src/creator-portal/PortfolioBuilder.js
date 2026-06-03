@@ -60,6 +60,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
   const [loading, setLoading]     = useState(true);
   const [kitViews, setKitViews]   = useState({ views_this_week: 0, recent: [] });
   const [saving, setSaving]       = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [showRates, setShowRates] = useState(false);
   const [kitSettings, setKitSettings] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -212,14 +213,34 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
   };
 
   const handlePublish = async () => {
+    setPublishing(true);
     try {
       await apiClient.patch('/api/portfolio/settings', { publish: true });
-      message.success('Kit published');
-      fetchPosts();
-      fetchKitSettings(); // Refresh to get the kit_slug
+      message.success(kitSettings?.kit_published ? 'Kit updated and published' : 'Kit published');
+      await fetchKitSettings(); // Refresh to get updated kit_published_at
+      await fetchPosts();
     } catch (e) {
       message.error('Failed to publish');
+    } finally {
+      setPublishing(false);
     }
+  };
+
+  // Format the last published date
+  const formatPublishDate = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const handleDeletePost = async (postId) => {
@@ -275,9 +296,14 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
         <DashTitle>My Kit</DashTitle>
         <DashActions>
           {posts.length > 0 && (
-            <PreviewBtn onClick={handlePublish}>
-              Publish kit
-            </PreviewBtn>
+            <PublishSection>
+              <PreviewBtn onClick={handlePublish} disabled={publishing}>
+                {publishing ? 'Publishing...' : (kitSettings?.kit_published ? 'Publish updates' : 'Publish kit')}
+              </PreviewBtn>
+              {kitSettings?.kit_published_at && (
+                <PublishDate>Last: {formatPublishDate(kitSettings.kit_published_at)}</PublishDate>
+              )}
+            </PublishSection>
           )}
           <ShareChip onClick={() => {
             navigator.clipboard.writeText(`https://${kitUrl}`);
@@ -857,6 +883,13 @@ const DashActions = styled.div`
   flex-wrap: wrap;
 `;
 
+const PublishSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+`;
+
 const PreviewBtn = styled.button`
   background: #0F0F0F;
   color: #fff;
@@ -866,6 +899,16 @@ const PreviewBtn = styled.button`
   border-radius: 10px;
   border: none;
   cursor: pointer;
+  opacity: ${props => props.disabled ? 0.6 : 1};
+  pointer-events: ${props => props.disabled ? 'none' : 'auto'};
+  transition: opacity 0.15s ease;
+`;
+
+const PublishDate = styled.div`
+  font-size: 10px;
+  color: #9CA3AF;
+  font-weight: 500;
+  padding-left: 2px;
 `;
 
 const ShareChip = styled.button`

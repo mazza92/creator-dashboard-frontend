@@ -803,17 +803,36 @@ ${creatorName}`;
                 </QuotaLine>
               </Actions>
 
-              {/* Media kit nudge — only in compose state */}
+              {/* Media kit nudge — smart states based on kit status */}
               {!loading && creatorProfile && !creatorProfile.has_media_kit && (
-                <MediaKitNudge>
+                <MediaKitNudgePulse>
+                  <MediaKitNudgeIcon>✨</MediaKitNudgeIcon>
                   <MediaKitNudgeText>
-                    <MediaKitNudgeTitle>Attach your media kit</MediaKitNudgeTitle>
-                    <MediaKitNudgeSub>Creators with a media kit get 3x more replies</MediaKitNudgeSub>
+                    <MediaKitNudgeTitle>Create your media kit</MediaKitNudgeTitle>
+                    <MediaKitNudgeSub>Creators with a portfolio get 3x more brand replies</MediaKitNudgeSub>
                   </MediaKitNudgeText>
-                  <MediaKitNudgeBtn onClick={() => { onClose(); navigate('/creator/dashboard/my-kit'); }}>
-                    Build kit
-                  </MediaKitNudgeBtn>
-                </MediaKitNudge>
+                  <MediaKitNudgeBtnPulse onClick={() => { onClose(); navigate('/creator/dashboard/my-kit'); }}>
+                    Create portfolio
+                  </MediaKitNudgeBtnPulse>
+                </MediaKitNudgePulse>
+              )}
+              {!loading && creatorProfile && creatorProfile.has_media_kit && (
+                <MediaKitNudgeAttached>
+                  <MediaKitNudgeIcon>✓</MediaKitNudgeIcon>
+                  <MediaKitNudgeText>
+                    <MediaKitNudgeTitle>Media kit attached</MediaKitNudgeTitle>
+                    <MediaKitNudgeSub>
+                      {(creatorProfile.portfolio_post_count || 0) < 3
+                        ? 'Add more posts to stand out even more'
+                        : 'Your portfolio is included in this pitch'}
+                    </MediaKitNudgeSub>
+                  </MediaKitNudgeText>
+                  {(creatorProfile.portfolio_post_count || 0) < 6 && (
+                    <MediaKitEnrichBtn onClick={() => { onClose(); navigate('/creator/dashboard/my-kit'); }}>
+                      Enrich kit
+                    </MediaKitEnrichBtn>
+                  )}
+                </MediaKitNudgeAttached>
               )}
             </>
           )}
@@ -1845,10 +1864,33 @@ const FormTip = styled.div`
   }
 `;
 
-const MediaKitNudge = styled.div`
+const MediaKitNudgePulse = styled.div`
   margin: 12px 24px 20px;
-  background: #F5F3FF;
-  border: 1px solid #DDD6FE;
+  background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+  border-radius: 13px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: pulseGlow 2s ease-in-out infinite;
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0); }
+  }
+
+  @media (max-width: 768px) {
+    margin: 10px 16px 16px;
+    padding: 12px 14px;
+    gap: 10px;
+    border-radius: 11px;
+  }
+`;
+
+const MediaKitNudgeAttached = styled.div`
+  margin: 12px 24px 20px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
   border-radius: 13px;
   padding: 12px 14px;
   display: flex;
@@ -1863,33 +1905,96 @@ const MediaKitNudge = styled.div`
   }
 `;
 
+const MediaKitNudgeIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+
+  ${MediaKitNudgePulse} & {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  ${MediaKitNudgeAttached} & {
+    background: #10B981;
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+  }
+`;
+
 const MediaKitNudgeText = styled.div`
   flex: 1;
+
+  ${MediaKitNudgePulse} & {
+    color: white;
+  }
 `;
 
 const MediaKitNudgeTitle = styled.div`
   font-size: 12px;
   font-weight: 700;
-  color: #0F0F0F;
+  color: inherit;
+
+  ${MediaKitNudgePulse} & {
+    color: white;
+  }
+
+  ${MediaKitNudgeAttached} & {
+    color: #065F46;
+  }
 `;
 
 const MediaKitNudgeSub = styled.div`
   font-size: 11px;
-  color: #6B7280;
   margin-top: 1px;
+
+  ${MediaKitNudgePulse} & {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  ${MediaKitNudgeAttached} & {
+    color: #6B7280;
+  }
 `;
 
-const MediaKitNudgeBtn = styled.button`
-  background: #7C3AED;
-  color: #fff;
+const MediaKitNudgeBtnPulse = styled.button`
+  background: white;
+  color: #7C3AED;
   font-size: 11px;
   font-weight: 700;
-  padding: 7px 13px;
+  padding: 8px 14px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+`;
+
+const MediaKitEnrichBtn = styled.button`
+  background: #10B981;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #059669;
+  }
 `;
 
 // ── Success screen ─────────────────────────────────────────────
