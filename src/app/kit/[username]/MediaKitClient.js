@@ -1,555 +1,745 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
-import {
-  FiInstagram, FiYoutube, FiTwitter, FiMail, FiMapPin,
-  FiExternalLink, FiCheck, FiDollarSign, FiBriefcase
-} from 'react-icons/fi';
-import { FaTiktok } from 'react-icons/fa';
+import { FaInstagram, FaTiktok, FaYoutube, FaShare, FaEye, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
+
+const formatNumber = (n) => {
+  if (!n) return null;
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return n.toString();
+};
+
+// Parse niches - handle both array and JSON string formats
+const parseNiches = (niches) => {
+  if (!niches) return [];
+  if (Array.isArray(niches)) return niches;
+  if (typeof niches === 'string') {
+    try {
+      const parsed = JSON.parse(niches);
+      return Array.isArray(parsed) ? parsed : [niches];
+    } catch {
+      return [niches];
+    }
+  }
+  return [];
+};
+
+const PLATFORM_LABEL = { instagram: 'IG', tiktok: 'TikTok', youtube: 'YT' };
+const PLATFORM_DISPLAY = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
+const POST_TYPE_LABEL = {
+  reel: 'Reel', photo: 'Photo', story: 'Story',
+  tiktok: 'TikTok', youtube: 'Video', short: 'Short',
+};
+const COLLAB_COLOR = {
+  paid:    { bg: '#D1FAE5', color: '#065F46' },
+  gifted:  { bg: '#EFF6FF', color: '#1D4ED8' },
+  organic: { bg: '#F3F4F6', color: '#6B7280' },
+  own:     { bg: '#F3F4F6', color: '#6B7280' },
+};
+
+const abbreviateRegion = (region) => {
+  const abbrevs = {
+    'North America': 'NA', 'South America': 'SA', 'Europe': 'EU',
+    'Asia': 'Asia', 'Africa': 'Africa', 'Oceania': 'OCE',
+    'Middle East': 'ME', 'United States': 'US', 'United Kingdom': 'UK',
+  };
+  return abbrevs[region] || region;
+};
+
+const PlatformIcon = ({ platform, size = 28 }) => {
+  if (platform === 'tiktok') return <FaTiktok size={size} color="#000" />;
+  if (platform === 'youtube') return <FaYoutube size={size} color="#FF0000" />;
+  return <FaInstagram size={size} color="#E4405F" />;
+};
 
 const MediaKitClient = ({ mediaKit, username }) => {
-  const formatFollowers = (num) => {
-    if (!num) return '0';
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
-  };
+  const [copied, setCopied] = useState(false);
 
-  const getPlatformIcon = (platform) => {
-    switch (platform?.toLowerCase()) {
-      case 'instagram': return <FiInstagram />;
-      case 'tiktok': return <FaTiktok />;
-      case 'youtube': return <FiYoutube />;
-      case 'twitter': return <FiTwitter />;
-      default: return null;
+  const handleShare = async () => {
+    const url = `https://newcollab.co/kit/${username}`;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title: `${mediaKit.display_name}'s Media Kit`, url });
+      } else if (typeof navigator !== 'undefined') {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (e) {
+      // User cancelled or error
     }
   };
 
+  const posts = mediaKit.posts || [];
+  const rates = mediaKit.rates || [];
+  const hasRates = rates.length > 0;
+  const brands = [...new Set((mediaKit.collaborations || []).map(c => c.brand).filter(Boolean))];
+  const niches = parseNiches(mediaKit.niches);
+  const platforms = [...new Set(posts.map(p => p.platform))].filter(Boolean);
+  const socials = mediaKit.socials || {};
+  const regions = mediaKit.regions || [];
+
   return (
-    <PageContainer>
-      <ContentWrapper>
-        {/* Hero Section */}
-        <HeroSection>
-          <ProfilePhoto
-            src={mediaKit.profile_photo_url || '/default-avatar.png'}
-            alt={mediaKit.display_name}
-            onError={(e) => e.target.src = '/default-avatar.png'}
-          />
-          <HeroInfo>
-            <DisplayName>{mediaKit.display_name}</DisplayName>
-            {mediaKit.tagline && <Tagline>{mediaKit.tagline}</Tagline>}
-            {mediaKit.location && (
-              <Location><FiMapPin /> {mediaKit.location}</Location>
+    <KitPage>
+      <KitWrap>
+        {/* Header */}
+        <KitHeader>
+          <KitHeaderTop>
+            {mediaKit.is_pro && mediaKit.kit_views != null && (
+              <KitViewsCounter>
+                <FaEye size={12} style={{ opacity: 0.7 }} />
+                <span>{mediaKit.kit_views} KIT VIEWS THIS WEEK</span>
+              </KitViewsCounter>
             )}
-          </HeroInfo>
-        </HeroSection>
+            {!mediaKit.is_pro && <div />}
+            <KitShareBtn onClick={handleShare}>
+              <FaShare size={12} />
+              <span>{copied ? 'Copied!' : 'Share kit'}</span>
+            </KitShareBtn>
+          </KitHeaderTop>
 
-        {/* Stats Section */}
-        <StatsSection>
-          <StatCard>
-            <StatValue>{formatFollowers(mediaKit.total_followers)}</StatValue>
-            <StatLabel>Followers</StatLabel>
-          </StatCard>
-          {mediaKit.engagement_rate && (
-            <StatCard>
-              <StatValue>{mediaKit.engagement_rate}%</StatValue>
-              <StatLabel>Engagement</StatLabel>
-            </StatCard>
-          )}
-          {mediaKit.platforms?.length > 0 && (
-            <StatCard>
-              <StatValue>{mediaKit.platforms.length}</StatValue>
-              <StatLabel>Platforms</StatLabel>
-            </StatCard>
-          )}
-        </StatsSection>
-
-        {/* Availability Badges */}
-        <BadgesSection>
-          {mediaKit.accepts_gifted && (
-            <Badge><FiCheck /> Open to Gifted</Badge>
-          )}
-          {mediaKit.accepts_paid && (
-            <Badge $primary><FiDollarSign /> Open to Paid</Badge>
-          )}
-        </BadgesSection>
-
-        {/* Niches */}
-        {mediaKit.niches?.length > 0 && (
-          <Section>
-            <SectionTitle>Niches</SectionTitle>
-            <TagsGrid>
-              {mediaKit.niches.map((niche, i) => (
-                <Tag key={i}>{niche}</Tag>
-              ))}
-            </TagsGrid>
-          </Section>
-        )}
-
-        {/* Content Types */}
-        {mediaKit.content_types?.length > 0 && (
-          <Section>
-            <SectionTitle>Content I Create</SectionTitle>
-            <TagsGrid>
-              {mediaKit.content_types.map((type, i) => (
-                <Tag key={i} $secondary>{type}</Tag>
-              ))}
-            </TagsGrid>
-          </Section>
-        )}
-
-        {/* Platforms */}
-        {mediaKit.platforms?.length > 0 && (
-          <Section>
-            <SectionTitle>Platforms</SectionTitle>
-            <PlatformsGrid>
-              {mediaKit.platforms.map((platform, i) => (
-                <PlatformCard key={i}>
-                  <PlatformIcon>{getPlatformIcon(platform.platform)}</PlatformIcon>
-                  <PlatformInfo>
-                    <PlatformName>{platform.platform}</PlatformName>
-                    {platform.handle && <PlatformHandle>{platform.handle}</PlatformHandle>}
-                    {platform.followers && (
-                      <PlatformFollowers>{formatFollowers(parseInt(platform.followers))} followers</PlatformFollowers>
-                    )}
-                  </PlatformInfo>
-                </PlatformCard>
-              ))}
-            </PlatformsGrid>
-          </Section>
-        )}
-
-        {/* Past Collaborations */}
-        {mediaKit.collaborations?.length > 0 && (
-          <Section>
-            <SectionTitle><FiBriefcase /> Past Collaborations</SectionTitle>
-            <CollabsGrid>
-              {mediaKit.collaborations.map((collab, i) => (
-                <CollabCard key={i}>
-                  <CollabBrand>{collab.brand}</CollabBrand>
-                  <CollabType>{collab.type}</CollabType>
-                  {collab.description && <CollabDesc>{collab.description}</CollabDesc>}
-                  {collab.url && (
-                    <CollabLink href={collab.url} target="_blank" rel="noopener noreferrer">
-                      View Content <FiExternalLink />
-                    </CollabLink>
+          <KitHeaderInner>
+            <KitAvatarWrap>
+              <KitAvatar>
+                {mediaKit.profile_photo_url
+                  ? <img src={mediaKit.profile_photo_url} alt={username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span>{(mediaKit.display_name || username || '?').charAt(0).toUpperCase()}</span>
+                }
+              </KitAvatar>
+            </KitAvatarWrap>
+            <KitHeaderInfo>
+              <KitName>{mediaKit.display_name || username}</KitName>
+              {mediaKit.tagline && <KitTagline>{mediaKit.tagline}</KitTagline>}
+              <KitChipsRow>
+                {niches.slice(0, 3).map(n => (
+                  <KitNicheTag key={n}>{String(n).replace(/["[\]]/g, '')}</KitNicheTag>
+                ))}
+              </KitChipsRow>
+              {Object.keys(socials).length > 0 && (
+                <KitSocialsRow>
+                  {socials.instagram && (
+                    <KitSocialLink href={socials.instagram} target="_blank" rel="noopener noreferrer">
+                      <FaInstagram size={18} />
+                    </KitSocialLink>
                   )}
-                </CollabCard>
-              ))}
-            </CollabsGrid>
-          </Section>
+                  {socials.tiktok && (
+                    <KitSocialLink href={socials.tiktok} target="_blank" rel="noopener noreferrer">
+                      <FaTiktok size={16} />
+                    </KitSocialLink>
+                  )}
+                  {socials.youtube && (
+                    <KitSocialLink href={socials.youtube} target="_blank" rel="noopener noreferrer">
+                      <FaYoutube size={18} />
+                    </KitSocialLink>
+                  )}
+                  {socials.linkedin && (
+                    <KitSocialLink href={socials.linkedin} target="_blank" rel="noopener noreferrer">
+                      <FaLinkedinIn size={16} />
+                    </KitSocialLink>
+                  )}
+                  {socials.twitter && (
+                    <KitSocialLink href={socials.twitter} target="_blank" rel="noopener noreferrer">
+                      <FaTwitter size={16} />
+                    </KitSocialLink>
+                  )}
+                </KitSocialsRow>
+              )}
+            </KitHeaderInfo>
+          </KitHeaderInner>
+        </KitHeader>
+
+        {/* Stats section */}
+        <KitStatsSection>
+          <KitStatsGrid>
+            {mediaKit.total_followers > 0 && (
+              <KitStatCard>
+                <KitStatVal>{formatNumber(mediaKit.total_followers)}</KitStatVal>
+                <KitStatSub>followers</KitStatSub>
+              </KitStatCard>
+            )}
+            {mediaKit.engagement_rate > 0 && mediaKit.engagement_rate < 100 && (
+              <KitStatCard>
+                <KitStatVal>{Number(mediaKit.engagement_rate).toFixed(1)}%</KitStatVal>
+                <KitStatSub>engagement</KitStatSub>
+              </KitStatCard>
+            )}
+            {posts.length > 0 && (
+              <KitStatCard>
+                <KitStatVal>{posts.length}</KitStatVal>
+                <KitStatSub>posts</KitStatSub>
+              </KitStatCard>
+            )}
+            {mediaKit.primary_age_range && (
+              <KitStatCard>
+                <KitStatVal>{mediaKit.primary_age_range}</KitStatVal>
+                <KitStatSub>audience age</KitStatSub>
+              </KitStatCard>
+            )}
+            {regions.length > 0 && (
+              <KitStatCard>
+                <KitStatVal>{regions.slice(0, 2).map(abbreviateRegion).join(', ')}</KitStatVal>
+                <KitStatSub>regions</KitStatSub>
+              </KitStatCard>
+            )}
+          </KitStatsGrid>
+
+          {/* Platform breakdown */}
+          {platforms.length > 0 && (
+            <KitPlatformStats>
+              {platforms.map(platform => {
+                const platformPosts = posts.filter(p => p.platform === platform);
+                const totalViews = platformPosts.reduce((sum, p) => sum + (p.views || 0), 0);
+                return (
+                  <KitPlatformStatRow key={platform}>
+                    <KitPlatformStatIcon>
+                      <PlatformIcon platform={platform} size={16} />
+                    </KitPlatformStatIcon>
+                    <KitPlatformStatName>{PLATFORM_DISPLAY[platform]}</KitPlatformStatName>
+                    <KitPlatformStatValue>
+                      {platformPosts.length} posts
+                      {totalViews > 0 && ` · ${formatNumber(totalViews)} views`}
+                    </KitPlatformStatValue>
+                  </KitPlatformStatRow>
+                );
+              })}
+            </KitPlatformStats>
+          )}
+        </KitStatsSection>
+
+        {/* Portfolio grid */}
+        {posts.length > 0 && (
+          <>
+            <KitSectionLabel>Portfolio</KitSectionLabel>
+            <KitGrid>
+              {posts.map((post, i) => {
+                const collab = COLLAB_COLOR[post.collab_type] || COLLAB_COLOR.own;
+                return (
+                  <KitPostCard key={post.id || i} href={post.post_url || undefined} target="_blank" rel="noopener noreferrer" as={post.post_url ? 'a' : 'div'}>
+                    <KitPostImg hasThumbnail={!!post.thumbnail_url}>
+                      {post.thumbnail_url ? (
+                        <KitPostThumb src={post.thumbnail_url} alt={post.brand_name || 'Post'} />
+                      ) : (
+                        <KitPostEmoji><PlatformIcon platform={post.platform} size={28} /></KitPostEmoji>
+                      )}
+                      <KitPostPlatformBadge platform={post.platform}>
+                        {PLATFORM_LABEL[post.platform] || post.platform} · {POST_TYPE_LABEL[post.post_type] || post.post_type}
+                      </KitPostPlatformBadge>
+                    </KitPostImg>
+                    <KitPostBody>
+                      <KitPostBrandRow>
+                        <KitPostBrand>{post.brand_name || 'Original content'}</KitPostBrand>
+                        <KitPostCollabChip style={{ background: collab.bg, color: collab.color }}>
+                          {post.collab_type === 'own' ? 'Original' : post.collab_type}
+                        </KitPostCollabChip>
+                      </KitPostBrandRow>
+                      {(post.views || post.likes) > 0 && (
+                        <KitPostStats>
+                          {post.views > 0 && <span>{formatNumber(post.views)} views</span>}
+                          {post.likes > 0 && <span>{formatNumber(post.likes)} likes</span>}
+                        </KitPostStats>
+                      )}
+                    </KitPostBody>
+                  </KitPostCard>
+                );
+              })}
+            </KitGrid>
+          </>
         )}
 
-        {/* Rates & Packages */}
-        {mediaKit.rates?.length > 0 && (
-          <Section>
-            <SectionTitle><FiDollarSign /> Packages & Rates</SectionTitle>
-            <RatesGrid>
-              {mediaKit.rates.map((rate, i) => (
-                <RateCard key={i}>
-                  <div>
-                    <RateName>{rate.name}</RateName>
-                    {rate.deliverables && <RateDeliverables>{rate.deliverables}</RateDeliverables>}
-                  </div>
-                  <RatePrice>${rate.price}</RatePrice>
-                </RateCard>
-              ))}
-            </RatesGrid>
-          </Section>
+        {/* Brands worked with */}
+        {brands.length > 0 && (
+          <>
+            <KitSectionLabel>Brands worked with</KitSectionLabel>
+            <BrandsRow>
+              {brands.map(b => <BrandPill key={b}>{b}</BrandPill>)}
+              {mediaKit.accepts_gifted && <BrandPill $open>Open to gifted</BrandPill>}
+            </BrandsRow>
+          </>
         )}
 
-        {/* Contact CTA */}
-        <CTASection>
-          <CTATitle>Interested in collaborating?</CTATitle>
-          <CTAText>Reach out to {mediaKit.display_name} for partnership opportunities</CTAText>
-          <CTAButton href={`mailto:?subject=Collaboration Inquiry - ${mediaKit.display_name}&body=Hi ${mediaKit.display_name},%0A%0AI came across your media kit on NewCollab and would love to discuss a potential collaboration.%0A%0ABest regards`}>
-            <FiMail /> Get in Touch
-          </CTAButton>
-        </CTASection>
+        {/* Rate card */}
+        {hasRates && (
+          <>
+            <KitSectionLabel>Packages</KitSectionLabel>
+            <RateCard>
+              {rates.map((rate, i) => (
+                <RateCardRow key={i}>
+                  <RateCardLabel>{rate.name}</RateCardLabel>
+                  <RateCardPrice>from ${rate.price?.toLocaleString()}</RateCardPrice>
+                </RateCardRow>
+              ))}
+              {mediaKit.accepts_gifted && (
+                <RateCardRow $gifted>
+                  <RateCardLabel>Gifted collabs</RateCardLabel>
+                  <RateCardPrice style={{ color: '#059669' }}>Open</RateCardPrice>
+                </RateCardRow>
+              )}
+            </RateCard>
+          </>
+        )}
 
-        {/* Footer */}
-        <Footer>
-          <FooterText>Media kit powered by</FooterText>
-          <FooterLogo href="/">NewCollab</FooterLogo>
-        </Footer>
-      </ContentWrapper>
-    </PageContainer>
+        {/* CTA */}
+        <KitCTA>
+          <KitCTAText>
+            <KitCTATitle>Interested in working together?</KitCTATitle>
+            <KitCTASub>Sign up as a brand to connect with {mediaKit.display_name || username}</KitCTASub>
+          </KitCTAText>
+          <KitCTABtn href="/register/brand">
+            Get in touch
+          </KitCTABtn>
+        </KitCTA>
+
+        <KitFooter>
+          <KitFooterLeft>newcollab.co/kit/{username}</KitFooterLeft>
+          <KitFooterRight>Media kit by <KitBrand>Newcollab</KitBrand></KitFooterRight>
+        </KitFooter>
+      </KitWrap>
+    </KitPage>
   );
 };
 
-// Styled Components
-const PageContainer = styled.div`
+// ── Styled Components ─────────────────────────────────────────
+
+const KitPage = styled.div`
   min-height: 100vh;
-  background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%);
-  padding: 40px 20px;
-
-  @media (max-width: 640px) {
-    padding: 24px 16px;
-  }
+  background: #F5F5F3;
+  padding: 24px 16px 60px;
+  @media (max-width: 480px) { padding: 0 0 60px; }
 `;
 
-const ContentWrapper = styled.div`
-  max-width: 680px;
+const KitWrap = styled.div`
+  max-width: 720px;
   margin: 0 auto;
-`;
-
-// Hero Section
-const HeroSection = styled.div`
-  background: white;
+  background: #fff;
   border-radius: 24px;
-  padding: 32px;
-  text-align: center;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  margin-bottom: 24px;
-
-  @media (max-width: 640px) {
-    padding: 24px;
-  }
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+  @media (max-width: 480px) { border-radius: 0; box-shadow: none; }
 `;
 
-const ProfilePhoto = styled.img`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #E5E7EB;
+const KitHeader = styled.div`
+  background: #0F0F0F;
+  padding: 16px 24px 24px;
+  @media (max-width: 480px) { padding: 12px 16px 20px; }
+`;
+
+const KitHeaderTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
 `;
 
-const HeroInfo = styled.div``;
-
-const DisplayName = styled.h2`
-  font-size: 28px;
-  font-weight: 800;
-  color: #111827;
-  margin: 0 0 8px 0;
-
-  @media (max-width: 640px) {
-    font-size: 24px;
-  }
-`;
-
-const Tagline = styled.p`
-  font-size: 16px;
-  color: #6B7280;
-  margin: 0 0 12px 0;
-  line-height: 1.5;
-
-  @media (max-width: 640px) {
-    font-size: 15px;
-  }
-`;
-
-const Location = styled.div`
-  display: inline-flex;
+const KitViewsCounter = styled.div`
+  display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  color: #9CA3AF;
-`;
-
-// Stats Section
-const StatsSection = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-`;
-
-const StatCard = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 24px 16px;
-  text-align: center;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-`;
-
-const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 800;
-  color: #111827;
-`;
-
-const StatLabel = styled.div`
-  font-size: 13px;
-  color: #6B7280;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-top: 4px;
 `;
 
-// Badges
-const BadgesSection = styled.div`
+const KitShareBtn = styled.button`
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-`;
-
-const Badge = styled.div`
-  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 20px;
-  background: ${props => props.$primary ? '#ECFDF5' : '#EFF6FF'};
-  color: ${props => props.$primary ? '#059669' : '#3B82F6'};
-  border-radius: 24px;
-  font-size: 14px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 12px;
   font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { background: rgba(255,255,255,0.2); }
 `;
 
-// Sections
-const Section = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-
-  @media (max-width: 640px) {
-    padding: 20px;
-  }
-`;
-
-const SectionTitle = styled.h3`
+const KitHeaderInner = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 16px 0;
+  align-items: flex-start;
+  gap: 16px;
 `;
 
-// Tags
-const TagsGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+const KitAvatarWrap = styled.div`
+  flex-shrink: 0;
+  padding: 3px;
+  background: linear-gradient(135deg, #7C3AED, #E11D48, #F59E0B);
+  border-radius: 50%;
 `;
 
-const Tag = styled.span`
-  padding: 8px 16px;
-  background: ${props => props.$secondary ? '#F3F4F6' : '#EFF6FF'};
-  color: ${props => props.$secondary ? '#374151' : '#3B82F6'};
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-// Platforms
-const PlatformsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-`;
-
-const PlatformCard = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #F9FAFB;
-  border-radius: 12px;
-`;
-
-const PlatformIcon = styled.div`
-  width: 44px;
-  height: 44px;
-  background: white;
-  border-radius: 12px;
+const KitAvatar = styled.div`
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #1F1F1F;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  color: #3B82F6;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  flex-shrink: 0;
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  overflow: hidden;
+  border: 3px solid #0F0F0F;
+  @media (max-width: 480px) { width: 60px; height: 60px; font-size: 24px; }
 `;
 
-const PlatformInfo = styled.div`
-  min-width: 0;
+const KitHeaderInfo = styled.div`
+  flex: 1;
+  padding-top: 4px;
 `;
 
-const PlatformName = styled.div`
+const KitName = styled.div`
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 4px;
+  @media (max-width: 480px) { font-size: 20px; }
+`;
+
+const KitTagline = styled.div`
   font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.4;
+  margin-bottom: 12px;
+  @media (max-width: 480px) { font-size: 13px; }
+`;
+
+const KitChipsRow = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+const KitNicheTag = styled.span`
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+  font-size: 11px;
   font-weight: 600;
-  color: #111827;
+  padding: 5px 12px;
+  border-radius: 20px;
   text-transform: capitalize;
 `;
 
-const PlatformHandle = styled.div`
+const KitSocialsRow = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+`;
+
+const KitSocialLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  transition: all 0.2s;
+  &:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+`;
+
+const KitStatsSection = styled.div`
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #F3F4F6;
+`;
+
+const KitStatsGrid = styled.div`
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  @media (max-width: 420px) { flex-wrap: wrap; }
+`;
+
+const KitStatCard = styled.div`
+  flex: 1;
+  min-width: 0;
+  background: #F9FAFB;
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  @media (max-width: 420px) {
+    flex: 1 1 calc(33.333% - 4px);
+    min-width: calc(33.333% - 4px);
+  }
+`;
+
+const KitStatVal = styled.div`
   font-size: 13px;
-  color: #6B7280;
+  font-weight: 800;
+  color: #0F0F0F;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 `;
 
-const PlatformFollowers = styled.div`
-  font-size: 12px;
+const KitStatSub = styled.div`
+  font-size: 8px;
   color: #9CA3AF;
-  margin-top: 2px;
+  margin-top: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
 `;
 
-// Collaborations
-const CollabsGrid = styled.div`
-  display: grid;
-  gap: 12px;
+const KitPlatformStats = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
-const CollabCard = styled.div`
-  padding: 16px;
+const KitPlatformStatRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
   background: #F9FAFB;
-  border-radius: 12px;
+  border-radius: 10px;
 `;
 
-const CollabBrand = styled.div`
-  font-size: 15px;
-  font-weight: 600;
-  color: #111827;
+const KitPlatformStatIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 `;
 
-const CollabType = styled.div`
-  display: inline-block;
+const KitPlatformStatName = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F0F0F;
+  flex: 1;
+`;
+
+const KitPlatformStatValue = styled.div`
   font-size: 12px;
   color: #6B7280;
-  background: #E5E7EB;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-top: 4px;
+  font-weight: 500;
+`;
+
+const KitSectionLabel = styled.div`
+  font-size: 10px;
+  font-weight: 800;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 20px 8px;
+`;
+
+const KitGrid = styled.div`
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  @media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 380px) { grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 12px; }
+`;
+
+const KitPostCard = styled.a`
+  background: #F9FAFB;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid #F3F4F6;
+  text-decoration: none;
+  display: block;
+  transition: transform 0.15s;
+  &:hover { transform: translateY(-2px); }
+`;
+
+const KitPostImg = styled.div`
+  padding-top: 100%;
+  position: relative;
+  overflow: hidden;
+  background: ${p => p.hasThumbnail ? '#000' : 'linear-gradient(135deg,#EFF6FF,#F5F3FF)'};
+`;
+
+const KitPostThumb = styled.img`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const KitPostEmoji = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+`;
+
+const KitPostPlatformBadge = styled.div`
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: ${p => p.platform === 'tiktok' ? '#0F0F0F' : p.platform === 'youtube' ? '#EF4444' : '#E11D48'};
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+`;
+
+const KitPostBody = styled.div`
+  padding: 8px 10px 10px;
+`;
+
+const KitPostBrandRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+`;
+
+const KitPostBrand = styled.div`
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0F0F0F;
+`;
+
+const KitPostCollabChip = styled.span`
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
   text-transform: capitalize;
 `;
 
-const CollabDesc = styled.div`
-  font-size: 14px;
-  color: #6B7280;
-  margin-top: 8px;
+const KitPostStats = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: #9CA3AF;
+  font-weight: 500;
 `;
 
-const CollabLink = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #3B82F6;
-  text-decoration: none;
-  margin-top: 8px;
-
-  &:hover {
-    text-decoration: underline;
-  }
+const BrandsRow = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 20px 16px;
 `;
 
-// Rates
-const RatesGrid = styled.div`
-  display: grid;
-  gap: 12px;
+const BrandPill = styled.div`
+  padding: 6px 14px;
+  background: ${p => p.$open ? '#F0FDF4' : '#F9FAFB'};
+  border: 1px solid ${p => p.$open ? '#A7F3D0' : '#E5E7EB'};
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${p => p.$open ? '#059669' : '#374151'};
 `;
 
 const RateCard = styled.div`
+  margin: 0 16px 16px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 16px;
+  overflow: hidden;
+`;
+
+const RateCardRow = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px;
-  background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
-  border-radius: 12px;
-  border: 1px solid #D1FAE5;
-  gap: 16px;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    gap: 8px;
-  }
-`;
-
-const RateName = styled.div`
-  font-size: 15px;
-  font-weight: 600;
-  color: #111827;
-`;
-
-const RatePrice = styled.div`
-  font-size: 20px;
-  font-weight: 800;
-  color: #059669;
-  flex-shrink: 0;
-`;
-
-const RateDeliverables = styled.div`
-  font-size: 13px;
-  color: #6B7280;
-  margin-top: 4px;
-`;
-
-// CTA Section
-const CTASection = styled.div`
-  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-  border-radius: 20px;
-  padding: 32px;
-  text-align: center;
-  margin-bottom: 24px;
-
-  @media (max-width: 640px) {
-    padding: 24px;
-  }
-`;
-
-const CTATitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 8px 0;
-`;
-
-const CTAText = styled.p`
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0 0 20px 0;
-`;
-
-const CTAButton = styled.a`
-  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 28px;
-  background: white;
-  color: #3B82F6;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  }
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid #F3F4F6;
+  background: ${p => p.$gifted ? '#F0FDF4' : '#fff'};
+  &:last-child { border-bottom: none; }
 `;
 
-// Footer
-const Footer = styled.div`
-  text-align: center;
-  padding: 20px 0;
-`;
-
-const FooterText = styled.span`
+const RateCardLabel = styled.div`
   font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+`;
+
+const RateCardPrice = styled.div`
+  font-size: 14px;
+  font-weight: 900;
+  color: #0F0F0F;
+`;
+
+const KitCTA = styled.div`
+  margin: 8px 16px 0;
+  background: #0F0F0F;
+  border-radius: 18px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  @media (max-width: 480px) { flex-direction: column; text-align: center; gap: 14px; margin: 8px 12px 0; }
+`;
+
+const KitCTAText = styled.div``;
+
+const KitCTATitle = styled.div`
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 3px;
+`;
+
+const KitCTASub = styled.div`
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+`;
+
+const KitCTABtn = styled(Link)`
+  background: #fff;
+  color: #0F0F0F;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 12px 22px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-block;
+  @media (max-width: 480px) { width: 100%; text-align: center; }
+`;
+
+const KitFooter = styled.div`
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #F3F4F6;
+  margin-top: 16px;
+  @media (max-width: 480px) { flex-direction: column; gap: 4px; text-align: center; padding: 12px; }
+`;
+
+const KitFooterLeft = styled.div`
+  font-size: 12px;
   color: #9CA3AF;
 `;
 
-const FooterLogo = styled(Link)`
-  font-size: 14px;
-  font-weight: 700;
-  color: #3B82F6;
-  text-decoration: none;
-  margin-left: 4px;
+const KitFooterRight = styled.div`
+  font-size: 12px;
+  color: #9CA3AF;
+`;
 
-  &:hover {
-    text-decoration: underline;
-  }
+const KitBrand = styled.span`
+  color: #E11D48;
+  font-weight: 800;
 `;
 
 export default MediaKitClient;
