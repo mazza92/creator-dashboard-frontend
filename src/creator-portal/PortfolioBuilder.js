@@ -65,6 +65,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
   const [kitSettings, setKitSettings] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState(null);
+  const [showPublishNudge, setShowPublishNudge] = useState(false);
 
   // Step form state
   const [postUrl, setPostUrl]       = useState('');
@@ -72,7 +73,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
   const [postType, setPostType]     = useState('reel');
   const [brandName, setBrandName]   = useState('');
   const [collabType, setCollabType] = useState('gifted');
-  const [stats, setStats]           = useState({ views: '', likes: '', comments: '', shares: '' });
+  const [stats, setStats]           = useState({ views: '', likes: '', comments: '', shares: '', saves: '' });
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [urlDetecting, setUrlDetecting] = useState(false);
 
@@ -142,7 +143,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
   const resetForm = () => {
     setPostUrl(''); setPlatform('instagram'); setPostType('reel');
     setBrandName(''); setCollabType('gifted'); setThumbnailUrl('');
-    setStats({ views: '', likes: '', comments: '', shares: '' });
+    setStats({ views: '', likes: '', comments: '', shares: '', saves: '' });
     setStep(1);
   };
 
@@ -168,6 +169,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
     const likesNum = parseInt(stats.likes.replace(/[^0-9]/g, '')) || 0;
     const commentsNum = parseInt(stats.comments.replace(/[^0-9]/g, '')) || 0;
     const sharesNum = parseInt(stats.shares.replace(/[^0-9]/g, '')) || 0;
+    const savesNum = parseInt(stats.saves.replace(/[^0-9]/g, '')) || 0;
 
     if (!stats.views.trim()) {
       message.error('Please enter the number of views');
@@ -185,6 +187,10 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
       message.error('Please enter the number of shares');
       return;
     }
+    if (!stats.saves.trim()) {
+      message.error('Please enter the number of saves');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -199,12 +205,15 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
         likes:       likesNum,
         comments:    commentsNum,
         shares:      sharesNum,
+        saves:       savesNum,
         display_order: posts.length,
       });
       await fetchPosts();
       message.success('Added to your portfolio');
       resetForm();
       setView('dashboard');
+      // Show publish nudge if kit has unpublished changes
+      setShowPublishNudge(true);
     } catch (e) {
       message.error('Failed to save');
     } finally {
@@ -219,6 +228,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
       message.success(kitSettings?.kit_published ? 'Kit updated and published' : 'Kit published');
       await fetchKitSettings(); // Refresh to get updated kit_published_at
       await fetchPosts();
+      setShowPublishNudge(false); // Hide nudge after publishing
     } catch (e) {
       message.error('Failed to publish');
     } finally {
@@ -313,6 +323,22 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
           </ShareChip>
         </DashActions>
       </DashHeader>
+
+      {/* Publish nudge - shows after adding new content */}
+      {showPublishNudge && posts.length > 0 && (
+        <PublishNudgeBanner>
+          <PublishNudgeText>
+            <PublishNudgeIcon>✨</PublishNudgeIcon>
+            <span>Content added! Publish to make it visible on your public kit.</span>
+          </PublishNudgeText>
+          <PublishNudgeActions>
+            <PublishNudgeBtn onClick={handlePublish} disabled={publishing}>
+              {publishing ? 'Publishing...' : 'Publish now'}
+            </PublishNudgeBtn>
+            <PublishNudgeDismiss onClick={() => setShowPublishNudge(false)}>Later</PublishNudgeDismiss>
+          </PublishNudgeActions>
+        </PublishNudgeBanner>
+      )}
 
       {/* Kit view stats - Pro feature */}
       {isPro && kitViews.views_this_week > 0 && (
@@ -665,6 +691,7 @@ const AddPostView = ({
                 { key: 'likes',    label: 'Likes' },
                 { key: 'comments', label: 'Comments' },
                 { key: 'shares',   label: 'Shares' },
+                { key: 'saves',    label: 'Saves' },
               ].map(({ key, label }) => (
                 <StatInputWrap key={key} hasValue={!!stats[key].trim()}>
                   <StatInputLabel>{label} <RequiredStar>*</RequiredStar></StatInputLabel>
@@ -704,7 +731,7 @@ const AddPostView = ({
             <PrimaryBtn
               style={{ marginTop: 16 }}
               onClick={onSave}
-              disabled={saving || !stats.views.trim() || !stats.likes.trim() || !stats.comments.trim() || !stats.shares.trim()}
+              disabled={saving || !stats.views.trim() || !stats.likes.trim() || !stats.comments.trim() || !stats.shares.trim() || !stats.saves.trim()}
             >
               {saving ? 'Saving...' : 'Save to my portfolio'}
             </PrimaryBtn>
@@ -786,6 +813,7 @@ const RatesEditor = ({ kitSettings, onSaved }) => {
   const [tiktok, setTiktok] = useState('');
   const [photo, setPhoto]   = useState('');
   const [gifted, setGifted] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved]   = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -801,6 +829,7 @@ const RatesEditor = ({ kitSettings, onSaved }) => {
   }, [kitSettings, loaded]);
 
   const save = async () => {
+    setSaving(true);
     try {
       await apiClient.patch('/api/portfolio/settings', {
         rates_reel: reel ? parseInt(reel) : null,
@@ -809,9 +838,10 @@ const RatesEditor = ({ kitSettings, onSaved }) => {
         rates_gifted: gifted,
       });
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), 2500);
       if (onSaved) onSaved();
     } catch (e) { message.error('Failed to save rates'); }
+    finally { setSaving(false); }
   };
 
   return (
@@ -836,9 +866,9 @@ const RatesEditor = ({ kitSettings, onSaved }) => {
           {gifted ? 'Yes' : 'No'}
         </GiftedToggle>
       </RateRow>
-      <PrimaryBtn onClick={save} style={{ marginTop: 12 }}>
-        {saved ? 'Saved' : 'Save rates'}
-      </PrimaryBtn>
+      <SaveRatesBtn onClick={save} disabled={saving} $saved={saved}>
+        {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save rates'}
+      </SaveRatesBtn>
     </RatesWrap>
   );
 };
@@ -878,16 +908,16 @@ const DashTitle = styled.h1`
 
 const DashActions = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
   flex-wrap: wrap;
 `;
 
 const PublishSection = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
+  align-items: flex-end;
+  gap: 2px;
 `;
 
 const PreviewBtn = styled.button`
@@ -901,7 +931,14 @@ const PreviewBtn = styled.button`
   cursor: pointer;
   opacity: ${props => props.disabled ? 0.6 : 1};
   pointer-events: ${props => props.disabled ? 'none' : 'auto'};
-  transition: opacity 0.15s ease;
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
 `;
 
 const PublishDate = styled.div`
@@ -909,6 +946,71 @@ const PublishDate = styled.div`
   color: #9CA3AF;
   font-weight: 500;
   padding-left: 2px;
+`;
+
+const PublishNudgeBanner = styled.div`
+  margin: 0 16px 12px;
+  background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: slideIn 0.3s ease-out;
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const PublishNudgeText = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const PublishNudgeIcon = styled.span`
+  font-size: 16px;
+`;
+
+const PublishNudgeActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+`;
+
+const PublishNudgeBtn = styled.button`
+  background: white;
+  color: #7C3AED;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  opacity: ${p => p.disabled ? 0.7 : 1};
+  transition: transform 0.15s ease;
+  &:hover:not(:disabled) { transform: scale(1.02); }
+`;
+
+const PublishNudgeDismiss = styled.button`
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  &:hover { color: white; }
 `;
 
 const ShareChip = styled.button`
@@ -1928,6 +2030,25 @@ const PrimaryBtn = styled.button`
   transition: opacity 0.15s;
   &:disabled { opacity: 0.5; cursor: not-allowed; }
   &:hover:not(:disabled) { opacity: 0.88; }
+`;
+
+const SaveRatesBtn = styled.button`
+  width: 100%;
+  margin-top: 12px;
+  background: ${p => p.$saved ? '#10B981' : '#0F0F0F'};
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 15px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 `;
 
 const SecondaryBtn = styled.button`

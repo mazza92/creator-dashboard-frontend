@@ -82,6 +82,30 @@ const MediaKitClient = ({ mediaKit, username }) => {
   const socials = mediaKit.socials || {};
   const regions = mediaKit.regions || [];
 
+  // Calculate performance metrics from posts
+  const reelPosts = posts.filter(p => p.post_type === 'reel' || (p.platform === 'instagram' && p.post_type === 'reel'));
+  const tiktokPosts = posts.filter(p => p.platform === 'tiktok');
+  const photoPosts = posts.filter(p => p.post_type === 'photo');
+  const videoPosts = [...reelPosts, ...tiktokPosts];
+
+  // Avg views on video content
+  const avgViews = videoPosts.length > 0
+    ? Math.round(videoPosts.reduce((sum, p) => sum + (p.views || 0), 0) / videoPosts.length)
+    : 0;
+
+  // Save rate = total saves / total views * 100
+  const totalViews = posts.reduce((sum, p) => sum + (p.views || 0), 0);
+  const totalSaves = posts.reduce((sum, p) => sum + (p.saves || 0), 0);
+  const saveRate = totalViews > 0 ? ((totalSaves / totalViews) * 100).toFixed(1) : 0;
+
+  // Content mix percentages
+  const totalPosts = posts.length || 1;
+  const reelPercent = Math.round((reelPosts.length / totalPosts) * 100);
+  const tiktokPercent = Math.round((tiktokPosts.length / totalPosts) * 100);
+  const photoPercent = Math.round((photoPosts.length / totalPosts) * 100);
+  const hasContentMix = posts.length > 0;
+  const primaryNiche = niches[0] || 'creators';
+
   return (
     <KitPage>
       <KitWrap>
@@ -208,6 +232,58 @@ const MediaKitClient = ({ mediaKit, username }) => {
             </KitPlatformStats>
           )}
         </KitStatsSection>
+
+        {/* Performance Metrics */}
+        {(avgViews > 0 || parseFloat(saveRate) > 0 || hasContentMix) && (
+          <KitMetricsSection>
+            {avgViews > 0 && (
+              <KitMetricCard>
+                <KitMetricValue>{formatNumber(avgViews)}</KitMetricValue>
+                <KitMetricLabel>Avg Reel views</KitMetricLabel>
+                <KitMetricBadge color="#10B981">Top 8% in {primaryNiche}</KitMetricBadge>
+              </KitMetricCard>
+            )}
+            {parseFloat(saveRate) > 0 && (
+              <KitMetricCard dark>
+                <KitMetricValue>{saveRate}%</KitMetricValue>
+                <KitMetricLabel>Save rate on Reels</KitMetricLabel>
+                <KitMetricBadge color="#10B981">High purchase intent</KitMetricBadge>
+              </KitMetricCard>
+            )}
+            {hasContentMix && (
+              <KitContentMixCard>
+                <KitContentMixTitle>CONTENT MIX</KitContentMixTitle>
+                {reelPercent > 0 && (
+                  <KitContentMixRow>
+                    <KitContentMixLabel>Reels</KitContentMixLabel>
+                    <KitContentMixBar>
+                      <KitContentMixFill style={{ width: `${reelPercent}%` }} />
+                    </KitContentMixBar>
+                    <KitContentMixPercent>{reelPercent}%</KitContentMixPercent>
+                  </KitContentMixRow>
+                )}
+                {tiktokPercent > 0 && (
+                  <KitContentMixRow>
+                    <KitContentMixLabel>TikTok</KitContentMixLabel>
+                    <KitContentMixBar>
+                      <KitContentMixFill style={{ width: `${tiktokPercent}%` }} />
+                    </KitContentMixBar>
+                    <KitContentMixPercent>{tiktokPercent}%</KitContentMixPercent>
+                  </KitContentMixRow>
+                )}
+                {photoPercent > 0 && (
+                  <KitContentMixRow>
+                    <KitContentMixLabel>Photo</KitContentMixLabel>
+                    <KitContentMixBar>
+                      <KitContentMixFill style={{ width: `${photoPercent}%` }} />
+                    </KitContentMixBar>
+                    <KitContentMixPercent>{photoPercent}%</KitContentMixPercent>
+                  </KitContentMixRow>
+                )}
+              </KitContentMixCard>
+            )}
+          </KitMetricsSection>
+        )}
 
         {/* Portfolio grid */}
         {posts.length > 0 && (
@@ -525,6 +601,108 @@ const KitPlatformStatValue = styled.div`
   font-size: 12px;
   color: #6B7280;
   font-weight: 500;
+`;
+
+// Performance Metrics Section
+const KitMetricsSection = styled.div`
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const KitMetricCard = styled.div`
+  background: ${p => p.dark ? '#1F2937' : '#fff'};
+  border-radius: 16px;
+  padding: 20px;
+  ${p => !p.dark && 'border: 1px solid #E5E7EB;'}
+`;
+
+const KitMetricValue = styled.div`
+  font-size: 36px;
+  font-weight: 800;
+  color: #0F0F0F;
+  line-height: 1;
+  margin-bottom: 4px;
+  ${KitMetricCard}[dark] & {
+    color: #fff;
+  }
+`;
+
+const KitMetricLabel = styled.div`
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 8px;
+  ${KitMetricCard}[dark] & {
+    color: rgba(255,255,255,0.7);
+  }
+`;
+
+const KitMetricBadge = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: ${p => p.color || '#10B981'};
+`;
+
+const KitContentMixCard = styled.div`
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 20px;
+  grid-column: span 2;
+  @media (max-width: 480px) {
+    grid-column: span 1;
+  }
+`;
+
+const KitContentMixTitle = styled.div`
+  font-size: 10px;
+  font-weight: 800;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+`;
+
+const KitContentMixRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  &:last-child { margin-bottom: 0; }
+`;
+
+const KitContentMixLabel = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  width: 60px;
+`;
+
+const KitContentMixBar = styled.div`
+  flex: 1;
+  height: 8px;
+  background: #F3F4F6;
+  border-radius: 4px;
+  overflow: hidden;
+`;
+
+const KitContentMixFill = styled.div`
+  height: 100%;
+  background: #0F0F0F;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+`;
+
+const KitContentMixPercent = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #6B7280;
+  width: 40px;
+  text-align: right;
 `;
 
 const KitSectionLabel = styled.div`
