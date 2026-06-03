@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation';
 import MediaKitClient from './MediaKitClient';
 
-// Fetch media kit data
+// Fetch media kit data from portfolio API
 async function getMediaKit(username) {
   try {
-    const res = await fetch(`https://api.newcollab.co/api/media-kit/public/${username}`, {
+    const res = await fetch(`https://api.newcollab.co/api/portfolio/public/${username}`, {
       next: { revalidate: 3600 } // Cache for 1 hour
     });
 
@@ -13,7 +13,43 @@ async function getMediaKit(username) {
     }
 
     const data = await res.json();
-    return data.success ? data : null;
+    // Portfolio API returns data directly (not wrapped in success/media_kit)
+    if (data.error) return null;
+
+    // Transform portfolio API response to match expected structure
+    return {
+      success: true,
+      media_kit: {
+        display_name: data.first_name || data.username,
+        username: data.username,
+        tagline: data.tagline,
+        profile_photo_url: data.avatar_url,
+        location: null,
+        niches: data.niches || [],
+        total_followers: data.follower_count,
+        engagement_rate: data.engagement_rate,
+        accepts_gifted: data.rates_gifted,
+        accepts_paid: !!(data.rates_reel || data.rates_tiktok || data.rates_photo),
+        platforms: [],  // Will be derived from posts
+        content_types: [],
+        collaborations: (data.posts || []).filter(p => p.brand_name && p.collab_type !== 'own').map(p => ({
+          brand: p.brand_name,
+          type: p.collab_type,
+          url: p.post_url
+        })),
+        rates: [
+          ...(data.rates_reel ? [{ name: 'Instagram Reel', price: data.rates_reel }] : []),
+          ...(data.rates_tiktok ? [{ name: 'TikTok Video', price: data.rates_tiktok }] : []),
+          ...(data.rates_photo ? [{ name: 'Instagram Photo', price: data.rates_photo }] : []),
+        ],
+        posts: data.posts || [],
+        is_pro: data.is_pro,
+        kit_views: data.kit_views,
+        socials: data.socials || {},
+        regions: data.regions || [],
+        primary_age_range: data.primary_age_range,
+      }
+    };
   } catch (error) {
     console.error('Error fetching media kit:', error);
     return null;
