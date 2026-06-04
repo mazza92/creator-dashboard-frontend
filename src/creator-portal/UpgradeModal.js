@@ -21,7 +21,7 @@ const UPGRADE_COPY = {
   },
   followup: {
     headline: "Double your reply rate with a Pro follow-up",
-    sub: "Get an AI-written follow-up email with your Media Kit auto-attached — the combo that gets brands to actually respond.",
+    sub: "Get an AI-written follow-up email with your Media Kit auto-attached. The combo that gets brands to actually respond.",
     features: [
       "AI follow-up email personalized to your pitch",
       "Media Kit auto-attached as a link",
@@ -32,7 +32,7 @@ const UPGRADE_COPY = {
   },
   pr_value: {
     headline: "Track your PR value with Pro",
-    sub: "See exactly how much free product you've earned through NewCollab — and never lose track of a collab again.",
+    sub: "See exactly how much free product you've earned through NewCollab and never lose track of a collab again.",
     features: [
       "$PR Value Earned dashboard",
       "Package value logging",
@@ -42,16 +42,28 @@ const UPGRADE_COPY = {
     valueProp: "Know your worth! Pro creators track an average of $1,200+ in PR value their first year."
   },
   limit_reached: {
-    headline: "You're on a roll. Keep going.",
-    sub: "You've sent all your brand pitches this month.",
+    headline: "You have matched brands waiting.",
+    sub: "Your free contacts this month have been used. Upgrade to contact all your matches.",
     features: [
-      "Unlimited pitches. Every brand, every month.",
+      "Unlimited brand contacts every month",
       "Custom outreach emails written for each brand",
       "Direct PR manager contacts for 500+ brands",
-      "Your media kit and portfolio in one shareable link",
-      "Personal creator assistant for follow-ups and deal negotiations"
+      "Kit view tracking: see which brands checked you out",
+      "Full portfolio builder with bento media kit"
     ],
     valueProp: "Most creators land their first gifted package within 30 days. That covers your $12 back in product."
+  },
+  for_you: {
+    headline: "You have brand matches waiting.",
+    sub: "These brands are looking for creators exactly like you. Upgrade to contact them.",
+    features: [
+      "Contact all your For You matches",
+      "Unlock reply rates and avg. deal value for every brand",
+      "Unlimited pitches every month",
+      "Kit view tracking: see which brands checked you out",
+      "Full portfolio builder with bento media kit"
+    ],
+    valueProp: "Your top match has a 40%+ reply rate. That's 4x the industry average. Worth a $12 bet."
   },
   kit_views: {
     headline: "See who's viewing your Media Kit",
@@ -62,7 +74,7 @@ const UPGRADE_COPY = {
       "Unlimited portfolio posts",
       "Your media kit and portfolio in one shareable link"
     ],
-    valueProp: "Pro creators know when to follow up — because they can see when brands are interested!"
+    valueProp: "Pro creators know when to follow up because they can see when brands are interested!"
   },
   portfolio_limit: {
     headline: "Showcase your best work",
@@ -110,6 +122,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
                   feature === 'pr_value' ? 'pr_value' :
                   feature === 'kit_views' ? 'kit_views' :
                   feature === 'portfolio_limit' ? 'portfolio_limit' :
+                  feature === 'for_you' ? 'for_you' :
                   limitReached ? 'limit_reached' : 'default';
   const copy = UPGRADE_COPY[copyKey];
 
@@ -140,11 +153,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature })
             </Icon>
             <Title>{copy.headline}</Title>
             <Subtitle>
-              {copyKey === 'limit_reached'
-                ? `You've sent ${currentCount} pitches this month. Don't stop now.`
-                : copyKey === 'default' && !limitReached
-                  ? `You have ${limit - currentCount} free pitches left this month.`
-                  : copy.sub}
+              {copyKey === 'default' && !limitReached
+                ? `You have ${limit - currentCount} free pitches left this month.`
+                : copy.sub}
             </Subtitle>
           </Header>
 

@@ -32,6 +32,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [editedBody, setEditedBody] = useState('');
   const [contactMethod, setContactMethod] = useState('email'); // 'email' | 'form'
   const [pitchSent, setPitchSent] = useState(false);
+  const [showUpgradeOverlay, setShowUpgradeOverlay] = useState(false);
 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
@@ -46,21 +47,13 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const initializePitch = async () => {
     setLoading(true);
 
-    // Fetch limits first to check if user can contact
-    const limits = await fetchPitchLimits();
+    // Fetch limits (but don't gate pitch generation — that happens at send time)
+    await fetchPitchLimits();
 
-    // If user can't pitch, just show upgrade prompt (don't generate pitch)
-    if (!limits.canPitch) {
-      setLoading(false);
-      return;
-    }
-
-    // Fetch creator profile
+    // Always generate the pitch — contact reveal is what consumes the credit
     const profile = await fetchCreatorProfile();
     setCreatorProfile(profile);
-
-    // Try AI endpoint, fall back to smart template
-    const pitchData = await generatePitch(profile);
+    await generatePitch(profile);
 
     setLoading(false);
   };
@@ -215,8 +208,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
       ? niche.charAt(0).toUpperCase() + niche.slice(1)
       : (brand.category || 'Content');
     const subject = followersShort
-      ? `${subjectNiche} content idea — ${followersShort} ${platform} audience`
-      : `Content collab idea — ${brand.brand_name}`;
+      ? `${subjectNiche} content idea for ${followersShort} ${platform} audience`
+      : `Content collab idea for ${brand.brand_name}`;
 
     // Pass creator niche — not brand category — so the opener reflects the creator's identity
     const openers = getHumanOpeners(brand.brand_name, niche);
@@ -325,9 +318,9 @@ ${creatorName}`;
     const openers = [
       `I've been following ${brandName} for a while and wanted to reach out about a collab idea.`,
       `Found ${brandName} a few months back and it fits really well with the content I make.`,
-      `Quick intro — I make ${nicheLabel} content and I've had my eye on ${brandName} for a while.`,
+      `Quick intro: I make ${nicheLabel} content and I've had my eye on ${brandName} for a while.`,
       `Hope this finds the right person! I make ${nicheLabel} content and ${brandName} keeps coming up in my comments.`,
-      `I've been wanting to reach out for a while — ${brandName} fits naturally into what I already post.`
+      `I've been wanting to reach out for a while. ${brandName} fits naturally into what I already post.`
     ];
     return openers;
   };
@@ -392,8 +385,9 @@ ${creatorName}`;
 
   const handleSendEmail = async () => {
     // Follow-ups don't consume pitch credits (Pro only feature)
+    // Show upgrade overlay instead of blocking with a warning
     if (!isFollowup && !pitchLimits.canPitch) {
-      message.warning('You\'ve used all your free contacts this month. Upgrade to continue!');
+      setShowUpgradeOverlay(true);
       return;
     }
 
@@ -424,10 +418,11 @@ ${creatorName}`;
   };
 
   const handleApplicationFormClick = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
+    // Show upgrade overlay instead of blocking with a warning
     if (!pitchLimits.canPitch) {
-      message.warning('You\'ve used all your free contacts this month. Upgrade to continue!');
+      setShowUpgradeOverlay(true);
       return false;
     }
 
@@ -595,7 +590,7 @@ ${creatorName}`;
                 <SuccessTip>
                   <SuccessTipIcon><FiZap /></SuccessTipIcon>
                   <SuccessTipText>
-                    <strong>Follow-up reminder set.</strong> We'll remind you in 7 days if you haven't heard back — that's when reply rates are highest.
+                    <strong>Follow-up reminder set.</strong> We'll remind you in 7 days if you haven't heard back. That's when reply rates are highest.
                   </SuccessTipText>
                 </SuccessTip>
                 {brand.response_rate > 0 && (
@@ -646,8 +641,8 @@ ${creatorName}`;
                         ? `${brand.days_since_pitched || 7}+ days since pitch`
                         : brand.category}
                       {brand.match_score && (
-                        <MatchChip score={brand.match_score}>
-                          {brand.match_score}% match
+                        <MatchChip score={Math.min(brand.match_score, 100)}>
+                          {Math.min(Math.round(brand.match_score), 100)}% match
                         </MatchChip>
                       )}
                     </BrandMeta>
@@ -662,27 +657,6 @@ ${creatorName}`;
               <LoadingText>{isFollowup ? 'Crafting your follow-up...' : 'Crafting your email...'}</LoadingText>
               <LoadingSubtext>Personalizing for {brandName}</LoadingSubtext>
             </LoadingState>
-          ) : !pitchLimits.canPitch ? (
-            <UpgradePrompt>
-              <UpgradeIcon><FiZap /></UpgradeIcon>
-              <UpgradeTitle>You've Used All Free Contacts!</UpgradeTitle>
-              <UpgradeText>
-                Upgrade to Pro for unlimited brand contacts and land more PR deals.
-              </UpgradeText>
-              <UpgradeFeatures>
-                <UpgradeFeature>✓ Unlimited brand contacts</UpgradeFeature>
-                <UpgradeFeature>✓ Direct PR manager emails</UpgradeFeature>
-                <UpgradeFeature>✓ Priority brand matching</UpgradeFeature>
-              </UpgradeFeatures>
-              <UpgradeButton
-                as="button"
-                onClick={handleUpgrade}
-                disabled={upgrading}
-              >
-                {upgrading ? 'Processing...' : 'Upgrade to Pro - $12/month'}
-              </UpgradeButton>
-              <UpgradeNote>💡 One PR package pays for 6+ months of Pro!</UpgradeNote>
-            </UpgradePrompt>
           ) : (
             <>
               {/* Flow tab switcher — only show when brand has both email and form */}
@@ -759,11 +733,9 @@ ${creatorName}`;
                 {(contactMethod === 'form' || !brandEmail) && applicationFormUrl ? (
                   <>
                     <PrimaryBtn
-                      as="a"
-                      href={applicationFormUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      as={motion.button}
                       onClick={handleApplicationFormClick}
+                      whileTap={{ scale: 0.98 }}
                     >
                       Open form · 1 contact
                     </PrimaryBtn>
@@ -833,6 +805,26 @@ ${creatorName}`;
                     </MediaKitEnrichBtn>
                   )}
                 </MediaKitNudgeAttached>
+              )}
+
+              {/* Inline upgrade overlay — shown when user tries to send without credits */}
+              {showUpgradeOverlay && (
+                <UpgradeOverlay>
+                  <UpgradeOverlayCard>
+                    <UpgradeOverlayClose onClick={() => setShowUpgradeOverlay(false)}>×</UpgradeOverlayClose>
+                    <UpgradeOverlayTitle>You've used your free contacts</UpgradeOverlayTitle>
+                    <UpgradeOverlayText>
+                      You have matched brands waiting. Upgrade to contact them all.
+                    </UpgradeOverlayText>
+                    <UpgradeOverlayBtn
+                      onClick={handleUpgrade}
+                      disabled={upgrading}
+                    >
+                      {upgrading ? 'Processing...' : 'Upgrade to Pro for $12/month'}
+                    </UpgradeOverlayBtn>
+                    <UpgradeOverlayNote>One gifted package covers your Pro for the year.</UpgradeOverlayNote>
+                  </UpgradeOverlayCard>
+                </UpgradeOverlay>
               )}
             </>
           )}
@@ -2191,6 +2183,82 @@ const SuccessSecondaryBtn = styled.button`
   border: none;
   cursor: pointer;
   text-align: center;
+`;
+
+// ── Upgrade overlay ────────────────────────────────────────────
+
+const UpgradeOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 20;
+`;
+
+const UpgradeOverlayCard = styled.div`
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+`;
+
+const UpgradeOverlayClose = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #9CA3AF;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  &:hover { color: #111827; }
+`;
+
+const UpgradeOverlayTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+`;
+
+const UpgradeOverlayText = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0 0 20px;
+  line-height: 1.5;
+`;
+
+const UpgradeOverlayBtn = styled.button`
+  width: 100%;
+  padding: 14px 20px;
+  background: #0F0F0F;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const UpgradeOverlayNote = styled.p`
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #9CA3AF;
 `;
 
 export default AIPitchModal;

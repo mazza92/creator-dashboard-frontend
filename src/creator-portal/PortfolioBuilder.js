@@ -53,7 +53,7 @@ const formatNumber = (n) => {
 };
 
 // ── Component ──────────────────────────────────────────────────
-const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
+const PortfolioBuilder = ({ currentUser }) => {
   const [view, setView]           = useState('dashboard'); // dashboard | add | guide
   const [step, setStep]           = useState(1);
   const [posts, setPosts]         = useState([]);
@@ -66,6 +66,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState(null);
   const [showPublishNudge, setShowPublishNudge] = useState(false);
+  const [subscriptionTier, setSubscriptionTier] = useState('free');
 
   // Step form state
   const [postUrl, setPostUrl]       = useState('');
@@ -90,7 +91,18 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
     fetchPosts();
     fetchKitViews();
     fetchKitSettings();
+    fetchSubscriptionStatus();
   }, []);
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const res = await apiClient.get('/api/subscription/status');
+      setSubscriptionTier(res.data.tier || 'free');
+    } catch (e) {
+      // Default to free if error
+      setSubscriptionTier('free');
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -337,29 +349,36 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
         </PublishNudgeBanner>
       )}
 
-      {/* Kit view stats - Pro feature */}
-      {isPro && kitViews.views_this_week > 0 && (
-        <ViewsCard>
-          <ViewsLeft>
-            <ViewsNum>{kitViews.views_this_week}</ViewsNum>
-            <ViewsLabel>kit views this week</ViewsLabel>
-          </ViewsLeft>
-          <ViewsList>
-            {kitViews.recent.slice(0, 2).map((v, i) => (
-              <ViewRow key={v.id}>
-                <ViewDot style={{ background: i === 0 ? '#10B981' : '#7C3AED' }} />
-                <ViewText>
-                  {v.referrer
-                    ? `Via ${new URL(v.referrer).hostname.replace('www.', '')}`
-                    : 'Direct visit'}
-                  <ViewTime>
-                    {Math.round((Date.now() - new Date(v.viewed_at)) / 3600000)}h ago
-                  </ViewTime>
-                </ViewText>
-              </ViewRow>
-            ))}
-          </ViewsList>
-        </ViewsCard>
+      {/* Kit Analytics - Pro feature */}
+      {isPro && (kitViews.views_this_week > 0 || kitViews.portfolio_clicks > 0) && (
+        <StatsCard>
+          <StatsPrimary>
+            <StatsNum>{kitViews.views_this_week || 0}</StatsNum>
+            <StatsLabel>kit views this week</StatsLabel>
+          </StatsPrimary>
+          <StatsGrid>
+            <StatItem>
+              <StatIcon>📂</StatIcon>
+              <StatValue>{kitViews.portfolio_clicks || 0}</StatValue>
+              <StatName>Portfolio clicks</StatName>
+            </StatItem>
+            <StatItem>
+              <StatIcon>🔗</StatIcon>
+              <StatValue>{kitViews.share_clicks || 0}</StatValue>
+              <StatName>Share clicks</StatName>
+            </StatItem>
+            <StatItem>
+              <StatIcon>📱</StatIcon>
+              <StatValue>{kitViews.social_clicks || 0}</StatValue>
+              <StatName>Social clicks</StatName>
+            </StatItem>
+            <StatItem>
+              <StatIcon>✉️</StatIcon>
+              <StatValue>{kitViews.contact_clicks || 0}</StatValue>
+              <StatName>Contact clicks</StatName>
+            </StatItem>
+          </StatsGrid>
+        </StatsCard>
       )}
 
       {/* Kit views teaser for free users */}
@@ -381,7 +400,7 @@ const PortfolioBuilder = ({ currentUser, subscriptionTier }) => {
         <EmptyState>
           <EmptyTitle>Build your portfolio</EmptyTitle>
           <EmptyBody>
-            Add posts you have created — branded or organic. Each one builds your case for a collab.
+            Add posts you have created, branded or organic. Each one builds your case for a collab.
           </EmptyBody>
           <EmptyActions>
             <PrimaryBtn onClick={() => setView('add')}>Paste a post URL</PrimaryBtn>
@@ -636,7 +655,7 @@ const AddPostView = ({
         {step === 2 && (
           <StepPanel key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <StepQ>Brand and collab type</StepQ>
-            <StepSub>No brand? Select "My own content" — original posts count too.</StepSub>
+            <StepSub>No brand? Select "My own content". Original posts count too.</StepSub>
 
             {/* Show auto-detected thumbnail preview */}
             {thumbnailUrl && (
@@ -773,7 +792,7 @@ const GuideView = ({ niche, onBack, onDone }) => {
       </GuideSection>
 
       <GuideSection>
-        <GuideSectionLabel>What to film — 3 shots</GuideSectionLabel>
+        <GuideSectionLabel>What to film (3 shots)</GuideSectionLabel>
         {[
           { n: 1, title: 'The before', body: 'Show the product or your starting point. Natural light. Keep it real. 4 seconds.' },
           { n: 2, title: 'The use', body: 'Apply, wear, or use it. No need to be perfect. The authenticity is the point. 8 seconds.' },
@@ -798,7 +817,7 @@ const GuideView = ({ niche, onBack, onDone }) => {
       </GuideSection>
 
       <GuideSection style={{ paddingBottom: 32 }}>
-        <PrimaryBtn onClick={onDone}>I filmed it — add to my kit</PrimaryBtn>
+        <PrimaryBtn onClick={onDone}>I filmed it, add to my kit</PrimaryBtn>
       </GuideSection>
     </Container>
   );
@@ -1026,66 +1045,71 @@ const ViewKitBtn = styled.button`
   }
 `;
 
-const ViewsCard = styled.div`
+// Kit Analytics Card - Pro feature
+const StatsCard = styled.div`
   margin: 0 16px 16px;
-  background: #fff;
+  background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
   border-radius: 16px;
-  padding: 14px;
-  border: 1.5px solid #E5E7EB;
+  padding: 16px;
+  border: 1px solid #E5E7EB;
+`;
+
+const StatsPrimary = styled.div`
   display: flex;
-  align-items: center;
-  gap: 16px;
-  @media (max-width: 480px) { flex-direction: column; align-items: flex-start; gap: 10px; }
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #E5E7EB;
 `;
 
-const ViewsLeft = styled.div`
-  flex-shrink: 0;
-`;
-
-const ViewsNum = styled.div`
-  font-size: 28px;
+const StatsNum = styled.div`
+  font-size: 32px;
   font-weight: 900;
   color: #0F0F0F;
   line-height: 1;
 `;
 
-const ViewsLabel = styled.div`
-  font-size: 11px;
-  color: #9CA3AF;
-  margin-top: 3px;
+const StatsLabel = styled.div`
+  font-size: 13px;
+  color: #6B7280;
+  font-weight: 500;
 `;
 
-const ViewsList = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const ViewRow = styled.div`
-  display: flex;
-  align-items: center;
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 `;
 
-const ViewDot = styled.div`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+const StatItem = styled.div`
+  text-align: center;
+  padding: 10px 6px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #F3F4F6;
 `;
 
-const ViewText = styled.div`
-  font-size: 12px;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+const StatIcon = styled.div`
+  font-size: 16px;
+  margin-bottom: 4px;
 `;
 
-const ViewTime = styled.span`
+const StatValue = styled.div`
+  font-size: 18px;
+  font-weight: 800;
+  color: #0F0F0F;
+  line-height: 1.2;
+`;
+
+const StatName = styled.div`
+  font-size: 10px;
   color: #9CA3AF;
+  font-weight: 500;
+  margin-top: 2px;
 `;
 
 const ViewsTeaserCard = styled.div`

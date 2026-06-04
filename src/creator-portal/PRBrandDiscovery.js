@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import PROnboarding from '../components/PROnboarding';
 import UpgradeModal from './UpgradeModal';
 import AIPitchModal from './AIPitchModal';
@@ -866,6 +867,7 @@ const EmptyState = styled.div`
 `;
 
 const PRBrandDiscovery = () => {
+  const navigate = useNavigate();
   const [brands, setBrands] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -883,6 +885,10 @@ const PRBrandDiscovery = () => {
   const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
   const [showWelcomeCard, setShowWelcomeCard] = useState(false);
   const [brandMatchCount, setBrandMatchCount] = useState(0);
+  // Kit nudge interstitial state
+  const [kitNudgeBrand, setKitNudgeBrand] = useState(null);
+  const [showKitNudge, setShowKitNudge] = useState(false);
+  const [creatorProfile, setCreatorProfile] = useState(null);
 
   // Using centralized api client from config/api.js
 
@@ -903,8 +909,19 @@ const PRBrandDiscovery = () => {
     }
     fetchBrands();
     fetchSubscriptionStatus();
+    fetchCreatorProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch creator profile to check kit status
+  const fetchCreatorProfile = async () => {
+    try {
+      const response = await api.get('/profile');
+      setCreatorProfile(response.data);
+    } catch (error) {
+      // Silently fail
+    }
+  };
 
   // Fetch more brands when nearing the end of current batch
   useEffect(() => {
@@ -1029,7 +1046,7 @@ const PRBrandDiscovery = () => {
     setCurrentIndex(prev => prev + 1);
   };
 
-  // Open AI Pitch Modal - the main action
+  // Open AI Pitch Modal - the main action (with kit nudge interstitial)
   const handlePitchBrand = () => {
     if (currentIndex >= brands.length) return;
     const brand = brands[currentIndex];
@@ -1041,21 +1058,34 @@ const PRBrandDiscovery = () => {
       return;
     }
 
-    // Check pitch limits for free users
-    const FREE_PITCH_LIMIT = 3;
-    if (subscriptionTier === 'free' && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
-      setUpgradeInfo({
-        currentCount: pitchesSentThisWeek,
-        limit: FREE_PITCH_LIMIT,
-        feature: 'pitches'
-      });
-      setShowUpgradeModal(true);
+    // Kit nudge interstitial - show once if creator has no kit
+    const hasSeenNudge = localStorage.getItem('nc_kit_nudge_seen');
+    const hasKit = creatorProfile?.has_media_kit ||
+                   (creatorProfile?.portfolio_post_count && creatorProfile.portfolio_post_count > 0);
+
+    if (!hasKit && !hasSeenNudge) {
+      localStorage.setItem('nc_kit_nudge_seen', 'true');
+      setKitNudgeBrand(brand);
+      setShowKitNudge(true);
       return;
     }
 
     // Open the AI pitch modal
     setSelectedBrandForPitch(brand);
     setShowPitchModal(true);
+  };
+
+  const handleKitNudgeSkip = () => {
+    setShowKitNudge(false);
+    setSelectedBrandForPitch(kitNudgeBrand);
+    setShowPitchModal(true);
+    setKitNudgeBrand(null);
+  };
+
+  const handleKitNudgeBuild = () => {
+    setShowKitNudge(false);
+    setKitNudgeBrand(null);
+    navigate('/creator/dashboard/my-kit');
   };
 
   // Called when user sends a pitch from the modal
@@ -1340,8 +1370,124 @@ const PRBrandDiscovery = () => {
         limit={upgradeInfo.limit}
         feature={upgradeInfo.feature}
       />
+
+      {/* Kit Nudge Interstitial */}
+      <AnimatePresence>
+        {showKitNudge && (
+          <KitNudgeOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleKitNudgeSkip}
+          >
+            <KitNudgeCard
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <KitNudgeStat>3×</KitNudgeStat>
+              <KitNudgeTitle>
+                Pitches with a media kit get 3x more replies
+              </KitNudgeTitle>
+              <KitNudgeSub>
+                Build yours in 2 minutes before pitching{' '}
+                {kitNudgeBrand?.brand_name || 'this brand'}.
+              </KitNudgeSub>
+              <KitNudgePrimary onClick={handleKitNudgeBuild}>
+                Build my kit
+              </KitNudgePrimary>
+              <KitNudgeSecondary onClick={handleKitNudgeSkip}>
+                Pitch without kit
+              </KitNudgeSecondary>
+            </KitNudgeCard>
+          </KitNudgeOverlay>
+        )}
+      </AnimatePresence>
     </Container>
   );
 };
+
+// Kit nudge interstitial styled components
+const KitNudgeOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 9999;
+  padding: 0 0 env(safe-area-inset-bottom);
+
+  @media (min-width: 600px) {
+    align-items: center;
+  }
+`;
+
+const KitNudgeCard = styled(motion.div)`
+  background: white;
+  border-radius: 24px 24px 0 0;
+  padding: 32px 24px 40px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+
+  @media (min-width: 600px) {
+    border-radius: 24px;
+    padding: 40px 32px;
+  }
+`;
+
+const KitNudgeStat = styled.div`
+  font-size: 48px;
+  font-weight: 800;
+  color: #0F0F0F;
+  line-height: 1;
+  margin-bottom: 12px;
+`;
+
+const KitNudgeTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin: 0 0 8px;
+  line-height: 1.3;
+`;
+
+const KitNudgeSub = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0 0 28px;
+  line-height: 1.5;
+`;
+
+const KitNudgePrimary = styled.button`
+  width: 100%;
+  padding: 16px;
+  background: #0F0F0F;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.85; }
+`;
+
+const KitNudgeSecondary = styled.button`
+  width: 100%;
+  padding: 14px;
+  background: none;
+  color: #6B7280;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+  &:hover { color: #0F0F0F; }
+`;
 
 export default PRBrandDiscovery;

@@ -445,7 +445,7 @@ export default function Register() {
           </Headline>
 
           <Subline>
-            You know how to create content. We handle everything else — finding brands,
+            You know how to create content. We handle everything else: finding brands,
             writing the perfect pitch, tracking your outreach, reminding you to follow up.
           </Subline>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight } from 'lucide-react';
+import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight, Eye, FileText, ArrowRight } from 'lucide-react';
 import { message } from 'antd';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
@@ -44,6 +44,15 @@ const ForYou = () => {
   const [followerCount, setFollowerCount] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
 
+  // Kit nudge interstitial state
+  const [kitNudgeBrand, setKitNudgeBrand] = useState(null);
+  const [showKitNudge, setShowKitNudge] = useState(false);
+  const [creatorProfile, setCreatorProfile] = useState(null);
+
+  // Kit views notification state
+  const [kitViews, setKitViews] = useState({ views_this_week: 0, recent: [] });
+  const [showKitViewsBanner, setShowKitViewsBanner] = useState(true);
+
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
 
@@ -51,7 +60,31 @@ const ForYou = () => {
     fetchData();
     fetchSubscriptionStatus();
     fetchSavedBrands();
+    fetchCreatorProfile();
+    fetchKitViews();
   }, []);
+
+  const fetchKitViews = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/portfolio/views`, {
+        withCredentials: true
+      });
+      if (response.data) {
+        setKitViews(response.data);
+      }
+    } catch (error) {
+      // Silently fail - kit views is an optional feature
+    }
+  };
+
+  const fetchCreatorProfile = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/profile`, { withCredentials: true });
+      setCreatorProfile(response.data);
+    } catch (error) {
+      // Silently fail
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -113,12 +146,6 @@ const ForYou = () => {
   };
 
   const handlePitchNow = useCallback(async (brand) => {
-    if (atLimit) {
-      setUpgradeReason('limit');
-      setShowUpgrade(true);
-      return;
-    }
-
     // Auto-save to pipeline if not already saved
     if (!savedIds.has(brand.id)) {
       try {
@@ -133,8 +160,32 @@ const ForYou = () => {
       }
     }
 
+    // Kit nudge interstitial - show once if creator has no kit
+    const hasSeenNudge = localStorage.getItem('nc_kit_nudge_seen');
+    const hasKit = creatorProfile?.has_media_kit ||
+                   (creatorProfile?.portfolio_post_count && creatorProfile.portfolio_post_count > 0);
+
+    if (!hasKit && !hasSeenNudge) {
+      localStorage.setItem('nc_kit_nudge_seen', 'true');
+      setKitNudgeBrand(brand);
+      setShowKitNudge(true);
+      return;
+    }
+
     setPitchingBrand(brand);
-  }, [atLimit, savedIds]);
+  }, [atLimit, savedIds, creatorProfile]);
+
+  const handleKitNudgeSkip = () => {
+    setShowKitNudge(false);
+    setPitchingBrand(kitNudgeBrand);
+    setKitNudgeBrand(null);
+  };
+
+  const handleKitNudgeBuild = () => {
+    setShowKitNudge(false);
+    setKitNudgeBrand(null);
+    navigate('/creator/dashboard/my-kit');
+  };
 
   const handlePitchSent = useCallback(async (brandArg, context = {}) => {
     const contactedBrand = brandArg || pitchingBrand;
@@ -220,12 +271,57 @@ const ForYou = () => {
           )}
         </PageHeader>
 
+        {/* Kit Views Banner - LinkedIn style notification */}
+        {showKitViewsBanner && kitViews.views_this_week > 0 && (
+          <KitViewsBanner>
+            <KitViewsIcon>
+              <Eye size={18} />
+            </KitViewsIcon>
+            <KitViewsContent>
+              <KitViewsTitle>
+                <strong>{kitViews.views_this_week}</strong> {kitViews.views_this_week === 1 ? 'person' : 'people'} viewed your kit this week
+              </KitViewsTitle>
+              {isPro && kitViews.recent?.length > 0 && kitViews.recent[0].referrer && (
+                <KitViewsSub>
+                  Latest from: {new URL(kitViews.recent[0].referrer).hostname.replace('www.', '')}
+                </KitViewsSub>
+              )}
+              {!isPro && (
+                <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
+                  Upgrade to see who's checking you out →
+                </KitViewsUpgrade>
+              )}
+            </KitViewsContent>
+            <KitViewsClose onClick={() => setShowKitViewsBanner(false)}>×</KitViewsClose>
+          </KitViewsBanner>
+        )}
+
+        {/* Kit Builder Prompt - shown when user hasn't built their kit yet */}
+        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && (
+          <KitBuilderCard>
+            <KitBuilderLeft>
+              <KitBuilderStat>3×</KitBuilderStat>
+              <KitBuilderContent>
+                <KitBuilderTitle>Build your media kit to get 3× more replies</KitBuilderTitle>
+                <KitBuilderDesc>
+                  Brands want to see your content before they respond. Takes 2 minutes.
+                </KitBuilderDesc>
+              </KitBuilderContent>
+            </KitBuilderLeft>
+            <KitBuilderBtn onClick={() => navigate('/creator/dashboard/my-kit')}>
+              <FileText size={16} />
+              Build my kit
+              <ArrowRight size={14} />
+            </KitBuilderBtn>
+          </KitBuilderCard>
+        )}
+
         {/* Profile Prompt - shown when no niche data yet */}
         {!data?.has_profile && (
           <ProfilePromptCard>
             <PromptIcon>🎯</PromptIcon>
             <PromptTitle>Tell us about your niche</PromptTitle>
-            <PromptSub>Takes 10 seconds — unlocks brands matched specifically to you</PromptSub>
+            <PromptSub>Takes 10 seconds and unlocks brands matched specifically to you</PromptSub>
 
             <NicheGrid>
               {NICHE_OPTIONS.map(n => (
@@ -250,14 +346,14 @@ const ForYou = () => {
           </ProfilePromptCard>
         )}
 
-        {/* Compact Quota Strip for Free Users */}
-        {!isPro && (
-          <QuotaCompact>
-            <span><Mail size={14} /> {FREE_PITCH_LIMIT - pitchesSentThisMonth} free contacts left this month</span>
-            <UpgradeLink onClick={() => { setUpgradeReason('quota'); setShowUpgrade(true); }}>
-              Upgrade for unlimited →
-            </UpgradeLink>
-          </QuotaCompact>
+        {/* Pull-framing bar for Free Users — focus on opportunity, not limits */}
+        {!isPro && data?.matched?.length > 0 && (
+          <PullFramingBar onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
+            <PullFramingText>
+              You have <strong>{data.matched.length} matched brands</strong>. Upgrade to contact them all
+            </PullFramingText>
+            <PullFramingCTA>$12/mo →</PullFramingCTA>
+          </PullFramingBar>
         )}
 
         {/* Refresh Hint */}
@@ -299,8 +395,8 @@ const ForYou = () => {
           ) : (
             /* Free users: 2 visible cards + locked cards with visible stats */
             <>
-              {/* Section header for unlocked */}
-              <MatchSectionLabel>🔓 You can pitch ({Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisMonth)} left)</MatchSectionLabel>
+              {/* Section header for unlocked — no quota info, just category */}
+              <MatchSectionLabel>Your top matches</MatchSectionLabel>
 
               {/* First 2 visible cards */}
               <CardGrid $cols={2} style={{ marginBottom: 20 }}>
@@ -324,7 +420,7 @@ const ForYou = () => {
                 <>
                   <MatchSectionLabel>🔒 Pro matches ({(data?.matched?.length || 0) - 2} brands)</MatchSectionLabel>
 
-                  {/* Locked match cards - show visible stats, hidden names */}
+                  {/* Locked match cards - show category, collab type, stats to create desire */}
                   <LockedMatchList>
                     {data?.matched?.slice(2, 5).map((brand, i) => (
                       <LockedMatchCard key={brand.id || i}>
@@ -333,12 +429,20 @@ const ForYou = () => {
                         </LockedMatchLogo>
                         <LockedMatchInfo>
                           <LockedMatchNameBar />
-                          <LockedMatchMetaBar />
+                          <LockedMatchMeta>
+                            {brand.category && <span>{categoryLabel(brand.category)}</span>}
+                            {brand.collab_types && <span>· Gifted</span>}
+                          </LockedMatchMeta>
                         </LockedMatchInfo>
                         <LockedMatchRight>
-                          {brand.response_rate > 0 && (
-                            <LockedVisibleStat>🔥 {brand.response_rate}% reply</LockedVisibleStat>
-                          )}
+                          <LockedMatchStats>
+                            {brand.response_rate > 0 && (
+                              <LockedVisibleStat>🔥 {brand.response_rate}% reply</LockedVisibleStat>
+                            )}
+                            {brand.avg_response_days && (
+                              <LockedVisibleStat>~{brand.avg_response_days}d avg</LockedVisibleStat>
+                            )}
+                          </LockedMatchStats>
                           <LockedIcon>🔒</LockedIcon>
                         </LockedMatchRight>
                       </LockedMatchCard>
@@ -349,63 +453,81 @@ const ForYou = () => {
                     <MoreLockedText>+{(data?.matched?.length || 0) - 5} more matched brands</MoreLockedText>
                   )}
 
-                  {/* Upgrade CTA */}
-                  <UnlockBanner onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
-                    <UnlockBannerText>
-                      <UnlockBannerTitle>Unlock {(data?.matched?.length || 0) - 2} matched brands</UnlockBannerTitle>
-                      <UnlockBannerSub>Brands ready to work with creators your size</UnlockBannerSub>
-                    </UnlockBannerText>
-                    <UnlockBannerBtn>$12/mo →</UnlockBannerBtn>
-                  </UnlockBanner>
+                  {/* Upgrade CTA — use specific data from top locked match */}
+                  {(() => {
+                    const topLocked = data?.matched?.[2];
+                    const topRate = topLocked?.response_rate || 40;
+                    return (
+                      <UnlockBanner onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
+                        <UnlockBannerText>
+                          <UnlockBannerTitle>Your top locked match replies to {topRate}% of pitches</UnlockBannerTitle>
+                          <UnlockBannerSub>That's {Math.round(topRate / 10)}x the industry average. Upgrade to contact them.</UnlockBannerSub>
+                        </UnlockBannerText>
+                        <UnlockBannerBtn>$12/mo →</UnlockBannerBtn>
+                      </UnlockBanner>
+                    );
+                  })()}
                 </>
               )}
             </>
           )}
         </Section>
 
-        {/* Section 2: Most Contacted Brands */}
-        <Section>
-          <SectionHeader>
-            <SectionLeft>
-              <SectionIcon $bg="#FFF7ED">🔥</SectionIcon>
-              <SectionTitleWrap>
-                <SectionTitle>Most contacted brands</SectionTitle>
-                <SectionDesc>Top brands creators are pitching right now</SectionDesc>
-              </SectionTitleWrap>
-            </SectionLeft>
-          </SectionHeader>
+        {/* Trending in your niche — show hot brands (niche-relevant when possible) */}
+        {data?.hot?.length > 0 && selectedNiches.length > 0 && (
+          <Section>
+            <SectionHeader>
+              <SectionLeft>
+                <SectionIcon $bg="#FFF7ED">🔥</SectionIcon>
+                <SectionTitleWrap>
+                  <SectionTitle>Trending in {CATEGORY_LABELS[selectedNiches[0]] || selectedNiches[0]}</SectionTitle>
+                  <SectionDesc>Popular with creators in your niche this week</SectionDesc>
+                </SectionTitleWrap>
+              </SectionLeft>
+            </SectionHeader>
 
-          <CardGrid $cols={3}>
-            {data?.hot?.map(brand => (
-              <BrandCard
-                key={brand.id}
-                brand={brand}
-                isPro={isPro}
-                hasPitched={pitchedIds.has(brand.id)}
-                isSaved={savedIds.has(brand.id)}
-                atLimit={atLimit}
-                onPitch={() => handlePitchNow(brand)}
-                onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
-                showMomentum
-              />
-            ))}
-          </CardGrid>
-        </Section>
+            <CardGrid $cols={3}>
+              {/* Show niche-relevant brands first, fall back to all hot brands */}
+              {(() => {
+                const nicheFiltered = data.hot.filter(b =>
+                  selectedNiches.some(n =>
+                    b.category?.toLowerCase().includes(n.toLowerCase()) ||
+                    n.toLowerCase().includes(b.category?.toLowerCase() || '')
+                  )
+                );
+                const brandsToShow = nicheFiltered.length >= 3 ? nicheFiltered : data.hot;
+                return brandsToShow.slice(0, 3).map(brand => (
+                  <BrandCard
+                    key={brand.id}
+                    brand={brand}
+                    isPro={isPro}
+                    hasPitched={pitchedIds.has(brand.id)}
+                    isSaved={savedIds.has(brand.id)}
+                    atLimit={atLimit}
+                    onPitch={() => handlePitchNow(brand)}
+                    onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
+                    showMomentum
+                  />
+                ));
+              })()}
+            </CardGrid>
+          </Section>
+        )}
 
-        {/* Section 3: Right Season */}
+        {/* Right Season — seasonal picks (limited to 4) */}
         <Section>
           <SectionHeader>
             <SectionLeft>
               <SectionIcon $bg="#ECFDF5">📅</SectionIcon>
               <SectionTitleWrap>
-                <SectionTitle>Right Season — {data?.seasonal_month}</SectionTitle>
+                <SectionTitle>Right Season: {data?.seasonal_month}</SectionTitle>
                 <SectionDesc>{data?.seasonal_reason}</SectionDesc>
               </SectionTitleWrap>
             </SectionLeft>
           </SectionHeader>
 
           <SeasonalGrid>
-            {data?.seasonal?.map(brand => (
+            {data?.seasonal?.slice(0, 4).map(brand => (
               <SeasonalCard key={brand.id}>
                 <SeasonalLogoBox>
                   {brand.logo ? (
@@ -416,7 +538,7 @@ const ForYou = () => {
                 </SeasonalLogoBox>
                 <SeasonalInfo>
                   <SeasonalName>{brand.name}</SeasonalName>
-                  <SeasonalReason>📅 Seasonal pick — {data?.seasonal_reason?.split('—')[0]}</SeasonalReason>
+                  <SeasonalReason>📅 Seasonal pick: {data?.seasonal_reason?.split('—')[0]}</SeasonalReason>
                   <SeasonalStats>
                     {brand.response_rate && (
                       <div>
@@ -463,8 +585,30 @@ const ForYou = () => {
           onClose={() => setShowUpgrade(false)}
           currentCount={pitchesSentThisMonth}
           limit={FREE_PITCH_LIMIT}
-          feature={upgradeReason === 'matched' ? 'personalized matches' : 'brand contacts'}
+          feature={upgradeReason === 'matched' ? 'for_you' : 'limit_reached'}
         />
+      )}
+
+      {/* Kit Nudge Interstitial */}
+      {showKitNudge && (
+        <KitNudgeOverlay onClick={handleKitNudgeSkip}>
+          <KitNudgeCard onClick={(e) => e.stopPropagation()}>
+            <KitNudgeStat>3×</KitNudgeStat>
+            <KitNudgeTitle>
+              Pitches with a media kit get 3x more replies
+            </KitNudgeTitle>
+            <KitNudgeSub>
+              Build yours in 2 minutes before pitching{' '}
+              {kitNudgeBrand?.name || kitNudgeBrand?.brand_name || 'this brand'}.
+            </KitNudgeSub>
+            <KitNudgePrimary onClick={handleKitNudgeBuild}>
+              Build my kit
+            </KitNudgePrimary>
+            <KitNudgeSecondary onClick={handleKitNudgeSkip}>
+              Pitch without kit
+            </KitNudgeSecondary>
+          </KitNudgeCard>
+        </KitNudgeOverlay>
       )}
     </PageWrap>
   );
@@ -486,7 +630,7 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, atLimit, onPitch, onUpgr
           <LogoBadge $type={badge.type}>{badge.label}</LogoBadge>
         )}
         {matchScore && (
-          <MatchBadge>{matchScore}% match</MatchBadge>
+          <MatchBadge>{Math.round(matchScore)}% match</MatchBadge>
         )}
         {brand.logo ? (
           <LogoImg src={brand.logo} alt={brand.name} onError={(e) => { e.target.style.display = 'none'; }} />
@@ -1415,12 +1559,28 @@ const LockedMatchMetaBar = styled.div`
   border-radius: 5px;
 `;
 
+const LockedMatchMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 500;
+`;
+
 const LockedMatchRight = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
   flex-shrink: 0;
+`;
+
+const LockedMatchStats = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 `;
 
 const LockedVisibleStat = styled.div`
@@ -1563,43 +1723,51 @@ const SaveProfileBtn = styled.button`
   }
 `;
 
-// Compact Quota Strip
-const QuotaCompact = styled.div`
+// Pull-framing bar — opportunity-focused, not limit-focused
+const PullFramingBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border: 1px solid ${tokens.border};
-  border-radius: 12px;
-  padding: 10px 16px;
+  background: linear-gradient(135deg, #7C3AED 0%, #E11D48 100%);
+  border-radius: 14px;
+  padding: 14px 18px;
   margin-bottom: 24px;
-  font-size: 13px;
-  color: ${tokens.textSecondary};
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.25);
+  }
 
   @media (max-width: 640px) {
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     text-align: center;
-    padding: 12px 14px;
-  }
-
-  span {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    padding: 16px;
   }
 `;
 
-const UpgradeLink = styled.button`
-  background: none;
-  border: none;
-  color: ${tokens.primary};
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 13px;
-  font-family: inherit;
+const PullFramingText = styled.div`
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 500;
 
-  &:hover { text-decoration: underline; }
+  strong {
+    color: #fff;
+    font-weight: 700;
+  }
+`;
+
+const PullFramingCTA = styled.div`
+  background: #fff;
+  color: #7C3AED;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 const RefreshHint = styled.div`
@@ -1627,6 +1795,285 @@ const RefreshDot = styled.span`
   @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
+  }
+`;
+
+// Kit nudge interstitial styled components
+const KitNudgeOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 9999;
+  padding: 0 0 env(safe-area-inset-bottom);
+
+  @media (min-width: 600px) {
+    align-items: center;
+  }
+`;
+
+const KitNudgeCard = styled.div`
+  background: white;
+  border-radius: 24px 24px 0 0;
+  padding: 32px 24px 40px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+
+  @media (min-width: 600px) {
+    border-radius: 24px;
+    padding: 40px 32px;
+  }
+`;
+
+const KitNudgeStat = styled.div`
+  font-size: 48px;
+  font-weight: 800;
+  color: #0F0F0F;
+  line-height: 1;
+  margin-bottom: 12px;
+`;
+
+const KitNudgeTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin: 0 0 8px;
+  line-height: 1.3;
+`;
+
+const KitNudgeSub = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0 0 28px;
+  line-height: 1.5;
+`;
+
+const KitNudgePrimary = styled.button`
+  width: 100%;
+  padding: 16px;
+  background: #0F0F0F;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-family: inherit;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.85; }
+`;
+
+const KitNudgeSecondary = styled.button`
+  width: 100%;
+  padding: 14px;
+  background: none;
+  color: #6B7280;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s;
+  &:hover { color: #0F0F0F; }
+`;
+
+// Kit Views Banner - LinkedIn style notification
+const KitViewsBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border: 1px solid #C7D2FE;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  position: relative;
+
+  @media (max-width: 640px) {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+`;
+
+const KitViewsIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6366F1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 36px;
+    height: 36px;
+  }
+`;
+
+const KitViewsContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const KitViewsTitle = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: #1F2937;
+
+  strong {
+    font-weight: 700;
+    color: #4F46E5;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 13px;
+  }
+`;
+
+const KitViewsSub = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 2px;
+`;
+
+const KitViewsUpgrade = styled.button`
+  font-size: 12px;
+  font-weight: 600;
+  color: #4F46E5;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 4px;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const KitViewsClose = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #9CA3AF;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #6B7280;
+  }
+`;
+
+// Kit Builder Prompt - for users without a media kit
+const KitBuilderCard = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1px solid #F59E0B;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+
+  @media (max-width: 700px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 20px;
+  }
+`;
+
+const KitBuilderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+
+  @media (max-width: 700px) {
+    gap: 14px;
+  }
+`;
+
+const KitBuilderStat = styled.div`
+  font-size: 36px;
+  font-weight: 800;
+  color: #92400E;
+  line-height: 1;
+  flex-shrink: 0;
+
+  @media (max-width: 700px) {
+    font-size: 32px;
+  }
+`;
+
+const KitBuilderContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const KitBuilderTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 700;
+  color: #78350F;
+  margin: 0 0 4px;
+  line-height: 1.3;
+
+  @media (max-width: 700px) {
+    font-size: 15px;
+  }
+`;
+
+const KitBuilderDesc = styled.p`
+  font-size: 13px;
+  color: #92400E;
+  margin: 0;
+  line-height: 1.4;
+`;
+
+const KitBuilderBtn = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0F0F0F;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+
+  &:hover {
+    background: #1F1F1F;
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 700px) {
+    justify-content: center;
+    padding: 14px 24px;
   }
 `;
 

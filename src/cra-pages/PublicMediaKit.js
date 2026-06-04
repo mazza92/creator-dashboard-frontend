@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
-import { FaInstagram, FaTiktok, FaYoutube, FaShare, FaEye, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
+import { FaInstagram, FaTiktok, FaYoutube, FaShare, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'https://api.newcollab.co';
 
@@ -76,8 +76,19 @@ const PublicMediaKit = ({ username }) => {
       .finally(() => setLoading(false));
   }, [username]);
 
+  // Track interactions for analytics
+  const trackInteraction = (type, target = '') => {
+    if (!kit?.creator_id) return;
+    axios.post(`${API_BASE}/api/portfolio/interaction`, {
+      creator_id: kit.creator_id,
+      interaction_type: type,
+      target_value: target
+    }).catch(() => {}); // Fire and forget
+  };
+
   const handleShare = async () => {
     const url = `https://newcollab.co/kit/${username}`;
+    trackInteraction('share_click');
     try {
       if (navigator.share) {
         await navigator.share({ title: `${kit.first_name || kit.username}'s Media Kit`, url });
@@ -89,6 +100,18 @@ const PublicMediaKit = ({ username }) => {
     } catch (e) {
       // User cancelled or error
     }
+  };
+
+  const handleSocialClick = (platform) => {
+    trackInteraction('social_click', platform);
+  };
+
+  const handlePortfolioClick = (postId) => {
+    trackInteraction('portfolio_click', String(postId));
+  };
+
+  const handleContactClick = () => {
+    trackInteraction('contact_click');
   };
 
   if (loading) return <KitPage><KitLoading>Loading...</KitLoading></KitPage>;
@@ -138,13 +161,7 @@ const PublicMediaKit = ({ username }) => {
         {/* Header */}
         <KitHeader>
           <KitHeaderTop>
-            {kit.is_pro && kit.kit_views != null && (
-              <KitViewsCounter>
-                <FaEye size={12} style={{ opacity: 0.7 }} />
-                <span>{kit.kit_views} KIT VIEWS THIS WEEK</span>
-              </KitViewsCounter>
-            )}
-            {!kit.is_pro && <div />}
+            <div />
             <KitShareBtn onClick={handleShare}>
               <FaShare size={12} />
               <span>{copied ? 'Copied!' : 'Share kit'}</span>
@@ -171,27 +188,27 @@ const PublicMediaKit = ({ username }) => {
               {kit.socials && Object.keys(kit.socials).length > 0 && (
                 <KitSocialsRow>
                   {kit.socials.instagram && (
-                    <KitSocialLink href={kit.socials.instagram} target="_blank" rel="noopener noreferrer">
+                    <KitSocialLink href={kit.socials.instagram} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('instagram')}>
                       <FaInstagram size={18} />
                     </KitSocialLink>
                   )}
                   {kit.socials.tiktok && (
-                    <KitSocialLink href={kit.socials.tiktok} target="_blank" rel="noopener noreferrer">
+                    <KitSocialLink href={kit.socials.tiktok} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('tiktok')}>
                       <FaTiktok size={16} />
                     </KitSocialLink>
                   )}
                   {kit.socials.youtube && (
-                    <KitSocialLink href={kit.socials.youtube} target="_blank" rel="noopener noreferrer">
+                    <KitSocialLink href={kit.socials.youtube} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('youtube')}>
                       <FaYoutube size={18} />
                     </KitSocialLink>
                   )}
                   {kit.socials.linkedin && (
-                    <KitSocialLink href={kit.socials.linkedin} target="_blank" rel="noopener noreferrer">
+                    <KitSocialLink href={kit.socials.linkedin} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('linkedin')}>
                       <FaLinkedinIn size={16} />
                     </KitSocialLink>
                   )}
                   {kit.socials.twitter && (
-                    <KitSocialLink href={kit.socials.twitter} target="_blank" rel="noopener noreferrer">
+                    <KitSocialLink href={kit.socials.twitter} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('twitter')}>
                       <FaTwitter size={16} />
                     </KitSocialLink>
                   )}
@@ -268,7 +285,7 @@ const PublicMediaKit = ({ username }) => {
                 const collab = COLLAB_COLOR[post.collab_type] || COLLAB_COLOR.own;
                 const isFeatured = post.is_featured || i === 0;
                 return (
-                  <KitPostCard key={post.id} featured={isFeatured} href={post.post_url || undefined} target="_blank" rel="noopener noreferrer" as={post.post_url ? 'a' : 'div'}>
+                  <KitPostCard key={post.id} featured={isFeatured} href={post.post_url || undefined} target="_blank" rel="noopener noreferrer" as={post.post_url ? 'a' : 'div'} onClick={() => handlePortfolioClick(post.id)}>
                     <KitPostImg featured={isFeatured} niche={kit.niches?.[0]?.toLowerCase()} hasThumbnail={!!post.thumbnail_url}>
                       {post.thumbnail_url ? (
                         <KitPostThumb src={post.thumbnail_url} alt={post.brand_name || 'Post'} />
@@ -403,7 +420,7 @@ const PublicMediaKit = ({ username }) => {
             <KitCTATitle>Interested in working together?</KitCTATitle>
             <KitCTASub>Sign up as a brand to connect with {kit.first_name || kit.username}</KitCTASub>
           </KitCTAText>
-          <KitCTABtn href="/register/brand">
+          <KitCTABtn href="/register/brand" onClick={handleContactClick}>
             Get in touch
           </KitCTABtn>
         </KitCTA>
@@ -455,17 +472,6 @@ const KitHeaderTop = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-`;
-
-const KitViewsCounter = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 `;
 
 const KitShareBtn = styled.button`

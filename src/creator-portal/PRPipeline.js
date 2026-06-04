@@ -378,7 +378,7 @@ const PRPipeline = () => {
         title: 'Did you send the follow-up?',
         subtitle: "Nice work staying on top of it! Confirm you sent it so we can track your progress.",
         confirmLabel: '✓ Yes, I sent the follow-up',
-        laterLabel: "Not yet — I'll send later",
+        laterLabel: "Not yet, I'll send later",
         success: "✓ Follow-up sent! Most brands respond within a few days after a nudge.",
         hint: "Follow-ups double your reply rate"
       };
@@ -388,9 +388,9 @@ const PRPipeline = () => {
       return {
         icon: '📋',
         title: 'Did you apply through the form?',
-        subtitle: "We'll remind you to follow up at the right time — but only if you confirm you submitted the form.",
+        subtitle: "We'll remind you to follow up at the right time, but only if you confirm you submitted the form.",
         confirmLabel: '✓ Yes, I applied',
-        laterLabel: "Not yet — I'll apply later",
+        laterLabel: "Not yet, I'll apply later",
         success: "✓ Application tracked! We'll remind you to follow up in 7 days.",
         hint: "You'll get a reminder in 7 days to follow up"
       };
@@ -399,9 +399,9 @@ const PRPipeline = () => {
     return {
       icon: '📧',
       title: 'Did you send the email?',
-      subtitle: "We'll remind you to follow up at the right time — but only if you confirm you sent it.",
+      subtitle: "We'll remind you to follow up at the right time, but only if you confirm you sent it.",
       confirmLabel: '✓ Yes, I sent it',
-      laterLabel: "Not yet — I'll send later",
+      laterLabel: "Not yet, I'll send later",
       success: "✓ Brand contacted! We'll remind you to follow up in 7 days.",
       hint: "You'll get a reminder in 7 days to follow up"
     };
@@ -527,16 +527,15 @@ const PRPipeline = () => {
   };
 
   // Handle PR form link click - show confirmation modal after (if not at limit)
-  const handleFormLinkClick = (item) => {
+  const handleFormLinkClick = (e, item) => {
     // Check if user is at or over pitch limit
     const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
 
     if (atLimit) {
-      // Show upgrade modal instead of confirmation modal
-      setTimeout(() => {
-        setUpgradeReason('limit_reached');
-        setShowUpgradeModal(true);
-      }, 1500);
+      // BLOCK the link from opening - user must upgrade
+      e.preventDefault();
+      setUpgradeReason('limit_reached');
+      setShowUpgradeModal(true);
       return;
     }
 
@@ -816,7 +815,7 @@ const PRPipeline = () => {
               href={item.application_form_url}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => handleFormLinkClick(item)}
+              onClick={(e) => handleFormLinkClick(e, item)}
             >
               🔗 Open PR Form
             </SecondaryBtn>
@@ -1034,7 +1033,7 @@ const PRPipeline = () => {
             </ProgressTrack>
 
             <PrimaryBtn $followup onClick={() => handleFollowup(bestMove)}>
-              ✉ Send Follow-up — Draft Ready
+              ✉ Send Follow-up (Draft Ready)
             </PrimaryBtn>
             <SecondaryBtnGreen onClick={() => setReplyingItem(bestMove)}>
               ✓ They Replied
@@ -1236,7 +1235,7 @@ const PRPipeline = () => {
                   <ReplyEmoji>🤷</ReplyEmoji>
                   <ReplyContent>
                     <ReplyLabel>Not sure yet</ReplyLabel>
-                    <ReplySub>Still in conversation — mark later</ReplySub>
+                    <ReplySub>Still in conversation, mark later</ReplySub>
                   </ReplyContent>
                 </ReplyOption>
               </ReplyOptions>
