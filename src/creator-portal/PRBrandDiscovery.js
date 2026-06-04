@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark } from 'react-icons/fi';
+import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark, FiLock } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -1295,18 +1295,37 @@ const PRBrandDiscovery = () => {
                         Visit website
                       </ContactItem>
                     )}
-                    {/* Show application form link if available */}
-                    {(currentBrand.application_form_url || currentBrand.application_url) && (
-                      <ContactItem
-                        href={currentBrand.application_form_url || currentBrand.application_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#10B981' }}
-                      >
-                        <FiExternalLink size={16} />
-                        Apply via Form
-                      </ContactItem>
-                    )}
+                    {/* Show application form link if available - gated by quota */}
+                    {(currentBrand.application_form_url || currentBrand.application_url) && (() => {
+                      const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+                      const atLimit = !isPro && pitchesSentThisWeek >= 3;
+                      if (atLimit) {
+                        return (
+                          <ContactItem
+                            as="button"
+                            onClick={() => {
+                              setUpgradeInfo({ currentCount: pitchesSentThisWeek, limit: 3, feature: 'limit_reached' });
+                              setShowUpgradeModal(true);
+                            }}
+                            style={{ color: '#9CA3AF', cursor: 'pointer', border: 'none', background: 'none' }}
+                          >
+                            <FiLock size={16} />
+                            Apply via Form
+                          </ContactItem>
+                        );
+                      }
+                      return (
+                        <ContactItem
+                          href={currentBrand.application_form_url || currentBrand.application_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#10B981' }}
+                        >
+                          <FiExternalLink size={16} />
+                          Apply via Form
+                        </ContactItem>
+                      );
+                    })()}
                   </ContactInfo>
                 </CardContent>
               </BrandCard>

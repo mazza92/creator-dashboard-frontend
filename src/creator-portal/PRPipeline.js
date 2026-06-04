@@ -810,15 +810,33 @@ const PRPipeline = () => {
         {/* Secondary actions */}
         <SecondaryRow>
           {isSaved && item.application_form_url && (
-            <SecondaryBtn
-              as="a"
-              href={item.application_form_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => handleFormLinkClick(e, item)}
-            >
-              🔗 Open PR Form
-            </SecondaryBtn>
+            (() => {
+              const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
+              // Don't expose URL in DOM when user is at limit
+              if (atLimit) {
+                return (
+                  <SecondaryBtn
+                    onClick={() => {
+                      setUpgradeReason('limit_reached');
+                      setShowUpgradeModal(true);
+                    }}
+                  >
+                    🔒 Open PR Form
+                  </SecondaryBtn>
+                );
+              }
+              return (
+                <SecondaryBtn
+                  as="a"
+                  href={item.application_form_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => handleFormLinkClick(e, item)}
+                >
+                  🔗 Open PR Form
+                </SecondaryBtn>
+              );
+            })()
           )}
           {/* Only show "They Replied" in secondary row when overdue (primary shows Follow-up) */}
           {isWaiting && isOverdue && (
