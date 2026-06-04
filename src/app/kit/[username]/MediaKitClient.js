@@ -85,8 +85,9 @@ const MediaKitClient = ({ mediaKit, username }) => {
   // Calculate performance metrics from posts
   const reelPosts = posts.filter(p => p.post_type === 'reel' || (p.platform === 'instagram' && p.post_type === 'reel'));
   const tiktokPosts = posts.filter(p => p.platform === 'tiktok');
+  const youtubePosts = posts.filter(p => p.platform === 'youtube');
   const photoPosts = posts.filter(p => p.post_type === 'photo');
-  const videoPosts = [...reelPosts, ...tiktokPosts];
+  const videoPosts = [...reelPosts, ...tiktokPosts, ...youtubePosts];
 
   // Avg views on video content
   const avgViews = videoPosts.length > 0
@@ -102,6 +103,7 @@ const MediaKitClient = ({ mediaKit, username }) => {
   const totalPosts = posts.length || 1;
   const reelPercent = Math.round((reelPosts.length / totalPosts) * 100);
   const tiktokPercent = Math.round((tiktokPosts.length / totalPosts) * 100);
+  const youtubePercent = Math.round((youtubePosts.length / totalPosts) * 100);
   const photoPercent = Math.round((photoPosts.length / totalPosts) * 100);
   const hasContentMix = posts.length > 0;
   // Clean niche display - strip JSON formatting
@@ -311,6 +313,15 @@ const MediaKitClient = ({ mediaKit, username }) => {
                       <KitContentMixFill style={{ width: `${tiktokPercent}%` }} />
                     </KitContentMixBar>
                     <KitContentMixPercent>{tiktokPercent}%</KitContentMixPercent>
+                  </KitContentMixRow>
+                )}
+                {youtubePercent > 0 && (
+                  <KitContentMixRow>
+                    <KitContentMixLabel>YouTube</KitContentMixLabel>
+                    <KitContentMixBar>
+                      <KitContentMixFill style={{ width: `${youtubePercent}%` }} />
+                    </KitContentMixBar>
+                    <KitContentMixPercent>{youtubePercent}%</KitContentMixPercent>
                   </KitContentMixRow>
                 )}
                 {photoPercent > 0 && (
