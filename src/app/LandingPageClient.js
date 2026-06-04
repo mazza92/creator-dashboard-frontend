@@ -1702,7 +1702,7 @@ const brandsDataFallback = [
 // TICKER DATA
 // ═══════════════════════════════════════════════════════════════════
 const tickerItems = [
-  { icon: '📦', text: 'carolstyle landed Rhode Skin — 3 days after joining' },
+  { icon: '📦', text: 'carolstyle landed Rhode Skin, 3 days after joining' },
   { icon: '💬', text: 'glowwith_m got 2 brand replies in 48 hours' },
   { icon: '📦', text: 'zionne019 received an Anua PR package this week' },
   { icon: '✍️', text: 'sarahlooks pitched 8 brands in one afternoon' },
@@ -1910,15 +1910,15 @@ const LandingPage = () => {
               </ProblemCard>
               <ProblemCard>
                 <div className="headline">"I open a blank email and freeze every time."</div>
-                <div className="body">Too formal? Too casual? Most creators spend hours on one pitch — or never send it.</div>
+                <div className="body">Too formal? Too casual? Most creators spend hours on one pitch, or never send it.</div>
               </ProblemCard>
               <ProblemCard>
                 <div className="headline">"I sent emails last month and forgot to follow up."</div>
-                <div className="body">No system. No visibility. Warm leads went cold. Not laziness — just no tool.</div>
+                <div className="body">No system. No visibility. Warm leads went cold. Not laziness, just no tool.</div>
               </ProblemCard>
             </ProblemGrid>
             <ProblemCTA>
-              <div className="text">newcollab handles all of this — automatically.</div>
+              <div className="text">newcollab handles all of this, automatically.</div>
               <BtnRose href="/register/creator">Get started free →</BtnRose>
             </ProblemCTA>
           </Container>
@@ -1993,7 +1993,7 @@ const LandingPage = () => {
                 <em style={{ color: colors.rose }}>Apply in one click.</em>
               </h2>
               <p style={{ fontSize: 16, color: colors.text2, margin: '0 0 12px' }}>
-                Direct PR application links, verified email contacts, and reply rates — filtered by your niche. US, UK, Australian & Canadian brands.
+                Direct PR application links, verified email contacts, and reply rates, filtered by your niche. US, UK, Australian & Canadian brands.
               </p>
               <p style={{ fontSize: 13, color: colors.text3, margin: 0 }}>
                 Looking for a specific brand? See the full{' '}
@@ -2056,12 +2056,12 @@ const LandingPage = () => {
               <FeatureText>
                 <FeatureTag>Auto Media Kit</FeatureTag>
                 <FeatureH3>Your media kit, generated automatically. Every pitch looks pro.</FeatureH3>
-                <FeatureP>Brands won't reply without one. newcollab builds your media kit from your profile — stats, audience, niche — and attaches it to every pitch automatically. No Canva. No design skills. Done in 30 seconds.</FeatureP>
+                <FeatureP>Brands won't reply without one. newcollab builds your media kit from your profile (stats, audience, niche) and attaches it to every pitch automatically. No Canva. No design skills. Done in 30 seconds.</FeatureP>
                 <FeatureBullet>
                   <FeatureBulletItem>Stats pulled live from your profile</FeatureBulletItem>
                   <FeatureBulletItem>Audience age, niche, platform included</FeatureBulletItem>
                   <FeatureBulletItem>Auto-attached to every AI pitch</FeatureBulletItem>
-                  <FeatureBulletItem>Always up to date — no manual edits</FeatureBulletItem>
+                  <FeatureBulletItem>Always up to date, no manual edits</FeatureBulletItem>
                 </FeatureBullet>
               </FeatureText>
               <FeatureVisual>
@@ -2072,7 +2072,7 @@ const LandingPage = () => {
                       <MockupDot $color="#FFBD2E" />
                       <MockupDot $color="#28CA41" />
                     </MockupDots>
-                    <MockupTitle>My Media Kit — newcollab</MockupTitle>
+                    <MockupTitle>My Media Kit</MockupTitle>
                   </MockupHeader>
                   <MockupBody>
                     <KitCard>
@@ -2125,9 +2125,9 @@ const LandingPage = () => {
               <FeatureText>
                 <FeatureTag>AI Pitch Writer</FeatureTag>
                 <FeatureH3>Perfect pitch in 60 seconds. Send to 10 brands at once.</FeatureH3>
-                <FeatureP>AI writes a personalised email for each brand — their name, their niche, why you're the right fit. Media kit attaches automatically. Batch-pitch up to 10 brands in one session on Pro.</FeatureP>
+                <FeatureP>AI writes a personalised email for each brand: their name, their niche, why you're the right fit. Media kit attaches automatically. Batch-pitch up to 10 brands in one session on Pro.</FeatureP>
                 <FeatureBullet>
-                  <FeatureBulletItem>Personalised per brand — not a generic template</FeatureBulletItem>
+                  <FeatureBulletItem>Personalised per brand, not a generic template</FeatureBulletItem>
                   <FeatureBulletItem>Media kit auto-attached every time</FeatureBulletItem>
                   <FeatureBulletItem>Batch-pitch 10 brands in one session <TagPro>Pro</TagPro></FeatureBulletItem>
                   <FeatureBulletItem>AI follow-up at day 7 <TagPro>Pro</TagPro></FeatureBulletItem>
@@ -2154,7 +2154,7 @@ const LandingPage = () => {
                     <div style={{ background: colors.white, border: `1.5px solid ${colors.black}`, borderRadius: 10, padding: 12, fontSize: 12, color: colors.text2, lineHeight: 1.6 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>AI-Generated Pitch</div>
                       Hi Rhode Skin team,<br /><br />
-                      I'm <strong style={{ color: colors.text }}>@carolstyle</strong>, a fashion & beauty creator with <strong style={{ color: colors.text }}>17K followers</strong> (6.2% engagement). My audience is 85% female, 18–34 — a strong fit for your skincare launches...<br /><br />
+                      I'm <strong style={{ color: colors.text }}>@carolstyle</strong>, a fashion & beauty creator with <strong style={{ color: colors.text }}>17K followers</strong> (6.2% engagement). My audience is 85% female, 18–34, a strong fit for your skincare launches...<br /><br />
                       <span style={{ color: colors.text3, fontSize: 11 }}>Media kit attached for your review.</span>
                     </div>
                     <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
@@ -2177,7 +2177,7 @@ const LandingPage = () => {
               <FeatureText>
                 <FeatureTag>PR Pipeline</FeatureTag>
                 <FeatureH3>Track every pitch. Follow up before it goes cold.</FeatureH3>
-                <FeatureP>Every brand you contact lives in your pipeline. We remind you to follow up at day 7 — when most brands respond. Never lose a warm lead again.</FeatureP>
+                <FeatureP>Every brand you contact lives in your pipeline. We remind you to follow up at day 7, when most brands respond. Never lose a warm lead again.</FeatureP>
                 <FeatureCallout>
                   <em>Creators who follow up are 3× more likely to land the deal.</em> We make sure you never forget.
                 </FeatureCallout>
@@ -2241,10 +2241,10 @@ const LandingPage = () => {
               <FeatureText>
                 <FeatureTag>For You Feed</FeatureTag>
                 <FeatureH3>The right brands, delivered to you every week.</FeatureH3>
-                <FeatureP>Based on your niche, platform, and following — newcollab surfaces the brands most likely to reply to you right now. Hot this week. Seasonal campaigns. Brands that just responded to creators like you.</FeatureP>
+                <FeatureP>Based on your niche, platform, and following, newcollab surfaces the brands most likely to reply to you right now. Hot this week. Seasonal campaigns. Brands that just responded to creators like you.</FeatureP>
                 <FeatureBullet>
                   <FeatureBulletItem>Matched to your niche + follower count</FeatureBulletItem>
-                  <FeatureBulletItem>Seasonal alerts — pitch before everyone else</FeatureBulletItem>
+                  <FeatureBulletItem>Seasonal alerts: pitch before everyone else</FeatureBulletItem>
                   <FeatureBulletItem>Full personalised feed <TagPro>Pro</TagPro></FeatureBulletItem>
                 </FeatureBullet>
               </FeatureText>
@@ -2259,7 +2259,7 @@ const LandingPage = () => {
                     <MockupTitle>For You</MockupTitle>
                   </MockupHeader>
                   <MockupBody>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>🔥 Hot this week — Beauty</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: colors.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>🔥 Hot this week: Beauty</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: colors.bg, borderRadius: 10, padding: 10 }}>
                         <BrandLogoBlock $bg="#B5002D" style={{ width: 36, height: 36, margin: 0, fontSize: 11 }}>RS</BrandLogoBlock>
@@ -2316,7 +2316,7 @@ const LandingPage = () => {
               </NotifPill>
               <NotifPill $delay="0.3s">
                 <span className="notif-icon">🎉</span>
-                <span><strong>@zionne019</strong> landed her first brand deal — 5.3K followers <span>· yesterday</span></span>
+                <span><strong>@zionne019</strong> landed her first brand deal with 5.3K followers <span>· yesterday</span></span>
               </NotifPill>
             </NotifWall>
 
@@ -2351,7 +2351,7 @@ const LandingPage = () => {
                 <TestimonialStars>★★★★★</TestimonialStars>
                 <TestimonialResult>
                   <span>📦</span>
-                  Landed Rhode Skin within 3 days. The auto media kit made me look so professional — they actually commented on it.
+                  Landed Rhode Skin within 3 days. The auto media kit made me look so professional, they actually commented on it.
                 </TestimonialResult>
                 <TestimonialQuote>"I'd spent months DMing brands on IG. Nothing. This changed everything."</TestimonialQuote>
               </TestimonialCard>
@@ -2381,7 +2381,7 @@ const LandingPage = () => {
                 <TestimonialStars>★★★★★</TestimonialStars>
                 <TestimonialResult>
                   <span>🎉</span>
-                  First PR package arrived 2 weeks after signing up. Found Anua in the For You feed — they actively wanted micro creators.
+                  First PR package arrived 2 weeks after signing up. Found Anua in the For You feed. They actively wanted micro creators.
                 </TestimonialResult>
                 <TestimonialQuote>"I thought you needed 100K followers. I had 5K and it still worked."</TestimonialQuote>
               </TestimonialCard>
@@ -2405,12 +2405,12 @@ const LandingPage = () => {
               <HowStep>
                 <div className="how-num">1</div>
                 <h3>Find your brands</h3>
-                <p>Browse 500+ PR contacts by niche and reply speed. Or check your For You feed — matched brands, every week. Save the ones you want to pitch.</p>
+                <p>Browse 500+ PR contacts by niche and reply speed. Or check your For You feed: matched brands, every week. Save the ones you want to pitch.</p>
               </HowStep>
               <HowStep>
                 <div className="how-num">2</div>
                 <h3>Send a complete pitch</h3>
-                <p>AI writes a personalised email. Media kit auto-attached. Hit send. Pitch one brand — or ten — in the same session.</p>
+                <p>AI writes a personalised email. Media kit auto-attached. Hit send. Pitch one brand, or ten, in the same session.</p>
               </HowStep>
               <HowStep>
                 <div className="how-num">3</div>
@@ -2444,9 +2444,9 @@ const LandingPage = () => {
                 <PricingPrice><sup>$</sup>0</PricingPrice>
                 <PricingPriceSub>Forever free · No credit card</PricingPriceSub>
                 <PricingFeatures>
-                  <PricingFeatureItem><span className="pf-check">✓</span> Brand directory — full access</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> For You feed — top 3 brands/week</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> AI pitch writer — 3 per month</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Brand directory (full access)</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> For You feed (top 3 brands/week)</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> AI pitch writer (3 per month)</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Auto media kit</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> PR Pipeline</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-cross">—</span> <span className="pf-lock">Batch pitching</span></PricingFeatureItem>
@@ -2464,13 +2464,13 @@ const LandingPage = () => {
                 <PricingFeatures>
                   <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Unlimited AI pitches</strong></PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong> — 10 brands at once</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong>: 10 brands at once</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>AI follow-up writer</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Full For You feed</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Priority brand alerts</PricingFeatureItem>
                 </PricingFeatures>
-                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro — $12/mo</PricingBtn>
+                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro · $12/mo</PricingBtn>
                 <PricingNote>Cancel anytime · No contracts</PricingNote>
               </PricingCard>
             </PricingGrid>
@@ -2493,7 +2493,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks — the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start.
+                  Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks. The key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2502,7 +2502,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes — it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed.
+                  Yes, it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2511,7 +2511,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  No minimum. 63% of brands prefer working with nano and micro creators (1K–50K followers) — engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities.
+                  No minimum. 63% of brands prefer working with nano and micro creators (1K–50K followers). Engagement is more genuine and content feels authentic. newcollab filters brands by follower fit so you only see relevant opportunities.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2520,7 +2520,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  A PR package is when a brand sends you their products for free in exchange for content on your channels — a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply.
+                  A PR package is when a brand sends you their products for free in exchange for content on your channels: a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2529,7 +2529,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. Filter by niche and send an AI pitch in one click — no hunting for contact emails or application URLs. See the full{' '}
+                  newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. Filter by niche and send an AI pitch in one click. No hunting for contact emails or application URLs. See the full{' '}
                   <a href="/directory" style={{ color: colors.rose, textDecoration: 'none', fontWeight: 600 }}>PR forms directory</a>.
                 </FAQAnswer>
               </FAQItem>
@@ -2548,7 +2548,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
+                  Yes, the free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>
@@ -2567,9 +2567,9 @@ const LandingPage = () => {
               Your first brand deal<br />
               is one pitch <em>away.</em>
             </FinalH2>
-            <FinalSubline>Join 900+ creators who stopped guessing — and started getting brand deals.</FinalSubline>
+            <FinalSubline>Join 900+ creators who stopped guessing and started getting brand deals.</FinalSubline>
             <FinalCTAActions>
-              <BtnRose href="/register/creator">Start for free — no credit card →</BtnRose>
+              <BtnRose href="/register/creator">Start for free, no credit card →</BtnRose>
               <FinalTrust>Free plan · 3 AI pitches · Media kit included · Pro cancel anytime</FinalTrust>
             </FinalCTAActions>
           </ContainerSm>
