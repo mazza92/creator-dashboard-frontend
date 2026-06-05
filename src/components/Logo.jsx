@@ -7,7 +7,7 @@ const LogoWrap = styled.a`
 `;
 
 const LogoImg = styled.img`
-  height: 24px;
+  height: 28px;
   width: auto;
   display: block;
 `;
