@@ -350,12 +350,13 @@ const ForYou = () => {
         {!isPro && data?.matched?.length > 0 && (
           <SocialProofStrip>
             <SocialProofAvatars>
-              <SocialProofAvatar style={{ background: '#E879F9' }}>J</SocialProofAvatar>
-              <SocialProofAvatar style={{ background: '#34D399' }}>M</SocialProofAvatar>
-              <SocialProofAvatar style={{ background: '#60A5FA' }}>S</SocialProofAvatar>
+              <SocialProofAvatarImg src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop&crop=face" alt="" />
+              <SocialProofAvatarImg src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face" alt="" />
+              <SocialProofAvatarImg src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=face" alt="" />
+              <SocialProofAvatarMore>+124</SocialProofAvatarMore>
             </SocialProofAvatars>
             <SocialProofText>
-              <strong>127 creators</strong> with 2K–15K followers got PR from brands on Newcollab this month
+              <strong>127 creators</strong> with 2K–15K followers landed PR this month
             </SocialProofText>
           </SocialProofStrip>
         )}
@@ -1846,23 +1847,35 @@ const SocialProofAvatars = styled.div`
   flex-shrink: 0;
 `;
 
-const SocialProofAvatar = styled.div`
-  width: 32px;
-  height: 32px;
+const SocialProofAvatarImg = styled.img`
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: white;
-  border: 2px solid white;
-  margin-left: -8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 2.5px solid white;
+  margin-left: -10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  object-fit: cover;
 
   &:first-child {
     margin-left: 0;
   }
+`;
+
+const SocialProofAvatarMore = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border: 2.5px solid white;
+  margin-left: -10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.3px;
 `;
 
 const SocialProofText = styled.div`
