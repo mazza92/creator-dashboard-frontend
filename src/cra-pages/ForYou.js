@@ -346,14 +346,18 @@ const ForYou = () => {
           </ProfilePromptCard>
         )}
 
-        {/* Pull-framing bar for Free Users — focus on opportunity, not limits */}
+        {/* Social proof strip for Free Users — show success, not pressure */}
         {!isPro && data?.matched?.length > 0 && (
-          <PullFramingBar onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
-            <PullFramingText>
-              You have <strong>{data.matched.length} matched brands</strong>. Upgrade to contact them all
-            </PullFramingText>
-            <PullFramingCTA>$12/mo →</PullFramingCTA>
-          </PullFramingBar>
+          <SocialProofStrip>
+            <SocialProofAvatars>
+              <SocialProofAvatar style={{ background: '#E879F9' }}>J</SocialProofAvatar>
+              <SocialProofAvatar style={{ background: '#34D399' }}>M</SocialProofAvatar>
+              <SocialProofAvatar style={{ background: '#60A5FA' }}>S</SocialProofAvatar>
+            </SocialProofAvatars>
+            <SocialProofText>
+              <strong>127 creators</strong> with 5K–15K followers got PR from brands on Newcollab this month
+            </SocialProofText>
+          </SocialProofStrip>
         )}
 
         {/* Refresh Hint */}
@@ -1815,6 +1819,61 @@ const PullFramingCTA = styled.div`
   border-radius: 8px;
   white-space: nowrap;
   flex-shrink: 0;
+`;
+
+// Social proof strip — show success stories, not upgrade pressure
+const SocialProofStrip = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  border: 1px solid #A7F3D0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+    padding: 16px;
+  }
+`;
+
+const SocialProofAvatars = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+`;
+
+const SocialProofAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  border: 2px solid white;
+  margin-left: -8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  &:first-child {
+    margin-left: 0;
+  }
+`;
+
+const SocialProofText = styled.div`
+  font-size: 14px;
+  color: #065F46;
+  line-height: 1.4;
+
+  strong {
+    font-weight: 700;
+    color: #047857;
+  }
 `;
 
 const RefreshHint = styled.div`
