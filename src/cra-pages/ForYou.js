@@ -473,27 +473,53 @@ const ForYou = () => {
           )}
         </Section>
 
-        {/* Trending in your niche — only show niche-relevant brands */}
+        {/* Trending in your niche — strict filtering, honest labeling */}
         {data?.hot?.length > 0 && selectedNiches.length > 0 && (
           (() => {
-            // Filter brands that match user's niche categories
+            // Beauty-related keywords to exclude from non-beauty niches
+            const beautyKeywords = ['beauty', 'skincare', 'makeup', 'cosmetic', 'lipstick', 'mascara', 'foundation', 'blush', 'eyeshadow', 'haircare', 'nail', 'fragrance', 'perfume', 'serum', 'moisturizer', 'cleanser', 'toner'];
+
+            // Check if brand is beauty-related (by name, description, or category)
+            const isBeautyBrand = (brand) => {
+              const name = (brand.name || '').toLowerCase();
+              const desc = (brand.description || '').toLowerCase();
+              const cat = (brand.category || '').toLowerCase();
+              return beautyKeywords.some(kw => name.includes(kw) || desc.includes(kw) || cat.includes(kw));
+            };
+
+            // Primary niche for title (first selected)
+            const primaryNiche = selectedNiches[0].toLowerCase();
+            const isPrimaryBeauty = ['beauty', 'skincare', 'makeup'].includes(primaryNiche);
+
+            // Strict filter: match PRIMARY niche only, exclude beauty from non-beauty niches
             const nicheFiltered = data.hot.filter(b => {
               const brandCat = (b.category || '').toLowerCase();
-              return selectedNiches.some(n => {
-                const niche = n.toLowerCase();
-                // Exact match or partial match for category
-                return brandCat === niche ||
-                       brandCat.includes(niche) ||
-                       niche.includes(brandCat) ||
-                       // Handle related categories
-                       (niche === 'tech' && ['technology', 'electronics', 'gadgets', 'software'].some(t => brandCat.includes(t))) ||
-                       (niche === 'lifestyle' && ['home', 'wellness', 'fitness', 'travel'].some(t => brandCat.includes(t))) ||
-                       (niche === 'fashion' && ['clothing', 'apparel', 'accessories'].some(t => brandCat.includes(t))) ||
-                       (niche === 'beauty' && ['skincare', 'makeup', 'cosmetics', 'haircare'].some(t => brandCat.includes(t)));
-              });
+
+              // If primary niche is NOT beauty-related, exclude beauty brands entirely
+              if (!isPrimaryBeauty && isBeautyBrand(b)) {
+                return false;
+              }
+
+              // Strict matching for primary niche only
+              if (primaryNiche === 'tech') {
+                return brandCat === 'tech' || ['technology', 'electronics', 'gadgets', 'software', 'gaming', 'apps'].some(t => brandCat.includes(t));
+              }
+              if (primaryNiche === 'lifestyle') {
+                // Lifestyle but NOT beauty/fashion/makeup
+                return (brandCat === 'lifestyle' || ['home', 'wellness', 'fitness', 'travel', 'food', 'decor'].some(t => brandCat.includes(t))) && !isBeautyBrand(b);
+              }
+              if (primaryNiche === 'fashion') {
+                return brandCat === 'fashion' || ['clothing', 'apparel', 'accessories', 'shoes', 'jewelry'].some(t => brandCat.includes(t));
+              }
+              if (primaryNiche === 'beauty' || primaryNiche === 'skincare' || primaryNiche === 'makeup') {
+                return isBeautyBrand(b) || brandCat === 'beauty' || ['skincare', 'makeup', 'cosmetics', 'haircare'].some(t => brandCat.includes(t));
+              }
+
+              // Default: exact or partial match
+              return brandCat === primaryNiche || brandCat.includes(primaryNiche);
             });
 
-            // If no niche-relevant brands, show generic trending section
+            // If no matches for primary niche, show generic section
             const hasNicheMatches = nicheFiltered.length > 0;
             const brandsToShow = hasNicheMatches ? nicheFiltered.slice(0, 3) : data.hot.slice(0, 3);
             const sectionTitle = hasNicheMatches
