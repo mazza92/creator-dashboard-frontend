@@ -9,6 +9,7 @@ export const revalidate = 3600;
 const STATIC_PAGES = [
   { url: '/',                          priority: 1.0, changeFrequency: 'daily'   },
   { url: '/directory',                 priority: 0.9, changeFrequency: 'daily'   },
+  { url: '/pr-list',                   priority: 0.9, changeFrequency: 'daily'   },
   { url: '/directory/skincare',        priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/directory/k-beauty',        priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/directory/beauty',          priority: 0.8, changeFrequency: 'weekly'  },

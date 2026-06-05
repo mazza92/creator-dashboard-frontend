@@ -65,14 +65,19 @@
     <link rel="dns-prefetch" href="https://www.paypal.com">
     <title>The Ultimate PR List Directory: 500+ Brands Sending PR (2026) | NewCollab</title>
     
-    <!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js) with cross-domain tracking -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-5RET5C6MZ8"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      gtag('config', 'G-5RET5C6MZ8');
+      gtag('config', 'G-5RET5C6MZ8', {
+        linker: {
+          domains: ['newcollab.co', 'app.newcollab.co'],
+          accept_incoming: true
+        }
+      });
     </script>
     
     <script src="https://www.paypal.com/sdk/js?client-id=AdcSPBFMx1tyFYYM0w7OPguxT3BrrL8J2PoZiiSy58--ou77qv37Av2SCT3s2kiyUBN9WsRpjm4PaFvN&currency=EUR"></script>

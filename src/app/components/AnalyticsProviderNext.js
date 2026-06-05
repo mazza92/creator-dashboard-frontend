@@ -3,6 +3,9 @@
 import React, { createContext, useContext, useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
+// GA4 Measurement ID - must match layout.js
+const GA_MEASUREMENT_ID = 'G-5RET5C6MZ8';
+
 const AnalyticsContext = createContext();
 
 export const useAnalytics = () => {
@@ -28,9 +31,12 @@ function AnalyticsPageTracker() {
   useEffect(() => {
     if (typeof window !== 'undefined' && window.gtag) {
       const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
-      window.gtag('config', 'G-5RET5C6MZ8', {
+      // Use page_view event for SPA navigation tracking
+      // Cross-domain linker is configured in layout.js initial config
+      window.gtag('event', 'page_view', {
         page_path: fullPath,
         page_title: document.title,
+        page_location: window.location.href,
       });
     }
   }, [pathname, searchParams]);
