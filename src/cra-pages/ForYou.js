@@ -355,7 +355,7 @@ const ForYou = () => {
               <SocialProofAvatar style={{ background: '#60A5FA' }}>S</SocialProofAvatar>
             </SocialProofAvatars>
             <SocialProofText>
-              <strong>127 creators</strong> with 5K–15K followers got PR from brands on Newcollab this month
+              <strong>127 creators</strong> with 2K–15K followers got PR from brands on Newcollab this month
             </SocialProofText>
           </SocialProofStrip>
         )}
