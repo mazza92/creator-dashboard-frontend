@@ -473,45 +473,66 @@ const ForYou = () => {
           )}
         </Section>
 
-        {/* Trending in your niche — show hot brands (niche-relevant when possible) */}
+        {/* Trending in your niche — only show niche-relevant brands */}
         {data?.hot?.length > 0 && selectedNiches.length > 0 && (
-          <Section>
-            <SectionHeader>
-              <SectionLeft>
-                <SectionIcon $bg="#FFF7ED">🔥</SectionIcon>
-                <SectionTitleWrap>
-                  <SectionTitle>Trending in {CATEGORY_LABELS[selectedNiches[0]] || selectedNiches[0]}</SectionTitle>
-                  <SectionDesc>Popular with creators in your niche this week</SectionDesc>
-                </SectionTitleWrap>
-              </SectionLeft>
-            </SectionHeader>
+          (() => {
+            // Filter brands that match user's niche categories
+            const nicheFiltered = data.hot.filter(b => {
+              const brandCat = (b.category || '').toLowerCase();
+              return selectedNiches.some(n => {
+                const niche = n.toLowerCase();
+                // Exact match or partial match for category
+                return brandCat === niche ||
+                       brandCat.includes(niche) ||
+                       niche.includes(brandCat) ||
+                       // Handle related categories
+                       (niche === 'tech' && ['technology', 'electronics', 'gadgets', 'software'].some(t => brandCat.includes(t))) ||
+                       (niche === 'lifestyle' && ['home', 'wellness', 'fitness', 'travel'].some(t => brandCat.includes(t))) ||
+                       (niche === 'fashion' && ['clothing', 'apparel', 'accessories'].some(t => brandCat.includes(t))) ||
+                       (niche === 'beauty' && ['skincare', 'makeup', 'cosmetics', 'haircare'].some(t => brandCat.includes(t)));
+              });
+            });
 
-            <CardGrid $cols={3}>
-              {/* Show niche-relevant brands first, fall back to all hot brands */}
-              {(() => {
-                const nicheFiltered = data.hot.filter(b =>
-                  selectedNiches.some(n =>
-                    b.category?.toLowerCase().includes(n.toLowerCase()) ||
-                    n.toLowerCase().includes(b.category?.toLowerCase() || '')
-                  )
-                );
-                const brandsToShow = nicheFiltered.length >= 3 ? nicheFiltered : data.hot;
-                return brandsToShow.slice(0, 3).map(brand => (
-                  <BrandCard
-                    key={brand.id}
-                    brand={brand}
-                    isPro={isPro}
-                    hasPitched={pitchedIds.has(brand.id)}
-                    isSaved={savedIds.has(brand.id)}
-                    atLimit={atLimit}
-                    onPitch={() => handlePitchNow(brand)}
-                    onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
-                    showMomentum
-                  />
-                ));
-              })()}
-            </CardGrid>
-          </Section>
+            // If no niche-relevant brands, show generic trending section
+            const hasNicheMatches = nicheFiltered.length > 0;
+            const brandsToShow = hasNicheMatches ? nicheFiltered.slice(0, 3) : data.hot.slice(0, 3);
+            const sectionTitle = hasNicheMatches
+              ? `Trending in ${CATEGORY_LABELS[selectedNiches[0]] || selectedNiches[0]}`
+              : 'Trending Now';
+            const sectionDesc = hasNicheMatches
+              ? 'Popular with creators in your niche this week'
+              : 'Hot brands this week';
+
+            return (
+              <Section>
+                <SectionHeader>
+                  <SectionLeft>
+                    <SectionIcon $bg="#FFF7ED">🔥</SectionIcon>
+                    <SectionTitleWrap>
+                      <SectionTitle>{sectionTitle}</SectionTitle>
+                      <SectionDesc>{sectionDesc}</SectionDesc>
+                    </SectionTitleWrap>
+                  </SectionLeft>
+                </SectionHeader>
+
+                <CardGrid $cols={3}>
+                  {brandsToShow.map(brand => (
+                    <BrandCard
+                      key={brand.id}
+                      brand={brand}
+                      isPro={isPro}
+                      hasPitched={pitchedIds.has(brand.id)}
+                      isSaved={savedIds.has(brand.id)}
+                      atLimit={atLimit}
+                      onPitch={() => handlePitchNow(brand)}
+                      onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
+                      showMomentum
+                    />
+                  ))}
+                </CardGrid>
+              </Section>
+            );
+          })()
         )}
 
         {/* Right Season — seasonal picks (limited to 4) */}
