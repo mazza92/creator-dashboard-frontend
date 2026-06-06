@@ -220,6 +220,7 @@ function AppContent() {
                 '/marketplace',
                 '/c/',
                 '/kit/',
+                '/for-brands',
                 '/creator/dashboard/subscription/success',
                 '/creator/dashboard/subscription/cancel'
             ];
