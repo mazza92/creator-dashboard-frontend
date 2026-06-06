@@ -116,6 +116,12 @@ const nextConfig = {
         destination: '/blog/list-of-companies-that-send-pr-packages-2026',
         permanent: true,
       },
+      // Redirect /for-brands to CRA app (Brand Opportunities submission form)
+      {
+        source: '/for-brands',
+        destination: 'https://app.newcollab.co/for-brands',
+        permanent: false,
+      },
     ];
   },
   
