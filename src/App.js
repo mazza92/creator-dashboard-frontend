@@ -153,6 +153,7 @@ function AppContent() {
             '/brand',
             '/c/',
             '/dashboard',
+            '/for-brands',
             // Note: /directory removed - served by Next.js on newcollab.co for SEO
         ];
 
