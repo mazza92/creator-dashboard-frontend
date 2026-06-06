@@ -57,6 +57,7 @@ import CampaignInvites from './creator-portal/CampaignInvites';
 import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
 import ForYou from './cra-pages/ForYou';
+import BrandSubmitPage from './cra-pages/BrandSubmitPage';
 import MediaKit from './creator-portal/MediaKit';
 import PortfolioBuilder from './creator-portal/PortfolioBuilder';
 import PublicMediaKit from './cra-pages/PublicMediaKit';
@@ -90,6 +91,7 @@ import NotFound from './cra-pages/NotFound';
 import BrandAdmin from './admin/BrandAdmin';
 import AdminReports from './admin/AdminReports';
 import AdminEmail from './admin/AdminEmail';
+import AdminOpportunities from './admin/AdminOpportunities';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -374,6 +376,7 @@ function AppContent() {
             <Route path='/register/creator' element={<CreatorSignup />} />
             {/* About, Contact, Privacy, Terms - Still on CRA (Next.js has placeholders) */}
             <Route path='/about' element={<AboutPage />} />
+            <Route path='/for-brands' element={<BrandSubmitPage />} />
             <Route path='/contact' element={<ContactPage />} />
             <Route path='/privacy-policy' element={<PrivacyPolicy />} />
             <Route path='/terms-of-service' element={<TermsOfService />} />
@@ -425,6 +428,7 @@ function AppContent() {
             <Route path='/admin/brands' element={<BrandAdmin />} />
             <Route path='/admin/reports' element={<AdminReports />} />
             <Route path='/admin/email' element={<AdminEmail />} />
+            <Route path='/admin/opportunities' element={<AdminOpportunities />} />
 
             {/* Standalone routes for profiles, wrapped in a layout manager */}
             <Route element={<ProfileLayoutWrapper />}>

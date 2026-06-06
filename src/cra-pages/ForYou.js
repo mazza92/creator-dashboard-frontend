@@ -8,6 +8,7 @@ import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
+import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -56,6 +57,11 @@ const ForYou = () => {
   // Pending pitches state (for dead zone engagement)
   const [pendingPitches, setPendingPitches] = useState([]);
 
+  // Sub-tab state for Matches vs Opportunities
+  const [activeTab, setActiveTab] = useState('matches');
+  const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
+  const [opportunityCount, setOpportunityCount] = useState(0);
+
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
 
@@ -65,7 +71,23 @@ const ForYou = () => {
     fetchSavedBrands();
     fetchCreatorProfile();
     fetchKitViews();
+    fetchOpportunityCount();
   }, []);
+
+  const fetchOpportunityCount = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/opportunities/list`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        const matched = response.data.matched || [];
+        const others = response.data.others || [];
+        setOpportunityCount(matched.length + others.length);
+      }
+    } catch (error) {
+      // Silently fail
+    }
+  };
 
   const fetchKitViews = async () => {
     try {
@@ -122,6 +144,7 @@ const ForYou = () => {
       });
       if (limitsResponse.data.success) {
         setPitchesSentThisMonth(limitsResponse.data.used || 0);
+        setPitchLimits(limitsResponse.data);
       }
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -398,6 +421,36 @@ const ForYou = () => {
           Matches refresh every Monday · Last updated today
         </RefreshHint>
 
+        {/* Sub-tabs: Matches vs Opportunities */}
+        <SubTabRow>
+          <SubTab
+            $active={activeTab === 'matches'}
+            onClick={() => setActiveTab('matches')}
+          >
+            🎯 Matches
+          </SubTab>
+          <SubTab
+            $active={activeTab === 'opportunities'}
+            onClick={() => setActiveTab('opportunities')}
+          >
+            ⚡ Opportunities
+            {opportunityCount > 0 && <CountBadge>{opportunityCount}</CountBadge>}
+          </SubTab>
+        </SubTabRow>
+
+        {/* Opportunities Tab */}
+        {activeTab === 'opportunities' && (
+          <OpportunitiesTab
+            pitchLimits={pitchLimits}
+            isPro={isPro}
+            onShowUpgrade={(reason) => { setUpgradeReason(reason); setShowUpgrade(true); }}
+            onCountChange={setOpportunityCount}
+          />
+        )}
+
+        {/* Matches Tab Content */}
+        {activeTab === 'matches' && (
+          <>
         {/* Pending Pitch Banner — keeps users engaged during wait */}
         {pendingPitches && pendingPitches.length > 0 && (
           <PendingPitchBanner>
@@ -678,6 +731,8 @@ const ForYou = () => {
             })}
           </SeasonalGrid>
         </Section>
+          </>
+        )}
       </PageInner>
 
       {/* Modals */}
@@ -2424,6 +2479,45 @@ const RefreshDot = styled.span`
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
+`;
+
+// Sub-tabs for Matches vs Opportunities
+const SubTabRow = styled.div`
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid ${tokens.border};
+  margin-bottom: 24px;
+`;
+
+const SubTab = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${p => p.$active ? tokens.textPrimary : tokens.textMuted};
+  background: none;
+  border: none;
+  border-bottom: 2px solid ${p => p.$active ? tokens.textPrimary : 'transparent'};
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    color: ${tokens.textPrimary};
+  }
+`;
+
+const CountBadge = styled.span`
+  background: ${tokens.primary};
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
 `;
 
 // Kit nudge interstitial styled components
