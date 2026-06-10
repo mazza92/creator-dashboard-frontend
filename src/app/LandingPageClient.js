@@ -2459,7 +2459,7 @@ const LandingPage = () => {
               <PricingCard $featured className="featured">
                 <PricingBadge>Most popular</PricingBadge>
                 <PricingTier $rose>Pro</PricingTier>
-                <PricingPrice className="gradient"><sup>$</sup>12</PricingPrice>
+                <PricingPrice className="gradient"><sup>$</sup>19</PricingPrice>
                 <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
                 <PricingFeatures>
                   <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
