@@ -504,9 +504,9 @@ const ForYou = () => {
               <MatchSectionLabel>Your top matches</MatchSectionLabel>
               <TopMatchesProofStrip>
                 <TopMatchesAvatarRow>
-                  <TopMatchesAvatarImg src="https://p16-common-sign.tiktokcdn-eu.com/tos-no1a-avt-0068c700-no/57ca5fb833eda9f7c6383076b86f8642~tplv-tiktokx-cropcenter:100:100.jpeg?dr=10399&refresh_token=fcc1bce2&x-expires=1780844400&x-signature=D9iMdVr52ifhe%2Fw%2BTzEnqUjIRao%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=no1a" alt="Creator" />
-                  <TopMatchesAvatarImg src="https://p16-common-sign.tiktokcdn-eu.com/tos-maliva-avt-0068/1538e7ff2355d67e6ac887a26bdf874b~tplv-tiktokx-cropcenter:100:100.jpeg?dr=10399&refresh_token=64623259&x-expires=1780844400&x-signature=d2cDT3ADjwx6n86ffrO30d3y8Gc%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=no1a" alt="Creator" />
-                  <TopMatchesAvatarImg src="https://p16-common-sign.tiktokcdn-eu.com/tos-no1a-avt-0068c001-no/b6befd9eba1aaf28239581bb97e0f049~tplv-tiktokx-cropcenter:100:100.jpeg?dr=10399&refresh_token=49dc89b9&x-expires=1780844400&x-signature=ZDGTifoygmR47KrztmwtR5xzeIY%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=no1a" alt="Creator" />
+                  <TopMatchesAvatarImg src="https://iili.io/CBGa92t.png" alt="Creator" />
+                  <TopMatchesAvatarImg src="https://iili.io/CBGaJvn.png" alt="Creator" />
+                  <TopMatchesAvatarImg src="https://iili.io/CBGadps.png" alt="Creator" />
                 </TopMatchesAvatarRow>
                 <TopMatchesProofText>
                   Creators with under 10K followers got PR from brands like these this month
@@ -1722,6 +1722,10 @@ const TopMatchesAvatarImg = styled.img`
   border: 2px solid #fff;
   object-fit: cover;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
 
   &:not(:first-child) {
     margin-left: -8px;
