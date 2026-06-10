@@ -40,7 +40,7 @@ const FAQ_ITEMS = [
   {
     question: 'Is newcollab free?',
     answer:
-      'Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.',
+      'Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.',
   },
 ];
 

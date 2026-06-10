@@ -1829,7 +1829,7 @@ const LandingPage = () => {
         "name": "Is newcollab free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard."
+          "text": "Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard."
         }
       }
     ]
@@ -2560,7 +2560,7 @@ const LandingPage = () => {
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Priority brand alerts</PricingFeatureItem>
                 </PricingFeatures>
-                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro for $12/mo</PricingBtn>
+                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro for $19/mo</PricingBtn>
                 <PricingNote>Cancel anytime · No contracts</PricingNote>
               </PricingCard>
             </PricingGrid>
@@ -2638,7 +2638,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes! The free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($12/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
+                  Yes! The free plan includes full brand directory access, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>

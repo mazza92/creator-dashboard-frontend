@@ -36,7 +36,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   // Determine context-specific copy
   let headline = 'Your matched brands are waiting.';
   let subtext = '3 free pitches used this month. Upgrade to keep pitching.';
-  let ctaText = 'Get Pro for $12/month';
+  let ctaText = 'Get Pro for $19/month';
   let progressLabel = 'pitches';
 
   const used = pitchLimits?.used || currentCount || 3;
@@ -51,17 +51,17 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   } else if (feature === 'locked' || feature === 'for_you') {
     headline = 'Your top matches reply 4x more than average.';
     subtext = 'These brands are locked to Pro. They reply to 38 to 55% of pitches.';
-    ctaText = 'Unlock Pro matches for $12/month';
+    ctaText = 'Unlock Pro matches for $19/month';
 
   } else if (feature === 'kit' || feature === 'kit_views') {
     headline = 'Creators in your niche are landing PR this month.';
     subtext = 'Pro unlocks your top matches, brand casting calls, and kit view tracking.';
-    ctaText = 'Get Pro for $12/month';
+    ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'limit_reached') {
     headline = 'Your matched brands are waiting.';
     subtext = `${used} free pitches used this month. Upgrade to keep pitching.`;
-    ctaText = 'Get Pro for $12/month';
+    ctaText = 'Get Pro for $19/month';
   }
 
   // Feature list with the NEW tag for opportunities
@@ -147,7 +147,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             <ProCard>
               <ProCardHeader>
                 <ProLabel>Pro</ProLabel>
-                <ProPrice>$12<span>/month</span></ProPrice>
+                <ProPrice>$19<span>/month</span></ProPrice>
               </ProCardHeader>
               <ProRoiLine>One gifted package covers your Pro for the year</ProRoiLine>
 
@@ -166,7 +166,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               {/* ROI Box */}
               <RoiBox>
                 Most Pro creators receive their first PR package within 30 days.<br />
-                <strong>That covers your $12 in product.</strong>
+                <strong>That covers your $19 in product.</strong>
               </RoiBox>
             </ProCard>
           </ModalScroll>

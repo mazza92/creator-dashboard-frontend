@@ -86,7 +86,7 @@ const AccountSettings = () => {
   const getPlanPrice = (tier) => {
     switch(tier) {
       case 'elite': return '$49';
-      case 'pro': return '$12';
+      case 'pro': return '$19';
       default: return '$0';
     }
   };

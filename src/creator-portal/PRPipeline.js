@@ -81,6 +81,34 @@ const computePipelineHealth = (items) => {
   return Math.max(10, Math.min(100, score));
 };
 
+// State-based pipeline messaging (replaces anxiety-inducing score labels)
+const getPipelineMessage = (items) => {
+  const pitched = items.filter(i =>
+    ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage) || i.pitched_at
+  );
+  const total = pitched.length;
+  const replied = items.filter(i => i.pipeline_stage === 'replied').length;
+  const waiting = items.filter(i => i.pipeline_stage === 'waiting').length;
+  const won = items.filter(i => ['won', 'received', 'success'].includes(i.pipeline_stage)).length;
+
+  if (total === 0) {
+    return { title: 'Get started', message: 'Start your first pitch to get going.' };
+  }
+  if (won > 0) {
+    return { title: 'You\'re winning', message: `${won} PR package${won > 1 ? 's' : ''} secured. Keep the momentum.` };
+  }
+  if (replied > 0) {
+    return { title: 'Replies coming in', message: 'Your first reply is in. This is how it starts.' };
+  }
+  if (waiting >= 3) {
+    return { title: 'Pipeline active', message: '3+ pitches sent. Brands are reviewing. Check back in a few days.' };
+  }
+  if (waiting > 0) {
+    return { title: 'Pitches sent', message: 'Your pitches are out there. Most replies come in 3 to 7 days.' };
+  }
+  return { title: 'Keep pitching', message: 'Keep pitching to build momentum.' };
+};
+
 const getBestMove = (items) => {
   // Find overdue items that need follow-up, sorted by response rate
   const overdue = items
@@ -946,34 +974,18 @@ const PRPipeline = () => {
         </LiveStrip>
       )}
 
-      {/* Pipeline Health Card */}
+      {/* Pipeline Health Card - State-based messaging instead of anxiety-inducing scores */}
       {stats.total_contacted > 0 && (() => {
-        const score = computePipelineHealth(items);
-        const healthLabel = score >= 70 ? 'Looking strong' : score >= 40 ? 'Needs attention' : 'At risk';
-        const healthColor = score >= 70 ? '#059669' : score >= 40 ? '#D97706' : '#7C3AED';
-        const circumference = 2 * Math.PI * 21;
-        const offset = circumference - (score / 100) * circumference;
+        const pipelineStatus = getPipelineMessage(items);
+        const hasReplies = items.filter(i => i.pipeline_stage === 'replied').length > 0;
+        const hasWins = items.filter(i => ['won', 'received', 'success'].includes(i.pipeline_stage)).length > 0;
+        const statusColor = hasWins ? '#059669' : hasReplies ? '#059669' : '#6366F1';
         return (
           <HealthCard>
-            <HealthRing>
-              <svg width="52" height="52" viewBox="0 0 52 52">
-                <circle cx="26" cy="26" r="21" fill="none" stroke="#F3F4F6" strokeWidth="5"/>
-                <circle cx="26" cy="26" r="21" fill="none" stroke={healthColor} strokeWidth="5"
-                  strokeDasharray={circumference} strokeDashoffset={offset}
-                  strokeLinecap="round" style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}/>
-              </svg>
-              <HealthScoreText style={{ color: healthColor }}>{score}</HealthScoreText>
-            </HealthRing>
-            <HealthInfo>
-              <HealthLabel>Pipeline Health</HealthLabel>
-              <HealthTitle>{healthLabel}</HealthTitle>
-              <HealthTip>
-                {nudgeItems.length > 0
-                  ? <><strong>Send {nudgeItems.length} overdue follow-up{nudgeItems.length > 1 ? 's' : ''}</strong> to improve your score</>
-                  : items.filter(i => i.pipeline_stage === 'saved').length > 0
-                    ? <><strong>Contact your saved brands</strong> to grow your pipeline</>
-                    : <><strong>Add more pitches</strong> to strengthen your pipeline</>}
-              </HealthTip>
+            <HealthInfo style={{ marginLeft: 0 }}>
+              <HealthLabel>Pipeline Status</HealthLabel>
+              <HealthTitle style={{ color: statusColor }}>{pipelineStatus.title}</HealthTitle>
+              <HealthTip>{pipelineStatus.message}</HealthTip>
             </HealthInfo>
           </HealthCard>
         );
@@ -1150,7 +1162,7 @@ const PRPipeline = () => {
               <ProNudgeTitle>Pitch more brands this month</ProNudgeTitle>
               <ProNudgeSub>You've used {pitchLimits.used} of {pitchLimits.limit} free contacts. Pro removes the limit.</ProNudgeSub>
             </ProNudgeText>
-            <ProNudgeCTA>$12/mo</ProNudgeCTA>
+            <ProNudgeCTA>$19/mo</ProNudgeCTA>
           </ProNudge>
         )}
       </BrandList>

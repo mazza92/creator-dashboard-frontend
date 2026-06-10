@@ -820,7 +820,7 @@ ${creatorName}`;
                       onClick={handleUpgrade}
                       disabled={upgrading}
                     >
-                      {upgrading ? 'Processing...' : 'Upgrade to Pro for $12/month'}
+                      {upgrading ? 'Processing...' : 'Upgrade to Pro for $19/month'}
                     </UpgradeOverlayBtn>
                     <UpgradeOverlayNote>One gifted package covers your Pro for the year.</UpgradeOverlayNote>
                   </UpgradeOverlayCard>
