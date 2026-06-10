@@ -324,31 +324,6 @@ const ForYou = () => {
           )}
         </PageHeader>
 
-        {/* Kit Views Banner - LinkedIn style notification */}
-        {showKitViewsBanner && kitViews.views_this_week > 0 && (
-          <KitViewsBanner>
-            <KitViewsIcon>
-              <Eye size={18} />
-            </KitViewsIcon>
-            <KitViewsContent>
-              <KitViewsTitle>
-                <strong>{kitViews.views_this_week}</strong> {kitViews.views_this_week === 1 ? 'person' : 'people'} viewed your kit this week
-              </KitViewsTitle>
-              {isPro && kitViews.recent?.length > 0 && kitViews.recent[0].referrer && (
-                <KitViewsSub>
-                  Latest from: {new URL(kitViews.recent[0].referrer).hostname.replace('www.', '')}
-                </KitViewsSub>
-              )}
-              {!isPro && (
-                <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
-                  Upgrade to see who's checking you out →
-                </KitViewsUpgrade>
-              )}
-            </KitViewsContent>
-            <KitViewsClose onClick={() => setShowKitViewsBanner(false)}>×</KitViewsClose>
-          </KitViewsBanner>
-        )}
-
         {/* Profile Prompt - shown when no niche data yet */}
         {!data?.has_profile && (
           <ProfilePromptCard>
@@ -412,24 +387,29 @@ const ForYou = () => {
           </HowItWorksCard>
         )}
 
-        {/* Kit Builder Prompt - shown AFTER they understand the flow */}
-        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && (
-          <KitBuilderCard>
-            <KitBuilderLeft>
-              <KitBuilderStat>3×</KitBuilderStat>
-              <KitBuilderContent>
-                <KitBuilderTitle>Build your media kit to get 3× more replies</KitBuilderTitle>
-                <KitBuilderDesc>
-                  Brands want to see your content before they respond. Takes 2 minutes.
-                </KitBuilderDesc>
-              </KitBuilderContent>
-            </KitBuilderLeft>
-            <KitBuilderBtn onClick={() => navigate('/creator/dashboard/my-kit')}>
-              <FileText size={16} />
-              Build my kit
-              <ArrowRight size={14} />
-            </KitBuilderBtn>
-          </KitBuilderCard>
+        {/* Kit Views Banner - shown AFTER how it works so user understands context */}
+        {showKitViewsBanner && kitViews.views_this_week > 0 && (
+          <KitViewsBanner>
+            <KitViewsIcon>
+              <Eye size={18} />
+            </KitViewsIcon>
+            <KitViewsContent>
+              <KitViewsTitle>
+                <strong>{kitViews.views_this_week}</strong> {kitViews.views_this_week === 1 ? 'person' : 'people'} viewed your kit this week
+              </KitViewsTitle>
+              {isPro && kitViews.recent?.length > 0 && kitViews.recent[0].referrer && (
+                <KitViewsSub>
+                  Latest from: {new URL(kitViews.recent[0].referrer).hostname.replace('www.', '')}
+                </KitViewsSub>
+              )}
+              {!isPro && (
+                <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
+                  Upgrade to see who's checking you out →
+                </KitViewsUpgrade>
+              )}
+            </KitViewsContent>
+            <KitViewsClose onClick={() => setShowKitViewsBanner(false)}>×</KitViewsClose>
+          </KitViewsBanner>
         )}
 
         {/* Refresh Hint */}
@@ -542,9 +522,23 @@ const ForYou = () => {
           };
 
           const fallbackReplies = FALLBACK_BY_NICHE[nicheKey] || FALLBACK_BY_NICHE.default;
-          // Only use API data if we have 2+ real replies with proper data
-          const hasRealData = recentReplies.length >= 2 && recentReplies[0]?.brand_name && recentReplies[0]?.time_ago;
-          const displayReplies = hasRealData ? recentReplies.slice(0, 2) : fallbackReplies;
+
+          // Mega-brands list - unrealistic for small creators, damages credibility
+          const megaBrands = ['rare beauty', 'fenty', 'kylie', 'glossier', 'charlotte tilbury', 'selena', 'rihanna', 'kim kardashian', 'skims'];
+          const isMegaBrand = (name) => megaBrands.some(m => (name || '').toLowerCase().includes(m));
+
+          // Validate API data quality:
+          // 1. Has 2+ replies with brand_name, time_ago, and follower_range
+          // 2. No mega-brands (unrealistic)
+          // 3. Follower counts should vary (not all identical)
+          const validReplies = recentReplies.filter(r =>
+            r?.brand_name && r?.time_ago && r?.follower_range && !isMegaBrand(r.brand_name)
+          );
+          const hasVariedFollowers = validReplies.length >= 2 &&
+            validReplies[0]?.follower_range !== validReplies[1]?.follower_range;
+          const hasRealData = validReplies.length >= 2 && hasVariedFollowers;
+
+          const displayReplies = hasRealData ? validReplies.slice(0, 2) : fallbackReplies;
 
           return (
             <RecentRepliesStrip>
@@ -631,10 +625,18 @@ const ForYou = () => {
                   <MatchSectionLabel>🔒 Pro matches ({(data?.matched?.length || 0) - 2} brands)</MatchSectionLabel>
 
                   {/* Locked match cards - reply rate is the hook, not the name */}
+                  {/* Each card shows different stats to feel like real data */}
                   <LockedMatchList>
                     {data?.matched?.slice(2, 5).map((brand, i) => {
-                      const replyRate = brand.response_rate || [45, 52, 38][i % 3];
-                      const multiplier = Math.round(replyRate / 10);
+                      // Vary the stats explicitly per card - avoid identical numbers
+                      const CARD_STATS = [
+                        { rate: 48, multiplier: 5 },
+                        { rate: 37, multiplier: 4 },
+                        { rate: 29, multiplier: 3 },
+                      ];
+                      const stats = CARD_STATS[i] || CARD_STATS[0];
+                      const replyRate = brand.response_rate || stats.rate;
+                      const multiplier = brand.response_rate ? Math.round(replyRate / 10) : stats.multiplier;
                       return (
                         <LockedMatchCard key={brand.id || i}>
                           <LockedMatchHighlight>
@@ -679,6 +681,26 @@ const ForYou = () => {
             </>
           )}
         </Section>
+
+        {/* Kit Builder Prompt - shown AFTER brand matches, so the reward (brands) is first */}
+        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && (
+          <KitBuilderCard>
+            <KitBuilderLeft>
+              <KitBuilderStat>3×</KitBuilderStat>
+              <KitBuilderContent>
+                <KitBuilderTitle>Build your media kit to get 3× more replies</KitBuilderTitle>
+                <KitBuilderDesc>
+                  Brands want to see your content before they respond. Takes 2 minutes.
+                </KitBuilderDesc>
+              </KitBuilderContent>
+            </KitBuilderLeft>
+            <KitBuilderBtn onClick={() => navigate('/creator/dashboard/my-kit')}>
+              <FileText size={16} />
+              Build my kit
+              <ArrowRight size={14} />
+            </KitBuilderBtn>
+          </KitBuilderCard>
+        )}
 
         {/* Trending in your niche — strict filtering, honest labeling */}
         {data?.hot?.length > 0 && selectedNiches.length > 0 && (
