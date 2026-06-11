@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -23,8 +23,29 @@ const API_BASE = getApiBase();
 
 const FREE_PITCH_LIMIT = 3;
 
-// Use all canonical categories from database (excluding 'other')
-const NICHE_OPTIONS = CANONICAL_CATEGORIES.filter(c => c !== 'other');
+// Niche options WITH emoji labels — MUST match onboarding for consistency
+// Keep in sync with CreatorOnboarding.js NICHES array
+const NICHE_OPTIONS = [
+  { id: 'beauty', label: '💄 Beauty' },
+  { id: 'skincare', label: '🧴 Skincare' },
+  { id: 'haircare', label: '💇 Haircare' },
+  { id: 'fashion', label: '👗 Fashion' },
+  { id: 'jewelry', label: '💍 Jewelry' },
+  { id: 'activewear', label: '🏃 Activewear' },
+  { id: 'fitness', label: '💪 Fitness' },
+  { id: 'wellness', label: '🌿 Wellness' },
+  { id: 'supplements', label: '💊 Supplements' },
+  { id: 'food', label: '🍽️ Food & Beverage' },
+  { id: 'travel', label: '✈️ Travel' },
+  { id: 'lifestyle', label: '🏠 Lifestyle' },
+  { id: 'home', label: '🏡 Home & Living' },
+  { id: 'tech', label: '💻 Tech' },
+  { id: 'gaming', label: '🎮 Gaming' },
+  { id: 'pet', label: '🐾 Pet' },
+  { id: 'baby', label: '🍼 Baby & Parenting' },
+  { id: 'sustainable', label: '♻️ Sustainable' },
+  { id: 'luxury', label: '✨ Luxury' },
+];
 
 const ForYou = () => {
   const { user } = useContext(UserContext);
@@ -62,8 +83,10 @@ const ForYou = () => {
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
   const [opportunityCount, setOpportunityCount] = useState(0);
 
-  // Recent replies for social proof strip
+  // Recent replies for social proof strip (notification feed)
   const [recentReplies, setRecentReplies] = useState([]);
+  const [weekReplyCount, setWeekReplyCount] = useState(63);
+  const [socialFeedNotifs, setSocialFeedNotifs] = useState([]);
 
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
@@ -76,6 +99,86 @@ const ForYou = () => {
     fetchKitViews();
     fetchOpportunityCount();
     fetchRecentReplies();
+  }, []);
+
+  // ── Social proof notification feed: creator pool and brands ──
+  const SOCIAL_CREATORS = useMemo(() => [
+    { initials: 'S', color: '#f97316', handle: '@sarah.wellness', followers: '8.2K', niche: 'fitness & wellness', platform: 'ig' },
+    { initials: 'J', color: '#7c3aed', handle: '@jadebeautyy', followers: '3.4K', niche: 'beauty', platform: 'tt' },
+    { initials: 'M', color: '#059669', handle: '@maya.eats', followers: '6.1K', niche: 'food & bev', platform: 'ig' },
+    { initials: 'A', color: '#0ea5e9', handle: '@alex.fit', followers: '12K', niche: 'fitness', platform: 'ig' },
+    { initials: 'P', color: '#e11d48', handle: '@petite.skin', followers: '4.7K', niche: 'skincare', platform: 'tt' },
+    { initials: 'L', color: '#d97706', handle: '@lena.wellness', followers: '9.3K', niche: 'wellness', platform: 'ig' },
+    { initials: 'R', color: '#6366f1', handle: '@runwithrose', followers: '2.9K', niche: 'fitness', platform: 'tt' },
+    { initials: 'C', color: '#14b8a6', handle: '@chloe.eats', followers: '5.5K', niche: 'food & bev', platform: 'ig' },
+  ], []);
+
+  const SOCIAL_BRANDS = useMemo(() => [
+    { name: 'Aura Bora', event: 'reply' },
+    { name: 'Cowshed', event: 'package' },
+    { name: 'Graza', event: 'reply' },
+    { name: 'Peach Slices', event: 'reply' },
+    { name: 'Momentous', event: 'package' },
+    { name: 'Splits59', event: 'reply' },
+    { name: 'Fly By Jing', event: 'reply' },
+    { name: 'Olly', event: 'package' },
+    { name: 'JuneShine', event: 'reply' },
+    { name: 'Pela Case', event: 'reply' },
+  ], []);
+
+  // Initialize social feed with 3 notifications
+  useEffect(() => {
+    const initNotifs = SOCIAL_CREATORS.slice(0, 3).map((c, i) => ({
+      ...c,
+      brand: SOCIAL_BRANDS[i],
+      timeLabel: ['just now', '14m ago', '1h ago'][i],
+      id: `init-${i}`,
+      isNew: i === 0,
+    }));
+    setSocialFeedNotifs(initNotifs);
+  }, [SOCIAL_CREATORS, SOCIAL_BRANDS]);
+
+  // Live notification injection every ~6 seconds
+  const notifIndexRef = useRef(3);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSocialFeedNotifs(prev => {
+        // Age existing time labels
+        const aged = prev.map(n => {
+          let newTime = n.timeLabel;
+          if (newTime === 'just now') newTime = '1m ago';
+          else if (newTime === '1m ago') newTime = '3m ago';
+          else if (newTime === '3m ago') newTime = '7m ago';
+          return { ...n, timeLabel: newTime, isNew: false };
+        });
+
+        // Pick next creator (cycle through pool)
+        const idx = notifIndexRef.current % SOCIAL_CREATORS.length;
+        const creator = SOCIAL_CREATORS[idx];
+        const brand = SOCIAL_BRANDS[Math.floor(Math.random() * SOCIAL_BRANDS.length)];
+        notifIndexRef.current++;
+
+        // Insert new at top, keep max 3
+        const newNotif = {
+          ...creator,
+          brand,
+          timeLabel: 'just now',
+          id: `notif-${Date.now()}`,
+          isNew: true,
+        };
+        return [newNotif, ...aged].slice(0, 3);
+      });
+    }, 5800);
+
+    return () => clearInterval(interval);
+  }, [SOCIAL_CREATORS, SOCIAL_BRANDS]);
+
+  // Increment week count slowly
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWeekReplyCount(c => c + Math.floor(Math.random() * 2));
+    }, 12000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchOpportunityCount = async () => {
@@ -332,15 +435,15 @@ const ForYou = () => {
             <PromptSub>Takes 10 seconds and unlocks brands matched specifically to you</PromptSub>
 
             <NicheGrid>
-              {NICHE_OPTIONS.map(n => (
+              {NICHE_OPTIONS.map(niche => (
                 <NicheChip
-                  key={n}
-                  $selected={selectedNiches.includes(n)}
+                  key={niche.id}
+                  $selected={selectedNiches.includes(niche.id)}
                   onClick={() => setSelectedNiches(prev =>
-                    prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n]
+                    prev.includes(niche.id) ? prev.filter(x => x !== niche.id) : [...prev, niche.id]
                   )}
                 >
-                  {CATEGORY_LABELS[n] || n}
+                  {niche.label}
                 </NicheChip>
               ))}
             </NicheGrid>
@@ -464,97 +567,59 @@ const ForYou = () => {
           </PendingPitchBanner>
         )}
 
-        {/* Social Proof Strip - Recent replies happening on platform */}
-        {(() => {
-          // Get user's primary niche for personalized fallback
-          const userNiches = selectedNiches?.length > 0
-            ? selectedNiches
-            : (data?.profile?.niches?.length > 0 ? data.profile.niches : ['lifestyle']);
-          const nicheKey = (userNiches[0] || 'default').toLowerCase();
+        {/* Social Proof Strip - Variant A: Notification feed with live updates */}
+        <SocialFeedStrip>
+          <SocialFeedHeader>
+            <LiveBadge>
+              <LiveDot />
+              Live activity
+            </LiveBadge>
+            <WeekCount><strong>{weekReplyCount}</strong> replies sent this week</WeekCount>
+          </SocialFeedHeader>
 
-          // Niche-matched fallback data with believable indie brands
-          // Different follower counts, mix of reply/package events, time signals
-          const FALLBACK_BY_NICHE = {
-            beauty: [
-              { brand_name: 'Cowshed', creator_niche: 'beauty', follower_range: '6.4K', event: 'got a reply from', time_ago: '4h ago' },
-              { brand_name: 'Peach Slices', creator_niche: 'beauty', follower_range: '3.1K', event: 'received a PR package from', time_ago: '1d ago' },
-            ],
-            skincare: [
-              { brand_name: 'Versed', creator_niche: 'skincare', follower_range: '5.2K', event: 'got a reply from', time_ago: '3h ago' },
-              { brand_name: 'Good Molecules', creator_niche: 'skincare', follower_range: '8.7K', event: 'received a PR package from', time_ago: '2d ago' },
-            ],
-            fitness: [
-              { brand_name: 'Splits59', creator_niche: 'fitness', follower_range: '12K', event: 'got a reply from', time_ago: '6h ago' },
-              { brand_name: 'Momentous', creator_niche: 'fitness', follower_range: '4.8K', event: 'received a PR package from', time_ago: '2d ago' },
-            ],
-            wellness: [
-              { brand_name: 'Aura Bora', creator_niche: 'wellness', follower_range: '7.2K', event: 'got a reply from', time_ago: '3h ago' },
-              { brand_name: 'Olly', creator_niche: 'wellness', follower_range: '2.9K', event: 'received a PR package from', time_ago: '1d ago' },
-            ],
-            supplements: [
-              { brand_name: 'Athletic Greens', creator_niche: 'supplements', follower_range: '9.1K', event: 'got a reply from', time_ago: '5h ago' },
-              { brand_name: 'Ritual', creator_niche: 'supplements', follower_range: '4.2K', event: 'received a PR package from', time_ago: '1d ago' },
-            ],
-            food: [
-              { brand_name: 'Graza', creator_niche: 'food', follower_range: '8.1K', event: 'got a reply from', time_ago: '5h ago' },
-              { brand_name: 'Fly By Jing', creator_niche: 'food', follower_range: '3.6K', event: 'received a PR package from', time_ago: '2d ago' },
-            ],
-            fashion: [
-              { brand_name: 'Reformation', creator_niche: 'fashion', follower_range: '11K', event: 'got a reply from', time_ago: '4h ago' },
-              { brand_name: 'Girlfriend Collective', creator_niche: 'fashion', follower_range: '5.3K', event: 'received a PR package from', time_ago: '1d ago' },
-            ],
-            lifestyle: [
-              { brand_name: 'Vitruvi', creator_niche: 'lifestyle', follower_range: '6.8K', event: 'got a reply from', time_ago: '3h ago' },
-              { brand_name: 'Caraway', creator_niche: 'lifestyle', follower_range: '4.1K', event: 'received a PR package from', time_ago: '2d ago' },
-            ],
-            tech: [
-              { brand_name: 'Anker', creator_niche: 'tech', follower_range: '8.4K', event: 'got a reply from', time_ago: '6h ago' },
-              { brand_name: 'Keychron', creator_niche: 'tech', follower_range: '5.7K', event: 'received a PR package from', time_ago: '1d ago' },
-            ],
-            pet: [
-              { brand_name: 'Wild One', creator_niche: 'pet', follower_range: '7.3K', event: 'got a reply from', time_ago: '4h ago' },
-              { brand_name: 'Sundays for Dogs', creator_niche: 'pet', follower_range: '3.9K', event: 'received a PR package from', time_ago: '2d ago' },
-            ],
-            default: [
-              { brand_name: 'Cowshed', creator_niche: 'beauty', follower_range: '6.4K', event: 'got a reply from', time_ago: '4h ago' },
-              { brand_name: 'Aura Bora', creator_niche: 'wellness', follower_range: '2.8K', event: 'received a PR package from', time_ago: '1d ago' },
-            ],
-          };
+          <SocialFeed>
+            {socialFeedNotifs.map((notif, i) => {
+              const isPackage = notif.brand?.event === 'package';
+              const actionText = isPackage ? 'received a package from' : 'got a reply from';
+              return (
+                <React.Fragment key={notif.id}>
+                  {i > 0 && <NotifDivider />}
+                  <NotifRow $isNew={notif.isNew}>
+                    <NotifAvatar style={{ background: notif.color }}>
+                      {notif.initials}
+                      <PlatformDot $platform={notif.platform}>
+                        {notif.platform === 'ig' ? '▲' : 'T'}
+                      </PlatformDot>
+                    </NotifAvatar>
+                    <NotifBody>
+                      <NotifLine>
+                        <NotifHandle>{notif.handle}</NotifHandle> {actionText}{' '}
+                        <NotifBrand $isPackage={isPackage}>{notif.brand?.name}</NotifBrand>
+                      </NotifLine>
+                      <NotifMeta>
+                        <FollowersChip>{notif.followers} followers</FollowersChip>
+                        {notif.niche} · {notif.timeLabel}
+                      </NotifMeta>
+                    </NotifBody>
+                    {isPackage ? (
+                      <PackageBadge>📦 Package</PackageBadge>
+                    ) : (
+                      <ReplyBadge>✓ Replied</ReplyBadge>
+                    )}
+                  </NotifRow>
+                </React.Fragment>
+              );
+            })}
+          </SocialFeed>
 
-          const fallbackReplies = FALLBACK_BY_NICHE[nicheKey] || FALLBACK_BY_NICHE.default;
-
-          // Mega-brands list - unrealistic for small creators, damages credibility
-          const megaBrands = ['rare beauty', 'fenty', 'kylie', 'glossier', 'charlotte tilbury', 'selena', 'rihanna', 'kim kardashian', 'skims'];
-          const isMegaBrand = (name) => megaBrands.some(m => (name || '').toLowerCase().includes(m));
-
-          // Validate API data quality:
-          // 1. Has 2+ replies with brand_name, time_ago, and follower_range
-          // 2. No mega-brands (unrealistic)
-          // 3. Follower counts should vary (not all identical)
-          const validReplies = recentReplies.filter(r =>
-            r?.brand_name && r?.time_ago && r?.follower_range && !isMegaBrand(r.brand_name)
-          );
-          const hasVariedFollowers = validReplies.length >= 2 &&
-            validReplies[0]?.follower_range !== validReplies[1]?.follower_range;
-          const hasRealData = validReplies.length >= 2 && hasVariedFollowers;
-
-          const displayReplies = hasRealData ? validReplies.slice(0, 2) : fallbackReplies;
-
-          return (
-            <RecentRepliesStrip>
-              <RepliesStripLabel>This week on Newcollab</RepliesStripLabel>
-              {displayReplies.map((reply, i) => (
-                <ReplyPreview key={i}>
-                  <GreenDot />
-                  <ReplyText>
-                    A {reply.creator_niche} creator ({reply.follower_range} followers) {reply.event || 'got a reply from'} {reply.brand_name}
-                    {reply.time_ago && <TimeAgo> · {reply.time_ago}</TimeAgo>}
-                  </ReplyText>
-                </ReplyPreview>
-              ))}
-            </RecentRepliesStrip>
-          );
-        })()}
+          <SocialFeedFooter>
+            <SeeAllLabel>See all activity →</SeeAllLabel>
+            <RefreshLabel>
+              <RefreshDot />
+              Updates in real time
+            </RefreshLabel>
+          </SocialFeedFooter>
+        </SocialFeedStrip>
 
         {/* Section 1: Matched for You (Pro gate) */}
         <Section>
@@ -602,9 +667,9 @@ const ForYou = () => {
                 </TopMatchesProofText>
               </TopMatchesProofStrip>
 
-              {/* First 2 visible cards */}
+              {/* First 4 visible cards - more teaser toward upgrading */}
               <CardGrid $cols={2} style={{ marginBottom: 20 }}>
-                {data?.matched?.slice(0, 2).map(brand => (
+                {data?.matched?.slice(0, 4).map(brand => (
                   <BrandCard
                     key={brand.id}
                     brand={brand}
@@ -620,14 +685,14 @@ const ForYou = () => {
               </CardGrid>
 
               {/* Locked matches section */}
-              {data?.matched?.length > 2 && (
+              {data?.matched?.length > 4 && (
                 <>
-                  <MatchSectionLabel>🔒 Pro matches ({(data?.matched?.length || 0) - 2} brands)</MatchSectionLabel>
+                  <MatchSectionLabel>🔒 Pro matches ({(data?.matched?.length || 0) - 4} brands)</MatchSectionLabel>
 
                   {/* Locked match cards - reply rate is the hook, not the name */}
                   {/* Each card shows different stats to feel like real data */}
                   <LockedMatchList>
-                    {data?.matched?.slice(2, 5).map((brand, i) => {
+                    {data?.matched?.slice(4, 7).map((brand, i) => {
                       // Vary the stats explicitly per card - avoid identical numbers
                       const CARD_STATS = [
                         { rate: 48, multiplier: 5 },
@@ -658,13 +723,13 @@ const ForYou = () => {
                     })}
                   </LockedMatchList>
 
-                  {data?.matched?.length > 5 && (
-                    <MoreLockedText>+{(data?.matched?.length || 0) - 5} more matched brands</MoreLockedText>
+                  {data?.matched?.length > 7 && (
+                    <MoreLockedText>+{(data?.matched?.length || 0) - 7} more matched brands</MoreLockedText>
                   )}
 
                   {/* Upgrade CTA — use specific data from top locked match */}
                   {(() => {
-                    const topLocked = data?.matched?.[2];
+                    const topLocked = data?.matched?.[4];
                     const topRate = topLocked?.response_rate || 40;
                     return (
                       <UnlockBanner onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
@@ -1855,52 +1920,219 @@ const TopMatchesProofText = styled.span`
   line-height: 1.4;
 `;
 
-// Recent Replies Social Proof Strip
-const RecentRepliesStrip = styled.div`
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+// ── Variant A: Notification Feed Social Proof ──
+const SocialFeedStrip = styled.div`
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
 `;
 
-const RepliesStripLabel = styled.div`
-  font-size: 11px;
-  font-weight: 700;
-  color: #059669;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 8px;
-`;
-
-const ReplyPreview = styled.div`
+const SocialFeedHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #374151;
-  margin-bottom: 4px;
+  justify-content: space-between;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid #f3f4f6;
+`;
 
-  &:last-child {
-    margin-bottom: 0;
+const LiveBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+`;
+
+const LiveDot = styled.div`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #059669;
+  animation: socialPulse 1.6s ease-in-out infinite;
+
+  @keyframes socialPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
   }
 `;
 
-const GreenDot = styled.div`
-  width: 8px;
-  height: 8px;
+const WeekCount = styled.div`
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+
+  strong {
+    color: #111827;
+    font-weight: 700;
+  }
+`;
+
+const SocialFeed = styled.div`
+  padding: 4px 0;
+  max-height: 148px;
+  overflow: hidden;
+`;
+
+const NotifRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  transition: background 0.15s;
+  animation: ${p => p.$isNew ? 'slideIn 0.4s cubic-bezier(.22,1,.36,1) both, flashBg 0.9s ease-out both' : 'slideIn 0.4s cubic-bezier(.22,1,.36,1) both'};
+
+  &:hover { background: #f9fafb; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes flashBg {
+    0% { background: #ecfdf5; }
+    100% { background: transparent; }
+  }
+`;
+
+const NotifDivider = styled.div`
+  height: 1px;
+  background: #f9fafb;
+  margin: 0 14px;
+`;
+
+const NotifAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  position: relative;
+`;
+
+const PlatformDot = styled.div`
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  background: ${p => p.$platform === 'ig' ? '#e1306c' : '#000'};
+  color: #fff;
+`;
+
+const NotifBody = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const NotifLine = styled.div`
+  font-size: 12.5px;
+  color: #374151;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const NotifHandle = styled.span`
+  font-weight: 700;
+  color: #111827;
+`;
+
+const NotifBrand = styled.span`
+  font-weight: 700;
+  color: ${p => p.$isPackage ? '#7c3aed' : '#059669'};
+`;
+
+const NotifMeta = styled.div`
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const FollowersChip = styled.span`
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+`;
+
+const ReplyBadge = styled.div`
+  flex-shrink: 0;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #059669;
+  white-space: nowrap;
+`;
+
+const PackageBadge = styled.div`
+  flex-shrink: 0;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #7c3aed;
+  white-space: nowrap;
+`;
+
+const SocialFeedFooter = styled.div`
+  padding: 8px 14px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const SeeAllLabel = styled.div`
+  font-size: 11.5px;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover { color: #374151; }
+`;
+
+const RefreshLabel = styled.div`
+  font-size: 10.5px;
+  color: #d1d5db;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const RefreshDot = styled.div`
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #059669;
-  flex-shrink: 0;
-`;
-
-const ReplyText = styled.span`
-  line-height: 1.4;
-`;
-
-const TimeAgo = styled.span`
-  color: #9ca3af;
-  font-size: 12px;
+  animation: socialPulse 2s ease-in-out infinite;
 `;
 
 // Pending Pitch Banner — keeps users engaged during wait period
