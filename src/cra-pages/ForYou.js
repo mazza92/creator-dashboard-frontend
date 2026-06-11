@@ -477,33 +477,55 @@ const ForYou = () => {
         )}
 
 
-        {/* How It Works — Clear explanation FIRST so users understand the game */}
+        {/* How It Works — Variant A: Outcome icons, light card */}
         {!isPro && data?.has_profile && (
           <HowItWorksCard>
-            <HowItWorksTitle>How to get your PR from brands</HowItWorksTitle>
+            <HowItWorksHeader>
+              <HowItWorksEyebrow>How it works</HowItWorksEyebrow>
+              <HowItWorksTitle>Pick a brand. We do the rest. <span>You get free PR.</span></HowItWorksTitle>
+            </HowItWorksHeader>
+
             <HowItWorksSteps>
               <HowItWorksStep>
-                <StepNumber>1</StepNumber>
-                <StepText>
-                  <StepLabel>Click <strong>Pitch Now</strong> to contact brands</StepLabel>
-                  <StepDesc>Unlock their PR email + your custom message, sent from your email so it feels personal</StepDesc>
-                </StepText>
+                <StepIconWrap $bg="#fff0f3" $border="#fecdd3">
+                  ✍️
+                  <StepNumber>1</StepNumber>
+                </StepIconWrap>
+                <StepContent>
+                  <StepOutcome>Your pitch is ready to send</StepOutcome>
+                  <StepDetail>
+                    We generate a <strong>personalised email</strong> to their PR inbox based on your niche and audience.
+                  </StepDetail>
+                  <StepTime>⏱ 30 seconds</StepTime>
+                </StepContent>
               </HowItWorksStep>
-              <StepDivider />
+
               <HowItWorksStep>
-                <StepNumber>2</StepNumber>
-                <StepText>
-                  <StepLabel>You review & hit send</StepLabel>
-                  <StepDesc>Edit the pitch if you want, then send from your own inbox</StepDesc>
-                </StepText>
+                <StepIconWrap $bg="#faf5ff" $border="#e9d5ff">
+                  📤
+                  <StepNumber>2</StepNumber>
+                </StepIconWrap>
+                <StepContent>
+                  <StepOutcome>Send it in one tap</StepOutcome>
+                  <StepDetail>
+                    Review, edit if you want, then send <strong>direct from your inbox.</strong> Feels personal, not automated.
+                  </StepDetail>
+                  <StepTime>⏱ One tap</StepTime>
+                </StepContent>
               </HowItWorksStep>
-              <StepDivider />
+
               <HowItWorksStep>
-                <StepNumber>3</StepNumber>
-                <StepText>
-                  <StepLabel>We track replies for you</StepLabel>
-                  <StepDesc>Follow up in your pipeline and get PR packages</StepDesc>
-                </StepText>
+                <StepIconWrap $bg="#f0fdf4" $border="#bbf7d0">
+                  📦
+                  <StepNumber>3</StepNumber>
+                </StepIconWrap>
+                <StepContent>
+                  <StepOutcome>Brands reply. Packages arrive.</StepOutcome>
+                  <StepDetail>
+                    We track every reply and notify you. Most creators hear back <strong>within 5 days.</strong>
+                  </StepDetail>
+                  <StepTime $bg="#f0fdf4" $color="#059669">🎉 Free products</StepTime>
+                </StepContent>
               </HowItWorksStep>
             </HowItWorksSteps>
           </HowItWorksCard>
@@ -2811,124 +2833,185 @@ const WinBrandDot = styled.span`
   background: ${tokens.success};
 `;
 
-// How It Works Card — Clean 3-step flow
+// How It Works Card — Variant A: Outcome icons, light card
 const HowItWorksCard = styled.div`
   background: #fff;
   border: 1px solid ${tokens.border};
   border-radius: 16px;
-  padding: 20px 24px;
+  padding: 22px 24px 20px;
   margin-bottom: 24px;
   box-shadow: ${tokens.shadowCard};
 
   @media (max-width: 640px) {
-    padding: 16px;
+    padding: 18px 16px 16px;
     border-radius: 14px;
   }
 `;
 
-const HowItWorksTitle = styled.h3`
-  font-size: 13px;
-  font-weight: 600;
-  color: ${tokens.textMuted};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 16px;
+const HowItWorksHeader = styled.div`
+  margin-bottom: 18px;
 
   @media (max-width: 640px) {
-    font-size: 12px;
     margin-bottom: 14px;
   }
 `;
 
-const HowItWorksSteps = styled.div`
-  display: flex;
-  align-items: stretch;
-  gap: 0;
+const HowItWorksEyebrow = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  color: #E11D48;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 4px;
+`;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 0;
+const HowItWorksTitle = styled.h3`
+  font-size: 17px;
+  font-weight: 800;
+  color: ${tokens.textPrimary};
+  line-height: 1.25;
+  margin: 0;
+
+  span {
+    color: #059669;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 15px;
+  }
+`;
+
+const HowItWorksSteps = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  position: relative;
+
+  /* Connector line between steps */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 22px;
+    left: calc(16.6% + 12px);
+    right: calc(16.6% + 12px);
+    height: 2px;
+    background: linear-gradient(90deg, #E11D48 0%, #7c3aed 50%, #059669 100%);
+    opacity: 0.25;
+    z-index: 0;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+
+    &::before {
+      display: none;
+    }
   }
 `;
 
 const HowItWorksStep = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  flex: 1;
-  padding: 0 16px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 12px;
+  position: relative;
+  z-index: 1;
 
-  &:first-child {
-    padding-left: 0;
+  @media (max-width: 640px) {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0;
+    gap: 12px;
   }
+`;
 
-  &:last-child {
-    padding-right: 0;
-  }
+const StepIconWrap = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 10px;
+  position: relative;
+  flex-shrink: 0;
+  background: ${props => props.$bg || '#fff0f3'};
+  border: 2px solid ${props => props.$border || '#fecdd3'};
 
-  @media (max-width: 768px) {
-    padding: 12px 0;
-
-    &:first-child {
-      padding-top: 0;
-    }
-
-    &:last-child {
-      padding-bottom: 0;
-    }
+  @media (max-width: 640px) {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    margin-bottom: 0;
   }
 `;
 
 const StepNumber = styled.div`
-  width: 28px;
-  height: 28px;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: ${tokens.textPrimary};
   color: #fff;
+  font-size: 9px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  flex-shrink: 0;
 `;
 
-const StepText = styled.div`
+const StepContent = styled.div`
   flex: 1;
   min-width: 0;
-  padding-top: 2px;
 `;
 
-const StepLabel = styled.div`
-  font-size: 14px;
-  font-weight: 700;
+const StepOutcome = styled.div`
+  font-size: 13.5px;
+  font-weight: 800;
   color: ${tokens.textPrimary};
-  margin-bottom: 3px;
+  line-height: 1.25;
+  margin-bottom: 5px;
 
   @media (max-width: 640px) {
     font-size: 13px;
+    margin-bottom: 3px;
   }
 `;
 
-const StepDesc = styled.div`
-  font-size: 13px;
+const StepDetail = styled.div`
+  font-size: 11.5px;
   color: ${tokens.textMuted};
-  line-height: 1.4;
+  line-height: 1.45;
+
+  strong {
+    color: #374151;
+    font-weight: 600;
+  }
 
   @media (max-width: 640px) {
-    font-size: 12px;
+    font-size: 11px;
   }
 `;
 
-const StepDivider = styled.div`
-  width: 1px;
-  background: ${tokens.border};
-  align-self: stretch;
-  flex-shrink: 0;
+const StepTime = styled.span`
+  display: inline-block;
+  margin-top: 6px;
+  background: ${props => props.$bg || '#f3f4f6'};
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: ${props => props.$color || '#6b7280'};
 
-  @media (max-width: 768px) {
-    width: 100%;
-    height: 1px;
+  @media (max-width: 640px) {
+    margin-top: 4px;
+    font-size: 10px;
   }
 `;
 
