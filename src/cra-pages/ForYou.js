@@ -87,6 +87,7 @@ const ForYou = () => {
   const [recentReplies, setRecentReplies] = useState([]);
   const [weekReplyCount, setWeekReplyCount] = useState(63);
   const [socialFeedNotifs, setSocialFeedNotifs] = useState([]);
+  const [realBrands, setRealBrands] = useState([]);
 
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
@@ -99,6 +100,7 @@ const ForYou = () => {
     fetchKitViews();
     fetchOpportunityCount();
     fetchRecentReplies();
+    fetchSocialProofBrands();
   }, []);
 
   // ── Social proof notification feed: creator pool and brands ──
@@ -113,27 +115,22 @@ const ForYou = () => {
     { initials: 'C', color: '#14b8a6', handle: '@chloe.eats', followers: '5.5K', niche: 'food & bev', platform: 'ig' },
   ], []);
 
-  const SOCIAL_BRANDS = useMemo(() => [
-    // 'contacted' events are most common to emphasize action-taking
-    { name: 'Glossier', event: 'contacted' },
-    { name: 'Aura Bora', event: 'contacted' },
-    { name: 'Graza', event: 'contacted' },
-    { name: 'Cowshed', event: 'package' },
-    { name: 'Peach Slices', event: 'contacted' },
-    { name: 'Momentous', event: 'reply' },
-    { name: 'Splits59', event: 'contacted' },
-    { name: 'Fly By Jing', event: 'contacted' },
-    { name: 'Olly', event: 'package' },
-    { name: 'JuneShine', event: 'reply' },
-    { name: 'Pela Case', event: 'contacted' },
-    { name: 'Rhode', event: 'contacted' },
-  ], []);
+  // Use real brands from API if available, otherwise fall back to empty
+  // The API returns brands that definitely exist in our database
+  const SOCIAL_BRANDS = useMemo(() => {
+    if (realBrands.length > 0) {
+      return realBrands;
+    }
+    // Fallback: return empty - will wait for API
+    return [];
+  }, [realBrands]);
 
-  // Initialize social feed with 3 notifications
+  // Initialize social feed with 3 notifications when brands are loaded
   useEffect(() => {
+    if (SOCIAL_BRANDS.length === 0) return; // Wait for real brands to load
     const initNotifs = SOCIAL_CREATORS.slice(0, 3).map((c, i) => ({
       ...c,
-      brand: SOCIAL_BRANDS[i],
+      brand: SOCIAL_BRANDS[i % SOCIAL_BRANDS.length],
       timeLabel: ['just now', '14m ago', '1h ago'][i],
       id: `init-${i}`,
       isNew: i === 0,
@@ -144,6 +141,7 @@ const ForYou = () => {
   // Live notification injection every ~6 seconds
   const notifIndexRef = useRef(3);
   useEffect(() => {
+    if (SOCIAL_BRANDS.length === 0) return; // Don't run until brands are loaded
     const interval = setInterval(() => {
       setSocialFeedNotifs(prev => {
         // Age existing time labels
@@ -212,6 +210,19 @@ const ForYou = () => {
     }
   };
 
+  const fetchSocialProofBrands = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/pr-crm/social-proof-brands`, {
+        withCredentials: true
+      });
+      if (response.data.success && response.data.brands?.length > 0) {
+        setRealBrands(response.data.brands);
+      }
+    } catch (error) {
+      // Silently fail - use fallback brands
+    }
+  };
+
   const fetchKitViews = async () => {
     try {
       const response = await axios.get(`${API_BASE}/api/portfolio/views`, {
@@ -243,7 +254,12 @@ const ForYou = () => {
       if (response.data.success) {
         setData(response.data);
         if (response.data.profile) {
-          setSelectedNiches(response.data.profile.niches || []);
+          // Normalize niches to lowercase to match NICHE_OPTIONS IDs
+          const rawNiches = response.data.profile.niches || [];
+          const normalizedNiches = rawNiches.map(n =>
+            typeof n === 'string' ? n.toLowerCase().trim() : ''
+          ).filter(Boolean);
+          setSelectedNiches(normalizedNiches);
           setFollowerCount(response.data.profile.followers?.toString() || '');
         }
       }
@@ -571,6 +587,7 @@ const ForYou = () => {
         )}
 
         {/* Social Proof Strip - Variant A: Notification feed with live updates */}
+        {socialFeedNotifs.length > 0 && (
         <SocialFeedStrip>
           <SocialFeedHeader>
             <LiveBadge>
@@ -630,6 +647,7 @@ const ForYou = () => {
             </RefreshLabel>
           </SocialFeedFooter>
         </SocialFeedStrip>
+        )}
 
         {/* Section 1: Matched for You (Pro gate) */}
         <Section>
