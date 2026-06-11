@@ -613,7 +613,6 @@ const ForYou = () => {
           </SocialFeed>
 
           <SocialFeedFooter>
-            <SeeAllLabel>See all activity →</SeeAllLabel>
             <RefreshLabel>
               <RefreshDot />
               Updates in real time
@@ -1936,6 +1935,12 @@ const SocialFeedHeader = styled.div`
   justify-content: space-between;
   padding: 10px 14px 8px;
   border-bottom: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  @media (max-width: 480px) {
+    padding: 8px 10px 6px;
+  }
 `;
 
 const LiveBadge = styled.div`
@@ -1971,6 +1976,10 @@ const WeekCount = styled.div`
     color: #111827;
     font-weight: 700;
   }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
 `;
 
 const SocialFeed = styled.div`
@@ -1997,6 +2006,11 @@ const NotifRow = styled.div`
   @keyframes flashBg {
     0% { background: #ecfdf5; }
     100% { background: transparent; }
+  }
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    padding: 8px 10px;
   }
 `;
 
@@ -2045,9 +2059,16 @@ const NotifLine = styled.div`
   font-size: 12.5px;
   color: #374151;
   line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+  @media (min-width: 481px) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;
 
 const NotifHandle = styled.span`
@@ -2067,6 +2088,12 @@ const NotifMeta = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    gap: 4px;
+  }
 `;
 
 const FollowersChip = styled.span`
@@ -2088,6 +2115,11 @@ const ReplyBadge = styled.div`
   font-weight: 700;
   color: #059669;
   white-space: nowrap;
+
+  @media (max-width: 480px) {
+    padding: 2px 7px;
+    font-size: 9.5px;
+  }
 `;
 
 const PackageBadge = styled.div`
@@ -2100,6 +2132,11 @@ const PackageBadge = styled.div`
   font-weight: 700;
   color: #7c3aed;
   white-space: nowrap;
+
+  @media (max-width: 480px) {
+    padding: 2px 7px;
+    font-size: 9.5px;
+  }
 `;
 
 const SocialFeedFooter = styled.div`
@@ -2107,16 +2144,11 @@ const SocialFeedFooter = styled.div`
   border-top: 1px solid #f3f4f6;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-`;
+  justify-content: flex-end;
 
-const SeeAllLabel = styled.div`
-  font-size: 11.5px;
-  color: #6b7280;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:hover { color: #374151; }
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+  }
 `;
 
 const RefreshLabel = styled.div`
@@ -2869,18 +2901,6 @@ const RefreshHint = styled.div`
   }
 `;
 
-const RefreshDot = styled.span`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: ${tokens.success};
-  animation: pulse 2s infinite;
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-`;
 
 // Sub-tabs for Matches vs Opportunities
 const SubTabRow = styled.div`
