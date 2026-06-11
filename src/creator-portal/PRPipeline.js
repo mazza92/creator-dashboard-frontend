@@ -129,13 +129,11 @@ const MOCK_ACTIVITY = [
   { icon: '📦', text: '4 packages landed in Wellness this week', type: 'green' },
 ];
 
-// Stage filter options
+// Stage filter options - simplified for better UX
 const STAGE_FILTERS = [
   { key: 'all', label: 'All' },
-  { key: 'action', label: 'Action Needed', emoji: '⚡' },
-  { key: 'waiting', label: 'Waiting', emoji: '⏳' },
-  { key: 'won', label: 'Won', emoji: '🎁' },
-  { key: 'saved', label: 'Ready to Contact', emoji: '📌' },
+  { key: 'waiting', label: 'Waiting' },
+  { key: 'replied', label: 'Replied' },
 ];
 
 const PRPipeline = () => {
@@ -291,6 +289,7 @@ const PRPipeline = () => {
     // Map filter to stage(s)
     const stageMap = {
       'waiting': ['waiting', 'followup', 'pitched'],
+      'replied': ['replied'],
       'won': ['won', 'received', 'success'],
       'saved': ['saved']
     };
@@ -330,11 +329,8 @@ const PRPipeline = () => {
   // Count items by stage
   const stageCounts = useMemo(() => {
     return {
-      action: items.filter(i =>
-        i.pipeline_stage === 'replied' ||
-        ((i.pipeline_stage === 'waiting' || i.pipeline_stage === 'pitched') && i.days_since_pitched >= 7)
-      ).length,
       waiting: items.filter(i => ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage)).length,
+      replied: items.filter(i => i.pipeline_stage === 'replied').length,
       won: items.filter(i => ['won', 'received', 'success'].includes(i.pipeline_stage)).length,
       saved: items.filter(i => i.pipeline_stage === 'saved').length,
     };
@@ -769,18 +765,33 @@ const PRPipeline = () => {
           </WaitingDetail>
         )}
 
+        {/* Brand description for saved items */}
+        {isSaved && item.description && !cardSuccessStates[item.id] && (
+          <BrandDesc>{item.description}</BrandDesc>
+        )}
+
         {/* Info pills for saved items */}
         {isSaved && !cardSuccessStates[item.id] && (
           <InfoRow>
             {item.response_rate && (
               <InfoPill $green={item.response_rate >= 40}>
-                {item.response_rate}% response rate {item.response_rate >= 50 ? '🔥' : ''}
+                {item.response_rate >= 50 ? '🔥 ' : ''}{item.response_rate}% response rate
               </InfoPill>
             )}
             {item.has_application_form && (
               <InfoPill>📋 Has PR form</InfoPill>
             )}
           </InfoRow>
+        )}
+
+        {/* Social proof line for saved items */}
+        {isSaved && !cardSuccessStates[item.id] && (
+          <SocialProofLine>
+            <GreenDotSm />
+            {item.recent_creator_replies && item.recent_creator_replies > 0
+              ? `${item.recent_creator_replies} ${item.category || 'creator'}${item.recent_creator_replies > 1 ? 's' : ''} got a reply this month`
+              : `Active this week · ${item.response_rate || 20}% reply rate`}
+          </SocialProofLine>
         )}
 
         {/* Replied celebration banner */}
@@ -806,9 +817,27 @@ const PRPipeline = () => {
 
         {/* Primary action button */}
         {isSaved && (
-          <PrimaryBtn $contact onClick={() => handlePitch(item)}>
-            📧 Contact {item.brand_name}
-          </PrimaryBtn>
+          <>
+            <PrimaryBtn
+              $contact
+              onClick={() => handlePitch(item)}
+              disabled={!isPro && pitchLimits.used >= pitchLimits.limit}
+              style={{
+                background: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#f3f4f6' : undefined,
+                color: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#9ca3af' : undefined,
+                cursor: (!isPro && pitchLimits.used >= pitchLimits.limit) ? 'not-allowed' : undefined
+              }}
+            >
+              ✉️ Pitch {item.brand_name} · Use 1 credit
+            </PrimaryBtn>
+            {!isPro && (
+              <CtaCredit>
+                {pitchLimits.limit - pitchLimits.used - 1 >= 0
+                  ? `${pitchLimits.limit - pitchLimits.used - 1} credit${pitchLimits.limit - pitchLimits.used - 1 !== 1 ? 's' : ''} remaining after this pitch`
+                  : 'No credits remaining — upgrade to pitch'}
+              </CtaCredit>
+            )}
+          </>
         )}
 
         {isWaiting && isOverdue && (
@@ -918,15 +947,27 @@ const PRPipeline = () => {
     ? getConfirmationCopy(confirmingItem._confirmMethod)
     : null;
 
+  // Calculate ready-to-pitch brands count
+  const readyToPitchCount = items.filter(i => i.pipeline_stage === 'saved' && !i.pitched_at && !i.send_confirmed).length;
+
+  // Calculate next reset date
+  const getNextResetDate = () => {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return nextMonth.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   return (
     <Container>
       {/* Journey Header */}
       <JourneyHeader>
         <JourneyGreeting>My Pitches</JourneyGreeting>
         <JourneySub>
-          {stats.total_contacted === 0
-            ? "Contact your first brand to get started"
-            : `${stageCounts.waiting} active · ${nudgeItems.length} need follow-up`}
+          {stageCounts.waiting > 0
+            ? `${stageCounts.waiting} pitch${stageCounts.waiting === 1 ? '' : 'es'} out · reply expected in ~5 days`
+            : readyToPitchCount > 0
+              ? `${readyToPitchCount} brand${readyToPitchCount === 1 ? '' : 's'} ready to contact this month`
+              : 'Save brands from For You to start pitching'}
         </JourneySub>
         <JourneyStats>
           <JStat>
@@ -958,6 +999,26 @@ const PRPipeline = () => {
           </JStat>
         </JourneyStats>
       </JourneyHeader>
+
+      {/* Quota Bar - always visible for free users */}
+      {!isPro && (
+        <QuotaBar>
+          <QuotaIcon>📨</QuotaIcon>
+          <QuotaText>
+            <QuotaTitle>
+              {pitchLimits.limit - pitchLimits.used > 0
+                ? `${pitchLimits.limit - pitchLimits.used} free ${pitchLimits.limit - pitchLimits.used === 1 ? 'pitch' : 'pitches'} left this month`
+                : 'Monthly pitches used — upgrade to keep going'}
+            </QuotaTitle>
+            <QuotaSub>{pitchLimits.used} used · resets {getNextResetDate()}</QuotaSub>
+          </QuotaText>
+          <QuotaPips>
+            {Array.from({ length: pitchLimits.limit }).map((_, i) => (
+              <Pip key={i} $used={i < pitchLimits.used} />
+            ))}
+          </QuotaPips>
+        </QuotaBar>
+      )}
 
       {/* Live Activity Strip */}
       {stats.total_contacted > 0 && (
@@ -1080,13 +1141,10 @@ const PRPipeline = () => {
             $active={activeFilter === filter.key}
             onClick={() => setActiveFilter(filter.key)}
           >
-            {filter.emoji && <span>{filter.emoji}</span>}
             {filter.label}
-            {filter.key !== 'all' && (
-              <TabCount $active={activeFilter === filter.key}>
-                {stageCounts[filter.key] || 0}
-              </TabCount>
-            )}
+            {filter.key === 'all' ? ` (${items.length})` : ''}
+            {filter.key === 'waiting' && stageCounts.waiting > 0 && ` (${stageCounts.waiting})`}
+            {filter.key === 'replied' && stageCounts.replied > 0 && ` (${stageCounts.replied})`}
           </FilterTab>
         ))}
       </FilterTabs>
@@ -1151,19 +1209,23 @@ const PRPipeline = () => {
           </AnimatePresence>
         )}
 
-        {/* Pro Nudge at bottom of list */}
-        {!isPro && filteredItems.length > 0 && (activeFilter === 'all' || activeFilter === 'waiting') && (
-          <ProNudge onClick={() => {
-            setUpgradeReason('limit_reached');
+        {/* Locked Upgrade Card - desire-driven */}
+        {!isPro && filteredItems.length > 0 && (
+          <LockedCard onClick={() => {
+            setUpgradeReason('saved');
             setShowUpgradeModal(true);
           }}>
-            <ProNudgeIcon>🔒</ProNudgeIcon>
-            <ProNudgeText>
-              <ProNudgeTitle>Pitch more brands this month</ProNudgeTitle>
-              <ProNudgeSub>You've used {pitchLimits.used} of {pitchLimits.limit} free contacts. Pro removes the limit.</ProNudgeSub>
-            </ProNudgeText>
-            <ProNudgeCTA>$19/mo</ProNudgeCTA>
-          </ProNudge>
+            <LockIconWrap>🔒</LockIconWrap>
+            <LockedTextWrap>
+              <LockedTitle>
+                {stageCounts.saved > 3
+                  ? `${stageCounts.saved - 3} more brands match your saved categories`
+                  : 'Unlock unlimited pitches every month'}
+              </LockedTitle>
+              <LockedSub>Pro removes the 3-pitch limit so you can contact all of them.</LockedSub>
+            </LockedTextWrap>
+            <LockedCta>$19/mo</LockedCta>
+          </LockedCard>
         )}
       </BrandList>
 
@@ -1414,6 +1476,10 @@ const Container = styled.div`
   padding: 32px 20px 100px;
   background: #F5F5F7;
   min-height: 100vh;
+
+  @media (max-width: 480px) {
+    padding: 20px 16px 100px;
+  }
 `;
 
 const JourneyHeader = styled.div`
@@ -1423,6 +1489,12 @@ const JourneyHeader = styled.div`
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 1px 3px rgba(15, 15, 15, 0.05);
+
+  @media (max-width: 480px) {
+    padding: 20px 16px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+  }
 `;
 
 const JourneyGreeting = styled.div`
@@ -1431,6 +1503,10 @@ const JourneyGreeting = styled.div`
   letter-spacing: -0.3px;
   margin-bottom: 4px;
   color: #0F0F0F;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const JourneySub = styled.div`
@@ -1634,6 +1710,11 @@ const FilterTabs = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
+
+  @media (max-width: 480px) {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
 `;
 
 const FilterTab = styled.button`
@@ -1750,6 +1831,11 @@ const BrandCard = styled(motion.div)`
 
   &:hover {
     box-shadow: 0 4px 16px rgba(15, 15, 15, 0.07);
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px;
+    border-radius: 14px;
   }
 `;
 
@@ -1872,20 +1958,30 @@ const InfoRow = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
 `;
 
 const InfoPill = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: ${props => props.$warn ? '#FFFBEB' : props.$green ? '#ECFDF5' : '#F4F4F4'};
-  border-radius: 8px;
-  padding: 5px 10px;
+  background: ${props => props.$warn ? '#FFFBEB' : props.$green ? '#f0fdf4' : '#F4F4F4'};
+  border-radius: 20px;
+  padding: 3px 9px;
   font-size: 12px;
   color: ${props => props.$warn ? '#D97706' : props.$green ? '#059669' : '#4B4B4B'};
-  font-weight: ${props => (props.$warn || props.$green) ? '700' : '500'};
+  font-weight: 700;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
 `;
 
 const WinValue = styled.div`
@@ -1925,7 +2021,7 @@ const PrimaryBtn = styled.button`
   ${props => props.$contact && `
     background: #0F0F0F;
     color: #fff;
-    &:hover { background: #1C1C1C; }
+    &:hover:not(:disabled) { background: #E11D48; }
   `}
 
   ${props => props.$followup && `
@@ -1951,6 +2047,12 @@ const PrimaryBtn = styled.button`
       transform: translateY(-1px);
     }
   `}
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
 `;
 
 const SecondaryRow = styled.div`
@@ -2767,6 +2869,216 @@ const ProNudgeCTA = styled.button`
   &:hover {
     transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  }
+`;
+
+// ── New Saved Tab Optimization styled components ─────────────────────────────────────
+
+const QuotaBar = styled.div`
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+`;
+
+const QuotaIcon = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+`;
+
+const QuotaText = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const QuotaTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f0f0f;
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
+`;
+
+const QuotaSub = styled.div`
+  font-size: 11.5px;
+  color: #6b7280;
+  margin-top: 1px;
+
+  @media (max-width: 480px) {
+    font-size: 10.5px;
+  }
+`;
+
+const QuotaPips = styled.div`
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+`;
+
+const Pip = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${p => p.$used ? '#059669' : '#e5e7eb'};
+  transition: background 0.3s;
+
+  @media (max-width: 480px) {
+    width: 8px;
+    height: 8px;
+  }
+`;
+
+const LockedCard = styled.div`
+  background: linear-gradient(135deg, #1f1135 0%, #0f0f0f 100%);
+  border-radius: 14px;
+  padding: 16px 14px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.15s;
+
+  &:hover {
+    transform: scale(1.01);
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+`;
+
+const LockIconWrap = styled.div`
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.25);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+`;
+
+const LockedTextWrap = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const LockedTitle = styled.div`
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+
+  @media (max-width: 480px) {
+    font-size: 12.5px;
+  }
+`;
+
+const LockedSub = styled.div`
+  font-size: 11.5px;
+  color: #9ca3af;
+  margin-top: 3px;
+  line-height: 1.35;
+
+  @media (max-width: 480px) {
+    font-size: 10.5px;
+  }
+`;
+
+const LockedCta = styled.button`
+  background: linear-gradient(135deg, #7c3aed, #E11D48);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+`;
+
+const SocialProofLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: #6b7280;
+  margin-top: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 10.5px;
+  }
+`;
+
+const GreenDotSm = styled.div`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #059669;
+  flex-shrink: 0;
+`;
+
+const CtaCredit = styled.div`
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 6px;
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
+`;
+
+const BrandDesc = styled.div`
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 10px;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
   }
 `;
 
