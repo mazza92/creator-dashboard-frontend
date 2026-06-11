@@ -969,35 +969,38 @@ const PRPipeline = () => {
               ? `${readyToPitchCount} brand${readyToPitchCount === 1 ? '' : 's'} ready to contact this month`
               : 'Save brands from For You to start pitching'}
         </JourneySub>
-        <JourneyStats>
-          <JStat>
-            <JStatVal $rose>{stats.total_contacted || 0}</JStatVal>
-            <JStatLabel>Contacted</JStatLabel>
-          </JStat>
-          <JStat>
-            <JStatVal $green>{stats.total_responded || 0}</JStatVal>
-            <JStatLabel>Responded</JStatLabel>
-          </JStat>
-          <JStat
-            $clickable={!isPro}
-            onClick={() => {
-              if (!isPro) {
-                setUpgradeReason('pr_value');
-                setShowUpgradeModal(true);
-              }
-            }}
-          >
-            {isPro ? (
-              <JStatVal $purple>${stats.pr_value_earned || 0}</JStatVal>
-            ) : (
-              <LockedValue>
-                <LockedIcon>📊</LockedIcon>
-                <UnlockLabel>Unlock</UnlockLabel>
-              </LockedValue>
-            )}
-            <JStatLabel>PR Value</JStatLabel>
-          </JStat>
-        </JourneyStats>
+        {/* Only show stats after first pitch - zeros are demoralizing */}
+        {(stats.total_contacted > 0) && (
+          <JourneyStats>
+            <JStat>
+              <JStatVal $rose>{stats.total_contacted}</JStatVal>
+              <JStatLabel>Contacted</JStatLabel>
+            </JStat>
+            <JStat>
+              <JStatVal $green>{stats.total_responded || 0}</JStatVal>
+              <JStatLabel>Responded</JStatLabel>
+            </JStat>
+            <JStat
+              $clickable={!isPro}
+              onClick={() => {
+                if (!isPro) {
+                  setUpgradeReason('pr_value');
+                  setShowUpgradeModal(true);
+                }
+              }}
+            >
+              {isPro ? (
+                <JStatVal $purple>${stats.pr_value_earned || 0}</JStatVal>
+              ) : (
+                <LockedValue>
+                  <LockedIcon>📊</LockedIcon>
+                  <UnlockLabel>Unlock</UnlockLabel>
+                </LockedValue>
+              )}
+              <JStatLabel>PR Value</JStatLabel>
+            </JStat>
+          </JourneyStats>
+        )}
       </JourneyHeader>
 
       {/* Quota Bar - always visible for free users */}
@@ -1052,12 +1055,13 @@ const PRPipeline = () => {
         );
       })()}
 
-      {/* Progress Path */}
+      {/* Progress Path - only show after first pitch */}
+      {(stats.total_contacted > 0) && (
       <ProgressPath>
         <PathStep $filled>
           <PathCircle $filled>✓</PathCircle>
           <PathLabel>Contacted</PathLabel>
-          <PathCount>{stats.total_contacted || 0}</PathCount>
+          <PathCount>{stats.total_contacted}</PathCount>
         </PathStep>
         <PathStep $active={stageCounts.waiting > 0}>
           <PathCircle $active={stageCounts.waiting > 0}>⏳</PathCircle>
@@ -1070,6 +1074,7 @@ const PRPipeline = () => {
           <PathCount $win={stageCounts.won > 0}>{stageCounts.won}</PathCount>
         </PathStep>
       </ProgressPath>
+      )}
 
       {/* Best Move Card */}
       {(() => {
