@@ -834,7 +834,7 @@ const PRPipeline = () => {
               <CtaCredit>
                 {pitchLimits.limit - pitchLimits.used - 1 >= 0
                   ? `${pitchLimits.limit - pitchLimits.used - 1} credit${pitchLimits.limit - pitchLimits.used - 1 !== 1 ? 's' : ''} remaining after this pitch`
-                  : 'No credits remaining — upgrade to pitch'}
+                  : <>No credits remaining — <UpgradeLink onClick={() => { setUpgradeReason('quota'); setShowUpgradeModal(true); }}>upgrade to pitch</UpgradeLink></>}
               </CtaCredit>
             )}
           </>
@@ -1023,22 +1023,7 @@ const PRPipeline = () => {
         </QuotaBar>
       )}
 
-      {/* Live Activity Strip */}
-      {stats.total_contacted > 0 && (
-        <LiveStrip>
-          <LiveStripInner>
-            {MOCK_ACTIVITY.map((item, i) => (
-              <LivePill key={i} $type={item.type}>
-                {i === 0 && <LiveLabel>Live</LiveLabel>}
-                <PulseDot $type={item.type} />
-                {item.icon} {item.text}
-              </LivePill>
-            ))}
-          </LiveStripInner>
-        </LiveStrip>
-      )}
-
-      {/* Pipeline Health Card - State-based messaging instead of anxiety-inducing scores */}
+      {/* Pipeline Health Card - State-based messaging */}
       {stats.total_contacted > 0 && (() => {
         const pipelineStatus = getPipelineMessage(items);
         const hasReplies = items.filter(i => i.pipeline_stage === 'replied').length > 0;
@@ -1054,27 +1039,6 @@ const PRPipeline = () => {
           </HealthCard>
         );
       })()}
-
-      {/* Progress Path - only show after first pitch */}
-      {(stats.total_contacted > 0) && (
-      <ProgressPath>
-        <PathStep $filled>
-          <PathCircle $filled>✓</PathCircle>
-          <PathLabel>Contacted</PathLabel>
-          <PathCount>{stats.total_contacted}</PathCount>
-        </PathStep>
-        <PathStep $active={stageCounts.waiting > 0}>
-          <PathCircle $active={stageCounts.waiting > 0}>⏳</PathCircle>
-          <PathLabel $active={stageCounts.waiting > 0}>Waiting</PathLabel>
-          <PathCount $active={stageCounts.waiting > 0}>{stageCounts.waiting}</PathCount>
-        </PathStep>
-        <PathStep $win={stageCounts.won > 0}>
-          <PathCircle $win={stageCounts.won > 0}>🎁</PathCircle>
-          <PathLabel $win={stageCounts.won > 0}>Won</PathLabel>
-          <PathCount $win={stageCounts.won > 0}>{stageCounts.won}</PathCount>
-        </PathStep>
-      </ProgressPath>
-      )}
 
       {/* Best Move Card */}
       {(() => {
@@ -3050,9 +3014,11 @@ const SocialProofLine = styled.div`
   font-size: 11.5px;
   color: #6b7280;
   margin-top: 4px;
+  margin-bottom: 12px;
 
   @media (max-width: 480px) {
     font-size: 10.5px;
+    margin-bottom: 10px;
   }
 `;
 
@@ -3073,6 +3039,17 @@ const CtaCredit = styled.div`
 
   @media (max-width: 480px) {
     font-size: 10px;
+  }
+`;
+
+const UpgradeLink = styled.span`
+  color: #7c3aed;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  &:hover {
+    color: #E11D48;
   }
 `;
 
