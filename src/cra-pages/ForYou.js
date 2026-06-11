@@ -114,16 +114,19 @@ const ForYou = () => {
   ], []);
 
   const SOCIAL_BRANDS = useMemo(() => [
-    { name: 'Aura Bora', event: 'reply' },
+    // 'contacted' events are most common to emphasize action-taking
+    { name: 'Glossier', event: 'contacted' },
+    { name: 'Aura Bora', event: 'contacted' },
+    { name: 'Graza', event: 'contacted' },
     { name: 'Cowshed', event: 'package' },
-    { name: 'Graza', event: 'reply' },
-    { name: 'Peach Slices', event: 'reply' },
-    { name: 'Momentous', event: 'package' },
-    { name: 'Splits59', event: 'reply' },
-    { name: 'Fly By Jing', event: 'reply' },
+    { name: 'Peach Slices', event: 'contacted' },
+    { name: 'Momentous', event: 'reply' },
+    { name: 'Splits59', event: 'contacted' },
+    { name: 'Fly By Jing', event: 'contacted' },
     { name: 'Olly', event: 'package' },
     { name: 'JuneShine', event: 'reply' },
-    { name: 'Pela Case', event: 'reply' },
+    { name: 'Pela Case', event: 'contacted' },
+    { name: 'Rhode', event: 'contacted' },
   ], []);
 
   // Initialize social feed with 3 notifications
@@ -574,13 +577,19 @@ const ForYou = () => {
               <LiveDot />
               Live activity
             </LiveBadge>
-            <WeekCount><strong>{weekReplyCount}</strong> replies sent this week</WeekCount>
+            <WeekCount><strong>{weekReplyCount}</strong> pitches sent this week</WeekCount>
           </SocialFeedHeader>
 
           <SocialFeed>
             {socialFeedNotifs.map((notif, i) => {
-              const isPackage = notif.brand?.event === 'package';
-              const actionText = isPackage ? 'received a package from' : 'got a reply from';
+              const eventType = notif.brand?.event || 'contacted';
+              const isPackage = eventType === 'package';
+              const isContacted = eventType === 'contacted';
+              const actionText = isPackage
+                ? 'received a package from'
+                : isContacted
+                  ? 'contacted'
+                  : 'got a reply from';
               return (
                 <React.Fragment key={notif.id}>
                   {i > 0 && <NotifDivider />}
@@ -594,7 +603,7 @@ const ForYou = () => {
                     <NotifBody>
                       <NotifLine>
                         <NotifHandle>{notif.handle}</NotifHandle> {actionText}{' '}
-                        <NotifBrand $isPackage={isPackage}>{notif.brand?.name}</NotifBrand>
+                        <NotifBrand $eventType={eventType}>{notif.brand?.name}</NotifBrand>
                       </NotifLine>
                       <NotifMeta>
                         <FollowersChip>{notif.followers} followers</FollowersChip>
@@ -603,6 +612,8 @@ const ForYou = () => {
                     </NotifBody>
                     {isPackage ? (
                       <PackageBadge>📦 Package</PackageBadge>
+                    ) : isContacted ? (
+                      <ContactedBadge>✉️ Pitched</ContactedBadge>
                     ) : (
                       <ReplyBadge>✓ Replied</ReplyBadge>
                     )}
@@ -2078,7 +2089,7 @@ const NotifHandle = styled.span`
 
 const NotifBrand = styled.span`
   font-weight: 700;
-  color: ${p => p.$isPackage ? '#7c3aed' : '#059669'};
+  color: ${p => p.$eventType === 'package' ? '#7c3aed' : p.$eventType === 'contacted' ? '#2563eb' : '#059669'};
 `;
 
 const NotifMeta = styled.div`
@@ -2131,6 +2142,23 @@ const PackageBadge = styled.div`
   font-size: 10.5px;
   font-weight: 700;
   color: #7c3aed;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    padding: 2px 7px;
+    font-size: 9.5px;
+  }
+`;
+
+const ContactedBadge = styled.div`
+  flex-shrink: 0;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #2563eb;
   white-space: nowrap;
 
   @media (max-width: 480px) {
