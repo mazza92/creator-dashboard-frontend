@@ -226,7 +226,7 @@ Here's what I had in mind:
 - A ${platform === 'TikTok' ? 'TikTok' : 'Reel'} showing how I actually use the product (not a basic unboxing)
 - I can also send over the raw clips if your team wants to use them
 
-${socialUrl ? `My ${platform}: ${socialUrl}` : ''}${creatorId ? `\nMy profile & past work: https://newcollab.co/c/${creatorId}` : ''}${profile?.has_media_kit && profile?.media_kit_url ? `\nMy media kit: ${profile.media_kit_url}` : ''}
+${socialUrl ? `My ${platform}: ${socialUrl}` : ''}${profile?.has_media_kit && creatorId ? `\nhttps://newcollab.co/kit/${profile?.username || creatorId}` : ''}
 
 If you're open to it, I'd love to try some products and see if we can make something work. No pressure either way!
 
@@ -276,7 +276,7 @@ ${opener}
 
 I'm still interested in creating content around ${brand.brand_name} products for my ${followers || ''} ${platform} followers${niche ? ` in the ${niche.toLowerCase()} space` : ''}.
 
-${profile?.has_media_kit && profile?.media_kit_url ? `Here's my media kit for reference: ${profile.media_kit_url}\n` : ''}${creatorId ? `Profile: https://newcollab.co/c/${creatorId}\n` : ''}
+${profile?.has_media_kit && creatorId ? `https://newcollab.co/kit/${profile?.username || creatorId}\n` : ''}
 Happy to chat more if you're interested - just let me know!
 
 Thanks,
@@ -776,30 +776,31 @@ ${creatorName}`;
               </Actions>
 
               {/* Media kit nudge — smart states based on kit status */}
-              {!loading && creatorProfile && !creatorProfile.has_media_kit && (
+              {/* Use API response kit_published if available, fallback to profile */}
+              {!loading && !(pitch?.kit_published ?? creatorProfile?.has_media_kit) && (
                 <MediaKitNudgePulse>
                   <MediaKitNudgeIcon>✨</MediaKitNudgeIcon>
                   <MediaKitNudgeText>
-                    <MediaKitNudgeTitle>Create your media kit</MediaKitNudgeTitle>
-                    <MediaKitNudgeSub>Creators with a portfolio get 3x more brand replies</MediaKitNudgeSub>
+                    <MediaKitNudgeTitle>Add your media kit link</MediaKitNudgeTitle>
+                    <MediaKitNudgeSub>Brands check your best work before replying</MediaKitNudgeSub>
                   </MediaKitNudgeText>
                   <MediaKitNudgeBtnPulse onClick={() => { onClose(); navigate('/creator/dashboard/my-kit'); }}>
-                    Create portfolio
+                    Build kit
                   </MediaKitNudgeBtnPulse>
                 </MediaKitNudgePulse>
               )}
-              {!loading && creatorProfile && creatorProfile.has_media_kit && (
+              {!loading && (pitch?.kit_published ?? creatorProfile?.has_media_kit) && (
                 <MediaKitNudgeAttached>
                   <MediaKitNudgeIcon>✓</MediaKitNudgeIcon>
                   <MediaKitNudgeText>
                     <MediaKitNudgeTitle>Media kit attached</MediaKitNudgeTitle>
                     <MediaKitNudgeSub>
-                      {(creatorProfile.portfolio_post_count || 0) < 3
+                      {(creatorProfile?.portfolio_post_count || 0) < 3
                         ? 'Add more posts to stand out even more'
                         : 'Your portfolio is included in this pitch'}
                     </MediaKitNudgeSub>
                   </MediaKitNudgeText>
-                  {(creatorProfile.portfolio_post_count || 0) < 6 && (
+                  {(creatorProfile?.portfolio_post_count || 0) < 6 && (
                     <MediaKitEnrichBtn onClick={() => { onClose(); navigate('/creator/dashboard/my-kit'); }}>
                       Enrich kit
                     </MediaKitEnrichBtn>
