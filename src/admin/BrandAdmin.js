@@ -157,9 +157,10 @@ const BrandAdmin = () => {
 
   // Add new brand
   const addNewBrand = async () => {
+    const timestamp = Date.now();
     const newBrand = {
-      name: 'New Brand',
-      slug: `new-brand-${Date.now()}`,
+      name: `New Brand ${timestamp}`,
+      slug: `new-brand-${timestamp}`,
       status: 'draft',
       category: 'other',
       min_followers: 0,
@@ -395,6 +396,44 @@ const BrandAdmin = () => {
     );
   };
 
+  // AI Enrich brand data (hero_product, target_audience, tone, etc.)
+  const aiEnrichBrand = async (brand, refreshRow) => {
+    if (!brand.website) {
+      message.warning('No website URL to enrich from');
+      return;
+    }
+
+    try {
+      message.loading({ content: 'AI enriching brand data...', key: 'enrich', duration: 0 });
+      const { data } = await api.post(
+        `/api/admin/brands/${brand.id}/enrich`,
+        {},
+        getApiConfig()
+      );
+
+      if (data.success) {
+        // Update local row data
+        Object.assign(brand, {
+          hero_product: data.data.hero_product,
+          target_audience: data.data.target_audience,
+          tone: data.data.tone,
+          price_point: data.data.price_point,
+          enriched_at: new Date().toISOString()
+        });
+        if (data.data.description && !brand.description) {
+          brand.description = data.data.description;
+        }
+        refreshRow();
+        message.success({ content: `Enriched: ${data.data.hero_product}`, key: 'enrich' });
+      } else {
+        message.warning({ content: data.error || 'Enrichment failed', key: 'enrich' });
+      }
+    } catch (error) {
+      console.error('Enrich failed:', error);
+      message.error({ content: 'Enrichment failed', key: 'enrich' });
+    }
+  };
+
   // Scrape OpenGraph data from website
   const scrapeWebsiteData = async (brand, refreshRow) => {
     if (!brand.website) {
@@ -441,6 +480,15 @@ const BrandAdmin = () => {
 
     return (
       <Space size="small">
+        <Tooltip title="AI Enrich (hero product, audience, tone)">
+          <Button
+            size="small"
+            type={params.data.enriched_at ? 'default' : 'primary'}
+            icon={<span role="img" aria-label="ai">🤖</span>}
+            onClick={() => aiEnrichBrand(params.data, refreshRow)}
+            disabled={!params.data.website}
+          />
+        </Tooltip>
         <Tooltip title="Auto-fill from website">
           <Button
             size="small"
@@ -576,6 +624,51 @@ const BrandAdmin = () => {
       width: 250,
       cellEditor: 'agLargeTextCellEditor',
       cellEditorPopup: true
+    },
+    // AI Enrichment fields
+    {
+      field: 'hero_product',
+      headerName: '🎯 Hero Product',
+      editable: true,
+      width: 200,
+      cellStyle: { backgroundColor: '#f0fdf4' }
+    },
+    {
+      field: 'target_audience',
+      headerName: '👥 Target Audience',
+      editable: true,
+      width: 220,
+      cellStyle: { backgroundColor: '#f0fdf4' }
+    },
+    {
+      field: 'tone',
+      headerName: '🎨 Tone',
+      editable: true,
+      width: 120,
+      cellEditor: 'agSelectCellEditor',
+      cellEditorParams: { values: ['premium', 'casual', 'wellness', 'functional', 'luxury', 'playful', 'minimalist', 'bold'] },
+      cellStyle: { backgroundColor: '#f0fdf4' }
+    },
+    {
+      field: 'price_point',
+      headerName: '💰 Price',
+      editable: true,
+      width: 100,
+      valueFormatter: (params) => params.value ? `$${params.value}` : '',
+      cellStyle: { backgroundColor: '#f0fdf4' }
+    },
+    {
+      field: 'enriched_at',
+      headerName: '🤖 Enriched',
+      width: 120,
+      editable: false,
+      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : '',
+      cellRenderer: (params) => {
+        if (params.value) {
+          return <Tag color="green" style={{ fontSize: 10 }}>✓ {new Date(params.value).toLocaleDateString()}</Tag>;
+        }
+        return <Tag color="default" style={{ fontSize: 10 }}>Not enriched</Tag>;
+      }
     },
     // Social handles
     {
@@ -914,7 +1007,7 @@ const BrandAdmin = () => {
     },
     {
       headerName: 'Actions',
-      width: 120,
+      width: 160,
       pinned: 'right',
       cellRenderer: ActionsCellRenderer,
       sortable: false,
@@ -1089,6 +1182,7 @@ const BrandAdmin = () => {
           suppressRowClickSelection={true}
           getRowId={(params) => params.data.id?.toString()}
           loading={loading}
+          theme="legacy"
           overlayLoadingTemplate='<span class="ag-overlay-loading-center">Loading brands...</span>'
           overlayNoRowsTemplate='<span class="ag-overlay-no-rows-center">No brands found. Click "Add Brand" to get started!</span>'
         />
