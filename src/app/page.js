@@ -3,11 +3,11 @@ import HomeFaqSchemaScript from './HomeFaqSchemaScript';
 
 // SEO metadata for landing page
 export const metadata = {
-  title: 'newcollab — PR Forms for Brands & Brand Outreach Tool for Micro Creators',
+  title: 'newcollab | PR Forms for Brands & Brand Outreach Tool for Micro Creators',
   description: 'Browse 500+ brands with open PR forms and direct application links. Send AI pitch emails, auto-generate your media kit, and track every outreach. The complete PR forms directory and brand deal system for micro creators.',
   keywords: 'PR forms for brands, brand PR forms, PR application forms for influencers, brands with open PR forms, how to get brand deals, PR packages for micro creators, brand outreach tool, media kit for content creators, micro influencer brand deals, brand collaboration forms',
   openGraph: {
-    title: 'newcollab — 500+ Brand PR Forms & Outreach Tool for Micro Creators',
+    title: 'newcollab | 500+ Brand PR Forms & Outreach Tool for Micro Creators',
     description: 'Browse brands with open PR forms and application links. AI pitch emails, auto media kit, deal tracking — all in one place for nano and micro creators.',
     type: 'website',
     url: 'https://newcollab.co',
@@ -15,7 +15,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'newcollab — Brand Outreach for Micro Creators',
+    title: 'newcollab | Brand Outreach for Micro Creators',
     description: 'The complete brand deal system for nano and micro creators.',
     creator: '@newcollab',
   },

@@ -1838,16 +1838,16 @@ const LandingPage = () => {
   return (
     <>
       <Helmet>
-        <title>newcollab — PR Forms for Brands &amp; Brand Outreach Tool for Micro Creators</title>
+        <title>newcollab | PR Forms for Brands &amp; Brand Outreach Tool for Micro Creators</title>
         <meta name="description" content="Browse 500+ brands with open PR forms and direct application links. Send AI pitch emails, auto-generate your media kit, and track every outreach. The complete PR forms directory and brand deal system for micro creators." />
         <meta name="keywords" content="PR forms for brands, brand PR forms, PR application forms for influencers, brands with open PR forms, how to get brand deals, PR packages for micro creators, brand outreach tool, media kit for content creators, micro influencer brand deals, brand collaboration forms" />
-        <meta property="og:title" content="newcollab — 500+ Brand PR Forms &amp; Outreach Tool for Micro Creators" />
+        <meta property="og:title" content="newcollab | 500+ Brand PR Forms &amp; Outreach Tool for Micro Creators" />
         <meta property="og:description" content="Browse brands with open PR forms and application links. AI pitch emails, auto media kit, deal tracking — all in one place for nano and micro creators." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://newcollab.co" />
         <meta property="og:site_name" content="newcollab" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="newcollab — Brand Outreach for Micro Creators" />
+        <meta name="twitter:title" content="newcollab | Brand Outreach for Micro Creators" />
         <meta name="twitter:description" content="The complete brand deal system for nano and micro creators." />
         <link rel="canonical" href="https://newcollab.co/" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

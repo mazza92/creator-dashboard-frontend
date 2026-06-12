@@ -677,13 +677,13 @@ const AboutPage = () => {
   return (
     <LandingPageLayout>
       <Helmet>
-        <title>About newcollab — Built for Creators Who Want Brand Deals</title>
+        <title>About newcollab | Built for Creators Who Want Brand Deals</title>
         <meta
           name="description"
           content="newcollab was built by a founder who spent years in influencer marketing and saw the same problem everywhere: creators with great content, no system to reach brands. So we built one."
         />
         <link rel="canonical" href="https://newcollab.co/about" />
-        <meta property="og:title" content="About newcollab — Built for Creators Who Want Brand Deals" />
+        <meta property="og:title" content="About newcollab | Built for Creators Who Want Brand Deals" />
         <meta
           property="og:description"
           content="A solo-founder product, built after years watching talented creators get ignored — not because their content was bad, but because they had no system."
@@ -691,7 +691,7 @@ const AboutPage = () => {
         <meta property="og:url" content="https://newcollab.co/about" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="About newcollab — Built for Creators Who Want Brand Deals" />
+        <meta name="twitter:title" content="About newcollab | Built for Creators Who Want Brand Deals" />
         <meta
           name="twitter:description"
           content="The complete brand outreach tool for nano and micro creators."

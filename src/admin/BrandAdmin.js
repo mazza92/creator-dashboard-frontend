@@ -561,6 +561,23 @@ const BrandAdmin = () => {
       headerName: 'Website',
       editable: true,
       width: 200,
+      cellRenderer: (params) => {
+        if (params.value) {
+          const url = params.value.startsWith('http') ? params.value : `https://${params.value}`;
+          return (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ color: '#1890ff', textDecoration: 'none' }}
+            >
+              {params.value}
+            </a>
+          );
+        }
+        return null;
+      },
       // Auto-fill logo from Clearbit when website changes
       onCellValueChanged: (params) => {
         if (params.newValue && params.newValue !== params.oldValue) {
