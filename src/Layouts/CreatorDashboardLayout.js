@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bookmark, Sparkles, FileText, Bell } from 'lucide-react';
+import { Search, Inbox, Sparkles, FileText, Bell } from 'lucide-react';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
@@ -357,7 +357,7 @@ const EmptyNotifications = styled.div`
 const navItems = [
   { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
-  { label: 'Saved',    icon: Bookmark, path: '/creator/dashboard/pr-pipeline' },
+  { label: 'Inbox',    icon: Inbox,    path: '/creator/dashboard/pr-pipeline' },
   { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/my-kit', isNew: true },
 ];
 
@@ -488,7 +488,7 @@ const CreatorDashboardLayout = () => {
                 <Icon />
                 {label}
                 {isNew && <NewBadge>New</NewBadge>}
-                {label === 'Saved' && savedCount > 0 && <DesktopCountBadge>{savedCount}</DesktopCountBadge>}
+                {label === 'Inbox' && savedCount > 0 && <DesktopCountBadge>{savedCount}</DesktopCountBadge>}
               </NavTab>
             ))}
           </NavTabs>
@@ -585,7 +585,7 @@ const CreatorDashboardLayout = () => {
             <Icon />
             {label}
             {isNew && <MobileNewBadge>New</MobileNewBadge>}
-            {label === 'Saved' && savedCount > 0 && <CountBadge>{savedCount}</CountBadge>}
+            {label === 'Inbox' && savedCount > 0 && <CountBadge>{savedCount}</CountBadge>}
           </MobileTab>
         ))}
       </MobileTabBar>
