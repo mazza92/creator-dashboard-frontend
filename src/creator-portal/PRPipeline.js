@@ -1813,15 +1813,16 @@ const ShowMoreBtn = styled.button`
 
 const CardRemoveBtn = styled.button`
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: transparent;
+  top: 8px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
   border: none;
-  color: #CBD5E1;
-  font-size: 16px;
+  color: #9CA3AF;
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
