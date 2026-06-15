@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Inbox, Sparkles, FileText, Bell } from 'lucide-react';
 import { message, Avatar } from 'antd';
@@ -230,6 +230,21 @@ const DesktopCountBadge = styled.span`
   margin-left: 4px;
 `;
 
+// Pulsing "new brands" badge — draws the eye to drive contact + upgrade
+const badgePulse = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.55); }
+  70% { box-shadow: 0 0 0 6px rgba(225, 29, 72, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+`;
+
+const ForYouDesktopBadge = styled(DesktopCountBadge)`
+  animation: ${badgePulse} 2s infinite;
+`;
+
+const ForYouMobileBadge = styled(CountBadge)`
+  animation: ${badgePulse} 2s infinite;
+`;
+
 const Content = styled.main`
   min-height: calc(100vh - 60px);
 
@@ -369,6 +384,7 @@ const CreatorDashboardLayout = () => {
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [savedCount, setSavedCount] = useState(0);
+  const [matchedRemaining, setMatchedRemaining] = useState(0);
   const isFetching = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -438,6 +454,31 @@ const CreatorDashboardLayout = () => {
     return () => window.removeEventListener('savedBrandCountChanged', fetchSavedCount);
   }, [isLoading, location.pathname]);
 
+  // Fetch the number of matched brands the creator still needs to contact.
+  // Drives the For You badge: it starts at their match count (e.g. 8) and
+  // ticks down as they pitch (8 → 6 after contacting 2), creating the
+  // incentive to upgrade and pitch the rest of their matches.
+  useEffect(() => {
+    const fetchMatchedCount = async () => {
+      try {
+        const response = await api.get('/api/pr-crm/matched-brands-count');
+        if (response.data?.success) {
+          setMatchedRemaining(response.data.count || 0);
+        }
+      } catch (error) {
+        // Silent — badge is a non-critical enhancement
+      }
+    };
+
+    if (!isLoading) {
+      fetchMatchedCount();
+    }
+
+    // Refresh after the user contacts/saves a brand so the count stays live
+    window.addEventListener('savedBrandCountChanged', fetchMatchedCount);
+    return () => window.removeEventListener('savedBrandCountChanged', fetchMatchedCount);
+  }, [isLoading, location.pathname]);
+
   const handleLogoutWithCleanup = async () => {
     try {
       await handleLogout();
@@ -488,6 +529,9 @@ const CreatorDashboardLayout = () => {
                 <Icon />
                 {label}
                 {isNew && <NewBadge>New</NewBadge>}
+                {label === 'For You' && matchedRemaining > 0 && (
+                  <ForYouDesktopBadge>{matchedRemaining}</ForYouDesktopBadge>
+                )}
                 {label === 'Inbox' && savedCount > 0 && <DesktopCountBadge>{savedCount}</DesktopCountBadge>}
               </NavTab>
             ))}
@@ -585,6 +629,9 @@ const CreatorDashboardLayout = () => {
             <Icon />
             {label}
             {isNew && <MobileNewBadge>New</MobileNewBadge>}
+            {label === 'For You' && matchedRemaining > 0 && (
+              <ForYouMobileBadge>{matchedRemaining}</ForYouMobileBadge>
+            )}
             {label === 'Inbox' && savedCount > 0 && <CountBadge>{savedCount}</CountBadge>}
           </MobileTab>
         ))}
