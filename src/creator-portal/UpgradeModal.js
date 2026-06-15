@@ -49,25 +49,29 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     progressLabel = 'applications';
 
   } else if (feature === 'locked' || feature === 'for_you') {
-    headline = 'Your top matches reply 4x more than average.';
-    subtext = 'These brands are locked to Pro. They reply to 38 to 55% of pitches.';
-    ctaText = 'Unlock Pro matches for $19/month';
+    headline = 'Unlock your full PR toolkit.';
+    subtext = 'Direct access to 500+ brand contacts and application forms. Pitch professionally, land packages.';
+    ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'kit' || feature === 'kit_views') {
     headline = 'Creators in your niche are landing PR this month.';
-    subtext = 'Pro unlocks your top matches, brand casting calls, and kit view tracking.';
+    subtext = 'Pro gives you the complete toolkit: unlimited pitches, brand contacts, and kit analytics.';
     ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'limit_reached') {
-    headline = 'Your matched brands are waiting.';
-    subtext = `${used} free pitches used this month. Upgrade to keep pitching.`;
+    headline = 'Keep the momentum going.';
+    subtext = `You've started strong with ${used} pitches. Upgrade to contact all your matched brands.`;
     ctaText = 'Get Pro for $19/month';
   }
 
   // Feature list with the NEW tag for opportunities
   const features = [
     {
-      text: <><strong>Unlimited pitches</strong> to any brand every month</>,
+      text: <><strong>Unlimited pitches</strong> to any brand, every month</>,
+      highlight: false
+    },
+    {
+      text: <><strong>500+ brand contacts</strong> with direct PR emails and forms</>,
       highlight: false
     },
     {
@@ -75,15 +79,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       highlight: true
     },
     {
-      text: <><strong>Unlock your top matches</strong> with 38–55% reply rates</>,
-      highlight: false
-    },
-    {
       text: <><strong>See which brands viewed your kit</strong> and when</>,
       highlight: false
     },
     {
-      text: <>AI pitch written for every brand, direct to their PR inbox</>,
+      text: <><strong>Proven pitch templates</strong> personalized to your profile</>,
       highlight: false
     },
   ];
@@ -130,16 +130,16 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             {/* Proof Strip */}
             <ProofStrip>
               <ProofStat>
-                <ProofVal>40%+</ProofVal>
-                <ProofLbl>Reply rate</ProofLbl>
+                <ProofVal>500+</ProofVal>
+                <ProofLbl>Brands</ProofLbl>
               </ProofStat>
               <ProofStat>
                 <ProofVal>~$45</ProofVal>
                 <ProofLbl>Avg PR value</ProofLbl>
               </ProofStat>
               <ProofStat>
-                <ProofVal>30d</ProofVal>
-                <ProofLbl>To first PR</ProofLbl>
+                <ProofVal>∞</ProofVal>
+                <ProofLbl>Pitches/month</ProofLbl>
               </ProofStat>
             </ProofStrip>
 
@@ -165,8 +165,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
               {/* ROI Box */}
               <RoiBox>
-                Most Pro creators receive their first PR package within 30 days.<br />
-                <strong>That covers your $19 in product.</strong>
+                One PR package pays for a full year of Pro.<br />
+                <strong>Most creators land multiple packages per month.</strong>
               </RoiBox>
             </ProCard>
           </ModalScroll>

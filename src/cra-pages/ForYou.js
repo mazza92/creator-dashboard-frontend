@@ -2273,11 +2273,13 @@ const TickerText = styled.div`
   gap: 0;
   font-size: 12px;
   color: #6b7280;
+  text-decoration: none;
 
   strong {
     color: #111827;
     font-weight: 600;
     margin-right: 3px;
+    text-decoration: none;
   }
 
   @media (max-width: 480px) {
@@ -2288,6 +2290,7 @@ const TickerText = styled.div`
 const TickerDivider = styled.span`
   margin: 0 8px;
   color: #d1d5db;
+  text-decoration: none;
 
   @media (max-width: 480px) {
     margin: 0 6px;
@@ -2297,6 +2300,7 @@ const TickerDivider = styled.span`
 const TickerItem = styled.span`
   color: #374151;
   font-weight: 500;
+  text-decoration: none;
 `;
 
 // Pending Pitch Banner — keeps users engaged during wait period
