@@ -477,8 +477,8 @@ const ForYou = () => {
         )}
 
 
-        {/* How It Works — Variant A: Outcome icons, light card */}
-        {!isPro && data?.has_profile && (
+        {/* How It Works — Only show to new users who haven't sent any pitches yet */}
+        {!isPro && data?.has_profile && pitchedIds.size === 0 && (
           <HowItWorksCard>
             <HowItWorksHeader>
               <HowItWorksEyebrow>How it works</HowItWorksEyebrow>
