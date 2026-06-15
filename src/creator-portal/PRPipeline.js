@@ -132,7 +132,7 @@ const MOCK_ACTIVITY = [
 // Stage filter options - simplified for better UX
 const STAGE_FILTERS = [
   { key: 'all', label: 'All' },
-  { key: 'waiting', label: 'Waiting' },
+  { key: 'waiting', label: 'In Progress' },
   { key: 'replied', label: 'Replied' },
 ];
 
@@ -366,7 +366,7 @@ const PRPipeline = () => {
   const SECTION_CONFIG = {
     ready: { emoji: '📌', title: 'Ready to Contact', priority: 1 },
     action: { emoji: '⚡', title: 'Action Needed', priority: 2 },
-    waiting: { emoji: '⏳', title: 'Waiting', priority: 3 },
+    waiting: { emoji: '⏳', title: 'In Progress', priority: 3 },
     completed: { emoji: '🎁', title: 'Completed', priority: 4 },
     other: { emoji: '📋', title: 'Other', priority: 5 }
   };
@@ -678,6 +678,7 @@ const PRPipeline = () => {
         exit={{ opacity: 0, x: -100 }}
         $isWon={isWon}
       >
+        <CardRemoveBtn onClick={() => removeBrand(item.id)} title="Remove">×</CardRemoveBtn>
         <CardTop>
           <BrandLogo>
             <LogoImg
@@ -713,7 +714,7 @@ const PRPipeline = () => {
           >
             {isReplied && '💬 Replied!'}
             {isWaiting && isOverdue && `⚠ ${daysSinceLastContact}d`}
-            {isWaiting && !isOverdue && (isFollowupStage ? '🔄 Followed up' : '📧 Waiting')}
+            {isWaiting && !isOverdue && (isFollowupStage ? '🔄 Followed up' : '● In Progress')}
             {isWon && '🎁 Won'}
             {isSaved && '📌 Saved'}
             {isReceived && '✅ Received'}
@@ -947,7 +948,6 @@ const PRPipeline = () => {
               {item.notes ? '📝 Edit content note' : '📝 Add content note'}
             </SecondaryBtn>
           )}
-          <RemoveBtn onClick={() => removeBrand(item.id)}>×</RemoveBtn>
         </SecondaryRow>
 
         {/* Inline note editor */}
@@ -1811,6 +1811,31 @@ const ShowMoreBtn = styled.button`
   }
 `;
 
+const CardRemoveBtn = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: #CBD5E1;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  opacity: 0;
+  z-index: 5;
+
+  &:hover {
+    background: #FEE2E2;
+    color: #EF4444;
+  }
+`;
+
 const BrandCard = styled(motion.div)`
   background: ${props => props.$isWon ? 'linear-gradient(135deg, #FFF1F3 0%, #F5F3FF 100%)' : '#fff'};
   border: ${props => props.$isWon ? '1.5px solid #FECDD3' : '1px solid #E8E8E8'};
@@ -1833,11 +1858,19 @@ const BrandCard = styled(motion.div)`
 
   &:hover {
     box-shadow: 0 4px 16px rgba(15, 15, 15, 0.07);
+
+    ${CardRemoveBtn} {
+      opacity: 1;
+    }
   }
 
   @media (max-width: 480px) {
     padding: 14px;
     border-radius: 14px;
+
+    ${CardRemoveBtn} {
+      opacity: 0.7;
+    }
   }
 `;
 
