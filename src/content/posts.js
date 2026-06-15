@@ -1,5 +1,9 @@
 // Auto-generated post index — do not edit manually
 export const posts = [
+  "k-beauty-pr-application-forms-2026",
+  "how-i-got-on-pr-lists-australia-2026",
+  "pr-email-addresses-for-brands-how-to-pitch-2026",
+  "skincare-brands-that-send-pr-to-small-influencers-2026",
   "brand-pitch-email-templates-micro-creators-2026",
   "list-of-companies-that-send-pr-packages-2026",
   "wellness-brands-for-creator-collaborations-2026",
