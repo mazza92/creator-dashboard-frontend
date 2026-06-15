@@ -681,7 +681,6 @@ const ForYou = () => {
                 <SectionDesc>{data?.matched?.length || 0} brands match your profile</SectionDesc>
               </SectionTitleWrap>
             </SectionLeft>
-            {!isPro && <ProLabel>⚡ Pro</ProLabel>}
           </SectionHeader>
 
           {isPro ? (
@@ -717,9 +716,9 @@ const ForYou = () => {
                 </TopMatchesProofText>
               </TopMatchesProofStrip>
 
-              {/* First 4 visible cards - more teaser toward upgrading */}
+              {/* First 2 visible cards - creates curiosity to see more */}
               <CardGrid $cols={2} style={{ marginBottom: 20 }}>
-                {data?.matched?.slice(0, 4).map(brand => (
+                {data?.matched?.slice(0, 2).map(brand => (
                   <BrandCard
                     key={brand.id}
                     brand={brand}
@@ -735,14 +734,14 @@ const ForYou = () => {
               </CardGrid>
 
               {/* Locked matches section */}
-              {data?.matched?.length > 4 && (
+              {data?.matched?.length > 2 && (
                 <>
-                  <MatchSectionLabel>🔒 Pro matches ({(data?.matched?.length || 0) - 4} brands)</MatchSectionLabel>
+                  <MatchSectionLabel>🔒 {(data?.matched?.length || 0) - 2} more matches</MatchSectionLabel>
 
                   {/* Locked match cards - reply rate is the hook, not the name */}
                   {/* Each card shows different stats to feel like real data */}
                   <LockedMatchList>
-                    {data?.matched?.slice(4, 7).map((brand, i) => {
+                    {data?.matched?.slice(2, 5).map((brand, i) => {
                       // Vary the stats explicitly per card - avoid identical numbers
                       const CARD_STATS = [
                         { rate: 48, multiplier: 5 },
