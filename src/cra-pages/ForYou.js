@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight, Eye, FileText, ArrowRight } from 'lucide-react';
 import { message } from 'antd';
@@ -423,25 +423,21 @@ const ForYou = () => {
         <PageHeader>
           <PageTitleWrap>
             <PageEyebrow><Sparkles size={14} /> Personalized for you</PageEyebrow>
-            <PageTitle>Your Brand Matches</PageTitle>
-            <PageSub>Curated daily based on your niche, following and pitch history</PageSub>
+            <PageTitle>{data?.matched?.length || 0} brands matched to your content</PageTitle>
+            <PageSub>Contact them in one tap — your free PR package is one pitch away</PageSub>
           </PageTitleWrap>
           {data?.has_profile && (
             <ProfilePill>
-              <ProfileAvatar>{user?.name?.charAt(0) || 'C'}</ProfileAvatar>
               <ProfileInfo>
-                <ProfileName>{user?.name || 'Creator'} · {selectedNiches.slice(0, 2).map(n => CATEGORY_LABELS[n] || n).join(' & ')}</ProfileName>
+                <ProfileName>✦ {selectedNiches.slice(0, 2).map(n => CATEGORY_LABELS[n] || n).join(' & ')}</ProfileName>
                 <ProfileNiche>
                   {parseInt(followerCount) >= 1000
                     ? `${(parseInt(followerCount) / 1000).toFixed(0)}K followers`
                     : parseInt(followerCount) > 0
                       ? `${followerCount} followers`
-                      : 'Creator'}
+                      : ''}
                 </ProfileNiche>
               </ProfileInfo>
-              <ProfileEdit onClick={() => setData(prev => ({ ...prev, has_profile: false }))}>
-                Edit niches <ChevronRight size={14} />
-              </ProfileEdit>
             </ProfilePill>
           )}
         </PageHeader>
@@ -488,43 +484,43 @@ const ForYou = () => {
             <HowItWorksSteps>
               <HowItWorksStep>
                 <StepIconWrap $bg="#fff0f3" $border="#fecdd3">
-                  ✍️
+                  📧
                   <StepNumber>1</StepNumber>
                 </StepIconWrap>
                 <StepContent>
-                  <StepOutcome>Your pitch is ready to send</StepOutcome>
+                  <StepOutcome>We find the right contact</StepOutcome>
                   <StepDetail>
-                    We generate a <strong>personalised email</strong> to their PR inbox based on your niche and audience.
+                    Direct <strong>PR emails and application forms</strong> for brands that match your content.
+                  </StepDetail>
+                  <StepTime>⏱ No guessing</StepTime>
+                </StepContent>
+              </HowItWorksStep>
+
+              <HowItWorksStep>
+                <StepIconWrap $bg="#faf5ff" $border="#e9d5ff">
+                  ✍️
+                  <StepNumber>2</StepNumber>
+                </StepIconWrap>
+                <StepContent>
+                  <StepOutcome>Your pitch is ready</StepOutcome>
+                  <StepDetail>
+                    A <strong>proven email template</strong> personalized to your profile. Review, edit, send.
                   </StepDetail>
                   <StepTime>⏱ 30 seconds</StepTime>
                 </StepContent>
               </HowItWorksStep>
 
               <HowItWorksStep>
-                <StepIconWrap $bg="#faf5ff" $border="#e9d5ff">
-                  📤
-                  <StepNumber>2</StepNumber>
-                </StepIconWrap>
-                <StepContent>
-                  <StepOutcome>Send it in one tap</StepOutcome>
-                  <StepDetail>
-                    Review, edit if you want, then send <strong>direct from your inbox.</strong> Feels personal, not automated.
-                  </StepDetail>
-                  <StepTime>⏱ One tap</StepTime>
-                </StepContent>
-              </HowItWorksStep>
-
-              <HowItWorksStep>
                 <StepIconWrap $bg="#f0fdf4" $border="#bbf7d0">
-                  📦
+                  🔁
                   <StepNumber>3</StepNumber>
                 </StepIconWrap>
                 <StepContent>
-                  <StepOutcome>Brands reply. Packages arrive.</StepOutcome>
+                  <StepOutcome>Keep pitching, land collabs</StepOutcome>
                   <StepDetail>
-                    We track every reply and notify you. Most creators hear back <strong>within 5 days.</strong>
+                    The secret? <strong>Professional, consistent outreach.</strong> The more you pitch, the more you land.
                   </StepDetail>
-                  <StepTime $bg="#f0fdf4" $color="#059669">🎉 Free products</StepTime>
+                  <StepTime $bg="#f0fdf4" $color="#059669">🎉 Free PR</StepTime>
                 </StepContent>
               </HowItWorksStep>
             </HowItWorksSteps>
@@ -556,11 +552,17 @@ const ForYou = () => {
           </KitViewsBanner>
         )}
 
-        {/* Refresh Hint */}
-        <RefreshHint>
-          <RefreshDot />
-          Matches refresh every Monday · Last updated today
-        </RefreshHint>
+        {/* Social Proof Strip */}
+        <TopMatchesProofStrip>
+          <TopMatchesAvatarRow>
+            <TopMatchesAvatarImg src="https://iili.io/CBGa92t.png" alt="Creator" />
+            <TopMatchesAvatarImg src="https://iili.io/CBGaJvn.png" alt="Creator" />
+            <TopMatchesAvatarImg src="https://iili.io/CBGadps.png" alt="Creator" />
+          </TopMatchesAvatarRow>
+          <TopMatchesProofText>
+            Creators with under 10K followers got PR from brands like these this month
+          </TopMatchesProofText>
+        </TopMatchesProofStrip>
 
         {/* Sub-tabs: Matches vs Opportunities */}
         <SubTabRow>
@@ -592,97 +594,44 @@ const ForYou = () => {
         {/* Matches Tab Content */}
         {activeTab === 'matches' && (
           <>
-        {/* Pending Pitch Banner — keeps users engaged during wait */}
+        {/* Pending Pitch Banner — celebrates momentum */}
         {pendingPitches && pendingPitches.length > 0 && (
           <PendingPitchBanner>
-            <PendingIcon>📬</PendingIcon>
+            <PendingIcon>🎉</PendingIcon>
             <PendingContent>
-              <PendingTitle>Your pitch to {pendingPitches[0].brand_name} is in their inbox</PendingTitle>
+              <PendingTitle>
+                Nice work! You've reached out to {pendingPitches.length} {pendingPitches.length === 1 ? 'brand' : 'brands'}
+              </PendingTitle>
               <PendingSubtitle>
-                Avg reply time is ~5 days · {pendingPitches.length > 1 ? `${pendingPitches.length} pitches pending` : "We'll notify you when they respond"}
+                Keep going. Most creators land their first PR package after pitching 5-10 brands.
               </PendingSubtitle>
             </PendingContent>
             <PendingLink onClick={() => navigate('/creator/dashboard/pr-pipeline')}>
-              View pipeline →
+              View Inbox →
             </PendingLink>
           </PendingPitchBanner>
         )}
 
-        {/* Social Proof Strip - Variant A: Notification feed with live updates */}
+        {/* Live Activity Ticker - compact single line with horizontal scroll */}
         {socialFeedNotifs.length > 0 && (
-        <SocialFeedStrip>
-          <SocialFeedHeader>
-            <LiveBadge>
-              <LiveDot />
-              Live activity
-            </LiveBadge>
-            <WeekCount><strong>{weekReplyCount}</strong> pitches sent this week</WeekCount>
-          </SocialFeedHeader>
-
-          <SocialFeed>
-            {socialFeedNotifs.map((notif, i) => {
-              const eventType = notif.brand?.event || 'contacted';
-              const isPackage = eventType === 'package';
-              const isContacted = eventType === 'contacted';
-              const actionText = isPackage
-                ? 'received a package from'
-                : isContacted
-                  ? 'contacted'
-                  : 'got a reply from';
-              return (
-                <React.Fragment key={notif.id}>
-                  {i > 0 && <NotifDivider />}
-                  <NotifRow $isNew={notif.isNew}>
-                    <NotifAvatar style={{ background: notif.color }}>
-                      {notif.initials}
-                      <PlatformDot $platform={notif.platform}>
-                        {notif.platform === 'ig' ? '▲' : 'T'}
-                      </PlatformDot>
-                    </NotifAvatar>
-                    <NotifBody>
-                      <NotifLine>
-                        <NotifHandle>{notif.handle}</NotifHandle> {actionText}{' '}
-                        <NotifBrand $eventType={eventType}>{notif.brand?.name}</NotifBrand>
-                      </NotifLine>
-                      <NotifMeta>
-                        <FollowersChip>{notif.followers} followers</FollowersChip>
-                        {notif.niche} · {notif.timeLabel}
-                      </NotifMeta>
-                    </NotifBody>
-                    {isPackage ? (
-                      <PackageBadge>📦 Package</PackageBadge>
-                    ) : isContacted ? (
-                      <ContactedBadge>✉️ Pitched</ContactedBadge>
-                    ) : (
-                      <ReplyBadge>✓ Replied</ReplyBadge>
-                    )}
-                  </NotifRow>
-                </React.Fragment>
-              );
-            })}
-          </SocialFeed>
-
-          <SocialFeedFooter>
-            <RefreshLabel>
-              <RefreshDot />
-              Updates in real time
-            </RefreshLabel>
-          </SocialFeedFooter>
-        </SocialFeedStrip>
+          <LiveTicker>
+            <TickerContent>
+              <TickerDot />
+              <TickerText>
+                <strong>{weekReplyCount}</strong> pitches sent this week
+                {socialFeedNotifs.slice(0, 3).map((notif, i) => (
+                  <React.Fragment key={notif.id}>
+                    <TickerDivider>·</TickerDivider>
+                    <TickerItem>{notif.handle} → {notif.brand?.name}</TickerItem>
+                  </React.Fragment>
+                ))}
+              </TickerText>
+            </TickerContent>
+          </LiveTicker>
         )}
 
         {/* Section 1: Matched for You (Pro gate) */}
         <Section>
-          <SectionHeader>
-            <SectionLeft>
-              <SectionIcon $bg="#F5F3FF">🎯</SectionIcon>
-              <SectionTitleWrap>
-                <SectionTitle>Matched for You</SectionTitle>
-                <SectionDesc>{data?.matched?.length || 0} brands match your profile</SectionDesc>
-              </SectionTitleWrap>
-            </SectionLeft>
-          </SectionHeader>
-
           {isPro ? (
             /* Pro users see all cards */
             <CardGrid $cols={3}>
@@ -703,19 +652,6 @@ const ForYou = () => {
           ) : (
             /* Free users: 2 visible cards + locked cards with visible stats */
             <>
-              {/* Section header for unlocked — no quota info, just category */}
-              <MatchSectionLabel>Your top matches</MatchSectionLabel>
-              <TopMatchesProofStrip>
-                <TopMatchesAvatarRow>
-                  <TopMatchesAvatarImg src="https://iili.io/CBGa92t.png" alt="Creator" />
-                  <TopMatchesAvatarImg src="https://iili.io/CBGaJvn.png" alt="Creator" />
-                  <TopMatchesAvatarImg src="https://iili.io/CBGadps.png" alt="Creator" />
-                </TopMatchesAvatarRow>
-                <TopMatchesProofText>
-                  Creators with under 10K followers got PR from brands like these this month
-                </TopMatchesProofText>
-              </TopMatchesProofStrip>
-
               {/* First 2 visible cards - creates curiosity to see more */}
               <CardGrid $cols={2} style={{ marginBottom: 20 }}>
                 {data?.matched?.slice(0, 2).map(brand => (
@@ -738,11 +674,9 @@ const ForYou = () => {
                 <>
                   <MatchSectionLabel>🔒 {(data?.matched?.length || 0) - 2} more matches</MatchSectionLabel>
 
-                  {/* Locked match cards - reply rate is the hook, not the name */}
-                  {/* Each card shows different stats to feel like real data */}
+                  {/* Locked match cards - modern glassmorphism design */}
                   <LockedMatchList>
                     {data?.matched?.slice(2, 5).map((brand, i) => {
-                      // Vary the stats explicitly per card - avoid identical numbers
                       const CARD_STATS = [
                         { rate: 48, multiplier: 5 },
                         { rate: 37, multiplier: 4 },
@@ -750,46 +684,55 @@ const ForYou = () => {
                       ];
                       const stats = CARD_STATS[i] || CARD_STATS[0];
                       const replyRate = brand.response_rate || stats.rate;
-                      const multiplier = brand.response_rate ? Math.round(replyRate / 10) : stats.multiplier;
                       return (
-                        <LockedMatchCard key={brand.id || i}>
-                          <LockedMatchHighlight>
-                            <LockedHighlightRate>{replyRate}%</LockedHighlightRate>
-                            <LockedHighlightLabel>reply rate</LockedHighlightLabel>
-                          </LockedMatchHighlight>
-                          <LockedMatchInfo>
-                            <LockedMatchHeadline>
-                              {multiplier}x higher than average
-                            </LockedMatchHeadline>
-                            <LockedMatchMeta>
-                              {brand.category && <span>{categoryLabel(brand.category)}</span>}
-                              {brand.collab_types && <span> · Gifted PR</span>}
-                            </LockedMatchMeta>
-                          </LockedMatchInfo>
-                          <LockedIcon>🔒</LockedIcon>
+                        <LockedMatchCard
+                          key={brand.id || i}
+                          onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}
+                        >
+                          <LockedCardBlur>
+                            {brand.logo && <LockedBrandLogo src={brand.logo} alt="" />}
+                          </LockedCardBlur>
+                          <LockedCardContent>
+                            <LockedStatBadge>
+                              <LockedStatValue>{replyRate}%</LockedStatValue>
+                              <LockedStatLabel>reply rate</LockedStatLabel>
+                            </LockedStatBadge>
+                            <LockedMatchInfo>
+                              <LockedMatchHeadline>High-converting brand match</LockedMatchHeadline>
+                              <LockedMatchMeta>
+                                {brand.category && <span>{categoryLabel(brand.category)}</span>}
+                                <span> · ~${brand.price_point || 45} PR value</span>
+                              </LockedMatchMeta>
+                            </LockedMatchInfo>
+                            <LockedIcon>
+                              <Lock size={16} />
+                            </LockedIcon>
+                          </LockedCardContent>
                         </LockedMatchCard>
                       );
                     })}
                   </LockedMatchList>
 
-                  {data?.matched?.length > 7 && (
-                    <MoreLockedText>+{(data?.matched?.length || 0) - 7} more matched brands</MoreLockedText>
-                  )}
-
-                  {/* Upgrade CTA — use specific data from top locked match */}
-                  {(() => {
-                    const topLocked = data?.matched?.[4];
-                    const topRate = topLocked?.response_rate || 40;
-                    return (
-                      <UnlockBanner onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
-                        <UnlockBannerText>
-                          <UnlockBannerTitle>Your top locked match replies to {topRate}% of pitches</UnlockBannerTitle>
-                          <UnlockBannerSub>That's {Math.round(topRate / 10)}x the industry average. Upgrade to contact them.</UnlockBannerSub>
-                        </UnlockBannerText>
-                        <UnlockBannerBtn>$19/mo →</UnlockBannerBtn>
-                      </UnlockBanner>
-                    );
-                  })()}
+                  {/* Upgrade CTA — clean, action-focused */}
+                  <UnlockBanner onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
+                    <UnlockBannerContent>
+                      <UnlockBannerIcon>
+                        <Sparkles size={20} />
+                      </UnlockBannerIcon>
+                      <UnlockBannerText>
+                        <UnlockBannerTitle>
+                          Unlock {(data?.matched?.length || 0) - 2} more high-converting matches
+                        </UnlockBannerTitle>
+                        <UnlockBannerSub>
+                          Pro members pitch unlimited brands · Average {data?.matched?.[2]?.response_rate || 45}% reply rate
+                        </UnlockBannerSub>
+                      </UnlockBannerText>
+                    </UnlockBannerContent>
+                    <UnlockBannerBtn>
+                      Upgrade to Pro
+                      <ArrowRight size={16} />
+                    </UnlockBannerBtn>
+                  </UnlockBanner>
                 </>
               )}
             </>
@@ -798,19 +741,27 @@ const ForYou = () => {
 
         {/* Kit Builder Prompt - shown AFTER brand matches, so the reward (brands) is first */}
         {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && (
-          <KitBuilderCard>
-            <KitBuilderLeft>
-              <KitBuilderStat>3×</KitBuilderStat>
-              <KitBuilderContent>
-                <KitBuilderTitle>Build your media kit to get 3× more replies</KitBuilderTitle>
-                <KitBuilderDesc>
-                  Brands want to see your content before they respond. Takes 2 minutes.
-                </KitBuilderDesc>
-              </KitBuilderContent>
-            </KitBuilderLeft>
-            <KitBuilderBtn onClick={() => navigate('/creator/dashboard/my-kit')}>
-              <FileText size={16} />
-              Build my kit
+          <KitBuilderCard onClick={() => navigate('/creator/dashboard/my-kit')}>
+            <KitBuilderProgress>
+              <KitProgressRing>
+                <KitProgressCircle />
+                <KitProgressText>0%</KitProgressText>
+              </KitProgressRing>
+            </KitBuilderProgress>
+            <KitBuilderContent>
+              <KitBuilderTitle>Complete your media kit</KitBuilderTitle>
+              <KitBuilderDesc>
+                Creators with kits get <strong>3× more brand responses</strong>. Takes 2 minutes.
+              </KitBuilderDesc>
+              <KitBuilderStats>
+                <KitStat>
+                  <Eye size={12} />
+                  <span>Brands check your kit before replying</span>
+                </KitStat>
+              </KitBuilderStats>
+            </KitBuilderContent>
+            <KitBuilderBtn>
+              Complete Kit
               <ArrowRight size={14} />
             </KitBuilderBtn>
           </KitBuilderCard>
@@ -904,20 +855,24 @@ const ForYou = () => {
           })()
         )}
 
-        {/* Right Season — seasonal picks (limited to 4) */}
+        {/* New Brands on newcollab — 4 most recently added (limited to 4) */}
+        {data?.newest?.length > 0 && (
         <Section>
           <SectionHeader>
             <SectionLeft>
-              <SectionIcon $bg="#ECFDF5">📅</SectionIcon>
+              <SectionIcon $bg="#EEF2FF">✨</SectionIcon>
               <SectionTitleWrap>
-                <SectionTitle>Right Season: {data?.seasonal_month}</SectionTitle>
-                <SectionDesc>{data?.seasonal_reason}</SectionDesc>
+                <SectionTitleRow>
+                  <SectionTitle>New brands on newcollab</SectionTitle>
+                  <NewCountPill>{data.newest.length} new</NewCountPill>
+                </SectionTitleRow>
+                <SectionDesc>Contact them now to unlock your next PR package</SectionDesc>
               </SectionTitleWrap>
             </SectionLeft>
           </SectionHeader>
 
           <SeasonalGrid>
-            {data?.seasonal?.slice(0, 4).map((brand, idx) => {
+            {data?.newest?.slice(0, 4).map((brand, idx) => {
               // Add variance to avoid identical stats looking auto-generated
               const displayRate = brand.display_reply_rate ||
                 (brand.response_rate ? brand.response_rate + ((brand.id || idx) % 7) - 3 : null);
@@ -932,17 +887,17 @@ const ForYou = () => {
                 </SeasonalLogoBox>
                 <SeasonalInfo>
                   <SeasonalName>{brand.name}</SeasonalName>
-                  <SeasonalReason>📅 Seasonal pick: {data?.seasonal_reason?.split('—')[0]}</SeasonalReason>
+                  <SeasonalReason>✨ Just added{brand.category ? ` · ${categoryLabel(brand.category)}` : ''}</SeasonalReason>
                   <SeasonalStats>
                     {displayRate && (
                       <div>
                         <SeasonalStatVal className="green">{Math.max(35, Math.min(65, displayRate))}%</SeasonalStatVal>
-                        <SeasonalStatLbl>Response</SeasonalStatLbl>
+                        <SeasonalStatLbl>Reply rate</SeasonalStatLbl>
                       </div>
                     )}
                     <div>
-                      <SeasonalStatVal>~{brand.avg_response_days || (4 + (idx % 3))}d</SeasonalStatVal>
-                      <SeasonalStatLbl>Avg reply</SeasonalStatLbl>
+                      <SeasonalStatVal>~${brand.price_point || (35 + (idx * 15))}</SeasonalStatVal>
+                      <SeasonalStatLbl>PR value</SeasonalStatLbl>
                     </div>
                   </SeasonalStats>
                   <SeasonalBtn
@@ -962,6 +917,7 @@ const ForYou = () => {
             })}
           </SeasonalGrid>
         </Section>
+        )}
           </>
         )}
       </PageInner>
@@ -1053,7 +1009,7 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, atLimit, onPitch, onUpgr
       {showMomentum && brand.response_rate && (
         <Momentum>
           <MomentumLabel>
-            <span>Response rate this week</span>
+            <span>Reply rate this week</span>
             <span className="rate">↑ {brand.response_rate}%</span>
           </MomentumLabel>
           <MomentumTrack>
@@ -1070,14 +1026,14 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, atLimit, onPitch, onUpgr
               <>
                 <StatItem>
                   <StatValue className="green">{brand.response_rate}%</StatValue>
-                  <StatLabel>Response</StatLabel>
+                  <StatLabel>Reply rate</StatLabel>
                 </StatItem>
                 <StatDivider />
               </>
             )}
             <StatItem>
-              <StatValue>~{brand.avg_response_days || 5}d</StatValue>
-              <StatLabel>Avg reply</StatLabel>
+              <StatValue>~${brand.price_point || 45}</StatValue>
+              <StatLabel>PR value</StatLabel>
             </StatItem>
           </CardStats>
         </>
@@ -1314,6 +1270,33 @@ const SectionTitle = styled.div`
   @media (max-width: 640px) {
     font-size: 15px;
   }
+`;
+
+const SectionTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const newPillPulse = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(225, 29, 72, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+`;
+
+const NewCountPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  background: #E11D48;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+  animation: ${newPillPulse} 2s infinite;
 `;
 
 const SectionDesc = styled.div`
@@ -2234,6 +2217,88 @@ const RefreshDot = styled.div`
   animation: socialPulse 2s ease-in-out infinite;
 `;
 
+// ── Live Activity Ticker — compact single line (~32px) ──
+const LiveTicker = styled.div`
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 16px;
+  overflow: hidden;
+
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+  }
+`;
+
+const TickerContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  &::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
+`;
+
+const TickerDot = styled.div`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+  animation: tickerPulse 1.5s ease-in-out infinite;
+
+  @keyframes tickerPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.9); }
+  }
+`;
+
+const TickerText = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 12px;
+  color: #6b7280;
+
+  strong {
+    color: #111827;
+    font-weight: 600;
+    margin-right: 3px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
+`;
+
+const TickerDivider = styled.span`
+  margin: 0 8px;
+  color: #d1d5db;
+
+  @media (max-width: 480px) {
+    margin: 0 6px;
+  }
+`;
+
+const TickerItem = styled.span`
+  color: #374151;
+  font-weight: 500;
+`;
+
 // Pending Pitch Banner — keeps users engaged during wait period
 const PendingPitchBanner = styled.div`
   display: flex;
@@ -2310,18 +2375,54 @@ const PendingLink = styled.button`
 const LockedMatchList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 16px;
 `;
 
 const LockedMatchCard = styled.div`
-  background: linear-gradient(135deg, #FEFCE8 0%, #FEF3C7 100%);
-  border: 1.5px solid #FDE68A;
-  border-radius: 14px;
-  padding: 14px 16px;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  border: 1.5px solid #E2E8F0;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.12);
+    border-color: #A78BFA;
+  }
+
+  @media (max-width: 640px) {
+    border-radius: 14px;
+  }
+`;
+
+const LockedCardBlur = styled.div`
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  opacity: 0.08;
+  filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const LockedBrandLogo = styled.img`
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+`;
+
+const LockedCardContent = styled.div`
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
+  padding: 14px 16px;
 
   @media (max-width: 640px) {
     padding: 12px 14px;
@@ -2329,27 +2430,27 @@ const LockedMatchCard = styled.div`
   }
 `;
 
-const LockedMatchHighlight = styled.div`
+const LockedStatBadge = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+  border: 1px solid #A7F3D0;
   border-radius: 10px;
   padding: 8px 12px;
-  min-width: 56px;
+  min-width: 58px;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 `;
 
-const LockedHighlightRate = styled.div`
+const LockedStatValue = styled.div`
   font-size: 18px;
   font-weight: 800;
-  color: ${tokens.success};
+  color: #059669;
   line-height: 1;
 `;
 
-const LockedHighlightLabel = styled.div`
+const LockedStatLabel = styled.div`
   font-size: 9px;
   font-weight: 600;
   color: #6B7280;
@@ -2364,56 +2465,82 @@ const LockedMatchInfo = styled.div`
 `;
 
 const LockedMatchHeadline = styled.div`
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: #1F2937;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 `;
 
 const LockedMatchMeta = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: #6B7280;
   font-weight: 500;
 `;
 
 const LockedIcon = styled.div`
-  font-size: 18px;
-  color: #D97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #EDE9FE, #DDD6FE);
+  color: #7C3AED;
   flex-shrink: 0;
 `;
 
-const MoreLockedText = styled.div`
-  text-align: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #9CA3AF;
-  padding: 6px 0 12px;
-`;
-
 const UnlockBanner = styled.div`
-  background: linear-gradient(135deg, #7C3AED, #E11D48);
+  background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+  border: 1.5px solid #C4B5FD;
   border-radius: 16px;
-  padding: 16px 18px;
+  padding: 18px 20px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 16px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
+  margin-top: 8px;
 
   &:hover {
+    border-color: #A78BFA;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
   }
 
   @media (max-width: 640px) {
     flex-direction: column;
     text-align: center;
-    padding: 18px 16px;
-    gap: 12px;
+    padding: 20px 18px;
+    gap: 14px;
   }
+`;
+
+const UnlockBannerContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 10px;
+  }
+`;
+
+const UnlockBannerIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+  color: white;
+  flex-shrink: 0;
 `;
 
 const UnlockBannerText = styled.div`
@@ -2421,26 +2548,42 @@ const UnlockBannerText = styled.div`
 `;
 
 const UnlockBannerTitle = styled.div`
-  font-size: 14px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 2px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 3px;
+  line-height: 1.3;
 `;
 
 const UnlockBannerSub = styled.div`
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  color: #6B7280;
 `;
 
 const UnlockBannerBtn = styled.div`
-  background: #fff;
-  color: #7C3AED;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 9px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 20px;
   border-radius: 10px;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+
+  &:hover {
+    background: linear-gradient(135deg, #6D28D9, #7C3AED);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: center;
+  }
 `;
 
 // Profile Prompt Styles
@@ -3257,44 +3400,60 @@ const KitViewsClose = styled.button`
 const KitBuilderCard = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-  border: 1px solid #F59E0B;
+  gap: 18px;
+  background: #fff;
+  border: 1px solid #E5E7EB;
   border-radius: 16px;
-  padding: 20px 24px;
+  padding: 18px 22px;
   margin-bottom: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    border-color: #3B82F6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+  }
 
   @media (max-width: 700px) {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
-    padding: 20px;
+    padding: 18px;
   }
 `;
 
-const KitBuilderLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-
-  @media (max-width: 700px) {
-    gap: 14px;
-  }
-`;
-
-const KitBuilderStat = styled.div`
-  font-size: 36px;
-  font-weight: 800;
-  color: #92400E;
-  line-height: 1;
+const KitBuilderProgress = styled.div`
   flex-shrink: 0;
 
   @media (max-width: 700px) {
-    font-size: 32px;
+    display: none;
   }
+`;
+
+const KitProgressRing = styled.div`
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: conic-gradient(#E5E7EB 0deg, #E5E7EB 360deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const KitProgressCircle = styled.div`
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: white;
+`;
+
+const KitProgressText = styled.div`
+  position: relative;
+  font-size: 12px;
+  font-weight: 700;
+  color: #9CA3AF;
 `;
 
 const KitBuilderContent = styled.div`
@@ -3303,34 +3462,53 @@ const KitBuilderContent = styled.div`
 `;
 
 const KitBuilderTitle = styled.h3`
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: #78350F;
+  color: #111827;
   margin: 0 0 4px;
   line-height: 1.3;
-
-  @media (max-width: 700px) {
-    font-size: 15px;
-  }
 `;
 
 const KitBuilderDesc = styled.p`
   font-size: 13px;
-  color: #92400E;
-  margin: 0;
+  color: #6B7280;
+  margin: 0 0 8px;
   line-height: 1.4;
+
+  strong {
+    color: #059669;
+    font-weight: 600;
+  }
+`;
+
+const KitBuilderStats = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const KitStat = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #9CA3AF;
+
+  svg {
+    color: #3B82F6;
+  }
 `;
 
 const KitBuilderBtn = styled.button`
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #0F0F0F;
+  gap: 6px;
+  background: #3B82F6;
   color: white;
   border: none;
-  border-radius: 12px;
-  padding: 14px 20px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -3338,8 +3516,7 @@ const KitBuilderBtn = styled.button`
   font-family: inherit;
 
   &:hover {
-    background: #1F1F1F;
-    transform: translateX(2px);
+    background: #2563EB;
   }
 
   @media (max-width: 700px) {

@@ -2,11 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings } from 'react-icons/fi';
+import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings, FiEdit2 } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+// Niche options - must match onboarding for consistency
+const NICHE_OPTIONS = [
+  { id: 'beauty', label: '💄 Beauty' },
+  { id: 'skincare', label: '🧴 Skincare' },
+  { id: 'haircare', label: '💇 Haircare' },
+  { id: 'fashion', label: '👗 Fashion' },
+  { id: 'jewelry', label: '💍 Jewelry' },
+  { id: 'activewear', label: '🏃 Activewear' },
+  { id: 'fitness', label: '💪 Fitness' },
+  { id: 'wellness', label: '🌿 Wellness' },
+  { id: 'supplements', label: '💊 Supplements' },
+  { id: 'food', label: '🍽️ Food & Beverage' },
+  { id: 'travel', label: '✈️ Travel' },
+  { id: 'lifestyle', label: '🏠 Lifestyle' },
+  { id: 'home', label: '🏡 Home & Living' },
+  { id: 'tech', label: '💻 Tech' },
+  { id: 'gaming', label: '🎮 Gaming' },
+  { id: 'pet', label: '🐾 Pet' },
+  { id: 'baby', label: '🍼 Baby & Parenting' },
+  { id: 'sustainable', label: '♻️ Sustainable' },
+  { id: 'luxury', label: '✨ Luxury' },
+];
 
 const AccountSettings = () => {
   const [searchParams] = useSearchParams();
@@ -15,8 +38,15 @@ const AccountSettings = () => {
   const [portalLoading, setPortalLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  // Niche editing state
+  const [selectedNiches, setSelectedNiches] = useState([]);
+  const [followerCount, setFollowerCount] = useState('');
+  const [savingNiches, setSavingNiches] = useState(false);
+  const [nichesDirty, setNichesDirty] = useState(false);
+
   useEffect(() => {
     fetchSubscriptionStatus();
+    fetchCreatorProfile();
   }, []);
 
   // Email nudge CTA: /creator/dashboard/settings?upgrade=pro
@@ -43,6 +73,62 @@ const AccountSettings = () => {
     } catch (error) {
       console.error('Error fetching subscription:', error);
       setLoading(false);
+    }
+  };
+
+  const fetchCreatorProfile = async () => {
+    try {
+      const response = await api.get('/api/pr-crm/for-you');
+      if (response.data.success && response.data.profile) {
+        const rawNiches = response.data.profile.niches || [];
+        const normalizedNiches = rawNiches.map(n =>
+          typeof n === 'string' ? n.toLowerCase().trim() : ''
+        ).filter(Boolean);
+        setSelectedNiches(normalizedNiches);
+        setFollowerCount(response.data.profile.followers?.toString() || '');
+      }
+    } catch (error) {
+      console.error('Error fetching creator profile:', error);
+    }
+  };
+
+  const toggleNiche = (nicheId) => {
+    setSelectedNiches(prev => {
+      if (prev.includes(nicheId)) {
+        return prev.filter(n => n !== nicheId);
+      } else if (prev.length < 3) {
+        return [...prev, nicheId];
+      }
+      return prev;
+    });
+    setNichesDirty(true);
+  };
+
+  const saveNiches = async () => {
+    if (selectedNiches.length === 0) {
+      message.warning('Please select at least one niche');
+      return;
+    }
+    setSavingNiches(true);
+    try {
+      const response = await api.patch('/api/pr-crm/creator-profile', {
+        creator_niches: selectedNiches
+      });
+      if (response.data.success) {
+        message.success('Content niches updated!');
+        setNichesDirty(false);
+        // Update local state with server response to confirm sync
+        if (response.data.profile?.niches) {
+          setSelectedNiches(response.data.profile.niches);
+        }
+      } else {
+        message.error(response.data.error || 'Failed to save niches');
+      }
+    } catch (error) {
+      console.error('Error saving niches:', error);
+      message.error('Failed to save niches');
+    } finally {
+      setSavingNiches(false);
     }
   };
 
@@ -294,6 +380,43 @@ const AccountSettings = () => {
             {tier === 'free' && <UsageNote>Resets monthly</UsageNote>}
           </UsageCard>
         </UsageGrid>
+      </Section>
+
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Content Niches</SectionTitle>
+          <SectionSubtitle>Select up to 3 niches to get matched with relevant brands</SectionSubtitle>
+        </SectionHeader>
+
+        <NicheCard>
+          <NicheGrid>
+            {NICHE_OPTIONS.map(niche => (
+              <NicheChip
+                key={niche.id}
+                $selected={selectedNiches.includes(niche.id)}
+                onClick={() => toggleNiche(niche.id)}
+                disabled={!selectedNiches.includes(niche.id) && selectedNiches.length >= 3}
+              >
+                {niche.label}
+              </NicheChip>
+            ))}
+          </NicheGrid>
+
+          {nichesDirty && (
+            <SaveNichesButton
+              onClick={saveNiches}
+              disabled={savingNiches || selectedNiches.length === 0}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {savingNiches ? 'Saving...' : 'Save Changes'}
+            </SaveNichesButton>
+          )}
+
+          <NicheHelpText>
+            {selectedNiches.length}/3 niches selected · Changes affect your brand matches
+          </NicheHelpText>
+        </NicheCard>
       </Section>
     </Container>
   );
@@ -585,6 +708,82 @@ const UsageNote = styled.div`
   color: #9CA3AF;
   margin-top: 6px;
   font-style: italic;
+`;
+
+const SectionHeader = styled.div`
+  margin-bottom: 16px;
+`;
+
+const SectionSubtitle = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin: 4px 0 0 0;
+`;
+
+const NicheCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #E5E7EB;
+`;
+
+const NicheGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const NicheChip = styled.button`
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1.5px solid ${props => props.$selected ? '#3B82F6' : '#E5E7EB'};
+  background: ${props => props.$selected ? '#EFF6FF' : '#fff'};
+  color: ${props => props.$selected ? '#3B82F6' : '#374151'};
+
+  &:hover:not(:disabled) {
+    border-color: #3B82F6;
+    background: ${props => props.$selected ? '#DBEAFE' : '#F9FAFB'};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const SaveNichesButton = styled(motion.button)`
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px 20px;
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background: #2563EB;
+  }
+`;
+
+const NicheHelpText = styled.p`
+  text-align: center;
+  font-size: 13px;
+  color: #9CA3AF;
+  margin: 16px 0 0 0;
 `;
 
 export default AccountSettings;
