@@ -85,7 +85,32 @@ const ForYou = () => {
 
   // Recent replies for social proof strip (notification feed)
   const [recentReplies, setRecentReplies] = useState([]);
-  const [weekReplyCount, setWeekReplyCount] = useState(63);
+  // Daily pitch count - calculated based on time of day for realistic feel
+  // Starts low in morning, increases throughout the day
+  const [todayPitchCount, setTodayPitchCount] = useState(() => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    // Base rate: ~4 pitches per hour on average, starting from 6am
+    // 6am-9am: slower (2/hr), 9am-6pm: peak (5/hr), 6pm-11pm: moderate (3/hr)
+    let basePitches = 0;
+    if (hours >= 6) {
+      const activeHours = hours - 6;
+      // Morning ramp up (6am-9am): 2 pitches/hr
+      const morningHours = Math.min(Math.max(activeHours, 0), 3);
+      basePitches += morningHours * 2;
+      // Peak hours (9am-6pm): 5 pitches/hr
+      const peakHours = Math.min(Math.max(activeHours - 3, 0), 9);
+      basePitches += peakHours * 5;
+      // Evening (6pm-11pm): 3 pitches/hr
+      const eveningHours = Math.max(activeHours - 12, 0);
+      basePitches += eveningHours * 3;
+      // Add partial hour contribution
+      basePitches += Math.floor((minutes / 60) * 3);
+    }
+    // Add small random variance (+/- 5)
+    return Math.max(basePitches + Math.floor(Math.random() * 11) - 5, 0);
+  });
   const [socialFeedNotifs, setSocialFeedNotifs] = useState([]);
   const [realBrands, setRealBrands] = useState([]);
 
@@ -174,11 +199,12 @@ const ForYou = () => {
     return () => clearInterval(interval);
   }, [SOCIAL_CREATORS, SOCIAL_BRANDS]);
 
-  // Increment week count slowly
+  // Increment today's pitch count slowly during session
+  // Adds 0-1 pitch every 15-25 seconds to feel organic
   useEffect(() => {
     const interval = setInterval(() => {
-      setWeekReplyCount(c => c + Math.floor(Math.random() * 2));
-    }, 12000);
+      setTodayPitchCount(c => c + (Math.random() > 0.6 ? 1 : 0));
+    }, 15000 + Math.random() * 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -618,7 +644,7 @@ const ForYou = () => {
             <TickerContent>
               <TickerDot />
               <TickerText>
-                <strong>{weekReplyCount}</strong> pitches sent this week
+                <strong>{todayPitchCount}</strong> pitches sent today
                 {socialFeedNotifs.slice(0, 3).map((notif, i) => (
                   <React.Fragment key={notif.id}>
                     <TickerDivider>·</TickerDivider>

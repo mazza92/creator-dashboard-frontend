@@ -62,9 +62,14 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     headline = 'Keep the momentum going.';
     subtext = `You've started strong with ${used} pitches. Upgrade to contact all your matched brands.`;
     ctaText = 'Get Pro for $19/month';
+
+  } else if (feature === 'bump_profile') {
+    headline = 'Bump your profile to the top.';
+    subtext = 'Brands get hundreds of pitches. A follow-up from the Newcollab team puts yours back at the top.';
+    ctaText = 'Get Pro for $19/month';
   }
 
-  // Feature list with the NEW tag for opportunities
+  // Feature list - bump feature always shown with NEW tag
   const features = [
     {
       text: <><strong>Unlimited pitches</strong> to any brand, every month</>,
@@ -75,15 +80,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       highlight: false
     },
     {
-      text: <><strong>Apply to brand casting calls</strong> — exclusive opportunities <NewTag>new</NewTag></>,
-      highlight: true
+      text: <><strong>Profile bumps</strong> — we email brands on your behalf <NewTag>new</NewTag></>,
+      highlight: feature === 'bump_profile'
     },
     {
-      text: <><strong>See which brands viewed your kit</strong> and when</>,
+      text: <><strong>Apply to brand casting calls</strong> — exclusive opportunities</>,
       highlight: false
     },
     {
-      text: <><strong>Proven pitch templates</strong> personalized to your profile</>,
+      text: <><strong>See which brands viewed your kit</strong> and when</>,
       highlight: false
     },
   ];

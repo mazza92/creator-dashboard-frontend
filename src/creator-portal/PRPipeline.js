@@ -162,10 +162,30 @@ const PRPipeline = () => {
   const [packageValue, setPackageValue] = useState('');
   const [expandedSections, setExpandedSections] = useState({}); // Track expanded won/completed sections
 
+  // Bump feature (Pro) - manual follow-up by Newcollab team
+  const [showBumpModal, setShowBumpModal] = useState(false);
+  const [bumpingItem, setBumpingItem] = useState(null);
+  const [bumpsRemaining, setBumpsRemaining] = useState(2); // 2 bumps per month for Pro
+  const [bumpLoading, setBumpLoading] = useState(false);
+
+  // Fetch bumps remaining for Pro users
+  const fetchBumpsRemaining = async () => {
+    try {
+      const apiBase = getApiBase();
+      const res = await axios.get(`${apiBase}/api/pipeline/bumps-remaining`, { withCredentials: true });
+      if (res.data.success) {
+        setBumpsRemaining(res.data.bumps_remaining);
+      }
+    } catch (e) {
+      // Default to 2 if error
+    }
+  };
+
   // Fetch pipeline data on mount
   useEffect(() => {
     fetchPipelineData();
     fetchPitchLimits();
+    fetchBumpsRemaining();
     const apiBase = getApiBase();
     axios.get(`${apiBase}/profile`, { withCredentials: true })
       .then(res => setCreatorUsername(res.data?.username || ''))
@@ -879,11 +899,28 @@ const PRPipeline = () => {
         )}
 
         {isWaiting && !isOverdue && (
-          <PitchMoreNudge onClick={() => navigate('/creator/dashboard/for-you')}>
-            <NudgeIcon>💡</NudgeIcon>
-            <NudgeText>Pitch more brands while you wait</NudgeText>
-            <NudgeArrow>→</NudgeArrow>
-          </PitchMoreNudge>
+          <>
+            <PitchMoreNudge onClick={() => navigate('/creator/dashboard/for-you')}>
+              <NudgeIcon>💡</NudgeIcon>
+              <NudgeText>Pitch more brands while you wait</NudgeText>
+              <NudgeArrow>→</NudgeArrow>
+            </PitchMoreNudge>
+            {/* Bump feature - always available for waiting pitches */}
+            <BumpNudge onClick={() => {
+                if (!isPro) {
+                  setUpgradeReason('bump_profile');
+                  setShowUpgradeModal(true);
+                } else {
+                  setBumpingItem(item);
+                  setShowBumpModal(true);
+                }
+              }}>
+                <BumpIcon>⚡</BumpIcon>
+                <BumpText>Bump your profile to {item.brand_name}'s inbox</BumpText>
+                {!isPro && <BumpProBadge>Pro</BumpProBadge>}
+                <BumpArrow>→</BumpArrow>
+              </BumpNudge>
+          </>
         )}
 
         {isReplied && (
@@ -1247,6 +1284,64 @@ const PRPipeline = () => {
         limit={pitchLimits.limit}
         feature={upgradeReason}
       />
+
+      {/* Bump Profile Modal (Pro) */}
+      <AnimatePresence>
+        {showBumpModal && bumpingItem && (
+          <BumpModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowBumpModal(false)}
+          >
+            <BumpModalCard
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <BumpModalIcon>⚡</BumpModalIcon>
+              <BumpModalTitle>Bump your profile to {bumpingItem.brand_name}</BumpModalTitle>
+              <BumpModalBody>
+                We'll send a follow-up to their PR team on your behalf within 24 hours, from the Newcollab team, with your media kit attached.
+              </BumpModalBody>
+              <BumpModalNote>Most brands respond faster to platform nudges.</BumpModalNote>
+              <BumpModalActions>
+                <BumpModalPrimary
+                  onClick={async () => {
+                    setBumpLoading(true);
+                    try {
+                      const apiBase = getApiBase();
+                      await axios.post(`${apiBase}/api/pipeline/bump`, {
+                        pipeline_id: bumpingItem.id,
+                        brand_id: bumpingItem.brand_id
+                      }, { withCredentials: true });
+                      setBumpsRemaining(b => Math.max(0, b - 1));
+                      setShowBumpModal(false);
+                      setBumpingItem(null);
+                      message.success(`Profile bump requested for ${bumpingItem.brand_name}`);
+                    } catch (err) {
+                      message.error('Failed to request bump');
+                    } finally {
+                      setBumpLoading(false);
+                    }
+                  }}
+                  disabled={bumpLoading || bumpsRemaining <= 0}
+                >
+                  {bumpLoading ? 'Requesting...' : 'Bump now →'}
+                </BumpModalPrimary>
+                <BumpModalSecondary onClick={() => setShowBumpModal(false)}>
+                  Cancel
+                </BumpModalSecondary>
+              </BumpModalActions>
+              <BumpModalLimit>
+                {bumpsRemaining} bump{bumpsRemaining !== 1 ? 's' : ''} remaining this month
+              </BumpModalLimit>
+            </BumpModalCard>
+          </BumpModalOverlay>
+        )}
+      </AnimatePresence>
 
       {/* Send Confirmation Modal */}
       <AnimatePresence>
@@ -1676,12 +1771,16 @@ const NudgeBanner = styled.div`
 `;
 
 const NudgeIcon = styled.div`
-  font-size: 22px;
+  font-size: 15px;
   flex-shrink: 0;
+  opacity: 0.9;
 `;
 
 const NudgeText = styled.div`
   flex: 1;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
 `;
 
 const NudgeTitle = styled.div`
@@ -1697,9 +1796,10 @@ const NudgeSub = styled.div`
 `;
 
 const NudgeArrow = styled.div`
-  color: #D97706;
-  font-size: 18px;
+  color: #94A3B8;
+  font-size: 13px;
   flex-shrink: 0;
+  opacity: 0.8;
 `;
 
 const FilterTabs = styled.div`
@@ -2911,19 +3011,168 @@ const WaitingMetaRight = styled.span`
 const PitchMoreNudge = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
-  border: 1px solid #C7D2FE;
+  gap: 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: 10px;
   padding: 12px 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   margin-bottom: 8px;
 
   &:hover {
-    background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
-    border-color: #A5B4FC;
+    background: #F1F5F9;
+    border-color: #CBD5E1;
   }
+`;
+
+// Bump Profile CTA (Pro feature)
+const BumpNudge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 8px;
+
+  &:hover {
+    background: #FEF3C7;
+    border-color: #FCD34D;
+  }
+`;
+
+const BumpIcon = styled.div`
+  font-size: 15px;
+  flex-shrink: 0;
+  opacity: 0.9;
+`;
+
+const BumpText = styled.div`
+  flex: 1;
+  font-size: 13px;
+  color: #78350F;
+  font-weight: 500;
+`;
+
+const BumpProBadge = styled.span`
+  background: #7C3AED;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+`;
+
+const BumpArrow = styled.div`
+  font-size: 13px;
+  color: #B45309;
+  opacity: 0.7;
+`;
+
+// Bump Modal
+const BumpModalOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const BumpModalCard = styled(motion.div)`
+  background: white;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+`;
+
+const BumpModalIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 12px;
+`;
+
+const BumpModalTitle = styled.div`
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F0F0F;
+  margin-bottom: 12px;
+`;
+
+const BumpModalBody = styled.div`
+  font-size: 14px;
+  color: #6B7280;
+  line-height: 1.5;
+  margin-bottom: 8px;
+`;
+
+const BumpModalNote = styled.div`
+  font-size: 13px;
+  color: #059669;
+  font-weight: 600;
+  margin-bottom: 20px;
+`;
+
+const BumpModalActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const BumpModalPrimary = styled.button`
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const BumpModalSecondary = styled.button`
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: #9CA3AF;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: #6B7280;
+  }
+`;
+
+const BumpModalLimit = styled.div`
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #F3F4F6;
+  font-size: 12px;
+  color: #9CA3AF;
+  font-weight: 500;
 `;
 
 const RepliedBanner = styled.div`

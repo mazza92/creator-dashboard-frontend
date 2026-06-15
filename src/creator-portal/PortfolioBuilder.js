@@ -66,7 +66,10 @@ const PortfolioBuilder = ({ currentUser }) => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState(null);
   const [showPublishNudge, setShowPublishNudge] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showEmptyKitTooltip, setShowEmptyKitTooltip] = useState(false);
   const [subscriptionTier, setSubscriptionTier] = useState('free');
+  const viewKitBtnRef = useRef(null);
 
   // Step form state
   const [postUrl, setPostUrl]       = useState('');
@@ -224,8 +227,8 @@ const PortfolioBuilder = ({ currentUser }) => {
       message.success('Added to your portfolio');
       resetForm();
       setView('dashboard');
-      // Show publish nudge if kit has unpublished changes
-      setShowPublishNudge(true);
+      // Show publish modal immediately after adding content
+      setShowPublishModal(true);
     } catch (e) {
       message.error('Failed to save');
     } finally {
@@ -241,6 +244,7 @@ const PortfolioBuilder = ({ currentUser }) => {
       await fetchKitSettings(); // Refresh to get updated kit_published_at
       await fetchPosts();
       setShowPublishNudge(false); // Hide nudge after publishing
+      setShowPublishModal(false); // Hide modal after publishing
     } catch (e) {
       message.error('Failed to publish');
     } finally {
@@ -275,6 +279,17 @@ const PortfolioBuilder = ({ currentUser }) => {
   };
 
   const kitUrl = `newcollab.co/kit/${kitSettings?.kit_slug || currentUser?.username || ''}`;
+
+  // Handle "View my portfolio" click - show tooltip if empty
+  const handleViewKitClick = () => {
+    if (posts.length === 0) {
+      setShowEmptyKitTooltip(true);
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowEmptyKitTooltip(false), 5000);
+    } else {
+      window.open(`https://${kitUrl}`, '_blank');
+    }
+  };
 
   // ── VIEWS ───────────────────────────────────────────────────
 
@@ -327,9 +342,33 @@ const PortfolioBuilder = ({ currentUser }) => {
               )}
             </PublishSection>
           )}
-          <ViewKitBtn onClick={() => window.open(`https://${kitUrl}`, '_blank')}>
-            View my portfolio
-          </ViewKitBtn>
+          <ViewKitBtnWrap ref={viewKitBtnRef}>
+            <ViewKitBtn onClick={handleViewKitClick}>
+              View my portfolio
+            </ViewKitBtn>
+            <AnimatePresence>
+              {showEmptyKitTooltip && (
+                <EmptyKitTooltip
+                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <TooltipArrow />
+                  <TooltipContent>
+                    <TooltipIcon>📂</TooltipIcon>
+                    <TooltipText>
+                      <TooltipTitle>Add content first</TooltipTitle>
+                      <TooltipBody>Brands want to see your work before reaching out. Add at least one post to showcase your style.</TooltipBody>
+                    </TooltipText>
+                  </TooltipContent>
+                  <TooltipAction onClick={() => { setShowEmptyKitTooltip(false); setView('add'); }}>
+                    Add your first post →
+                  </TooltipAction>
+                </EmptyKitTooltip>
+              )}
+            </AnimatePresence>
+          </ViewKitBtnWrap>
         </DashActions>
       </DashHeader>
 
@@ -469,6 +508,43 @@ const PortfolioBuilder = ({ currentUser }) => {
         limit={FREE_POST_LIMIT}
         feature={upgradeFeature}
       />
+
+      {/* Publish Modal - shows after adding content */}
+      <AnimatePresence>
+        {showPublishModal && (
+          <PublishModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowPublishModal(false)}
+          >
+            <PublishModalCard
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <PublishModalIcon>✨</PublishModalIcon>
+              <PublishModalTitle>Content added!</PublishModalTitle>
+              <PublishModalBody>
+                Publish now to make it visible on your public kit. Brands can only see published content.
+              </PublishModalBody>
+              <PublishModalActions>
+                <PublishModalPrimary onClick={handlePublish} disabled={publishing}>
+                  {publishing ? 'Publishing...' : 'Publish now'}
+                </PublishModalPrimary>
+                <PublishModalSecondary onClick={() => setShowPublishModal(false)}>
+                  I'll do it later
+                </PublishModalSecondary>
+              </PublishModalActions>
+              <PublishModalHint>
+                Your kit: <strong>{kitUrl}</strong>
+              </PublishModalHint>
+            </PublishModalCard>
+          </PublishModalOverlay>
+        )}
+      </AnimatePresence>
     </Container>
   );
 };
@@ -1029,6 +1105,10 @@ const PublishNudgeDismiss = styled.button`
   &:hover { color: white; }
 `;
 
+const ViewKitBtnWrap = styled.div`
+  position: relative;
+`;
+
 const ViewKitBtn = styled.button`
   background: #F3F4F6;
   color: #374151;
@@ -1043,6 +1123,157 @@ const ViewKitBtn = styled.button`
     background: #E5E7EB;
     color: #0F0F0F;
   }
+`;
+
+// Empty kit tooltip
+const EmptyKitTooltip = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15), 0 2px 10px rgba(0,0,0,0.08);
+  z-index: 100;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+`;
+
+const TooltipArrow = styled.div`
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-left: 1px solid #E5E7EB;
+  border-top: 1px solid #E5E7EB;
+  transform: rotate(45deg);
+`;
+
+const TooltipContent = styled.div`
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  align-items: flex-start;
+`;
+
+const TooltipIcon = styled.div`
+  font-size: 24px;
+  flex-shrink: 0;
+`;
+
+const TooltipText = styled.div`
+  flex: 1;
+`;
+
+const TooltipTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin-bottom: 4px;
+`;
+
+const TooltipBody = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.45;
+`;
+
+const TooltipAction = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  background: #0F0F0F;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+  &:hover { background: #1F1F1F; }
+`;
+
+// Publish modal
+const PublishModalOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const PublishModalCard = styled(motion.div)`
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+`;
+
+const PublishModalIcon = styled.div`
+  font-size: 40px;
+  margin-bottom: 12px;
+`;
+
+const PublishModalTitle = styled.div`
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F0F0F;
+  margin-bottom: 8px;
+`;
+
+const PublishModalBody = styled.div`
+  font-size: 14px;
+  color: #6B7280;
+  line-height: 1.5;
+  margin-bottom: 20px;
+`;
+
+const PublishModalActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const PublishModalPrimary = styled.button`
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+`;
+
+const PublishModalSecondary = styled.button`
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: #9CA3AF;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  &:hover { color: #6B7280; }
+`;
+
+const PublishModalHint = styled.div`
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #F3F4F6;
+  font-size: 11px;
+  color: #9CA3AF;
+  strong { color: #7C3AED; }
 `;
 
 // Kit Analytics Card - Pro feature
