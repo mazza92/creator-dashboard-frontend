@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { message } from 'antd';
 import axios from 'axios';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getRuntimeApiUrl } from '../config/api';
 import AIPitchModal from './AIPitchModal';
 import UpgradeModal from './UpgradeModal';
@@ -138,6 +138,7 @@ const STAGE_FILTERS = [
 
 const PRPipeline = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -755,15 +756,45 @@ const PRPipeline = () => {
           );
         })()}
 
-        {/* Waiting state info for non-overdue */}
-        {isWaiting && !isOverdue && !cardSuccessStates[item.id] && (
-          <WaitingDetail>
-            <WaitingDetailLeft>
-              📅 {isFollowupStage ? 'Follow-up sent' : `Follow-up ready in ${Math.max(0, 7 - daysSinceLastContact)} days`}
-            </WaitingDetailLeft>
-            <WaitingDetailRight>Draft prepared</WaitingDetailRight>
-          </WaitingDetail>
-        )}
+        {/* Waiting state info for non-overdue - Progress Timeline */}
+        {isWaiting && !isOverdue && !cardSuccessStates[item.id] && (() => {
+          const daysWaiting = daysSinceLastContact;
+          const avgResponseDays = Math.max(4, Math.round((100 - (item.response_rate || 30)) / 15));
+          const progressPercent = Math.min(95, (daysWaiting / avgResponseDays) * 100);
+          const daysRemaining = Math.max(0, 7 - daysWaiting);
+
+          return (
+            <WaitingProgressBox>
+              <ProgressTimeline>
+                <TimelineStep $done>
+                  <TimelineCheck>✓</TimelineCheck>
+                  <TimelineLabel>Sent</TimelineLabel>
+                </TimelineStep>
+                <TimelineLine $done />
+                <TimelineStep $done>
+                  <TimelineCheck>✓</TimelineCheck>
+                  <TimelineLabel>Delivered</TimelineLabel>
+                </TimelineStep>
+                <TimelineLine $progress={progressPercent} />
+                <TimelineStep $active>
+                  <TimelineCircle />
+                  <TimelineLabel>Response</TimelineLabel>
+                </TimelineStep>
+              </ProgressTimeline>
+
+              <WaitingMeta>
+                <WaitingMetaLeft>
+                  {daysRemaining > 0
+                    ? `Follow-up ready in ${daysRemaining} days`
+                    : 'Follow-up ready now'}
+                </WaitingMetaLeft>
+                <WaitingMetaRight onClick={() => setReplyingItem(item)}>
+                  Got a reply? →
+                </WaitingMetaRight>
+              </WaitingMeta>
+            </WaitingProgressBox>
+          );
+        })()}
 
         {/* Brand description for saved items */}
         {isSaved && item.description && !cardSuccessStates[item.id] && (
@@ -847,9 +878,11 @@ const PRPipeline = () => {
         )}
 
         {isWaiting && !isOverdue && (
-          <PrimaryBtn $success onClick={() => setReplyingItem(item)}>
-            💬 They Replied!
-          </PrimaryBtn>
+          <PitchMoreNudge onClick={() => navigate('/creator/dashboard/for-you')}>
+            <NudgeIcon>💡</NudgeIcon>
+            <NudgeText>Pitch more brands while you wait</NudgeText>
+            <NudgeArrow>→</NudgeArrow>
+          </PitchMoreNudge>
         )}
 
         {isReplied && (
@@ -2755,6 +2788,108 @@ const WaitingDetailRight = styled.span`
   font-size: 11.5px;
   color: #3B82F6;
   font-weight: 600;
+`;
+
+// New Progress Timeline for Waiting Cards
+const WaitingProgressBox = styled.div`
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+`;
+
+const ProgressTimeline = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+const TimelineStep = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+`;
+
+const TimelineCheck = styled.div`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #10B981;
+  color: white;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+`;
+
+const TimelineCircle = styled.div`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #CBD5E1;
+`;
+
+const TimelineLine = styled.div`
+  flex: 1;
+  height: 2px;
+  margin: 0 4px;
+  background: ${p => p.$done ? '#10B981' : `linear-gradient(90deg, #10B981 ${p.$progress || 0}%, #E2E8F0 ${p.$progress || 0}%)`};
+  margin-bottom: 16px;
+`;
+
+const TimelineLabel = styled.span`
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 500;
+`;
+
+const WaitingMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid #E2E8F0;
+`;
+
+const WaitingMetaLeft = styled.span`
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+`;
+
+const WaitingMetaRight = styled.span`
+  font-size: 12px;
+  color: #6366F1;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    color: #4F46E5;
+    text-decoration: underline;
+  }
+`;
+
+const PitchMoreNudge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border: 1px solid #C7D2FE;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 8px;
+
+  &:hover {
+    background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+    border-color: #A5B4FC;
+  }
 `;
 
 const RepliedBanner = styled.div`
