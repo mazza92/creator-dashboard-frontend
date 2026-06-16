@@ -178,6 +178,10 @@ const PRPipeline = () => {
       const res = await axios.get(`${apiBase}/api/pr-crm/pipeline/bumps-remaining`, { withCredentials: true });
       if (res.data.success) {
         setBumpsRemaining(res.data.bumps_remaining);
+        // Load bumped items from backend
+        if (res.data.bumped_items) {
+          setBumpedItems(res.data.bumped_items);
+        }
       }
     } catch (e) {
       // Default to 2 if error
