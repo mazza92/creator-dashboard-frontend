@@ -295,8 +295,15 @@ const AdminEmail = () => {
     // Fetch the actual recipient count for this campaign's segment
     setSending(true);
     try {
+      // For specific_users, extract user_ids from the stored segment_filters
+      const segmentFilters = campaign.segment_filters || {};
+      const previewPayload = { segment_id: campaign.segment_type, limit: 1 };
+      if (campaign.segment_type === 'specific_users') {
+        const userIds = segmentFilters.user_ids || segmentFilters?.user_ids || [];
+        previewPayload.user_ids = userIds;
+      }
       const { data: segmentData } = await api.post('/api/admin/email/segments/preview',
-        { segment_id: campaign.segment_type, limit: 1 },
+        previewPayload,
         getApiConfig()
       );
       const recipientCount = segmentData.total_count || 0;
