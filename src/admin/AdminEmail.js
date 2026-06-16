@@ -58,7 +58,7 @@ const AdminEmail = () => {
     headerTitle: 'An update from Newcollab',
     headerSubtitle: '',
     gradient: 'teal',
-    bodyText: `<p style="margin: 0 0 16px 0; font-size: 16px; color: #111827;">Hey {{first_name}}!</p>\n<p style="margin: 0; font-size: 15px; color: #4b5563; line-height: 1.6;">Your message here.</p>`,
+    bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>\n<p style="margin: 0;">Your message here.</p>`,
     calloutText: '',
     calloutIcon: '💡',
     ctaLabel: 'Go to Dashboard',
@@ -1047,7 +1047,7 @@ const AdminEmail = () => {
                       value={announcementConfig.bodyText}
                       onChange={(e) => setAnnouncementConfig(c => ({ ...c, bodyText: e.target.value }))}
                       rows={5}
-                      placeholder={`<p style="...">Hey {{first_name}}!</p>\n<p style="...">Your message...</p>`}
+                      placeholder={`<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>\n<p style="margin: 0;">Your message here.</p>`}
                     />
                   </div>
                   <div className="form-group">

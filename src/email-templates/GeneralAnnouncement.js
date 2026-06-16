@@ -2,14 +2,13 @@
  * General Announcement Email Template
  *
  * Flexible, composable email for announcements, insights, feature updates,
- * tips, or any custom content. Shares branding with WeeklyBrandRoundup.
+ * tips, or any custom content. Clean minimal style: logo → white card → content → footer.
  *
  * Usage:
  *   generateGeneralAnnouncement({
  *     firstName: 'Sarah',
- *     headerTitle: 'Your weekly insights are here',
- *     headerSubtitle: 'Week of June 15, 2026',
- *     gradient: 'teal',            // 'teal' | 'purple' | 'green' | 'dark' | 'amber'
+ *     headerTitle: 'Your weekly insights are here',   // optional bold heading inside card
+ *     gradient: 'teal',   // unused in layout but kept for backwards compat
  *     bodyText: '<p>Hey {{first_name}},</p><p>...</p>',
  *     blocks: [
  *       { type: 'stat',     items: [{ value: '23', label: 'New Brands' }, ...] },
@@ -24,30 +23,24 @@
  *   })
  */
 
-// Gradient map
-const GRADIENTS = {
-  teal:   'linear-gradient(135deg, #26A69A 0%, #00897B 100%)',
-  purple: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  green:  'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-  dark:   'linear-gradient(135deg, #1a1a2e 0%, #374151 100%)',
-  amber:  'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-};
+const LOGO_URL = 'https://app.newcollab.co/newcollab-logo-dark.png';
 
 // Render a stat bar block (2-4 items)
 const renderStatBlock = (items = []) => {
   const cellWidth = Math.floor(100 / items.length);
   const cells = items.map((item, i) => `
     <td width="${cellWidth}%" style="padding: 16px 8px; text-align: center;${i < items.length - 1 ? ' border-right: 1px solid #e5e7eb;' : ''}">
-      <p style="margin: 0 0 2px 0; font-size: 22px; font-weight: 700; color: #667eea;">${item.value}</p>
-      <p style="margin: 0; font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
+      <p style="margin: 0 0 3px 0; font-size: 22px; font-weight: 700; color: #111827;">${item.value}</p>
+      <p style="margin: 0; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${item.label}</p>
     </td>
   `).join('');
 
   return `
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
     <tr>
-      <td style="padding: 0 32px 24px 32px;" class="padding-mobile">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f9fafb; border-radius: 10px;">
+      <td style="padding: 0 0 24px 0;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+               style="background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
           <tr>${cells}</tr>
         </table>
       </td>
@@ -56,15 +49,15 @@ const renderStatBlock = (items = []) => {
 };
 
 // Render a callout / tip box
-const renderCalloutBlock = ({ text, icon = '💡', color = '#667eea', bg = '#f0f4ff' } = {}) => `
+const renderCalloutBlock = ({ text, icon = '💡', color = '#111827', bg = '#f9fafb' } = {}) => `
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
     <tr>
-      <td style="padding: 0 32px 24px 32px;" class="padding-mobile">
+      <td style="padding: 0 0 24px 0;">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
-          style="background: ${bg}; border-left: 4px solid ${color}; border-radius: 0 8px 8px 0;">
+               style="background: ${bg}; border-left: 3px solid ${color}; border-radius: 0 8px 8px 0;">
           <tr>
-            <td style="padding: 16px 20px;">
-              <p style="margin: 0; font-size: 15px; color: #1f2937; line-height: 1.6;">
+            <td style="padding: 14px 18px;">
+              <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6;">
                 <span style="margin-right: 8px;">${icon}</span>${text}
               </p>
             </td>
@@ -78,15 +71,13 @@ const renderCalloutBlock = ({ text, icon = '💡', color = '#667eea', bg = '#f0f
 const renderListBlock = (items = []) => {
   const rows = items.map(item => `
     <tr>
-      <td style="padding: 0 0 16px 0;">
+      <td style="padding: 0 0 14px 0;">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
           <tr>
-            <td width="32" valign="top" style="padding-top: 2px;">
-              <span style="font-size: 18px;">${item.icon || '•'}</span>
-            </td>
-            <td valign="top" style="padding-left: 12px;">
-              ${item.title ? `<p style="margin: 0 0 2px 0; font-size: 15px; font-weight: 600; color: #111827;">${item.title}</p>` : ''}
-              ${item.text ? `<p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.5;">${item.text}</p>` : ''}
+            <td width="28" valign="top" style="padding-top: 1px; font-size: 16px; line-height: 1.4;">${item.icon || '&bull;'}</td>
+            <td valign="top" style="padding-left: 10px;">
+              ${item.title ? `<p style="margin: 0 0 2px 0; font-size: 14px; font-weight: 700; color: #111827;">${item.title}</p>` : ''}
+              ${item.text  ? `<p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.5;">${item.text}</p>` : ''}
             </td>
           </tr>
         </table>
@@ -96,7 +87,7 @@ const renderListBlock = (items = []) => {
   return `
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
     <tr>
-      <td style="padding: 0 32px 24px 32px;" class="padding-mobile">
+      <td style="padding: 0 0 24px 0;">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
           ${rows}
         </table>
@@ -109,13 +100,7 @@ const renderListBlock = (items = []) => {
 const renderDivider = () => `
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
     <tr>
-      <td style="padding: 0 32px 24px 32px;" class="padding-mobile">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-          <tr>
-            <td style="border-top: 1px solid #e5e7eb; font-size: 0; line-height: 0;">&nbsp;</td>
-          </tr>
-        </table>
-      </td>
+      <td style="padding: 0 0 24px 0; border-top: 1px solid #e5e7eb; font-size: 0; line-height: 0;">&nbsp;</td>
     </tr>
   </table>`;
 
@@ -123,30 +108,28 @@ const renderDivider = () => `
 const renderHtmlBlock = (content = '') => `
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
     <tr>
-      <td style="padding: 0 32px 24px 32px;" class="padding-mobile">
-        ${content}
-      </td>
+      <td style="padding: 0 0 24px 0;">${content}</td>
     </tr>
   </table>`;
 
 // Dispatch block types
 const renderBlock = (block) => {
   switch (block.type) {
-    case 'stat':     return renderStatBlock(block.items);
-    case 'callout':  return renderCalloutBlock(block);
-    case 'list':     return renderListBlock(block.items);
-    case 'divider':  return renderDivider();
-    case 'html':     return renderHtmlBlock(block.content);
-    default:         return '';
+    case 'stat':    return renderStatBlock(block.items);
+    case 'callout': return renderCalloutBlock(block);
+    case 'list':    return renderListBlock(block.items);
+    case 'divider': return renderDivider();
+    case 'html':    return renderHtmlBlock(block.content);
+    default:        return '';
   }
 };
 
 // Main template generator
 export const generateGeneralAnnouncement = ({
   firstName = 'Creator',
-  headerTitle = 'An update from Newcollab',
+  headerTitle = '',
   headerSubtitle = '',
-  gradient = 'teal',
+  gradient = 'teal',   // kept for API compat, not used in layout
   bodyText = '',
   blocks = [],
   primaryCta = null,
@@ -155,40 +138,43 @@ export const generateGeneralAnnouncement = ({
   utmCampaign = 'general_announcement',
 } = {}) => {
 
-  const gradientCSS = GRADIENTS[gradient] || GRADIENTS.teal;
-  const preheaderText = preheader || headerTitle;
+  const preheaderText = preheader || headerTitle || 'An update from Newcollab.';
   const preheaderPadding = '\u200C\u00A0'.repeat(90);
   const renderedBlocks = blocks.map(renderBlock).join('');
 
-  const primaryCtaHtml = primaryCta ? `
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-    <tr>
-      <td style="padding: 0 32px 32px 32px; text-align: center;" class="padding-mobile">
-        <a href="${primaryCta.url}"
-           style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; font-size: 15px; font-weight: 600; padding: 14px 32px; border-radius: 10px; text-decoration: none;">
-          ${primaryCta.label} &rarr;
-        </a>
-        ${secondaryCta ? `
-        <div style="margin-top: 16px;">
-          <a href="${secondaryCta.url}"
-             style="font-size: 14px; color: #667eea; text-decoration: underline;">
-            ${secondaryCta.label}
-          </a>
-        </div>` : ''}
-      </td>
-    </tr>
-  </table>` : '';
+  const titleHtml = headerTitle ? `
+      <p style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+        ${headerTitle}
+      </p>` : '';
+
+  const subtitleHtml = headerSubtitle ? `
+      <p style="margin: -12px 0 20px 0; font-size: 14px; color: #6b7280; line-height: 1.5;">
+        ${headerSubtitle}
+      </p>` : '';
 
   const bodyHtml = bodyText ? `
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-    <tr>
-      <td style="padding: 32px 32px 24px 32px;" class="padding-mobile">
-        <div style="font-size: 15px; color: #4b5563; line-height: 1.7;">
-          ${bodyText}
-        </div>
-      </td>
-    </tr>
-  </table>` : '';
+      <div style="font-size: 15px; color: #374151; line-height: 1.7; margin-bottom: 24px;">
+        ${bodyText}
+      </div>` : '';
+
+  const primaryCtaHtml = primaryCta ? `
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr>
+            <td style="padding: 8px 0 0 0; text-align: center;">
+              <a href="${primaryCta.url}"
+                 style="display: inline-block; background: #111827; color: #ffffff; font-size: 15px; font-weight: 600; padding: 14px 36px; border-radius: 8px; text-decoration: none;">
+                ${primaryCta.label}
+              </a>
+              ${secondaryCta ? `
+              <div style="margin-top: 14px;">
+                <a href="${secondaryCta.url}"
+                   style="font-size: 14px; color: #374151; text-decoration: underline;">
+                  ${secondaryCta.label}
+                </a>
+              </div>` : ''}
+            </td>
+          </tr>
+        </table>` : '';
 
   return `
 <!DOCTYPE html>
@@ -212,7 +198,7 @@ export const generateGeneralAnnouncement = ({
     td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
   </style>
   <![endif]-->
-  <title>${headerTitle} - Newcollab</title>
+  <title>${headerTitle || 'An update from Newcollab'}</title>
   <style>
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
     table { border-collapse: collapse !important; }
@@ -225,7 +211,7 @@ export const generateGeneralAnnouncement = ({
       .fluid { width: 100% !important; max-width: 100% !important; height: auto !important; }
       .stack-column { display: block !important; width: 100% !important; max-width: 100% !important; }
       .center-on-narrow { text-align: center !important; display: block !important; margin: 0 auto !important; float: none !important; }
-      .padding-mobile { padding-left: 16px !important; padding-right: 16px !important; }
+      .padding-mobile { padding-left: 20px !important; padding-right: 20px !important; }
     }
   </style>
 </head>
@@ -233,82 +219,56 @@ export const generateGeneralAnnouncement = ({
 
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${preheaderText}${preheaderPadding}</div>
 
-  <div role="article" aria-roledescription="email" aria-label="${headerTitle}" lang="en"
+  <div role="article" aria-roledescription="email" aria-label="${headerTitle || 'Newcollab'}" lang="en"
        style="font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
 
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto;">
       <tr>
-        <td valign="top" style="padding: 24px 16px;">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="email-container">
+        <td valign="top" style="padding: 32px 16px 24px 16px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="margin: auto;" class="email-container">
 
-            <!-- Logo Header -->
+            <!-- Logo -->
             <tr>
-              <td style="padding: 0 0 24px 0; text-align: center;">
+              <td style="padding: 0 0 28px 0; text-align: center;">
                 <a href="https://app.newcollab.co?utm_source=email&utm_medium=${utmCampaign}" style="text-decoration: none; display: inline-block;">
-                  <table cellpadding="0" cellspacing="0" border="0" style="margin: auto;">
-                    <tr>
-                      <td>
-                        <img src="https://app.newcollab.co/logo.png" alt="Newcollab" width="36" height="36"
-                             style="display: inline-block; vertical-align: middle; border-radius: 8px;">
-                      </td>
-                      <td style="padding-left: 8px; vertical-align: middle;">
-                        <span style="font-size: 18px; font-weight: 700; color: #111827; letter-spacing: -0.3px;">Newcollab</span>
-                      </td>
-                    </tr>
-                  </table>
+                  <img src="${LOGO_URL}" alt="Newcollab" height="36"
+                       style="display: block; height: 36px; width: auto; border: 0;" />
                 </a>
               </td>
             </tr>
 
             <!-- Main Content Card -->
             <tr>
-              <td style="background: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); overflow: hidden;">
-
-                <!-- Hero / Header -->
+              <td style="background: #ffffff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                   <tr>
-                    <td style="background: ${gradientCSS}; padding: 40px 32px; text-align: center;">
-                      <h1 style="margin: 0 0 ${headerSubtitle ? '8px' : '0'} 0; font-size: 28px; font-weight: 700; color: #ffffff; line-height: 1.2;">
-                        ${headerTitle}
-                      </h1>
-                      ${headerSubtitle ? `
-                      <p style="margin: 0; font-size: 16px; color: rgba(255,255,255,0.85); line-height: 1.4;">
-                        ${headerSubtitle}
-                      </p>` : ''}
+                    <td style="padding: 36px 40px 36px 40px;" class="padding-mobile">
+
+                      ${titleHtml}
+                      ${subtitleHtml}
+                      ${bodyHtml}
+                      ${renderedBlocks}
+                      ${primaryCtaHtml}
+
                     </td>
                   </tr>
                 </table>
-
-                <!-- Body Text -->
-                ${bodyHtml}
-
-                <!-- Dynamic Blocks -->
-                ${renderedBlocks}
-
-                <!-- Primary CTA -->
-                ${primaryCtaHtml}
-
               </td>
             </tr>
 
             <!-- Footer -->
             <tr>
-              <td style="padding: 32px 24px; text-align: center;">
-                <p style="margin: 0 0 16px 0; font-size: 13px; color: #9ca3af;">
-                  <a href="https://instagram.com/newcollab.co" style="color: #6b7280; text-decoration: none; margin: 0 8px;">Instagram</a>
-                  &bull;
-                  <a href="https://tiktok.com/@newcollabco" style="color: #6b7280; text-decoration: none; margin: 0 8px;">TikTok</a>
-                  &bull;
-                  <a href="https://twitter.com/newcollabco" style="color: #6b7280; text-decoration: none; margin: 0 8px;">Twitter</a>
+              <td style="padding: 28px 24px 32px 24px; text-align: center;">
+                <p style="margin: 0 0 10px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">
+                  Newcollab helps creators land PR packages from brands they love.
                 </p>
-                <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #6b7280; line-height: 1.5;">
-                  Newcollab &mdash; Connecting Creators with Brands
+                <p style="margin: 0 0 10px 0; font-size: 13px; color: #9ca3af;">
+                  <a href="https://newcollab.co/help" style="color: #9ca3af; text-decoration: none;">Help</a>
+                  &nbsp;&middot;&nbsp;
+                  <a href="https://app.newcollab.co/login" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a>
                 </p>
-                <p style="margin: 0 0 16px 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
-                  You're receiving this because you signed up for Newcollab.
-                </p>
-                <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                  <a href="https://app.newcollab.co/login" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a>
+                <p style="margin: 0; font-size: 12px; color: #d1d5db;">
+                  &copy; 2026 Newcollab. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -326,10 +286,10 @@ export const generateGeneralAnnouncement = ({
 // Default preview data
 export const sampleAnnouncementInsights = {
   headerTitle: 'Your creator insights are here',
-  headerSubtitle: 'Week of June 15, 2026',
+  headerSubtitle: 'Week of June 16, 2026',
   gradient: 'teal',
-  bodyText: `<p style="margin: 0 0 16px 0; font-size: 16px; color: #111827;">Hey {{first_name}}!</p>
-<p style="margin: 0; font-size: 15px; color: #4b5563; line-height: 1.6;">Here is a quick look at how things are moving on Newcollab this week, plus some tips to help you land your next PR package.</p>`,
+  bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
+<p style="margin: 0;">Here is a quick look at how things are moving on Newcollab this week, plus a tip to help you land your next PR package.</p>`,
   blocks: [
     {
       type: 'stat',
@@ -343,20 +303,20 @@ export const sampleAnnouncementInsights = {
       type: 'callout',
       icon: '💡',
       text: 'Creators who personalise their pitch with a specific product name get 3x more replies than those who send generic outreach.',
-      color: '#26A69A',
-      bg: '#f0faf9',
+      color: '#111827',
+      bg: '#f9fafb',
     },
     {
       type: 'list',
       items: [
         { icon: '📦', title: 'New brands added', text: 'Beauty of Joseon, Anua, Frank Body and 20 more added this week with open PR forms.' },
-        { icon: '🎯', title: 'Tip: time your pitch', text: 'Brands respond fastest Tuesday-Thursday between 9am-11am in their timezone.' },
-        { icon: '🚀', title: 'Upgrade to Pro', text: 'Pro creators unlock unlimited pitches and get access to exclusive brand deals not visible to free users.' },
+        { icon: '🎯', title: 'Tip: time your pitch', text: 'Brands respond fastest Tuesday to Thursday between 9am and 11am in their timezone.' },
+        { icon: '🚀', title: 'Upgrade to Pro', text: 'Pro creators unlock unlimited pitches and get access to exclusive brand deals.' },
       ]
     },
   ],
-  primaryCta: { label: 'Browse New Brands', url: 'https://app.newcollab.co/dashboard?utm_source=email&utm_medium=announcement' },
-  secondaryCta: { label: 'View All PR Brands', url: 'https://newcollab.co/directory' },
+  primaryCta: { label: 'Browse new brands', url: 'https://app.newcollab.co/dashboard?utm_source=email&utm_medium=announcement' },
+  secondaryCta: { label: 'View all PR brands', url: 'https://newcollab.co/directory' },
   preheader: 'New brands added this week, a quick tip, and your platform insights.',
 };
 
@@ -364,15 +324,15 @@ export const sampleAnnouncementGeneral = {
   headerTitle: 'Something new is live on Newcollab',
   headerSubtitle: '',
   gradient: 'purple',
-  bodyText: `<p style="margin: 0 0 16px 0; font-size: 16px; color: #111827;">Hey {{first_name}}!</p>
-<p style="margin: 0; font-size: 15px; color: #4b5563; line-height: 1.6;">We have been building something you asked for, and it is ready. Here is what is new.</p>`,
+  bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
+<p style="margin: 0;">We have been building something you asked for, and it is ready. Here is what is new.</p>`,
   blocks: [
     {
       type: 'callout',
       icon: '🎉',
       text: 'Your announcement content goes here. Keep it to one or two punchy sentences that explain the value clearly.',
-      color: '#667eea',
-      bg: '#f0f4ff',
+      color: '#111827',
+      bg: '#f9fafb',
     },
     { type: 'divider' },
     {
@@ -384,7 +344,7 @@ export const sampleAnnouncementGeneral = {
       ]
     },
   ],
-  primaryCta: { label: 'Try It Now', url: 'https://app.newcollab.co' },
+  primaryCta: { label: 'Try it now', url: 'https://app.newcollab.co' },
   preheader: 'Something new is live. Here is what changed and why it matters.',
 };
 
