@@ -172,7 +172,7 @@ const PRPipeline = () => {
   const fetchBumpsRemaining = async () => {
     try {
       const apiBase = getApiBase();
-      const res = await axios.get(`${apiBase}/api/pipeline/bumps-remaining`, { withCredentials: true });
+      const res = await axios.get(`${apiBase}/api/pr-crm/pipeline/bumps-remaining`, { withCredentials: true });
       if (res.data.success) {
         setBumpsRemaining(res.data.bumps_remaining);
       }
@@ -1313,7 +1313,7 @@ const PRPipeline = () => {
                     setBumpLoading(true);
                     try {
                       const apiBase = getApiBase();
-                      await axios.post(`${apiBase}/api/pipeline/bump`, {
+                      await axios.post(`${apiBase}/api/pr-crm/pipeline/bump`, {
                         pipeline_id: bumpingItem.id,
                         brand_id: bumpingItem.brand_id
                       }, { withCredentials: true });
