@@ -51,6 +51,11 @@ const AdminEmail = () => {
   const [roundupBrands, setRoundupBrands] = useState([]);
   const [roundupBrandsLoading, setRoundupBrandsLoading] = useState(false);
 
+  // Individual user picker state
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [userSearchOptions, setUserSearchOptions] = useState([]);
+  const [userSearchLoading, setUserSearchLoading] = useState(false);
+
   // General announcement composer state
   const [showAnnouncementPreview, setShowAnnouncementPreview] = useState(false);
   const [announcementViewMode, setAnnouncementViewMode] = useState('desktop');
@@ -151,6 +156,25 @@ const AdminEmail = () => {
     }
   };
 
+  const searchUsers = async (query) => {
+    if (!query || query.length < 2) {
+      setUserSearchOptions([]);
+      return;
+    }
+    setUserSearchLoading(true);
+    try {
+      const { data } = await api.get(
+        `/api/admin/email/users/search?q=${encodeURIComponent(query)}`,
+        getApiConfig()
+      );
+      setUserSearchOptions(data.users || []);
+    } catch (error) {
+      console.error('User search failed:', error);
+    } finally {
+      setUserSearchLoading(false);
+    }
+  };
+
   const buildAnnouncementHTML = (config = announcementConfig, forCampaign = false) => {
     const blocks = [];
     if (config.calloutText) {
@@ -205,7 +229,12 @@ const AdminEmail = () => {
 
   const handleSegmentSelect = (segmentId) => {
     setSelectedSegment(segmentId);
-    previewSegment(segmentId);
+    if (segmentId === 'specific_users') {
+      setPreviewUsers([]);
+      setPreviewCount(0);
+    } else {
+      previewSegment(segmentId);
+    }
   };
 
   const handleCreateCampaign = async () => {
@@ -227,6 +256,12 @@ const AdminEmail = () => {
       return;
     }
 
+    // If individual users mode, require at least one user selected
+    if (selectedSegment === 'specific_users' && selectedUserIds.length === 0) {
+      message.error('Please select at least one user to send to');
+      return;
+    }
+
     try {
       const { data } = await api.post('/api/admin/email/campaigns', {
         name: campaignName,
@@ -234,7 +269,7 @@ const AdminEmail = () => {
         subject_override: subjectOverride || null,
         html_content_override: emailContent || null,
         segment_type: selectedSegment,
-        segment_filters: {}
+        segment_filters: selectedSegment === 'specific_users' ? { user_ids: selectedUserIds } : {}
       }, getApiConfig());
 
       message.success('Campaign created!');
@@ -415,6 +450,8 @@ const AdminEmail = () => {
     setEmailContent('');
     setPreviewUsers([]);
     setPreviewCount(0);
+    setSelectedUserIds([]);
+    setUserSearchOptions([]);
   };
 
   const getTemplateIcon = (type) => {
@@ -935,9 +972,56 @@ const AdminEmail = () => {
                       {segment.name} ({segment.count} users)
                     </Select.Option>
                   ))}
+                  <Select.Option value="specific_users">
+                    <UserOutlined style={{ marginRight: 8 }} />
+                    Individual Users (pick specific)
+                  </Select.Option>
                 </Select>
 
-                {previewCount > 0 && (
+                {/* Individual user picker */}
+                {selectedSegment === 'specific_users' && (
+                  <div style={{ marginTop: 12 }}>
+                    <Select
+                      mode="multiple"
+                      showSearch
+                      value={selectedUserIds}
+                      placeholder="Search by email, name or username..."
+                      filterOption={false}
+                      onSearch={searchUsers}
+                      onChange={(values) => setSelectedUserIds(values)}
+                      loading={userSearchLoading}
+                      style={{ width: '100%' }}
+                      size="large"
+                      notFoundContent={userSearchLoading ? <Spin size="small" /> : 'Type to search users...'}
+                    >
+                      {userSearchOptions.map(user => (
+                        <Select.Option key={user.user_id} value={user.user_id}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>
+                              <strong>{user.email}</strong>
+                              {user.first_name && (
+                                <span style={{ color: '#888', marginLeft: 8 }}>{user.first_name}</span>
+                              )}
+                              {user.username && (
+                                <span style={{ color: '#aaa', marginLeft: 6 }}>@{user.username}</span>
+                              )}
+                            </span>
+                            <Tag color={user.tier === 'pro' ? 'purple' : 'default'} style={{ marginLeft: 8 }}>
+                              {user.tier}
+                            </Tag>
+                          </div>
+                        </Select.Option>
+                      ))}
+                    </Select>
+                    {selectedUserIds.length > 0 && (
+                      <div className="recipient-preview">
+                        <strong>{selectedUserIds.length}</strong> individual user{selectedUserIds.length !== 1 ? 's' : ''} selected
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedSegment !== 'specific_users' && previewCount > 0 && (
                   <div className="recipient-preview">
                     <strong>{previewCount}</strong> recipients will receive this email
                   </div>
