@@ -167,6 +167,9 @@ const PRPipeline = () => {
   const [bumpingItem, setBumpingItem] = useState(null);
   const [bumpsRemaining, setBumpsRemaining] = useState(2); // 2 bumps per month for Pro
   const [bumpLoading, setBumpLoading] = useState(false);
+  const [bumpedItems, setBumpedItems] = useState({}); // Track bumped pipeline items {id: 'requested'|'in_progress'|'bumped'}
+  const [showBumpSuccess, setShowBumpSuccess] = useState(false);
+  const [bumpSuccessBrand, setBumpSuccessBrand] = useState('');
 
   // Fetch bumps remaining for Pro users
   const fetchBumpsRemaining = async () => {
@@ -906,20 +909,30 @@ const PRPipeline = () => {
               <NudgeArrow>→</NudgeArrow>
             </PitchMoreNudge>
             {/* Bump feature - always available for waiting pitches */}
-            <BumpNudge onClick={() => {
-                if (!isPro) {
-                  setUpgradeReason('bump_profile');
-                  setShowUpgradeModal(true);
-                } else {
-                  setBumpingItem(item);
-                  setShowBumpModal(true);
-                }
-              }}>
-                <BumpIcon>⚡</BumpIcon>
-                <BumpText>Bump your profile to {item.brand_name}'s inbox</BumpText>
-                {!isPro && <BumpProBadge>Pro</BumpProBadge>}
-                <BumpArrow>→</BumpArrow>
-              </BumpNudge>
+            {bumpedItems[item.id] ? (
+              <BumpStatusNudge>
+                <BumpStatusIcon>✓</BumpStatusIcon>
+                <BumpStatusText>
+                  <BumpStatusTitle>Bump requested</BumpStatusTitle>
+                  <BumpStatusSub>We'll email {item.brand_name} within 24h</BumpStatusSub>
+                </BumpStatusText>
+              </BumpStatusNudge>
+            ) : (
+              <BumpNudge onClick={() => {
+                  if (!isPro) {
+                    setUpgradeReason('bump_profile');
+                    setShowUpgradeModal(true);
+                  } else {
+                    setBumpingItem(item);
+                    setShowBumpModal(true);
+                  }
+                }}>
+                  <BumpIcon>⚡</BumpIcon>
+                  <BumpText>Bump your profile to {item.brand_name}'s inbox</BumpText>
+                  {!isPro && <BumpProBadge>Pro</BumpProBadge>}
+                  <BumpArrow>→</BumpArrow>
+                </BumpNudge>
+            )}
           </>
         )}
 
@@ -1318,9 +1331,11 @@ const PRPipeline = () => {
                         brand_id: bumpingItem.brand_id
                       }, { withCredentials: true });
                       setBumpsRemaining(b => Math.max(0, b - 1));
+                      setBumpedItems(prev => ({ ...prev, [bumpingItem.id]: 'requested' }));
+                      setBumpSuccessBrand(bumpingItem.brand_name);
                       setShowBumpModal(false);
                       setBumpingItem(null);
-                      message.success(`Profile bump requested for ${bumpingItem.brand_name}`);
+                      setShowBumpSuccess(true);
                     } catch (err) {
                       message.error('Failed to request bump');
                     } finally {
@@ -1339,6 +1354,49 @@ const PRPipeline = () => {
                 {bumpsRemaining} bump{bumpsRemaining !== 1 ? 's' : ''} remaining this month
               </BumpModalLimit>
             </BumpModalCard>
+          </BumpModalOverlay>
+        )}
+      </AnimatePresence>
+
+      {/* Bump Success Modal */}
+      <AnimatePresence>
+        {showBumpSuccess && (
+          <BumpModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowBumpSuccess(false)}
+          >
+            <BumpSuccessCard
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <BumpSuccessIcon>✓</BumpSuccessIcon>
+              <BumpSuccessTitle>Bump requested</BumpSuccessTitle>
+              <BumpSuccessBody>
+                Our team will reach out to {bumpSuccessBrand}'s PR team within 24 hours with your media kit.
+              </BumpSuccessBody>
+              <BumpSuccessSteps>
+                <BumpSuccessStep $active>
+                  <BumpStepDot $active>✓</BumpStepDot>
+                  <BumpStepText>Request submitted</BumpStepText>
+                </BumpSuccessStep>
+                <BumpSuccessStep>
+                  <BumpStepDot>2</BumpStepDot>
+                  <BumpStepText>We email the brand</BumpStepText>
+                </BumpSuccessStep>
+                <BumpSuccessStep>
+                  <BumpStepDot>3</BumpStepDot>
+                  <BumpStepText>Brand reviews your profile</BumpStepText>
+                </BumpSuccessStep>
+              </BumpSuccessSteps>
+              <BumpSuccessDone onClick={() => setShowBumpSuccess(false)}>
+                Done
+              </BumpSuccessDone>
+            </BumpSuccessCard>
           </BumpModalOverlay>
         )}
       </AnimatePresence>
@@ -3173,6 +3231,138 @@ const BumpModalLimit = styled.div`
   font-size: 12px;
   color: #9CA3AF;
   font-weight: 500;
+`;
+
+// Bump Status (after bump requested)
+const BumpStatusNudge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+`;
+
+const BumpStatusIcon = styled.div`
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #10B981;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
+const BumpStatusText = styled.div`
+  flex: 1;
+`;
+
+const BumpStatusTitle = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: #065F46;
+`;
+
+const BumpStatusSub = styled.div`
+  font-size: 12px;
+  color: #059669;
+  margin-top: 1px;
+`;
+
+// Bump Success Modal
+const BumpSuccessCard = styled(motion.div)`
+  background: white;
+  border-radius: 20px;
+  padding: 32px 28px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+`;
+
+const BumpSuccessIcon = styled.div`
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #10B981;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+`;
+
+const BumpSuccessTitle = styled.div`
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F0F0F;
+  margin-bottom: 8px;
+`;
+
+const BumpSuccessBody = styled.div`
+  font-size: 14px;
+  color: #6B7280;
+  line-height: 1.5;
+  margin-bottom: 24px;
+`;
+
+const BumpSuccessSteps = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  text-align: left;
+`;
+
+const BumpSuccessStep = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: ${p => p.$active ? 1 : 0.5};
+`;
+
+const BumpStepDot = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: ${p => p.$active ? '#10B981' : '#E5E7EB'};
+  color: ${p => p.$active ? 'white' : '#9CA3AF'};
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
+const BumpStepText = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: ${p => p.$active ? '#065F46' : '#6B7280'};
+`;
+
+const BumpSuccessDone = styled.button`
+  width: 100%;
+  padding: 14px;
+  background: #111;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #333;
+  }
 `;
 
 const RepliedBanner = styled.div`
