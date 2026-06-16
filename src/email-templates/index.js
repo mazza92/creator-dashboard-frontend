@@ -13,6 +13,15 @@ export {
   getPreviewHTML as getWeeklyBrandRoundupPreview
 } from './WeeklyBrandRoundup';
 
+export {
+  default as generateGeneralAnnouncement,
+  generateGeneralAnnouncement as GeneralAnnouncement,
+  sampleAnnouncementInsights,
+  sampleAnnouncementGeneral,
+  getAnnouncementInsightsPreview,
+  getAnnouncementGeneralPreview,
+} from './GeneralAnnouncement';
+
 // Components
 export { default as EmailTemplatePreview } from './EmailTemplatePreview';
 
@@ -23,8 +32,15 @@ export const emailTemplates = {
     name: 'Weekly Brand Roundup',
     description: 'Showcase new brands with clean card layout',
     icon: '📦',
-    generator: 'generateWeeklyBrandRoundup'
-  }
+    generator: 'generateWeeklyBrandRoundup',
+  },
+  general_announcement: {
+    id: 'general_announcement',
+    name: 'General Announcement',
+    description: 'Flexible template for insights, news, and updates',
+    icon: '💡',
+    generator: 'generateGeneralAnnouncement',
+  },
 };
 
 // Helper to get all available templates

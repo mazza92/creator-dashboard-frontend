@@ -12,7 +12,7 @@ import {
   DesktopOutlined, MobileOutlined, CopyOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
-import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands } from '../email-templates';
+import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement } from '../email-templates';
 
 const { TextArea } = Input;
 
@@ -50,6 +50,21 @@ const AdminEmail = () => {
   // Roundup brands state
   const [roundupBrands, setRoundupBrands] = useState([]);
   const [roundupBrandsLoading, setRoundupBrandsLoading] = useState(false);
+
+  // General announcement composer state
+  const [showAnnouncementPreview, setShowAnnouncementPreview] = useState(false);
+  const [announcementViewMode, setAnnouncementViewMode] = useState('desktop');
+  const [announcementConfig, setAnnouncementConfig] = useState({
+    headerTitle: 'An update from Newcollab',
+    headerSubtitle: '',
+    gradient: 'teal',
+    bodyText: `<p style="margin: 0 0 16px 0; font-size: 16px; color: #111827;">Hey {{first_name}}!</p>\n<p style="margin: 0; font-size: 15px; color: #4b5563; line-height: 1.6;">Your message here.</p>`,
+    calloutText: '',
+    calloutIcon: '💡',
+    ctaLabel: 'Go to Dashboard',
+    ctaUrl: 'https://app.newcollab.co',
+    preheader: '',
+  });
 
   // Check auth on mount
   useEffect(() => {
@@ -134,6 +149,30 @@ const AdminEmail = () => {
     } finally {
       setRoundupBrandsLoading(false);
     }
+  };
+
+  const buildAnnouncementHTML = (config = announcementConfig, forCampaign = false) => {
+    const blocks = [];
+    if (config.calloutText) {
+      blocks.push({
+        type: 'callout',
+        text: config.calloutText,
+        icon: config.calloutIcon || '💡',
+        color: '#26A69A',
+        bg: '#f0faf9',
+      });
+    }
+    return generateGeneralAnnouncement({
+      firstName: forCampaign ? '{{first_name}}' : 'Sarah',
+      headerTitle: config.headerTitle || 'An update from Newcollab',
+      headerSubtitle: config.headerSubtitle || '',
+      gradient: config.gradient || 'teal',
+      bodyText: config.bodyText || '',
+      blocks,
+      primaryCta: config.ctaLabel ? { label: config.ctaLabel, url: config.ctaUrl || 'https://app.newcollab.co' } : null,
+      preheader: config.preheader || config.headerTitle || '',
+      utmCampaign: 'general_announcement',
+    });
   };
 
   const previewSegment = async (segmentId) => {
@@ -742,15 +781,22 @@ const AdminEmail = () => {
                   </ModernTemplateCard>
                 </Col>
                 <Col xs={24} md={12} lg={8}>
-                  <ModernTemplateCard disabled>
-                    <div className="template-badge coming-soon">COMING SOON</div>
-                    <div className="template-icon-large">🔄</div>
-                    <h4>Re-engagement</h4>
-                    <p>Win back dormant users with personalized content and special offers</p>
+                  <ModernTemplateCard
+                    onClick={() => setShowAnnouncementPreview(true)}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #26A69A 0%, #00897B 100%)' }}>NEW</div>
+                    <div className="template-icon-large">💡</div>
+                    <h4>General Announcement</h4>
+                    <p>Flexible template for insights, updates, feature launches, or any custom message to your creators</p>
                     <div className="template-features">
-                      <span>Personalized</span>
-                      <span>Stats</span>
+                      <span>Flexible</span>
+                      <span>Live Composer</span>
+                      <span>All Content Types</span>
                     </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#26A69A', color: '#26A69A' }}>
+                      <EyeOutlined /> Compose & Preview
+                    </Button>
                   </ModernTemplateCard>
                 </Col>
                 <Col xs={24} md={12} lg={8}>
@@ -926,6 +972,181 @@ const AdminEmail = () => {
                 </Button>
               </div>
             </CampaignBuilder>
+          </Modal>
+
+          {/* General Announcement Compose Modal */}
+          <Modal
+            title={null}
+            open={showAnnouncementPreview}
+            onCancel={() => setShowAnnouncementPreview(false)}
+            footer={null}
+            width={1100}
+            style={{ top: 20 }}
+            bodyStyle={{ padding: 0, background: '#1a1a2e' }}
+          >
+            <TemplatePreviewContainer>
+              <div className="preview-header">
+                <div>
+                  <h3>💡 General Announcement — Live Composer</h3>
+                  <p>Edit the fields on the left; preview updates instantly on the right</p>
+                </div>
+                <Space>
+                  <Button
+                    type={announcementViewMode === 'desktop' ? 'primary' : 'default'}
+                    icon={<DesktopOutlined />}
+                    onClick={() => setAnnouncementViewMode('desktop')}
+                  >
+                    Desktop
+                  </Button>
+                  <Button
+                    type={announcementViewMode === 'mobile' ? 'primary' : 'default'}
+                    icon={<MobileOutlined />}
+                    onClick={() => setAnnouncementViewMode('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </Space>
+              </div>
+
+              {/* Two-panel composer */}
+              <AnnouncementComposer>
+                {/* Left: Form Fields */}
+                <div className="composer-form">
+                  <div className="form-group">
+                    <label>Header Title *</label>
+                    <Input
+                      value={announcementConfig.headerTitle}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, headerTitle: e.target.value }))}
+                      placeholder="e.g. Your weekly insights are here"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Header Subtitle</label>
+                    <Input
+                      value={announcementConfig.headerSubtitle}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, headerSubtitle: e.target.value }))}
+                      placeholder="e.g. Week of June 15, 2026"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Header Colour</label>
+                    <Radio.Group
+                      value={announcementConfig.gradient}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, gradient: e.target.value }))}
+                    >
+                      <Radio.Button value="teal">Teal</Radio.Button>
+                      <Radio.Button value="purple">Purple</Radio.Button>
+                      <Radio.Button value="green">Green</Radio.Button>
+                      <Radio.Button value="amber">Amber</Radio.Button>
+                      <Radio.Button value="dark">Dark</Radio.Button>
+                    </Radio.Group>
+                  </div>
+                  <div className="form-group">
+                    <label>Body Text (HTML supported)</label>
+                    <TextArea
+                      value={announcementConfig.bodyText}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, bodyText: e.target.value }))}
+                      rows={5}
+                      placeholder={`<p style="...">Hey {{first_name}}!</p>\n<p style="...">Your message...</p>`}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Callout / Tip Box (optional)</label>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                      <Input
+                        value={announcementConfig.calloutIcon}
+                        onChange={(e) => setAnnouncementConfig(c => ({ ...c, calloutIcon: e.target.value }))}
+                        style={{ width: 60 }}
+                        placeholder="💡"
+                      />
+                      <Input
+                        value={announcementConfig.calloutText}
+                        onChange={(e) => setAnnouncementConfig(c => ({ ...c, calloutText: e.target.value }))}
+                        placeholder="Optional highlighted tip or callout text"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>CTA Button Label</label>
+                    <Input
+                      value={announcementConfig.ctaLabel}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, ctaLabel: e.target.value }))}
+                      placeholder="e.g. Go to Dashboard"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>CTA Button URL</label>
+                    <Input
+                      value={announcementConfig.ctaUrl}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, ctaUrl: e.target.value }))}
+                      placeholder="https://app.newcollab.co"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Inbox Preview Text (preheader)</label>
+                    <Input
+                      value={announcementConfig.preheader}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, preheader: e.target.value }))}
+                      placeholder="Short text shown in inbox preview..."
+                    />
+                  </div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', padding: '8px 0' }}>
+                    <strong style={{ color: '#cbd5e1' }}>Variables:</strong>{' '}
+                    {'{{first_name}}'}, {'{{username}}'}, {'{{pitches_remaining}}'}
+                  </div>
+                </div>
+
+                {/* Right: Live Preview */}
+                <div className="composer-preview">
+                  <div
+                    className={`device-frame ${announcementViewMode}`}
+                    style={{ width: announcementViewMode === 'mobile' ? 375 : 560, maxWidth: '100%' }}
+                  >
+                    {announcementViewMode === 'mobile' && <div className="device-notch" />}
+                    <iframe
+                      srcDoc={buildAnnouncementHTML(announcementConfig, false)}
+                      title="Announcement Preview"
+                      style={{
+                        width: '100%',
+                        height: announcementViewMode === 'mobile' ? 580 : 660,
+                        border: 'none',
+                        background: '#f3f4f6',
+                        borderRadius: announcementViewMode === 'mobile' ? '0 0 24px 24px' : 8
+                      }}
+                    />
+                  </div>
+                </div>
+              </AnnouncementComposer>
+
+              <div className="preview-actions">
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={() => {
+                    const html = buildAnnouncementHTML(announcementConfig, true);
+                    const subject = announcementConfig.headerTitle || 'An update from Newcollab';
+                    navigator.clipboard.writeText(`Subject: ${subject}\n\n${html}`);
+                    message.success('HTML + subject copied to clipboard!');
+                  }}
+                >
+                  Copy HTML
+                </Button>
+                <Button
+                  type="primary"
+                  style={{ background: 'linear-gradient(135deg, #26A69A 0%, #00897B 100%)', border: 'none' }}
+                  onClick={() => {
+                    const html = buildAnnouncementHTML(announcementConfig, true);
+                    setEmailContent(html);
+                    setSubjectOverride(announcementConfig.headerTitle || 'An update from Newcollab');
+                    setCampaignName(`General Announcement - ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
+                    setShowAnnouncementPreview(false);
+                    setShowCampaignModal(true);
+                    message.success('Template loaded! Finish setting up your campaign.');
+                  }}
+                >
+                  Use This Template
+                </Button>
+              </div>
+            </TemplatePreviewContainer>
           </Modal>
 
           {/* Template Preview Modal */}
@@ -1398,6 +1619,122 @@ const TemplatePreviewContainer = styled.div`
     padding: 16px 24px;
     background: #16213e;
     border-top: 1px solid #0f3460;
+  }
+`;
+
+const AnnouncementComposer = styled.div`
+  display: flex;
+  min-height: 500px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+
+  .composer-form {
+    width: 320px;
+    flex-shrink: 0;
+    padding: 24px;
+    background: #0f1729;
+    border-right: 1px solid #1e3a5f;
+    overflow-y: auto;
+    max-height: 700px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 6px;
+    }
+
+    .ant-input,
+    .ant-input-affix-wrapper {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      color: #e2e8f0 !important;
+      border-radius: 6px;
+
+      &::placeholder {
+        color: #475569;
+      }
+    }
+
+    textarea.ant-input {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-color: #334155 !important;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .ant-radio-group {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .ant-radio-button-wrapper {
+      background: #1e293b;
+      border-color: #334155;
+      color: #94a3b8;
+      font-size: 12px;
+      padding: 0 10px;
+      height: 30px;
+      line-height: 28px;
+
+      &.ant-radio-button-wrapper-checked {
+        background: #26A69A;
+        border-color: #26A69A;
+        color: #fff;
+      }
+    }
+  }
+
+  .composer-preview {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 32px 24px;
+    overflow-y: auto;
+    max-height: 700px;
+  }
+
+  .device-frame {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+
+    &.mobile {
+      background: #1c1c1e;
+      border-radius: 40px;
+      padding: 12px;
+    }
+
+    .device-notch {
+      width: 120px;
+      height: 28px;
+      background: #1c1c1e;
+      border-radius: 0 0 14px 14px;
+      margin: 0 auto 8px auto;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 4px;
+        background: #333;
+        border-radius: 2px;
+      }
+    }
   }
 `;
 
