@@ -71,9 +71,10 @@ const ForYou = () => {
   const [showKitNudge, setShowKitNudge] = useState(false);
   const [creatorProfile, setCreatorProfile] = useState(null);
 
-  // Kit views notification state
-  const [kitViews, setKitViews] = useState({ views_this_week: 0, recent: [] });
+  // Kit views notification state - "Who Viewed Your Kit" feature
+  const [kitViews, setKitViews] = useState({ views_this_week: 0, brands_this_week: 0, views: [], is_pro: false });
   const [showKitViewsBanner, setShowKitViewsBanner] = useState(true);
+  const [showKitViewsList, setShowKitViewsList] = useState(false);
 
   // Pending pitches state (for dead zone engagement)
   const [pendingPitches, setPendingPitches] = useState([]);
@@ -251,14 +252,25 @@ const ForYou = () => {
 
   const fetchKitViews = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/portfolio/views`, {
+      // Use new PR CRM endpoint with brand attribution
+      const response = await axios.get(`${API_BASE}/api/pr-crm/kit-views`, {
         withCredentials: true
       });
-      if (response.data) {
+      if (response.data?.success) {
         setKitViews(response.data);
       }
     } catch (error) {
-      // Silently fail - kit views is an optional feature
+      // Fallback to old endpoint if new one not deployed
+      try {
+        const fallback = await axios.get(`${API_BASE}/api/portfolio/views`, {
+          withCredentials: true
+        });
+        if (fallback.data) {
+          setKitViews({ ...fallback.data, brands_this_week: 0, views: [], is_pro: isPro });
+        }
+      } catch {
+        // Silently fail
+      }
     }
   };
 
@@ -553,22 +565,27 @@ const ForYou = () => {
           </HowItWorksCard>
         )}
 
-        {/* Kit Views Banner - shown AFTER how it works so user understands context */}
-        {showKitViewsBanner && kitViews.views_this_week > 0 && (
-          <KitViewsBanner>
+        {/* Kit Views Banner - "Who Viewed Your Kit" - headline Pro conversion feature */}
+        {showKitViewsBanner && (kitViews.brands_this_week > 0 || kitViews.views_this_week > 0) && (
+          <KitViewsBanner $highlight={!isPro}>
             <KitViewsIcon>
               <Eye size={18} />
             </KitViewsIcon>
             <KitViewsContent>
               <KitViewsTitle>
-                <strong>{kitViews.views_this_week}</strong> {kitViews.views_this_week === 1 ? 'person' : 'people'} viewed your kit this week
+                🔥 <strong>{kitViews.brands_this_week || kitViews.views_this_week}</strong> {(kitViews.brands_this_week || kitViews.views_this_week) === 1 ? 'brand' : 'brands'} viewed your kit this week
               </KitViewsTitle>
-              {isPro && kitViews.recent?.length > 0 && kitViews.recent[0].referrer && (
-                <KitViewsSub>
-                  Latest from: {new URL(kitViews.recent[0].referrer).hostname.replace('www.', '')}
-                </KitViewsSub>
-              )}
-              {!isPro && (
+              {isPro && kitViews.views?.length > 0 ? (
+                <>
+                  <KitViewsSub>
+                    {kitViews.views.slice(0, 2).map(v => v.brand_name).join(', ')}
+                    {kitViews.views.length > 2 && ` +${kitViews.views.length - 2} more`}
+                  </KitViewsSub>
+                  <KitViewsUpgrade onClick={() => setShowKitViewsList(!showKitViewsList)}>
+                    {showKitViewsList ? 'Hide details ↑' : 'See all views →'}
+                  </KitViewsUpgrade>
+                </>
+              ) : (
                 <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
                   Upgrade to see who's checking you out →
                 </KitViewsUpgrade>
@@ -576,6 +593,36 @@ const ForYou = () => {
             </KitViewsContent>
             <KitViewsClose onClick={() => setShowKitViewsBanner(false)}>×</KitViewsClose>
           </KitViewsBanner>
+        )}
+
+        {/* Kit Views List - Pro users see full details */}
+        {isPro && showKitViewsList && kitViews.views?.length > 0 && (
+          <KitViewsList>
+            {kitViews.views.map(view => (
+              <KitViewRow key={view.id}>
+                <KitViewBrandLogo>
+                  {view.logo_url ? (
+                    <img src={view.logo_url} alt={view.brand_name} />
+                  ) : (
+                    <span>{view.brand_name?.charAt(0) || '?'}</span>
+                  )}
+                </KitViewBrandLogo>
+                <KitViewInfo>
+                  <KitViewBrandName>{view.brand_name}</KitViewBrandName>
+                  <KitViewMeta>
+                    {view.category && <span>{view.category}</span>}
+                    <span>{new Date(view.viewed_at).toLocaleDateString()}</span>
+                    {view.view_count > 1 && <KitViewBadge>Viewed {view.view_count}x</KitViewBadge>}
+                  </KitViewMeta>
+                </KitViewInfo>
+                {!view.has_replied && (
+                  <KitViewAction onClick={() => navigate(`/creator/dashboard/inbox`)}>
+                    Follow up →
+                  </KitViewAction>
+                )}
+              </KitViewRow>
+            ))}
+          </KitViewsList>
         )}
 
         {/* Social Proof Strip */}
@@ -3326,16 +3373,16 @@ const KitNudgeSecondary = styled.button`
   &:hover { color: #0F0F0F; }
 `;
 
-// Kit Views Banner - LinkedIn style notification
+// Kit Views Banner - "Who Viewed Your Kit" headline feature
 const KitViewsBanner = styled.div`
   display: flex;
   align-items: center;
   gap: 14px;
-  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
-  border: 1px solid #C7D2FE;
+  background: ${p => p.$highlight ? 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)' : 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)'};
+  border: 1px solid ${p => p.$highlight ? '#FCD34D' : '#C7D2FE'};
   border-radius: 14px;
   padding: 14px 18px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   position: relative;
 
   @media (max-width: 640px) {
@@ -3423,6 +3470,101 @@ const KitViewsClose = styled.button`
   &:hover {
     background: rgba(0, 0, 0, 0.05);
     color: #6B7280;
+  }
+`;
+
+// Kit Views List - Pro users see full brand details
+const KitViewsList = styled.div`
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  overflow: hidden;
+`;
+
+const KitViewRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #F3F4F6;
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #F9FAFB;
+  }
+`;
+
+const KitViewBrandLogo = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  span {
+    font-size: 18px;
+    font-weight: 700;
+    color: #6B7280;
+  }
+`;
+
+const KitViewInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const KitViewBrandName = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+`;
+
+const KitViewMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6B7280;
+`;
+
+const KitViewBadge = styled.span`
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+`;
+
+const KitViewAction = styled.button`
+  background: #111;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #333;
   }
 `;
 

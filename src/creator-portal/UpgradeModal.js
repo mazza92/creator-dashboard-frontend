@@ -54,8 +54,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'kit' || feature === 'kit_views') {
-    headline = 'Creators in your niche are landing PR this month.';
-    subtext = 'Pro gives you the complete toolkit: unlimited pitches, brand contacts, and kit analytics.';
+    headline = 'Brands are already looking at you.';
+    subtext = 'See exactly who viewed your kit — and follow up before they forget.';
     ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'limit_reached') {

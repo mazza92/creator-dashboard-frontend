@@ -139,7 +139,14 @@ const MediaKitClient = ({ mediaKit, username }) => {
               </KitAvatar>
             </KitAvatarWrap>
             <KitHeaderInfo>
-              <KitName>{mediaKit.display_name || username}</KitName>
+              <KitNameRow>
+                <KitName>{mediaKit.display_name || username}</KitName>
+                {mediaKit.is_pro && (
+                  <PRReadyBadge title="Verified by Newcollab — actively pitching brands">
+                    ✓ PR-Ready
+                  </PRReadyBadge>
+                )}
+              </KitNameRow>
               {mediaKit.tagline && <KitTagline>{mediaKit.tagline}</KitTagline>}
               <KitChipsRow>
                 {niches.slice(0, 3).map(n => (
@@ -483,12 +490,38 @@ const KitHeaderInfo = styled.div`
   padding-top: 4px;
 `;
 
+const KitNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+`;
+
 const KitName = styled.div`
   font-size: 24px;
   font-weight: 900;
   color: #fff;
-  margin-bottom: 4px;
   @media (max-width: 480px) { font-size: 20px; }
+`;
+
+const PRReadyBadge = styled.span`
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
 `;
 
 const KitTagline = styled.div`
