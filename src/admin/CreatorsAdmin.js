@@ -366,21 +366,28 @@ const CreatorsAdmin = () => {
       render: (val) => <Tag color={tierTagColor(val)} style={{ margin: 0 }}>{val || 'free'}</Tag>,
     },
     {
-      title: 'Status',
-      key: 'status',
-      width: 105,
-      render: (_, record) => (
-        <StatusCell>
-          {record.is_verified
-            ? <Tag color="success" icon={<CheckCircleOutlined />} style={{ margin: 0 }}>Verified</Tag>
-            : <Tag color="default" style={{ margin: 0, color: '#9ca3af' }}>—</Tag>
-          }
-          {(record.has_media_kit || record.kit_published)
-            ? <Tag color="blue" style={{ margin: 0, marginTop: 3 }}>Kit live</Tag>
-            : null
-          }
-        </StatusCell>
-      ),
+      title: 'Regions',
+      key: 'regions',
+      dataIndex: 'regions',
+      width: 120,
+      render: (val) => {
+        const regions = Array.isArray(val) ? val : [];
+        if (!regions.length) return <span style={{ color: '#9ca3af', fontSize: 12 }}>—</span>;
+        const shown = regions.slice(0, 2);
+        const extra = regions.length - shown.length;
+        return (
+          <RegionCell>
+            {shown.map((r) => (
+              <RegionTag key={r}>{r}</RegionTag>
+            ))}
+            {extra > 0 && (
+              <Tooltip title={regions.slice(2).join(', ')}>
+                <RegionTag $muted>+{extra}</RegionTag>
+              </Tooltip>
+            )}
+          </RegionCell>
+        );
+      },
     },
     {
       title: 'Pitches',
@@ -916,10 +923,24 @@ const DateCell = styled.div`
   white-space: nowrap;
 `;
 
-const StatusCell = styled.div`
+const RegionCell = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 3px;
+  align-items: center;
+`;
+
+const RegionTag = styled.span`
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: ${(p) => p.$muted ? '#f3f4f6' : '#eff6ff'};
+  color: ${(p) => p.$muted ? '#6b7280' : '#1d4ed8'};
+  border: 1px solid ${(p) => p.$muted ? '#e5e7eb' : '#bfdbfe'};
+  white-space: nowrap;
+  cursor: ${(p) => p.$muted ? 'default' : 'auto'};
 `;
 
 const PitchCell = styled.div`
