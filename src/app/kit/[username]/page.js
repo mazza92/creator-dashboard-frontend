@@ -2,10 +2,17 @@ import { notFound } from 'next/navigation';
 import MediaKitClient from './MediaKitClient';
 
 // Fetch media kit data from portfolio API
-async function getMediaKit(username) {
+async function getMediaKit(username, refToken = null) {
   try {
-    const res = await fetch(`https://api.newcollab.co/api/portfolio/public/${username}`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+    // Build URL with ref token if present (for kit view tracking with brand attribution)
+    const url = refToken
+      ? `https://api.newcollab.co/api/portfolio/public/${username}?ref=${refToken}`
+      : `https://api.newcollab.co/api/portfolio/public/${username}`;
+
+    const res = await fetch(url, {
+      // Don't cache when ref token is present (tracking request)
+      cache: refToken ? 'no-store' : undefined,
+      next: refToken ? undefined : { revalidate: 3600 } // Cache for 1 hour only if no ref token
     });
 
     if (!res.ok) {
@@ -113,9 +120,11 @@ export async function generateMetadata({ params }) {
 // Pages are pre-rendered at build time and can be regenerated on-demand
 export const revalidate = 3600; // Revalidate every hour (ISR)
 
-export default async function MediaKitPage({ params }) {
+export default async function MediaKitPage({ params, searchParams }) {
   const { username } = await params;
-  const data = await getMediaKit(username);
+  const resolvedSearchParams = await searchParams;
+  const refToken = resolvedSearchParams?.ref || null;
+  const data = await getMediaKit(username, refToken);
 
   if (!data || !data.media_kit) {
     notFound();
