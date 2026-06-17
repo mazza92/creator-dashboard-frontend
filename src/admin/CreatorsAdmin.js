@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
 import api from '../config/api';
 import {
   Table,
@@ -418,10 +417,14 @@ const CreatorsAdmin = () => {
               onClick={() => navigator.clipboard.writeText(CTA_KIT_URL).then(() => message.success('Copied'))}
             />
           </Tooltip>
-          <Tooltip title="View profile">
-            <Link to={`/creator/profile/${record.creator_id}`}>
+          <Tooltip title="View public kit">
+            <a
+              href={`${PUBLIC_KIT_URL_PREFIX}${record.kit_slug || record.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Button size="small" type="text" icon={<UserOutlined />} />
-            </Link>
+            </a>
           </Tooltip>
         </ActionCell>
       ),
@@ -737,9 +740,13 @@ const CreatorsAdmin = () => {
                   Copy public kit
                 </Button>
               )}
-              <Link to={`/creator/profile/${selectedCreator.creator_id}`}>
-                <Button type="primary" icon={<UserOutlined />}>View profile</Button>
-              </Link>
+              <a
+                href={`${PUBLIC_KIT_URL_PREFIX}${selectedCreator.kit_slug || selectedCreator.username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button type="primary" icon={<UserOutlined />}>View public kit</Button>
+              </a>
             </DrawerActions>
           </DrawerContent>
         ) : (
