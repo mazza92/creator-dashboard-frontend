@@ -92,6 +92,7 @@ import BrandAdmin from './admin/BrandAdmin';
 import AdminReports from './admin/AdminReports';
 import AdminEmail from './admin/AdminEmail';
 import AdminOpportunities from './admin/AdminOpportunities';
+import CreatorsAdmin from './admin/CreatorsAdmin';
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -428,6 +429,7 @@ function AppContent() {
             {/* PR Hunter - Internal Tool (has its own login) */}
             <Route path='/supply' element={<PRHunter />} />
             <Route path='/admin/brands' element={<BrandAdmin />} />
+            <Route path='/admin/creators' element={<CreatorsAdmin />} />
             <Route path='/admin/reports' element={<AdminReports />} />
             <Route path='/admin/email' element={<AdminEmail />} />
             <Route path='/admin/opportunities' element={<AdminOpportunities />} />
