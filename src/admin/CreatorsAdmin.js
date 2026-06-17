@@ -161,6 +161,7 @@ const CreatorsAdmin = () => {
   const [tier, setTier] = useState('');
   const [verified, setVerified] = useState('');
   const [kit, setKit] = useState('');
+  const [unsubscribed, setUnsubscribed] = useState('');
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -199,6 +200,7 @@ const CreatorsAdmin = () => {
       if (tier) params.set('tier', tier);
       if (verified) params.set('verified', verified);
       if (kit) params.set('kit', kit);
+      if (unsubscribed) params.set('unsubscribed', unsubscribed);
 
       const { data } = await api.get(`/api/admin/creators?${params.toString()}`, getApiConfig());
       setCreators(data.creators || []);
@@ -210,7 +212,7 @@ const CreatorsAdmin = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, page, pageSize, searchQ, niche, region, tier, verified, kit, sortField, sortOrder]);
+  }, [isAuthenticated, page, pageSize, searchQ, niche, region, tier, verified, kit, unsubscribed, sortField, sortOrder]);
 
   useEffect(() => {
     fetchCreators();
@@ -462,6 +464,7 @@ const CreatorsAdmin = () => {
     setTier('');
     setVerified('');
     setKit('');
+    setUnsubscribed('');
     setPage(1);
   };
 
@@ -563,6 +566,10 @@ const CreatorsAdmin = () => {
           <Select value={kit || undefined} onChange={(v) => { setKit(v || ''); setPage(1); }} allowClear placeholder="Kit" style={{ width: '100%' }}>
             <Option value="true">Has kit</Option>
             <Option value="false">No kit</Option>
+          </Select>
+          <Select value={unsubscribed || undefined} onChange={(v) => { setUnsubscribed(v || ''); setPage(1); }} allowClear placeholder="Subscribed" style={{ width: '100%' }}>
+            <Option value="false">Active only</Option>
+            <Option value="true">Unsubscribed</Option>
           </Select>
         </FilterRow>
         <FilterMeta>
@@ -820,12 +827,12 @@ const FiltersCard = styled.div`
 
 const FilterRow = styled.div`
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr 0.8fr 0.6fr 0.7fr 0.6fr;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr 0.6fr 0.7fr 0.6fr 0.7fr;
   gap: 10px;
   align-items: center;
 
-  @media (max-width: 1100px) {
-    grid-template-columns: 1fr 1fr;
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 1fr 1fr;
   }
 
   @media (max-width: 600px) {
