@@ -1,18 +1,13 @@
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import MediaKitClient from './MediaKitClient';
+import KitViewTracker from './KitViewTracker';
 
-// Fetch media kit data from portfolio API
-async function getMediaKit(username, refToken = null) {
+// Fetch media kit data from portfolio API (without ref token - tracking done client-side)
+async function getMediaKit(username) {
   try {
-    // Build URL with ref token if present (for kit view tracking with brand attribution)
-    const url = refToken
-      ? `https://api.newcollab.co/api/portfolio/public/${username}?ref=${refToken}`
-      : `https://api.newcollab.co/api/portfolio/public/${username}`;
-
-    const res = await fetch(url, {
-      // Don't cache when ref token is present (tracking request)
-      cache: refToken ? 'no-store' : undefined,
-      next: refToken ? undefined : { revalidate: 3600 } // Cache for 1 hour only if no ref token
+    const res = await fetch(`https://api.newcollab.co/api/portfolio/public/${username}`, {
+      next: { revalidate: 3600 } // Cache for 1 hour
     });
 
     if (!res.ok) {
@@ -120,11 +115,9 @@ export async function generateMetadata({ params }) {
 // Pages are pre-rendered at build time and can be regenerated on-demand
 export const revalidate = 3600; // Revalidate every hour (ISR)
 
-export default async function MediaKitPage({ params, searchParams }) {
+export default async function MediaKitPage({ params }) {
   const { username } = await params;
-  const resolvedSearchParams = await searchParams;
-  const refToken = resolvedSearchParams?.ref || null;
-  const data = await getMediaKit(username, refToken);
+  const data = await getMediaKit(username);
 
   if (!data || !data.media_kit) {
     notFound();
@@ -190,6 +183,9 @@ export default async function MediaKitPage({ params, searchParams }) {
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
         {displayName} - Creator Media Kit
       </h1>
+      <Suspense fallback={null}>
+        <KitViewTracker username={username} />
+      </Suspense>
       <MediaKitClient mediaKit={mediaKit} username={username} />
     </>
   );
