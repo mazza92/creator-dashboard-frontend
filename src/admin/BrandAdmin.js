@@ -417,19 +417,31 @@ const BrandAdmin = () => {
       );
 
       if (data.success) {
-        // Update local row data
+        // Update local row data with all enriched fields
         Object.assign(brand, {
-          hero_product: data.data.hero_product,
-          target_audience: data.data.target_audience,
-          tone: data.data.tone,
-          price_point: data.data.price_point,
-          enriched_at: new Date().toISOString()
+          hero_product: data.data.hero_product || brand.hero_product,
+          target_audience: data.data.target_audience || brand.target_audience,
+          tone: data.data.tone || brand.tone,
+          price_point: data.data.price_point || brand.price_point,
+          enriched_at: new Date().toISOString(),
+          // New enrichment fields
+          instagram_handle: data.data.instagram_handle || brand.instagram_handle,
+          tiktok_handle: data.data.tiktok_handle || brand.tiktok_handle,
+          youtube_handle: data.data.youtube_handle || brand.youtube_handle,
+          min_followers: data.data.min_followers || brand.min_followers,
+          collaboration_type: data.data.collaboration_type || brand.collaboration_type,
+          seo_title: data.data.seo_title || brand.seo_title,
+          seo_description: data.data.seo_description || brand.seo_description,
+          success_stories: data.data.success_stories || brand.success_stories,
+          response_rate: data.data.response_rate || brand.response_rate,
+          avg_response_time_days: data.data.avg_response_time_days || brand.avg_response_time_days
         });
         if (data.data.description && !brand.description) {
           brand.description = data.data.description;
         }
         refreshRow();
-        message.success({ content: `Enriched: ${data.data.hero_product}`, key: 'enrich' });
+        const fieldsEnriched = Object.keys(data.data).filter(k => data.data[k]).length;
+        message.success({ content: `Enriched ${fieldsEnriched} fields: ${data.data.hero_product || 'done'}`, key: 'enrich' });
       } else {
         message.warning({ content: data.error || 'Enrichment failed', key: 'enrich' });
       }
