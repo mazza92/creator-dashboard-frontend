@@ -147,8 +147,13 @@ const BrandAdmin = () => {
       message.success(`Updated ${colDef.headerName}`, 1);
     } catch (error) {
       console.error('Failed to save:', error);
-      message.error(`Failed to save ${colDef.headerName}`);
-      // Revert the change without triggering another save
+      const apiMsg = error.response?.data?.error;
+      if (error.response?.status === 409 && apiMsg) {
+        message.error(apiMsg, 5);
+      } else {
+        message.error(`Failed to save ${colDef.headerName}`);
+      }
+      // Revert the cell to its previous value
       isReverting.current = true;
       params.node.setDataValue(colDef.field, oldValue);
       isReverting.current = false;
