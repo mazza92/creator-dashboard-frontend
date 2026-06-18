@@ -57,6 +57,7 @@ import CampaignInvites from './creator-portal/CampaignInvites';
 import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
 import ForYou from './cra-pages/ForYou';
+import Pool from './cra-pages/Pool';
 import BrandSubmitPage from './cra-pages/BrandSubmitPage';
 import MediaKit from './creator-portal/MediaKit';
 import PortfolioBuilder from './creator-portal/PortfolioBuilder';
@@ -488,6 +489,7 @@ function AppContent() {
                 <Route path='dashboard/pr-pipeline' element={<PRPipeline />} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
                 <Route path='dashboard/for-you' element={<ForYou />} />
+                <Route path='dashboard/pool' element={<Pool />} />
                 <Route path='dashboard/media-kit' element={<MediaKit />} />
                 <Route path='dashboard/my-kit' element={<PortfolioBuilder currentUser={user} />} />
                 <Route path='dashboard/settings' element={<AccountSettings />} />

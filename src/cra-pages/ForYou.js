@@ -115,6 +115,11 @@ const ForYou = () => {
   const [socialFeedNotifs, setSocialFeedNotifs] = useState([]);
   const [realBrands, setRealBrands] = useState([]);
 
+  // Pool promo banner state
+  const [poolStats, setPoolStats] = useState(null);
+  const [poolActiveMembers, setPoolActiveMembers] = useState([]);
+  const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false);
+
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
 
@@ -127,6 +132,7 @@ const ForYou = () => {
     fetchOpportunityCount();
     fetchRecentReplies();
     fetchSocialProofBrands();
+    fetchPoolData();
   }, []);
 
   // ── Social proof notification feed: creator pool and brands ──
@@ -247,6 +253,21 @@ const ForYou = () => {
       }
     } catch (error) {
       // Silently fail - use fallback brands
+    }
+  };
+
+  const fetchPoolData = async () => {
+    try {
+      const [statsRes, membersRes, activityRes] = await Promise.all([
+        axios.get(`${API_BASE}/api/pool/stats`, { withCredentials: true }),
+        axios.get(`${API_BASE}/api/pool/active-members`, { withCredentials: true }),
+        axios.get(`${API_BASE}/api/pool/recent-activity`, { withCredentials: true })
+      ]);
+      if (statsRes.data) setPoolStats(statsRes.data);
+      if (membersRes.data?.members) setPoolActiveMembers(membersRes.data.members);
+      if (activityRes.data) setHasRecentPoolActivity(activityRes.data.has_recent_activity);
+    } catch (error) {
+      // Silently fail - pool promo is optional
     }
   };
 
@@ -625,17 +646,50 @@ const ForYou = () => {
           </KitViewsList>
         )}
 
-        {/* Social Proof Strip */}
-        <TopMatchesProofStrip>
-          <TopMatchesAvatarRow>
-            <TopMatchesAvatarImg src="https://iili.io/CBGa92t.png" alt="Creator" />
-            <TopMatchesAvatarImg src="https://iili.io/CBGaJvn.png" alt="Creator" />
-            <TopMatchesAvatarImg src="https://iili.io/CBGadps.png" alt="Creator" />
-          </TopMatchesAvatarRow>
-          <TopMatchesProofText>
-            Creators with under 10K followers got PR from brands like these this month
-          </TopMatchesProofText>
-        </TopMatchesProofStrip>
+        {/* Pool Promo Banner - viral, exciting design */}
+        <PoolPromoBanner onClick={() => navigate('/creator/dashboard/pool')}>
+          <PoolAvatarStack>
+            {poolActiveMembers.length > 0 ? (
+              poolActiveMembers.slice(0, 3).map((member, i) => (
+                <PoolAvatarImg key={member.id} $index={i} $color={['#7C3AED', '#E11D48', '#0EA5E9'][i]}>
+                  {member.profile_image_url ? (
+                    <img src={member.profile_image_url} alt={member.username} />
+                  ) : (
+                    (member.display_name || member.username)?.[0]?.toUpperCase() || '?'
+                  )}
+                </PoolAvatarImg>
+              ))
+            ) : (
+              <>
+                <PoolAvatarImg $index={0} $color="#7C3AED">
+                  <img src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/@justavatar.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvQGp1c3RhdmF0YXIucG5nIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4MTc5NjcxMywiZXhwIjoyNDEyNTE2NzEzfQ.X-lOx8_72aWLHu2rC-MiqC2h43p5ebHIoqr98QAWcXo" alt="Creator" />
+                </PoolAvatarImg>
+                <PoolAvatarImg $index={1} $color="#E11D48">
+                  <img src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/@fitspace.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvQGZpdHNwYWNlLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODE3OTY3NDUsImV4cCI6MTgxMzMzMjc0NX0.ltLA07dWixaQfRTfHc3ff36XOWT_ObEfBQgx15s-BC4" alt="Creator" />
+                </PoolAvatarImg>
+                <PoolAvatarImg $index={2} $color="#0EA5E9">
+                  <img src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/fitness%20avatar.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvZml0bmVzcyBhdmF0YXIuanBlZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODE3OTY3NjYsImV4cCI6MTgxMzMzMjc2Nn0.QXbJRXzoXn1Kp_OoBaEl504k2qhoRybOCeSZIowPn40" alt="Creator" />
+                </PoolAvatarImg>
+              </>
+            )}
+          </PoolAvatarStack>
+          <PoolBannerContent>
+            {hasRecentPoolActivity && poolStats?.followers_this_month > 0 ? (
+              <>
+                <PoolBannerTitle>🔥 +{poolStats.followers_this_month} new followers this month</PoolBannerTitle>
+                <PoolBannerSubtitle>Keep boosting to grow faster</PoolBannerSubtitle>
+              </>
+            ) : (
+              <>
+                <PoolBannerTitle>🚀 Grow your followers fast</PoolBannerTitle>
+                <PoolBannerSubtitle>Join creators boosting each other</PoolBannerSubtitle>
+              </>
+            )}
+          </PoolBannerContent>
+          <PoolBannerCTA>
+            {hasRecentPoolActivity ? 'Keep boosting →' : 'Join Pool →'}
+          </PoolBannerCTA>
+        </PoolPromoBanner>
 
         {/* Sub-tabs: Matches vs Opportunities */}
         <SubTabRow>
@@ -2023,6 +2077,114 @@ const TopMatchesProofText = styled.span`
   font-size: 12px;
   color: ${tokens.textSecondary};
   line-height: 1.4;
+`;
+
+// Pool Promo Banner - viral, exciting design with mobile responsiveness
+const PoolPromoBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+  border-radius: 14px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+`;
+
+const PoolAvatarStack = styled.div`
+  display: flex;
+  flex-shrink: 0;
+`;
+
+const PoolAvatarImg = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.9);
+  background: ${p => p.$color || '#7C3AED'};
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: ${p => p.$index > 0 ? '-8px' : '0'};
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+    margin-left: ${p => p.$index > 0 ? '-6px' : '0'};
+  }
+`;
+
+const PoolBannerContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const PoolBannerTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 2px;
+  line-height: 1.3;
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
+`;
+
+const PoolBannerSubtitle = styled.div`
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
+`;
+
+const PoolBannerCTA = styled.div`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background: rgba(255,255,255,0.2);
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  &:hover {
+    background: rgba(255,255,255,0.3);
+  }
 `;
 
 // ── Variant A: Notification Feed Social Proof ──

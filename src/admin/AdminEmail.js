@@ -844,6 +844,40 @@ const AdminEmail = () => {
                   </ModernTemplateCard>
                 </Col>
                 <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setAnnouncementConfig({
+                        headerTitle: 'Your portfolio is almost ready',
+                        headerSubtitle: '',
+                        gradient: 'purple',
+                        bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
+<p style="margin: 0 0 16px 0;">Your creator portfolio on Newcollab is almost ready — but brands can only see and review creators with a <strong>published portfolio</strong>.</p>
+<p style="margin: 0;">A complete portfolio helps brands understand your content style, audience, and past collaborations at a glance. It's the first thing they check before responding to pitches.</p>`,
+                        calloutText: 'With a published portfolio, you can also track when brands view your page — so you know exactly who\'s checking you out.',
+                        calloutIcon: '💡',
+                        ctaLabel: 'Complete & Publish My Portfolio',
+                        ctaUrl: 'https://app.newcollab.co/creator/dashboard/kit',
+                        preheader: 'Brands are actively reviewing creator portfolios on Newcollab',
+                      });
+                      setShowAnnouncementPreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #9333EA 0%, #7C3AED 100%)' }}>NEW</div>
+                    <div className="template-icon-large">📋</div>
+                    <h4>Complete Your Portfolio</h4>
+                    <p>Nudge creators to finish and publish their portfolio — brands only review complete profiles</p>
+                    <div className="template-features">
+                      <span>Engagement</span>
+                      <span>Live Composer</span>
+                      <span>Kit Unpublished</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#9333EA', color: '#9333EA' }}>
+                      <EyeOutlined /> Compose & Preview
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
                   <ModernTemplateCard disabled>
                     <div className="template-badge coming-soon">COMING SOON</div>
                     <div className="template-icon-large">⚡</div>
@@ -1229,6 +1263,7 @@ const AdminEmail = () => {
                     setEmailContent(html);
                     setSubjectOverride(announcementConfig.headerTitle || 'An update from Newcollab');
                     setCampaignName(`General Announcement - ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
+                    setSelectedTemplate(null); // Clear any previously selected template - using custom HTML
                     setShowAnnouncementPreview(false);
                     setShowCampaignModal(true);
                     message.success('Template loaded! Finish setting up your campaign.');

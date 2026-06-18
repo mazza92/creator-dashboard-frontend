@@ -33,6 +33,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [contactMethod, setContactMethod] = useState('email'); // 'email' | 'form'
   const [pitchSent, setPitchSent] = useState(false);
   const [showUpgradeOverlay, setShowUpgradeOverlay] = useState(false);
+  const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false); // Default false to show Pool nudge
 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
@@ -49,6 +50,14 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
 
     // Fetch limits (but don't gate pitch generation — that happens at send time)
     await fetchPitchLimits();
+
+    // Check if user has recent pool activity (for nudge visibility)
+    try {
+      const poolRes = await api.get('/api/pool/recent-activity');
+      setHasRecentPoolActivity(poolRes.data?.has_recent_activity || false);
+    } catch {
+      setHasRecentPoolActivity(false); // Default to showing nudge on error
+    }
 
     // Always generate the pitch — contact reveal is what consumes the credit
     const profile = await fetchCreatorProfile();
@@ -603,15 +612,26 @@ ${creatorName}`;
                 )}
               </SuccessTips>
 
-              <SuccessKitNudge>
-                <SuccessKitText>
-                  <SuccessKitTitle>Build your media kit before they reply</SuccessKitTitle>
-                  <SuccessKitSub>Brands ask for it when they're interested. Be ready.</SuccessKitSub>
-                </SuccessKitText>
-                <SuccessKitBtn onClick={() => { handleClose(); navigate('/creator/dashboard/my-kit'); }}>
-                  Build kit
-                </SuccessKitBtn>
-              </SuccessKitNudge>
+              {/* Show kit nudge OR pool nudge based on activity */}
+              {!hasRecentPoolActivity ? (
+                <SuccessPoolNudge onClick={() => { handleClose(); navigate('/creator/dashboard/pool'); }}>
+                  <SuccessPoolText>
+                    <SuccessPoolTitle>🚀 Grow your followers while you wait</SuccessPoolTitle>
+                    <SuccessPoolSub>Join creators boosting each other in the Pool</SuccessPoolSub>
+                  </SuccessPoolText>
+                  <SuccessPoolBtn>Boost my followers →</SuccessPoolBtn>
+                </SuccessPoolNudge>
+              ) : (
+                <SuccessKitNudge>
+                  <SuccessKitText>
+                    <SuccessKitTitle>Build your media kit before they reply</SuccessKitTitle>
+                    <SuccessKitSub>Brands ask for it when they're interested. Be ready.</SuccessKitSub>
+                  </SuccessKitText>
+                  <SuccessKitBtn onClick={() => { handleClose(); navigate('/creator/dashboard/my-kit'); }}>
+                    Build kit
+                  </SuccessKitBtn>
+                </SuccessKitNudge>
+              )}
 
               <SuccessActions>
                 <PrimaryBtn as="button" onClick={() => { finishOutreach('email'); }}>
@@ -806,6 +826,20 @@ ${creatorName}`;
                     </MediaKitEnrichBtn>
                   )}
                 </MediaKitNudgeAttached>
+              )}
+
+              {/* Pool nudge — shown only if creator hasn't been active in pool recently */}
+              {!loading && !hasRecentPoolActivity && (
+                <PoolNudgeBanner onClick={() => { onClose(); navigate('/creator/dashboard/pool'); }}>
+                  <PoolNudgeContent>
+                    <PoolNudgeEmoji>🚀</PoolNudgeEmoji>
+                    <PoolNudgeTextWrap>
+                      <PoolNudgeTitle>Grow your followers while you wait</PoolNudgeTitle>
+                      <PoolNudgeDesc>Join creators boosting each other in the Pool</PoolNudgeDesc>
+                    </PoolNudgeTextWrap>
+                  </PoolNudgeContent>
+                  <PoolNudgeCTA>Boost my followers →</PoolNudgeCTA>
+                </PoolNudgeBanner>
               )}
 
               {/* Inline upgrade overlay — shown when user tries to send without credits */}
@@ -1990,6 +2024,84 @@ const MediaKitEnrichBtn = styled.button`
   }
 `;
 
+// ── Pool nudge banner (viral, exciting design) ──
+const PoolNudgeBanner = styled.div`
+  margin: 0 24px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    margin: 0 16px 12px;
+    padding: 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+`;
+
+const PoolNudgeContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+`;
+
+const PoolNudgeEmoji = styled.span`
+  font-size: 20px;
+  flex-shrink: 0;
+`;
+
+const PoolNudgeTextWrap = styled.div`
+  flex: 1;
+`;
+
+const PoolNudgeTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.3;
+`;
+
+const PoolNudgeDesc = styled.div`
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 2px;
+`;
+
+const PoolNudgeCTA = styled.span`
+  background: white;
+  color: #7C3AED;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  @media (max-width: 768px) {
+    text-align: center;
+    padding: 10px 14px;
+  }
+`;
+
 // ── Success screen ─────────────────────────────────────────────
 
 const SuccessScreen = styled.div`
@@ -2162,6 +2274,53 @@ const SuccessKitBtn = styled.button`
   border-radius: 10px;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+`;
+
+// Pool nudge in success screen
+const SuccessPoolNudge = styled.div`
+  margin: 0 24px 16px;
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  }
+
+  @media (max-width: 768px) { margin: 0 16px 16px; }
+`;
+
+const SuccessPoolText = styled.div`
+  flex: 1;
+`;
+
+const SuccessPoolTitle = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 2px;
+`;
+
+const SuccessPoolSub = styled.div`
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+`;
+
+const SuccessPoolBtn = styled.span`
+  background: white;
+  color: #7C3AED;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 10px;
   white-space: nowrap;
   flex-shrink: 0;
 `;

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Inbox, Sparkles, FileText, Bell } from 'lucide-react';
+import { Search, Inbox, Sparkles, FileText, Bell, Users } from 'lucide-react';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
@@ -245,6 +245,17 @@ const ForYouMobileBadge = styled(CountBadge)`
   animation: ${badgePulse} 2s infinite;
 `;
 
+// Violet badge for Pool tab - distinguishes growth activity from brand replies
+const PoolDesktopBadge = styled(DesktopCountBadge)`
+  background: #7C3AED;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.4);
+`;
+
+const PoolMobileBadge = styled(CountBadge)`
+  background: #7C3AED;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.4);
+`;
+
 const Content = styled.main`
   min-height: calc(100vh - 60px);
 
@@ -373,7 +384,8 @@ const navItems = [
   { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
   { label: 'Inbox',    icon: Inbox,    path: '/creator/dashboard/pr-pipeline' },
-  { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/my-kit', isNew: true },
+  { label: 'Pool',     icon: Users,    path: '/creator/dashboard/pool', isNew: true },
+  { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/my-kit' },
 ];
 
 const CreatorDashboardLayout = () => {
@@ -385,6 +397,7 @@ const CreatorDashboardLayout = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [savedCount, setSavedCount] = useState(0);
   const [matchedRemaining, setMatchedRemaining] = useState(0);
+  const [poolBadge, setPoolBadge] = useState(0);
   const isFetching = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -479,6 +492,30 @@ const CreatorDashboardLayout = () => {
     return () => window.removeEventListener('savedBrandCountChanged', fetchMatchedCount);
   }, [isLoading, location.pathname]);
 
+  // Fetch pool badge count (new followers since last visit)
+  useEffect(() => {
+    const fetchPoolBadge = async () => {
+      try {
+        const response = await api.get('/api/pool/badge');
+        if (response.data?.badge !== undefined) {
+          setPoolBadge(response.data.badge);
+        }
+      } catch (error) {
+        // Silent — badge is a non-critical enhancement
+      }
+    };
+
+    if (!isLoading) {
+      fetchPoolBadge();
+    }
+
+    // Clear badge when visiting pool page
+    if (location.pathname === '/creator/dashboard/pool') {
+      api.post('/api/pool/visit').catch(() => {});
+      setPoolBadge(0);
+    }
+  }, [isLoading, location.pathname]);
+
   const handleLogoutWithCleanup = async () => {
     try {
       await handleLogout();
@@ -528,11 +565,13 @@ const CreatorDashboardLayout = () => {
               <NavTab key={path} to={path} $active={location.pathname === path}>
                 <Icon />
                 {label}
-                {isNew && <NewBadge>New</NewBadge>}
+                {/* Hide "New" badge for Pool when there's a notification count */}
+                {isNew && !(label === 'Pool' && poolBadge > 0) && <NewBadge>New</NewBadge>}
                 {label === 'For You' && matchedRemaining > 0 && (
                   <ForYouDesktopBadge>{matchedRemaining}</ForYouDesktopBadge>
                 )}
                 {label === 'Inbox' && savedCount > 0 && <DesktopCountBadge>{savedCount}</DesktopCountBadge>}
+                {label === 'Pool' && poolBadge > 0 && <PoolDesktopBadge>{poolBadge}</PoolDesktopBadge>}
               </NavTab>
             ))}
           </NavTabs>
@@ -628,11 +667,13 @@ const CreatorDashboardLayout = () => {
           <MobileTab key={path} to={path} $active={location.pathname === path}>
             <Icon />
             {label}
-            {isNew && <MobileNewBadge>New</MobileNewBadge>}
+            {/* Hide "New" badge for Pool when there's a notification count */}
+            {isNew && !(label === 'Pool' && poolBadge > 0) && <MobileNewBadge>New</MobileNewBadge>}
             {label === 'For You' && matchedRemaining > 0 && (
               <ForYouMobileBadge>{matchedRemaining}</ForYouMobileBadge>
             )}
             {label === 'Inbox' && savedCount > 0 && <CountBadge>{savedCount}</CountBadge>}
+            {label === 'Pool' && poolBadge > 0 && <PoolMobileBadge>{poolBadge}</PoolMobileBadge>}
           </MobileTab>
         ))}
       </MobileTabBar>

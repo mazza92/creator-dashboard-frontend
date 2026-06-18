@@ -67,6 +67,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     headline = 'Bump your profile to the top.';
     subtext = 'Brands get hundreds of pitches. A follow-up from the Newcollab team puts yours back at the top.';
     ctaText = 'Get Pro for $19/month';
+
+  } else if (feature === 'pool') {
+    headline = 'Grow your following with real engagement.';
+    subtext = 'Pro members get unlimited Pool access — connect with creators in your niche who actually engage with your content.';
+    ctaText = 'Get Pro for $19/month';
   }
 
   // Feature list - bump feature always shown with NEW tag
@@ -80,7 +85,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       highlight: false
     },
     {
-      text: <><strong>Profile bumps</strong> — we email brands on your behalf <NewTag>new</NewTag></>,
+      text: <><strong>Creator Pool</strong> — grow followers & engagement from your niche <NewTag>new</NewTag></>,
+      highlight: feature === 'pool'
+    },
+    {
+      text: <><strong>Profile bumps</strong> — we email brands on your behalf</>,
       highlight: feature === 'bump_profile'
     },
     {
