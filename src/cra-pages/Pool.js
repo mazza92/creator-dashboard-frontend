@@ -610,7 +610,7 @@ const InstagramIcon = () => (
 // COMPONENT
 // ============================================================
 
-const DAILY_QUOTA = 3;
+const BASE_DAILY_LIMIT = 5;  // Base: 5/day, +2 bonus at 3-day streak
 const INITIAL_VISIBLE = 3;
 const INTRO_SEEN_KEY = 'pool_intro_seen';
 
@@ -667,8 +667,13 @@ const Pool = () => {
   };
 
   // Daily quota: free users get 3 boosts per day
-  const givenToday = credits?.given_today || credits?.given_this_week || 0;
-  const isOutOfCredits = !credits?.is_pro && givenToday >= DAILY_QUOTA;
+  // Dynamic daily limit from API (base 5 + 2 streak bonus at 3+ days)
+  const dailyLimit = credits?.daily_limit || BASE_DAILY_LIMIT;
+  const streakBonus = credits?.streak_bonus || 0;
+  const hasStreakBonus = credits?.has_streak_bonus || false;
+  const streakDays = credits?.streak_days || 0;
+  const givenToday = credits?.given_today || 0;
+  const isOutOfCredits = !credits?.is_pro && givenToday >= dailyLimit;
   // Visibility: Pro users always visible, free users visible only when they have balance AND haven't exhausted quota
   const isVisible = credits?.is_pro || ((credits?.balance || 0) > 0 && !isOutOfCredits);
 
@@ -732,7 +737,7 @@ const Pool = () => {
     if (!creator || isProcessing) return;
 
     // Check quota before allowing support (prevent edge case of exceeding daily limit)
-    if (!credits?.is_pro && givenToday >= DAILY_QUOTA) {
+    if (!credits?.is_pro && givenToday >= dailyLimit) {
       message.info('Daily limit reached. Come back tomorrow!');
       setPendingCreatorId(null);
       return;
@@ -876,7 +881,7 @@ const Pool = () => {
               <StepsContainer>
                 <Step>
                   <StepNumber>1</StepNumber>
-                  <StepText>Follow 3 creators in your niche today</StepText>
+                  <StepText>Follow 5 creators in your niche today (up to 7 with streak bonus!)</StepText>
                 </Step>
                 <Step>
                   <StepNumber>2</StepNumber>
@@ -897,18 +902,21 @@ const Pool = () => {
 
       {/* Main content */}
       <>
+      {/* Followers Gained Banner - ALWAYS visible for social proof */}
+      <FollowersGained style={{ marginBottom: '12px', justifyContent: 'center', padding: '12px 16px' }}>
+        <GainNumber>+{credits?.received_this_week || 0}</GainNumber>
+        <GainLabel>followers gained<br/>this week from Pool</GainLabel>
+      </FollowersGained>
+
       {/* Dark credit bar */}
       <CreditBar>
         <CreditLeft>
-          <CreditLabel>Daily boosts left</CreditLabel>
-          <CreditValue>{credits?.is_pro ? '∞' : Math.max(0, DAILY_QUOTA - givenToday)}</CreditValue>
+          <CreditLabel>
+            Daily boosts left
+            {hasStreakBonus && <span style={{ color: '#F97316', marginLeft: '4px' }}>🔥+{streakBonus}</span>}
+          </CreditLabel>
+          <CreditValue>{credits?.is_pro ? '∞' : Math.max(0, dailyLimit - givenToday)}</CreditValue>
         </CreditLeft>
-        {(credits?.received_this_week || supporters.length) > 0 && (
-          <FollowersGained>
-            <GainNumber>+{credits?.received_this_week || supporters.length}</GainNumber>
-            <GainLabel>new<br/>followers</GainLabel>
-          </FollowersGained>
-        )}
         <CreditRight>
           <CreditLabel>Your growth</CreditLabel>
           <VisibilityStatus $active={isVisible}>
@@ -921,15 +929,39 @@ const Pool = () => {
         </CreditRight>
       </CreditBar>
 
+      {/* Streak progress indicator */}
+      {!credits?.is_pro && streakDays > 0 && (
+        <div style={{
+          background: hasStreakBonus ? 'linear-gradient(135deg, #FEF3C7, #FDE68A)' : '#F9FAFB',
+          borderRadius: '10px',
+          padding: '10px 14px',
+          marginBottom: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '12px',
+          color: hasStreakBonus ? '#92400E' : '#6B7280'
+        }}>
+          <span style={{ fontSize: '16px' }}>🔥</span>
+          <span>
+            <b>{streakDays}-day streak!</b>
+            {hasStreakBonus
+              ? ' +2 bonus boosts unlocked'
+              : ` ${3 - streakDays} more day${3 - streakDays > 1 ? 's' : ''} for +2 bonus boosts`
+            }
+          </span>
+        </div>
+      )}
+
       {/* Daily progress - hide when quota reached since we show the locked banner */}
       {!credits?.is_pro && !isOutOfCredits && (
         <ProgressSection>
           <ProgressTrack>
-            <ProgressFill $progress={givenToday} $goal={DAILY_QUOTA} />
+            <ProgressFill $progress={givenToday} $goal={dailyLimit} />
           </ProgressTrack>
           <ProgressLabel>
-            {Math.min(givenToday, DAILY_QUOTA)} of {DAILY_QUOTA} boosts given today
-            {givenToday >= DAILY_QUOTA && ' ✓'}
+            {Math.min(givenToday, dailyLimit)} of {dailyLimit} boosts given today
+            {givenToday >= dailyLimit && ' ✓'}
           </ProgressLabel>
         </ProgressSection>
       )}
@@ -942,11 +974,11 @@ const Pool = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <SuccessTitle>🎉 {Math.min(givenToday, DAILY_QUOTA)} of {DAILY_QUOTA} boosts given today</SuccessTitle>
+            <SuccessTitle>🎉 {Math.min(givenToday, dailyLimit)} of {dailyLimit} boosts given today</SuccessTitle>
             <SuccessDesc>
-              {givenToday >= DAILY_QUOTA
+              {givenToday >= dailyLimit
                 ? "You're growing! Come back tomorrow for more boosts."
-                : `Boost ${DAILY_QUOTA - givenToday} more to unlock full growth today.`
+                : `Boost ${dailyLimit - givenToday} more to unlock full growth today.`
               }
             </SuccessDesc>
           </SuccessBanner>
@@ -995,7 +1027,7 @@ const Pool = () => {
             {/* For free users: 3 active cards, rest blurred. For pro: all active */}
             {allMatches.slice(0, credits?.is_pro ? visibleCount : Math.max(visibleCount, 6)).map((creator, idx) => {
               // Free users: first 3 are active (based on remaining quota), rest are blurred
-              const remainingQuota = credits?.is_pro ? 999 : Math.max(0, DAILY_QUOTA - givenToday);
+              const remainingQuota = credits?.is_pro ? 999 : Math.max(0, dailyLimit - givenToday);
               const isLocked = !credits?.is_pro && idx >= remainingQuota;
 
               return (
@@ -1137,7 +1169,7 @@ const Pool = () => {
 
       {/* Bottom tip toast */}
       <AnimatePresence>
-        {!pendingCreatorId && !showSuccessBanner && givenToday > 0 && givenToday < DAILY_QUOTA && (
+        {!pendingCreatorId && !showSuccessBanner && givenToday > 0 && givenToday < dailyLimit && (
           <BottomToast
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
