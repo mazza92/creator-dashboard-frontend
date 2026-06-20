@@ -353,6 +353,14 @@ export default function CreatorSignup() {
         terms_accepted: true,
       }, { headers: { 'Content-Type': 'application/json' } });
 
+      // Track signup completion in TikTok pixel
+      if (window.ttq) {
+        window.ttq.track('CompleteRegistration', {
+          content_type: 'product',
+          content_id: 'signup'
+        });
+      }
+
       doRedirect(res.data?.redirect_url || '/verify-email-pending');
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
@@ -378,6 +386,14 @@ export default function CreatorSignup() {
         email: result.user.email,
         name: result.user.displayName,
       });
+
+      // Track signup completion in TikTok pixel (only for new accounts)
+      if (window.ttq && response.data?.needs_onboarding) {
+        window.ttq.track('CompleteRegistration', {
+          content_type: 'product',
+          content_id: 'signup'
+        });
+      }
 
       const redirectUrl = response.data?.redirect_url ||
         (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
