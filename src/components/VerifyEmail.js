@@ -31,6 +31,7 @@ const VerifyEmail = () => {
   const { user, loading: userLoading, setUser } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errorType, setErrorType] = useState(null); // 'already-verified', 'expired', or 'invalid'
 
   useEffect(() => {
     let token = searchParams.get('token');
@@ -83,9 +84,30 @@ const VerifyEmail = () => {
           }, 1800);
         }
       } catch (err) {
-        const errorMsg = err.response?.data?.error || 'Failed to verify email.';
+        const backendError = err.response?.data?.error || '';
+        let errorMsg = 'Failed to verify email.';
+        let type = 'invalid';
+
+        // Provide specific error messages for common scenarios
+        if (backendError.toLowerCase().includes('already verified') ||
+            backendError.toLowerCase().includes('already been verified')) {
+          errorMsg = 'This email is already verified! You can log in now.';
+          type = 'already-verified';
+        } else if (backendError.toLowerCase().includes('expired') ||
+                   backendError.toLowerCase().includes('invalid token')) {
+          errorMsg = 'This verification link has expired. Please request a new one.';
+          type = 'expired';
+        } else if (backendError.toLowerCase().includes('not found') ||
+                   backendError.toLowerCase().includes('invalid')) {
+          errorMsg = 'Invalid verification link. Please check the link or request a new one.';
+          type = 'invalid';
+        } else if (backendError) {
+          errorMsg = backendError;
+        }
+
         console.error('🔥 Verification error:', err, err.response?.data);
         setError(errorMsg);
+        setErrorType(type);
         message.error(errorMsg);
         setLoading(false);
       }
@@ -110,10 +132,71 @@ const VerifyEmail = () => {
     return (
       <Container>
         <Card>
-          <Title level={2}>Verification Failed</Title>
+          <Title level={2}>
+            {errorType === 'already-verified' ? 'Already Verified' : 'Verification Failed'}
+          </Title>
           <Text>{error}</Text>
           <br /><br />
-          <Link to="/resend-verification">Resend Verification Email</Link>
+          {errorType === 'already-verified' ? (
+            <Link to="/login" style={{
+              padding: '10px 20px',
+              background: '#8B5CF6',
+              color: 'white',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}>
+              Go to Login
+            </Link>
+          ) : errorType === 'expired' ? (
+            <>
+              <Link to="/resend-verification" style={{
+                padding: '10px 20px',
+                background: '#8B5CF6',
+                color: 'white',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                display: 'inline-block',
+                marginRight: '10px'
+              }}>
+                Request New Link
+              </Link>
+              <Link to="/login" style={{
+                padding: '10px 20px',
+                background: '#E5E7EB',
+                color: '#111827',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                display: 'inline-block'
+              }}>
+                Go to Login
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/resend-verification" style={{
+                padding: '10px 20px',
+                background: '#8B5CF6',
+                color: 'white',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                display: 'inline-block',
+                marginRight: '10px'
+              }}>
+                Resend Verification Email
+              </Link>
+              <Link to="/register/creator" style={{
+                padding: '10px 20px',
+                background: '#E5E7EB',
+                color: '#111827',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                display: 'inline-block'
+              }}>
+                Create New Account
+              </Link>
+            </>
+          )}
         </Card>
       </Container>
     );

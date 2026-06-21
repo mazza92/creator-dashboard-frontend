@@ -88,6 +88,8 @@ const BrandLogo = styled.img`
   height: 28px;
   width: auto;
   display: block;
+  /* Prevent CLS by reserving space */
+  aspect-ratio: auto 140 / 28;
 `;
 
 const Eyebrow = styled.div`
@@ -680,6 +682,8 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
               <BrandLogo
                 src="/newcollab-logo-dark.png"
                 alt="newcollab"
+                width="140"
+                height="28"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}

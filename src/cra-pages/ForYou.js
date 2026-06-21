@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback, useRef, useMemo } 
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
-import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight, Eye, FileText, ArrowRight } from 'lucide-react';
+import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight, Eye, FileText, ArrowRight, Crown } from 'lucide-react';
 import { message } from 'antd';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
@@ -120,6 +120,10 @@ const ForYou = () => {
   const [poolActiveMembers, setPoolActiveMembers] = useState([]);
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false);
 
+  // Upgrade CTA impression tracking
+  const [bannerSeen, setBannerSeen] = useState(false);
+  const bannerRef = useRef(null);
+
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
 
@@ -214,6 +218,31 @@ const ForYou = () => {
     }, 15000 + Math.random() * 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // Track upgrade banner impressions for conversion optimization
+  useEffect(() => {
+    if (!isPro && bannerRef.current) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !bannerSeen) {
+              setBannerSeen(true);
+              // Track impression
+              axios.post(`${API_BASE}/api/track-event`, {
+                event: 'upgrade_cta_impression',
+                location: 'for_you_banner',
+                user_id: user?.creator_id
+              }).catch(err => console.error('Tracking error:', err));
+            }
+          });
+        },
+        { threshold: 0.5 } // 50% visible
+      );
+
+      observer.observe(bannerRef.current);
+      return () => observer.disconnect();
+    }
+  }, [isPro, bannerSeen, user]);
 
   const fetchOpportunityCount = async () => {
     try {
@@ -801,6 +830,39 @@ const ForYou = () => {
                 <>
                   <MatchSectionLabel>🔒 {(data?.matched?.length || 0) - 2} more matches</MatchSectionLabel>
 
+                  {/* Upgrade CTA — moved BEFORE locked cards for better visibility */}
+                  <UnlockBanner
+                    ref={bannerRef}
+                    onClick={() => {
+                      // Track click
+                      axios.post(`${API_BASE}/api/track-event`, {
+                        event: 'upgrade_cta_click',
+                        location: 'for_you_banner',
+                        user_id: user?.creator_id
+                      }).catch(err => console.error('Tracking error:', err));
+                      setUpgradeReason('matched_banner');
+                      setShowUpgrade(true);
+                    }}
+                  >
+                    <UnlockBannerContent>
+                      <UnlockBannerIcon>
+                        <Sparkles size={20} />
+                      </UnlockBannerIcon>
+                      <UnlockBannerText>
+                        <UnlockBannerTitle>
+                          Unlock {(data?.matched?.length || 0) - 2} more high-converting matches
+                        </UnlockBannerTitle>
+                        <UnlockBannerSub>
+                          Pro members pitch unlimited brands · Average {data?.matched?.[2]?.response_rate || 45}% reply rate
+                        </UnlockBannerSub>
+                      </UnlockBannerText>
+                    </UnlockBannerContent>
+                    <UnlockBannerBtn>
+                      Upgrade to Pro
+                      <ArrowRight size={16} />
+                    </UnlockBannerBtn>
+                  </UnlockBanner>
+
                   {/* Locked match cards - modern glassmorphism design */}
                   <LockedMatchList>
                     {data?.matched?.slice(2, 5).map((brand, i) => {
@@ -814,7 +876,15 @@ const ForYou = () => {
                       return (
                         <LockedMatchCard
                           key={brand.id || i}
-                          onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}
+                          onClick={() => {
+                            axios.post(`${API_BASE}/api/track-event`, {
+                              event: 'upgrade_cta_click',
+                              location: 'locked_card',
+                              user_id: user?.creator_id
+                            }).catch(err => console.error('Tracking error:', err));
+                            setUpgradeReason('locked_card');
+                            setShowUpgrade(true);
+                          }}
                         >
                           <LockedCardBlur>
                             {brand.logo && <LockedBrandLogo src={brand.logo} alt="" />}
@@ -834,32 +904,16 @@ const ForYou = () => {
                             <LockedIcon>
                               <Lock size={16} />
                             </LockedIcon>
+                            {/* Hover CTA - appears on card hover */}
+                            <LockedCardCTA>
+                              <span>Unlock with Pro</span>
+                              <ArrowRight size={12} />
+                            </LockedCardCTA>
                           </LockedCardContent>
                         </LockedMatchCard>
                       );
                     })}
                   </LockedMatchList>
-
-                  {/* Upgrade CTA — clean, action-focused */}
-                  <UnlockBanner onClick={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}>
-                    <UnlockBannerContent>
-                      <UnlockBannerIcon>
-                        <Sparkles size={20} />
-                      </UnlockBannerIcon>
-                      <UnlockBannerText>
-                        <UnlockBannerTitle>
-                          Unlock {(data?.matched?.length || 0) - 2} more high-converting matches
-                        </UnlockBannerTitle>
-                        <UnlockBannerSub>
-                          Pro members pitch unlimited brands · Average {data?.matched?.[2]?.response_rate || 45}% reply rate
-                        </UnlockBannerSub>
-                      </UnlockBannerText>
-                    </UnlockBannerContent>
-                    <UnlockBannerBtn>
-                      Upgrade to Pro
-                      <ArrowRight size={16} />
-                    </UnlockBannerBtn>
-                  </UnlockBanner>
                 </>
               )}
             </>
@@ -1089,6 +1143,25 @@ const ForYou = () => {
             </KitNudgeSecondary>
           </KitNudgeCard>
         </KitNudgeOverlay>
+      )}
+
+      {/* Floating Upgrade Button - FAB style, always visible for free users */}
+      {!isPro && data?.matched?.length > 2 && (
+        <UpgradeFAB
+          onClick={() => {
+            axios.post(`${API_BASE}/api/track-event`, {
+              event: 'upgrade_cta_click',
+              location: 'floating_button',
+              user_id: user?.creator_id
+            }).catch(err => console.error('Tracking error:', err));
+            setUpgradeReason('sticky_cta');
+            setShowUpgrade(true);
+          }}
+          aria-label="Upgrade to Pro"
+        >
+          <Crown size={16} />
+          <span>Upgrade to Pro</span>
+        </UpgradeFAB>
       )}
     </PageWrap>
   );
@@ -2822,6 +2895,143 @@ const UnlockBannerBtn = styled.div`
   @media (max-width: 640px) {
     width: 100%;
     justify-content: center;
+  }
+`;
+
+// Floating Action Button (FAB) for Upgrade - follows best practices from Notion, Linear, Grammarly
+const UpgradeFAB = styled.button`
+  /* Fixed positioning - always visible */
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+
+  /* Styling */
+  background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 24px 14px 20px;
+
+  /* Typography */
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+
+  /* Flexbox for icon + text */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  /* Elevation & shadows */
+  box-shadow:
+    0 4px 12px rgba(124, 58, 237, 0.25),
+    0 8px 24px rgba(124, 58, 237, 0.15);
+
+  /* Interactions */
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Prevent text selection */
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /* Hover state */
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+      0 6px 16px rgba(124, 58, 237, 0.3),
+      0 12px 32px rgba(124, 58, 237, 0.2);
+    background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+  }
+
+  /* Active state */
+  &:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow:
+      0 2px 8px rgba(124, 58, 237, 0.25);
+  }
+
+  /* Focus state for accessibility */
+  &:focus-visible {
+    outline: 2px solid #8B5CF6;
+    outline-offset: 2px;
+  }
+
+  /* Mobile optimization */
+  @media (max-width: 768px) {
+    bottom: 80px;
+    right: 16px;
+    padding: 16px 28px 16px 24px;
+    font-size: 15px;
+    gap: 10px;
+
+    /* Larger touch target for mobile */
+    min-width: 48px;
+    min-height: 48px;
+
+    /* Stronger shadow on mobile for visibility */
+    box-shadow:
+      0 8px 24px rgba(124, 58, 237, 0.3),
+      0 16px 48px rgba(124, 58, 237, 0.2);
+  }
+
+  /* Tablet */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    bottom: 20px;
+    right: 20px;
+  }
+
+  /* Small screens - compact version */
+  @media (max-width: 480px) {
+    padding: 14px 22px 14px 18px;
+    font-size: 14px;
+
+    /* Hide text on very small screens, show icon only */
+    span {
+      display: none;
+    }
+
+    /* Make it circular when text hidden */
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  /* Ensure it doesn't overlap with bottom nav or other fixed elements */
+  @media (max-height: 600px) {
+    bottom: 12px;
+    right: 12px;
+    padding: 12px 20px 12px 16px;
+    font-size: 13px;
+  }
+`;
+
+// Locked Card CTA - appears on hover
+const LockedCardCTA = styled.div`
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  pointer-events: none;
+
+  ${LockedMatchCard}:hover & {
+    opacity: 1;
   }
 `;
 
