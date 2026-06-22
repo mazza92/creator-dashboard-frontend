@@ -617,12 +617,14 @@ export default function CreatorOnboarding() {
       // This prevents the incomplete-profile guard from redirecting back to /onboarding
       await refreshUser();
       sessionStorage.setItem('justCompletedOnboarding', 'true');
-      const redirectUrl = res.data?.redirect || '/creator/dashboard/for-you';
+      const baseRedirect = res.data?.redirect || '/creator/dashboard/for-you';
       try {
-        const urlObj = new URL(redirectUrl, window.location.origin);
+        const urlObj = new URL(baseRedirect, window.location.origin);
+        // Add onboarding=complete param for Google Ads conversion tracking
+        urlObj.searchParams.set('onboarding', 'complete');
         navigate(urlObj.pathname + urlObj.search + urlObj.hash, { replace: true });
       } catch (e) {
-        navigate('/creator/dashboard/for-you', { replace: true });
+        navigate('/creator/dashboard/for-you?onboarding=complete', { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
