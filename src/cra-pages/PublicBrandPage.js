@@ -296,6 +296,21 @@ const PublicBrandPage = () => {
             <ArrowLeft size={14} /> Back to Directory
           </BackLink>
 
+          {/* Hero lifestyle image */}
+          {brand.coverImage && (
+            <HeroSection>
+              <HeroImage
+                src={brand.coverImage}
+                alt={`${brand.brand_name} lifestyle`}
+                loading="lazy"
+              />
+              <HeroGradient />
+              <HeroLogoOverlay>
+                <BrandLogo brand={brand} />
+              </HeroLogoOverlay>
+            </HeroSection>
+          )}
+
           {/* Brand header */}
           <BrandHeader>
             <BrandLogoBox>
@@ -643,6 +658,64 @@ const BackLink = styled.a`
   cursor: pointer;
   transition: color 0.15s;
   &:hover { color: #0F0F0F; }
+`;
+
+const HeroSection = styled.div`
+  position: relative;
+  width: 100%;
+  height: 320px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 20px;
+
+  @media (max-width: 640px) {
+    height: 200px;
+    border-radius: 16px;
+  }
+`;
+
+const HeroImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const HeroGradient = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%);
+  pointer-events: none;
+`;
+
+const HeroLogoOverlay = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 24px;
+  width: 72px;
+  height: 72px;
+  background: white;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: grid;
+  place-items: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  @media (max-width: 640px) {
+    width: 56px;
+    height: 56px;
+    bottom: 16px;
+    left: 16px;
+    padding: 8px;
+  }
 `;
 
 const BrandHeader = styled.div`

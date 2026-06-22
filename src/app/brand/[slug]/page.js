@@ -345,6 +345,58 @@ export default async function BrandPage({ params }) {
         .bp-back:hover { color: #0F0F0F; }
         .bp-back svg { width: 14px; height: 14px; }
 
+        /* Hero lifestyle image */
+        .bp-hero {
+          position: relative;
+          width: 100%;
+          height: 320px;
+          border-radius: 20px;
+          overflow: hidden;
+          margin-bottom: 20px;
+        }
+        .bp-hero-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .bp-hero-gradient {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 120px;
+          background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%);
+          pointer-events: none;
+        }
+        .bp-hero-logo {
+          position: absolute;
+          bottom: 20px;
+          left: 24px;
+          width: 72px;
+          height: 72px;
+          background: white;
+          border-radius: 16px;
+          padding: 10px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+          display: grid;
+          place-items: center;
+        }
+        .bp-hero-logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+        .bp-hero-logo span {
+          font-weight: 900;
+          font-size: 24px;
+          color: #E11D48;
+        }
+        @media (max-width: 640px) {
+          .bp-hero { height: 200px; border-radius: 16px; }
+          .bp-hero-logo { width: 56px; height: 56px; bottom: 16px; left: 16px; padding: 8px; }
+          .bp-hero-logo span { font-size: 20px; }
+        }
+
         /* Brand header card */
         .bp-header {
           background: #FFFFFF;
@@ -916,6 +968,26 @@ export default async function BrandPage({ params }) {
             </svg>
             Back to Directory
           </Link>
+
+          {/* Hero lifestyle image */}
+          {brand.coverImage && (
+            <div className="bp-hero">
+              <img
+                src={brand.coverImage}
+                alt={`${brand.name} lifestyle`}
+                loading="lazy"
+                className="bp-hero-img"
+              />
+              <div className="bp-hero-gradient" />
+              <div className="bp-hero-logo">
+                {brand.logo ? (
+                  <img src={brand.logo} alt={brand.name} />
+                ) : (
+                  <span>{brand.name?.slice(0, 1) || 'B'}</span>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Brand header */}
           <header className="bp-header">
