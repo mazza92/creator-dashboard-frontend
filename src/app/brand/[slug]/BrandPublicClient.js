@@ -46,6 +46,59 @@ const Logo = styled.div`
   }
 `;
 
+const HeroSection = styled.div`
+  position: relative;
+  width: 100%;
+  height: 320px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  @media (max-width: 640px) {
+    height: 200px;
+    border-radius: 16px;
+  }
+`;
+
+const HeroImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const HeroGradient = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%);
+`;
+
+const HeroLogoOverlay = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 24px;
+  width: 72px;
+  height: 72px;
+  background: white;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: grid;
+  place-items: center;
+  @media (max-width: 640px) {
+    width: 56px;
+    height: 56px;
+    bottom: 16px;
+    left: 16px;
+  }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+`;
+
 const Title = styled.h1`
   margin: 0;
   font-size: 34px;
@@ -155,6 +208,23 @@ export default function BrandPublicClient({ brand }) {
   return (
     <LandingPageLayoutNext canonicalUrl={canonical}>
       <Page>
+        {brand.coverImage && (
+          <HeroSection>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <HeroImage src={brand.coverImage} alt={`${brand.name} lifestyle`} loading="lazy" />
+            <HeroGradient />
+            <HeroLogoOverlay>
+              {brand.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={brand.logo} alt={brand.name} />
+              ) : (
+                <span style={{ fontWeight: 900, color: '#3b82f6', fontSize: 24 }}>
+                  {brand.name?.slice(0, 1) || 'B'}
+                </span>
+              )}
+            </HeroLogoOverlay>
+          </HeroSection>
+        )}
         <Header>
           <Logo>
             {brand.logo ? (
