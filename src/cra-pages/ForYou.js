@@ -532,7 +532,7 @@ const ForYou = () => {
 
         {/* Persistent Quota Progress Banner - only for free users */}
         {!isPro && data?.has_profile && (
-          <QuotaBanner>
+          <QuotaBanner $exhausted={pitchLimits.used >= pitchLimits.limit}>
             <QuotaDots>
               {[0, 1, 2].map(i => (
                 <QuotaDot key={i} $filled={i < pitchLimits.used} />
@@ -540,11 +540,21 @@ const ForYou = () => {
             </QuotaDots>
             <QuotaText>
               <QuotaTitle>{pitchLimits.used} of 3 free pitches sent</QuotaTitle>
-              <QuotaSub>Creators who send all 3 are 2.4x more likely to land a reply</QuotaSub>
+              <QuotaSub>
+                {pitchLimits.used >= pitchLimits.limit
+                  ? 'Pro members pitch unlimited brands — 6 more 90%+ matches are already waiting for you'
+                  : 'Creators who send all 3 are 2.4x more likely to land a reply'}
+              </QuotaSub>
             </QuotaText>
-            <QuotaRemaining>
-              {pitchLimits.limit - pitchLimits.used} left →
-            </QuotaRemaining>
+            {pitchLimits.used >= pitchLimits.limit ? (
+              <QuotaUpgrade onClick={() => navigate('/creator/dashboard/settings')}>
+                Unlock unlimited →
+              </QuotaUpgrade>
+            ) : (
+              <QuotaRemaining>
+                {pitchLimits.limit - pitchLimits.used} left →
+              </QuotaRemaining>
+            )}
           </QuotaBanner>
         )}
 
@@ -1363,6 +1373,24 @@ const QuotaRemaining = styled.div`
   font-size: 14px;
   color: #EC4899;
   white-space: nowrap;
+`;
+
+const QuotaUpgrade = styled.button`
+  background: linear-gradient(135deg, #EC4899, #8B5CF6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+  }
 `;
 
 const PageTitleWrap = styled.div`
