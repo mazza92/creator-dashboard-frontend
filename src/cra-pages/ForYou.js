@@ -120,6 +120,9 @@ const ForYou = () => {
   const [poolActiveMembers, setPoolActiveMembers] = useState([]);
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false);
 
+  // Welcome modal for new users (post-onboarding)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
   // Upgrade CTA impression tracking
   const [bannerSeen, setBannerSeen] = useState(false);
   const bannerRef = useRef(null);
@@ -138,6 +141,30 @@ const ForYou = () => {
     fetchSocialProofBrands();
     fetchPoolData();
   }, []);
+
+  // Check for onboarding completion and show welcome modal
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const justOnboarded = urlParams.get('onboarding') === 'complete' ||
+                          sessionStorage.getItem('justCompletedOnboarding') === 'true';
+
+    if (justOnboarded && !loading && data?.matched?.length > 0) {
+      // Only show if user hasn't dismissed it before in this session
+      const hasSeenWelcome = sessionStorage.getItem('welcomeModalShown');
+      if (!hasSeenWelcome) {
+        setShowWelcomeModal(true);
+        sessionStorage.setItem('welcomeModalShown', 'true');
+        // Clean up the URL param
+        if (urlParams.get('onboarding')) {
+          urlParams.delete('onboarding');
+          const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+          window.history.replaceState({}, '', newUrl);
+        }
+        // Clear onboarding flag
+        sessionStorage.removeItem('justCompletedOnboarding');
+      }
+    }
+  }, [loading, data]);
 
   // ── Social proof notification feed: creator pool and brands ──
   const SOCIAL_CREATORS = useMemo(() => [
@@ -1149,6 +1176,54 @@ const ForYou = () => {
           limit={FREE_PITCH_LIMIT}
           feature={upgradeReason === 'matched' ? 'for_you' : 'limit_reached'}
         />
+      )}
+
+      {/* Welcome Modal - Post-onboarding first pitch guide */}
+      {showWelcomeModal && data?.matched?.length > 0 && (
+        <WelcomeOverlay onClick={() => setShowWelcomeModal(false)}>
+          <WelcomeModal onClick={(e) => e.stopPropagation()}>
+            <WelcomeClose onClick={() => setShowWelcomeModal(false)}>×</WelcomeClose>
+            <WelcomeEmoji>🎉</WelcomeEmoji>
+            <WelcomeTitle>Your top matches are ready!</WelcomeTitle>
+            <WelcomeSub>
+              We found {data.matched.length} brands perfect for your content.<br />
+              <strong>Send your first pitch now</strong> — creators who act fast get 2.4x more replies.
+            </WelcomeSub>
+
+            <WelcomeBrands>
+              {data.matched.slice(0, 3).map((brand, idx) => (
+                <WelcomeBrandCard key={brand.id || idx}>
+                  <WelcomeBrandLogo>
+                    {brand.logo_url ? (
+                      <img src={brand.logo_url} alt={brand.brand_name} />
+                    ) : (
+                      <span>{brand.brand_name?.charAt(0) || 'B'}</span>
+                    )}
+                  </WelcomeBrandLogo>
+                  <WelcomeBrandInfo>
+                    <WelcomeBrandName>{brand.brand_name}</WelcomeBrandName>
+                    <WelcomeBrandMeta>
+                      {brand.match_score && <span>{brand.match_score}% match</span>}
+                      {brand.category && <span>{brand.category}</span>}
+                    </WelcomeBrandMeta>
+                  </WelcomeBrandInfo>
+                  <WelcomePitchBtn onClick={() => {
+                    setShowWelcomeModal(false);
+                    setPitchingBrand(brand);
+                  }}>
+                    Pitch
+                  </WelcomePitchBtn>
+                </WelcomeBrandCard>
+              ))}
+            </WelcomeBrands>
+
+            <WelcomeFooter>
+              <WelcomeSkip onClick={() => setShowWelcomeModal(false)}>
+                I'll explore first
+              </WelcomeSkip>
+            </WelcomeFooter>
+          </WelcomeModal>
+        </WelcomeOverlay>
       )}
 
       {/* Kit Nudge Interstitial */}
@@ -3759,6 +3834,198 @@ const CountBadge = styled.span`
   border-radius: 10px;
   min-width: 16px;
   text-align: center;
+`;
+
+// Welcome modal styled components (post-onboarding)
+const WelcomeOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+`;
+
+const WelcomeModal = styled.div`
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 440px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease-out;
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+`;
+
+const WelcomeClose = styled.button`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #F3F4F6;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #6B7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #E5E7EB;
+  }
+`;
+
+const WelcomeEmoji = styled.div`
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+const WelcomeTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+  text-align: center;
+  margin: 0 0 8px 0;
+`;
+
+const WelcomeSub = styled.p`
+  font-size: 15px;
+  color: #6B7280;
+  text-align: center;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+
+  strong {
+    color: #111827;
+  }
+`;
+
+const WelcomeBrands = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const WelcomeBrandCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #F9FAFB;
+  border-radius: 14px;
+  border: 1px solid #E5E7EB;
+`;
+
+const WelcomeBrandLogo = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  span {
+    font-size: 18px;
+    font-weight: 700;
+    color: #3B82F6;
+  }
+`;
+
+const WelcomeBrandInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const WelcomeBrandName = styled.div`
+  font-weight: 600;
+  font-size: 15px;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const WelcomeBrandMeta = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6B7280;
+
+  span:first-child {
+    color: #10B981;
+    font-weight: 600;
+  }
+`;
+
+const WelcomePitchBtn = styled.button`
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  }
+`;
+
+const WelcomeFooter = styled.div`
+  margin-top: 20px;
+  text-align: center;
+`;
+
+const WelcomeSkip = styled.button`
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 16px;
+
+  &:hover {
+    color: #6B7280;
+  }
 `;
 
 // Kit nudge interstitial styled components
