@@ -757,12 +757,11 @@ ${creatorName}`;
                       onClick={handleApplicationFormClick}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Send Pitch
+                      Apply to PR List
                     </PrimaryBtn>
                     <FormTip>
                       💡 Use the pitch above as a reference when filling out the form
                     </FormTip>
-                    <MethodCaption>via PR form</MethodCaption>
                   </>
                 ) : brandEmail ? (
                   /* Case 2: Email available */
