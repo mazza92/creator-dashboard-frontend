@@ -35,6 +35,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [showUpgradeOverlay, setShowUpgradeOverlay] = useState(false);
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false); // Default false to show Pool nudge
   const [trackingPixelUrl, setTrackingPixelUrl] = useState(null); // For email open tracking
+  const [showIncompleteKitPopup, setShowIncompleteKitPopup] = useState(false); // Popup when kit not filled
 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
@@ -141,13 +142,13 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
         const insertPoint = body.indexOf('\nIf you\'re open to it');
         if (insertPoint > -1) {
           // Insert media kit link before the closing paragraph
-          pitchData.body = body.slice(0, insertPoint) + `\nMy media kit: ${profile.media_kit_url}` + body.slice(insertPoint);
+          pitchData.body = body.slice(0, insertPoint) + `\nPlease find my portfolio here: ${profile.media_kit_url}` + body.slice(insertPoint);
         } else {
           // Fallback: append before signature (last 2 lines typically)
           const lines = body.split('\n');
           const signatureIndex = lines.findIndex(line => line.startsWith('Thanks,') || line.startsWith('Best,'));
           if (signatureIndex > -1) {
-            lines.splice(signatureIndex, 0, `My media kit: ${profile.media_kit_url}`, '');
+            lines.splice(signatureIndex, 0, `Please find my portfolio here: ${profile.media_kit_url}`, '');
             pitchData.body = lines.join('\n');
           }
         }
@@ -240,7 +241,7 @@ Here's what I had in mind:
 - A ${platform === 'TikTok' ? 'TikTok' : 'Reel'} showing how I actually use the product (not a basic unboxing)
 - I can also send over the raw clips if your team wants to use them
 
-${socialUrl ? `My ${platform}: ${socialUrl}` : ''}${profile?.has_media_kit && creatorId ? `\nhttps://newcollab.co/kit/${profile?.username || creatorId}` : ''}
+${socialUrl ? `My ${platform}: ${socialUrl}` : ''}${profile?.has_media_kit && creatorId ? `\nPlease find my portfolio here: https://newcollab.co/kit/${profile?.username || creatorId}` : ''}
 
 If you're open to it, I'd love to try some products and see if we can make something work. No pressure either way!
 
@@ -290,7 +291,7 @@ ${opener}
 
 I'm still interested in creating content around ${brand.brand_name} products for my ${followers || ''} ${platform} followers${niche ? ` in the ${niche.toLowerCase()} space` : ''}.
 
-${profile?.has_media_kit && creatorId ? `https://newcollab.co/kit/${profile?.username || creatorId}\n` : ''}
+${profile?.has_media_kit && creatorId ? `Please find my portfolio here: https://newcollab.co/kit/${profile?.username || creatorId}\n` : ''}
 Happy to chat more if you're interested - just let me know!
 
 Thanks,
@@ -397,11 +398,18 @@ ${creatorName}`;
     return seriesNames[key] || seriesNames[category] || seriesNames['default'];
   };
 
-  const handleSendEmail = async () => {
+  const handleSendEmail = async (skipKitCheck = false) => {
     // Follow-ups don't consume pitch credits (Pro only feature)
     // Show upgrade overlay instead of blocking with a warning
     if (!isFollowup && !pitchLimits.canPitch) {
       setShowUpgradeOverlay(true);
+      return;
+    }
+
+    // Check if kit is incomplete and this is an early pitch - show popup
+    const kitIsIncomplete = !(pitch?.kit_published ?? creatorProfile?.has_media_kit);
+    if (!isFollowup && !skipKitCheck && kitIsIncomplete && pitchLimits.used < 3) {
+      setShowIncompleteKitPopup(true);
       return;
     }
 
@@ -877,6 +885,32 @@ ${creatorName}`;
                     <UpgradeOverlayNote>One gifted package covers your Pro for the year.</UpgradeOverlayNote>
                   </UpgradeOverlayCard>
                 </UpgradeOverlay>
+              )}
+
+              {/* Incomplete Kit Popup — shown when user tries to pitch without portfolio */}
+              {showIncompleteKitPopup && (
+                <IncompleteKitOverlay>
+                  <IncompleteKitCard
+                    as={motion.div}
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <IncompleteKitClose onClick={() => setShowIncompleteKitPopup(false)}>×</IncompleteKitClose>
+                    <IncompleteKitEmoji>📋</IncompleteKitEmoji>
+                    <IncompleteKitTitle>Complete your portfolio first?</IncompleteKitTitle>
+                    <IncompleteKitText>
+                      Brands are <strong>3x more likely to reply</strong> when they can see your work.
+                      A complete portfolio helps you stand out.
+                    </IncompleteKitText>
+                    <IncompleteKitPrimaryBtn onClick={() => { setShowIncompleteKitPopup(false); onClose(); navigate('/creator/dashboard/my-kit'); }}>
+                      Build my portfolio
+                    </IncompleteKitPrimaryBtn>
+                    <IncompleteKitSecondaryBtn onClick={() => { setShowIncompleteKitPopup(false); handleSendEmail(true); }}>
+                      Send pitch anyway
+                    </IncompleteKitSecondaryBtn>
+                  </IncompleteKitCard>
+                </IncompleteKitOverlay>
               )}
             </>
           )}
@@ -2443,6 +2477,107 @@ const UpgradeOverlayNote = styled.p`
   margin: 10px 0 0;
   font-size: 12px;
   color: #9CA3AF;
+`;
+
+// ── Incomplete Kit Popup ─────────────────────────────────────────
+
+const IncompleteKitOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 25;
+`;
+
+const IncompleteKitCard = styled.div`
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+`;
+
+const IncompleteKitClose = styled.button`
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: #F3F4F6;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: #9CA3AF;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  &:hover { background: #E5E7EB; color: #111827; }
+`;
+
+const IncompleteKitEmoji = styled.div`
+  font-size: 42px;
+  margin-bottom: 12px;
+`;
+
+const IncompleteKitTitle = styled.h3`
+  font-size: 19px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 10px;
+`;
+
+const IncompleteKitText = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  line-height: 1.6;
+  margin: 0 0 22px;
+
+  strong {
+    color: #059669;
+    font-weight: 700;
+  }
+`;
+
+const IncompleteKitPrimaryBtn = styled.button`
+  width: 100%;
+  padding: 14px 20px;
+  background: #0F0F0F;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-bottom: 10px;
+
+  &:hover { opacity: 0.88; }
+`;
+
+const IncompleteKitSecondaryBtn = styled.button`
+  width: 100%;
+  padding: 12px 20px;
+  background: transparent;
+  color: #6B7280;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover { color: #374151; }
 `;
 
 export default AIPitchModal;

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import axios from 'axios';
 import { FaInstagram, FaTiktok, FaYoutube, FaShare, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://api.newcollab.co';
+const API_BASE = process.env.REACT_APP_API_URL || (
+  typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : 'https://api.newcollab.co'
+);
 
 const formatNumber = (n) => {
   if (!n) return null;
@@ -63,6 +68,8 @@ const PlatformIcon = ({ platform, size = 28 }) => {
 };
 
 const PublicMediaKit = ({ username }) => {
+  const [searchParams] = useSearchParams();
+  const refToken = searchParams.get('ref');
   const [kit, setKit]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -70,11 +77,16 @@ const PublicMediaKit = ({ username }) => {
 
   useEffect(() => {
     if (!username) return;
-    axios.get(`${API_BASE}/api/portfolio/public/${username}`)
+    // Include ref token for view tracking (links brand view to pipeline)
+    const url = refToken
+      ? `${API_BASE}/api/portfolio/public/${username}?ref=${refToken}`
+      : `${API_BASE}/api/portfolio/public/${username}`;
+    console.log('[PublicMediaKit] Fetching:', url);
+    axios.get(url)
       .then(r => setKit(r.data))
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [username]);
+  }, [username, refToken]);
 
   // Track interactions for analytics
   const trackInteraction = (type, target = '') => {
