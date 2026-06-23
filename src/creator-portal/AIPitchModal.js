@@ -34,6 +34,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [pitchSent, setPitchSent] = useState(false);
   const [showUpgradeOverlay, setShowUpgradeOverlay] = useState(false);
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false); // Default false to show Pool nudge
+  const [trackingPixelUrl, setTrackingPixelUrl] = useState(null); // For email open tracking
 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
@@ -76,6 +77,10 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
       });
       // Credit deducted successfully
       setCreditUsed(true);
+      // Store tracking pixel URL for email open tracking
+      if (response.data.tracking_pixel_url) {
+        setTrackingPixelUrl(response.data.tracking_pixel_url);
+      }
       await fetchPitchLimits();
       return response.data;
     } catch (error) {
@@ -469,7 +474,16 @@ ${creatorName}`;
   const buildMailtoUrl = () => {
     const email = brandEmail || '';
     const subject = encodeURIComponent(editedSubject || pitch?.subject || '');
-    const body = encodeURIComponent(editedBody || pitch?.body || '');
+    let bodyText = editedBody || pitch?.body || '';
+
+    // Note: Tracking pixel won't render in plain text mailto emails
+    // It's included here for when we switch to HTML emails via platform
+    // For now, the "pitched_at" timestamp is set when creator clicks Send
+    if (trackingPixelUrl) {
+      bodyText += `\n\n\n<img src="${trackingPixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+    }
+
+    const body = encodeURIComponent(bodyText);
     return `mailto:${email}?bcc=creators@newcollab.co&subject=${subject}&body=${body}`;
   };
 

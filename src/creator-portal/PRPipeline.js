@@ -791,6 +791,13 @@ const PRPipeline = () => {
           const progressPercent = Math.min(95, (daysWaiting / avgResponseDays) * 100);
           const daysRemaining = Math.max(0, 7 - daysWaiting);
 
+          // Format opened timestamp if available
+          const openedTime = item.email_opened_at
+            ? new Date(item.email_opened_at).toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+              })
+            : null;
+
           return (
             <WaitingProgressBox>
               <ProgressTimeline>
@@ -799,9 +806,13 @@ const PRPipeline = () => {
                   <TimelineLabel>Sent</TimelineLabel>
                 </TimelineStep>
                 <TimelineLine $done />
-                <TimelineStep $done>
-                  <TimelineCheck>✓</TimelineCheck>
-                  <TimelineLabel>Delivered</TimelineLabel>
+                <TimelineStep $done $opened={item.email_opened}>
+                  <TimelineCheck $opened={item.email_opened}>
+                    {item.email_opened ? '👁' : '✓'}
+                  </TimelineCheck>
+                  <TimelineLabel $opened={item.email_opened}>
+                    {item.email_opened ? 'Opened' : 'Delivered'}
+                  </TimelineLabel>
                 </TimelineStep>
                 <TimelineLine $progress={progressPercent} />
                 <TimelineStep $active>
@@ -809,6 +820,13 @@ const PRPipeline = () => {
                   <TimelineLabel>Response</TimelineLabel>
                 </TimelineStep>
               </ProgressTimeline>
+
+              {/* Show opened timestamp */}
+              {item.email_opened && openedTime && (
+                <OpenedBadge>
+                  👁 Brand viewed your pitch · {openedTime}
+                </OpenedBadge>
+              )}
 
               <WaitingMeta>
                 <WaitingMetaLeft>
@@ -3015,7 +3033,7 @@ const TimelineCheck = styled.div`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #10B981;
+  background: ${p => p.$opened ? '#8B5CF6' : '#10B981'};
   color: white;
   font-size: 11px;
   display: flex;
@@ -3042,8 +3060,22 @@ const TimelineLine = styled.div`
 
 const TimelineLabel = styled.span`
   font-size: 10px;
-  color: #64748B;
+  color: ${p => p.$opened ? '#8B5CF6' : '#64748B'};
+  font-weight: ${p => p.$opened ? '600' : '500'};
+`;
+
+const OpenedBadge = styled.div`
+  background: linear-gradient(135deg, #EDE9FE 0%, #F3E8FF 100%);
+  border: 1px solid #DDD6FE;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #7C3AED;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 `;
 
 const WaitingMeta = styled.div`
