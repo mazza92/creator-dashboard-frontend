@@ -470,7 +470,7 @@ ${creatorName}`;
     const email = brandEmail || '';
     const subject = encodeURIComponent(editedSubject || pitch?.subject || '');
     const body = encodeURIComponent(editedBody || pitch?.body || '');
-    return `mailto:${email}?subject=${subject}&body=${body}`;
+    return `mailto:${email}?bcc=creators@newcollab.co&subject=${subject}&body=${body}`;
   };
 
   const handleCopyPitch = async () => {
