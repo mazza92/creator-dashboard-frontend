@@ -616,7 +616,7 @@ const ForYou = () => {
         )}
 
 
-        {/* How It Works — Only show to new users who haven't sent any pitches yet */}
+        {/* How It Works — Temporarily commented out
         {!isPro && data?.has_profile && pitchedIds.size === 0 && (
           <HowItWorksCard>
             <HowItWorksHeader>
@@ -669,6 +669,7 @@ const ForYou = () => {
             </HowItWorksSteps>
           </HowItWorksCard>
         )}
+        */}
 
         {/* Kit Views Banner - "Who Viewed Your Kit" - headline Pro conversion feature */}
         {showKitViewsBanner && (kitViews.brands_this_week > 0 || kitViews.views_this_week > 0) && (
@@ -1206,22 +1207,24 @@ const ForYou = () => {
             <WelcomeBrands>
               {data.matched.slice(0, 3).map((brand, idx) => {
                 // Generate 2-char initials from brand name
-                const words = (brand.brand_name || '').split(' ').filter(Boolean);
+                const brandName = brand.name || brand.brand_name || '';
+                const words = brandName.split(' ').filter(Boolean);
                 const initials = words.length >= 2
                   ? (words[0][0] + words[1][0]).toUpperCase()
-                  : (brand.brand_name || 'BR').slice(0, 2).toUpperCase();
+                  : brandName.slice(0, 2).toUpperCase() || 'BR';
+                const brandLogo = brand.logo || brand.logo_url;
 
                 return (
                   <WelcomeBrandCard key={brand.id || idx}>
-                    <WelcomeBrandLogo $hasImage={!!brand.logo_url}>
-                      {brand.logo_url ? (
-                        <img src={brand.logo_url} alt={brand.brand_name} />
+                    <WelcomeBrandLogo $hasImage={!!brandLogo}>
+                      {brandLogo ? (
+                        <img src={brandLogo} alt={brandName} onError={(e) => { e.target.style.display = 'none'; }} />
                       ) : (
                         <span>{initials}</span>
                       )}
                     </WelcomeBrandLogo>
                     <WelcomeBrandInfo>
-                      <WelcomeBrandName>{brand.brand_name}</WelcomeBrandName>
+                      <WelcomeBrandName>{brandName}</WelcomeBrandName>
                       <WelcomeBrandMeta>
                         {brand.match_score && <span className="pct">{brand.match_score}% match</span>}
                         {brand.category && <><span>·</span><span>{brand.category}</span></>}
