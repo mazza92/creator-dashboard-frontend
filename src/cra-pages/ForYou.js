@@ -902,11 +902,11 @@ const ForYou = () => {
               ))}
             </CardGrid>
           ) : (
-            /* Free users: 2 visible cards + locked cards with visible stats */
+            /* Free users: 3 visible cards + locked cards with visible stats */
             <>
-              {/* First 2 visible cards - creates curiosity to see more */}
-              <CardGrid $cols={2} style={{ marginBottom: 20 }}>
-                {data?.matched?.slice(0, 2).map(brand => (
+              {/* First 3 visible cards - creates curiosity to see more */}
+              <CardGrid $cols={3} style={{ marginBottom: 20 }}>
+                {data?.matched?.slice(0, 3).map(brand => (
                   <BrandCard
                     key={brand.id}
                     brand={brand}
@@ -922,9 +922,9 @@ const ForYou = () => {
               </CardGrid>
 
               {/* Locked matches section */}
-              {data?.matched?.length > 2 && (
+              {data?.matched?.length > 3 && (
                 <>
-                  <MatchSectionLabel>🔒 {(data?.matched?.length || 0) - 2} more matches</MatchSectionLabel>
+                  <MatchSectionLabel>🔒 {(data?.matched?.length || 0) - 3} more matches</MatchSectionLabel>
 
                   {/* Upgrade CTA — moved BEFORE locked cards for better visibility */}
                   <UnlockBanner
@@ -946,10 +946,10 @@ const ForYou = () => {
                       </UnlockBannerIcon>
                       <UnlockBannerText>
                         <UnlockBannerTitle>
-                          Unlock {(data?.matched?.length || 0) - 2} more high-converting matches
+                          Unlock {(data?.matched?.length || 0) - 3} more high-converting matches
                         </UnlockBannerTitle>
                         <UnlockBannerSub>
-                          Pro members pitch unlimited brands · Average {data?.matched?.[2]?.response_rate || 45}% reply rate
+                          Pro members pitch unlimited brands · Average {data?.matched?.[3]?.response_rate || 45}% reply rate
                         </UnlockBannerSub>
                       </UnlockBannerText>
                     </UnlockBannerContent>
@@ -961,7 +961,7 @@ const ForYou = () => {
 
                   {/* Locked match cards - modern glassmorphism design */}
                   <LockedMatchList>
-                    {data?.matched?.slice(2, 5).map((brand, i) => {
+                    {data?.matched?.slice(3, 6).map((brand, i) => {
                       const CARD_STATS = [
                         { rate: 48, multiplier: 5 },
                         { rate: 37, multiplier: 4 },
@@ -1339,7 +1339,7 @@ const ForYou = () => {
       )}
 
       {/* Floating Upgrade Button - FAB style, always visible for free users */}
-      {!isPro && data?.matched?.length > 2 && (
+      {!isPro && data?.matched?.length > 3 && (
         <UpgradeFAB
           onClick={() => {
             axios.post(`${API_BASE}/api/track-event`, {
