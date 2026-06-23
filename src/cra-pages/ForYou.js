@@ -1184,42 +1184,63 @@ const ForYou = () => {
           <WelcomeModal onClick={(e) => e.stopPropagation()}>
             <WelcomeClose onClick={() => setShowWelcomeModal(false)}>×</WelcomeClose>
             <WelcomeEmoji>🎉</WelcomeEmoji>
-            <WelcomeTitle>Your top matches are ready!</WelcomeTitle>
+            <WelcomeTitle>Your top 3 matches are ready!</WelcomeTitle>
             <WelcomeSub>
-              We found {data.matched.length} brands perfect for your content.<br />
-              <strong>Send your first pitch now</strong> — creators who act fast get 2.4x more replies.
+              We matched you to <strong>{data.matched.length} brands</strong>. Your first 3 are free to pitch right now —<br />
+              Pro unlocks all {data.matched.length}, every week.
             </WelcomeSub>
 
+            <WelcomeQuota>
+              <WelcomeQuotaDots>
+                {[0, 1, 2].map(i => (
+                  <WelcomeQuotaDot key={i} $filled={i >= pitchLimits.used} />
+                ))}
+              </WelcomeQuotaDots>
+              <span>{3 - pitchLimits.used} of 3 free pitches available</span>
+            </WelcomeQuota>
+
+            <WelcomeUrgency>
+              <strong>Act now:</strong> creators who pitch within 24 hours of signing up get 2.4x more replies.
+            </WelcomeUrgency>
+
             <WelcomeBrands>
-              {data.matched.slice(0, 3).map((brand, idx) => (
-                <WelcomeBrandCard key={brand.id || idx}>
-                  <WelcomeBrandLogo>
-                    {brand.logo_url ? (
-                      <img src={brand.logo_url} alt={brand.brand_name} />
-                    ) : (
-                      <span>{brand.brand_name?.charAt(0) || 'B'}</span>
-                    )}
-                  </WelcomeBrandLogo>
-                  <WelcomeBrandInfo>
-                    <WelcomeBrandName>{brand.brand_name}</WelcomeBrandName>
-                    <WelcomeBrandMeta>
-                      {brand.match_score && <span>{brand.match_score}% match</span>}
-                      {brand.category && <span>{brand.category}</span>}
-                    </WelcomeBrandMeta>
-                  </WelcomeBrandInfo>
-                  <WelcomePitchBtn onClick={() => {
-                    setShowWelcomeModal(false);
-                    setPitchingBrand(brand);
-                  }}>
-                    Pitch
-                  </WelcomePitchBtn>
-                </WelcomeBrandCard>
-              ))}
+              {data.matched.slice(0, 3).map((brand, idx) => {
+                // Generate 2-char initials from brand name
+                const words = (brand.brand_name || '').split(' ').filter(Boolean);
+                const initials = words.length >= 2
+                  ? (words[0][0] + words[1][0]).toUpperCase()
+                  : (brand.brand_name || 'BR').slice(0, 2).toUpperCase();
+
+                return (
+                  <WelcomeBrandCard key={brand.id || idx}>
+                    <WelcomeBrandLogo $hasImage={!!brand.logo_url}>
+                      {brand.logo_url ? (
+                        <img src={brand.logo_url} alt={brand.brand_name} />
+                      ) : (
+                        <span>{initials}</span>
+                      )}
+                    </WelcomeBrandLogo>
+                    <WelcomeBrandInfo>
+                      <WelcomeBrandName>{brand.brand_name}</WelcomeBrandName>
+                      <WelcomeBrandMeta>
+                        {brand.match_score && <span className="pct">{brand.match_score}% match</span>}
+                        {brand.category && <><span>·</span><span>{brand.category}</span></>}
+                      </WelcomeBrandMeta>
+                    </WelcomeBrandInfo>
+                    <WelcomePitchBtn onClick={() => {
+                      setShowWelcomeModal(false);
+                      setPitchingBrand(brand);
+                    }}>
+                      Pitch
+                    </WelcomePitchBtn>
+                  </WelcomeBrandCard>
+                );
+              })}
             </WelcomeBrands>
 
             <WelcomeFooter>
               <WelcomeSkip onClick={() => setShowWelcomeModal(false)}>
-                I'll explore first
+                Maybe later
               </WelcomeSkip>
             </WelcomeFooter>
           </WelcomeModal>
@@ -3851,12 +3872,12 @@ const WelcomeOverlay = styled.div`
 
 const WelcomeModal = styled.div`
   background: white;
-  border-radius: 24px;
-  padding: 32px;
-  max-width: 440px;
+  border-radius: 18px;
+  padding: 30px 26px 24px;
+  max-width: 420px;
   width: 100%;
   position: relative;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
   animation: slideUp 0.3s ease-out;
 
   @keyframes slideUp {
@@ -3871,22 +3892,22 @@ const WelcomeModal = styled.div`
   }
 
   @media (max-width: 480px) {
-    padding: 24px 20px;
-    border-radius: 20px;
+    padding: 24px 20px 20px;
+    border-radius: 16px;
   }
 `;
 
 const WelcomeClose = styled.button`
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
   border: none;
-  background: #F3F4F6;
+  background: #F1F2F4;
   border-radius: 50%;
-  font-size: 20px;
-  color: #6B7280;
+  font-size: 15px;
+  color: #8A8F98;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -3899,53 +3920,94 @@ const WelcomeClose = styled.button`
 `;
 
 const WelcomeEmoji = styled.div`
-  font-size: 48px;
+  font-size: 34px;
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 6px;
 `;
 
 const WelcomeTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 19px;
+  font-weight: 700;
   color: #111827;
   text-align: center;
   margin: 0 0 8px 0;
 `;
 
 const WelcomeSub = styled.p`
-  font-size: 15px;
+  font-size: 13.5px;
   color: #6B7280;
   text-align: center;
-  line-height: 1.5;
-  margin: 0 0 24px 0;
+  line-height: 1.45;
+  margin: 0 0 4px 0;
 
   strong {
     color: #111827;
   }
 `;
 
+const WelcomeQuota = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 16px;
+  font-size: 12.5px;
+  color: #6B7280;
+`;
+
+const WelcomeQuotaDots = styled.div`
+  display: flex;
+  gap: 5px;
+`;
+
+const WelcomeQuotaDot = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${props => props.$filled ? '#5B4DFF' : '#E5E7EB'};
+  transition: background 0.2s;
+`;
+
+const WelcomeUrgency = styled.div`
+  font-size: 12.5px;
+  text-align: center;
+  color: #111827;
+  background: #F4F3FF;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 18px;
+
+  strong {
+    color: #5B4DFF;
+  }
+`;
+
 const WelcomeBrands = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 `;
 
 const WelcomeBrandCard = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  background: #F9FAFB;
-  border-radius: 14px;
-  border: 1px solid #E5E7EB;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #ECECEF;
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const WelcomeBrandLogo = styled.div`
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  background: white;
-  border: 1px solid #E5E7EB;
+  background: #F1F2F4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3955,13 +4017,13 @@ const WelcomeBrandLogo = styled.div`
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: ${props => props.$hasImage ? 'cover' : 'contain'};
   }
 
   span {
-    font-size: 18px;
-    font-weight: 700;
-    color: #3B82F6;
+    font-size: 13px;
+    font-weight: 800;
+    color: #374151;
   }
 `;
 
@@ -3971,8 +4033,8 @@ const WelcomeBrandInfo = styled.div`
 `;
 
 const WelcomeBrandName = styled.div`
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 13.5px;
   color: #111827;
   white-space: nowrap;
   overflow: hidden;
@@ -3981,50 +4043,51 @@ const WelcomeBrandName = styled.div`
 
 const WelcomeBrandMeta = styled.div`
   display: flex;
-  gap: 8px;
-  margin-top: 2px;
-  font-size: 12px;
+  gap: 6px;
+  align-items: center;
+  margin-top: 1px;
+  font-size: 11.5px;
   color: #6B7280;
 
-  span:first-child {
-    color: #10B981;
-    font-weight: 600;
+  .pct {
+    color: #1AA15D;
+    font-weight: 700;
   }
 `;
 
 const WelcomePitchBtn = styled.button`
-  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  background: #5B4DFF;
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 10px 18px;
+  border-radius: 8px;
+  padding: 8px 16px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s, opacity 0.15s;
   flex-shrink: 0;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+    opacity: 0.9;
   }
 `;
 
 const WelcomeFooter = styled.div`
-  margin-top: 20px;
+  margin-top: 10px;
   text-align: center;
 `;
 
 const WelcomeSkip = styled.button`
   background: none;
   border: none;
-  color: #9CA3AF;
-  font-size: 14px;
+  color: #B6B9C0;
+  font-size: 11.5px;
   cursor: pointer;
-  padding: 8px 16px;
+  padding: 4px 8px;
+  text-decoration: none;
 
   &:hover {
-    color: #6B7280;
+    color: #9CA3AF;
   }
 `;
 
