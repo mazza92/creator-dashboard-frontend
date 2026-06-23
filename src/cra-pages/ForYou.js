@@ -530,6 +530,24 @@ const ForYou = () => {
           )}
         </PageHeader>
 
+        {/* Persistent Quota Progress Banner - only for free users */}
+        {!isPro && data?.has_profile && (
+          <QuotaBanner>
+            <QuotaDots>
+              {[0, 1, 2].map(i => (
+                <QuotaDot key={i} $filled={i < pitchLimits.used} />
+              ))}
+            </QuotaDots>
+            <QuotaText>
+              <QuotaTitle>{pitchLimits.used} of 3 free pitches sent</QuotaTitle>
+              <QuotaSub>Creators who send all 3 are 2.4x more likely to land a reply</QuotaSub>
+            </QuotaText>
+            <QuotaRemaining>
+              {pitchLimits.limit - pitchLimits.used} left →
+            </QuotaRemaining>
+          </QuotaBanner>
+        )}
+
         {/* Profile Prompt - shown when no niche data yet */}
         {!data?.has_profile && (
           <ProfilePromptCard>
@@ -1291,6 +1309,60 @@ const PageHeader = styled.div`
     gap: 14px;
     margin-bottom: 20px;
   }
+`;
+
+const QuotaBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #1F2937;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+`;
+
+const QuotaDots = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const QuotaDot = styled.div`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: ${props => props.$filled ? '#EC4899' : '#4B5563'};
+  transition: background 0.2s;
+`;
+
+const QuotaText = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const QuotaTitle = styled.div`
+  font-weight: 700;
+  font-size: 15px;
+  color: #F9FAFB;
+`;
+
+const QuotaSub = styled.div`
+  font-size: 13px;
+  color: #9CA3AF;
+  margin-top: 2px;
+`;
+
+const QuotaRemaining = styled.div`
+  font-weight: 600;
+  font-size: 14px;
+  color: #EC4899;
+  white-space: nowrap;
 `;
 
 const PageTitleWrap = styled.div`
