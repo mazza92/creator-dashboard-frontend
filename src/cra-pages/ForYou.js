@@ -122,6 +122,8 @@ const ForYou = () => {
 
   // Welcome modal for new users (post-onboarding)
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomePitchedIds, setWelcomePitchedIds] = useState(new Set()); // Track brands pitched within welcome flow
+  const [isWelcomeFlow, setIsWelcomeFlow] = useState(false); // Flag to return to modal after pitch
 
   // Upgrade CTA impression tracking
   const [bannerSeen, setBannerSeen] = useState(false);
@@ -484,6 +486,11 @@ const ForYou = () => {
     if (contactedBrand) {
       setPitchedIds(prev => new Set([...prev, contactedBrand.id]));
       setSavedIds(prev => new Set([...prev, contactedBrand.id]));
+
+      // Track in welcome flow if applicable
+      if (isWelcomeFlow) {
+        setWelcomePitchedIds(prev => new Set([...prev, contactedBrand.id]));
+      }
     }
     setPitchingBrand(null);
 
@@ -493,6 +500,7 @@ const ForYou = () => {
       });
       if (response.data.success) {
         setPitchesSentThisMonth(response.data.used || 0);
+        setPitchLimits(response.data);
       }
     } catch (error) {
       setPitchesSentThisMonth(prev => prev + 1);
@@ -504,9 +512,26 @@ const ForYou = () => {
           ? 'PR form opened. Confirm your application in Saved.'
           : 'Email opened. Confirm it in Saved so we can track follow-ups.'
       );
-      navigate(`/creator/dashboard/pr-pipeline?confirmBrand=${contactedBrand.id}&method=${method}`);
+
+      // If in welcome flow, return to welcome modal instead of navigating
+      if (isWelcomeFlow) {
+        // Check if all 3 welcome brands have been pitched
+        const newPitchedCount = welcomePitchedIds.size + 1;
+        if (newPitchedCount >= 3) {
+          // All 3 done - close welcome flow
+          setIsWelcomeFlow(false);
+          setShowWelcomeModal(false);
+          message.success('Amazing! You pitched all 3 brands. Check your pipeline for responses.');
+          navigate('/creator/dashboard/pr-pipeline');
+        } else {
+          // More brands to pitch - keep modal open
+          setShowWelcomeModal(true);
+        }
+      } else {
+        navigate(`/creator/dashboard/pr-pipeline?confirmBrand=${contactedBrand.id}&method=${method}`);
+      }
     }
-  }, [pitchingBrand, navigate]);
+  }, [pitchingBrand, navigate, isWelcomeFlow, welcomePitchedIds]);
 
   const handleSaveProfile = async () => {
     if (selectedNiches.length === 0) return;
@@ -1181,28 +1206,40 @@ const ForYou = () => {
 
       {/* Welcome Modal - Post-onboarding first pitch guide */}
       {showWelcomeModal && data?.matched?.length > 0 && (
-        <WelcomeOverlay onClick={() => setShowWelcomeModal(false)}>
+        <WelcomeOverlay>
           <WelcomeModal onClick={(e) => e.stopPropagation()}>
-            <WelcomeClose onClick={() => setShowWelcomeModal(false)}>×</WelcomeClose>
-            <WelcomeEmoji>🎉</WelcomeEmoji>
-            <WelcomeTitle>Your top 3 matches are ready!</WelcomeTitle>
+            <WelcomeClose onClick={() => { setShowWelcomeModal(false); setIsWelcomeFlow(false); }}>×</WelcomeClose>
+            <WelcomeEmoji>{welcomePitchedIds.size > 0 ? '🚀' : '🎉'}</WelcomeEmoji>
+            <WelcomeTitle>
+              {welcomePitchedIds.size === 0
+                ? 'Your top 3 matches are ready!'
+                : welcomePitchedIds.size === 1
+                  ? 'Great start! 2 more to go'
+                  : 'Almost there! 1 more to go'}
+            </WelcomeTitle>
             <WelcomeSub>
-              We matched you to <strong>{data.matched.length} brands</strong>. Your first 3 are free to pitch right now —<br />
-              Pro unlocks all {data.matched.length}, every week.
+              {welcomePitchedIds.size === 0 ? (
+                <>We matched you to <strong>{data.matched.length} brands</strong>. Your first 3 are free to pitch right now —<br />
+                Pro unlocks all {data.matched.length}, every week.</>
+              ) : (
+                <>Keep going! Creators who pitch all 3 are <strong>2.4x more likely</strong> to land a reply.</>
+              )}
             </WelcomeSub>
 
             <WelcomeQuota>
               <WelcomeQuotaDots>
                 {[0, 1, 2].map(i => (
-                  <WelcomeQuotaDot key={i} $filled={i >= pitchLimits.used} />
+                  <WelcomeQuotaDot key={i} $filled={i < welcomePitchedIds.size} $completed={i < welcomePitchedIds.size} />
                 ))}
               </WelcomeQuotaDots>
-              <span>{3 - pitchLimits.used} of 3 free pitches available</span>
+              <span>{welcomePitchedIds.size} of 3 pitched</span>
             </WelcomeQuota>
 
-            <WelcomeUrgency>
-              <strong>Act now:</strong> creators who pitch within 24 hours of signing up get 2.4x more replies.
-            </WelcomeUrgency>
+            {welcomePitchedIds.size === 0 && (
+              <WelcomeUrgency>
+                <strong>Act now:</strong> creators who pitch within 24 hours of signing up get 2.4x more replies.
+              </WelcomeUrgency>
+            )}
 
             <WelcomeBrands>
               {data.matched.slice(0, 3).map((brand, idx) => {
@@ -1213,36 +1250,50 @@ const ForYou = () => {
                   ? (words[0][0] + words[1][0]).toUpperCase()
                   : brandName.slice(0, 2).toUpperCase() || 'BR';
                 const brandLogo = brand.logo || brand.logo_url;
+                const isPitched = welcomePitchedIds.has(brand.id);
 
                 return (
-                  <WelcomeBrandCard key={brand.id || idx}>
-                    <WelcomeBrandLogo $hasImage={!!brandLogo}>
-                      {brandLogo ? (
+                  <WelcomeBrandCard key={brand.id || idx} $pitched={isPitched}>
+                    <WelcomeBrandLogo $hasImage={!!brandLogo} $pitched={isPitched}>
+                      {isPitched ? (
+                        <span style={{ color: '#10B981', fontSize: 16 }}>✓</span>
+                      ) : brandLogo ? (
                         <img src={brandLogo} alt={brandName} onError={(e) => { e.target.style.display = 'none'; }} />
                       ) : (
                         <span>{initials}</span>
                       )}
                     </WelcomeBrandLogo>
                     <WelcomeBrandInfo>
-                      <WelcomeBrandName>{brandName}</WelcomeBrandName>
+                      <WelcomeBrandName $pitched={isPitched}>{brandName}</WelcomeBrandName>
                       <WelcomeBrandMeta>
-                        {brand.match_score && <span className="pct">{brand.match_score}% match</span>}
-                        {brand.category && <><span>·</span><span>{brand.category}</span></>}
+                        {isPitched ? (
+                          <span style={{ color: '#10B981', fontWeight: 600 }}>Pitched ✓</span>
+                        ) : (
+                          <>
+                            {brand.match_score && <span className="pct">{brand.match_score}% match</span>}
+                            {brand.category && <><span>·</span><span>{brand.category}</span></>}
+                          </>
+                        )}
                       </WelcomeBrandMeta>
                     </WelcomeBrandInfo>
-                    <WelcomePitchBtn onClick={() => {
-                      setShowWelcomeModal(false);
-                      setPitchingBrand(brand);
-                    }}>
-                      Pitch
-                    </WelcomePitchBtn>
+                    {isPitched ? (
+                      <WelcomePitchedBadge>Done</WelcomePitchedBadge>
+                    ) : (
+                      <WelcomePitchBtn onClick={() => {
+                        setIsWelcomeFlow(true);
+                        setShowWelcomeModal(false);
+                        setPitchingBrand(brand);
+                      }}>
+                        Pitch
+                      </WelcomePitchBtn>
+                    )}
                   </WelcomeBrandCard>
                 );
               })}
             </WelcomeBrands>
 
             <WelcomeFooter>
-              <WelcomeSkip onClick={() => setShowWelcomeModal(false)}>
+              <WelcomeSkip onClick={() => { setShowWelcomeModal(false); setIsWelcomeFlow(false); }}>
                 Maybe later
               </WelcomeSkip>
             </WelcomeFooter>
@@ -3967,7 +4018,7 @@ const WelcomeQuotaDot = styled.div`
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: ${props => props.$filled ? '#5B4DFF' : '#E5E7EB'};
+  background: ${props => props.$filled ? '#10B981' : '#E5E7EB'};
   transition: background 0.2s;
 `;
 
@@ -3996,10 +4047,11 @@ const WelcomeBrandCard = styled.div`
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  background: white;
+  background: ${props => props.$pitched ? '#F0FDF4' : 'white'};
   border-radius: 12px;
-  border: 1px solid #ECECEF;
+  border: 1px solid ${props => props.$pitched ? '#BBF7D0' : '#ECECEF'};
   margin-bottom: 10px;
+  transition: background 0.2s, border-color 0.2s;
 
   &:last-child {
     margin-bottom: 0;
@@ -4073,6 +4125,16 @@ const WelcomePitchBtn = styled.button`
   &:hover {
     opacity: 0.9;
   }
+`;
+
+const WelcomePitchedBadge = styled.div`
+  background: #D1FAE5;
+  color: #059669;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 600;
+  font-size: 12px;
+  flex-shrink: 0;
 `;
 
 const WelcomeFooter = styled.div`
