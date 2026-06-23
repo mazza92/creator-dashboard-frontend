@@ -887,13 +887,15 @@ const PRPipeline = () => {
                 cursor: (!isPro && pitchLimits.used >= pitchLimits.limit) ? 'not-allowed' : undefined
               }}
             >
-              ✉️ Pitch {item.brand_name} · Use 1 credit
+              ✉️ Send Pitch to {item.brand_name}
             </PrimaryBtn>
             {!isPro && (
               <CtaCredit>
-                {pitchLimits.limit - pitchLimits.used - 1 >= 0
-                  ? `${pitchLimits.limit - pitchLimits.used - 1} credit${pitchLimits.limit - pitchLimits.used - 1 !== 1 ? 's' : ''} remaining after this pitch`
-                  : <>No credits remaining — <UpgradeLink onClick={() => { setUpgradeReason('quota'); setShowUpgradeModal(true); }}>upgrade to pitch</UpgradeLink></>}
+                {pitchLimits.limit - pitchLimits.used <= 0
+                  ? <>Out of pitches — <UpgradeLink onClick={() => { setUpgradeReason('quota'); setShowUpgradeModal(true); }}>unlock unlimited →</UpgradeLink></>
+                  : pitchLimits.limit - pitchLimits.used === 1
+                    ? <>Last free pitch — <UpgradeLink onClick={() => { setUpgradeReason('quota'); setShowUpgradeModal(true); }}>then unlock unlimited →</UpgradeLink></>
+                    : `${pitchLimits.used} of ${pitchLimits.limit} pitches used this month`}
               </CtaCredit>
             )}
           </>

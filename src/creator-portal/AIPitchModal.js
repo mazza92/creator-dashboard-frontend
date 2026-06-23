@@ -757,22 +757,26 @@ ${creatorName}`;
                       onClick={handleApplicationFormClick}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Open form · 1 contact
+                      Send Pitch
                     </PrimaryBtn>
                     <FormTip>
                       💡 Use the pitch above as a reference when filling out the form
                     </FormTip>
+                    <MethodCaption>via PR form</MethodCaption>
                   </>
                 ) : brandEmail ? (
                   /* Case 2: Email available */
-                  <PrimaryBtn
-                    as={motion.button}
-                    onClick={handleSendEmail}
-                    disabled={sending}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {sending ? 'Opening email app...' : `Open in email app · Use 1 contact`}
-                  </PrimaryBtn>
+                  <>
+                    <PrimaryBtn
+                      as={motion.button}
+                      onClick={handleSendEmail}
+                      disabled={sending}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {sending ? 'Sending...' : 'Send Pitch'}
+                    </PrimaryBtn>
+                    <MethodCaption>via email</MethodCaption>
+                  </>
                 ) : (
                   /* Case 3: No contact info at all */
                   <NoContactNote>
@@ -1889,6 +1893,13 @@ const FormTip = styled.div`
     font-size: 11px;
     padding: 8px;
   }
+`;
+
+const MethodCaption = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  text-align: center;
+  margin-top: 6px;
 `;
 
 const MediaKitNudgePulse = styled.div`
