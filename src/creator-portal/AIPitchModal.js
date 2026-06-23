@@ -406,9 +406,16 @@ ${creatorName}`;
       return;
     }
 
-    // Check if kit is incomplete and this is an early pitch - show popup
+    // Check if kit is incomplete - show popup to encourage completion
     const kitIsIncomplete = !(pitch?.kit_published ?? creatorProfile?.has_media_kit);
-    if (!isFollowup && !skipKitCheck && kitIsIncomplete && pitchLimits.used < 3) {
+    console.log('[AIPitchModal] Kit check:', {
+      'pitch.kit_published': pitch?.kit_published,
+      'creatorProfile.has_media_kit': creatorProfile?.has_media_kit,
+      'kitIsIncomplete': kitIsIncomplete,
+      'skipKitCheck': skipKitCheck,
+      'isFollowup': isFollowup
+    });
+    if (!isFollowup && !skipKitCheck && kitIsIncomplete) {
       setShowIncompleteKitPopup(true);
       return;
     }
@@ -790,7 +797,7 @@ ${creatorName}`;
                   <>
                     <PrimaryBtn
                       as={motion.button}
-                      onClick={handleSendEmail}
+                      onClick={() => handleSendEmail()}
                       disabled={sending}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -897,17 +904,16 @@ ${creatorName}`;
                     transition={{ duration: 0.2 }}
                   >
                     <IncompleteKitClose onClick={() => setShowIncompleteKitPopup(false)}>×</IncompleteKitClose>
-                    <IncompleteKitEmoji>📋</IncompleteKitEmoji>
-                    <IncompleteKitTitle>Complete your portfolio first?</IncompleteKitTitle>
+                    <IncompleteKitEmoji>🚫</IncompleteKitEmoji>
+                    <IncompleteKitTitle>Brands won't review pitches without a portfolio</IncompleteKitTitle>
                     <IncompleteKitText>
-                      Brands are <strong>3x more likely to reply</strong> when they can see your work.
-                      A complete portfolio helps you stand out.
+                      PR teams <strong>skip emails without work samples</strong>. A 2-minute portfolio shows you're serious and increases replies by 3x.
                     </IncompleteKitText>
                     <IncompleteKitPrimaryBtn onClick={() => { setShowIncompleteKitPopup(false); onClose(); navigate('/creator/dashboard/my-kit'); }}>
-                      Build my portfolio
+                      Build my portfolio (2 min)
                     </IncompleteKitPrimaryBtn>
                     <IncompleteKitSecondaryBtn onClick={() => { setShowIncompleteKitPopup(false); handleSendEmail(true); }}>
-                      Send pitch anyway
+                      Send without portfolio
                     </IncompleteKitSecondaryBtn>
                   </IncompleteKitCard>
                 </IncompleteKitOverlay>
