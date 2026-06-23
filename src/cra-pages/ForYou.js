@@ -552,6 +552,21 @@ const ForYou = () => {
     }
   };
 
+  // Direct Stripe checkout (skip settings page)
+  const handleDirectUpgrade = async () => {
+    try {
+      const response = await axios.post(`${API_BASE}/api/subscription/create-checkout`,
+        { tier: 'pro' },
+        { withCredentials: true }
+      );
+      window.location.href = response.data.checkout_url;
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      // Fallback to settings page
+      navigate('/creator/dashboard/settings');
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner text="Loading your recommendations..." minHeight="400px" />;
   }
@@ -599,7 +614,7 @@ const ForYou = () => {
               </QuotaSub>
             </QuotaText>
             {pitchLimits.used >= pitchLimits.limit ? (
-              <QuotaUpgrade onClick={() => navigate('/creator/dashboard/settings')}>
+              <QuotaUpgrade onClick={handleDirectUpgrade}>
                 Unlock unlimited →
               </QuotaUpgrade>
             ) : (
