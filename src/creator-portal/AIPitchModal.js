@@ -780,7 +780,7 @@ ${creatorName}`;
                 ) : (
                   /* Case 3: No contact info at all */
                   <NoContactNote>
-                    No contact info on file yet. Copy the pitch and send via DM.
+                    Brand currently has no dedicated PR email — DM them directly.
                   </NoContactNote>
                 )}
 
