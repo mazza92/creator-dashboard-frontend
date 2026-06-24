@@ -841,6 +841,17 @@ const GuideView = ({ niche, onBack, onDone }) => {
   const hook = SCRIPT_HOOKS[niche] || SCRIPT_HOOKS.default;
   const [selected, setSelected] = useState(null);
 
+  // Load TikTok embed script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://www.tiktok.com/embed.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   return (
     <Container>
       <StepNav>
@@ -854,6 +865,20 @@ const GuideView = ({ niche, onBack, onDone }) => {
         <GuideTitle>Create your first collab-worthy post today</GuideTitle>
         <GuideSub>Based on your niche. Takes about 20 minutes to film.</GuideSub>
       </GuideDark>
+
+      <GuideSection>
+        <GuideSectionLabel>See how it's done</GuideSectionLabel>
+        <ExampleVideoWrapper>
+          <blockquote
+            className="tiktok-embed"
+            cite="https://www.tiktok.com/@aalexandraeklund/video/7396564178758159648"
+            data-video-id="7396564178758159648"
+            style={{ maxWidth: '325px', minWidth: '275px' }}
+          >
+            <section></section>
+          </blockquote>
+        </ExampleVideoWrapper>
+      </GuideSection>
 
       <GuideSection>
         <GuideSectionLabel>Products you probably own</GuideSectionLabel>
@@ -2168,6 +2193,18 @@ const GuideSectionLabel = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 10px;
+`;
+
+const ExampleVideoWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+  border-radius: 16px;
+  background: #FAFAFA;
+
+  .tiktok-embed {
+    margin: 0 !important;
+  }
 `;
 
 const ProductScroll = styled.div`

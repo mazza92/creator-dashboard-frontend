@@ -927,36 +927,28 @@ const PRPipeline = () => {
 
         {isWaiting && !isOverdue && (
           <>
-            <PitchMoreNudge onClick={() => navigate('/creator/dashboard/for-you')}>
-              <NudgeIcon>💡</NudgeIcon>
-              <NudgeText>Pitch more brands while you wait</NudgeText>
-              <NudgeArrow>→</NudgeArrow>
-            </PitchMoreNudge>
-            {/* Bump feature - always available for waiting pitches */}
-            {bumpedItems[item.id] ? (
-              <BumpStatusNudge>
-                <BumpStatusIcon>✓</BumpStatusIcon>
-                <BumpStatusText>
-                  <BumpStatusTitle>Bump requested</BumpStatusTitle>
-                  <BumpStatusSub>We'll email {item.brand_name} within 24h</BumpStatusSub>
-                </BumpStatusText>
-              </BumpStatusNudge>
-            ) : (
-              <BumpNudge onClick={() => {
-                  if (!isPro) {
-                    setUpgradeReason('bump_profile');
-                    setShowUpgradeModal(true);
-                  } else {
-                    setBumpingItem(item);
-                    setShowBumpModal(true);
-                  }
-                }}>
-                  <BumpIcon>⚡</BumpIcon>
-                  <BumpText>Bump your profile to {item.brand_name}'s inbox</BumpText>
-                  {!isPro && <BumpProBadge>Pro</BumpProBadge>}
-                  <BumpArrow>→</BumpArrow>
-                </BumpNudge>
-            )}
+            <WaitingActionsRow>
+              <SimilarBrandsBtn onClick={() => navigate(`/creator/dashboard/pr-brands?category=${encodeURIComponent(item.category || '')}`)}>
+                🔍 Similar brands in {item.category || 'this niche'}
+              </SimilarBrandsBtn>
+              {bumpedItems[item.id] ? (
+                <BumpedBadge>
+                  ✓ Bump requested
+                </BumpedBadge>
+              ) : (
+                <BumpBtn onClick={() => {
+                    if (!isPro) {
+                      setUpgradeReason('bump_profile');
+                      setShowUpgradeModal(true);
+                    } else {
+                      setBumpingItem(item);
+                      setShowBumpModal(true);
+                    }
+                  }}>
+                  ⚡ Bump profile {!isPro && <BumpProTag>PRO</BumpProTag>}
+                </BumpBtn>
+              )}
+            </WaitingActionsRow>
           </>
         )}
 
@@ -3122,53 +3114,82 @@ const PitchMoreNudge = styled.div`
   }
 `;
 
-// Bump Profile CTA (Pro feature)
-const BumpNudge = styled.div`
+// Waiting actions row - modern button layout
+const WaitingActionsRow = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+`;
+
+const SimilarBrandsBtn = styled.button`
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #FFFBEB;
-  border: 1px solid #FDE68A;
-  border-radius: 10px;
-  padding: 12px 14px;
+  justify-content: center;
+  gap: 6px;
+  background: white;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
   cursor: pointer;
   transition: all 0.15s ease;
-  margin-bottom: 8px;
 
   &:hover {
-    background: #FEF3C7;
-    border-color: #FCD34D;
+    border-color: #6366F1;
+    color: #4F46E5;
+    background: #F8FAFF;
   }
 `;
 
-const BumpIcon = styled.div`
-  font-size: 15px;
-  flex-shrink: 0;
-  opacity: 0.9;
-`;
-
-const BumpText = styled.div`
+const BumpBtn = styled.button`
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: white;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 14px;
   font-size: 13px;
-  color: #78350F;
   font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: #F59E0B;
+    color: #D97706;
+    background: #FFFBF5;
+  }
 `;
 
-const BumpProBadge = styled.span`
-  background: #7C3AED;
+const BumpProTag = styled.span`
+  background: linear-gradient(135deg, #7C3AED 0%, #6366F1 100%);
   color: white;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
 `;
 
-const BumpArrow = styled.div`
+const BumpedBadge = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #F0FDF4;
+  border: 1.5px solid #86EFAC;
+  border-radius: 8px;
+  padding: 10px 14px;
   font-size: 13px;
-  color: #B45309;
-  opacity: 0.7;
+  font-weight: 500;
+  color: #15803D;
 `;
 
 // Bump Modal
