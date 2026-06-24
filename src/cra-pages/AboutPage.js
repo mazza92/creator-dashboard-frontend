@@ -1039,6 +1039,48 @@ const AboutPage = () => {
           </ContainerSm>
         </RoadmapSection>
 
+        {/* Resources */}
+        <ForSection>
+          <ContainerSm>
+            <Center>
+              <CenteredEyebrow>
+                <EyebrowDot /> Free resources
+              </CenteredEyebrow>
+              <H2>
+                Start landing PR with
+                <br />
+                our <em>free guides.</em>
+              </H2>
+              <Subline>
+                Brand lists, PR contacts, and pitch templates — all free, all updated for 2026.
+              </Subline>
+            </Center>
+            <ForGrid>
+              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/companies-with-open-pr-application-forms-influencers-2025'}>
+                <ForCardTag $yes>Most Popular</ForCardTag>
+                <h3>385+ Brands with Open PR Application Forms</h3>
+                <ul>
+                  <li>Direct application links to brand PR forms</li>
+                  <li>Beauty, fashion, lifestyle & wellness brands</li>
+                  <li>Updated weekly with new opportunities</li>
+                </ul>
+              </ForCard>
+              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/list-of-companies-that-send-pr-packages-2025'}>
+                <ForCardTag $yes>2025 List</ForCardTag>
+                <h3>Companies That Send PR Packages</h3>
+                <ul>
+                  <li>100+ verified PR-friendly brands</li>
+                  <li>Brands actively seeking small creators</li>
+                  <li>Contact info and reply rate data</li>
+                </ul>
+              </ForCard>
+            </ForGrid>
+            <Center style={{ marginTop: 24 }}>
+              <BtnOutline href="/blog">View all guides →</BtnOutline>
+            </Center>
+          </ContainerSm>
+        </ForSection>
+
         {/* Final CTA */}
         <FinalCta>
           <ContainerSm>
