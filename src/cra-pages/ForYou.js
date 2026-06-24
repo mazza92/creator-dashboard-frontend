@@ -65,6 +65,21 @@ const ForYou = () => {
   const [selectedNiches, setSelectedNiches] = useState([]);
   const [followerCount, setFollowerCount] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
+  const [showNicheEditor, setShowNicheEditor] = useState(false);
+  const nicheEditorRef = useRef(null);
+
+  // Close niche editor when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (nicheEditorRef.current && !nicheEditorRef.current.contains(e.target)) {
+        setShowNicheEditor(false);
+      }
+    };
+    if (showNicheEditor) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNicheEditor]);
 
   // Kit nudge interstitial state
   const [kitNudgeBrand, setKitNudgeBrand] = useState(null);
@@ -582,18 +597,51 @@ const ForYou = () => {
             <PageSub>Contact them in one tap — your free PR package is one pitch away</PageSub>
           </PageTitleWrap>
           {data?.has_profile && (
-            <ProfilePill>
-              <ProfileInfo>
-                <ProfileName>✦ {selectedNiches.slice(0, 2).map(n => CATEGORY_LABELS[n] || n).join(' & ')}</ProfileName>
-                <ProfileNiche>
-                  {parseInt(followerCount) >= 1000
-                    ? `${(parseInt(followerCount) / 1000).toFixed(0)}K followers`
-                    : parseInt(followerCount) > 0
-                      ? `${followerCount} followers`
-                      : ''}
-                </ProfileNiche>
-              </ProfileInfo>
-            </ProfilePill>
+            <ProfilePillWrapper ref={nicheEditorRef}>
+              <ProfilePill onClick={() => setShowNicheEditor(!showNicheEditor)}>
+                <ProfileInfo>
+                  <ProfileName>
+                  ✦ {selectedNiches.slice(0, 2).map(n => CATEGORY_LABELS[n] || n).join(' & ')}
+                  {selectedNiches.length > 2 && <MoreNiches>+{selectedNiches.length - 2}</MoreNiches>}
+                </ProfileName>
+                  <ProfileNiche>
+                    {parseInt(followerCount) >= 1000
+                      ? `${(parseInt(followerCount) / 1000).toFixed(0)}K followers`
+                      : parseInt(followerCount) > 0
+                        ? `${followerCount} followers`
+                        : ''}
+                  </ProfileNiche>
+                </ProfileInfo>
+                <ProfileEditBtn>Edit</ProfileEditBtn>
+              </ProfilePill>
+              {showNicheEditor && (
+                <NicheEditorDropdown>
+                  <NicheEditorHeader>
+                    <NicheEditorTitle>Update your niche</NicheEditorTitle>
+                    <NicheEditorClose onClick={() => setShowNicheEditor(false)}>×</NicheEditorClose>
+                  </NicheEditorHeader>
+                  <NicheEditorGrid>
+                    {NICHE_OPTIONS.map(niche => (
+                      <NicheEditorChip
+                        key={niche.id}
+                        $selected={selectedNiches.includes(niche.id)}
+                        onClick={() => setSelectedNiches(prev =>
+                          prev.includes(niche.id) ? prev.filter(x => x !== niche.id) : [...prev, niche.id]
+                        )}
+                      >
+                        {niche.label}
+                      </NicheEditorChip>
+                    ))}
+                  </NicheEditorGrid>
+                  <NicheEditorSave
+                    disabled={selectedNiches.length === 0 || savingProfile}
+                    onClick={() => { handleSaveProfile(); setShowNicheEditor(false); }}
+                  >
+                    {savingProfile ? 'Saving...' : 'Save changes'}
+                  </NicheEditorSave>
+                </NicheEditorDropdown>
+              )}
+            </ProfilePillWrapper>
           )}
         </PageHeader>
 
@@ -1601,6 +1649,11 @@ const PageSub = styled.p`
   }
 `;
 
+const ProfilePillWrapper = styled.div`
+  position: relative;
+  flex-shrink: 0;
+`;
+
 const ProfilePill = styled.div`
   display: flex;
   align-items: center;
@@ -1611,6 +1664,12 @@ const ProfilePill = styled.div`
   padding: 8px 12px;
   box-shadow: ${tokens.shadowCard};
   flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: ${tokens.primary};
+  }
 
   @media (max-width: 768px) {
     justify-content: space-between;
@@ -1619,6 +1678,114 @@ const ProfilePill = styled.div`
   @media (max-width: 400px) {
     gap: 8px;
     padding: 8px 10px;
+  }
+`;
+
+const ProfileEditBtn = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${tokens.primary};
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: ${tokens.primaryLight};
+  transition: all 0.15s ease;
+
+  ${ProfilePill}:hover & {
+    background: ${tokens.primary};
+    color: white;
+  }
+`;
+
+const NicheEditorDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: white;
+  border: 1px solid ${tokens.border};
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  padding: 16px;
+  z-index: 100;
+
+  @media (max-width: 400px) {
+    width: 280px;
+    right: -40px;
+  }
+`;
+
+const NicheEditorHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+const NicheEditorTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${tokens.textPrimary};
+`;
+
+const NicheEditorClose = styled.button`
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: ${tokens.textMuted};
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+
+  &:hover {
+    color: ${tokens.textPrimary};
+  }
+`;
+
+const NicheEditorGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const NicheEditorChip = styled.button`
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1.5px solid ${p => p.$selected ? tokens.primary : tokens.border};
+  background: ${p => p.$selected ? tokens.primaryLight : 'white'};
+  color: ${p => p.$selected ? tokens.primary : tokens.textSecondary};
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: ${tokens.primary};
+    color: ${tokens.primary};
+  }
+`;
+
+const NicheEditorSave = styled.button`
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: ${tokens.primary};
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -1647,6 +1814,9 @@ const ProfileInfo = styled.div`
 `;
 
 const ProfileName = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
@@ -1656,6 +1826,15 @@ const ProfileName = styled.div`
   @media (max-width: 400px) {
     font-size: 12px;
   }
+`;
+
+const MoreNiches = styled.span`
+  font-size: 10px;
+  font-weight: 600;
+  color: ${tokens.primary};
+  background: ${tokens.primaryLight};
+  padding: 2px 6px;
+  border-radius: 10px;
 `;
 
 const ProfileNiche = styled.div`
