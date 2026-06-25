@@ -22,6 +22,15 @@ export {
   getAnnouncementGeneralPreview,
 } from './GeneralAnnouncement';
 
+export {
+  default as generateBrandViewNotification,
+  generateBrandViewNotification as BrandViewNotification,
+  sampleBrandViewFree,
+  sampleBrandViewPro,
+  getBrandViewFreePreview,
+  getBrandViewProPreview,
+} from './BrandViewNotification';
+
 // Components
 export { default as EmailTemplatePreview } from './EmailTemplatePreview';
 
@@ -40,6 +49,13 @@ export const emailTemplates = {
     description: 'Flexible template for insights, news, and updates',
     icon: '💡',
     generator: 'generateGeneralAnnouncement',
+  },
+  brand_view_notification: {
+    id: 'brand_view_notification',
+    name: 'Brand View Notification',
+    description: 'Triggered when a brand views creator kit via tracked link',
+    icon: '👀',
+    generator: 'generateBrandViewNotification',
   },
 };
 
