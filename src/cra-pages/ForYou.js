@@ -183,6 +183,30 @@ const ForYou = () => {
     }
   }, [loading, data]);
 
+  // Check for upgrade query param (from email CTAs)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const upgradeParam = urlParams.get('upgrade');
+
+    if (upgradeParam) {
+      // Map upgrade param to reason text
+      const reasonMap = {
+        'kit_views': 'See which brands viewed your kit and send follow-up pitches',
+        'pitch_limit': 'Send unlimited pitches to any brand',
+        'default': 'Unlock Pro features'
+      };
+      setUpgradeReason(reasonMap[upgradeParam] || reasonMap.default);
+      setShowUpgrade(true);
+
+      // Clean up URL
+      urlParams.delete('upgrade');
+      urlParams.delete('utm_source');
+      urlParams.delete('utm_medium');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
+
   // ── Social proof notification feed: creator pool and brands ──
   const SOCIAL_CREATORS = useMemo(() => [
     { initials: 'S', color: '#f97316', handle: '@sarah.wellness', followers: '8.2K', niche: 'fitness & wellness', platform: 'ig' },

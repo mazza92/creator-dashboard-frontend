@@ -4,13 +4,16 @@
  * Triggered when a brand clicks a tracked ref link from a creator's pitch.
  * Clean, minimal design focused on creating urgency and driving upgrade to Pro.
  *
+ * Free users: See brand category (e.g. "A skincare brand") + upgrade CTA
+ * Pro users: See brand name + follow-up CTA
+ *
  * Usage:
  *   generateBrandViewNotification({
  *     firstName: 'Sarah',
- *     brandName: 'Glossier', // only shown for Pro users, null for free
+ *     brandName: 'Glossier', // only shown for Pro users
+ *     brandCategory: 'skincare', // shown for free users as "A skincare brand"
  *     isPro: false,
  *     viewedAt: '2026-06-25T14:30:00Z',
- *     checkoutUrl: 'https://app.newcollab.co/creator/dashboard/upgrade?source=kit_view_email',
  *   })
  */
 
@@ -33,44 +36,54 @@ const formatViewedTime = (dateString) => {
 export const generateBrandViewNotification = ({
   firstName = 'Creator',
   brandName = null,
+  brandCategory = null,
   isPro = false,
   viewedAt = null,
-  checkoutUrl = 'https://app.newcollab.co/creator/dashboard/upgrade?source=kit_view_email',
   utmCampaign = 'brand_view_notification',
 } = {}) => {
 
   const timeAgo = formatViewedTime(viewedAt);
-  const preheaderText = isPro
-    ? `${brandName || 'A brand'} just viewed your media kit`
-    : 'A brand just viewed your media kit — see who it was';
-  const preheaderPadding = '\u200C\u00A0'.repeat(90);
+
+  // Format brand category for display (e.g. "skincare" -> "A skincare brand")
+  let categoryDisplay = 'A brand';
+  if (brandCategory) {
+    const catLower = brandCategory.toLowerCase().trim();
+    if (catLower && !['other', 'unknown', 'n/a'].includes(catLower)) {
+      const vowels = ['a', 'e', 'i', 'o', 'u'];
+      const article = vowels.includes(catLower[0]) ? 'An' : 'A';
+      categoryDisplay = `${article} ${catLower} brand`;
+    }
+  }
 
   // Different content for Pro vs Free users
-  const heroEmoji = '👀';
   const headline = isPro
     ? `${brandName} viewed your kit`
-    : 'A brand just viewed your kit';
+    : `${categoryDisplay} viewed your kit`;
+
+  const preheaderText = isPro
+    ? `They checked out your profile ${timeAgo}. Follow up now.`
+    : `See who it was and follow up while they are still interested.`;
 
   const subtitle = isPro
-    ? `They checked out your profile ${timeAgo}. Now's the perfect time to follow up.`
-    : `Someone's interested — they viewed your kit ${timeAgo}. Upgrade to see who and follow up while it's hot.`;
+    ? `They checked out your profile ${timeAgo}. Now is the perfect time to follow up.`
+    : `They checked out your profile ${timeAgo}. See who and follow up while they are still engaged.`;
 
   const bodyHtml = isPro ? `
     <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151; line-height: 1.7;">
       Hey ${firstName},
     </p>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: #374151; line-height: 1.7;">
-      <strong>${brandName}</strong> clicked through to your media kit ${timeAgo}. This means they're actively evaluating you for a potential collab.
+      <strong>${brandName}</strong> clicked through to your media kit ${timeAgo}. This means they are actively evaluating you for a potential collab.
     </p>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: #374151; line-height: 1.7;">
-      Brands that view your kit are <strong>5x more likely to respond</strong> to a follow-up. Don't let this one slip away.
+      Follow up while they are engaged. Most replies happen in the first 24 hours.
     </p>
   ` : `
     <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151; line-height: 1.7;">
       Hey ${firstName},
     </p>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: #374151; line-height: 1.7;">
-      A brand just clicked through to view your media kit. They're checking you out right now.
+      ${categoryDisplay} just clicked through to view your media kit. They are checking you out right now.
     </p>
   `;
 
@@ -85,10 +98,10 @@ export const generateBrandViewNotification = ({
               <td style="padding: 20px 24px; text-align: center;">
                 <p style="margin: 0 0 8px 0; font-size: 24px;">🔥</p>
                 <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: #92400e;">
-                  Strike while it's hot
+                  Strike while it is hot
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #a16207; line-height: 1.5;">
-                  Brands that get a follow-up within 24 hours of viewing are <strong>5x more likely</strong> to send PR.
+                  Follow up while they are engaged. Most replies happen in the first 24 hours.
                 </p>
               </td>
             </tr>
@@ -111,7 +124,7 @@ export const generateBrandViewNotification = ({
               <td style="padding: 0 0 10px 0;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                   <tr>
-                    <td width="24" valign="top" style="font-size: 14px;">👁</td>
+                    <td width="24" valign="top" style="font-size: 14px;">&#128065;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
                       <strong>See exactly which brand</strong> viewed your kit
                     </td>
@@ -123,9 +136,9 @@ export const generateBrandViewNotification = ({
               <td style="padding: 0 0 10px 0;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                   <tr>
-                    <td width="24" valign="top" style="font-size: 14px;">📧</td>
+                    <td width="24" valign="top" style="font-size: 14px;">&#128231;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
-                      <strong>Send a follow-up pitch</strong> while they're engaged
+                      <strong>Send a follow-up pitch</strong> while they are engaged
                     </td>
                   </tr>
                 </table>
@@ -135,9 +148,9 @@ export const generateBrandViewNotification = ({
               <td style="padding: 0 0 10px 0;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                   <tr>
-                    <td width="24" valign="top" style="font-size: 14px;">📦</td>
+                    <td width="24" valign="top" style="font-size: 14px;">&#128230;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
-                      <strong>Land the PR package</strong> before they move on
+                      <strong>Unlimited pitches</strong> to any brand, every month
                     </td>
                   </tr>
                 </table>
@@ -149,11 +162,11 @@ export const generateBrandViewNotification = ({
     </table>
   ` : '';
 
-  // CTA button
-  const ctaLabel = isPro ? 'Send Follow-Up Now' : 'See Who & Follow Up — $19/mo';
+  // CTA button - links to for-you page with upgrade param to trigger upgrade modal -> Stripe checkout
+  const ctaLabel = isPro ? 'Send Follow-Up Now' : 'See Who and Follow Up - $19/mo';
   const ctaUrl = isPro
     ? 'https://app.newcollab.co/creator/dashboard/pr-pipeline?utm_source=email&utm_medium=brand_view'
-    : checkoutUrl;
+    : 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=kit_views&utm_source=email&utm_medium=brand_view';
 
   const ctaHtml = `
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -165,13 +178,16 @@ export const generateBrandViewNotification = ({
           </a>
           ${!isPro ? `
           <p style="margin: 14px 0 0 0; font-size: 12px; color: #9ca3af;">
-            Cancel anytime · One PR package pays for a year of Pro
+            Cancel anytime. One PR package pays for a year of Pro.
           </p>
           ` : ''}
         </td>
       </tr>
     </table>
   `;
+
+  // Preheader padding to prevent email client from pulling body text
+  const preheaderPadding = '\u200C\u00A0'.repeat(90);
 
   return `
 <!DOCTYPE html>
@@ -195,7 +211,7 @@ export const generateBrandViewNotification = ({
     td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
   </style>
   <![endif]-->
-  <title>A brand viewed your kit</title>
+  <title>${headline}</title>
   <style>
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
     table { border-collapse: collapse !important; }
@@ -213,7 +229,7 @@ export const generateBrandViewNotification = ({
 
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${preheaderText}${preheaderPadding}</div>
 
-  <div role="article" aria-roledescription="email" aria-label="A brand viewed your kit" lang="en"
+  <div role="article" aria-roledescription="email" aria-label="${headline}" lang="en"
        style="font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
 
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto;">
@@ -238,9 +254,8 @@ export const generateBrandViewNotification = ({
                   <tr>
                     <td style="padding: 36px 40px 36px 40px;" class="padding-mobile">
 
-                      <!-- Hero emoji + headline -->
+                      <!-- Hero headline (no emoji) -->
                       <div style="text-align: center; margin-bottom: 24px;">
-                        <p style="margin: 0 0 12px 0; font-size: 48px;">${heroEmoji}</p>
                         <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 800; color: #111827; line-height: 1.2;">
                           ${headline}
                         </h1>
@@ -271,7 +286,7 @@ export const generateBrandViewNotification = ({
             <tr>
               <td style="padding: 28px 24px 32px 24px; text-align: center;">
                 <p style="margin: 0 0 10px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">
-                  You're receiving this because a brand clicked your tracked kit link.
+                  You are receiving this because a brand clicked your tracked kit link.
                 </p>
                 <p style="margin: 0 0 10px 0; font-size: 13px; color: #9ca3af;">
                   <a href="https://app.newcollab.co/creator/dashboard/settings" style="color: #9ca3af; text-decoration: underline;">Email settings</a>
@@ -279,7 +294,7 @@ export const generateBrandViewNotification = ({
                   <a href="https://app.newcollab.co/login" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a>
                 </p>
                 <p style="margin: 0; font-size: 12px; color: #d1d5db;">
-                  &copy; 2026 Newcollab. All rights reserved.
+                  2026 Newcollab. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -297,15 +312,16 @@ export const generateBrandViewNotification = ({
 // Sample data for preview
 export const sampleBrandViewFree = {
   firstName: 'Sarah',
-  brandName: null,
+  brandName: 'Glossier',
+  brandCategory: 'skincare',
   isPro: false,
   viewedAt: new Date(Date.now() - 15 * 60000).toISOString(), // 15 mins ago
-  checkoutUrl: 'https://app.newcollab.co/creator/dashboard/upgrade?source=kit_view_email',
 };
 
 export const sampleBrandViewPro = {
   firstName: 'Sarah',
   brandName: 'Glossier',
+  brandCategory: 'skincare',
   isPro: true,
   viewedAt: new Date(Date.now() - 15 * 60000).toISOString(),
 };
