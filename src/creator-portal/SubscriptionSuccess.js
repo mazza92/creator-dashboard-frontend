@@ -27,6 +27,16 @@ const SubscriptionSuccess = () => {
         // Then fetch the updated subscription status
         const response = await api.get('/api/subscription/status');
         setSubscriptionInfo(response.data);
+
+        // Track Microsoft Ads conversion
+        if (typeof window !== 'undefined' && window.uetq) {
+          const revenue = response.data?.tier === 'elite' ? 49 : 19;
+          window.uetq.push('event', 'purchase', {
+            'revenue_value': revenue,
+            'currency': 'USD'
+          });
+        }
+
         setLoading(false);
       } catch (error) {
         console.error('Error confirming subscription:', error);
