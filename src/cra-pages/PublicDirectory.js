@@ -29,6 +29,7 @@ const PublicDirectory = () => {
     featuredOnly: searchParams.get('featured') === 'true'
   });
 
+  
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -254,10 +255,27 @@ const PublicDirectory = () => {
             </BrandGrid>
 
             {brands.length === 0 && (
-              <EmptyState>
-                <h3>No brands found</h3>
-                <p>Try adjusting your filters or search terms</p>
-              </EmptyState>
+              filters.search.trim() && !filters.category && !filters.featuredOnly ? (
+                // Discovery fallback when searching for a brand not in directory
+                <DiscoveryFallback>
+                  <DiscoveryIcon>🔍</DiscoveryIcon>
+                  <DiscoveryTitle>"{filters.search}" not in our directory yet</DiscoveryTitle>
+                  <DiscoveryText>
+                    Sign up free to search for any brand's PR contact. We can find emails for brands not in our curated list.
+                  </DiscoveryText>
+                  <SignUpButton to="/register/creator">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Sign up to find {filters.search}'s PR contact
+                  </SignUpButton>
+                </DiscoveryFallback>
+              ) : (
+                <EmptyState>
+                  <h3>No brands found</h3>
+                  <p>Try adjusting your filters or search terms</p>
+                </EmptyState>
+              )
             )}
 
             {pagination.total > pagination.limit && (
@@ -537,6 +555,98 @@ const EmptyState = styled.div`
     margin-bottom: 12px;
   }
 `;
+
+// Discovery Fallback Components
+const DiscoveryFallback = styled.div`
+  text-align: center;
+  padding: 48px 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E5E5;
+  max-width: 600px;
+  margin: 40px auto;
+`;
+
+const DiscoveryIcon = styled.div`
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+`;
+
+const DiscoveryTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin: 0 0 8px;
+`;
+
+const DiscoveryText = styled.p`
+  font-size: 14px;
+  color: #6B6B6B;
+  margin: 0 0 24px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+`;
+
+const DiscoveryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+
+const SignUpButton = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0F0F0F;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #262626;
+    color: white;
+  }
+`;
+
 
 const PaginationContainer = styled.div`
   display: flex;

@@ -70,6 +70,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     contactType: searchParams.get('contactType') || '' // 'application', 'email', or '' for all
   });
 
+  // Discovery state
+  const [discoveryLoading, setDiscoveryLoading] = useState(false);
+  const [discoveredBrand, setDiscoveredBrand] = useState(null);
+  const [discoveryError, setDiscoveryError] = useState('');
+  const [rateLimitInfo, setRateLimitInfo] = useState(null);
+
   useEffect(() => {
     fetchCategories();
     fetchOpenPrBrands();
@@ -343,7 +349,72 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const handleSearch = (value) => {
     setFilters(prev => ({ ...prev, search: value }));
     setPagination(prev => ({ ...prev, page: 1 }));
+    // Reset discovery state when search changes
+    setDiscoveredBrand(null);
+    setDiscoveryError('');
     updateURLParams({ search: value });
+  };
+
+  // Discovery function for brands not in curated list
+  const handleDiscoverBrand = async () => {
+    if (!filters.search.trim()) return;
+
+    setDiscoveryLoading(true);
+    setDiscoveryError('');
+    setDiscoveredBrand(null);
+
+    try {
+      const response = await axios.post(`${API_BASE}/api/pr-crm/brands/discover`, {
+        query: filters.search.trim()
+      }, { withCredentials: true });
+
+      if (response.data.success && response.data.brand) {
+        setDiscoveredBrand(response.data);
+        if (response.data.rate_limit) {
+          setRateLimitInfo(response.data.rate_limit);
+        }
+      } else {
+        setDiscoveryError(response.data.message || 'We couldn\'t find a verified contact for this brand yet.');
+      }
+    } catch (err) {
+      console.error('Discovery error:', err);
+      if (err.response?.status === 429) {
+        setRateLimitInfo({
+          remaining: 0,
+          limit: err.response.data?.daily_limit || 5,
+        });
+        setDiscoveryError(err.response.data?.error || 'Daily discovery limit reached. Try again tomorrow.');
+      } else if (err.response?.status === 401) {
+        // User not authenticated - this shouldn't happen in dashboard view but handle gracefully
+        setDiscoveryError('Please log in to use brand discovery.');
+      } else {
+        setDiscoveryError(err.response?.data?.error || 'We couldn\'t find this brand. Try a different search.');
+      }
+    } finally {
+      setDiscoveryLoading(false);
+    }
+  };
+
+  // Handle clicking on discovered brand
+  const handleSelectDiscoveredBrand = () => {
+    if (discoveredBrand?.brand) {
+      // Open pitch modal with the discovered brand
+      setSelectedBrandForPitch({
+        id: discoveredBrand.brand.id,
+        brand_name: discoveredBrand.brand.brand_name,
+        name: discoveredBrand.brand.brand_name,
+        contact_email: discoveredBrand.brand.contact_email,
+        category: discoveredBrand.brand.category,
+        website: discoveredBrand.brand.website,
+        has_application_form: discoveredBrand.brand.has_application_form,
+        application_form_url: discoveredBrand.brand.application_form_url,
+        verified_contact: discoveredBrand.verified_contact,
+        discovery_tier: discoveredBrand.discovery_tier,
+        alternative_emails: discoveredBrand.alternative_emails || [],
+        is_discovered: discoveredBrand.source === 'discovered'
+      });
+      setShowPitchModal(true);
+    }
   };
 
   const handleFilterChange = (key, value) => {
@@ -602,6 +673,95 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           {/* Brand Grid */}
           {loading ? (
             <LoadingSpinner text="Loading brands..." minHeight="400px" />
+          ) : brands.length === 0 && filters.search.trim() ? (
+            // Discovery fallback when search returns no results
+            <DiscoveryFallback>
+              {discoveredBrand ? (
+                // Show discovered brand
+                <DiscoveredBrandCard onClick={handleSelectDiscoveredBrand}>
+                  <DiscoveredBadge>
+                    {discoveredBrand.source === 'curated' ? '✓ Found in directory' :
+                     discoveredBrand.discovery_tier === 2 ? '🔍 Found on website' :
+                     discoveredBrand.discovery_tier === 3 ? '✨ Generated contact' :
+                     '✨ Found via search'}
+                  </DiscoveredBadge>
+                  <DiscoveredBrandName>{discoveredBrand.brand.brand_name}</DiscoveredBrandName>
+                  <DiscoveredBrandEmail>{discoveredBrand.brand.contact_email}</DiscoveredBrandEmail>
+
+                  {/* Show tier badge for discovered brands */}
+                  {discoveredBrand.discovery_tier === 2 && (
+                    <TierBadge $tier={2}>
+                      ✓ Scraped from official website
+                    </TierBadge>
+                  )}
+                  {discoveredBrand.discovery_tier === 3 && (
+                    <TierBadge $tier={3}>
+                      ⚡ Generated from common patterns
+                    </TierBadge>
+                  )}
+
+                  {/* Show unverified warning for Tier 3 */}
+                  {discoveredBrand.verified_contact === false && (
+                    <UnverifiedBadge>
+                      ⚠️ Unverified - may not be correct
+                    </UnverifiedBadge>
+                  )}
+
+                  {/* Show alternative emails for Tier 3 */}
+                  {discoveredBrand.alternative_emails && discoveredBrand.alternative_emails.length > 0 && (
+                    <AlternativeEmails onClick={(e) => e.stopPropagation()}>
+                      <h5>Try these if no response:</h5>
+                      <ul>
+                        {discoveredBrand.alternative_emails.slice(0, 3).map((email, idx) => (
+                          <li key={idx} onClick={() => navigator.clipboard.writeText(email)}>
+                            {email} <span style={{opacity: 0.5, fontSize: '10px'}}>(click to copy)</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </AlternativeEmails>
+                  )}
+
+                  <DiscoveryButton as="div" style={{ marginTop: '16px', justifyContent: 'center' }}>
+                    <Mail size={16} /> Contact this brand
+                  </DiscoveryButton>
+                  {rateLimitInfo && rateLimitInfo.remaining !== undefined && (
+                    <RateLimitInfo>
+                      {rateLimitInfo.remaining} of {rateLimitInfo.limit} daily discoveries remaining
+                    </RateLimitInfo>
+                  )}
+                </DiscoveredBrandCard>
+              ) : (
+                // Show discovery prompt
+                <>
+                  <DiscoveryIcon>🔍</DiscoveryIcon>
+                  <DiscoveryTitle>"{filters.search}" not in our directory yet</DiscoveryTitle>
+                  <DiscoveryText>
+                    We'll search their website for PR contacts, or generate likely email addresses.
+                  </DiscoveryText>
+                  <DiscoveryButton onClick={handleDiscoverBrand} disabled={discoveryLoading}>
+                    {discoveryLoading ? (
+                      <>
+                        <Spin size="small" style={{ marginRight: 8 }} />
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Search size={18} />
+                        Search for {filters.search}'s PR contact
+                      </>
+                    )}
+                  </DiscoveryButton>
+                  {discoveryError && (
+                    <DiscoveryError>{discoveryError}</DiscoveryError>
+                  )}
+                  {rateLimitInfo && rateLimitInfo.remaining === 0 && (
+                    <RateLimitInfo>
+                      Daily discovery limit reached. Try again tomorrow!
+                    </RateLimitInfo>
+                  )}
+                </>
+              )}
+            </DiscoveryFallback>
           ) : (
             <>
               <BrandGrid>
@@ -1611,6 +1771,202 @@ const PaginationContainer = styled.div`
       font-size: 12px;
     }
   }
+`;
+
+// Discovery Fallback Components
+const DiscoveryFallback = styled.div`
+  text-align: center;
+  padding: 48px 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E5E5;
+  margin: 24px 0;
+`;
+
+const DiscoveryIcon = styled.div`
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+`;
+
+const DiscoveryTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin: 0 0 8px;
+`;
+
+const DiscoveryText = styled.p`
+  font-size: 14px;
+  color: #6B6B6B;
+  margin: 0 0 24px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+`;
+
+const DiscoveryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const DiscoveredBrandCard = styled.div`
+  max-width: 400px;
+  margin: 24px auto 0;
+  background: white;
+  border: 2px solid #0EA5E9;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.2);
+  }
+`;
+
+const DiscoveredBadge = styled.span`
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+`;
+
+const UnverifiedBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 8px;
+`;
+
+const TierBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: ${props => props.$tier === 2 ? '#DCFCE7' : '#E0E7FF'};
+  color: ${props => props.$tier === 2 ? '#166534' : '#3730A3'};
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+`;
+
+const AlternativeEmails = styled.div`
+  margin-top: 12px;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  text-align: left;
+
+  h5 {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B7280;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    font-size: 12px;
+    color: #4B5563;
+    padding: 4px 0;
+    cursor: pointer;
+
+    &:hover {
+      color: #0EA5E9;
+    }
+  }
+`;
+
+const DiscoveredBrandName = styled.h4`
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin: 8px 0 4px;
+  text-align: center;
+`;
+
+const DiscoveredBrandEmail = styled.div`
+  font-size: 14px;
+  color: #0EA5E9;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+const DiscoveryError = styled.div`
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-top: 16px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const RateLimitInfo = styled.div`
+  font-size: 12px;
+  color: #6B6B6B;
+  margin-top: 16px;
 `;
 
 // Open PR Applications Featured Section

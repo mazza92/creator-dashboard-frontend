@@ -138,6 +138,77 @@ const EmptyState = styled.div`
   }
 `;
 
+// Discovery Fallback Components
+const DiscoveryFallback = styled.div`
+  text-align: center;
+  padding: 48px 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E5E5E5;
+  margin-top: 24px;
+`;
+
+const DiscoveryIcon = styled.div`
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+`;
+
+const DiscoveryTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #0F0F0F;
+  margin: 0 0 8px;
+`;
+
+const DiscoveryText = styled.p`
+  font-size: 14px;
+  color: #6B6B6B;
+  margin: 0 0 24px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+`;
+
+const DiscoveryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+
 const Container = styled.div`
   max-width: 1200px;
   margin: -22px auto 0;
@@ -772,6 +843,7 @@ export default function DirectoryClient({
   const [categories, setCategories] = useState([]);
   const [openPrBrands, setOpenPrBrands] = useState([]);
 
+  
   const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
   const [total, setTotal] = useState(initialTotal || 0);
 
@@ -1082,17 +1154,38 @@ export default function DirectoryClient({
           {loading ? (
             <LoadingSpinner text="Loading brands..." minHeight="400px" />
           ) : brands.length === 0 ? (
-            <EmptyState>
-              <h3>No brands found{initialCountry ? ` in ${initialCountry}` : ''}</h3>
-              <p>
-                {category
-                  ? `No ${category} brands available${initialCountry ? ` for ${initialCountry}` : ''} yet. Try a different category or browse all brands.`
-                  : initialCountry
-                  ? `We're adding more ${initialCountry} brands soon. Browse our full directory in the meantime.`
-                  : 'Try adjusting your filters or search term.'}
-              </p>
-              <a href="/directory">Browse All Brands</a>
-            </EmptyState>
+            search.trim() && !category && !initialCountry ? (
+              // Discovery fallback when searching for a brand not in directory
+              <DiscoveryFallback>
+                <DiscoveryIcon>🔍</DiscoveryIcon>
+                <DiscoveryTitle>"{search}" not in our directory yet</DiscoveryTitle>
+                <DiscoveryText>
+                  Sign up free to search for any brand's PR contact. We can find emails for brands not in our curated list.
+                </DiscoveryText>
+                <DiscoveryButton
+                  as="a"
+                  href="https://app.newcollab.co/register/creator"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Sign up to find {search}'s PR contact
+                </DiscoveryButton>
+              </DiscoveryFallback>
+            ) : (
+              <EmptyState>
+                <h3>No brands found{initialCountry ? ` in ${initialCountry}` : ''}</h3>
+                <p>
+                  {category
+                    ? `No ${category} brands available${initialCountry ? ` for ${initialCountry}` : ''} yet. Try a different category or browse all brands.`
+                    : initialCountry
+                    ? `We're adding more ${initialCountry} brands soon. Browse our full directory in the meantime.`
+                    : 'Try adjusting your filters or search term.'}
+                </p>
+                <a href="/directory">Browse All Brands</a>
+              </EmptyState>
+            )
           ) : (
             <>
               <Grid>
