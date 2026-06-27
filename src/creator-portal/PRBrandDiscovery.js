@@ -201,6 +201,258 @@ const Title = styled.h1`
   }
 `;
 
+// ============================================
+// UNIVERSAL BRAND DISCOVERY COMPONENTS
+// ============================================
+
+const SearchContainer = styled.div`
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0 20px 16px;
+
+  @media (max-width: 768px) {
+    padding: 0 16px 12px;
+  }
+`;
+
+const SearchInputWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 14px 48px 14px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  border: 2px solid #E5E7EB;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  transition: all 0.2s;
+  outline: none;
+
+  &::placeholder {
+    color: #9CA3AF;
+    font-weight: 400;
+  }
+
+  &:focus {
+    border-color: ${primaryBlue};
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+`;
+
+const SearchButton = styled.button`
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px 14px;
+  background: linear-gradient(135deg, ${primaryBlue}, ${brightMagenta});
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    transform: translateY(-50%) scale(1.02);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const DiscoveryFallback = styled.div`
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 32px 24px;
+  text-align: center;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+`;
+
+const FallbackIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 16px;
+`;
+
+const FallbackTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+`;
+
+const FallbackDescription = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0 0 20px;
+  line-height: 1.5;
+`;
+
+const DiscoverButton = styled.button`
+  padding: 14px 28px;
+  background: linear-gradient(135deg, ${primaryBlue}, ${brightMagenta});
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const DiscoveredBadge = styled.div`
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.9);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 5;
+`;
+
+const UnverifiedBadge = styled.div`
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 12px;
+  background: rgba(245, 158, 11, 0.9);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 5;
+`;
+
+const SearchResultCard = styled.div`
+  max-width: 500px;
+  margin: 0 auto 16px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+
+  &:hover {
+    border-color: ${primaryBlue};
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+  }
+`;
+
+const SearchResultLogo = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+`;
+
+const SearchResultInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const SearchResultName = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+`;
+
+const SearchResultMeta = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const BackToFeed = styled.button`
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+
+  &:hover {
+    color: #111827;
+  }
+`;
+
+const RateLimitWarning = styled.div`
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 16px 20px;
+  background: #FEF3C7;
+  border: 1px solid #F59E0B;
+  border-radius: 12px;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #92400E;
+  }
+`;
+
 // V4: Welcome Card for first-time users after onboarding
 const WelcomeCard = styled.div`
   background: #0F0F0F;
@@ -890,6 +1142,14 @@ const PRBrandDiscovery = () => {
   const [showKitNudge, setShowKitNudge] = useState(false);
   const [creatorProfile, setCreatorProfile] = useState(null);
 
+  // Universal Brand Discovery state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResult, setSearchResult] = useState(null);
+  const [discoveryError, setDiscoveryError] = useState(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState(null);
+
   // Using centralized api client from config/api.js
 
   // V4: Check if user just completed onboarding (first login experience)
@@ -1016,6 +1276,75 @@ const PRBrandDiscovery = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ============================================
+  // UNIVERSAL BRAND DISCOVERY HANDLERS
+  // ============================================
+
+  const handleSearchSubmit = async (e) => {
+    e?.preventDefault();
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      message.warning('Please enter at least 2 characters');
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchMode(true);
+    setSearchResult(null);
+    setDiscoveryError(null);
+    setRateLimitInfo(null);
+
+    try {
+      const response = await api.post('/api/pr-crm/brands/discover', {
+        query: searchQuery.trim()
+      });
+
+      if (response.data.success) {
+        if (response.data.found) {
+          // Found a brand
+          setSearchResult({
+            brand: response.data.brand,
+            source: response.data.source,
+            discoveryTier: response.data.discovery_tier,
+            verifiedContact: response.data.verified_contact,
+            isNewDiscovery: response.data.is_new_discovery
+          });
+
+          if (response.data.is_new_discovery) {
+            message.success(`Found "${response.data.brand.brand_name}" and added to our directory!`);
+          }
+        } else {
+          // Not found
+          if (!response.data.can_discover) {
+            setRateLimitInfo(response.data.rate_limit);
+          } else {
+            setDiscoveryError(response.data.message || `We couldn't find "${searchQuery}" in our database.`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error searching brand:', error);
+      setDiscoveryError('An error occurred while searching. Please try again.');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSelectSearchResult = () => {
+    if (searchResult?.brand) {
+      // Show the discovered brand in pitch modal directly
+      setSelectedBrandForPitch(searchResult.brand);
+      setShowPitchModal(true);
+    }
+  };
+
+  const handleBackToFeed = () => {
+    setSearchMode(false);
+    setSearchQuery('');
+    setSearchResult(null);
+    setDiscoveryError(null);
+    setRateLimitInfo(null);
   };
 
   // Save brand for later (bookmark)
@@ -1159,6 +1488,95 @@ const PRBrandDiscovery = () => {
         </PlanBadge>
       </PageHeader>
 
+      {/* Universal Brand Discovery Search */}
+      <SearchContainer>
+        <form onSubmit={handleSearchSubmit}>
+          <SearchInputWrapper>
+            <SearchInput
+              type="text"
+              placeholder="Search any brand (e.g., Glossier, Tower 28)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <SearchButton type="submit" disabled={searchLoading || searchQuery.trim().length < 2}>
+              {searchLoading ? '...' : '🔍 Search'}
+            </SearchButton>
+          </SearchInputWrapper>
+        </form>
+      </SearchContainer>
+
+      {/* Search Mode: Show results or fallback */}
+      {searchMode && (
+        <div style={{ padding: '0 20px', maxWidth: '540px', margin: '0 auto' }}>
+          <BackToFeed onClick={handleBackToFeed}>
+            ← Back to discovery feed
+          </BackToFeed>
+
+          {searchLoading && (
+            <DiscoveryFallback>
+              <FallbackIcon>🔍</FallbackIcon>
+              <FallbackTitle>Searching...</FallbackTitle>
+              <FallbackDescription>Looking for "{searchQuery}" in our database</FallbackDescription>
+            </DiscoveryFallback>
+          )}
+
+          {!searchLoading && searchResult && (
+            <SearchResultCard onClick={handleSelectSearchResult}>
+              <SearchResultLogo>
+                {getBrandLogoUrl(searchResult.brand) ? (
+                  <img
+                    src={getBrandLogoUrl(searchResult.brand)}
+                    alt={searchResult.brand.brand_name}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <span style={{ fontSize: '20px', fontWeight: '700', color: '#6B7280' }}>
+                    {searchResult.brand.brand_name?.charAt(0) || '?'}
+                  </span>
+                )}
+              </SearchResultLogo>
+              <SearchResultInfo>
+                <SearchResultName>{searchResult.brand.brand_name}</SearchResultName>
+                <SearchResultMeta>
+                  {searchResult.brand.category && <span>{searchResult.brand.category}</span>}
+                  {searchResult.source === 'discovered' && (
+                    <span style={{ color: primaryBlue }}>✨ Found via search</span>
+                  )}
+                  {searchResult.source === 'curated' && (
+                    <span style={{ color: successGreen }}>✓ Verified directory</span>
+                  )}
+                </SearchResultMeta>
+              </SearchResultInfo>
+              <div style={{ color: primaryBlue, fontWeight: '600', fontSize: '14px' }}>
+                Pitch →
+              </div>
+            </SearchResultCard>
+          )}
+
+          {!searchLoading && rateLimitInfo && (
+            <RateLimitWarning>
+              <p>⚠️ {rateLimitInfo.message}</p>
+            </RateLimitWarning>
+          )}
+
+          {!searchLoading && discoveryError && !rateLimitInfo && (
+            <DiscoveryFallback>
+              <FallbackIcon>🤔</FallbackIcon>
+              <FallbackTitle>Brand not found yet</FallbackTitle>
+              <FallbackDescription>
+                We couldn't find "{searchQuery}" in our database. We're constantly adding new brands based on creator searches.
+              </FallbackDescription>
+              <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '16px' }}>
+                Try searching for a different brand or browse our curated directory below.
+              </p>
+            </DiscoveryFallback>
+          )}
+        </div>
+      )}
+
+      {/* Regular Discovery Feed (hidden during search mode) */}
+      {!searchMode && (
+      <>
       <CardArea>
         <CardStack>
           {!currentBrand ? (
@@ -1185,6 +1603,20 @@ const PRBrandDiscovery = () => {
                   <MatchScoreBadge>
                     🔥 {currentBrand.response_rate}% reply rate
                   </MatchScoreBadge>
+                )}
+
+                {/* Discovered Brand Badge - shows for non-curated brands */}
+                {currentBrand.source === 'discovered' && currentBrand.verified_contact !== false && (
+                  <DiscoveredBadge>
+                    ✨ Found via search
+                  </DiscoveredBadge>
+                )}
+
+                {/* Unverified Contact Badge - shows for Tier 3 inferred contacts */}
+                {currentBrand.source === 'discovered' && currentBrand.verified_contact === false && (
+                  <UnverifiedBadge>
+                    ⚠️ Unverified contact
+                  </UnverifiedBadge>
                 )}
 
                 <BrandImage>
@@ -1371,6 +1803,8 @@ const PRBrandDiscovery = () => {
             </span>
           </ActionButton>
         </ActionButtons>
+      )}
+      </>
       )}
 
       {/* AI Pitch Modal */}

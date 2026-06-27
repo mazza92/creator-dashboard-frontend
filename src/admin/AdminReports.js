@@ -258,7 +258,7 @@ const AdminReports = () => {
     );
   }
 
-  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month } = data;
+  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month, top_brands = [] } = data;
 
   // Calculate funnel percentages
   const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
@@ -337,109 +337,76 @@ const AdminReports = () => {
           </MilestoneRow>
         </GoalCard>
 
-        {/* 2. DO THIS TODAY */}
-        <SectionLabel>Do this today — highest chance of upgrade</SectionLabel>
+        {/* 2. TOP BRANDS BY PITCHES */}
+        <SectionLabel>Top brands by pitches</SectionLabel>
 
         <TodayCard>
           <TodayHeader>
             <TodayTitle>
-              <AmberDot />
-              Users who hit their pitch limit
+              <span style={{ fontSize: 16 }}>🎯</span>
+              Most pitched brands
               <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
-                {totalAtLimit} total
+                {top_brands.length} brands
               </span>
-              {nudgedCount > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: '#059669', background: '#ECFDF5', padding: '2px 8px', borderRadius: 12 }}>
-                  {nudgedCount} nudged ✓
-                </span>
-              )}
-              {cooldownCount > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
-                  {cooldownCount} recently emailed
-                </span>
-              )}
             </TodayTitle>
-            <TodaySubtitle>⚡ 7+ days = needs follow-up nudge · Skips users emailed in last 48h</TodaySubtitle>
+            <TodaySubtitle>All-time pitch volume by creators</TodaySubtitle>
           </TodayHeader>
 
-          {visibleAtLimitUsers.length === 0 ? (
+          {top_brands.length === 0 ? (
             <EmptyState>
-              <strong>{nudgedCount > 0 ? 'All users nudged!' : 'No users at limit right now'}</strong>
-              <p>{nudgedCount > 0
-                ? `You've sent ${nudgedCount} nudge email${nudgedCount > 1 ? 's' : ''} this session.`
-                : 'When free users max out their 3 weekly pitches, they\'ll appear here'}</p>
-              {cooldownCount > 0 && (
-                <p style={{ marginTop: 8, fontSize: 11, color: '#9CA3AF' }}>
-                  {cooldownCount} user{cooldownCount > 1 ? 's' : ''} skipped — already emailed by cron job
-                </p>
-              )}
+              <strong>No pitches yet</strong>
+              <p>When creators start pitching brands, the top ones will appear here</p>
             </EmptyState>
           ) : (
-            <>
-              {paginatedAtLimitUsers.map(user => (
-                <UserRow key={user.creator_id}>
-                  <Avatar>{(user.username || user.email)[0].toUpperCase()}</Avatar>
-                  <UserInfo>
-                    <UserName>{user.username || 'Unknown'}</UserName>
-                    <UserDetail>
-                      {user.followers ? `${user.followers.toLocaleString()} followers · ` : ''}
-                      {user.niche ? `${user.niche} · ` : ''}
-                      {user.email}
-                    </UserDetail>
-                  </UserInfo>
-                  <UserStat>
-                    <UserPitches>{user.pitches_used}/3</UserPitches>
-                    <UserLimit>pitches used</UserLimit>
-                  </UserStat>
-                  {user.days_since_limit !== null && (
-                    <HitLimitDate $urgent={user.needs_followup}>
-                      {user.days_since_limit === 0 ? 'Today' :
-                       user.days_since_limit === 1 ? '1 day ago' :
-                       `${user.days_since_limit}d ago`}
-                      {user.needs_followup && ' ⚡'}
-                    </HitLimitDate>
-                  )}
-                  <NudgeBtn
-                    $state={nudgeSent[user.creator_id] || 'default'}
-                    onClick={() => nudgeSent[user.creator_id] !== 'sending' && handleSendNudge(user)}
-                    disabled={nudgeSent[user.creator_id] === 'sending'}
-                  >
-                    {nudgeSent[user.creator_id] === 'sending' ? 'Sending...' : 'Send nudge →'}
-                  </NudgeBtn>
-                </UserRow>
-              ))}
-              {/* Pagination - show if multiple pages OR if backend has more users than loaded */}
-              <PaginationRow>
-                <PaginationInfo>
-                  {totalPages > 1 ? (
-                    <>Showing {(safePage - 1) * AT_LIMIT_PER_PAGE + 1}–{Math.min(safePage * AT_LIMIT_PER_PAGE, visibleAtLimitUsers.length)} of {visibleAtLimitUsers.length}</>
-                  ) : (
-                    <>Showing {visibleAtLimitUsers.length} users</>
-                  )}
-                  {totalAtLimit > allAtLimitUsers.length && (
-                    <span style={{ marginLeft: 8, color: '#D97706' }}>
-                      ({totalAtLimit - allAtLimitUsers.length} more not loaded — backend needs at_limit_limit param)
-                    </span>
-                  )}
-                </PaginationInfo>
-                {totalPages > 1 && (
-                  <PaginationButtons>
-                    <PaginationBtn
-                      onClick={() => setAtLimitPage(p => Math.max(1, p - 1))}
-                      disabled={safePage === 1}
-                    >
-                      ← Prev
-                    </PaginationBtn>
-                    <PaginationBtn
-                      onClick={() => setAtLimitPage(p => Math.min(totalPages, p + 1))}
-                      disabled={safePage === totalPages}
-                    >
-                      Next →
-                    </PaginationBtn>
-                  </PaginationButtons>
-                )}
-              </PaginationRow>
-            </>
+            <BrandTable>
+              <BrandTableHead>
+                <tr>
+                  <th style={{ width: '40%' }}>Brand</th>
+                  <th>Saves</th>
+                  <th>Pitches</th>
+                  <th>Replies</th>
+                  <th>Reply Rate</th>
+                </tr>
+              </BrandTableHead>
+              <tbody>
+                {top_brands.map((brand, idx) => (
+                  <BrandTableRow key={brand.brand_id}>
+                    <td>
+                      <BrandCell>
+                        <BrandRank>{idx + 1}</BrandRank>
+                        <BrandLogo
+                          src={brand.logo_url || `https://logo.clearbit.com/${brand.brand_name?.toLowerCase().replace(/\s+/g, '')}.com`}
+                          alt=""
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <BrandInfo>
+                          <BrandName>{brand.brand_name}</BrandName>
+                          {brand.category && <BrandCategory>{brand.category}</BrandCategory>}
+                        </BrandInfo>
+                      </BrandCell>
+                    </td>
+                    <td>
+                      <StatValue>{brand.saves}</StatValue>
+                    </td>
+                    <td>
+                      <StatValue $color={brand.pitch_count > 0 ? colors.violet : undefined}>
+                        {brand.pitch_count || 0}
+                      </StatValue>
+                    </td>
+                    <td>
+                      <StatValue $color={brand.replies > 0 ? colors.green : undefined}>
+                        {brand.replies}
+                      </StatValue>
+                    </td>
+                    <td>
+                      <ReplyRateBadge $rate={brand.reply_rate}>
+                        {brand.reply_rate}%
+                      </ReplyRateBadge>
+                    </td>
+                  </BrandTableRow>
+                ))}
+              </tbody>
+            </BrandTable>
           )}
         </TodayCard>
 
@@ -1167,6 +1134,101 @@ const PaginationBtn = styled.button`
     opacity: 0.4;
     cursor: not-allowed;
   }
+`;
+
+// Brand Table
+const BrandTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+`;
+
+const BrandTableHead = styled.thead`
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: ${colors.text3};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid ${colors.border};
+    background: #FAFAFA;
+  }
+`;
+
+const BrandTableRow = styled.tr`
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #F5F5F5;
+    vertical-align: middle;
+  }
+  &:last-child td { border-bottom: none; }
+  &:hover { background: #FAFAFA; }
+`;
+
+const BrandCell = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const BrandRank = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: ${colors.text3};
+  min-width: 20px;
+`;
+
+const BrandLogo = styled.img`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #F5F5F5;
+  flex-shrink: 0;
+`;
+
+const BrandInfo = styled.div`
+  min-width: 0;
+`;
+
+const BrandName = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: ${colors.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const BrandCategory = styled.div`
+  font-size: 11px;
+  color: ${colors.text3};
+  margin-top: 1px;
+`;
+
+const StatValue = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${props => props.$color || (props.$muted ? colors.text3 : colors.text)};
+`;
+
+const ReplyRateBadge = styled.span`
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  background: ${props => {
+    if (props.$rate >= 20) return '#ECFDF5';
+    if (props.$rate >= 10) return '#FEF3C7';
+    return '#F3F4F6';
+  }};
+  color: ${props => {
+    if (props.$rate >= 20) return colors.green;
+    if (props.$rate >= 10) return colors.amber;
+    return colors.text3;
+  }};
 `;
 
 // Health Grid
