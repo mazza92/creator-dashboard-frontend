@@ -501,29 +501,32 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           )}
 
           {/* Monthly Unlock Quota Tracker - Show for logged-in FREE users */}
-          {user && subscriptionTier === 'free' && isDashboardView && (
-            <QuotaStrip $atLimit={unlockBalance.remaining <= 0}>
-              <QuotaIconBox $atLimit={unlockBalance.remaining <= 0}>
-                <Mail size={20} />
-              </QuotaIconBox>
-              <QuotaBody>
-                <QuotaTitle>
-                  {unlockBalance.used} of {FREE_UNLOCK_LIMIT} brand unlocks used this month
-                </QuotaTitle>
-                <QuotaBarTrack>
-                  <QuotaBarFill $atLimit={unlockBalance.remaining <= 0} style={{ width: `${Math.min((unlockBalance.used / FREE_UNLOCK_LIMIT) * 100, 100)}%` }} />
-                </QuotaBarTrack>
-                <QuotaMeta $atLimit={unlockBalance.remaining <= 0}>
-                  {unlockBalance.remaining <= 0
-                    ? 'Limit reached · Upgrade to contact more brands'
-                    : `${unlockBalance.remaining} unlocks remaining${unlockBalance.reset_at ? ` · Resets ${new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`}
-                </QuotaMeta>
-              </QuotaBody>
-              <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
-                {unlockBalance.remaining <= 0 ? 'Unlock Unlimited' : 'Upgrade to Pro'}
-              </QuotaCTA>
-            </QuotaStrip>
-          )}
+          {user && subscriptionTier === 'free' && isDashboardView && (() => {
+            const unlocksUsed = FREE_UNLOCK_LIMIT - (unlockBalance.remaining ?? FREE_UNLOCK_LIMIT);
+            return (
+              <QuotaStrip $atLimit={unlockBalance.remaining <= 0}>
+                <QuotaIconBox $atLimit={unlockBalance.remaining <= 0}>
+                  <Mail size={20} />
+                </QuotaIconBox>
+                <QuotaBody>
+                  <QuotaTitle>
+                    {unlocksUsed} of {FREE_UNLOCK_LIMIT} brand unlocks used this month
+                  </QuotaTitle>
+                  <QuotaBarTrack>
+                    <QuotaBarFill $atLimit={unlockBalance.remaining <= 0} style={{ width: `${Math.min((unlocksUsed / FREE_UNLOCK_LIMIT) * 100, 100)}%` }} />
+                  </QuotaBarTrack>
+                  <QuotaMeta $atLimit={unlockBalance.remaining <= 0}>
+                    {unlockBalance.remaining <= 0
+                      ? 'Limit reached · Upgrade to contact more brands'
+                      : `${unlockBalance.remaining} unlocks remaining${unlockBalance.reset_at ? ` · Resets ${new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`}
+                  </QuotaMeta>
+                </QuotaBody>
+                <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
+                  {unlockBalance.remaining <= 0 ? 'Unlock Unlimited' : 'Upgrade to Pro'}
+                </QuotaCTA>
+              </QuotaStrip>
+            );
+          })()}
 
           {/* Search + Filters Row */}
           <SearchRow>

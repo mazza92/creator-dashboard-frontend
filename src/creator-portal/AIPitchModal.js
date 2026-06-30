@@ -185,8 +185,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       }
       // Brand is now unlocked - reveal the contact info immediately
       setContactRevealed(true);
-      // Notify parent if an unlock was consumed (for real-time quota updates)
-      if (response.data.unlock_status === 'unlocked' && onUnlockUsed) {
+      // Notify parent to refetch unlock balance for real-time quota updates
+      if (response.data.brand_unlocked && onUnlockUsed) {
         onUnlockUsed();
       }
       return pitchWithMediaKit;
