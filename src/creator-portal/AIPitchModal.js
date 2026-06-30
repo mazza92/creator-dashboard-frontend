@@ -123,12 +123,25 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
 
   const fetchPitchLimits = async () => {
     try {
-      const response = await api.get('/api/pr-crm/pitch-limits');
-      setPitchLimits(response.data);
-      return response.data;
+      // Use new unlock balance endpoint instead of old pitch-limits
+      const response = await api.get('/api/pr-crm/unlocks/balance');
+      const data = response.data;
+      // Convert to expected format - canPitch is true if unlimited or has remaining unlocks
+      const canPitch = data.is_unlimited || (data.remaining > 0);
+      const limits = {
+        used: data.is_unlimited ? 0 : (5 - (data.remaining || 0)),
+        limit: 5,
+        remaining: data.remaining,
+        canPitch: canPitch,
+        tier: data.tier,
+        reset_at: data.reset_at,
+        is_unlimited: data.is_unlimited
+      };
+      setPitchLimits(limits);
+      return limits;
     } catch (error) {
       // Endpoint doesn't exist yet - default to allowing pitches
-      const defaults = { used: 0, limit: 3, canPitch: true };
+      const defaults = { used: 0, limit: 5, canPitch: true };
       setPitchLimits(defaults);
       return defaults;
     }
