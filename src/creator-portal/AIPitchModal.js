@@ -13,7 +13,7 @@ import api from '../config/api';
  * that follow the proven structure brands expect in 2026.
  */
 
-const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
+const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [pitch, setPitch] = useState(null);
@@ -182,6 +182,12 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
       // Store the application form URL from API if available
       if (response.data.application_form_url) {
         setFetchedApplicationUrl(response.data.application_form_url);
+      }
+      // Brand is now unlocked - reveal the contact info immediately
+      setContactRevealed(true);
+      // Notify parent if an unlock was consumed (for real-time quota updates)
+      if (response.data.unlock_status === 'unlocked' && onUnlockUsed) {
+        onUnlockUsed();
       }
       return pitchWithMediaKit;
     } catch (error) {

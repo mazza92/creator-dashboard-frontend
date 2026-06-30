@@ -51,9 +51,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [pitchesSentThisWeek, setPitchesSentThisWeek] = useState(0);
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 5, used: 0, tier: 'free', reset_at: null });
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
-  const FREE_PITCH_LIMIT = 3; // Free users get 3 pitches per month
+  const FREE_UNLOCK_LIMIT = 5; // Free users get 5 brand unlocks per month
 
   // Pitch modal state
   const [showPitchModal, setShowPitchModal] = useState(false);
@@ -125,12 +125,17 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       });
       setSubscriptionTier(subResponse.data.tier || 'free');
 
-      // Fetch accurate pitch limits from PR CRM endpoint (handles monthly reset)
-      const limitsResponse = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+      // Fetch unlock balance from new credit unlock system
+      const balanceResponse = await axios.get(`${API_BASE}/api/pr-crm/unlocks/balance`, {
         withCredentials: true
       });
-      if (limitsResponse.data.success) {
-        setPitchesSentThisWeek(limitsResponse.data.used || 0);
+      if (balanceResponse.data) {
+        setUnlockBalance({
+          remaining: balanceResponse.data.remaining ?? 5,
+          used: balanceResponse.data.used ?? 0,
+          tier: balanceResponse.data.tier || 'free',
+          reset_at: balanceResponse.data.reset_at
+        });
       }
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -239,9 +244,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       return;
     }
 
-    // Check pitch limit for free users
+    // Check unlock limit for free users (backend also enforces this)
     const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
-    if (!isPro && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
+    if (!isPro && unlockBalance.remaining <= 0) {
       setUpgradeModalVisible(true);
       return;
     }
@@ -258,7 +263,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     e.stopPropagation();
 
     const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
-    if (!isPro && pitchesSentThisWeek >= FREE_PITCH_LIMIT) {
+    if (!isPro && unlockBalance.remaining <= 0) {
       setUpgradeModalVisible(true);
       return;
     }
@@ -495,27 +500,27 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             </WelcomeCard>
           )}
 
-          {/* Monthly Contact Quota Tracker - Show for logged-in FREE users */}
+          {/* Monthly Unlock Quota Tracker - Show for logged-in FREE users */}
           {user && subscriptionTier === 'free' && isDashboardView && (
-            <QuotaStrip $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT}>
-              <QuotaIconBox $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT}>
+            <QuotaStrip $atLimit={unlockBalance.remaining <= 0}>
+              <QuotaIconBox $atLimit={unlockBalance.remaining <= 0}>
                 <Mail size={20} />
               </QuotaIconBox>
               <QuotaBody>
                 <QuotaTitle>
-                  {Math.min(pitchesSentThisWeek, FREE_PITCH_LIMIT)} of {FREE_PITCH_LIMIT} brand contacts used this month
+                  {unlockBalance.used} of {FREE_UNLOCK_LIMIT} brand unlocks used this month
                 </QuotaTitle>
                 <QuotaBarTrack>
-                  <QuotaBarFill $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT} style={{ width: `${Math.min((pitchesSentThisWeek / FREE_PITCH_LIMIT) * 100, 100)}%` }} />
+                  <QuotaBarFill $atLimit={unlockBalance.remaining <= 0} style={{ width: `${Math.min((unlockBalance.used / FREE_UNLOCK_LIMIT) * 100, 100)}%` }} />
                 </QuotaBarTrack>
-                <QuotaMeta $atLimit={pitchesSentThisWeek >= FREE_PITCH_LIMIT}>
-                  {pitchesSentThisWeek >= FREE_PITCH_LIMIT
+                <QuotaMeta $atLimit={unlockBalance.remaining <= 0}>
+                  {unlockBalance.remaining <= 0
                     ? 'Limit reached · Upgrade to contact more brands'
-                    : `${FREE_PITCH_LIMIT - pitchesSentThisWeek} contacts remaining · Resets in 14 days`}
+                    : `${unlockBalance.remaining} unlocks remaining${unlockBalance.reset_at ? ` · Resets ${new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`}
                 </QuotaMeta>
               </QuotaBody>
               <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
-                {pitchesSentThisWeek >= FREE_PITCH_LIMIT ? 'Unlock Unlimited' : 'Upgrade to Pro'}
+                {unlockBalance.remaining <= 0 ? 'Unlock Unlimited' : 'Upgrade to Pro'}
               </QuotaCTA>
             </QuotaStrip>
           )}
@@ -769,7 +774,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 const isSaved = isBrandSaved(brand.id);
                 const isPitched = pitchedBrands.has(brand.id);
                 const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
-                const pitchesLeft = FREE_PITCH_LIMIT - pitchesSentThisWeek;
+                const unlocksLeft = unlockBalance.remaining;
 
                 // Use dashboard route for logged-in creators in dashboard, public route otherwise
                 const brandUrl = isDashboardView && user
@@ -921,9 +926,10 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         <UpgradeModal
           isOpen={upgradeModalVisible}
           onClose={() => setUpgradeModalVisible(false)}
-          currentCount={pitchesSentThisWeek}
-          limit={FREE_PITCH_LIMIT}
-          feature="brand contacts"
+          currentCount={unlockBalance.used}
+          limit={FREE_UNLOCK_LIMIT}
+          feature={unlockBalance.remaining <= 0 ? 'unlock_paywall' : 'pitch'}
+          resetAt={unlockBalance.reset_at}
         />
       )}
 
@@ -937,6 +943,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           }}
           brand={selectedBrandForPitch}
           onPitchSent={handlePitchSent}
+          onUnlockUsed={fetchSubscriptionStatus}
         />
       )}
     </>

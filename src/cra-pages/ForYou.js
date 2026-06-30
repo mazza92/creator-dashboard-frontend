@@ -428,6 +428,20 @@ const ForYou = () => {
     }
   };
 
+  // Separate function to fetch unlock balance - can be called after pitch generation
+  const fetchUnlockBalance = async () => {
+    try {
+      const unlockResponse = await axios.get(`${API_BASE}/api/pr-crm/unlocks/balance`, {
+        withCredentials: true
+      });
+      if (unlockResponse.data.success) {
+        setUnlockBalance(unlockResponse.data);
+      }
+    } catch (unlockErr) {
+      console.log('Unlock balance not available yet');
+    }
+  };
+
   const fetchSubscriptionStatus = async () => {
     try {
       const subResponse = await axios.get(`${API_BASE}/api/subscription/status`, {
@@ -444,16 +458,7 @@ const ForYou = () => {
       }
 
       // Fetch unlock balance for credit unlock model
-      try {
-        const unlockResponse = await axios.get(`${API_BASE}/api/pr-crm/unlocks/balance`, {
-          withCredentials: true
-        });
-        if (unlockResponse.data.success) {
-          setUnlockBalance(unlockResponse.data);
-        }
-      } catch (unlockErr) {
-        console.log('Unlock balance not available yet');
-      }
+      await fetchUnlockBalance();
     } catch (error) {
       console.error('Error fetching subscription:', error);
     }
@@ -1301,6 +1306,7 @@ const ForYou = () => {
           onClose={() => setPitchingBrand(null)}
           brand={pitchingBrand}
           onPitchSent={handlePitchSent}
+          onUnlockUsed={fetchUnlockBalance}
         />
       )}
 
