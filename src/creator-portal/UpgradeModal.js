@@ -6,7 +6,7 @@ import api from '../config/api';
 import { message } from 'antd';
 import { tokens } from '../theme/tokens';
 
-const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits }) => {
+const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt }) => {
   const [loading, setLoading] = useState(false);
 
   const handleUpgrade = async (tier) => {
@@ -72,12 +72,38 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     headline = 'Grow your following with real engagement.';
     subtext = 'Pro members get unlimited Pool access — connect with creators in your niche who actually engage with your content.';
     ctaText = 'Get Pro for $19/month';
+
+  } else if (feature === 'unlock_paywall') {
+    // New credit unlock model - exact copy from brief
+    headline = "You've used all 5 brand unlocks this month.";
+    subtext = 'Each unlock gives you a verified PR contact and a tailored pitch — the things brands actually read.';
+    ctaText = 'Unlock Unlimited — $19/mo';
+    progressLabel = 'unlocks';
   }
 
-  // Feature list - bump feature always shown with NEW tag
-  const features = [
+  // Feature list - use "unlocks" vocabulary for unlock_paywall feature
+  const isUnlockPaywall = feature === 'unlock_paywall';
+
+  const features = isUnlockPaywall ? [
     {
-      text: <><strong>Unlimited pitches</strong> to any brand, every month</>,
+      text: <><strong>Unlimited brand unlocks</strong> — contact any brand, anytime</>,
+      highlight: true
+    },
+    {
+      text: <><strong>Verified PR contacts</strong> — direct emails that get read</>,
+      highlight: false
+    },
+    {
+      text: <><strong>AI-tailored pitches</strong> — personalized for each brand</>,
+      highlight: false
+    },
+    {
+      text: <><strong>Reply tracking</strong> — know when brands respond</>,
+      highlight: false
+    },
+  ] : [
+    {
+      text: <><strong>Unlimited brand unlocks</strong> — contact any brand, every month</>,
       highlight: false
     },
     {
@@ -101,6 +127,17 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       highlight: false
     },
   ];
+
+  // Format reset date for display
+  const formatResetDate = (dateStr) => {
+    if (!dateStr) return 'next month';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    } catch {
+      return 'next month';
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -194,6 +231,13 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             >
               {loading ? 'Processing...' : ctaText}
             </CtaButton>
+
+            {/* Secondary "Wait" option for unlock paywall */}
+            {isUnlockPaywall && (
+              <WaitButton onClick={onClose}>
+                Wait until {formatResetDate(resetAt)}
+              </WaitButton>
+            )}
 
             {/* Footer Trust Signals */}
             <ModalFooter>
@@ -587,6 +631,31 @@ const CtaButton = styled(motion.button)`
     padding: 15px 16px;
     font-size: 14px;
     border-radius: 11px;
+  }
+`;
+
+const WaitButton = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: 11px 14px;
   }
 `;
 

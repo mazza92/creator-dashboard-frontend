@@ -33,6 +33,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
   const [contactMethod, setContactMethod] = useState('email'); // 'email' | 'form'
   const [pitchSent, setPitchSent] = useState(false);
   const [showUpgradeOverlay, setShowUpgradeOverlay] = useState(false);
+  const [paywallData, setPaywallData] = useState(null); // For unlock paywall
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false); // Default false to show Pool nudge
   const [trackingPixelUrl, setTrackingPixelUrl] = useState(null); // For email open tracking
   const [showIncompleteKitPopup, setShowIncompleteKitPopup] = useState(false); // Popup when kit not filled
@@ -185,6 +186,18 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent }) => {
       return pitchWithMediaKit;
     } catch (error) {
       console.error('[AIPitchModal] Generate pitch error:', error);
+
+      // Handle paywall (402) - user ran out of unlocks
+      if (error.response?.status === 402 && error.response?.data?.paywall) {
+        setPaywallData({
+          reset_at: error.response.data.reset_at,
+          remaining: 0,
+          message: error.response.data.message
+        });
+        setShowUpgradeOverlay(true);
+        return null;
+      }
+
       // AI endpoint not ready - use the Golden Template with real data
       const fallbackPitch = isFollowup
         ? generateFollowupTemplate(brand, profile)
@@ -699,6 +712,13 @@ ${creatorName}`;
                 </BrandInfo>
               </Header>
 
+              {/* Brand Unlocked Status Line */}
+              {!loading && pitch && (
+                <UnlockedStatus>
+                  <span>✓</span> Brand unlocked · Verified contact below
+                </UnlockedStatus>
+              )}
+
               {/* Content */}
               {loading ? (
             <LoadingState>
@@ -874,22 +894,35 @@ ${creatorName}`;
                 </PoolNudgeBanner>
               )}
 
-              {/* Inline upgrade overlay — shown when user tries to send without credits */}
+              {/* Inline upgrade overlay — shown when user runs out of unlocks */}
               {showUpgradeOverlay && (
                 <UpgradeOverlay>
                   <UpgradeOverlayCard>
-                    <UpgradeOverlayClose onClick={() => setShowUpgradeOverlay(false)}>×</UpgradeOverlayClose>
-                    <UpgradeOverlayTitle>You've used your free contacts</UpgradeOverlayTitle>
+                    <UpgradeOverlayClose onClick={() => {
+                      setShowUpgradeOverlay(false);
+                      onClose();
+                    }}>×</UpgradeOverlayClose>
+                    <UpgradeOverlayTitle>You've used all 5 brand unlocks this month.</UpgradeOverlayTitle>
                     <UpgradeOverlayText>
-                      You have matched brands waiting. Upgrade to contact them all.
+                      Each unlock gives you a verified PR contact and a tailored pitch — the things brands actually read.
                     </UpgradeOverlayText>
                     <UpgradeOverlayBtn
                       onClick={handleUpgrade}
                       disabled={upgrading}
                     >
-                      {upgrading ? 'Processing...' : 'Upgrade to Pro for $19/month'}
+                      {upgrading ? 'Processing...' : 'Unlock Unlimited — $19/mo'}
                     </UpgradeOverlayBtn>
-                    <UpgradeOverlayNote>One gifted package covers your Pro for the year.</UpgradeOverlayNote>
+                    {paywallData?.reset_at && (
+                      <UpgradeOverlayNote
+                        onClick={() => {
+                          setShowUpgradeOverlay(false);
+                          onClose();
+                        }}
+                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        Wait until {new Date(paywallData.reset_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                      </UpgradeOverlayNote>
+                    )}
                   </UpgradeOverlayCard>
                 </UpgradeOverlay>
               )}
@@ -1034,6 +1067,23 @@ const BrandName = styled.h2`
   font-weight: 700;
   color: #111827;
   margin: 0;
+`;
+
+const UnlockedStatus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #F0FDF4;
+  color: #15803D;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  margin: 0 16px 12px;
+
+  span {
+    font-size: 14px;
+  }
 `;
 
 const BrandCategory = styled.span`

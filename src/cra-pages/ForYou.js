@@ -97,6 +97,7 @@ const ForYou = () => {
   // Sub-tab state for Matches vs Opportunities
   const [activeTab, setActiveTab] = useState('matches');
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 5, tier: 'free', reset_at: null, is_unlimited: false });
   const [opportunityCount, setOpportunityCount] = useState(0);
 
   // Recent replies for social proof strip (notification feed)
@@ -441,6 +442,18 @@ const ForYou = () => {
         setPitchesSentThisMonth(limitsResponse.data.used || 0);
         setPitchLimits(limitsResponse.data);
       }
+
+      // Fetch unlock balance for credit unlock model
+      try {
+        const unlockResponse = await axios.get(`${API_BASE}/api/pr-crm/unlocks/balance`, {
+          withCredentials: true
+        });
+        if (unlockResponse.data.success) {
+          setUnlockBalance(unlockResponse.data);
+        }
+      } catch (unlockErr) {
+        console.log('Unlock balance not available yet');
+      }
     } catch (error) {
       console.error('Error fetching subscription:', error);
     }
@@ -669,31 +682,41 @@ const ForYou = () => {
           )}
         </PageHeader>
 
-        {/* Persistent Quota Progress Banner - only for free users */}
-        {!isPro && data?.has_profile && (
-          <QuotaBanner $exhausted={pitchLimits.used >= pitchLimits.limit}>
+        {/* Persistent Quota Progress Banner - Credit Unlock Model */}
+        {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (
+          <QuotaBanner $exhausted={unlockBalance.remaining <= 0}>
             <QuotaDots>
-              {[0, 1, 2].map(i => (
-                <QuotaDot key={i} $filled={i < pitchLimits.used} />
+              {[0, 1, 2, 3, 4].map(i => (
+                <QuotaDot key={i} $filled={i < (5 - (unlockBalance.remaining || 0))} />
               ))}
             </QuotaDots>
             <QuotaText>
-              <QuotaTitle>{pitchLimits.used} of 3 free pitches sent</QuotaTitle>
+              <QuotaTitle>{unlockBalance.remaining || 0} of 5 brand unlocks left</QuotaTitle>
               <QuotaSub>
-                {pitchLimits.used >= pitchLimits.limit
-                  ? 'Pro members pitch unlimited brands — 6 more 90%+ matches are already waiting for you'
-                  : 'Creators who send all 3 are 2.4x more likely to land a reply'}
+                {unlockBalance.remaining <= 0
+                  ? 'Get unlimited unlocks to contact all your matched brands'
+                  : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'next month'}`}
               </QuotaSub>
             </QuotaText>
-            {pitchLimits.used >= pitchLimits.limit ? (
+            {unlockBalance.remaining <= 0 ? (
               <QuotaUpgrade onClick={handleDirectUpgrade}>
-                Unlock unlimited →
+                Get unlimited unlocks →
               </QuotaUpgrade>
             ) : (
               <QuotaRemaining>
-                {pitchLimits.limit - pitchLimits.used} left →
+                {unlockBalance.remaining} left →
               </QuotaRemaining>
             )}
+          </QuotaBanner>
+        )}
+
+        {/* Pro user banner */}
+        {isPro && data?.has_profile && (
+          <QuotaBanner $isPro>
+            <QuotaText>
+              <QuotaTitle>Pro · unlimited unlocks</QuotaTitle>
+              <QuotaSub>Contact any brand, anytime</QuotaSub>
+            </QuotaText>
           </QuotaBanner>
         )}
 
@@ -1018,15 +1041,15 @@ const ForYou = () => {
                       </UnlockBannerIcon>
                       <UnlockBannerText>
                         <UnlockBannerTitle>
-                          Unlock {(data?.matched?.length || 0) - 3} more high-converting matches
+                          {(data?.matched?.length || 0) - 3} more high-quality matches
                         </UnlockBannerTitle>
                         <UnlockBannerSub>
-                          Pro members pitch unlimited brands · Average {data?.matched?.[3]?.response_rate || 45}% reply rate
+                          Unlock them with Pro · $19/mo for unlimited brand unlocks
                         </UnlockBannerSub>
                       </UnlockBannerText>
                     </UnlockBannerContent>
                     <UnlockBannerBtn>
-                      Upgrade to Pro
+                      Get unlimited unlocks
                       <ArrowRight size={16} />
                     </UnlockBannerBtn>
                   </UnlockBanner>
