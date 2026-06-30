@@ -572,16 +572,16 @@ const ForYou = () => {
 
       // If in welcome flow, return to welcome modal instead of navigating
       if (isWelcomeFlow) {
-        // Check if all 3 welcome brands have been pitched
-        const newPitchedCount = welcomePitchedIds.size + 1;
-        if (newPitchedCount >= 3) {
-          // All 3 done - close welcome flow
+        // Check if all 5 welcome brands have been unlocked
+        const newUnlockedCount = welcomePitchedIds.size + 1;
+        if (newUnlockedCount >= 5) {
+          // All 5 done - close welcome flow
           setIsWelcomeFlow(false);
           setShowWelcomeModal(false);
-          message.success('Amazing! You pitched all 3 brands. Check your pipeline for responses.');
+          message.success('You unlocked all 5 contacts! Check your pipeline for replies.');
           navigate('/creator/dashboard/pr-pipeline');
         } else {
-          // More brands to pitch - keep modal open
+          // More brands to unlock - show modal again
           setShowWelcomeModal(true);
         }
       } else {
@@ -687,39 +687,43 @@ const ForYou = () => {
           )}
         </PageHeader>
 
-        {/* Persistent Quota Progress Banner - Credit Unlock Model */}
-        {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (
-          <QuotaBanner $exhausted={unlockBalance.remaining <= 0}>
-            <QuotaDots>
-              {[0, 1, 2, 3, 4].map(i => (
-                <QuotaDot key={i} $filled={i < (5 - (unlockBalance.remaining || 0))} />
-              ))}
-            </QuotaDots>
-            <QuotaText>
-              <QuotaTitle>{unlockBalance.remaining || 0} of 5 brand unlocks left</QuotaTitle>
-              <QuotaSub>
-                {unlockBalance.remaining <= 0
-                  ? 'Get unlimited unlocks to contact all your matched brands'
-                  : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'next month'}`}
-              </QuotaSub>
-            </QuotaText>
-            {unlockBalance.remaining <= 0 ? (
-              <QuotaUpgrade onClick={handleDirectUpgrade}>
-                Get unlimited unlocks →
-              </QuotaUpgrade>
-            ) : (
-              <QuotaRemaining>
-                {unlockBalance.remaining} left →
-              </QuotaRemaining>
-            )}
-          </QuotaBanner>
-        )}
+        {/* Persistent Quota Progress Banner */}
+        {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (() => {
+          const remaining = unlockBalance.remaining || 0;
+          const used = 5 - remaining;
+          return (
+            <QuotaBanner $exhausted={remaining <= 0}>
+              <QuotaDots>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <QuotaDot key={i} $filled={i < used} />
+                ))}
+              </QuotaDots>
+              <QuotaText>
+                <QuotaTitle>{remaining} remaining ({used} used of 5)</QuotaTitle>
+                <QuotaSub>
+                  {remaining <= 0
+                    ? 'Get unlimited to contact all your matched brands'
+                    : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'next month'}`}
+                </QuotaSub>
+              </QuotaText>
+              {remaining <= 0 ? (
+                <QuotaUpgrade onClick={handleDirectUpgrade}>
+                  Get unlimited →
+                </QuotaUpgrade>
+              ) : (
+                <QuotaRemaining>
+                  {remaining} remaining →
+                </QuotaRemaining>
+              )}
+            </QuotaBanner>
+          );
+        })()}
 
         {/* Pro user banner */}
         {isPro && data?.has_profile && (
           <QuotaBanner $isPro>
             <QuotaText>
-              <QuotaTitle>Pro · unlimited unlocks</QuotaTitle>
+              <QuotaTitle>Pro · Unlimited</QuotaTitle>
               <QuotaSub>Contact any brand, anytime</QuotaSub>
             </QuotaText>
           </QuotaBanner>
@@ -1049,12 +1053,12 @@ const ForYou = () => {
                           {(data?.matched?.length || 0) - 3} more high-quality matches
                         </UnlockBannerTitle>
                         <UnlockBannerSub>
-                          Unlock them with Pro · $19/mo for unlimited brand unlocks
+                          Unlock them with Pro · $19/mo for unlimited contacts
                         </UnlockBannerSub>
                       </UnlockBannerText>
                     </UnlockBannerContent>
                     <UnlockBannerBtn>
-                      Get unlimited unlocks
+                      Get unlimited
                       <ArrowRight size={16} />
                     </UnlockBannerBtn>
                   </UnlockBanner>
@@ -1303,7 +1307,13 @@ const ForYou = () => {
       {pitchingBrand && (
         <AIPitchModal
           isOpen={!!pitchingBrand}
-          onClose={() => setPitchingBrand(null)}
+          onClose={() => {
+            setPitchingBrand(null);
+            // Return to welcome modal if in welcome flow
+            if (isWelcomeFlow) {
+              setShowWelcomeModal(true);
+            }
+          }}
           brand={pitchingBrand}
           onPitchSent={handlePitchSent}
           onUnlockUsed={fetchUnlockBalance}
@@ -1325,40 +1335,41 @@ const ForYou = () => {
         <WelcomeOverlay>
           <WelcomeModal onClick={(e) => e.stopPropagation()}>
             <WelcomeClose onClick={() => { setShowWelcomeModal(false); setIsWelcomeFlow(false); }}>×</WelcomeClose>
-            <WelcomeEmoji>{welcomePitchedIds.size > 0 ? '🚀' : '🎉'}</WelcomeEmoji>
+            <WelcomeEmoji>{welcomePitchedIds.size > 0 ? '🚀' : '✨'}</WelcomeEmoji>
             <WelcomeTitle>
               {welcomePitchedIds.size === 0
-                ? 'Your top 3 matches are ready!'
-                : welcomePitchedIds.size === 1
-                  ? 'Great start! 2 more to go'
-                  : 'Almost there! 1 more to go'}
+                ? '5 Brand Contacts, On Us'
+                : welcomePitchedIds.size < 3
+                  ? 'Great start! Keep going'
+                  : welcomePitchedIds.size < 5
+                    ? 'Almost there!'
+                    : 'All set!'}
             </WelcomeTitle>
             <WelcomeSub>
               {welcomePitchedIds.size === 0 ? (
-                <>We matched you to <strong>{data.matched.length} brands</strong>. Your first 3 are free to pitch right now —<br />
-                Pro unlocks all {data.matched.length}, every week.</>
+                <>Unlock <strong>5 brand contacts</strong> free this month. Each reveals a verified PR email + AI-drafted outreach.</>
               ) : (
-                <>Keep going! Creators who pitch all 3 are <strong>2.4x more likely</strong> to land a reply.</>
+                <>Creators who contact 5+ brands are <strong>3x more likely</strong> to land PR packages.</>
               )}
             </WelcomeSub>
 
             <WelcomeQuota>
               <WelcomeQuotaDots>
-                {[0, 1, 2].map(i => (
+                {[0, 1, 2, 3, 4].map(i => (
                   <WelcomeQuotaDot key={i} $filled={i < welcomePitchedIds.size} $completed={i < welcomePitchedIds.size} />
                 ))}
               </WelcomeQuotaDots>
-              <span>{welcomePitchedIds.size} of 3 pitched</span>
+              <span>{welcomePitchedIds.size} of 5 unlocked</span>
             </WelcomeQuota>
 
             {welcomePitchedIds.size === 0 && (
               <WelcomeUrgency>
-                <strong>Act now:</strong> creators who pitch within 24 hours of signing up get 2.4x more replies.
+                <strong>Pro tip:</strong> Unlock your first brand contact now — our AI drafts your pitch in seconds.
               </WelcomeUrgency>
             )}
 
             <WelcomeBrands>
-              {data.matched.slice(0, 3).map((brand, idx) => {
+              {data.matched.slice(0, 5).map((brand, idx) => {
                 // Generate 2-char initials from brand name
                 const brandName = brand.name || brand.brand_name || '';
                 const words = brandName.split(' ').filter(Boolean);
@@ -1383,7 +1394,7 @@ const ForYou = () => {
                       <WelcomeBrandName $pitched={isPitched}>{brandName}</WelcomeBrandName>
                       <WelcomeBrandMeta>
                         {isPitched ? (
-                          <span style={{ color: '#10B981', fontWeight: 600 }}>Pitched ✓</span>
+                          <span style={{ color: '#10B981', fontWeight: 600 }}>Unlocked ✓</span>
                         ) : (
                           <>
                             {brand.match_score && <span className="pct">{brand.match_score}% match</span>}
@@ -1393,14 +1404,14 @@ const ForYou = () => {
                       </WelcomeBrandMeta>
                     </WelcomeBrandInfo>
                     {isPitched ? (
-                      <WelcomePitchedBadge>Done</WelcomePitchedBadge>
+                      <WelcomePitchedBadge>✓</WelcomePitchedBadge>
                     ) : (
                       <WelcomePitchBtn onClick={() => {
                         setIsWelcomeFlow(true);
                         setShowWelcomeModal(false);
                         setPitchingBrand(brand);
                       }}>
-                        Pitch
+                        Unlock
                       </WelcomePitchBtn>
                     )}
                   </WelcomeBrandCard>
@@ -1410,7 +1421,7 @@ const ForYou = () => {
 
             <WelcomeFooter>
               <WelcomeSkip onClick={() => { setShowWelcomeModal(false); setIsWelcomeFlow(false); }}>
-                Maybe later
+                I'll explore first →
               </WelcomeSkip>
             </WelcomeFooter>
           </WelcomeModal>
@@ -1423,17 +1434,17 @@ const ForYou = () => {
           <KitNudgeCard onClick={(e) => e.stopPropagation()}>
             <KitNudgeStat>3×</KitNudgeStat>
             <KitNudgeTitle>
-              Pitches with a media kit get 3x more replies
+              Creators with a media kit get 3x more replies
             </KitNudgeTitle>
             <KitNudgeSub>
-              Build yours in 2 minutes before pitching{' '}
+              Build yours in 2 minutes before contacting{' '}
               {kitNudgeBrand?.name || kitNudgeBrand?.brand_name || 'this brand'}.
             </KitNudgeSub>
             <KitNudgePrimary onClick={handleKitNudgeBuild}>
               Build my kit
             </KitNudgePrimary>
             <KitNudgeSecondary onClick={handleKitNudgeSkip}>
-              Pitch without kit
+              Continue without kit
             </KitNudgeSecondary>
           </KitNudgeCard>
         </KitNudgeOverlay>

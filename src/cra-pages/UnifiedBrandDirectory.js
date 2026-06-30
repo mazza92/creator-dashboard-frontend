@@ -282,11 +282,16 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         slug: brand.slug
       }, { withCredentials: true });
 
-      const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+      const response = await axios.get(`${API_BASE}/api/pr-crm/unlocks/balance`, {
         withCredentials: true
       });
-      if (response.data.success) {
-        setPitchesSentThisWeek(response.data.used || 0);
+      if (response.data) {
+        setUnlockBalance({
+          remaining: response.data.remaining ?? 5,
+          used: response.data.used ?? 0,
+          tier: response.data.tier || 'free',
+          reset_at: response.data.reset_at
+        });
       }
     } catch (error) {
       console.error('Error tracking PR form application:', error);
@@ -325,17 +330,25 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     setShowPitchModal(false);
     setSelectedBrandForPitch(null);
 
-    // Re-fetch quota from API to ensure accurate count
+    // Re-fetch unlock balance from API to ensure accurate count
     try {
-      const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+      const response = await axios.get(`${API_BASE}/api/pr-crm/unlocks/balance`, {
         withCredentials: true
       });
-      if (response.data.success) {
-        setPitchesSentThisWeek(response.data.used || 0);
+      if (response.data) {
+        setUnlockBalance({
+          remaining: response.data.remaining ?? 5,
+          used: response.data.used ?? 0,
+          tier: response.data.tier || 'free',
+          reset_at: response.data.reset_at
+        });
       }
     } catch (error) {
-      // Fallback to incrementing locally if API fails
-      setPitchesSentThisWeek(prev => prev + 1);
+      // Fallback to decrementing locally if API fails
+      setUnlockBalance(prev => ({
+        ...prev,
+        remaining: Math.max(0, (prev.remaining ?? 5) - 1)
+      }));
     }
 
     if (contactedBrand) {
@@ -500,29 +513,30 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             </WelcomeCard>
           )}
 
-          {/* Monthly Unlock Quota Tracker - Show for logged-in FREE users */}
+          {/* Monthly Quota Tracker - Show for logged-in FREE users */}
           {user && subscriptionTier === 'free' && isDashboardView && (() => {
-            const unlocksUsed = FREE_UNLOCK_LIMIT - (unlockBalance.remaining ?? FREE_UNLOCK_LIMIT);
+            const remaining = unlockBalance.remaining ?? FREE_UNLOCK_LIMIT;
+            const used = FREE_UNLOCK_LIMIT - remaining;
             return (
-              <QuotaStrip $atLimit={unlockBalance.remaining <= 0}>
-                <QuotaIconBox $atLimit={unlockBalance.remaining <= 0}>
+              <QuotaStrip $atLimit={remaining <= 0}>
+                <QuotaIconBox $atLimit={remaining <= 0}>
                   <Mail size={20} />
                 </QuotaIconBox>
                 <QuotaBody>
                   <QuotaTitle>
-                    {unlocksUsed} of {FREE_UNLOCK_LIMIT} brand unlocks used this month
+                    {remaining} remaining ({used} used of {FREE_UNLOCK_LIMIT})
                   </QuotaTitle>
                   <QuotaBarTrack>
-                    <QuotaBarFill $atLimit={unlockBalance.remaining <= 0} style={{ width: `${Math.min((unlocksUsed / FREE_UNLOCK_LIMIT) * 100, 100)}%` }} />
+                    <QuotaBarFill $atLimit={remaining <= 0} style={{ width: `${Math.min((used / FREE_UNLOCK_LIMIT) * 100, 100)}%` }} />
                   </QuotaBarTrack>
-                  <QuotaMeta $atLimit={unlockBalance.remaining <= 0}>
-                    {unlockBalance.remaining <= 0
+                  <QuotaMeta $atLimit={remaining <= 0}>
+                    {remaining <= 0
                       ? 'Limit reached · Upgrade to contact more brands'
-                      : `${unlockBalance.remaining} unlocks remaining${unlockBalance.reset_at ? ` · Resets ${new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`}
+                      : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'next month'}`}
                   </QuotaMeta>
                 </QuotaBody>
                 <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
-                  {unlockBalance.remaining <= 0 ? 'Unlock Unlimited' : 'Upgrade to Pro'}
+                  {remaining <= 0 ? 'Get Unlimited' : 'Upgrade to Pro'}
                 </QuotaCTA>
               </QuotaStrip>
             );

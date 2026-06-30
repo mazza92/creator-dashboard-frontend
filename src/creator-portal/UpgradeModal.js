@@ -39,8 +39,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   let ctaText = 'Get Pro for $19/month';
   let progressLabel = 'pitches';
 
-  const used = pitchLimits?.used || currentCount || 3;
-  const total = pitchLimits?.limit || limit || 3;
+  // Default values, can be overridden by feature
+  let used = pitchLimits?.used || currentCount || 3;
+  let total = pitchLimits?.limit || limit || 3;
 
   if (feature === 'opportunities') {
     headline = 'Brands are reviewing applications right now.';
@@ -74,23 +75,25 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'unlock_paywall') {
-    // New credit unlock model - exact copy from brief
-    headline = "You've used all 5 brand unlocks this month.";
-    subtext = 'Each unlock gives you a verified PR contact and a tailored pitch — the things brands actually read.';
-    ctaText = 'Unlock Unlimited — $19/mo';
-    progressLabel = 'unlocks';
+    // Credit limit reached - user has 0 remaining
+    headline = "0 remaining (5 used of 5)";
+    subtext = 'Each contact reveals a verified PR email and generates a tailored pitch.';
+    ctaText = 'Get Unlimited — $19/mo';
+    progressLabel = 'contacts';
+    used = 5;
+    total = 5;
   }
 
-  // Feature list - use "unlocks" vocabulary for unlock_paywall feature
+  // Feature list
   const isUnlockPaywall = feature === 'unlock_paywall';
 
   const features = isUnlockPaywall ? [
     {
-      text: <><strong>Unlimited brand unlocks</strong> — contact any brand, anytime</>,
+      text: <><strong>Unlimited brand contacts</strong> — reach any brand, anytime</>,
       highlight: true
     },
     {
-      text: <><strong>Verified PR contacts</strong> — direct emails that get read</>,
+      text: <><strong>Verified PR emails</strong> — direct contacts that get read</>,
       highlight: false
     },
     {
@@ -103,7 +106,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     },
   ] : [
     {
-      text: <><strong>Unlimited brand unlocks</strong> — contact any brand, every month</>,
+      text: <><strong>Unlimited brand contacts</strong> — reach any brand, every month</>,
       highlight: false
     },
     {

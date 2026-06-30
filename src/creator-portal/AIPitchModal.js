@@ -921,15 +921,15 @@ ${creatorName}`;
                       setShowUpgradeOverlay(false);
                       onClose();
                     }}>×</UpgradeOverlayClose>
-                    <UpgradeOverlayTitle>You've used all 5 brand unlocks this month.</UpgradeOverlayTitle>
+                    <UpgradeOverlayTitle>0 remaining (5 used of 5)</UpgradeOverlayTitle>
                     <UpgradeOverlayText>
-                      Each unlock gives you a verified PR contact and a tailored pitch — the things brands actually read.
+                      Each contact reveals a verified PR email and generates a tailored pitch.
                     </UpgradeOverlayText>
                     <UpgradeOverlayBtn
                       onClick={handleUpgrade}
                       disabled={upgrading}
                     >
-                      {upgrading ? 'Processing...' : 'Unlock Unlimited — $19/mo'}
+                      {upgrading ? 'Processing...' : 'Get Unlimited — $19/mo'}
                     </UpgradeOverlayBtn>
                     {paywallData?.reset_at && (
                       <UpgradeOverlayNote
