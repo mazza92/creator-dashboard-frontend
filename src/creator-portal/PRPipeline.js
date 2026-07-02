@@ -260,12 +260,14 @@ const PRPipeline = () => {
   const fetchPitchLimits = async () => {
     try {
       const apiBase = getApiBase();
-      const response = await axios.get(`${apiBase}/api/pr-crm/pitch-limits`, { withCredentials: true });
+      // Use unlocks/balance API for accurate quota tracking
+      const response = await axios.get(`${apiBase}/api/pr-crm/unlocks/balance`, { withCredentials: true });
+      const isUnlimited = response.data.is_unlimited || response.data.tier === 'pro';
       setPitchLimits({
         used: response.data.used || 0,
-        limit: response.data.limit || 3
+        limit: response.data.limit || 5
       });
-      setIsPro(response.data.tier === 'pro' || response.data.tier === 'elite');
+      setIsPro(isUnlimited);
     } catch (error) {
       console.error('Error fetching pitch limits:', error);
     }
@@ -907,15 +909,6 @@ const PRPipeline = () => {
             >
               ✉️ Send Pitch to {item.brand_name}
             </PrimaryBtn>
-            {!isPro && (
-              <CtaCredit>
-                {pitchLimits.limit - pitchLimits.used <= 0
-                  ? <>Out of pitches — <UpgradeLink onClick={() => { setUpgradeReason('quota'); setShowUpgradeModal(true); }}>unlock unlimited →</UpgradeLink></>
-                  : pitchLimits.limit - pitchLimits.used === 1
-                    ? <>Last free pitch — <UpgradeLink onClick={() => { setUpgradeReason('quota'); setShowUpgradeModal(true); }}>then unlock unlimited →</UpgradeLink></>
-                    : `${pitchLimits.used} of ${pitchLimits.limit} pitches used this month`}
-              </CtaCredit>
-            )}
           </>
         )}
 

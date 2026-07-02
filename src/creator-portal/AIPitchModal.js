@@ -927,11 +927,6 @@ ${creatorName}`;
                   </SecondaryBtn>
                   {/* Rewrite pitch button removed to avoid LLM costs */}
                 </SecondaryRow>
-
-                {/* Subtle quota line — informational only */}
-                <QuotaLine>
-                  Contact {pitchLimits.used} of {pitchLimits.limit} used this month
-                </QuotaLine>
               </Actions>
 
               {/* Media kit nudge — smart states based on kit status */}
@@ -2314,13 +2309,6 @@ const SecondaryBtn = styled.button`
     font-size: 12px;
     border-radius: 10px;
   }
-`;
-
-const QuotaLine = styled.div`
-  text-align: center;
-  font-size: 11px;
-  color: #9CA3AF;
-  margin-top: 10px;
 `;
 
 const NoContactNote = styled.div`
