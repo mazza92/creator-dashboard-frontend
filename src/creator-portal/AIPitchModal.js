@@ -29,6 +29,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   const [creditUsed, setCreditUsed] = useState(false);
   const [outreachStartedMethod, setOutreachStartedMethod] = useState(null);
   const [contactRevealed, setContactRevealed] = useState(false);
+  const [pitchTracked, setPitchTracked] = useState(false); // Track if track_pitch was called
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [contactMethod, setContactMethod] = useState('email'); // 'email' | 'form'
@@ -453,10 +454,10 @@ ${creatorName}`;
 
     try {
       // Only track pitch usage for initial outreach, not follow-ups
-      // Also skip if contact was already revealed (quota already consumed)
-      if (!isFollowup && !contactRevealed) {
+      // Use pitchTracked flag (not contactRevealed) since contact is revealed during generatePitch
+      if (!isFollowup && !pitchTracked) {
         await trackPitchUsage();
-        setContactRevealed(true); // Now show the real email
+        setPitchTracked(true);
       }
       const method = isFollowup ? 'followup' : 'email';
       setOutreachStartedMethod(method);
@@ -490,10 +491,10 @@ ${creatorName}`;
     }
 
     try {
-      // Skip tracking if contact was already revealed (quota already consumed)
-      if (!contactRevealed) {
+      // Skip tracking if pitch was already tracked
+      if (!pitchTracked) {
         await trackPitchUsage();
-        setContactRevealed(true); // Now show the real email
+        setPitchTracked(true);
       }
       setOutreachStartedMethod('form');
       if (formWindow) {
