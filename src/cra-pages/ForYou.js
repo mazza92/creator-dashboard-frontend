@@ -589,7 +589,8 @@ const ForYou = () => {
       // If in welcome flow, return to welcome modal instead of navigating
       if (isWelcomeFlow) {
         // Check if all 5 welcome brands have been unlocked
-        const newUnlockedCount = welcomePitchedIds.size + 1;
+        // Use Set to calculate correct count (brand may already be tracked from onUnlockUsed)
+        const newUnlockedCount = new Set([...welcomePitchedIds, contactedBrand.id]).size;
         if (newUnlockedCount >= 5) {
           // All 5 done - close welcome flow
           setIsWelcomeFlow(false);
@@ -1338,6 +1339,10 @@ const ForYou = () => {
           onUnlockUsed={() => {
             fetchUnlockBalance();
             fetchUnlockedBrands();
+            // Mark as unlocked in welcome flow immediately (not just after pitch sent)
+            if (isWelcomeFlow && pitchingBrand) {
+              setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
+            }
           }}
         />
       )}
