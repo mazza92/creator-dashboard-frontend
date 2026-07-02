@@ -698,10 +698,15 @@ export default function CreatorOnboarding() {
               <FollowerReveal $show={!!platform}>
                 <FollowerLabel>{selectedPlatform?.label}</FollowerLabel>
                 <FollowerInput
-                  type="number"
-                  placeholder="e.g. 12,500"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="e.g. 120000"
                   value={followers}
-                  onChange={(e) => setFollowers(e.target.value)}
+                  onChange={(e) => {
+                    // Strip non-numeric characters (commas, spaces, etc) and store raw number
+                    const rawValue = e.target.value.replace(/[^\d]/g, '');
+                    setFollowers(rawValue);
+                  }}
                   disabled={loading}
                 />
               </FollowerReveal>

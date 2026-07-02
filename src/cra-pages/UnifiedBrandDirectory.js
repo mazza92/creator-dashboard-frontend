@@ -59,6 +59,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [showPitchModal, setShowPitchModal] = useState(false);
   const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
   const [pitchedBrands, setPitchedBrands] = useState(new Set());
+  const [unlockedBrands, setUnlockedBrands] = useState(new Set()); // Brands where contact was revealed
 
   // V4: Welcome card for first-time users after onboarding
   const [showWelcomeCard, setShowWelcomeCard] = useState(false);
@@ -82,6 +83,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     if (user) {
       fetchSubscriptionStatus();
       fetchSavedBrands();
+      fetchUnlockedBrands();
     }
   }, [user]);
 
@@ -161,6 +163,19 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       }
     } catch (error) {
       console.error('Error fetching saved brands:', error);
+    }
+  };
+
+  const fetchUnlockedBrands = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/pr-crm/unlocks/brands`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setUnlockedBrands(new Set(response.data.unlocked_brand_ids));
+      }
+    } catch (error) {
+      console.error('Error fetching unlocked brands:', error);
     }
   };
 
@@ -790,6 +805,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               {brands.map(brand => {
                 const isSaved = isBrandSaved(brand.id);
                 const isPitched = pitchedBrands.has(brand.id);
+                const isUnlocked = unlockedBrands.has(brand.id);
                 const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
                 const unlocksLeft = unlockBalance.remaining;
 
@@ -807,6 +823,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                       <FeaturedBadge>
                         <Sparkles size={14} /> Featured
                       </FeaturedBadge>
+                    )}
+
+                    {isUnlocked && !brand.isFeatured && (
+                      <UnlockedBadge>
+                        <Check size={14} /> Unlocked
+                      </UnlockedBadge>
                     )}
 
                     <BrandLogo>
@@ -960,7 +982,10 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           }}
           brand={selectedBrandForPitch}
           onPitchSent={handlePitchSent}
-          onUnlockUsed={fetchSubscriptionStatus}
+          onUnlockUsed={() => {
+            fetchSubscriptionStatus();
+            fetchUnlockedBrands();
+          }}
         />
       )}
     </>
@@ -1325,6 +1350,29 @@ const FeaturedBadge = styled.div`
   padding: 4px 9px;
   border-radius: ${tokens.radiusPill};
   border: 1px solid #FDE68A;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.2px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+`;
+
+const UnlockedBadge = styled.div`
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  background: #D1FAE5;
+  color: #065F46;
+  padding: 4px 9px;
+  border-radius: ${tokens.radiusPill};
+  border: 1px solid #A7F3D0;
   font-size: 10px;
   font-weight: 700;
   display: flex;

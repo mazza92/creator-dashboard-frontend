@@ -58,6 +58,7 @@ const ForYou = () => {
   const [upgradeReason, setUpgradeReason] = useState('');
   const [savedIds, setSavedIds] = useState(new Set());
   const [pitchedIds, setPitchedIds] = useState(new Set());
+  const [unlockedIds, setUnlockedIds] = useState(new Set()); // Brands where contact was revealed
   const [subscriptionTier, setSubscriptionTier] = useState('free');
   const [pitchesSentThisMonth, setPitchesSentThisMonth] = useState(0);
 
@@ -152,6 +153,7 @@ const ForYou = () => {
     fetchData();
     fetchSubscriptionStatus();
     fetchSavedBrands();
+    fetchUnlockedBrands();
     fetchCreatorProfile();
     fetchKitViews();
     fetchOpportunityCount();
@@ -439,6 +441,20 @@ const ForYou = () => {
       }
     } catch (unlockErr) {
       console.log('Unlock balance not available yet');
+    }
+  };
+
+  // Fetch list of brands the user has already unlocked (for showing "Unlocked" badge)
+  const fetchUnlockedBrands = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/pr-crm/unlocks/brands`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setUnlockedIds(new Set(response.data.unlocked_brand_ids));
+      }
+    } catch (err) {
+      console.log('Unlocked brands not available yet');
     }
   };
 
@@ -998,6 +1014,7 @@ const ForYou = () => {
                   isPro={isPro}
                   hasPitched={pitchedIds.has(brand.id)}
                   isSaved={savedIds.has(brand.id)}
+                  isUnlocked={unlockedIds.has(brand.id)}
                   atLimit={atLimit}
                   onPitch={() => handlePitchNow(brand)}
                   onUpgrade={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}
@@ -1017,6 +1034,7 @@ const ForYou = () => {
                     isPro={isPro}
                     hasPitched={pitchedIds.has(brand.id)}
                     isSaved={savedIds.has(brand.id)}
+                    isUnlocked={unlockedIds.has(brand.id)}
                     atLimit={atLimit}
                     onPitch={() => handlePitchNow(brand)}
                     onUpgrade={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}
@@ -1224,6 +1242,7 @@ const ForYou = () => {
                       isPro={isPro}
                       hasPitched={pitchedIds.has(brand.id)}
                       isSaved={savedIds.has(brand.id)}
+                      isUnlocked={unlockedIds.has(brand.id)}
                       atLimit={atLimit}
                       onPitch={() => handlePitchNow(brand)}
                       onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
@@ -1316,7 +1335,10 @@ const ForYou = () => {
           }}
           brand={pitchingBrand}
           onPitchSent={handlePitchSent}
-          onUnlockUsed={fetchUnlockBalance}
+          onUnlockUsed={() => {
+            fetchUnlockBalance();
+            fetchUnlockedBrands();
+          }}
         />
       )}
 
@@ -1473,7 +1495,7 @@ const ForYou = () => {
 };
 
 // Brand Card Component (inline for this page)
-const BrandCard = ({ brand, isPro, hasPitched, isSaved, atLimit, onPitch, onUpgrade, badge, matchScore, showMomentum }) => {
+const BrandCard = ({ brand, isPro, hasPitched, isSaved, isUnlocked, atLimit, onPitch, onUpgrade, badge, matchScore, showMomentum }) => {
   const catStyle = getCategoryColors(brand.category);
 
   return (
@@ -1487,8 +1509,11 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, atLimit, onPitch, onUpgr
         {badge && (
           <LogoBadge $type={badge.type}>{badge.label}</LogoBadge>
         )}
-        {matchScore && (
+        {matchScore && !isUnlocked && (
           <MatchBadge>{Math.round(matchScore)}% match</MatchBadge>
+        )}
+        {isUnlocked && (
+          <UnlockedBadge><Check size={12} /> Unlocked</UnlockedBadge>
         )}
         {brand.logo ? (
           <LogoImg src={brand.logo} alt={brand.name} onError={(e) => { e.target.style.display = 'none'; }} />
@@ -2190,6 +2215,37 @@ const MatchBadge = styled.div`
     right: 8px;
     font-size: 11px;
     padding: 5px 10px;
+  }
+`;
+
+const UnlockedBadge = styled.div`
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background: #D1FAE5;
+  color: #065F46;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.2px;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+  border: 1px solid #A7F3D0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  @media (max-width: 640px) {
+    top: -8px;
+    right: 8px;
+    font-size: 10px;
+    padding: 4px 8px;
   }
 `;
 

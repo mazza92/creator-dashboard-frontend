@@ -16,12 +16,13 @@ import api from '../config/api';
 const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [loadingStep, setLoadingStep] = useState(0); // 0: Finding contact, 1: Crafting pitch, 2: Personalizing
   const [pitch, setPitch] = useState(null);
   const [creatorProfile, setCreatorProfile] = useState(null);
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
-  const [regenerateCount, setRegenerateCount] = useState(0);
+  // NOTE: Rewrite/regenerate removed to avoid LLM costs per brief
   const [fetchedBrandEmail, setFetchedBrandEmail] = useState(null); // Email from API
   const [fetchedApplicationUrl, setFetchedApplicationUrl] = useState(null); // Application form URL from API
   const [upgrading, setUpgrading] = useState(false); // Stripe checkout loading
@@ -37,6 +38,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false); // Default false to show Pool nudge
   const [trackingPixelUrl, setTrackingPixelUrl] = useState(null); // For email open tracking
   const [showIncompleteKitPopup, setShowIncompleteKitPopup] = useState(false); // Popup when kit not filled
+  const [showUnlockCelebration, setShowUnlockCelebration] = useState(false); // Tinder-style unlock celebration
+  const [wasAlreadyUnlocked, setWasAlreadyUnlocked] = useState(false); // Track if brand was previously unlocked
 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
@@ -50,6 +53,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
 
   const initializePitch = async () => {
     setLoading(true);
+    setLoadingStep(0); // Finding contact
 
     // Fetch limits (but don't gate pitch generation — that happens at send time)
     await fetchPitchLimits();
@@ -62,9 +66,13 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       setHasRecentPoolActivity(false); // Default to showing nudge on error
     }
 
+    setLoadingStep(1); // Crafting pitch
+
     // Always generate the pitch — contact reveal is what consumes the credit
     const profile = await fetchCreatorProfile();
     setCreatorProfile(profile);
+
+    setLoadingStep(2); // Personalizing
     await generatePitch(profile);
 
     setLoading(false);
@@ -148,28 +156,6 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   };
 
   const generatePitch = async (profile) => {
-    // Helper to append media kit link to pitch body
-    const appendMediaKitLink = (pitchData) => {
-      if (profile?.has_media_kit && profile?.media_kit_url && pitchData?.body) {
-        // Find where to insert (before "If you're open to it" or at end before signature)
-        const body = pitchData.body;
-        const insertPoint = body.indexOf('\nIf you\'re open to it');
-        if (insertPoint > -1) {
-          // Insert media kit link before the closing paragraph
-          pitchData.body = body.slice(0, insertPoint) + `\nPlease find my portfolio here: ${profile.media_kit_url}` + body.slice(insertPoint);
-        } else {
-          // Fallback: append before signature (last 2 lines typically)
-          const lines = body.split('\n');
-          const signatureIndex = lines.findIndex(line => line.startsWith('Thanks,') || line.startsWith('Best,'));
-          if (signatureIndex > -1) {
-            lines.splice(signatureIndex, 0, `Please find my portfolio here: ${profile.media_kit_url}`, '');
-            pitchData.body = lines.join('\n');
-          }
-        }
-      }
-      return pitchData;
-    };
-
     try {
       // Try AI endpoint first - send both brand_id and slug as fallback
       const response = await api.post('/api/pr-crm/generate-pitch', {
@@ -183,8 +169,9 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
         brand_name: response.data.brand_name,
         is_followup: isFollowup
       });
-      // Append media kit link to the pitch body
-      const pitchWithMediaKit = appendMediaKitLink({ ...response.data });
+      // NOTE: Portfolio link is inserted by the backend (with tracking ?ref token).
+      // Do NOT append it here — doing so creates a duplicate untracked link.
+      const pitchWithMediaKit = { ...response.data };
       setPitch(pitchWithMediaKit);
       setEditedSubject(pitchWithMediaKit.subject || '');
       setEditedBody(pitchWithMediaKit.body || '');
@@ -198,9 +185,19 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       }
       // Brand is now unlocked - reveal the contact info immediately
       setContactRevealed(true);
-      // Notify parent to refetch unlock balance for real-time quota updates
-      if (response.data.brand_unlocked && onUnlockUsed) {
-        onUnlockUsed();
+      // Check if this was a fresh unlock (credit used) vs already unlocked
+      if (response.data.brand_unlocked) {
+        // Fresh unlock - show celebration!
+        setWasAlreadyUnlocked(false);
+        setShowUnlockCelebration(true);
+        // User must click to dismiss - give them time to appreciate the unlock
+        // Notify parent to refetch unlock balance for real-time quota updates
+        if (onUnlockUsed) {
+          onUnlockUsed();
+        }
+      } else if (response.data.already_unlocked) {
+        // Brand was already unlocked - no celebration, just show unlocked state
+        setWasAlreadyUnlocked(true);
       }
       return pitchWithMediaKit;
     } catch (error) {
@@ -546,10 +543,8 @@ ${creatorName}`;
     }
   };
 
-  const handleRegenerate = () => {
-    setRegenerateCount(prev => prev + 1);
-    initializePitch();
-  };
+  // NOTE: handleRegenerate removed to avoid LLM costs
+  // Each Gemini call costs ~$0.0002, regenerations add up
 
   const handleUpgrade = async () => {
     try {
@@ -731,19 +726,94 @@ ${creatorName}`;
                 </BrandInfo>
               </Header>
 
-              {/* Brand Unlocked Status Line */}
+              {/* Brand Unlocked Status Line - differentiate fresh vs already unlocked */}
               {!loading && pitch && (
-                <UnlockedStatus>
-                  <span>✓</span> Brand unlocked · Verified contact below
+                <UnlockedStatus $wasAlreadyUnlocked={wasAlreadyUnlocked}>
+                  <span>✓</span> {wasAlreadyUnlocked ? 'Already unlocked · No credit used' : 'Brand unlocked · Verified contact below'}
                 </UnlockedStatus>
               )}
+
+              {/* Tinder-style Unlock Celebration */}
+              <AnimatePresence>
+                {showUnlockCelebration && (
+                  <UnlockCelebrationOverlay
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <UnlockCelebrationCard
+                      initial={{ scale: 0.5, y: 50 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+                    >
+                      <ConfettiContainer>
+                        {[...Array(12)].map((_, i) => (
+                          <Confetti key={i} $delay={i * 0.1} $angle={i * 30} />
+                        ))}
+                      </ConfettiContainer>
+                      <CelebrationIcon>
+                        <span>🎉</span>
+                      </CelebrationIcon>
+                      <CelebrationTitle>Brand Contact Unlocked!</CelebrationTitle>
+                      <CelebrationBrandName>{brandName}</CelebrationBrandName>
+                      <CelebrationDetails>
+                        <CelebrationDetail>
+                          <span>✓</span> Verified PR email revealed
+                        </CelebrationDetail>
+                        <CelebrationDetail>
+                          <span>✓</span> Custom pitch generated
+                        </CelebrationDetail>
+                      </CelebrationDetails>
+                      <CelebrationDismiss onClick={() => setShowUnlockCelebration(false)}>
+                        Send your pitch →
+                      </CelebrationDismiss>
+                    </UnlockCelebrationCard>
+                  </UnlockCelebrationOverlay>
+                )}
+              </AnimatePresence>
 
               {/* Content */}
               {loading ? (
             <LoadingState>
-              <Spin size="large" />
-              <LoadingText>{isFollowup ? 'Crafting your follow-up...' : 'Crafting your email...'}</LoadingText>
-              <LoadingSubtext>Personalizing for {brandName}</LoadingSubtext>
+              <LoadingBrandIcon>
+                {brand?.logo ? (
+                  <img src={brand.logo} alt={brandName} />
+                ) : (
+                  <LoadingBrandInitial>{brandName?.charAt(0)}</LoadingBrandInitial>
+                )}
+              </LoadingBrandIcon>
+              <LoadingTitle>
+                {isFollowup ? 'Preparing follow-up' : 'Unlocking'} <LoadingBrandName>{brandName}</LoadingBrandName>
+              </LoadingTitle>
+              <LoadingSteps>
+                <LoadingStepItem $active={loadingStep >= 0} $complete={loadingStep > 0}>
+                  <LoadingStepDot $active={loadingStep === 0} $complete={loadingStep > 0}>
+                    {loadingStep > 0 ? '✓' : '1'}
+                  </LoadingStepDot>
+                  <LoadingStepLabel>Finding PR contact</LoadingStepLabel>
+                </LoadingStepItem>
+                <LoadingStepLine $complete={loadingStep > 0} />
+                <LoadingStepItem $active={loadingStep >= 1} $complete={loadingStep > 1}>
+                  <LoadingStepDot $active={loadingStep === 1} $complete={loadingStep > 1}>
+                    {loadingStep > 1 ? '✓' : '2'}
+                  </LoadingStepDot>
+                  <LoadingStepLabel>Crafting pitch</LoadingStepLabel>
+                </LoadingStepItem>
+                <LoadingStepLine $complete={loadingStep > 1} />
+                <LoadingStepItem $active={loadingStep >= 2} $complete={loadingStep > 2}>
+                  <LoadingStepDot $active={loadingStep === 2} $complete={loadingStep > 2}>
+                    {loadingStep > 2 ? '✓' : '3'}
+                  </LoadingStepDot>
+                  <LoadingStepLabel>Personalizing</LoadingStepLabel>
+                </LoadingStepItem>
+              </LoadingSteps>
+              <LoadingSubtext>
+                {loadingStep === 0 && 'Locating verified PR email...'}
+                {loadingStep === 1 && 'Writing custom outreach...'}
+                {loadingStep === 2 && 'Adding your profile details...'}
+              </LoadingSubtext>
             </LoadingState>
           ) : (
             <>
@@ -855,9 +925,7 @@ ${creatorName}`;
                   <SecondaryBtn onClick={handleCopyPitch}>
                     {copied ? 'Copied' : 'Copy pitch'}
                   </SecondaryBtn>
-                  <SecondaryBtn onClick={handleRegenerate}>
-                    Rewrite pitch
-                  </SecondaryBtn>
+                  {/* Rewrite pitch button removed to avoid LLM costs */}
                 </SecondaryRow>
 
                 {/* Subtle quota line — informational only */}
@@ -1093,8 +1161,8 @@ const UnlockedStatus = styled.div`
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: #F0FDF4;
-  color: #15803D;
+  background: ${p => p.$wasAlreadyUnlocked ? '#F3F4F6' : '#F0FDF4'};
+  color: ${p => p.$wasAlreadyUnlocked ? '#6B7280' : '#15803D'};
   font-size: 13px;
   font-weight: 600;
   border-radius: 8px;
@@ -1102,6 +1170,175 @@ const UnlockedStatus = styled.div`
 
   span {
     font-size: 14px;
+  }
+`;
+
+// ── Tinder-style Unlock Celebration ─────────────────────────────
+const UnlockCelebrationOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  padding: 20px;
+`;
+
+const UnlockCelebrationCard = styled(motion.div)`
+  background: linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 100%);
+  border-radius: 28px;
+  padding: 40px 32px 32px;
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10B981, #3B82F6, #8B5CF6, #EC4899);
+  }
+`;
+
+const ConfettiContainer = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+`;
+
+const Confetti = styled.div`
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: ${p => ['#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#EF4444'][p.$angle / 30 % 6]};
+  animation: confettiFall 1.5s ease-out forwards;
+  animation-delay: ${p => p.$delay}s;
+  transform: rotate(${p => p.$angle}deg);
+
+  @keyframes confettiFall {
+    0% {
+      transform: translateY(0) rotate(0deg) scale(0);
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(${p => 80 + Math.random() * 60}px)
+                 translateX(${p => (Math.cos(p.$angle * Math.PI / 180) * 120)}px)
+                 rotate(${p => p.$angle + 360}deg)
+                 scale(1);
+      opacity: 0;
+    }
+  }
+`;
+
+const CelebrationIcon = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10B981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.4);
+  animation: celebratePulse 0.6s ease-out;
+
+  span {
+    font-size: 40px;
+    animation: celebrateBounce 0.5s ease-out 0.2s;
+  }
+
+  @keyframes celebratePulse {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes celebrateBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+`;
+
+const CelebrationTitle = styled.div`
+  font-size: 24px;
+  font-weight: 900;
+  color: white;
+  margin-bottom: 8px;
+  animation: slideUp 0.5s ease-out 0.15s both;
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+
+const CelebrationBrandName = styled.div`
+  font-size: 18px;
+  font-weight: 700;
+  color: #10B981;
+  margin-bottom: 20px;
+  animation: slideUp 0.5s ease-out 0.3s both;
+`;
+
+const CelebrationDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+  animation: slideUp 0.5s ease-out 0.45s both;
+`;
+
+const CelebrationDetail = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+
+  span {
+    color: #10B981;
+    font-weight: 700;
+  }
+`;
+
+const CelebrationDismiss = styled.button`
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  animation: slideUp 0.5s ease-out 0.6s both, pulseBtn 2s ease-in-out 1.5s infinite;
+
+  @keyframes pulseBtn {
+    0%, 100% { box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+    50% { box-shadow: 0 4px 24px rgba(16, 185, 129, 0.6); }
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    animation: none;
   }
 `;
 
@@ -1127,21 +1364,124 @@ const PitchCounter = styled.div`
 `;
 
 const LoadingState = styled.div`
-  padding: 60px 24px;
+  padding: 48px 24px 56px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
-const LoadingText = styled.div`
-  margin-top: 20px;
-  font-size: 16px;
+const LoadingBrandIcon = styled.div`
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 12px;
+  }
+`;
+
+const LoadingBrandInitial = styled.div`
+  font-size: 28px;
+  font-weight: 700;
+  color: #6B7280;
+`;
+
+const LoadingTitle = styled.div`
+  font-size: 18px;
   font-weight: 600;
+  color: #374151;
+  margin-bottom: 28px;
+`;
+
+const LoadingBrandName = styled.span`
   color: #111827;
+  font-weight: 700;
+`;
+
+const LoadingSteps = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 320px;
+`;
+
+const LoadingStepItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: ${p => p.$active ? 1 : 0.4};
+  transition: opacity 0.3s ease;
+`;
+
+const LoadingStepDot = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+
+  ${p => p.$complete ? `
+    background: #10B981;
+    color: white;
+  ` : p.$active ? `
+    background: #111827;
+    color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+  ` : `
+    background: #E5E7EB;
+    color: #9CA3AF;
+  `}
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(17, 24, 39, 0.3); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(17, 24, 39, 0); }
+  }
+`;
+
+const LoadingStepLabel = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+  white-space: nowrap;
+`;
+
+const LoadingStepLine = styled.div`
+  width: 32px;
+  height: 2px;
+  background: ${p => p.$complete ? '#10B981' : '#E5E7EB'};
+  margin: 0 4px;
+  margin-bottom: 24px;
+  transition: background 0.3s ease;
 `;
 
 const LoadingSubtext = styled.div`
-  margin-top: 4px;
   font-size: 14px;
-  color: #6B7280;
+  color: #9CA3AF;
+  animation: fadeInUp 0.3s ease;
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 `;
 
 const EmailPreview = styled.div`
