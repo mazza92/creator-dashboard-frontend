@@ -449,6 +449,33 @@ function CreatorOnboardingForm({ role, onSuccess }) {
       }
       const usernameValid = await validateUsername();
       if (!usernameValid) return false;
+
+      // Check for duplicate social handles to prevent multi-account abuse
+      for (const link of formData.socialLinks) {
+        if (!link.platform || !link.url) continue;
+        // Extract handle from URL (e.g., instagram.com/username -> username)
+        const urlParts = link.url.replace(/\/$/, '').split('/');
+        const handle = urlParts[urlParts.length - 1];
+        if (!handle) continue;
+
+        try {
+          const handleCheck = await axios.post(
+            `${API_URL}/api/check-social-handle`,
+            { handle: handle.toLowerCase(), platform: link.platform },
+            { withCredentials: true }
+          );
+          if (handleCheck.data?.exists) {
+            message.error(`The ${link.platform} handle @${handle} is already registered with another account. Each social profile can only be linked to one account.`);
+            return false;
+          }
+        } catch (err) {
+          // If the endpoint doesn't exist (404), allow registration to continue
+          if (err.response?.status !== 404) {
+            console.error('Error checking social handle:', err);
+          }
+        }
+      }
+
       return true;
     }
     if (currentStep === 3) {

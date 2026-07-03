@@ -553,6 +553,17 @@ export default function CreatorOnboarding() {
     if (!followers || parseInt(followers) <= 0) { setError('Please enter your follower count'); return; }
     setLoading(true);
     try {
+      // Check if this social handle is already registered (prevent multi-account abuse)
+      const handleCheck = await apiClient.post('/api/check-social-handle', {
+        handle: username.trim().toLowerCase(),
+        platform,
+      });
+      if (handleCheck.data?.exists) {
+        setError('This social handle is already registered with another account. Each social profile can only be linked to one account.');
+        setLoading(false);
+        return;
+      }
+
       await apiClient.post('/api/user/onboarding/step1', {
         username: username.trim().toLowerCase(),
         platform,
@@ -560,7 +571,23 @@ export default function CreatorOnboarding() {
       });
       setStep(2);
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      // If the check endpoint doesn't exist yet, continue with registration
+      // The backend should still enforce uniqueness
+      if (err.response?.status === 404) {
+        try {
+          await apiClient.post('/api/user/onboarding/step1', {
+            username: username.trim().toLowerCase(),
+            platform,
+            followers: parseInt(followers),
+          });
+          setStep(2);
+          return;
+        } catch (innerErr) {
+          setError(innerErr.response?.data?.error || 'Something went wrong');
+        }
+      } else {
+        setError(err.response?.data?.error || 'Something went wrong');
+      }
     } finally {
       setLoading(false);
     }
