@@ -326,7 +326,7 @@ export default function PublicCreatorProfileClient({ username }) {
           {/* Profile Header */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <div style={{ fontWeight: 700, fontSize: 22, color: TEXT_COLOR, textAlign: 'center' }}>@{profile.username}</div>
+              <h1 style={{ fontWeight: 700, fontSize: 22, color: TEXT_COLOR, textAlign: 'center', margin: 0 }}>@{profile.username}</h1>
             </div>
 
             {/* Social Proof Stats */}
