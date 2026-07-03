@@ -40,6 +40,43 @@ const { TextArea } = Input;
 const { Option } = Select;
 const { Text } = Typography;
 
+// ============================================================================
+// USERNAME VALIDATION HELPERS
+// Only allow: letters, numbers, underscores, periods (like Instagram/Twitter)
+// Block: URLs, spaces, special characters
+// ============================================================================
+const sanitizeUsername = (value) => {
+  // Remove any URL-like patterns first (http://, https://, www.)
+  let cleaned = value.replace(/https?:\/\//gi, '').replace(/www\./gi, '');
+  // Only keep alphanumeric, underscore, and period
+  cleaned = cleaned.replace(/[^a-zA-Z0-9_.]/g, '');
+  // Limit to 30 characters (Instagram standard)
+  return cleaned.slice(0, 30).toLowerCase();
+};
+
+const validateUsernameFormat = (value) => {
+  if (!value || !value.trim()) {
+    return { valid: false, error: 'Username is required' };
+  }
+  // Check for URL patterns that might have slipped through
+  if (/https?|www\.|\.com|\.co|\.net|\.org|facebook|instagram|tiktok/i.test(value)) {
+    return { valid: false, error: 'Please enter a username, not a URL' };
+  }
+  // Must start with letter or number
+  if (!/^[a-zA-Z0-9]/.test(value)) {
+    return { valid: false, error: 'Username must start with a letter or number' };
+  }
+  // Minimum length
+  if (value.length < 3) {
+    return { valid: false, error: 'Username must be at least 3 characters' };
+  }
+  // No consecutive periods or underscores
+  if (/[._]{2,}/.test(value)) {
+    return { valid: false, error: 'Username cannot have consecutive periods or underscores' };
+  }
+  return { valid: true, error: null };
+};
+
 // Styled Components
 const Container = styled.div`
   display: flex;
@@ -359,8 +396,10 @@ function CreatorOnboardingForm({ role, onSuccess }) {
   );
 
   const validateUsername = async () => {
-    if (!formData.username.trim()) {
-      setUsernameError('Username is required.');
+    // First validate format (no URLs, special characters, etc.)
+    const formatValidation = validateUsernameFormat(formData.username);
+    if (!formatValidation.valid) {
+      setUsernameError(formatValidation.error);
       setCheckingUsername(false);
       return false;
     }
@@ -439,12 +478,14 @@ function CreatorOnboardingForm({ role, onSuccess }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const processedValue = name === 'bio' ? value : value.trim();
-    setFormData({ ...formData, [name]: processedValue });
-    form.setFieldsValue({ [name]: processedValue });
+    let processedValue = name === 'bio' ? value : value.trim();
+    // Sanitize username to prevent URLs and special characters
     if (name === 'username') {
+      processedValue = sanitizeUsername(value);
       setUsernameError('');
     }
+    setFormData({ ...formData, [name]: processedValue });
+    form.setFieldsValue({ [name]: processedValue });
     if (name === 'email') {
       setEmailError('');
       validateEmail(value.trim());
@@ -861,7 +902,7 @@ function CreatorOnboardingForm({ role, onSuccess }) {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="username (e.g., creator123)"
-                    maxLength={50}
+                    maxLength={30}
                     aria-label="Creator Username"
                   />
                 </Form.Item>

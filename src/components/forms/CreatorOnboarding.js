@@ -8,6 +8,43 @@ import { FaInstagram, FaTiktok, FaYoutube, FaPinterest, FaXTwitter } from 'react
 import { HiOutlinePencilSquare } from 'react-icons/hi2';
 
 // ============================================================================
+// USERNAME VALIDATION HELPERS
+// Only allow: letters, numbers, underscores, periods (like Instagram/Twitter)
+// Block: URLs, spaces, special characters
+// ============================================================================
+const sanitizeUsername = (value) => {
+  // Remove any URL-like patterns first (http://, https://, www.)
+  let cleaned = value.replace(/https?:\/\//gi, '').replace(/www\./gi, '');
+  // Only keep alphanumeric, underscore, and period
+  cleaned = cleaned.replace(/[^a-zA-Z0-9_.]/g, '');
+  // Limit to 30 characters (Instagram standard)
+  return cleaned.slice(0, 30).toLowerCase();
+};
+
+const validateUsername = (value) => {
+  if (!value || !value.trim()) {
+    return { valid: false, error: 'Username is required' };
+  }
+  // Check for URL patterns that might have slipped through
+  if (/https?|www\.|\.com|\.co|\.net|\.org|facebook|instagram|tiktok/i.test(value)) {
+    return { valid: false, error: 'Please enter a username, not a URL' };
+  }
+  // Must start with letter or number
+  if (!/^[a-zA-Z0-9]/.test(value)) {
+    return { valid: false, error: 'Username must start with a letter or number' };
+  }
+  // Minimum length
+  if (value.length < 3) {
+    return { valid: false, error: 'Username must be at least 3 characters' };
+  }
+  // No consecutive periods or underscores
+  if (/[._]{2,}/.test(value)) {
+    return { valid: false, error: 'Username cannot have consecutive periods or underscores' };
+  }
+  return { valid: true, error: null };
+};
+
+// ============================================================================
 // V4 ONBOARDING - 3-step flow
 // Step 1: Username + Platform + Followers
 // Step 2: Bio + Audience age range
@@ -509,13 +546,15 @@ export default function CreatorOnboarding() {
 
   const handleStep1 = async () => {
     setError('');
-    if (!username.trim()) { setError('Username is required'); return; }
+    // Validate username format
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.valid) { setError(usernameValidation.error); return; }
     if (!platform) { setError('Please select your main platform'); return; }
     if (!followers || parseInt(followers) <= 0) { setError('Please enter your follower count'); return; }
     setLoading(true);
     try {
       await apiClient.post('/api/user/onboarding/step1', {
-        username: username.trim(),
+        username: username.trim().toLowerCase(),
         platform,
         followers: parseInt(followers),
       });
@@ -671,9 +710,10 @@ export default function CreatorOnboarding() {
                   type="text"
                   placeholder="yourcreatorname"
                   value={username}
-                  onChange={(e) => { setUsername(e.target.value); setError(''); }}
+                  onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); }}
                   disabled={loading}
                   autoFocus
+                  maxLength={30}
                 />
               </InputWrap>
             </FormGroup>
