@@ -3,7 +3,7 @@ import CanadaDirectoryClient from './CanadaDirectoryClient';
 
 // SEO metadata for Canada Directory
 export const metadata = {
-  title: 'Canadian Brand PR Application Forms - How to Get PR Packages in Canada (2026) | NewCollab',
+  title: 'Canadian Brand PR Forms - PR Packages Canada (2026)',
   description: 'Direct PR application forms for Canadian brands. Find PR packages Canada, requirements, and how to get PR as a Canadian influencer. Top Canadian beauty, skincare, and lifestyle brands accepting micro-influencers.',
   keywords: 'pr packages canada, canadian brands pr packages, how to get pr packages canada, canada brand pr, canadian influencer pr, pr list canada, canadian beauty brands pr, brands that send pr to canada, micro influencer brands canada',
   openGraph: {

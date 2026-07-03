@@ -3,7 +3,7 @@ import SkincareDirectoryClient from './SkincareDirectoryClient';
 
 // SEO metadata for Skincare Directory
 export const metadata = {
-  title: 'Skincare Brand PR Application Forms - 75+ Beauty Brands (2026) | NewCollab',
+  title: 'Skincare PR Forms - 75+ Beauty Brands (2026) - newcollab',
   description: 'Direct skincare brand PR application forms. Find skincare PR list requirements, application links, and brands sending PR to micro-influencers. Filter by follower count.',
   keywords: 'skincare pr list, skincare pr application form, skincare brands pr, beauty pr list, skincare influencer pr, skincare pr packages, how to get skincare pr, skincare pr requirements',
   openGraph: {
