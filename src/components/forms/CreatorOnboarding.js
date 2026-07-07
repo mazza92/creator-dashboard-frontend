@@ -1,11 +1,12 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../utils/api';
 import { UserContext } from '../../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { FaInstagram, FaTiktok, FaYoutube, FaPinterest, FaXTwitter } from 'react-icons/fa6';
 import { HiOutlinePencilSquare } from 'react-icons/hi2';
+import { SocialVerificationStep } from '../SocialVerification';
 
 // ============================================================================
 // USERNAME VALIDATION HELPERS
@@ -282,6 +283,16 @@ const FollowerInput = styled.input`
   &::placeholder { color: ${colors.text3}; }
 `;
 
+const VerificationNote = styled.div`
+  font-size: 13px;
+  color: ${colors.text2};
+  padding: 10px 14px;
+  background: #F9F9F9;
+  border-radius: 8px;
+  margin-top: 12px;
+  text-align: center;
+`;
+
 const BtnRow = styled.div`
   display: flex;
   gap: 9px;
@@ -516,11 +527,17 @@ const REGIONS = [
 ];
 
 export default function CreatorOnboarding() {
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   // Step 1
   const [username, setUsername] = useState('');
   const [platform, setPlatform] = useState('');
   const [followers, setFollowers] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState(null); // null | 'verifying' | 'verified' | 'failed'
+  const [verificationError, setVerificationError] = useState(null);
+  const [verifiedProfile, setVerifiedProfile] = useState(null);
+  // Test mode: allow country override via ?_test_country=IN
+  const testCountry = searchParams.get('_test_country');
   // Step 2
   const [bio, setBio] = useState('');
   const [ageRange, setAgeRange] = useState('');
@@ -537,6 +554,72 @@ export default function CreatorOnboarding() {
 
   const selectedPlatform = PLATFORMS.find(p => p.id === platform);
 
+  // Platforms that support auto-verification via OAuth
+  const VERIFIABLE_PLATFORMS = ['instagram', 'tiktok'];
+
+  // Handle OAuth callback from Instagram/TikTok
+  useEffect(() => {
+    const socialStatus = searchParams.get('social');
+    const oauthPlatform = searchParams.get('platform');
+    const handle = searchParams.get('handle');
+    const followersParam = searchParams.get('followers');
+    const postsParam = searchParams.get('posts');
+    const reason = searchParams.get('reason');
+
+    if (socialStatus === 'success' && handle && oauthPlatform) {
+      // OAuth succeeded - set the username and platform, then auto-proceed
+      setUsername(handle);
+      setPlatform(oauthPlatform);
+      setVerificationStatus('verified');
+
+      const followerCount = parseInt(followersParam) || 0;
+      const postCount = parseInt(postsParam) || 0;
+
+      setVerifiedProfile({
+        username: handle,
+        follower_count: followerCount,
+        media_count: postCount,
+      });
+
+      // Save to backend and proceed to step 2
+      const saveAndProceed = async () => {
+        try {
+          await apiClient.post('/api/user/onboarding/step1', {
+            username: handle,
+            platform: oauthPlatform,
+            followers: followerCount,
+          });
+          setStep(2);
+        } catch (err) {
+          console.error('Error saving profile after OAuth:', err);
+          setError('Failed to complete verification. Please try again.');
+          setVerificationStatus('failed');
+        }
+      };
+
+      saveAndProceed();
+
+      // Clean up URL params
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (socialStatus === 'failed') {
+      // OAuth failed - show error
+      setPlatform(oauthPlatform || 'instagram');
+      setVerificationStatus('failed');
+
+      const errorMessages = {
+        'private': 'Your account appears to be private. Please make it public and try again.',
+        'below_follower_min': 'You need at least 500 followers to join.',
+        'below_post_min': 'You need at least 5 posts to join.',
+        'restricted_region': 'newcollab is not available in your region.',
+        'oauth_error': 'Connection was cancelled or failed. Please try again.',
+      };
+      setError(errorMessages[reason] || 'Verification failed. Please try again.');
+
+      // Clean up URL params
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
+
   const toggleNiche = (id) => {
     setNiches(prev =>
       prev.includes(id) ? prev.filter(n => n !== id) : [...prev, id]
@@ -546,12 +629,39 @@ export default function CreatorOnboarding() {
 
   const handleStep1 = async () => {
     setError('');
-    // Validate username format
+    setVerificationError(null);
+
+    if (!platform) { setError('Please select your main platform'); return; }
+
+    // For Instagram/TikTok, redirect to OAuth (no username input needed)
+    if (VERIFIABLE_PLATFORMS.includes(platform)) {
+      setLoading(true);
+      setVerificationStatus('verifying');
+
+      // Get the API base URL for OAuth redirect
+      const apiBase = process.env.REACT_APP_API_BASE || 'https://api.newcollab.co';
+
+      // Redirect to OAuth endpoint with return_url for flexible redirect back
+      const returnUrl = encodeURIComponent(window.location.origin + '/onboarding');
+      if (platform === 'instagram') {
+        window.location.href = `${apiBase}/api/social/connect/instagram?return_url=${returnUrl}`;
+      } else if (platform === 'tiktok') {
+        window.location.href = `${apiBase}/api/social/connect/tiktok?return_url=${returnUrl}`;
+      }
+      return;
+    }
+
+    // For non-verifiable platforms (YouTube, Pinterest, Twitter, Blog), use manual entry
     const usernameValidation = validateUsername(username);
     if (!usernameValidation.valid) { setError(usernameValidation.error); return; }
-    if (!platform) { setError('Please select your main platform'); return; }
-    if (!followers || parseInt(followers) <= 0) { setError('Please enter your follower count'); return; }
+
+    if (!followers || parseInt(followers) <= 0) {
+      setError('Please enter your follower count');
+      return;
+    }
+
     setLoading(true);
+
     try {
       // Check if this social handle is already registered (prevent multi-account abuse)
       const handleCheck = await apiClient.post('/api/check-social-handle', {
@@ -563,7 +673,15 @@ export default function CreatorOnboarding() {
         setLoading(false);
         return;
       }
+    } catch (err) {
+      // If check endpoint doesn't exist, continue
+      if (err.response?.status !== 404) {
+        console.error('Handle check error:', err);
+      }
+    }
 
+    // Non-verifiable platform - use manual follower count
+    try {
       await apiClient.post('/api/user/onboarding/step1', {
         username: username.trim().toLowerCase(),
         platform,
@@ -571,23 +689,7 @@ export default function CreatorOnboarding() {
       });
       setStep(2);
     } catch (err) {
-      // If the check endpoint doesn't exist yet, continue with registration
-      // The backend should still enforce uniqueness
-      if (err.response?.status === 404) {
-        try {
-          await apiClient.post('/api/user/onboarding/step1', {
-            username: username.trim().toLowerCase(),
-            platform,
-            followers: parseInt(followers),
-          });
-          setStep(2);
-          return;
-        } catch (innerErr) {
-          setError(innerErr.response?.data?.error || 'Something went wrong');
-        }
-      } else {
-        setError(err.response?.data?.error || 'Something went wrong');
-      }
+      setError(err.response?.data?.error || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -679,24 +781,55 @@ export default function CreatorOnboarding() {
     setLoading(true);
     try {
       const res = await apiClient.post('/api/user/onboarding/step3', { niches });
-      // Refresh user context so creator_id is set before navigating to dashboard
-      // This prevents the incomplete-profile guard from redirecting back to /onboarding
-      await refreshUser();
-      sessionStorage.setItem('justCompletedOnboarding', 'true');
-      const baseRedirect = res.data?.redirect || '/creator/dashboard/for-you';
+
+      // Social verification is now done in step 1 for Instagram/TikTok
+      // Just check if region blocked (for non-verifiable platforms)
       try {
-        const urlObj = new URL(baseRedirect, window.location.origin);
-        // Add onboarding=complete param for Google Ads conversion tracking
-        urlObj.searchParams.set('onboarding', 'complete');
-        navigate(urlObj.pathname + urlObj.search + urlObj.hash, { replace: true });
-      } catch (e) {
-        navigate('/creator/dashboard/for-you?onboarding=complete', { replace: true });
+        const verifyRes = await apiClient.get('/api/social/requires-verification');
+        if (verifyRes.data?.blocked) {
+          // Region blocked - show error and don't proceed
+          setError('newcollab is not available in your region.');
+          setLoading(false);
+          return;
+        }
+      } catch (verifyErr) {
+        // If verification check fails, continue without blocking
+        console.log('Social verification check failed, continuing:', verifyErr);
       }
+
+      // Complete onboarding
+      await completeOnboarding(res);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {
       setLoading(false);
     }
+  };
+
+  const completeOnboarding = async (res) => {
+    // Refresh user context so creator_id is set before navigating to dashboard
+    // This prevents the incomplete-profile guard from redirecting back to /onboarding
+    await refreshUser();
+    sessionStorage.setItem('justCompletedOnboarding', 'true');
+    const baseRedirect = res?.data?.redirect || '/creator/dashboard/for-you';
+    try {
+      const urlObj = new URL(baseRedirect, window.location.origin);
+      // Add onboarding=complete param for Google Ads conversion tracking
+      urlObj.searchParams.set('onboarding', 'complete');
+      navigate(urlObj.pathname + urlObj.search + urlObj.hash, { replace: true });
+    } catch (e) {
+      navigate('/creator/dashboard/for-you?onboarding=complete', { replace: true });
+    }
+  };
+
+  const handleSocialVerificationSuccess = async () => {
+    // Social verification passed, complete onboarding
+    await completeOnboarding(null);
+  };
+
+  const handleSocialVerificationSkip = async () => {
+    // Grandfathered user skipping - complete onboarding
+    await completeOnboarding(null);
   };
 
   return (
@@ -729,30 +862,18 @@ export default function CreatorOnboarding() {
             <Subline>We'll match you with brands actively looking for creators on your platform.</Subline>
 
             <FormGroup>
-              <FormLabel>Your creator handle</FormLabel>
-              <InputWrap>
-                <InputPre>@</InputPre>
-                <FormInput
-                  $hasPrefix
-                  type="text"
-                  placeholder="yourcreatorname"
-                  value={username}
-                  onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); }}
-                  disabled={loading}
-                  autoFocus
-                  maxLength={30}
-                />
-              </InputWrap>
-            </FormGroup>
-
-            <FormGroup>
               <FormLabel>Main platform</FormLabel>
               <PlatformGrid>
                 {PLATFORMS.map(p => (
                   <PlatformChip
                     key={p.id}
                     $selected={platform === p.id}
-                    onClick={() => setPlatform(p.id)}
+                    onClick={() => {
+                      setPlatform(p.id);
+                      setVerificationStatus(null);
+                      setVerificationError(null);
+                      setError('');
+                    }}
                   >
                     <PlatformIcon style={p.id === 'twitter' ? { fontSize: 17, fontWeight: 900 } : {}}>
                       {p.icon}
@@ -762,28 +883,76 @@ export default function CreatorOnboarding() {
                 ))}
               </PlatformGrid>
 
-              <FollowerReveal $show={!!platform}>
-                <FollowerLabel>{selectedPlatform?.label}</FollowerLabel>
-                <FollowerInput
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="e.g. 120000"
-                  value={followers}
-                  onChange={(e) => {
-                    // Strip non-numeric characters (commas, spaces, etc) and store raw number
-                    const rawValue = e.target.value.replace(/[^\d]/g, '');
-                    setFollowers(rawValue);
-                  }}
-                  disabled={loading}
-                />
-              </FollowerReveal>
+              {/* For non-verifiable platforms, show username + follower input */}
+              {platform && !VERIFIABLE_PLATFORMS.includes(platform) && (
+                <>
+                  <div style={{ marginTop: '16px' }}>
+                    <FormLabel>Your creator handle</FormLabel>
+                    <InputWrap>
+                      <InputPre>@</InputPre>
+                      <FormInput
+                        $hasPrefix
+                        type="text"
+                        placeholder="yourcreatorname"
+                        value={username}
+                        onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); }}
+                        disabled={loading}
+                        maxLength={30}
+                      />
+                    </InputWrap>
+                  </div>
+                  <FollowerReveal $show={true}>
+                    <FollowerLabel>{selectedPlatform?.label}</FollowerLabel>
+                    <FollowerInput
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="e.g. 120000"
+                      value={followers}
+                      onChange={(e) => {
+                        const rawValue = e.target.value.replace(/[^\d]/g, '');
+                        setFollowers(rawValue);
+                      }}
+                      disabled={loading}
+                    />
+                  </FollowerReveal>
+                </>
+              )}
+
+              {/* For Instagram/TikTok, show OAuth connect info */}
+              {platform && VERIFIABLE_PLATFORMS.includes(platform) && (
+                <VerificationNote>
+                  {verificationStatus === 'verifying' ? (
+                    <>⏳ Connecting to {platform === 'instagram' ? 'Instagram' : 'TikTok'}...</>
+                  ) : verificationStatus === 'verified' ? (
+                    <>✓ Verified: {verifiedProfile?.follower_count?.toLocaleString()} followers</>
+                  ) : verificationStatus === 'failed' ? (
+                    <>❌ Verification failed. Please try again.</>
+                  ) : (
+                    <>Click continue to securely connect your {platform === 'instagram' ? 'Instagram' : 'TikTok'} account</>
+                  )}
+                </VerificationNote>
+              )}
             </FormGroup>
 
             {error && <ErrorMsg>{error}</ErrorMsg>}
 
             <BtnRow>
-              <ContinueBtn onClick={handleStep1} disabled={loading || !username.trim() || !platform || !followers || parseInt(followers) <= 0}>
-                {loading ? 'Saving...' : 'Continue →'}
+              <ContinueBtn
+                onClick={handleStep1}
+                disabled={
+                  loading ||
+                  !platform ||
+                  // For non-verifiable platforms, require username and followers
+                  (!VERIFIABLE_PLATFORMS.includes(platform) && (!username.trim() || !followers || parseInt(followers) <= 0))
+                }
+              >
+                {loading ? (
+                  verificationStatus === 'verifying' ? 'Connecting...' : 'Saving...'
+                ) : VERIFIABLE_PLATFORMS.includes(platform) ? (
+                  `Connect ${platform === 'instagram' ? 'Instagram' : 'TikTok'} →`
+                ) : (
+                  'Continue →'
+                )}
               </ContinueBtn>
             </BtnRow>
           </Card>
@@ -920,6 +1089,8 @@ export default function CreatorOnboarding() {
             </BtnRow>
           </Card>
         )}
+
+        {/* Social verification is now integrated into step 1 for Instagram/TikTok */}
       </PageWrapper>
     </>
   );
