@@ -58,18 +58,53 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
     setLoading(true);
     setLoadingStep(0); // Finding contact
 
+    // Helper to safely parse array fields (might be JSON strings or arrays)
+    const parseArrayField = (field) => {
+      if (!field) return [];
+      if (Array.isArray(field)) return field;
+      if (typeof field === 'string') {
+        try {
+          const parsed = JSON.parse(field);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    };
+
     // FIRST: Check media kit completeness - block if not complete & published
     try {
       const kitRes = await api.get('/api/media-kit');
+      console.log('[AIPitchModal] Media kit response:', kitRes.data);
+
       if (kitRes.data.success) {
         const kit = kitRes.data.media_kit;
         const hasKit = !!kit;
         const isPublished = kit?.is_published === true;
         const hasDisplayName = !!kit?.display_name?.trim();
         const hasTagline = !!kit?.tagline?.trim();
-        const hasNiches = Array.isArray(kit?.niches) && kit.niches.length > 0;
-        const hasContentTypes = Array.isArray(kit?.content_types) && kit.content_types.length > 0;
+
+        // Parse array fields properly (might be JSON strings)
+        const nichesArray = parseArrayField(kit?.niches);
+        const contentTypesArray = parseArrayField(kit?.content_types);
+
+        const hasNiches = nichesArray.length > 0;
+        const hasContentTypes = contentTypesArray.length > 0;
         const hasFollowers = (kit?.total_followers || 0) > 0;
+
+        console.log('[AIPitchModal] Kit check:', {
+          hasKit,
+          isPublished,
+          hasDisplayName,
+          hasTagline,
+          hasNiches,
+          nichesArray,
+          hasContentTypes,
+          contentTypesArray,
+          hasFollowers,
+          total_followers: kit?.total_followers
+        });
 
         const missingFields = [];
         if (!hasDisplayName) missingFields.push({ key: 'display_name', label: 'Display Name' });
@@ -85,6 +120,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
         const completedCount = (hasDisplayName ? 1 : 0) + (hasTagline ? 1 : 0) + (hasNiches ? 1 : 0) +
                               (hasContentTypes ? 1 : 0) + (hasFollowers ? 1 : 0) + (isPublished ? 1 : 0);
         const percentage = Math.round((completedCount / totalFields) * 100);
+
+        console.log('[AIPitchModal] Completeness result:', { isComplete, missingFields, percentage });
 
         setMediaKitCompleteness({
           isComplete,
