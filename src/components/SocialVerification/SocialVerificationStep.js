@@ -288,10 +288,10 @@ const ErrorText = styled.div`
 // ============================================================================
 const FAILURE_MESSAGES = {
   restricted_region: {
-    title: 'newcollab is not available in your region',
-    message: 'We currently do not support creators from your country. Thank you for your interest.',
+    title: 'newcollab isn\'t available in your region yet',
+    message: 'We\'re currently focused on serving creators in select markets. We appreciate your interest and hope to expand to your region soon.',
     blocked: true,
-    actions: []
+    actions: ['home']
   },
   private: {
     title: 'Your account is set to private',
@@ -460,6 +460,10 @@ const SocialVerificationStep = ({
     window.location.href = '/creator/dashboard/profile';
   };
 
+  const handleGoHome = () => {
+    window.location.href = '/';
+  };
+
   // Loading state
   if (isCheckingRegion) {
     return (
@@ -600,6 +604,11 @@ const SocialVerificationStep = ({
           {failure.actions.includes('profile') && (
             <ActionButton $secondary onClick={handleProfile}>
               Complete your profile
+            </ActionButton>
+          )}
+          {failure.actions.includes('home') && (
+            <ActionButton $secondary onClick={handleGoHome}>
+              ← Back to Home
             </ActionButton>
           )}
 

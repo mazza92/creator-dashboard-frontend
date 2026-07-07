@@ -474,6 +474,100 @@ const ErrorMsg = styled.div`
   text-align: center;
 `;
 
+// Region blocked UI
+const RegionBlockedCard = styled.div`
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.07);
+  border-radius: 22px;
+  padding: 48px 36px;
+  width: 100%;
+  max-width: 420px;
+  margin: 60px auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 8px 32px rgba(0,0,0,.07);
+  text-align: center;
+
+  @media (max-width: 480px) {
+    padding: 36px 22px;
+    margin: 40px 16px;
+    width: auto;
+  }
+`;
+
+const RegionIcon = styled.div`
+  font-size: 56px;
+  margin-bottom: 20px;
+`;
+
+const RegionTitle = styled.h2`
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+  color: ${colors.black};
+`;
+
+const RegionMessage = styled.p`
+  font-size: 15px;
+  color: ${colors.text2};
+  line-height: 1.6;
+  margin-bottom: 24px;
+`;
+
+const RegionNote = styled.div`
+  font-size: 13px;
+  color: ${colors.text3};
+  padding: 16px;
+  background: #F9F9F9;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+`;
+
+const RegionBackLink = styled.a`
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${colors.black};
+  text-decoration: none;
+  padding: 12px 24px;
+  border: 1.5px solid ${colors.border};
+  border-radius: 12px;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #F5F5F5;
+    border-color: #ccc;
+  }
+`;
+
+// Loading screen
+const LoadingWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 3px solid ${colors.border};
+  border-top-color: ${colors.black};
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.div`
+  font-size: 14px;
+  color: ${colors.text2};
+`;
+
 const PLATFORMS = [
   { id: 'instagram', icon: <FaInstagram color="#E4405F" />, name: 'Instagram', label: 'Followers' },
   { id: 'tiktok', icon: <FaTiktok color="#000000" />, name: 'TikTok', label: 'Followers' },
@@ -549,13 +643,34 @@ export default function CreatorOnboarding() {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isCheckingRegion, setIsCheckingRegion] = useState(true);
+  const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
   const { refreshUser } = useContext(UserContext);
 
   const selectedPlatform = PLATFORMS.find(p => p.id === platform);
 
   // Platforms that support auto-verification via OAuth
-  const VERIFIABLE_PLATFORMS = ['instagram', 'tiktok'];
+  // TikTok OAuth is disabled pending TikTok Production app approval
+  const VERIFIABLE_PLATFORMS = ['instagram'];
+
+  // Check region on mount - block users from restricted regions
+  useEffect(() => {
+    const checkRegion = async () => {
+      try {
+        const res = await apiClient.get('/api/social/check-region');
+        if (!res.data.allowed) {
+          setRegionBlocked(true);
+        }
+      } catch (err) {
+        console.error('Error checking region:', err);
+        // Continue on error - don't block users if check fails
+      } finally {
+        setIsCheckingRegion(false);
+      }
+    };
+    checkRegion();
+  }, []);
 
   // Handle OAuth callback from Instagram/TikTok
   useEffect(() => {
@@ -831,6 +946,54 @@ export default function CreatorOnboarding() {
     // Grandfathered user skipping - complete onboarding
     await completeOnboarding(null);
   };
+
+  // Show loading while checking region
+  if (isCheckingRegion) {
+    return (
+      <PageWrapper>
+        <TopBar>
+          <Logo href="#">
+            <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
+          </Logo>
+        </TopBar>
+        <LoadingWrapper>
+          <LoadingSpinner />
+          <LoadingText>Checking eligibility...</LoadingText>
+        </LoadingWrapper>
+      </PageWrapper>
+    );
+  }
+
+  // Show region blocked screen
+  if (regionBlocked) {
+    return (
+      <>
+        <Helmet>
+          <title>Not Available in Your Region | NewCollab</title>
+        </Helmet>
+        <PageWrapper>
+          <TopBar>
+            <Logo href="#">
+              <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
+            </Logo>
+          </TopBar>
+          <RegionBlockedCard>
+            <RegionIcon>🌍</RegionIcon>
+            <RegionTitle>newcollab isn't available in your region yet</RegionTitle>
+            <RegionMessage>
+              We're currently focused on serving creators in select markets.
+              We appreciate your interest and hope to expand to your region soon.
+            </RegionMessage>
+            <RegionNote>
+              If you believe this is an error, please try connecting from a different network
+              or contact us at team@newcollab.co
+            </RegionNote>
+            <RegionBackLink href="/">← Back to Home</RegionBackLink>
+          </RegionBlockedCard>
+        </PageWrapper>
+      </>
+    );
+  }
 
   return (
     <>
