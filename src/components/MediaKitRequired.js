@@ -14,10 +14,10 @@ import { useNavigate } from 'react-router-dom';
 const MediaKitRequired = ({
   isOpen,
   onClose,
-  missingFields = [],
   isPublished = false,
   percentage = 0,
   hasKit = false,
+  postCount = 0,
 }) => {
   const navigate = useNavigate();
 
@@ -28,8 +28,8 @@ const MediaKitRequired = ({
 
   if (!isOpen) return null;
 
-  const allFieldsComplete = missingFields.length === 0;
-  const needsPublish = allFieldsComplete && !isPublished;
+  const hasEnoughPosts = postCount >= 3;
+  const needsPublish = hasEnoughPosts && !isPublished;
 
   return (
     <AnimatePresence>
@@ -92,41 +92,30 @@ const MediaKitRequired = ({
             </ProgressLabel>
           </ProgressSection>
 
-          {/* Checklist */}
+          {/* Checklist - Simple: 4 posts + published */}
           <Checklist>
-            {!hasKit && (
-              <ChecklistItem $pending>
-                <CheckIcon $pending><FiX /></CheckIcon>
-                <CheckLabel>Create your media kit</CheckLabel>
-              </ChecklistItem>
-            )}
+            {/* Portfolio posts requirement */}
+            <ChecklistItem $pending={!hasEnoughPosts}>
+              <CheckIcon $pending={!hasEnoughPosts}>
+                {hasEnoughPosts ? <FiCheck /> : <FiX />}
+              </CheckIcon>
+              <CheckLabel>
+                {postCount >= 3
+                  ? `${postCount} portfolio posts added`
+                  : `Add ${3 - postCount} more portfolio post${3 - postCount === 1 ? '' : 's'} (${postCount}/3)`
+                }
+              </CheckLabel>
+            </ChecklistItem>
 
-            {hasKit && (
-              <>
-                {/* Show completed fields */}
-                {['Display Name', 'Tagline', 'Niche', 'Content Types', 'Followers'].map((field) => {
-                  const isPending = missingFields.some(f => f.label === field);
-                  return (
-                    <ChecklistItem key={field} $pending={isPending}>
-                      <CheckIcon $pending={isPending}>
-                        {isPending ? <FiX /> : <FiCheck />}
-                      </CheckIcon>
-                      <CheckLabel>{field}</CheckLabel>
-                    </ChecklistItem>
-                  );
-                })}
-
-                {/* Published status */}
-                <ChecklistItem $pending={!isPublished} $highlight={needsPublish}>
-                  <CheckIcon $pending={!isPublished}>
-                    {isPublished ? <FiCheck /> : <FiX />}
-                  </CheckIcon>
-                  <CheckLabel>
-                    {needsPublish ? 'Publish your kit (final step!)' : 'Published & visible to brands'}
-                  </CheckLabel>
-                </ChecklistItem>
-              </>
-            )}
+            {/* Published status */}
+            <ChecklistItem $pending={!isPublished} $highlight={needsPublish}>
+              <CheckIcon $pending={!isPublished}>
+                {isPublished ? <FiCheck /> : <FiX />}
+              </CheckIcon>
+              <CheckLabel>
+                {needsPublish ? 'Publish your kit (final step!)' : isPublished ? 'Published & visible to brands' : 'Publish your media kit'}
+              </CheckLabel>
+            </ChecklistItem>
           </Checklist>
 
           {/* Stats callout */}

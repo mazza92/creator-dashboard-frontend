@@ -1250,95 +1250,51 @@ const PRBrandDiscovery = () => {
     }
   };
 
-  // Helper to safely parse array fields (might be JSON strings or arrays)
-  const parseArrayField = (field) => {
-    if (!field) return [];
-    if (Array.isArray(field)) return field;
-    if (typeof field === 'string') {
-      try {
-        const parsed = JSON.parse(field);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  };
-
-  // Fetch media kit completeness status
+  // Fetch media kit completeness status - requires 4 portfolio posts + published
   const fetchMediaKitStatus = async () => {
     try {
-      const response = await api.get('/api/media-kit');
-      console.log('[PRBrandDiscovery] Media kit response:', response.data);
+      // Fetch portfolio settings and posts count in parallel
+      const [portfolioRes, postsRes] = await Promise.all([
+        api.get('/api/portfolio/settings'),
+        api.get('/api/portfolio/posts')
+      ]);
 
-      if (response.data.success) {
-        const kit = response.data.media_kit;
-        const hasKit = !!kit;
-        const isPublished = kit?.is_published === true;
-        const hasDisplayName = !!kit?.display_name?.trim();
-        const hasTagline = !!kit?.tagline?.trim();
+      console.log('[PRBrandDiscovery] Portfolio settings:', portfolioRes.data);
+      console.log('[PRBrandDiscovery] Portfolio posts:', postsRes.data);
 
-        // Parse array fields properly (might be JSON strings)
-        const nichesArray = parseArrayField(kit?.niches);
-        const contentTypesArray = parseArrayField(kit?.content_types);
+      const portfolio = portfolioRes.data;
+      // API returns array directly, not {posts: [...]}
+      const posts = Array.isArray(postsRes.data) ? postsRes.data : [];
+      const postCount = posts.length;
 
-        const hasNiches = nichesArray.length > 0;
-        const hasContentTypes = contentTypesArray.length > 0;
-        const hasFollowers = (kit?.total_followers || 0) > 0;
+      // Simple requirements: 3 posts + published
+      const isPublished = portfolio?.kit_published === true;
+      const hasEnoughPosts = postCount >= 3;
 
-        console.log('[PRBrandDiscovery] Kit check:', {
-          hasKit,
-          isPublished,
-          hasDisplayName,
-          hasTagline,
-          hasNiches,
-          nichesArray,
-          hasContentTypes,
-          contentTypesArray,
-          hasFollowers,
-          total_followers: kit?.total_followers
-        });
+      console.log('[PRBrandDiscovery] Kit check:', {
+        isPublished,
+        postCount,
+        hasEnoughPosts
+      });
 
-        const missingFields = [];
-        if (!hasDisplayName) missingFields.push({ key: 'display_name', label: 'Display Name' });
-        if (!hasTagline) missingFields.push({ key: 'tagline', label: 'Tagline' });
-        if (!hasNiches) missingFields.push({ key: 'niches', label: 'Niche' });
-        if (!hasContentTypes) missingFields.push({ key: 'content_types', label: 'Content Types' });
-        if (!hasFollowers) missingFields.push({ key: 'total_followers', label: 'Followers' });
+      // Kit is complete if published AND has 3+ posts
+      const isComplete = isPublished && hasEnoughPosts;
 
-        const isComplete = hasKit && isPublished && missingFields.length === 0;
+      // Calculate percentage (2 requirements: posts and published)
+      const postsProgress = Math.min(postCount, 3); // 0-3
+      const publishedProgress = isPublished ? 1 : 0;
+      const percentage = Math.round(((postsProgress / 3) * 0.8 + publishedProgress * 0.2) * 100);
 
-        const totalFields = 6;
-        const completedCount = (hasDisplayName ? 1 : 0) + (hasTagline ? 1 : 0) + (hasNiches ? 1 : 0) +
-                              (hasContentTypes ? 1 : 0) + (hasFollowers ? 1 : 0) + (isPublished ? 1 : 0);
-        const percentage = Math.round((completedCount / totalFields) * 100);
+      console.log('[PRBrandDiscovery] Completeness result:', { isComplete, postCount, isPublished, percentage });
 
-        console.log('[PRBrandDiscovery] Completeness result:', { isComplete, missingFields, percentage });
-
-        setMediaKitComplete(isComplete);
-        setMediaKitCompleteness({
-          isComplete,
-          isPublished,
-          hasKit,
-          missingFields,
-          percentage,
-        });
-      } else {
-        setMediaKitComplete(false);
-        setMediaKitCompleteness({
-          isComplete: false,
-          isPublished: false,
-          hasKit: false,
-          missingFields: [
-            { key: 'display_name', label: 'Display Name' },
-            { key: 'tagline', label: 'Tagline' },
-            { key: 'niches', label: 'Niche' },
-            { key: 'content_types', label: 'Content Types' },
-            { key: 'total_followers', label: 'Followers' },
-          ],
-          percentage: 0,
-        });
-      }
+      setMediaKitComplete(isComplete);
+      setMediaKitCompleteness({
+        isComplete,
+        isPublished,
+        hasKit: true,
+        postCount,
+        percentage,
+      });
     } catch (error) {
       console.error('[PRBrandDiscovery] Error fetching media kit:', error);
       setMediaKitComplete(false);
@@ -1637,11 +1593,11 @@ const PRBrandDiscovery = () => {
             <MediaKitBannerContent>
               <MediaKitBannerTitle>Complete your media kit to pitch brands</MediaKitBannerTitle>
               <MediaKitBannerText>
-                {!mediaKitCompleteness.hasKit
-                  ? 'Create your media kit to start reaching out to brands'
+                {(mediaKitCompleteness.postCount || 0) < 3
+                  ? `Add ${3 - (mediaKitCompleteness.postCount || 0)} more portfolio post${3 - (mediaKitCompleteness.postCount || 0) === 1 ? '' : 's'} to unlock pitching`
                   : !mediaKitCompleteness.isPublished
                     ? 'Publish your media kit so brands can see your portfolio'
-                    : `Complete ${mediaKitCompleteness.missingFields.length} missing field${mediaKitCompleteness.missingFields.length > 1 ? 's' : ''}`
+                    : 'Complete your media kit to start pitching brands'
                 }
               </MediaKitBannerText>
             </MediaKitBannerContent>
@@ -1656,10 +1612,10 @@ const PRBrandDiscovery = () => {
       <MediaKitRequired
         isOpen={showMediaKitRequired}
         onClose={() => setShowMediaKitRequired(false)}
-        missingFields={mediaKitCompleteness?.missingFields || []}
         isPublished={mediaKitCompleteness?.isPublished || false}
         percentage={mediaKitCompleteness?.percentage || 0}
         hasKit={mediaKitCompleteness?.hasKit || false}
+        postCount={mediaKitCompleteness?.postCount || 0}
       />
 
       <PageHeader>

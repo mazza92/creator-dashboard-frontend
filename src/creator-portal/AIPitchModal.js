@@ -73,88 +73,55 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       return [];
     };
 
-    // FIRST: Check media kit completeness - block if not complete & published
+    // FIRST: Check media kit completeness - requires 4 portfolio posts + published
     try {
-      const kitRes = await api.get('/api/media-kit');
-      console.log('[AIPitchModal] Media kit response:', kitRes.data);
+      // Fetch portfolio settings and posts count in parallel
+      const [portfolioRes, postsRes] = await Promise.all([
+        api.get('/api/portfolio/settings'),
+        api.get('/api/portfolio/posts')
+      ]);
 
-      if (kitRes.data.success) {
-        const kit = kitRes.data.media_kit;
-        const hasKit = !!kit;
-        const isPublished = kit?.is_published === true;
-        const hasDisplayName = !!kit?.display_name?.trim();
-        const hasTagline = !!kit?.tagline?.trim();
+      console.log('[AIPitchModal] Portfolio settings:', portfolioRes.data);
+      console.log('[AIPitchModal] Portfolio posts:', postsRes.data);
 
-        // Parse array fields properly (might be JSON strings)
-        const nichesArray = parseArrayField(kit?.niches);
-        const contentTypesArray = parseArrayField(kit?.content_types);
+      const portfolio = portfolioRes.data;
+      // API returns array directly, not {posts: [...]}
+      const posts = Array.isArray(postsRes.data) ? postsRes.data : [];
+      const postCount = posts.length;
 
-        const hasNiches = nichesArray.length > 0;
-        const hasContentTypes = contentTypesArray.length > 0;
-        const hasFollowers = (kit?.total_followers || 0) > 0;
+      // Simple requirements: 3 posts + published
+      const isPublished = portfolio?.kit_published === true;
+      const hasEnoughPosts = postCount >= 3;
 
-        console.log('[AIPitchModal] Kit check:', {
-          hasKit,
-          isPublished,
-          hasDisplayName,
-          hasTagline,
-          hasNiches,
-          nichesArray,
-          hasContentTypes,
-          contentTypesArray,
-          hasFollowers,
-          total_followers: kit?.total_followers
-        });
+      console.log('[AIPitchModal] Kit check:', {
+        isPublished,
+        postCount,
+        hasEnoughPosts
+      });
 
-        const missingFields = [];
-        if (!hasDisplayName) missingFields.push({ key: 'display_name', label: 'Display Name' });
-        if (!hasTagline) missingFields.push({ key: 'tagline', label: 'Tagline' });
-        if (!hasNiches) missingFields.push({ key: 'niches', label: 'Niche' });
-        if (!hasContentTypes) missingFields.push({ key: 'content_types', label: 'Content Types' });
-        if (!hasFollowers) missingFields.push({ key: 'total_followers', label: 'Followers' });
+      // Kit is complete if published AND has 3+ posts
+      const isComplete = isPublished && hasEnoughPosts;
 
-        const isComplete = hasKit && isPublished && missingFields.length === 0;
+      // Calculate percentage (2 requirements: posts and published)
+      const postsProgress = Math.min(postCount, 3); // 0-3
+      const publishedProgress = isPublished ? 1 : 0;
+      const percentage = Math.round(((postsProgress / 3) * 0.8 + publishedProgress * 0.2) * 100);
 
-        // Calculate percentage
-        const totalFields = 6; // 5 fields + published
-        const completedCount = (hasDisplayName ? 1 : 0) + (hasTagline ? 1 : 0) + (hasNiches ? 1 : 0) +
-                              (hasContentTypes ? 1 : 0) + (hasFollowers ? 1 : 0) + (isPublished ? 1 : 0);
-        const percentage = Math.round((completedCount / totalFields) * 100);
+      console.log('[AIPitchModal] Completeness result:', { isComplete, postCount, isPublished, percentage });
 
-        console.log('[AIPitchModal] Completeness result:', { isComplete, missingFields, percentage });
+      setMediaKitCompleteness({
+        isComplete,
+        isPublished,
+        hasKit: true,
+        postCount,
+        percentage,
+      });
 
-        setMediaKitCompleteness({
-          isComplete,
-          isPublished,
-          hasKit,
-          missingFields,
-          percentage,
-        });
-
-        // Block if kit is not complete - show blocking modal
-        if (!isComplete) {
-          setShowMediaKitRequired(true);
-          setLoading(false);
-          return; // Don't proceed with pitch generation
-        }
-      } else {
-        // No kit at all
-        setMediaKitCompleteness({
-          isComplete: false,
-          isPublished: false,
-          hasKit: false,
-          missingFields: [
-            { key: 'display_name', label: 'Display Name' },
-            { key: 'tagline', label: 'Tagline' },
-            { key: 'niches', label: 'Niche' },
-            { key: 'content_types', label: 'Content Types' },
-            { key: 'total_followers', label: 'Followers' },
-          ],
-          percentage: 0,
-        });
+      // Block if kit is not complete - show blocking modal
+      if (!isComplete) {
         setShowMediaKitRequired(true);
         setLoading(false);
-        return;
+        return; // Don't proceed with pitch generation
       }
     } catch (err) {
       console.error('Error checking media kit:', err);
@@ -163,7 +130,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
         isComplete: false,
         isPublished: false,
         hasKit: false,
-        missingFields: [],
+        postCount: 0,
         percentage: 0,
       });
       setShowMediaKitRequired(true);
@@ -1122,10 +1089,10 @@ ${creatorName}`;
               <MediaKitRequired
                 isOpen={showMediaKitRequired}
                 onClose={() => { setShowMediaKitRequired(false); onClose(); }}
-                missingFields={mediaKitCompleteness?.missingFields || []}
                 isPublished={mediaKitCompleteness?.isPublished || false}
                 percentage={mediaKitCompleteness?.percentage || 0}
                 hasKit={mediaKitCompleteness?.hasKit || false}
+                postCount={mediaKitCompleteness?.postCount || 0}
               />
             </>
           )}

@@ -2,107 +2,77 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../config/api';
 
 /**
- * Media Kit Completeness Requirements:
- * 1. Media kit exists
- * 2. Media kit is published (is_published = true)
- * 3. Has display name
- * 4. Has tagline
- * 5. Has at least 1 niche selected
- * 6. Has at least 1 content type selected
- * 7. Has total followers > 0
+ * Media Kit Completeness Requirements (Simplified):
+ * 1. 4 portfolio posts minimum
+ * 2. Kit is published (kit_published = true)
  */
-
-const REQUIRED_FIELDS = {
-  display_name: { label: 'Display Name', check: (v) => !!v?.trim() },
-  tagline: { label: 'Tagline', check: (v) => !!v?.trim() },
-  niches: { label: 'Niche', check: (v) => Array.isArray(v) && v.length > 0 },
-  content_types: { label: 'Content Types', check: (v) => Array.isArray(v) && v.length > 0 },
-  total_followers: { label: 'Followers', check: (v) => v > 0 },
-};
 
 export const useMediaKitCompleteness = () => {
   const [loading, setLoading] = useState(true);
-  const [mediaKit, setMediaKit] = useState(null);
   const [completeness, setCompleteness] = useState({
     isComplete: false,
     isPublished: false,
     hasKit: false,
-    missingFields: [],
-    completedFields: [],
+    postCount: 0,
     percentage: 0,
   });
 
-  const calculateCompleteness = useCallback((kit) => {
-    if (!kit) {
-      return {
+  const fetchMediaKitStatus = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Fetch portfolio settings and posts count in parallel
+      const [portfolioRes, postsRes] = await Promise.all([
+        apiClient.get('/api/portfolio/settings'),
+        apiClient.get('/api/portfolio/posts')
+      ]);
+
+      const portfolio = portfolioRes.data;
+      // API returns array directly, not {posts: [...]}
+      const posts = Array.isArray(postsRes.data) ? postsRes.data : [];
+      const postCount = posts.length;
+
+      // Simple requirements: 3 posts + published
+      const isPublished = portfolio?.kit_published === true;
+      const hasEnoughPosts = postCount >= 3;
+
+      // Kit is complete if published AND has 3+ posts
+      const isComplete = isPublished && hasEnoughPosts;
+
+      // Calculate percentage (2 requirements: posts and published)
+      const postsProgress = Math.min(postCount, 3); // 0-3
+      const publishedProgress = isPublished ? 1 : 0;
+      const percentage = Math.round(((postsProgress / 3) * 0.8 + publishedProgress * 0.2) * 100);
+
+      setCompleteness({
+        isComplete,
+        isPublished,
+        hasKit: true,
+        postCount,
+        percentage,
+      });
+    } catch (err) {
+      console.error('Error fetching media kit completeness:', err);
+      setCompleteness({
         isComplete: false,
         isPublished: false,
         hasKit: false,
-        missingFields: Object.entries(REQUIRED_FIELDS).map(([key, { label }]) => ({ key, label })),
-        completedFields: [],
+        postCount: 0,
         percentage: 0,
-      };
-    }
-
-    const missingFields = [];
-    const completedFields = [];
-
-    Object.entries(REQUIRED_FIELDS).forEach(([key, { label, check }]) => {
-      if (check(kit[key])) {
-        completedFields.push({ key, label });
-      } else {
-        missingFields.push({ key, label });
-      }
-    });
-
-    const totalFields = Object.keys(REQUIRED_FIELDS).length + 1; // +1 for published status
-    const completedCount = completedFields.length + (kit.is_published ? 1 : 0);
-    const percentage = Math.round((completedCount / totalFields) * 100);
-
-    // Kit is complete ONLY if all fields are filled AND it's published
-    const isComplete = missingFields.length === 0 && kit.is_published === true;
-
-    return {
-      isComplete,
-      isPublished: kit.is_published === true,
-      hasKit: true,
-      missingFields,
-      completedFields,
-      percentage,
-    };
-  }, []);
-
-  const fetchMediaKit = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get('/api/media-kit');
-
-      if (response.data.success) {
-        const kit = response.data.media_kit;
-        setMediaKit(kit);
-        setCompleteness(calculateCompleteness(kit));
-      } else {
-        setMediaKit(null);
-        setCompleteness(calculateCompleteness(null));
-      }
-    } catch (err) {
-      console.error('Error fetching media kit completeness:', err);
-      setMediaKit(null);
-      setCompleteness(calculateCompleteness(null));
+      });
     } finally {
       setLoading(false);
     }
-  }, [calculateCompleteness]);
+  }, []);
 
   useEffect(() => {
-    fetchMediaKit();
-  }, [fetchMediaKit]);
+    fetchMediaKitStatus();
+  }, [fetchMediaKitStatus]);
 
   return {
     loading,
-    mediaKit,
     ...completeness,
-    refetch: fetchMediaKit,
+    refetch: fetchMediaKitStatus,
   };
 };
 
