@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark, FiLock } from 'react-icons/fi';
+import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark, FiLock, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import PROnboarding from '../components/PROnboarding';
 import UpgradeModal from './UpgradeModal';
 import AIPitchModal from './AIPitchModal';
 import ProfileCompleteness from '../components/ProfileCompleteness';
+import MediaKitRequired from '../components/MediaKitRequired';
 
 // Brand colors
 const primaryBlue = '#3B82F6';
@@ -557,6 +558,67 @@ const WelcomeClose = styled.button`
     background: rgba(255,255,255,0.2);
     color: #fff;
   }
+`;
+
+// Media Kit Completion Banner
+const MediaKitBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1px solid #F59E0B;
+  border-radius: 14px;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+  }
+`;
+
+const MediaKitBannerIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  background: #F59E0B;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  flex-shrink: 0;
+`;
+
+const MediaKitBannerContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const MediaKitBannerTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: #92400E;
+  margin-bottom: 2px;
+`;
+
+const MediaKitBannerText = styled.div`
+  font-size: 12px;
+  color: #B45309;
+`;
+
+const MediaKitBannerAction = styled.div`
+  width: 32px;
+  height: 32px;
+  background: rgba(146, 64, 14, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #92400E;
+  flex-shrink: 0;
 `;
 
 const PlanBadge = styled.div`
@@ -1141,6 +1203,10 @@ const PRBrandDiscovery = () => {
   const [kitNudgeBrand, setKitNudgeBrand] = useState(null);
   const [showKitNudge, setShowKitNudge] = useState(false);
   const [creatorProfile, setCreatorProfile] = useState(null);
+  // Media kit completeness state
+  const [mediaKitComplete, setMediaKitComplete] = useState(true); // Assume complete initially
+  const [mediaKitCompleteness, setMediaKitCompleteness] = useState(null);
+  const [showMediaKitRequired, setShowMediaKitRequired] = useState(false);
 
   // Universal Brand Discovery state
   const [searchQuery, setSearchQuery] = useState('');
@@ -1170,6 +1236,7 @@ const PRBrandDiscovery = () => {
     fetchBrands();
     fetchSubscriptionStatus();
     fetchCreatorProfile();
+    fetchMediaKitStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1180,6 +1247,63 @@ const PRBrandDiscovery = () => {
       setCreatorProfile(response.data);
     } catch (error) {
       // Silently fail
+    }
+  };
+
+  // Fetch media kit completeness status
+  const fetchMediaKitStatus = async () => {
+    try {
+      const response = await api.get('/api/media-kit');
+      if (response.data.success) {
+        const kit = response.data.media_kit;
+        const hasKit = !!kit;
+        const isPublished = kit?.is_published === true;
+        const hasDisplayName = !!kit?.display_name?.trim();
+        const hasTagline = !!kit?.tagline?.trim();
+        const hasNiches = Array.isArray(kit?.niches) && kit.niches.length > 0;
+        const hasContentTypes = Array.isArray(kit?.content_types) && kit.content_types.length > 0;
+        const hasFollowers = (kit?.total_followers || 0) > 0;
+
+        const missingFields = [];
+        if (!hasDisplayName) missingFields.push({ key: 'display_name', label: 'Display Name' });
+        if (!hasTagline) missingFields.push({ key: 'tagline', label: 'Tagline' });
+        if (!hasNiches) missingFields.push({ key: 'niches', label: 'Niche' });
+        if (!hasContentTypes) missingFields.push({ key: 'content_types', label: 'Content Types' });
+        if (!hasFollowers) missingFields.push({ key: 'total_followers', label: 'Followers' });
+
+        const isComplete = hasKit && isPublished && missingFields.length === 0;
+
+        const totalFields = 6;
+        const completedCount = (hasDisplayName ? 1 : 0) + (hasTagline ? 1 : 0) + (hasNiches ? 1 : 0) +
+                              (hasContentTypes ? 1 : 0) + (hasFollowers ? 1 : 0) + (isPublished ? 1 : 0);
+        const percentage = Math.round((completedCount / totalFields) * 100);
+
+        setMediaKitComplete(isComplete);
+        setMediaKitCompleteness({
+          isComplete,
+          isPublished,
+          hasKit,
+          missingFields,
+          percentage,
+        });
+      } else {
+        setMediaKitComplete(false);
+        setMediaKitCompleteness({
+          isComplete: false,
+          isPublished: false,
+          hasKit: false,
+          missingFields: [
+            { key: 'display_name', label: 'Display Name' },
+            { key: 'tagline', label: 'Tagline' },
+            { key: 'niches', label: 'Niche' },
+            { key: 'content_types', label: 'Content Types' },
+            { key: 'total_followers', label: 'Followers' },
+          ],
+          percentage: 0,
+        });
+      }
+    } catch (error) {
+      setMediaKitComplete(false);
     }
   };
 
@@ -1465,7 +1589,40 @@ const PRBrandDiscovery = () => {
           </WelcomeCard>
         )}
         <ProfileCompleteness />
+
+        {/* Media Kit Completion Banner - shows when kit is not complete & published */}
+        {!mediaKitComplete && mediaKitCompleteness && (
+          <MediaKitBanner onClick={() => navigate('/creator/dashboard/my-kit')}>
+            <MediaKitBannerIcon>
+              <FiAlertCircle />
+            </MediaKitBannerIcon>
+            <MediaKitBannerContent>
+              <MediaKitBannerTitle>Complete your media kit to pitch brands</MediaKitBannerTitle>
+              <MediaKitBannerText>
+                {!mediaKitCompleteness.hasKit
+                  ? 'Create your media kit to start reaching out to brands'
+                  : !mediaKitCompleteness.isPublished
+                    ? 'Publish your media kit so brands can see your portfolio'
+                    : `Complete ${mediaKitCompleteness.missingFields.length} missing field${mediaKitCompleteness.missingFields.length > 1 ? 's' : ''}`
+                }
+              </MediaKitBannerText>
+            </MediaKitBannerContent>
+            <MediaKitBannerAction>
+              <FiArrowRight />
+            </MediaKitBannerAction>
+          </MediaKitBanner>
+        )}
       </div>
+
+      {/* Media Kit Required Modal */}
+      <MediaKitRequired
+        isOpen={showMediaKitRequired}
+        onClose={() => setShowMediaKitRequired(false)}
+        missingFields={mediaKitCompleteness?.missingFields || []}
+        isPublished={mediaKitCompleteness?.isPublished || false}
+        percentage={mediaKitCompleteness?.percentage || 0}
+        hasKit={mediaKitCompleteness?.hasKit || false}
+      />
 
       <PageHeader>
         <Title>Discover Brands</Title>

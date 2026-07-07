@@ -5,6 +5,7 @@ import { message, Spin } from 'antd';
 import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFileText } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
+import MediaKitRequired from '../components/MediaKitRequired';
 
 /**
  * AI Pitch Modal - Generates personalized outreach emails using the "Golden Template"
@@ -38,7 +39,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   const [paywallData, setPaywallData] = useState(null); // For unlock paywall
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false); // Default false to show Pool nudge
   const [trackingPixelUrl, setTrackingPixelUrl] = useState(null); // For email open tracking
-  const [showIncompleteKitPopup, setShowIncompleteKitPopup] = useState(false); // Popup when kit not filled
+  const [showMediaKitRequired, setShowMediaKitRequired] = useState(false); // Blocking modal when kit incomplete
+  const [mediaKitCompleteness, setMediaKitCompleteness] = useState(null); // Media kit completeness data
   const [showUnlockCelebration, setShowUnlockCelebration] = useState(false); // Tinder-style unlock celebration
   const [wasAlreadyUnlocked, setWasAlreadyUnlocked] = useState(false); // Track if brand was previously unlocked
 
@@ -55,6 +57,82 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   const initializePitch = async () => {
     setLoading(true);
     setLoadingStep(0); // Finding contact
+
+    // FIRST: Check media kit completeness - block if not complete & published
+    try {
+      const kitRes = await api.get('/api/media-kit');
+      if (kitRes.data.success) {
+        const kit = kitRes.data.media_kit;
+        const hasKit = !!kit;
+        const isPublished = kit?.is_published === true;
+        const hasDisplayName = !!kit?.display_name?.trim();
+        const hasTagline = !!kit?.tagline?.trim();
+        const hasNiches = Array.isArray(kit?.niches) && kit.niches.length > 0;
+        const hasContentTypes = Array.isArray(kit?.content_types) && kit.content_types.length > 0;
+        const hasFollowers = (kit?.total_followers || 0) > 0;
+
+        const missingFields = [];
+        if (!hasDisplayName) missingFields.push({ key: 'display_name', label: 'Display Name' });
+        if (!hasTagline) missingFields.push({ key: 'tagline', label: 'Tagline' });
+        if (!hasNiches) missingFields.push({ key: 'niches', label: 'Niche' });
+        if (!hasContentTypes) missingFields.push({ key: 'content_types', label: 'Content Types' });
+        if (!hasFollowers) missingFields.push({ key: 'total_followers', label: 'Followers' });
+
+        const isComplete = hasKit && isPublished && missingFields.length === 0;
+
+        // Calculate percentage
+        const totalFields = 6; // 5 fields + published
+        const completedCount = (hasDisplayName ? 1 : 0) + (hasTagline ? 1 : 0) + (hasNiches ? 1 : 0) +
+                              (hasContentTypes ? 1 : 0) + (hasFollowers ? 1 : 0) + (isPublished ? 1 : 0);
+        const percentage = Math.round((completedCount / totalFields) * 100);
+
+        setMediaKitCompleteness({
+          isComplete,
+          isPublished,
+          hasKit,
+          missingFields,
+          percentage,
+        });
+
+        // Block if kit is not complete - show blocking modal
+        if (!isComplete) {
+          setShowMediaKitRequired(true);
+          setLoading(false);
+          return; // Don't proceed with pitch generation
+        }
+      } else {
+        // No kit at all
+        setMediaKitCompleteness({
+          isComplete: false,
+          isPublished: false,
+          hasKit: false,
+          missingFields: [
+            { key: 'display_name', label: 'Display Name' },
+            { key: 'tagline', label: 'Tagline' },
+            { key: 'niches', label: 'Niche' },
+            { key: 'content_types', label: 'Content Types' },
+            { key: 'total_followers', label: 'Followers' },
+          ],
+          percentage: 0,
+        });
+        setShowMediaKitRequired(true);
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking media kit:', err);
+      // On error, show the blocking modal to be safe
+      setMediaKitCompleteness({
+        isComplete: false,
+        isPublished: false,
+        hasKit: false,
+        missingFields: [],
+        percentage: 0,
+      });
+      setShowMediaKitRequired(true);
+      setLoading(false);
+      return;
+    }
 
     // Fetch limits (but don't gate pitch generation — that happens at send time)
     await fetchPitchLimits();
@@ -428,7 +506,7 @@ ${creatorName}`;
     return seriesNames[key] || seriesNames[category] || seriesNames['default'];
   };
 
-  const handleSendEmail = async (skipKitCheck = false) => {
+  const handleSendEmail = async () => {
     // Follow-ups don't consume pitch credits (Pro only feature)
     // Show upgrade overlay instead of blocking with a warning
     if (!isFollowup && !pitchLimits.canPitch) {
@@ -436,17 +514,10 @@ ${creatorName}`;
       return;
     }
 
-    // Check if kit is incomplete - show popup to encourage completion
-    const kitIsIncomplete = !(pitch?.kit_published ?? creatorProfile?.has_media_kit);
-    console.log('[AIPitchModal] Kit check:', {
-      'pitch.kit_published': pitch?.kit_published,
-      'creatorProfile.has_media_kit': creatorProfile?.has_media_kit,
-      'kitIsIncomplete': kitIsIncomplete,
-      'skipKitCheck': skipKitCheck,
-      'isFollowup': isFollowup
-    });
-    if (!isFollowup && !skipKitCheck && kitIsIncomplete) {
-      setShowIncompleteKitPopup(true);
+    // Media kit check is done at initialization - if we get here, kit is complete
+    // Double-check just in case (e.g., if somehow called directly)
+    if (!isFollowup && mediaKitCompleteness && !mediaKitCompleteness.isComplete) {
+      setShowMediaKitRequired(true);
       return;
     }
 
@@ -1010,30 +1081,15 @@ ${creatorName}`;
                 </UpgradeOverlay>
               )}
 
-              {/* Incomplete Kit Popup — shown when user tries to pitch without portfolio */}
-              {showIncompleteKitPopup && (
-                <IncompleteKitOverlay>
-                  <IncompleteKitCard
-                    as={motion.div}
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <IncompleteKitClose onClick={() => setShowIncompleteKitPopup(false)}>×</IncompleteKitClose>
-                    <IncompleteKitEmoji>🚫</IncompleteKitEmoji>
-                    <IncompleteKitTitle>Brands won't review pitches without a portfolio</IncompleteKitTitle>
-                    <IncompleteKitText>
-                      PR teams <strong>skip emails without work samples</strong>. A 2-minute portfolio shows you're serious and increases replies by 3x.
-                    </IncompleteKitText>
-                    <IncompleteKitPrimaryBtn onClick={() => { setShowIncompleteKitPopup(false); onClose(); navigate('/creator/dashboard/my-kit'); }}>
-                      Build my portfolio (2 min)
-                    </IncompleteKitPrimaryBtn>
-                    <IncompleteKitSecondaryBtn onClick={() => { setShowIncompleteKitPopup(false); handleSendEmail(true); }}>
-                      Send without portfolio
-                    </IncompleteKitSecondaryBtn>
-                  </IncompleteKitCard>
-                </IncompleteKitOverlay>
-              )}
+              {/* Media Kit Required Modal — blocks pitching until kit is complete & published */}
+              <MediaKitRequired
+                isOpen={showMediaKitRequired}
+                onClose={() => { setShowMediaKitRequired(false); onClose(); }}
+                missingFields={mediaKitCompleteness?.missingFields || []}
+                isPublished={mediaKitCompleteness?.isPublished || false}
+                percentage={mediaKitCompleteness?.percentage || 0}
+                hasKit={mediaKitCompleteness?.hasKit || false}
+              />
             </>
           )}
             </>
@@ -2881,107 +2937,6 @@ const UpgradeOverlayNote = styled.p`
   margin: 10px 0 0;
   font-size: 12px;
   color: #9CA3AF;
-`;
-
-// ── Incomplete Kit Popup ─────────────────────────────────────────
-
-const IncompleteKitOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 25;
-`;
-
-const IncompleteKitCard = styled.div`
-  background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 20px;
-  padding: 32px 28px;
-  text-align: center;
-  max-width: 340px;
-  width: 100%;
-  position: relative;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-`;
-
-const IncompleteKitClose = styled.button`
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  background: #F3F4F6;
-  border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  font-size: 18px;
-  color: #9CA3AF;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  &:hover { background: #E5E7EB; color: #111827; }
-`;
-
-const IncompleteKitEmoji = styled.div`
-  font-size: 42px;
-  margin-bottom: 12px;
-`;
-
-const IncompleteKitTitle = styled.h3`
-  font-size: 19px;
-  font-weight: 800;
-  color: #111827;
-  margin: 0 0 10px;
-`;
-
-const IncompleteKitText = styled.p`
-  font-size: 14px;
-  color: #6B7280;
-  line-height: 1.6;
-  margin: 0 0 22px;
-
-  strong {
-    color: #059669;
-    font-weight: 700;
-  }
-`;
-
-const IncompleteKitPrimaryBtn = styled.button`
-  width: 100%;
-  padding: 14px 20px;
-  background: #0F0F0F;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  margin-bottom: 10px;
-
-  &:hover { opacity: 0.88; }
-`;
-
-const IncompleteKitSecondaryBtn = styled.button`
-  width: 100%;
-  padding: 12px 20px;
-  background: transparent;
-  color: #6B7280;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-
-  &:hover { color: #374151; }
 `;
 
 export default AIPitchModal;
