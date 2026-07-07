@@ -651,8 +651,8 @@ export default function CreatorOnboarding() {
   const selectedPlatform = PLATFORMS.find(p => p.id === platform);
 
   // Platforms that support auto-verification via OAuth
-  // TikTok OAuth is disabled pending TikTok Production app approval
-  const VERIFIABLE_PLATFORMS = ['instagram'];
+  // Instagram and TikTok OAuth disabled - reverting to manual input for now
+  const VERIFIABLE_PLATFORMS = [];
 
   // Check region on mount - block users from restricted regions
   useEffect(() => {
