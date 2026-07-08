@@ -1965,7 +1965,11 @@ const PRBrandDiscovery = () => {
       {usePRPackageModal ? (
         <PRPackageModal
           isOpen={showPitchModal}
-          onClose={() => setShowPitchModal(false)}
+          onClose={() => {
+            // Refresh subscription status when modal closes (unlock happens on package generation)
+            fetchSubscriptionStatus();
+            setShowPitchModal(false);
+          }}
           brand={selectedBrandForPitch}
           onPitchSent={handlePitchSent}
           isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}

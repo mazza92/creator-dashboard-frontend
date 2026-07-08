@@ -1329,6 +1329,13 @@ const ForYou = () => {
         <PRPackageModal
           isOpen={!!pitchingBrand}
           onClose={() => {
+            // Refresh unlocked brands when modal closes (unlock happens on package generation)
+            fetchUnlockedBrands();
+            fetchUnlockBalance();
+            // Update welcome flow state if brand was unlocked
+            if (isWelcomeFlow && pitchingBrand) {
+              setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
+            }
             setPitchingBrand(null);
             // Return to welcome modal if in welcome flow
             if (isWelcomeFlow) {

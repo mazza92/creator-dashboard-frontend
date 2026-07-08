@@ -977,6 +977,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         <PRPackageModal
           isOpen={showPitchModal}
           onClose={() => {
+            // Refresh unlocked brands when modal closes (unlock happens on package generation)
+            fetchUnlockedBrands();
+            fetchSubscriptionStatus();
             setShowPitchModal(false);
             setSelectedBrandForPitch(null);
           }}
