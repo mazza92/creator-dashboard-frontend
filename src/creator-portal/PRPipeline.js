@@ -5,7 +5,7 @@ import { message } from 'antd';
 import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getRuntimeApiUrl } from '../config/api';
-import AIPitchModal from './AIPitchModal';
+import PRPackageModal from './PRPackageModal';
 import UpgradeModal from './UpgradeModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -897,18 +897,27 @@ const PRPipeline = () => {
         {/* Primary action button */}
         {isSaved && (
           <>
-            <PrimaryBtn
-              $contact
-              onClick={() => handlePitch(item)}
-              disabled={!isPro && pitchLimits.used >= pitchLimits.limit}
-              style={{
-                background: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#f3f4f6' : undefined,
-                color: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#9ca3af' : undefined,
-                cursor: (!isPro && pitchLimits.used >= pitchLimits.limit) ? 'not-allowed' : undefined
-              }}
-            >
-              ✉️ Send Pitch to {item.brand_name}
-            </PrimaryBtn>
+            {item.has_pr_package ? (
+              <PrimaryBtn
+                $contact
+                onClick={() => handlePitch(item)}
+              >
+                📦 View Package (unlocked)
+              </PrimaryBtn>
+            ) : (
+              <PrimaryBtn
+                $contact
+                onClick={() => handlePitch(item)}
+                disabled={!isPro && pitchLimits.used >= pitchLimits.limit}
+                style={{
+                  background: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#f3f4f6' : undefined,
+                  color: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#9ca3af' : undefined,
+                  cursor: (!isPro && pitchLimits.used >= pitchLimits.limit) ? 'not-allowed' : undefined
+                }}
+              >
+                ✉️ Send Pitch to {item.brand_name}
+              </PrimaryBtn>
+            )}
           </>
         )}
 
@@ -1053,7 +1062,7 @@ const PRPipeline = () => {
     <Container>
       {/* Journey Header */}
       <JourneyHeader>
-        <JourneyGreeting>My Pitches</JourneyGreeting>
+        <JourneyGreeting>My PR Pipeline</JourneyGreeting>
         <JourneySub>
           {stageCounts.waiting > 0
             ? `${stageCounts.waiting} pitch${stageCounts.waiting === 1 ? '' : 'es'} out · reply expected in ~5 days`
@@ -1102,8 +1111,8 @@ const PRPipeline = () => {
           <QuotaText>
             <QuotaTitle>
               {pitchLimits.limit - pitchLimits.used > 0
-                ? `${pitchLimits.limit - pitchLimits.used} free ${pitchLimits.limit - pitchLimits.used === 1 ? 'pitch' : 'pitches'} left this month`
-                : 'Monthly pitches used — upgrade to keep going'}
+                ? `${pitchLimits.limit - pitchLimits.used} free PR Package${pitchLimits.limit - pitchLimits.used === 1 ? '' : 's'} left this month`
+                : 'Monthly PR Packages used — upgrade to keep going'}
             </QuotaTitle>
             <QuotaSub>{pitchLimits.used} used · resets {getNextResetDate()}</QuotaSub>
           </QuotaText>
@@ -1281,21 +1290,26 @@ const PRPipeline = () => {
               <LockedTitle>
                 {stageCounts.saved > 3
                   ? `${stageCounts.saved - 3} more brands match your saved categories`
-                  : 'Unlock unlimited pitches every month'}
+                  : 'Unlock unlimited PR Packages every month'}
               </LockedTitle>
-              <LockedSub>Pro removes the 3-pitch limit so you can contact all of them.</LockedSub>
+              <LockedSub>Pro removes the 5-package limit so you can contact all of them.</LockedSub>
             </LockedTextWrap>
             <LockedCta>$19/mo</LockedCta>
           </LockedCard>
         )}
       </BrandList>
 
-      {/* Pitch Modal */}
-      <AIPitchModal
+      {/* PR Package Modal */}
+      <PRPackageModal
         isOpen={showPitchModal}
-        onClose={() => setShowPitchModal(false)}
+        onClose={() => {
+          setShowPitchModal(false);
+          // Refresh pipeline data to pick up has_pr_package changes
+          fetchPipelineData();
+        }}
         brand={selectedBrand}
         onPitchSent={handlePitchSent}
+        isPro={isPro}
       />
 
       {/* Upgrade Modal */}

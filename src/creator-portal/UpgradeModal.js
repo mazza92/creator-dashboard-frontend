@@ -35,9 +35,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   // Determine context-specific copy
   let headline = 'Your matched brands are waiting.';
-  let subtext = '3 free pitches used this month. Upgrade to keep pitching.';
+  let subtext = '5 free PR Packages used this month. Upgrade for unlimited.';
   let ctaText = 'Get Pro for $19/month';
-  let progressLabel = 'pitches';
+  let progressLabel = 'PR Packages';
 
   // Default values, can be overridden by feature
   let used = pitchLimits?.used || currentCount || 3;
@@ -51,7 +51,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   } else if (feature === 'locked' || feature === 'for_you') {
     headline = 'Unlock your full PR toolkit.';
-    subtext = 'Direct access to 500+ brand contacts and application forms. Pitch professionally, land packages.';
+    subtext = 'Direct access to 500+ brand PR Packages with verified contacts, ready-to-send pitches, and content ideas.';
     ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'kit' || feature === 'kit_views') {
@@ -61,7 +61,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   } else if (feature === 'limit_reached') {
     headline = 'Keep the momentum going.';
-    subtext = `You've started strong with ${used} pitches. Upgrade to contact all your matched brands.`;
+    subtext = `You've opened ${used} PR Packages this month. Upgrade to unlock all your matched brands.`;
     ctaText = 'Get Pro for $19/month';
 
   } else if (feature === 'bump_profile') {
@@ -77,9 +77,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   } else if (feature === 'unlock_paywall') {
     // Credit limit reached - user has 0 remaining
     headline = "0 remaining (5 used of 5)";
-    subtext = 'Each contact reveals a verified PR email and generates a tailored pitch.';
+    subtext = 'Each PR Package includes a verified contact, ready-to-send pitch in 3 tones, and content ideas.';
     ctaText = 'Get Unlimited — $19/mo';
-    progressLabel = 'contacts';
+    progressLabel = 'PR Packages';
     used = 5;
     total = 5;
   }
@@ -89,15 +89,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   const features = isUnlockPaywall ? [
     {
-      text: <><strong>Unlimited brand contacts</strong> — reach any brand, anytime</>,
+      text: <><strong>Unlimited PR Packages</strong> — reach any brand, anytime</>,
       highlight: true
     },
     {
-      text: <><strong>Verified PR emails</strong> — direct contacts that get read</>,
+      text: <><strong>Verified PR contacts</strong> — direct emails that get read</>,
       highlight: false
     },
     {
-      text: <><strong>AI-tailored pitches</strong> — personalized for each brand</>,
+      text: <><strong>Pitches in 3 tones</strong> — ready to copy and send</>,
       highlight: false
     },
     {
@@ -106,11 +106,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     },
   ] : [
     {
-      text: <><strong>Unlimited brand contacts</strong> — reach any brand, every month</>,
+      text: <><strong>Unlimited PR Packages</strong> — reach any brand, every month</>,
       highlight: false
     },
     {
-      text: <><strong>500+ brand contacts</strong> with direct PR emails and forms</>,
+      text: <><strong>500+ brand contacts</strong> with verified PR emails and forms</>,
       highlight: false
     },
     {
@@ -193,7 +193,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               </ProofStat>
               <ProofStat>
                 <ProofVal>∞</ProofVal>
-                <ProofLbl>Pitches/month</ProofLbl>
+                <ProofLbl>PR Packages/mo</ProofLbl>
               </ProofStat>
             </ProofStrip>
 
