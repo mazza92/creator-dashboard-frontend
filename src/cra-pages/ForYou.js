@@ -8,6 +8,7 @@ import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
+import PRPackageModal from '../creator-portal/PRPackageModal';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
@@ -1309,7 +1310,7 @@ const ForYou = () => {
                     {pitchedIds.has(brand.id) ? (
                       <><Check size={14} /> Contacted</>
                     ) : (
-                      <><Mail size={14} /> Pitch Now</>
+                      <><Mail size={14} /> Get Package</>
                     )}
                   </SeasonalBtn>
                 </SeasonalInfo>
@@ -1323,9 +1324,9 @@ const ForYou = () => {
         )}
       </PageInner>
 
-      {/* Modals */}
+      {/* Modals - PR Package Modal (new) */}
       {pitchingBrand && (
-        <AIPitchModal
+        <PRPackageModal
           isOpen={!!pitchingBrand}
           onClose={() => {
             setPitchingBrand(null);
@@ -1335,15 +1336,16 @@ const ForYou = () => {
             }
           }}
           brand={pitchingBrand}
-          onPitchSent={handlePitchSent}
-          onUnlockUsed={() => {
+          onPitchSent={(brand) => {
+            handlePitchSent(brand);
+            // Also trigger unlock callbacks
             fetchUnlockBalance();
             fetchUnlockedBrands();
-            // Mark as unlocked in welcome flow immediately (not just after pitch sent)
             if (isWelcomeFlow && pitchingBrand) {
               setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
             }
           }}
+          isPro={isPro}
         />
       )}
 
@@ -1374,7 +1376,7 @@ const ForYou = () => {
             </WelcomeTitle>
             <WelcomeSub>
               {welcomePitchedIds.size === 0 ? (
-                <>Unlock <strong>5 brand contacts</strong> free this month. Each reveals a verified PR email + AI-drafted outreach.</>
+                <>Get <strong>5 PR Packages</strong> free this month. Each includes a verified contact + ready-to-send pitch.</>
               ) : (
                 <>Creators who contact 5+ brands are <strong>3x more likely</strong> to land PR packages.</>
               )}
@@ -1391,7 +1393,7 @@ const ForYou = () => {
 
             {welcomePitchedIds.size === 0 && (
               <WelcomeUrgency>
-                <strong>Pro tip:</strong> Unlock your first brand contact now — our AI drafts your pitch in seconds.
+                <strong>Pro tip:</strong> Get your first PR Package now — verified contact + ready-to-send pitch.
               </WelcomeUrgency>
             )}
 
@@ -1588,7 +1590,7 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, isUnlocked, atLimit, onP
         {hasPitched ? (
           <><Check size={16} /> Contacted</>
         ) : (
-          <><Mail size={16} /> Pitch Now</>
+          <><Mail size={16} /> Get Package</>
         )}
       </PitchBtn>
     </Card>

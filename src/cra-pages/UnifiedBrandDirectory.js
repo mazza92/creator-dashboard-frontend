@@ -9,7 +9,7 @@ import { normalizeCategory, categoryLabel } from '../constants/brandCategories';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
-import AIPitchModal from '../creator-portal/AIPitchModal';
+import PRPackageModal from '../creator-portal/PRPackageModal';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 import { tokens } from '../theme/tokens';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -759,7 +759,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   )}
 
                   <DiscoveryButton as="div" style={{ marginTop: '16px', justifyContent: 'center' }}>
-                    <Mail size={16} /> Contact this brand
+                    <Mail size={16} /> Get PR Package
                   </DiscoveryButton>
                   {rateLimitInfo && rateLimitInfo.remaining !== undefined && (
                     <RateLimitInfo>
@@ -916,7 +916,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                             {isPitched ? (
                               <><Check size={16} /> Contacted</>
                             ) : (
-                              <><Mail size={16} /> Contact</>
+                              <><Mail size={16} /> Get Package</>
                             )}
                           </PitchButton>
                           <SaveActionButton
@@ -972,20 +972,21 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         />
       )}
 
-      {/* Brand Contact Modal */}
+      {/* PR Package Modal */}
       {showPitchModal && selectedBrandForPitch && (
-        <AIPitchModal
+        <PRPackageModal
           isOpen={showPitchModal}
           onClose={() => {
             setShowPitchModal(false);
             setSelectedBrandForPitch(null);
           }}
           brand={selectedBrandForPitch}
-          onPitchSent={handlePitchSent}
-          onUnlockUsed={() => {
+          onPitchSent={(brand) => {
+            handlePitchSent(brand);
             fetchSubscriptionStatus();
             fetchUnlockedBrands();
           }}
+          isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
         />
       )}
     </>

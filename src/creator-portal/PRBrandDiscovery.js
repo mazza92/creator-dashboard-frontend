@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import PROnboarding from '../components/PROnboarding';
 import UpgradeModal from './UpgradeModal';
 import AIPitchModal from './AIPitchModal';
+import PRPackageModal from './PRPackageModal';
 import ProfileCompleteness from '../components/ProfileCompleteness';
 import MediaKitRequired from '../components/MediaKitRequired';
 
@@ -1197,6 +1198,8 @@ const PRBrandDiscovery = () => {
   const [fetchingMore, setFetchingMore] = useState(false);
   const [showPitchModal, setShowPitchModal] = useState(false);
   const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
+  // Feature flag for PR Package pivot - set to true to enable new modal
+  const [usePRPackageModal] = useState(true);
   const [showWelcomeCard, setShowWelcomeCard] = useState(false);
   const [brandMatchCount, setBrandMatchCount] = useState(0);
   // Kit nudge interstitial state
@@ -1633,7 +1636,7 @@ const PRBrandDiscovery = () => {
           )}
           {subscriptionTier === 'free' && (
             <>
-              <FiSend size={14} /> {3 - pitchesSentThisWeek} free pitches left this month
+              <FiSend size={14} /> {5 - pitchesSentThisWeek} free PR Packages this month
             </>
           )}
         </PlanBadge>
@@ -1950,7 +1953,7 @@ const PRBrandDiscovery = () => {
               <FiSend />
             )}
             <span style={{ fontSize: '11px', marginTop: '4px' }}>
-              {pitchedBrands.has(currentBrand.id) ? 'Pitched' : 'Pitch'}
+              {pitchedBrands.has(currentBrand.id) ? 'Opened' : 'Get Package'}
             </span>
           </ActionButton>
         </ActionButtons>
@@ -1958,13 +1961,23 @@ const PRBrandDiscovery = () => {
       </>
       )}
 
-      {/* AI Pitch Modal */}
-      <AIPitchModal
-        isOpen={showPitchModal}
-        onClose={() => setShowPitchModal(false)}
-        brand={selectedBrandForPitch}
-        onPitchSent={handlePitchSent}
-      />
+      {/* Pitch Modal - PR Package or legacy AI Pitch */}
+      {usePRPackageModal ? (
+        <PRPackageModal
+          isOpen={showPitchModal}
+          onClose={() => setShowPitchModal(false)}
+          brand={selectedBrandForPitch}
+          onPitchSent={handlePitchSent}
+          isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+        />
+      ) : (
+        <AIPitchModal
+          isOpen={showPitchModal}
+          onClose={() => setShowPitchModal(false)}
+          brand={selectedBrandForPitch}
+          onPitchSent={handlePitchSent}
+        />
+      )}
 
       {/* Upgrade Modal */}
       <UpgradeModal
