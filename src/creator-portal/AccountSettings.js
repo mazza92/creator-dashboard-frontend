@@ -225,7 +225,7 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand saves
                 </Feature>
                 <Feature>
-                  <FiCheck /> 3 brand contacts per month
+                  <FiCheck /> 5 PR Packages per month
                 </Feature>
                 <Feature>
                   <FiCheck /> Full brand directory access
@@ -239,13 +239,13 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand saves
                 </Feature>
                 <Feature>
-                  <FiCheck /> Unlimited brand contacts
+                  <FiCheck /> Unlimited PR Packages
                 </Feature>
                 <Feature>
-                  <FiCheck /> Verified brand emails
+                  <FiCheck /> Verified PR contacts
                 </Feature>
                 <Feature>
-                  <FiCheck /> Personalized pitch templates
+                  <FiCheck /> Ready-to-send pitches in 3 tones
                 </Feature>
                 <Feature>
                   <FiCheck /> Priority support
@@ -259,10 +259,10 @@ const AccountSettings = () => {
                   <FiCheck /> Everything in Pro
                 </Feature>
                 <Feature>
-                  <FiCheck /> Unlimited brand contacts
+                  <FiCheck /> Unlimited PR Packages
                 </Feature>
                 <Feature>
-                  <FiCheck /> Professional pitch tools
+                  <FiCheck /> Professional PR tools
                 </Feature>
                 <Feature>
                   <FiCheck /> Guaranteed PR packages

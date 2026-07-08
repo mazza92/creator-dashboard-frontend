@@ -53,19 +53,19 @@ const SubscriptionSuccess = () => {
         <Title>Welcome to {subscriptionInfo?.tier === 'elite' ? 'Elite' : 'Pro'}! 🎉</Title>
 
         <Message>
-          Your subscription has been activated successfully. You now have access to unlimited brand saves, pitches, and premium features!
+          Your subscription has been activated successfully. You now have access to unlimited brand saves, PR Packages, and premium features!
         </Message>
 
         {!loading && subscriptionInfo && (
           <Features>
             <Feature>✅ Unlimited brand saves</Feature>
-            <Feature>✅ Unlimited pitches per month</Feature>
+            <Feature>✅ Unlimited PR Packages per month</Feature>
             <Feature>✅ Access to premium brands</Feature>
-            <Feature>✅ Advanced email templates</Feature>
+            <Feature>✅ Ready-to-send pitches in 3 tones</Feature>
             <Feature>✅ Email tracking & analytics</Feature>
             {subscriptionInfo.tier === 'elite' && (
               <>
-                <Feature>✅ Professional pitch tools</Feature>
+                <Feature>✅ Professional PR tools</Feature>
                 <Feature>✅ Personal PR coach</Feature>
                 <Feature>✅ Exclusive brand partnerships</Feature>
               </>

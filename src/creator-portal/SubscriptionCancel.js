@@ -21,14 +21,14 @@ const SubscriptionCancel = () => {
         <Title>Subscription Cancelled</Title>
 
         <Message>
-          No worries! You can still upgrade anytime to unlock unlimited brand saves, pitches, and premium features.
+          No worries! You can still upgrade anytime to unlock unlimited brand saves, PR Packages, and premium features.
         </Message>
 
         <FreeTierInfo>
           <InfoTitle>Your Free Tier Includes:</InfoTitle>
           <Features>
             <Feature>✓ Save up to 5 brands</Feature>
-            <Feature>✓ Send up to 3 pitches per month</Feature>
+            <Feature>✓ Get up to 5 PR Packages per month</Feature>
             <Feature>✓ Access to basic brand directory</Feature>
           </Features>
         </FreeTierInfo>
