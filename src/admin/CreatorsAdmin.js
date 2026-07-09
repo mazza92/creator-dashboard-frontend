@@ -153,7 +153,7 @@ const CreatorsAdmin = () => {
 
   const [creators, setCreators] = useState([]);
   const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState({ total: 0, verified: 0, with_kit: 0, pitched: 0 });
+  const [stats, setStats] = useState({ total: 0, verified: 0, with_kit: 0, unlocked: 0 });
 
   const [searchQ, setSearchQ] = useState('');
   const [niche, setNiche] = useState('');
@@ -244,7 +244,7 @@ const CreatorsAdmin = () => {
       setPage(1);
     }
     if (sorter?.field) {
-      const fieldMap = { signup_date: 'signup', pitches_total: 'pitches', followers_count: 'followers' };
+      const fieldMap = { signup_date: 'signup', unlocks_count: 'unlocks', followers_count: 'followers' };
       const nextField = fieldMap[sorter.field] || sortField;
       const nextOrder = sorter.order || (nextField === sortField && sortOrder === 'descend' ? 'ascend' : 'descend');
       if (nextField !== sortField || nextOrder !== sortOrder) {
@@ -392,18 +392,18 @@ const CreatorsAdmin = () => {
       },
     },
     {
-      title: 'Pitches',
-      key: 'pitches_total',
-      dataIndex: 'pitches_total',
+      title: 'Unlocks',
+      key: 'unlocks_count',
+      dataIndex: 'unlocks_count',
       width: 80,
       align: 'right',
       sorter: true,
-      sortOrder: sortField === 'pitches' ? sortOrder : null,
+      sortOrder: sortField === 'unlocks' ? sortOrder : null,
       render: (_, record) => (
         <PitchCell>
-          <span className="total">{formatNumber(record.pitches_total)}</span>
-          {record.pitches_this_week > 0 ? (
-            <span className="week">+{record.pitches_this_week}wk</span>
+          <span className="total">{formatNumber(record.unlocks_count)}</span>
+          {record.unlocks_this_week > 0 ? (
+            <span className="week">+{record.unlocks_this_week}wk</span>
           ) : null}
         </PitchCell>
       ),
@@ -528,7 +528,7 @@ const CreatorsAdmin = () => {
         </Col>
         <Col xs={12} sm={6}>
           <StatCard>
-            <Statistic title="Has pitched" value={stats.pitched ?? 0} />
+            <Statistic title="Has unlocked" value={stats.unlocked ?? 0} />
           </StatCard>
         </Col>
       </StatsRow>
@@ -671,9 +671,9 @@ const CreatorsAdmin = () => {
               <DetailItem label="Total posts" value={formatNumber(selectedCreator.total_posts)} />
               <DetailItem label="Total views" value={formatNumber(selectedCreator.total_views)} />
               <DetailItem label="Brands saved" value={formatNumber(selectedCreator.brands_saved ?? selectedCreator.pipeline_saves)} />
-              <DetailItem label="Pitches sent" value={formatNumber(selectedCreator.pitches_total)} highlight />
-              <DetailItem label="Pitches this week" value={formatNumber(selectedCreator.pitches_this_week)} />
-              <DetailItem label="Last pitched" value={formatDate(selectedCreator.last_pitched_at || selectedCreator.last_pitch_at, true)} />
+              <DetailItem label="Brands unlocked" value={formatNumber(selectedCreator.unlocks_count)} highlight />
+              <DetailItem label="Unlocks this week" value={formatNumber(selectedCreator.unlocks_this_week)} />
+              <DetailItem label="Last unlocked" value={formatDate(selectedCreator.last_unlocked_at || selectedCreator.last_unlock_date, true)} />
             </DetailGrid>
 
             <Divider style={{ margin: '16px 0' }} />
