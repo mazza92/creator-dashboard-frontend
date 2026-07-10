@@ -369,6 +369,7 @@ const TikTokFollowBtn = styled.a`
   border-radius: 12px;
   margin-bottom: 12px;
   transition: all 0.15s;
+  box-sizing: border-box;
 
   &:hover {
     background: #222;
@@ -539,7 +540,7 @@ export default function CreatorSignup() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <FaTiktok /> Follow @newcollabco on TikTok
+              <FaTiktok /> Follow @newcollabco
             </TikTokFollowBtn>
             <RegionNote>
               If you believe this is an error, try connecting from a different network
