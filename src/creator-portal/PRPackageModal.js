@@ -5,7 +5,6 @@ import { FiX, FiCopy, FiCheck, FiClock, FiArrowRight, FiLock, FiExternalLink } f
 import { apiClient } from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
-import MediaKitRequired from '../components/MediaKitRequired';
 
 /**
  * PR Package Modal - Complete PR Package with 6 sections:
@@ -32,8 +31,6 @@ const PRPackageModal = ({
   const [applicationUrl, setApplicationUrl] = useState(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-  const [showMediaKitRequired, setShowMediaKitRequired] = useState(false);
-  const [kitStatus, setKitStatus] = useState(null);
 
   // UI state
   const [selectedTone, setSelectedTone] = useState('growing');
@@ -121,12 +118,9 @@ const PRPackageModal = ({
         // Paywall triggered - show upgrade modal
         setShowPaywall(true);
         setShowAnimation(false);
-      } else if (err.response?.status === 403 && err.response?.data?.media_kit_required) {
-        // Media kit not complete - show media kit required modal
-        setKitStatus(err.response?.data?.kit_status || null);
-        setShowMediaKitRequired(true);
-        setShowAnimation(false);
       } else {
+        // Media kit enforcement removed - let users try the feature
+        // Backend should also be updated to remove the media_kit_required check
         setError(err.response?.data?.error || 'Failed to generate PR Package');
         setShowAnimation(false);
       }
@@ -510,18 +504,6 @@ const PRPackageModal = ({
         feature="unlock_paywall"
       />
 
-      {/* Media Kit Required Modal */}
-      <MediaKitRequired
-        isOpen={showMediaKitRequired}
-        onClose={() => {
-          setShowMediaKitRequired(false);
-          onClose(); // Also close the PR Package modal
-        }}
-        postCount={kitStatus?.post_count || 0}
-        isPublished={kitStatus?.is_published || false}
-        hasKit={kitStatus?.has_kit || false}
-        percentage={Math.min(100, Math.round(((kitStatus?.post_count || 0) / 3) * 100))}
-      />
     </AnimatePresence>
   );
 };

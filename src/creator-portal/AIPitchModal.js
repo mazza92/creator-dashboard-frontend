@@ -5,7 +5,7 @@ import { message, Spin } from 'antd';
 import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFileText } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
-import MediaKitRequired from '../components/MediaKitRequired';
+// Media kit enforcement removed - let users try the feature immediately
 
 /**
  * AI Pitch Modal - Generates personalized outreach emails using the "Golden Template"
@@ -39,8 +39,6 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   const [paywallData, setPaywallData] = useState(null); // For unlock paywall
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false); // Default false to show Pool nudge
   const [trackingPixelUrl, setTrackingPixelUrl] = useState(null); // For email open tracking
-  const [showMediaKitRequired, setShowMediaKitRequired] = useState(false); // Blocking modal when kit incomplete
-  const [mediaKitCompleteness, setMediaKitCompleteness] = useState(null); // Media kit completeness data
   const [showUnlockCelebration, setShowUnlockCelebration] = useState(false); // Tinder-style unlock celebration
   const [wasAlreadyUnlocked, setWasAlreadyUnlocked] = useState(false); // Track if brand was previously unlocked
 
@@ -73,70 +71,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       return [];
     };
 
-    // FIRST: Check media kit completeness - requires 4 portfolio posts + published
-    try {
-      // Fetch portfolio settings and posts count in parallel
-      const [portfolioRes, postsRes] = await Promise.all([
-        api.get('/api/portfolio/settings'),
-        api.get('/api/portfolio/posts')
-      ]);
-
-      console.log('[AIPitchModal] Portfolio settings:', portfolioRes.data);
-      console.log('[AIPitchModal] Portfolio posts:', postsRes.data);
-
-      const portfolio = portfolioRes.data;
-      // API returns array directly, not {posts: [...]}
-      const posts = Array.isArray(postsRes.data) ? postsRes.data : [];
-      const postCount = posts.length;
-
-      // Simple requirements: 3 posts + published
-      const isPublished = portfolio?.kit_published === true;
-      const hasEnoughPosts = postCount >= 3;
-
-      console.log('[AIPitchModal] Kit check:', {
-        isPublished,
-        postCount,
-        hasEnoughPosts
-      });
-
-      // Kit is complete if published AND has 3+ posts
-      const isComplete = isPublished && hasEnoughPosts;
-
-      // Calculate percentage (2 requirements: posts and published)
-      const postsProgress = Math.min(postCount, 3); // 0-3
-      const publishedProgress = isPublished ? 1 : 0;
-      const percentage = Math.round(((postsProgress / 3) * 0.8 + publishedProgress * 0.2) * 100);
-
-      console.log('[AIPitchModal] Completeness result:', { isComplete, postCount, isPublished, percentage });
-
-      setMediaKitCompleteness({
-        isComplete,
-        isPublished,
-        hasKit: true,
-        postCount,
-        percentage,
-      });
-
-      // Block if kit is not complete - show blocking modal
-      if (!isComplete) {
-        setShowMediaKitRequired(true);
-        setLoading(false);
-        return; // Don't proceed with pitch generation
-      }
-    } catch (err) {
-      console.error('Error checking media kit:', err);
-      // On error, show the blocking modal to be safe
-      setMediaKitCompleteness({
-        isComplete: false,
-        isPublished: false,
-        hasKit: false,
-        postCount: 0,
-        percentage: 0,
-      });
-      setShowMediaKitRequired(true);
-      setLoading(false);
-      return;
-    }
+    // Media kit enforcement removed - let users try the feature immediately
+    // Trade-off: users get instant value, but brands might ignore incomplete profiles
 
     // Fetch limits (but don't gate pitch generation — that happens at send time)
     await fetchPitchLimits();
@@ -515,13 +451,6 @@ ${creatorName}`;
     // Show upgrade overlay instead of blocking with a warning
     if (!isFollowup && !pitchLimits.canPitch) {
       setShowUpgradeOverlay(true);
-      return;
-    }
-
-    // Media kit check is done at initialization - if we get here, kit is complete
-    // Double-check just in case (e.g., if somehow called directly)
-    if (!isFollowup && mediaKitCompleteness && !mediaKitCompleteness.isComplete) {
-      setShowMediaKitRequired(true);
       return;
     }
 
@@ -1085,15 +1014,6 @@ ${creatorName}`;
                 </UpgradeOverlay>
               )}
 
-              {/* Media Kit Required Modal — blocks pitching until kit is complete & published */}
-              <MediaKitRequired
-                isOpen={showMediaKitRequired}
-                onClose={() => { setShowMediaKitRequired(false); onClose(); }}
-                isPublished={mediaKitCompleteness?.isPublished || false}
-                percentage={mediaKitCompleteness?.percentage || 0}
-                hasKit={mediaKitCompleteness?.hasKit || false}
-                postCount={mediaKitCompleteness?.postCount || 0}
-              />
             </>
           )}
             </>

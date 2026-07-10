@@ -10,7 +10,6 @@ import UpgradeModal from './UpgradeModal';
 import AIPitchModal from './AIPitchModal';
 import PRPackageModal from './PRPackageModal';
 import ProfileCompleteness from '../components/ProfileCompleteness';
-import MediaKitRequired from '../components/MediaKitRequired';
 
 // Brand colors
 const primaryBlue = '#3B82F6';
@@ -1206,10 +1205,6 @@ const PRBrandDiscovery = () => {
   const [kitNudgeBrand, setKitNudgeBrand] = useState(null);
   const [showKitNudge, setShowKitNudge] = useState(false);
   const [creatorProfile, setCreatorProfile] = useState(null);
-  // Media kit completeness state
-  const [mediaKitComplete, setMediaKitComplete] = useState(true); // Assume complete initially
-  const [mediaKitCompleteness, setMediaKitCompleteness] = useState(null);
-  const [showMediaKitRequired, setShowMediaKitRequired] = useState(false);
 
   // Universal Brand Discovery state
   const [searchQuery, setSearchQuery] = useState('');
@@ -1587,39 +1582,7 @@ const PRBrandDiscovery = () => {
         )}
         <ProfileCompleteness />
 
-        {/* Media Kit Completion Banner - shows when kit is not complete & published */}
-        {!mediaKitComplete && mediaKitCompleteness && (
-          <MediaKitBanner onClick={() => navigate('/creator/dashboard/my-kit')}>
-            <MediaKitBannerIcon>
-              <FiAlertCircle />
-            </MediaKitBannerIcon>
-            <MediaKitBannerContent>
-              <MediaKitBannerTitle>Complete your media kit to pitch brands</MediaKitBannerTitle>
-              <MediaKitBannerText>
-                {(mediaKitCompleteness.postCount || 0) < 3
-                  ? `Add ${3 - (mediaKitCompleteness.postCount || 0)} more portfolio post${3 - (mediaKitCompleteness.postCount || 0) === 1 ? '' : 's'} to unlock pitching`
-                  : !mediaKitCompleteness.isPublished
-                    ? 'Publish your media kit so brands can see your portfolio'
-                    : 'Complete your media kit to start pitching brands'
-                }
-              </MediaKitBannerText>
-            </MediaKitBannerContent>
-            <MediaKitBannerAction>
-              <FiArrowRight />
-            </MediaKitBannerAction>
-          </MediaKitBanner>
-        )}
       </div>
-
-      {/* Media Kit Required Modal */}
-      <MediaKitRequired
-        isOpen={showMediaKitRequired}
-        onClose={() => setShowMediaKitRequired(false)}
-        isPublished={mediaKitCompleteness?.isPublished || false}
-        percentage={mediaKitCompleteness?.percentage || 0}
-        hasKit={mediaKitCompleteness?.hasKit || false}
-        postCount={mediaKitCompleteness?.postCount || 0}
-      />
 
       <PageHeader>
         <Title>Discover Brands</Title>
