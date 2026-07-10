@@ -20,11 +20,6 @@ const getApiBase = () => {
   return base.replace(/\/+$/, '');
 };
 
-// Avatar colors for activity
-const AVATAR_COLORS = ['#E11D48','#7C3AED','#0F0F0F','#059669','#D97706'];
-const avatarColor = (name) =>
-  AVATAR_COLORS[name?.charCodeAt(0) % AVATAR_COLORS.length] || AVATAR_COLORS[0];
-
 const PublicBrandPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -39,7 +34,6 @@ const PublicBrandPage = () => {
   const [pitchesSentThisMonth, setPitchesSentThisMonth] = useState(0);
   const [showPitchModal, setShowPitchModal] = useState(false);
   const [hasPitched, setHasPitched] = useState(false);
-  const [recentActivity, setRecentActivity] = useState([]);
   const [relatedBrands, setRelatedBrands] = useState([]);
 
   const FREE_PITCH_LIMIT = 3;
@@ -106,13 +100,6 @@ const PublicBrandPage = () => {
         }
       }
 
-      // Fetch recent activity
-      try {
-        const { data: activity } = await axios.get(`${apiBase}/api/public/brands/${slug}/activity`);
-        setRecentActivity(activity || []);
-      } catch (e) {
-        // Activity endpoint may not exist yet
-      }
     } catch (error) {
       console.error('Error fetching brand:', error);
       if (error.response?.status === 404) {
@@ -461,26 +448,6 @@ const PublicBrandPage = () => {
                 </Card>
               )}
 
-              {/* Recent creator activity */}
-              {recentActivity?.length > 0 && (
-                <Card>
-                  <CardTitle>Recent Creator Activity</CardTitle>
-                  {recentActivity.map((item, i) => (
-                    <ActivityRow key={i}>
-                      <ActivityAvatar $color={avatarColor(item.username)}>
-                        {item.username?.[0]?.toUpperCase() || 'C'}
-                      </ActivityAvatar>
-                      <ActivityText>
-                        <strong>{item.username}</strong> sent a pitch ·{' '}
-                        {item.got_response
-                          ? <span className="got-response">Got a response</span>
-                          : 'No response yet'}
-                      </ActivityText>
-                      <ActivityTime>{item.days_ago}d ago</ActivityTime>
-                    </ActivityRow>
-                  ))}
-                </Card>
-              )}
             </MainCol>
 
             {/* SIDEBAR */}
@@ -1020,41 +987,6 @@ const SocialHandle = styled.span`
 
 const SocialFollowers = styled.span`
   font-size: 12px;
-  color: #8C8C8C;
-`;
-
-const ActivityRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #F4F4F4;
-  &:last-child { border-bottom: none; padding-bottom: 0; }
-`;
-
-const ActivityAvatar = styled.div`
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: ${p => p.$color || '#0F0F0F'};
-  color: white;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 11px;
-  flex-shrink: 0;
-`;
-
-const ActivityText = styled.div`
-  font-size: 12.5px;
-  color: #4B4B4B;
-  flex: 1;
-  strong { color: #0F0F0F; font-weight: 600; }
-  .got-response { color: #059669; font-weight: 600; }
-`;
-
-const ActivityTime = styled.div`
-  font-size: 11px;
   color: #8C8C8C;
 `;
 

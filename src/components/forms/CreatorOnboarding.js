@@ -523,11 +523,37 @@ const RegionNote = styled.div`
   line-height: 1.5;
 `;
 
+const TikTokFollowBtn = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: ${colors.black};
+  text-decoration: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #222;
+    transform: translateY(-1px);
+  }
+
+  svg {
+    font-size: 18px;
+  }
+`;
+
 const RegionBackLink = styled.a`
   display: inline-block;
   font-size: 14px;
   font-weight: 600;
-  color: ${colors.black};
+  color: ${colors.text3};
   text-decoration: none;
   padding: 12px 24px;
   border: 1.5px solid ${colors.border};
@@ -537,6 +563,7 @@ const RegionBackLink = styled.a`
   &:hover {
     background: #F5F5F5;
     border-color: #ccc;
+    color: ${colors.text2};
   }
 `;
 
@@ -981,11 +1008,18 @@ export default function CreatorOnboarding() {
             <RegionIcon>🌍</RegionIcon>
             <RegionTitle>newcollab isn't available in your region yet</RegionTitle>
             <RegionMessage>
-              We're currently focused on serving creators in select markets.
-              We appreciate your interest and hope to expand to your region soon.
+              We're currently focused on serving creators in the US, UK, Canada, and Australia.
+              Follow us on TikTok to be the first to know when we expand to your region!
             </RegionMessage>
+            <TikTokFollowBtn
+              href="https://www.tiktok.com/@newcollabco"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FaTiktok /> Follow @newcollabco on TikTok
+            </TikTokFollowBtn>
             <RegionNote>
-              If you believe this is an error, please try connecting from a different network
+              If you believe this is an error, try connecting from a different network
               or contact us at team@newcollab.co
             </RegionNote>
             <RegionBackLink href="/">← Back to Home</RegionBackLink>

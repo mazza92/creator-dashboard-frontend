@@ -5,6 +5,7 @@ import { apiClient } from '../utils/api';
 import { Helmet } from 'react-helmet-async';
 import { auth, firebaseConfigured } from '../components/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { FaTiktok } from 'react-icons/fa6';
 
 // ============================================================================
 // V4 SIGNUP FLOW - Simplified registration (email + password only)
@@ -328,6 +329,99 @@ const ErrorMsg = styled.div`
   text-align: center;
 `;
 
+// Region blocked UI
+const RegionBlockedCard = styled.div`
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.07);
+  border-radius: 22px;
+  padding: 48px 36px;
+  width: 100%;
+  max-width: 420px;
+  margin: 60px auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 8px 32px rgba(0,0,0,.07);
+  text-align: center;
+
+  @media (max-width: 480px) {
+    padding: 36px 22px;
+    margin: 40px 16px;
+    width: auto;
+  }
+`;
+
+const RegionIcon = styled.div`
+  font-size: 56px;
+  margin-bottom: 20px;
+`;
+
+const RegionTitle = styled.h2`
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+  color: ${colors.black};
+`;
+
+const RegionMessage = styled.p`
+  font-size: 15px;
+  color: ${colors.text2};
+  line-height: 1.6;
+  margin-bottom: 24px;
+`;
+
+const TikTokFollowBtn = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: ${colors.black};
+  text-decoration: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #222;
+    transform: translateY(-1px);
+  }
+
+  svg {
+    font-size: 18px;
+  }
+`;
+
+const RegionNote = styled.div`
+  font-size: 13px;
+  color: ${colors.text3};
+  padding: 16px;
+  background: #F9F9F9;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+`;
+
+const RegionBackLink = styled(Link)`
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${colors.text3};
+  text-decoration: none;
+  padding: 12px 24px;
+  border: 1.5px solid ${colors.border};
+  border-radius: 12px;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #F5F5F5;
+    border-color: #ccc;
+    color: ${colors.text2};
+  }
+`;
+
 export default function Register() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -336,6 +430,7 @@ export default function Register() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
 
   const isValid = firstName.trim().length > 0 && email.includes('@') && password.length >= 8;
@@ -409,11 +504,55 @@ export default function Register() {
       }
     } catch (err) {
       const msg = err.response?.data?.error || err.message || 'Google sign-in failed';
-      setError(msg);
+      // Check for region restriction (403 with "restricted region" message)
+      if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
+        setRegionBlocked(true);
+      } else {
+        setError(msg);
+      }
     } finally {
       setGoogleLoading(false);
     }
   };
+
+  // Show region blocked screen
+  if (regionBlocked) {
+    return (
+      <>
+        <Helmet>
+          <title>Not Available in Your Region | NewCollab</title>
+        </Helmet>
+        <PageWrapper>
+          <TopBar>
+            <LogoLink to="/">
+              <LogoMark>N</LogoMark>
+              <LogoWord>new<em>collab</em></LogoWord>
+            </LogoLink>
+          </TopBar>
+          <RegionBlockedCard>
+            <RegionIcon>🌍</RegionIcon>
+            <RegionTitle>newcollab isn't available in your region yet</RegionTitle>
+            <RegionMessage>
+              We're currently focused on serving creators in the US, UK, Canada, and Australia.
+              Follow us on TikTok to be the first to know when we expand to your region!
+            </RegionMessage>
+            <TikTokFollowBtn
+              href="https://www.tiktok.com/@newcollabco"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FaTiktok /> Follow @newcollabco on TikTok
+            </TikTokFollowBtn>
+            <RegionNote>
+              If you believe this is an error, try connecting from a different network
+              or contact us at team@newcollab.co
+            </RegionNote>
+            <RegionBackLink to="/">← Back to Home</RegionBackLink>
+          </RegionBlockedCard>
+        </PageWrapper>
+      </>
+    );
+  }
 
   return (
     <>

@@ -276,6 +276,35 @@ const ActionButton = styled.button`
   }
 `;
 
+const TikTokButton = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  background: ${colors.black};
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+  text-decoration: none;
+
+  &:hover {
+    background: #222;
+    transform: translateY(-1px);
+  }
+
+  svg {
+    font-size: 18px;
+  }
+`;
+
 const ErrorText = styled.div`
   color: ${colors.rose};
   font-size: 13px;
@@ -289,9 +318,9 @@ const ErrorText = styled.div`
 const FAILURE_MESSAGES = {
   restricted_region: {
     title: 'newcollab isn\'t available in your region yet',
-    message: 'We\'re currently focused on serving creators in select markets. We appreciate your interest and hope to expand to your region soon.',
+    message: 'We\'re currently focused on serving creators in the US, UK, Canada, and Australia. Follow us on TikTok to be the first to know when we expand to your region!',
     blocked: true,
-    actions: ['home']
+    actions: ['tiktok', 'home']
   },
   private: {
     title: 'Your account is set to private',
@@ -581,6 +610,15 @@ const SocialVerificationStep = ({
           <FailureTitle>{failure.title}</FailureTitle>
           <FailureMessage>{failure.message}</FailureMessage>
 
+          {failure.actions.includes('tiktok') && (
+            <TikTokButton
+              href="https://www.tiktok.com/@newcollabco"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FaTiktok /> Follow @newcollabco on TikTok
+            </TikTokButton>
+          )}
           {failure.actions.includes('recheck') && (
             <ActionButton onClick={handleRetry}>
               Try again

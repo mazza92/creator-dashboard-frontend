@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { auth, firebaseConfigured } from './firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { apiClient } from '../config/api';
+import { FaTiktok } from 'react-icons/fa6';
 
 // V5 design tokens — kept consistent with About / Landing pages
 const colors = {
@@ -402,6 +403,93 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// ── Region blocked UI ──────────────────────────────────────
+const RegionBlockedCard = styled.div`
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: 22px;
+  padding: 48px 36px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 8px 32px rgba(0,0,0,.07);
+  text-align: center;
+`;
+
+const RegionIcon = styled.div`
+  font-size: 56px;
+  margin-bottom: 20px;
+`;
+
+const RegionTitle = styled.h2`
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+  color: ${colors.black};
+`;
+
+const RegionMessage = styled.p`
+  font-size: 15px;
+  color: ${colors.text2};
+  line-height: 1.6;
+  margin-bottom: 24px;
+`;
+
+const TikTokFollowBtn = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: ${colors.black};
+  text-decoration: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.15s;
+
+  &:hover {
+    background: ${colors.black2};
+    transform: translateY(-1px);
+  }
+
+  svg {
+    font-size: 18px;
+  }
+`;
+
+const RegionNote = styled.div`
+  font-size: 13px;
+  color: ${colors.text3};
+  padding: 16px;
+  background: ${colors.bg};
+  border-radius: 12px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+`;
+
+const RegionBackLink = styled(Link)`
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${colors.text3};
+  text-decoration: none;
+  padding: 12px 24px;
+  border: 1.5px solid ${colors.border};
+  border-radius: 12px;
+  transition: all 0.15s;
+
+  &:hover {
+    background: ${colors.bg};
+    border-color: #ccc;
+    color: ${colors.text2};
+  }
+`;
+
 // ═══════════════════════════════════════════════════════════
 // COMPONENT
 // ═══════════════════════════════════════════════════════════
@@ -409,6 +497,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+  const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
   const { setUser } = useContext(UserContext);
   const [form] = Form.useForm();
@@ -546,6 +635,12 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         navigate('/register/creator', {
           state: { email: err.response?.data?.email || '' },
         });
+      } else if (
+        err.response?.status === 403 &&
+        (errorMessage.toLowerCase().includes('region') || errorMessage.toLowerCase().includes('restricted'))
+      ) {
+        // Region restriction - show region blocked UI
+        setRegionBlocked(true);
       } else {
         message.error(errorMessage);
       }
@@ -630,6 +725,34 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
       )}
     </>
   );
+
+  // ── Region blocked screen ────────────────────────────────
+  if (regionBlocked) {
+    return (
+      <Container>
+        <RegionBlockedCard>
+          <RegionIcon>🌍</RegionIcon>
+          <RegionTitle>newcollab isn't available in your region yet</RegionTitle>
+          <RegionMessage>
+            We're currently focused on serving creators in the US, UK, Canada, and Australia.
+            Follow us on TikTok to be the first to know when we expand to your region!
+          </RegionMessage>
+          <TikTokFollowBtn
+            href="https://www.tiktok.com/@newcollabco"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FaTiktok /> Follow @newcollabco on TikTok
+          </TikTokFollowBtn>
+          <RegionNote>
+            If you believe this is an error, try connecting from a different network
+            or contact us at team@newcollab.co
+          </RegionNote>
+          <RegionBackLink to="/">← Back to Home</RegionBackLink>
+        </RegionBlockedCard>
+      </Container>
+    );
+  }
 
   // ── Modal version (used in marketplace flow) ─────────────
   if (isModal) {
