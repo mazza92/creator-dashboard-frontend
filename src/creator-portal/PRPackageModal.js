@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiCopy, FiCheck, FiClock, FiArrowRight, FiLock, FiExternalLink } from 'react-icons/fi';
+import { FiX, FiCopy, FiCheck, FiClock, FiArrowRight, FiLock, FiExternalLink, FiStar } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
@@ -37,6 +38,12 @@ const PRPackageModal = ({
   const [copiedField, setCopiedField] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
   const [showAnimation, setShowAnimation] = useState(true);
+
+  const navigate = useNavigate();
+
+  // Check if creator has a published media kit
+  // API response may include kit_published, fallback to creatorProfile.has_media_kit
+  const hasPublishedKit = packageData?.kit_published ?? creatorProfile?.has_media_kit ?? false;
 
   // Handle upgrade to Pro via Stripe checkout
   const handleUpgradeClick = async () => {
@@ -332,9 +339,19 @@ const PRPackageModal = ({
                     </PitchBody>
                   </PitchComposer>
 
-                  <KitAttached>
-                    <FiCheck /> Media kit auto-attached
-                  </KitAttached>
+                  {hasPublishedKit ? (
+                    <KitAttached>
+                      <FiCheck /> Media kit auto-attached
+                    </KitAttached>
+                  ) : (
+                    <KitPrompt onClick={() => { onClose(); navigate('/creator/dashboard/my-kit'); }}>
+                      <KitPromptIcon><FiStar /></KitPromptIcon>
+                      <KitPromptText>
+                        <KitPromptMain>Brands prioritize creators with portfolios</KitPromptMain>
+                        <KitPromptSub>Add yours to increase reply rates →</KitPromptSub>
+                      </KitPromptText>
+                    </KitPrompt>
+                  )}
 
                   <SendButton onClick={handleSendPitch}>
                     Send Pitch <FiArrowRight />
@@ -901,6 +918,55 @@ const KitAttached = styled.div`
   padding: 6px 10px;
   background: #d4f4e2;
   border-radius: 7px;
+`;
+
+const KitPrompt = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    transform: translateY(-1px);
+  }
+`;
+
+const KitPromptIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  background: #fde68a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #92400e;
+  font-size: 14px;
+  flex-shrink: 0;
+`;
+
+const KitPromptText = styled.div`
+  flex: 1;
+`;
+
+const KitPromptMain = styled.div`
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #92400e;
+  line-height: 1.3;
+`;
+
+const KitPromptSub = styled.div`
+  font-size: 10.5px;
+  color: #b45309;
+  font-weight: 600;
+  margin-top: 1px;
 `;
 
 const SendButton = styled.button`
