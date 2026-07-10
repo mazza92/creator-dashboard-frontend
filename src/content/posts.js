@@ -1,5 +1,6 @@
 // Auto-generated post index — do not edit manually
 export const posts = [
+  "pr-emails-for-brands-2026",
   "paid-tiktok-partnerships-brands-list-2026",
   "brands-accepting-creators-with-no-followers-2026",
   "uk-brands-that-send-pr-packages-2026",
