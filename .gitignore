@@ -4,3 +4,6 @@ node_modules
 build
 tmpclaude-*
 nul
+
+# Local IDE / agent settings (may contain env vars in command history)
+.claude/settings.local.json
