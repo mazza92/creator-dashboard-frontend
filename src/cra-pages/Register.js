@@ -466,7 +466,13 @@ export default function Register() {
       }
       navigate(redirectUrl);
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      const msg = err.response?.data?.error || 'Something went wrong';
+      // Check for region restriction (403 with "region" message)
+      if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
+        setRegionBlocked(true);
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
