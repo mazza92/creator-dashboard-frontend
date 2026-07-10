@@ -32,6 +32,7 @@ const PRPackageModal = ({
   const [applicationUrl, setApplicationUrl] = useState(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [kitPublished, setKitPublished] = useState(false);
 
   // UI state
   const [selectedTone, setSelectedTone] = useState('growing');
@@ -41,9 +42,8 @@ const PRPackageModal = ({
 
   const navigate = useNavigate();
 
-  // Check if creator has a published media kit
-  // API response may include kit_published, fallback to creatorProfile.has_media_kit
-  const hasPublishedKit = packageData?.kit_published ?? creatorProfile?.has_media_kit ?? false;
+  // Check if creator has a published media kit (from API response)
+  const hasPublishedKit = kitPublished || creatorProfile?.has_media_kit || false;
 
   // Handle upgrade to Pro via Stripe checkout
   const handleUpgradeClick = async () => {
@@ -105,6 +105,7 @@ const PRPackageModal = ({
         setPackageData(response.data.package);
         setBrandEmail(response.data.brand_email);
         setApplicationUrl(response.data.application_form_url);
+        setKitPublished(response.data.kit_published || false);
 
         // NOW show "Package ready" step
         setAnimationStep(ANIMATION_STEPS.length - 1);
