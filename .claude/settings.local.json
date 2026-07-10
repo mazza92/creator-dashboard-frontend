@@ -12,7 +12,22 @@
       "Bash(powershell -Command \"wsl bash -c ''echo \"\"ls /home/hermes/.hermes\"\" | ssh hermes@178.104.230.7''\")",
       "Bash(powershell -Command \"wsl ssh hermes@178.104.230.7 ''bash -c \"\"ls -la /home/hermes/.hermes/\"\"''\")",
       "Bash(powershell -Command \"wsl ssh hermes@178.104.230.7 ''ls -ld /home/hermes/.hermes''\")",
-      "Bash(npm run build:cra:*)"
+      "Bash(npm run build:cra:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(python scripts/enrich_cover_images.py:*)",
+      "Bash(git diff:*)",
+      "Bash(npm run build:*)",
+      "Bash(python:*)",
+      "Bash(HUNTER_API_KEY=30ba0869cb94615e4e18ac35aa10ee42947fb98d node scripts/hunter-email-enrichment.js:*)",
+      "Bash(HUNTER_API_KEY=30ba0869cb94615e4e18ac35aa10ee42947fb98d node scripts/hunter-fix-invalid.js:*)",
+      "Bash(set HUNTER_API_KEY=30ba0869cb94615e4e18ac35aa10ee42947fb98d)",
+      "Bash(node scripts/hunter-fix-wrong-email.js:*)",
+      "Bash(HUNTER_API_KEY=30ba0869cb94615e4e18ac35aa10ee42947fb98d node scripts/hunter-fix-wrong-email.js:*)",
+      "Bash(node scripts/fix-long-titles.js:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(dir \"c:\\\\Users\\\\maher\\\\Desktop\\\\creator-dashboard\\\\src\")",
+      "Bash(dir \"c:\\\\Users\\\\maher\\\\Desktop\\\\creator-dashboard\\\\lib\")"
     ]
   }
 }

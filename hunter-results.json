@@ -1,0 +1,254 @@
+{
+  "timestamp": "2026-07-03T09:45:44.311Z",
+  "stats": {
+    "totalBrands": 427,
+    "brandsWithEmail": 395,
+    "brandsWithoutEmail": 32,
+    "emailsVerified": 0,
+    "emailsFound": 29,
+    "emailsValid": 0,
+    "emailsInvalid": 0,
+    "emailsUnknown": 0,
+    "emailsUpdated": 29,
+    "creditsUsed": 32,
+    "errors": []
+  },
+  "results": {
+    "verified": [],
+    "found": [
+      {
+        "id": 3464,
+        "name": "Geologie ",
+        "slug": "Geologie-beauty",
+        "email": "help@geologie.com",
+        "confidence": 95,
+        "domain": "geologie.com"
+      },
+      {
+        "id": 3451,
+        "name": "House of lashes",
+        "slug": "house-lashes",
+        "email": "info@houseoflashes.com",
+        "confidence": 95,
+        "domain": "houseoflashes.com"
+      },
+      {
+        "id": 2780,
+        "name": "Wildbird",
+        "slug": "wildbird",
+        "email": "collabs@wildbird.co",
+        "confidence": 95,
+        "domain": "wildbird.co"
+      },
+      {
+        "id": 2271,
+        "name": "4moms",
+        "slug": "4moms",
+        "email": "media@uppababy.com",
+        "confidence": 94,
+        "domain": "uppababy.com"
+      },
+      {
+        "id": 1703,
+        "name": "Nécessaire",
+        "slug": "necessaire",
+        "email": "team@necessaire.com",
+        "confidence": 95,
+        "domain": "necessaire.com"
+      },
+      {
+        "id": 666,
+        "name": "True Botanicals",
+        "slug": "true-botanicals",
+        "email": "press@truebotanicals.com",
+        "confidence": 95,
+        "domain": "truebotanicals.com"
+      },
+      {
+        "id": 650,
+        "name": "Dermatica",
+        "slug": "dermatica",
+        "email": "press@dermatica.com",
+        "confidence": 78,
+        "domain": "dermatica.com"
+      },
+      {
+        "id": 569,
+        "name": "Sigma Beauty",
+        "slug": "sigma-beauty",
+        "email": "marketing@sigmabeauty.com",
+        "confidence": 95,
+        "domain": "sigmabeauty.com"
+      },
+      {
+        "id": 557,
+        "name": "Whoop",
+        "slug": "whoop",
+        "email": "press@whoop.com",
+        "confidence": 80,
+        "domain": "whoop.com"
+      },
+      {
+        "id": 477,
+        "name": "Oiselle",
+        "slug": "oiselle",
+        "email": "feedback@oiselle.com",
+        "confidence": 96,
+        "domain": "oiselle.com"
+      },
+      {
+        "id": 479,
+        "name": "Piglet in Bed",
+        "slug": "piglet-in-bed",
+        "email": "team.usa@pigletinbed.com",
+        "confidence": 99,
+        "domain": "pigletinbed.com"
+      },
+      {
+        "id": 475,
+        "name": "Lolë",
+        "slug": "lolë",
+        "email": "social@lolelife.com",
+        "confidence": 77,
+        "domain": "lolelife.com"
+      },
+      {
+        "id": 465,
+        "name": "A Pup Above",
+        "slug": "a-pup-above",
+        "email": "contact@apupabove.com",
+        "confidence": 95,
+        "domain": "apupabove.com"
+      },
+      {
+        "id": 331,
+        "name": "RXBAR",
+        "slug": "rxbar",
+        "email": "media@rxbar.com",
+        "confidence": 96,
+        "domain": "rxbar.com"
+      },
+      {
+        "id": 312,
+        "name": "Twelve South",
+        "slug": "twelve-south",
+        "email": "marketing@twelvesouth.com",
+        "confidence": 95,
+        "domain": "twelvesouth.com"
+      },
+      {
+        "id": 284,
+        "name": "Ancient Nutrition",
+        "slug": "ancient-nutrition",
+        "email": "support@ancientnutrition.com",
+        "confidence": 90,
+        "domain": "ancientnutrition.com"
+      },
+      {
+        "id": 263,
+        "name": "Alphalete Athletics",
+        "slug": "alphalete-athletics",
+        "email": "info@alphaleteathletics.com",
+        "confidence": 98,
+        "domain": "alphaleteathletics.com"
+      },
+      {
+        "id": 251,
+        "name": "Babe Original",
+        "slug": "babe-original",
+        "email": "collab@babeoriginal.com",
+        "confidence": 75,
+        "domain": "babeoriginal.com"
+      },
+      {
+        "id": 230,
+        "name": "Free People",
+        "slug": "free-people",
+        "email": "press@freepeople.com",
+        "confidence": 77,
+        "domain": "freepeople.com"
+      },
+      {
+        "id": 215,
+        "name": "MAC Cosmetics",
+        "slug": "mac-cosmetics",
+        "email": "info.clusterhub@maccosmetics.com",
+        "confidence": 85,
+        "domain": "maccosmetics.com"
+      },
+      {
+        "id": 211,
+        "name": "Ulta Beauty",
+        "slug": "ulta-beauty",
+        "email": "service@ulta.com",
+        "confidence": 80,
+        "domain": "ulta.com"
+      },
+      {
+        "id": 192,
+        "name": "Homesick",
+        "slug": "homesick",
+        "email": "help@homesick.com",
+        "confidence": 99,
+        "domain": "homesick.com"
+      },
+      {
+        "id": 85,
+        "name": "Pacifica Beauty",
+        "slug": "pacifica-beauty",
+        "email": "ecom@pacificabeauty.com",
+        "confidence": 95,
+        "domain": "pacificabeauty.com"
+      },
+      {
+        "id": 76,
+        "name": "FashionNova.com",
+        "slug": "fashionnovacom",
+        "email": "submissions@fashionnova.com",
+        "confidence": 95,
+        "domain": "fashionnova.com"
+      },
+      {
+        "id": 20,
+        "name": "The Ordinary",
+        "slug": "the-ordinary",
+        "email": "support@theordinary.com",
+        "confidence": 99,
+        "domain": "theordinary.com"
+      },
+      {
+        "id": 66,
+        "name": "Allbirds",
+        "slug": "allbirds",
+        "email": "press@allbirds.com",
+        "confidence": 95,
+        "domain": "allbirds.com"
+      },
+      {
+        "id": 56,
+        "name": "PopSockets",
+        "slug": "popsockets",
+        "email": "promo@popsockets.com",
+        "confidence": 96,
+        "domain": "popsockets.com"
+      },
+      {
+        "id": 65,
+        "name": "Patagonia",
+        "slug": "patagonia",
+        "email": "press@patagonia.com",
+        "confidence": 95,
+        "domain": "patagonia.com"
+      },
+      {
+        "id": 69,
+        "name": "Ana Luisa",
+        "slug": "ana-luisa",
+        "email": "hello@analuisa.com",
+        "confidence": 94,
+        "domain": "analuisa.com"
+      }
+    ],
+    "invalid": []
+  }
+}

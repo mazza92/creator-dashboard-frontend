@@ -466,27 +466,9 @@ export default function Register() {
       }
       navigate(redirectUrl);
     } catch (err) {
-      console.log('[Register] Error caught:', err);
-      console.log('[Register] err.response:', err.response);
-      console.log('[Register] err.response?.data:', err.response?.data);
-      console.log('[Register] err.response?.status:', err.response?.status);
-
-      // Check multiple places for the error message
-      const dataError = err.response?.data?.error;
-      const dataMessage = err.response?.data?.message;
-      const statusText = err.response?.statusText;
-      const msg = dataError || dataMessage || statusText || err.message || 'Something went wrong';
-
-      console.log('[Register] Extracted msg:', msg);
-
-      // Check for region restriction (403 status OR message contains region/restricted)
-      const is403 = err.response?.status === 403;
-      const hasRegionText = msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted');
-
-      console.log('[Register] is403:', is403, 'hasRegionText:', hasRegionText);
-
-      if (is403 && hasRegionText) {
-        console.log('[Register] Setting regionBlocked = true');
+      const msg = err.response?.data?.error || 'Something went wrong';
+      // Check for region restriction (403 with "region" in message)
+      if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
         setRegionBlocked(true);
       } else {
         setError(msg);
@@ -527,24 +509,9 @@ export default function Register() {
         navigate(redirectUrl);
       }
     } catch (err) {
-      console.log('[Register-Google] Error caught:', err);
-      console.log('[Register-Google] err.response:', err.response);
-      console.log('[Register-Google] err.response?.data:', err.response?.data);
-
-      // Check multiple places for the error message
-      const dataError = err.response?.data?.error;
-      const dataMessage = err.response?.data?.message;
-      const statusText = err.response?.statusText;
-      const msg = dataError || dataMessage || statusText || err.message || 'Google sign-in failed';
-
-      console.log('[Register-Google] Extracted msg:', msg);
-
-      // Check for region restriction
-      const is403 = err.response?.status === 403;
-      const hasRegionText = msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted');
-
-      if (is403 && hasRegionText) {
-        console.log('[Register-Google] Setting regionBlocked = true');
+      const msg = err.response?.data?.error || err.message || 'Google sign-in failed';
+      // Check for region restriction (403 with "region" in message)
+      if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
         setRegionBlocked(true);
       } else {
         setError(msg);
