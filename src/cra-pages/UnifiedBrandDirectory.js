@@ -10,9 +10,13 @@ import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import PRPackageModal from '../creator-portal/PRPackageModal';
+import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 import { tokens } from '../theme/tokens';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+// Feature flag for V2 modal testing
+const USE_UNLOCK_V2 = true;
 
 // Normalize API base URL - remove trailing slash to prevent double slashes
 const getApiBase = () => {
@@ -100,6 +104,60 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       sessionStorage.removeItem('justCompletedOnboarding');
     }
   }, [isDashboardView]);
+
+  // Handle brand URL param to open specific brand modal (e.g., from better matches redirect)
+  useEffect(() => {
+    const brandSlug = searchParams.get('brand');
+    if (brandSlug && user) {
+      // Fetch the brand by slug and open the modal
+      const openBrandBySlug = async () => {
+        try {
+          // Use the brands list API with slug filter
+          const { data } = await axios.get(`${API_BASE}/api/public/brands`, {
+            params: { slug: brandSlug, limit: 1 }
+          });
+          const brand = data.brands?.[0];
+          if (brand) {
+            // Map API fields to expected format
+            // API returns: name, logo, description, coverImage, etc.
+            // Modal expects: brand_name, logo_url, notes, etc.
+            setSelectedBrandForPitch({
+              id: brand.id,
+              brand_name: brand.name || brand.brand_name,  // API returns 'name'
+              name: brand.name || brand.brand_name,
+              category: brand.category,
+              website: brand.website,
+              logo_url: brand.logo,  // API returns 'logo'
+              slug: brand.slug,
+              description: brand.description,
+              niches: brand.niches,
+              regions: brand.regions,
+              hasApplication: brand.hasApplication,
+              hasEmailContact: brand.hasEmailContact,
+            });
+            setShowPitchModal(true);
+            // Clear the brand param from URL
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('brand');
+            setSearchParams(newParams, { replace: true });
+          } else {
+            message.error('Brand not found');
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('brand');
+            setSearchParams(newParams, { replace: true });
+          }
+        } catch (error) {
+          console.error('Error fetching brand by slug:', error);
+          message.error('Brand not found');
+          // Clear the invalid param
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('brand');
+          setSearchParams(newParams, { replace: true });
+        }
+      };
+      openBrandBySlug();
+    }
+  }, [searchParams, user]);
 
   const fetchOpenPrBrands = async () => {
     try {
@@ -533,27 +591,26 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             const remaining = unlockBalance.remaining ?? FREE_UNLOCK_LIMIT;
             const used = FREE_UNLOCK_LIMIT - remaining;
             return (
-              <QuotaStrip $atLimit={remaining <= 0}>
-                <QuotaIconBox $atLimit={remaining <= 0}>
-                  <Mail size={20} />
-                </QuotaIconBox>
-                <QuotaBody>
-                  <QuotaTitle>
-                    {remaining} remaining ({used} used of {FREE_UNLOCK_LIMIT})
-                  </QuotaTitle>
-                  <QuotaBarTrack>
-                    <QuotaBarFill $atLimit={remaining <= 0} style={{ width: `${Math.min((used / FREE_UNLOCK_LIMIT) * 100, 100)}%` }} />
-                  </QuotaBarTrack>
-                  <QuotaMeta $atLimit={remaining <= 0}>
+              <QuotaBanner $exhausted={remaining <= 0}>
+                <QuotaDots>
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <QuotaDot key={i} $filled={i < used} />
+                  ))}
+                </QuotaDots>
+                <QuotaText>
+                  <QuotaTitle>{remaining} of 5 unlocks left</QuotaTitle>
+                  <QuotaSub>
                     {remaining <= 0
-                      ? 'Limit reached · Upgrade to contact more brands'
-                      : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'next month'}`}
-                  </QuotaMeta>
-                </QuotaBody>
-                <QuotaCTA onClick={() => setUpgradeModalVisible(true)}>
-                  {remaining <= 0 ? 'Get Unlimited' : 'Upgrade to Pro'}
-                </QuotaCTA>
-              </QuotaStrip>
+                      ? 'Upgrade for unlimited'
+                      : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
+                  </QuotaSub>
+                </QuotaText>
+                {remaining <= 0 && (
+                  <QuotaUpgrade onClick={() => setUpgradeModalVisible(true)}>
+                    Upgrade
+                  </QuotaUpgrade>
+                )}
+              </QuotaBanner>
             );
           })()}
 
@@ -972,25 +1029,47 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         />
       )}
 
-      {/* PR Package Modal */}
+      {/* PR Package Modal (V2 or legacy) */}
       {showPitchModal && selectedBrandForPitch && (
-        <PRPackageModal
-          isOpen={showPitchModal}
-          onClose={() => {
-            // Refresh unlocked brands when modal closes (unlock happens on package generation)
-            fetchUnlockedBrands();
-            fetchSubscriptionStatus();
-            setShowPitchModal(false);
-            setSelectedBrandForPitch(null);
-          }}
-          brand={selectedBrandForPitch}
-          onPitchSent={(brand) => {
-            handlePitchSent(brand);
-            fetchSubscriptionStatus();
-            fetchUnlockedBrands();
-          }}
-          isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
-        />
+        USE_UNLOCK_V2 ? (
+          <UnlockModalV2
+            isOpen={showPitchModal}
+            onClose={() => {
+              fetchUnlockedBrands();
+              fetchSubscriptionStatus();
+              setShowPitchModal(false);
+              setSelectedBrandForPitch(null);
+            }}
+            brand={selectedBrandForPitch}
+            onPitchSent={(brand) => {
+              handlePitchSent(brand);
+              fetchSubscriptionStatus();
+              fetchUnlockedBrands();
+            }}
+            isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+            onUpgrade={() => {
+              setShowPitchModal(false);
+              setUpgradeModalVisible(true);
+            }}
+          />
+        ) : (
+          <PRPackageModal
+            isOpen={showPitchModal}
+            onClose={() => {
+              fetchUnlockedBrands();
+              fetchSubscriptionStatus();
+              setShowPitchModal(false);
+              setSelectedBrandForPitch(null);
+            }}
+            brand={selectedBrandForPitch}
+            onPitchSent={(brand) => {
+              handlePitchSent(brand);
+              fetchSubscriptionStatus();
+              fetchUnlockedBrands();
+            }}
+            isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+          />
+        )
       )}
     </>
   );
@@ -1160,95 +1239,78 @@ const HeroContent = styled.div`
   }
 `;
 
-const QuotaStrip = styled.div`
-  background: ${props => props.$atLimit ? '#FEF2F2' : tokens.surface};
-  border: 1px solid ${props => props.$atLimit ? '#FECACA' : tokens.border};
-  border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
+// Compact quota tracker - matches ForYou design
+const QuotaBanner = styled.div`
   display: flex;
   align-items: center;
-  gap: 14px;
-  box-shadow: ${tokens.shadowCard};
-
-  @media (max-width: 768px) {
-    flex-wrap: wrap;
-  }
-`;
-
-const QuotaIconBox = styled.div`
-  width: 38px;
-  height: 38px;
+  gap: 12px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
   border-radius: 10px;
-  background: ${props => props.$atLimit ? '#FEE2E2' : tokens.subtle};
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  color: ${props => props.$atLimit ? '#DC2626' : tokens.textSecondary};
+  padding: 10px 14px;
+  margin-bottom: 16px;
 
-  svg {
-    width: 20px;
-    height: 20px;
+  @media (max-width: 640px) {
+    gap: 10px;
+    padding: 10px 12px;
   }
 `;
 
-const QuotaBody = styled.div`
+// Segmented progress bar - 5 dots
+const QuotaDots = styled.div`
+  display: flex;
+  gap: 3px;
+`;
+
+const QuotaDot = styled.div`
+  width: 24px;
+  height: 6px;
+  border-radius: 3px;
+  background: ${props => props.$filled ? '#10B981' : '#E5E7EB'};
+  transition: all 0.3s ease;
+
+  @media (max-width: 640px) {
+    width: 20px;
+    height: 5px;
+  }
+`;
+
+const QuotaText = styled.div`
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const QuotaTitle = styled.div`
-  font-size: 13px;
   font-weight: 600;
-  color: ${tokens.textPrimary};
-  margin-bottom: 5px;
+  font-size: 13px;
+  color: #374151;
 `;
 
-const QuotaBarTrack = styled.div`
-  height: 4px;
-  background: ${tokens.subtle};
-  border-radius: 2px;
-  overflow: hidden;
-  max-width: 280px;
-  margin-bottom: 5px;
+const QuotaSub = styled.div`
+  font-size: 12px;
+  color: #9CA3AF;
 `;
 
-const QuotaBarFill = styled.div`
-  height: 100%;
-  background: ${props => props.$atLimit ? '#DC2626' : tokens.proGradient};
-  border-radius: 2px;
-  transition: width 0.4s ease;
-`;
-
-const QuotaMeta = styled.div`
-  font-size: 11px;
-  color: ${props => props.$atLimit ? '#DC2626' : tokens.textMuted};
-  font-weight: ${props => props.$atLimit ? '600' : '400'};
-`;
-
-const QuotaCTA = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: ${tokens.proGradient};
+const QuotaUpgrade = styled.button`
+  background: #111827;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 12.5px;
+  border-radius: 6px;
+  padding: 6px 12px;
   font-weight: 600;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
-  font-family: inherit;
-  transition: opacity 0.15s;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 
   &:hover {
-    opacity: 0.9;
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-    justify-content: center;
+    background: #1F2937;
   }
 `;
 

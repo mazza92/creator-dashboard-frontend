@@ -9,7 +9,11 @@ import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import PRPackageModal from '../creator-portal/PRPackageModal';
+import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
+
+// Feature flag for V2 modal testing - set to true to use new verdict-first design
+const USE_UNLOCK_V2 = true;
 import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -538,7 +542,8 @@ const ForYou = () => {
       return;
     }
 
-    setPitchingBrand(brand);
+    // Mark brand as coming from For You to ensure consistent fit rating
+    setPitchingBrand({ ...brand, is_for_you_match: true });
   }, [atLimit, savedIds, creatorProfile]);
 
   const handleKitNudgeSkip = () => {
@@ -705,7 +710,7 @@ const ForYou = () => {
           )}
         </PageHeader>
 
-        {/* Persistent Quota Progress Banner */}
+        {/* Compact Unlock Tracker */}
         {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (() => {
           const remaining = unlockBalance.remaining || 0;
           const used = 5 - remaining;
@@ -717,34 +722,51 @@ const ForYou = () => {
                 ))}
               </QuotaDots>
               <QuotaText>
-                <QuotaTitle>{remaining} remaining ({used} used of 5)</QuotaTitle>
+                <QuotaTitle>{remaining} of 5 unlocks left</QuotaTitle>
                 <QuotaSub>
                   {remaining <= 0
-                    ? 'Get unlimited to contact all your matched brands'
-                    : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'next month'}`}
+                    ? 'Upgrade for unlimited'
+                    : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
                 </QuotaSub>
               </QuotaText>
-              {remaining <= 0 ? (
+              {remaining <= 0 && (
                 <QuotaUpgrade onClick={handleDirectUpgrade}>
-                  Get unlimited →
+                  Upgrade
                 </QuotaUpgrade>
-              ) : (
-                <QuotaRemaining>
-                  {remaining} remaining →
-                </QuotaRemaining>
               )}
             </QuotaBanner>
           );
         })()}
 
-        {/* Pro user banner */}
+        {/* Pro user badge - minimal */}
         {isPro && data?.has_profile && (
           <QuotaBanner $isPro>
             <QuotaText>
-              <QuotaTitle>Pro · Unlimited</QuotaTitle>
-              <QuotaSub>Contact any brand, anytime</QuotaSub>
+              <QuotaTitle $isPro>Pro</QuotaTitle>
+              <QuotaSub $isPro>Unlimited unlocks</QuotaSub>
             </QuotaText>
           </QuotaBanner>
+        )}
+
+        {/* Enhanced Media Kit CTA - positioned right after unlock tracker */}
+        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && data?.has_profile && (
+          <KitBuilderCard onClick={() => navigate('/creator/dashboard/my-kit')}>
+            <KitBuilderProgress>
+              <FileText size={20} />
+            </KitBuilderProgress>
+            <KitBuilderContent>
+              <KitBuilderTitle>
+                <span>Complete your media kit</span>
+              </KitBuilderTitle>
+              <KitBuilderDesc>
+                Creators with kits get <strong>3× more replies</strong>
+              </KitBuilderDesc>
+            </KitBuilderContent>
+            <KitBuilderBtn>
+              Build kit
+              <ArrowRight size={12} />
+            </KitBuilderBtn>
+          </KitBuilderCard>
         )}
 
         {/* Profile Prompt - shown when no niche data yet */}
@@ -1141,33 +1163,6 @@ const ForYou = () => {
         </Section>
 
         {/* Kit Builder Prompt - shown AFTER brand matches, so the reward (brands) is first */}
-        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && (
-          <KitBuilderCard onClick={() => navigate('/creator/dashboard/my-kit')}>
-            <KitBuilderProgress>
-              <KitProgressRing>
-                <KitProgressCircle />
-                <KitProgressText>0%</KitProgressText>
-              </KitProgressRing>
-            </KitBuilderProgress>
-            <KitBuilderContent>
-              <KitBuilderTitle>Complete your media kit</KitBuilderTitle>
-              <KitBuilderDesc>
-                Creators with kits get <strong>3× more brand responses</strong>. Takes 2 minutes.
-              </KitBuilderDesc>
-              <KitBuilderStats>
-                <KitStat>
-                  <Eye size={12} />
-                  <span>Brands check your kit before replying</span>
-                </KitStat>
-              </KitBuilderStats>
-            </KitBuilderContent>
-            <KitBuilderBtn>
-              Complete Kit
-              <ArrowRight size={14} />
-            </KitBuilderBtn>
-          </KitBuilderCard>
-        )}
-
         {/* Trending in your niche — strict filtering, honest labeling */}
         {data?.hot?.length > 0 && selectedNiches.length > 0 && (
           (() => {
@@ -1324,36 +1319,63 @@ const ForYou = () => {
         )}
       </PageInner>
 
-      {/* Modals - PR Package Modal (new) */}
+      {/* Modals - PR Package Modal (V2 or legacy) */}
       {pitchingBrand && (
-        <PRPackageModal
-          isOpen={!!pitchingBrand}
-          onClose={() => {
-            // Refresh unlocked brands when modal closes (unlock happens on package generation)
-            fetchUnlockedBrands();
-            fetchUnlockBalance();
-            // Update welcome flow state if brand was unlocked
-            if (isWelcomeFlow && pitchingBrand) {
-              setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
-            }
-            setPitchingBrand(null);
-            // Return to welcome modal if in welcome flow
-            if (isWelcomeFlow) {
-              setShowWelcomeModal(true);
-            }
-          }}
-          brand={pitchingBrand}
-          onPitchSent={(brand) => {
-            handlePitchSent(brand);
-            // Also trigger unlock callbacks
-            fetchUnlockBalance();
-            fetchUnlockedBrands();
-            if (isWelcomeFlow && pitchingBrand) {
-              setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
-            }
-          }}
-          isPro={isPro}
-        />
+        USE_UNLOCK_V2 ? (
+          <UnlockModalV2
+            isOpen={!!pitchingBrand}
+            onClose={() => {
+              fetchUnlockedBrands();
+              fetchUnlockBalance();
+              if (isWelcomeFlow && pitchingBrand) {
+                setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
+              }
+              setPitchingBrand(null);
+              if (isWelcomeFlow) {
+                setShowWelcomeModal(true);
+              }
+            }}
+            brand={pitchingBrand}
+            onPitchSent={(brand) => {
+              handlePitchSent(brand);
+              fetchUnlockBalance();
+              fetchUnlockedBrands();
+              if (isWelcomeFlow && pitchingBrand) {
+                setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
+              }
+            }}
+            isPro={isPro}
+          />
+        ) : (
+          <PRPackageModal
+            isOpen={!!pitchingBrand}
+            onClose={() => {
+              // Refresh unlocked brands when modal closes (unlock happens on package generation)
+              fetchUnlockedBrands();
+              fetchUnlockBalance();
+              // Update welcome flow state if brand was unlocked
+              if (isWelcomeFlow && pitchingBrand) {
+                setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
+              }
+              setPitchingBrand(null);
+              // Return to welcome modal if in welcome flow
+              if (isWelcomeFlow) {
+                setShowWelcomeModal(true);
+              }
+            }}
+            brand={pitchingBrand}
+            onPitchSent={(brand) => {
+              handlePitchSent(brand);
+              // Also trigger unlock callbacks
+              fetchUnlockBalance();
+              fetchUnlockedBrands();
+              if (isWelcomeFlow && pitchingBrand) {
+                setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
+              }
+            }}
+            isPro={isPro}
+          />
+        )
       )}
 
       {showUpgrade && (
@@ -1637,75 +1659,88 @@ const PageHeader = styled.div`
   }
 `;
 
+// Compact Unlock Tracker - Modern inline design (inspired by Spotify/Notion)
 const QuotaBanner = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: #1F2937;
-  border-radius: 14px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  gap: 12px;
+  background: ${props => props.$isPro ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : '#F9FAFB'};
+  border: ${props => props.$isPro ? 'none' : '1px solid #E5E7EB'};
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
 
   @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 16px;
+    gap: 10px;
+    padding: 10px 12px;
   }
 `;
 
+// Segmented progress bar - compact and modern
 const QuotaDots = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 3px;
 `;
 
 const QuotaDot = styled.div`
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: ${props => props.$filled ? '#EC4899' : '#4B5563'};
-  transition: background 0.2s;
+  width: 24px;
+  height: 6px;
+  border-radius: 3px;
+  background: ${props => props.$filled ? '#10B981' : '#E5E7EB'};
+  transition: all 0.3s ease;
+
+  @media (max-width: 640px) {
+    width: 20px;
+    height: 5px;
+  }
 `;
 
 const QuotaText = styled.div`
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const QuotaTitle = styled.div`
-  font-weight: 700;
-  font-size: 15px;
-  color: #F9FAFB;
+  font-weight: 600;
+  font-size: 13px;
+  color: ${props => props.$isPro ? '#fff' : '#374151'};
 `;
 
 const QuotaSub = styled.div`
-  font-size: 13px;
-  color: #9CA3AF;
-  margin-top: 2px;
+  font-size: 12px;
+  color: ${props => props.$isPro ? 'rgba(255,255,255,0.8)' : '#9CA3AF'};
 `;
 
 const QuotaRemaining = styled.div`
   font-weight: 600;
-  font-size: 14px;
-  color: #EC4899;
+  font-size: 12px;
+  color: #10B981;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const QuotaUpgrade = styled.button`
-  background: linear-gradient(135deg, #EC4899, #8B5CF6);
+  background: #111827;
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
+  border-radius: 6px;
+  padding: 6px 12px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+    background: #1F2937;
   }
 `;
 
@@ -4763,35 +4798,57 @@ const KitViewAction = styled.button`
   }
 `;
 
-// Kit Builder Prompt - for users without a media kit
+// Enhanced Media Kit CTA - More prominent with gradient and social proof
 const KitBuilderCard = styled.div`
   display: flex;
   align-items: center;
-  gap: 18px;
-  background: #fff;
-  border: 1px solid #E5E7EB;
-  border-radius: 16px;
-  padding: 18px 22px;
-  margin-bottom: 24px;
+  gap: 16px;
+  background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 50%, #FDF2F8 100%);
+  border: 1.5px solid #C7D2FE;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.08));
+    pointer-events: none;
+  }
 
   &:hover {
-    border-color: #3B82F6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+    border-color: #8B5CF6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.15);
   }
 
   @media (max-width: 700px) {
     flex-direction: column;
     align-items: stretch;
-    gap: 16px;
-    padding: 18px;
+    gap: 14px;
+    padding: 16px;
   }
 `;
 
 const KitBuilderProgress = styled.div`
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  border-radius: 10px;
+  color: white;
+  font-size: 20px;
 
   @media (max-width: 700px) {
     display: none;
@@ -4799,28 +4856,15 @@ const KitBuilderProgress = styled.div`
 `;
 
 const KitProgressRing = styled.div`
-  position: relative;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: conic-gradient(#E5E7EB 0deg, #E5E7EB 360deg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: none;
 `;
 
 const KitProgressCircle = styled.div`
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: white;
+  display: none;
 `;
 
 const KitProgressText = styled.div`
-  position: relative;
-  font-size: 12px;
-  font-weight: 700;
-  color: #9CA3AF;
+  display: none;
 `;
 
 const KitBuilderContent = styled.div`
@@ -4829,66 +4873,61 @@ const KitBuilderContent = styled.div`
 `;
 
 const KitBuilderTitle = styled.h3`
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: #111827;
-  margin: 0 0 4px;
+  color: #4C1D95;
+  margin: 0 0 3px;
   line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 `;
 
 const KitBuilderDesc = styled.p`
-  font-size: 13px;
+  font-size: 12px;
   color: #6B7280;
-  margin: 0 0 8px;
+  margin: 0;
   line-height: 1.4;
 
   strong {
-    color: #059669;
+    color: #7C3AED;
     font-weight: 600;
   }
 `;
 
 const KitBuilderStats = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: none;
 `;
 
 const KitStat = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: #9CA3AF;
-
-  svg {
-    color: #3B82F6;
-  }
+  display: none;
 `;
 
 const KitBuilderBtn = styled.button`
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #3B82F6;
+  gap: 5px;
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 12px 18px;
-  font-size: 13px;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
   font-family: inherit;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
 
   &:hover {
-    background: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
   }
 
   @media (max-width: 700px) {
     justify-content: center;
-    padding: 14px 24px;
+    padding: 12px 20px;
   }
 `;
 

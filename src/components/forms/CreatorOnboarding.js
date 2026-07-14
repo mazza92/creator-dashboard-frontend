@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async';
 import { FaInstagram, FaTiktok, FaYoutube, FaPinterest, FaXTwitter } from 'react-icons/fa6';
 import { HiOutlinePencilSquare } from 'react-icons/hi2';
 import { SocialVerificationStep } from '../SocialVerification';
+import ProfileScrapingLoader from '../ProfileScrapingLoader';
 
 // ============================================================================
 // USERNAME VALIDATION HELPERS
@@ -647,6 +648,9 @@ const REGIONS = [
   { id: 'Global', label: '🌐 Global' },
 ];
 
+// Platforms that support AI scraping (Instagram, TikTok)
+const SCRAPABLE_PLATFORMS = ['instagram', 'tiktok'];
+
 export default function CreatorOnboarding() {
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
@@ -657,6 +661,9 @@ export default function CreatorOnboarding() {
   const [verificationStatus, setVerificationStatus] = useState(null); // null | 'verifying' | 'verified' | 'failed'
   const [verificationError, setVerificationError] = useState(null);
   const [verifiedProfile, setVerifiedProfile] = useState(null);
+  // Scraping state
+  const [showScraping, setShowScraping] = useState(false);
+  const [scrapeError, setScrapeError] = useState(null);
   // Test mode: allow country override via ?_test_country=IN
   const testCountry = searchParams.get('_test_country');
   // Step 2
@@ -772,8 +779,13 @@ export default function CreatorOnboarding() {
   const handleStep1 = async () => {
     setError('');
     setVerificationError(null);
+    setScrapeError(null);
 
     if (!platform) { setError('Please select your main platform'); return; }
+
+    // Validate username for all platforms
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.valid) { setError(usernameValidation.error); return; }
 
     // For Instagram/TikTok, redirect to OAuth (no username input needed)
     if (VERIFIABLE_PLATFORMS.includes(platform)) {
@@ -793,10 +805,30 @@ export default function CreatorOnboarding() {
       return;
     }
 
-    // For non-verifiable platforms (YouTube, Pinterest, Twitter, Blog), use manual entry
-    const usernameValidation = validateUsername(username);
-    if (!usernameValidation.valid) { setError(usernameValidation.error); return; }
+    // For scrapable platforms (Instagram/TikTok), show verification UI and save
+    if (SCRAPABLE_PLATFORMS.includes(platform)) {
+      // Check handle uniqueness first
+      try {
+        const handleCheck = await apiClient.post('/api/check-social-handle', {
+          handle: username.trim().toLowerCase(),
+          platform,
+        });
+        if (handleCheck.data?.exists) {
+          setError('This social handle is already registered with another account.');
+          return;
+        }
+      } catch (err) {
+        if (err.response?.status !== 404) {
+          console.error('Handle check error:', err);
+        }
+      }
 
+      // Show verification UI and trigger scrape
+      setShowScraping(true);
+      return;
+    }
+
+    // For non-scrapable platforms (YouTube, Pinterest, Twitter, Blog), use manual entry
     if (!followers || parseInt(followers) <= 0) {
       setError('Please enter your follower count');
       return;
@@ -822,7 +854,7 @@ export default function CreatorOnboarding() {
       }
     }
 
-    // Non-verifiable platform - use manual follower count
+    // Non-scrapable platform - use manual follower count
     try {
       await apiClient.post('/api/user/onboarding/step1', {
         username: username.trim().toLowerCase(),
@@ -835,6 +867,50 @@ export default function CreatorOnboarding() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle scrape completion - extract data and save to DB
+  const handleScrapeComplete = async (scrapeData) => {
+    try {
+      // Extract follower count from scrape result (use 1000 as fallback for pending scrapes)
+      const followerCount = scrapeData?.summary?.follower_count ||
+                           scrapeData?.profile?.followers_count ||
+                           1000; // Default for pending scrapes - will be updated post-onboarding
+
+      // Save to backend
+      await apiClient.post('/api/user/onboarding/step1', {
+        username: username.trim().toLowerCase(),
+        platform,
+        followers: followerCount,
+      });
+
+      // Proceed to step 2
+      setShowScraping(false);
+      setStep(2);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong saving your profile');
+      setShowScraping(false);
+    }
+  };
+
+  // Handle scrape error - block on private profiles, show error to user
+  const handleScrapeError = async (err) => {
+    console.error('Scrape error during onboarding:', err);
+
+    // Check if it's a private profile error - DO NOT proceed
+    const isPrivate = err.response?.data?.is_private;
+    const errorMsg = err.response?.data?.error || err.message || 'Failed to analyze profile';
+
+    if (isPrivate) {
+      // Private profile - show error and let user fix it
+      setScrapeError('Your profile is private. Please make it public and try again.');
+      setShowScraping(false);
+      return;
+    }
+
+    // For other errors, show the error message and let user retry
+    setScrapeError(errorMsg);
+    setShowScraping(false);
   };
 
   const toggleRegion = (id) => {
@@ -1055,103 +1131,146 @@ export default function CreatorOnboarding() {
               </ProgressTrack>
             </ProgressWrap>
 
-            <Headline>Quick, where do you create?</Headline>
-            <Subline>We'll match you with brands actively looking for creators on your platform.</Subline>
+            {/* Show scraping loader when analyzing profile */}
+            {showScraping ? (
+              <>
+                <Headline>Analyzing your profile...</Headline>
+                <ProfileScrapingLoader
+                  handle={username}
+                  platform={platform}
+                  onComplete={handleScrapeComplete}
+                  onError={handleScrapeError}
+                  endpoint="/api/user/onboarding/scrape"
+                />
+              </>
+            ) : (
+              <>
+                <Headline>Quick, where do you create?</Headline>
+                <Subline>We'll match you with brands actively looking for creators on your platform.</Subline>
 
-            <FormGroup>
-              <FormLabel>Main platform</FormLabel>
-              <PlatformGrid>
-                {PLATFORMS.map(p => (
-                  <PlatformChip
-                    key={p.id}
-                    $selected={platform === p.id}
-                    onClick={() => {
-                      setPlatform(p.id);
-                      setVerificationStatus(null);
-                      setVerificationError(null);
-                      setError('');
-                    }}
-                  >
-                    <PlatformIcon style={p.id === 'twitter' ? { fontSize: 17, fontWeight: 900 } : {}}>
-                      {p.icon}
-                    </PlatformIcon>
-                    <PlatformName>{p.name}</PlatformName>
-                  </PlatformChip>
-                ))}
-              </PlatformGrid>
+                <FormGroup>
+                  <FormLabel>Main platform</FormLabel>
+                  <PlatformGrid>
+                    {PLATFORMS.map(p => (
+                      <PlatformChip
+                        key={p.id}
+                        $selected={platform === p.id}
+                        onClick={() => {
+                          setPlatform(p.id);
+                          setVerificationStatus(null);
+                          setVerificationError(null);
+                          setScrapeError(null);
+                          setError('');
+                        }}
+                      >
+                        <PlatformIcon style={p.id === 'twitter' ? { fontSize: 17, fontWeight: 900 } : {}}>
+                          {p.icon}
+                        </PlatformIcon>
+                        <PlatformName>{p.name}</PlatformName>
+                      </PlatformChip>
+                    ))}
+                  </PlatformGrid>
 
-              {/* For non-verifiable platforms, show username + follower input */}
-              {platform && !VERIFIABLE_PLATFORMS.includes(platform) && (
-                <>
-                  <div style={{ marginTop: '16px' }}>
-                    <FormLabel>Your creator handle</FormLabel>
-                    <InputWrap>
-                      <InputPre>@</InputPre>
-                      <FormInput
-                        $hasPrefix
-                        type="text"
-                        placeholder="yourcreatorname"
-                        value={username}
-                        onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); }}
-                        disabled={loading}
-                        maxLength={30}
-                      />
-                    </InputWrap>
-                  </div>
-                  <FollowerReveal $show={true}>
-                    <FollowerLabel>{selectedPlatform?.label}</FollowerLabel>
-                    <FollowerInput
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="e.g. 120000"
-                      value={followers}
-                      onChange={(e) => {
-                        const rawValue = e.target.value.replace(/[^\d]/g, '');
-                        setFollowers(rawValue);
-                      }}
-                      disabled={loading}
-                    />
-                  </FollowerReveal>
-                </>
-              )}
-
-              {/* For Instagram/TikTok, show OAuth connect info */}
-              {platform && VERIFIABLE_PLATFORMS.includes(platform) && (
-                <VerificationNote>
-                  {verificationStatus === 'verifying' ? (
-                    <>⏳ Connecting to {platform === 'instagram' ? 'Instagram' : 'TikTok'}...</>
-                  ) : verificationStatus === 'verified' ? (
-                    <>✓ Verified: {verifiedProfile?.follower_count?.toLocaleString()} followers</>
-                  ) : verificationStatus === 'failed' ? (
-                    <>❌ Verification failed. Please try again.</>
-                  ) : (
-                    <>Click continue to securely connect your {platform === 'instagram' ? 'Instagram' : 'TikTok'} account</>
+                  {/* For scrapable platforms (Instagram/TikTok), show username only - followers will be scraped */}
+                  {platform && SCRAPABLE_PLATFORMS.includes(platform) && !VERIFIABLE_PLATFORMS.includes(platform) && (
+                    <div style={{ marginTop: '16px' }}>
+                      <FormLabel>Your creator handle</FormLabel>
+                      <InputWrap>
+                        <InputPre>@</InputPre>
+                        <FormInput
+                          $hasPrefix
+                          type="text"
+                          placeholder="yourcreatorname"
+                          value={username}
+                          onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); setScrapeError(null); }}
+                          disabled={loading}
+                          maxLength={30}
+                        />
+                      </InputWrap>
+                      <VerificationNote style={{ marginTop: '12px' }}>
+                        We'll verify your profile and fetch your stats automatically
+                      </VerificationNote>
+                    </div>
                   )}
-                </VerificationNote>
-              )}
-            </FormGroup>
 
-            {error && <ErrorMsg>{error}</ErrorMsg>}
+                  {/* For non-scrapable platforms (YouTube, Pinterest, Twitter, Blog), show username + follower input */}
+                  {platform && !SCRAPABLE_PLATFORMS.includes(platform) && !VERIFIABLE_PLATFORMS.includes(platform) && (
+                    <>
+                      <div style={{ marginTop: '16px' }}>
+                        <FormLabel>Your creator handle</FormLabel>
+                        <InputWrap>
+                          <InputPre>@</InputPre>
+                          <FormInput
+                            $hasPrefix
+                            type="text"
+                            placeholder="yourcreatorname"
+                            value={username}
+                            onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); }}
+                            disabled={loading}
+                            maxLength={30}
+                          />
+                        </InputWrap>
+                      </div>
+                      <FollowerReveal $show={true}>
+                        <FollowerLabel>{selectedPlatform?.label}</FollowerLabel>
+                        <FollowerInput
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="e.g. 120000"
+                          value={followers}
+                          onChange={(e) => {
+                            const rawValue = e.target.value.replace(/[^\d]/g, '');
+                            setFollowers(rawValue);
+                          }}
+                          disabled={loading}
+                        />
+                      </FollowerReveal>
+                    </>
+                  )}
 
-            <BtnRow>
-              <ContinueBtn
-                onClick={handleStep1}
-                disabled={
-                  loading ||
-                  !platform ||
-                  // For non-verifiable platforms, require username and followers
-                  (!VERIFIABLE_PLATFORMS.includes(platform) && (!username.trim() || !followers || parseInt(followers) <= 0))
-                }
-              >
-                {loading ? (
-                  verificationStatus === 'verifying' ? 'Connecting...' : 'Saving...'
-                ) : VERIFIABLE_PLATFORMS.includes(platform) ? (
-                  `Connect ${platform === 'instagram' ? 'Instagram' : 'TikTok'} →`
-                ) : (
-                  'Continue →'
-                )}
-              </ContinueBtn>
-            </BtnRow>
+                  {/* For Instagram/TikTok OAuth flow (if VERIFIABLE_PLATFORMS is enabled), show OAuth connect info */}
+                  {platform && VERIFIABLE_PLATFORMS.includes(platform) && (
+                    <VerificationNote>
+                      {verificationStatus === 'verifying' ? (
+                        <>⏳ Connecting to {platform === 'instagram' ? 'Instagram' : 'TikTok'}...</>
+                      ) : verificationStatus === 'verified' ? (
+                        <>✓ Verified: {verifiedProfile?.follower_count?.toLocaleString()} followers</>
+                      ) : verificationStatus === 'failed' ? (
+                        <>❌ Verification failed. Please try again.</>
+                      ) : (
+                        <>Click continue to securely connect your {platform === 'instagram' ? 'Instagram' : 'TikTok'} account</>
+                      )}
+                    </VerificationNote>
+                  )}
+                </FormGroup>
+
+                {(error || scrapeError) && <ErrorMsg>{error || scrapeError}</ErrorMsg>}
+
+                <BtnRow>
+                  <ContinueBtn
+                    onClick={handleStep1}
+                    disabled={
+                      loading ||
+                      !platform ||
+                      // For OAuth platforms, no username needed
+                      (VERIFIABLE_PLATFORMS.includes(platform) ? false :
+                        // For scrapable platforms, require username only
+                        SCRAPABLE_PLATFORMS.includes(platform) ? !username.trim() :
+                        // For non-scrapable platforms, require username and followers
+                        (!username.trim() || !followers || parseInt(followers) <= 0))
+                    }
+                  >
+                    {loading ? (
+                      verificationStatus === 'verifying' ? 'Connecting...' : 'Saving...'
+                    ) : VERIFIABLE_PLATFORMS.includes(platform) ? (
+                      `Connect ${platform === 'instagram' ? 'Instagram' : 'TikTok'} →`
+                    ) : (
+                      'Continue →'
+                    )}
+                  </ContinueBtn>
+                </BtnRow>
+              </>
+            )}
           </Card>
         )}
 

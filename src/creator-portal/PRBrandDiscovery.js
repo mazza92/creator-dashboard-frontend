@@ -4,12 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark, FiLock, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import PROnboarding from '../components/PROnboarding';
 import UpgradeModal from './UpgradeModal';
 import AIPitchModal from './AIPitchModal';
 import PRPackageModal from './PRPackageModal';
+import { UnlockModalV2 } from './unlockV2';
 import ProfileCompleteness from '../components/ProfileCompleteness';
+
+// Feature flag for V2 modal testing - set to true to use new verdict-first design
+const USE_UNLOCK_V2 = true;
 
 // Brand colors
 const primaryBlue = '#3B82F6';
@@ -1182,6 +1186,7 @@ const EmptyState = styled.div`
 
 const PRBrandDiscovery = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [brands, setBrands] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -1237,6 +1242,48 @@ const PRBrandDiscovery = () => {
     fetchMediaKitStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle brand URL param - opens unlock modal for specified brand slug
+  useEffect(() => {
+    const brandSlug = searchParams.get('brand');
+    if (brandSlug) {
+      // Find brand in loaded brands first
+      const foundBrand = brands.find(b => b.slug === brandSlug);
+      if (foundBrand) {
+        setSelectedBrandForPitch(foundBrand);
+        setShowPitchModal(true);
+        // Clear the URL param
+        setSearchParams({});
+      } else if (brands.length > 0 || !loading) {
+        // Fetch brand by slug if not in loaded brands (but only after initial load)
+        const fetchBrandBySlug = async () => {
+          try {
+            const response = await api.get(`/api/pr-crm/brand/${brandSlug}`);
+            if (response.data.success && response.data.brand) {
+              const brand = response.data.brand;
+              // Parse JSON fields if needed
+              const parsedBrand = {
+                ...brand,
+                regions: typeof brand.regions === 'string' && brand.regions.startsWith('[')
+                  ? JSON.parse(brand.regions)
+                  : brand.regions,
+                niches: typeof brand.niches === 'string' && brand.niches.startsWith('[')
+                  ? JSON.parse(brand.niches)
+                  : brand.niches,
+              };
+              setSelectedBrandForPitch(parsedBrand);
+              setShowPitchModal(true);
+            }
+          } catch (error) {
+            console.error('Error fetching brand by slug:', error);
+          }
+          // Clear the URL param regardless
+          setSearchParams({});
+        };
+        fetchBrandBySlug();
+      }
+    }
+  }, [searchParams, brands, loading, setSearchParams]);
 
   // Fetch creator profile to check kit status
   const fetchCreatorProfile = async () => {
@@ -1924,8 +1971,23 @@ const PRBrandDiscovery = () => {
       </>
       )}
 
-      {/* Pitch Modal - PR Package or legacy AI Pitch */}
-      {usePRPackageModal ? (
+      {/* Pitch Modal - V2 (verdict-first), PR Package, or legacy AI Pitch */}
+      {USE_UNLOCK_V2 ? (
+        <UnlockModalV2
+          isOpen={showPitchModal}
+          onClose={() => {
+            fetchSubscriptionStatus();
+            setShowPitchModal(false);
+          }}
+          brand={selectedBrandForPitch}
+          onPitchSent={handlePitchSent}
+          isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+          onUpgrade={() => {
+            setUpgradeInfo({ currentCount: 5, limit: 5, feature: 'unlocks' });
+            setShowUpgradeModal(true);
+          }}
+        />
+      ) : usePRPackageModal ? (
         <PRPackageModal
           isOpen={showPitchModal}
           onClose={() => {

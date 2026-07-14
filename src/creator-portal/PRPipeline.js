@@ -6,8 +6,12 @@ import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getRuntimeApiUrl } from '../config/api';
 import PRPackageModal from './PRPackageModal';
+import { UnlockModalV2 } from './unlockV2';
 import UpgradeModal from './UpgradeModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+// Feature flag for V2 modal testing
+const USE_UNLOCK_V2 = true;
 
 // Use shared API config
 const getApiBase = () => getRuntimeApiUrl();
@@ -1299,18 +1303,30 @@ const PRPipeline = () => {
         )}
       </BrandList>
 
-      {/* PR Package Modal */}
-      <PRPackageModal
-        isOpen={showPitchModal}
-        onClose={() => {
-          setShowPitchModal(false);
-          // Refresh pipeline data to pick up has_pr_package changes
-          fetchPipelineData();
-        }}
-        brand={selectedBrand}
-        onPitchSent={handlePitchSent}
-        isPro={isPro}
-      />
+      {/* PR Package Modal (V2 or legacy) */}
+      {USE_UNLOCK_V2 ? (
+        <UnlockModalV2
+          isOpen={showPitchModal}
+          onClose={() => {
+            setShowPitchModal(false);
+            fetchPipelineData();
+          }}
+          brand={selectedBrand}
+          onPitchSent={handlePitchSent}
+          isPro={isPro}
+        />
+      ) : (
+        <PRPackageModal
+          isOpen={showPitchModal}
+          onClose={() => {
+            setShowPitchModal(false);
+            fetchPipelineData();
+          }}
+          brand={selectedBrand}
+          onPitchSent={handlePitchSent}
+          isPro={isPro}
+        />
+      )}
 
       {/* Upgrade Modal */}
       <UpgradeModal
