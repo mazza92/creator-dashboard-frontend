@@ -450,11 +450,9 @@ export default function CreatorSignup() {
       }, { headers: { 'Content-Type': 'application/json' } });
 
       // Track signup completion in TikTok pixel
+      // TikTok standard event requires exact format: 'Complete Registration' (with space)
       if (window.ttq) {
-        window.ttq.track('CompleteRegistration', {
-          content_type: 'product',
-          content_id: 'signup'
-        });
+        window.ttq.track('Complete Registration');
       }
 
       doRedirect(res.data?.redirect_url || '/verify-email-pending');
@@ -491,10 +489,7 @@ export default function CreatorSignup() {
 
       // Track signup completion in TikTok pixel (only for new accounts)
       if (window.ttq && response.data?.needs_onboarding) {
-        window.ttq.track('CompleteRegistration', {
-          content_type: 'product',
-          content_id: 'signup'
-        });
+        window.ttq.track('Complete Registration');
       }
 
       const redirectUrl = response.data?.redirect_url ||
