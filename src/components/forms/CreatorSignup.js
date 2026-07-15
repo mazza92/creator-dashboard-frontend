@@ -449,9 +449,14 @@ export default function CreatorSignup() {
         terms_accepted: true,
       }, { headers: { 'Content-Type': 'application/json' } });
 
-      // Track signup completion in TikTok pixel
+      // Track signup completion in TikTok pixel with user data for better EMQ
       // TikTok standard event requires exact format: 'Complete Registration' (with space)
       if (window.ttq) {
+        // Identify user with email and external_id for better event matching
+        window.ttq.identify({
+          email: email.trim().toLowerCase(),
+          external_id: res.data?.user_id || email.trim().toLowerCase()
+        });
         window.ttq.track('Complete Registration');
       }
 
@@ -487,8 +492,13 @@ export default function CreatorSignup() {
         name: result.user.displayName,
       });
 
-      // Track signup completion in TikTok pixel (only for new accounts)
+      // Track signup completion in TikTok pixel (only for new accounts) with user data for better EMQ
       if (window.ttq && response.data?.needs_onboarding) {
+        // Identify user with email and external_id for better event matching
+        window.ttq.identify({
+          email: result.user.email,
+          external_id: response.data?.user_id || result.user.email
+        });
         window.ttq.track('Complete Registration');
       }
 
