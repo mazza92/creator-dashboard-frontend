@@ -134,8 +134,8 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
       <IntroCard>
         <IntroIcon>📣</IntroIcon>
         <IntroText>
-          <IntroTitle>Brands posting here are actively looking for creators</IntroTitle>
-          <IntroSub>Apply with your media kit. The brand reviews your profile and ships product if selected.</IntroSub>
+          <IntroTitle>Brands are looking for creators right now</IntroTitle>
+          <IntroSub>Tap Apply — some open your media kit, others take you straight to the brand’s apply page.</IntroSub>
         </IntroText>
       </IntroCard>
 
@@ -171,6 +171,10 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
           applying={applying === opp.id}
           applied={applied.has(opp.id) || opp.already_applied}
           onApply={() => handleApply(opp.id)}
+          onExternalApply={(url) => {
+            window.open(url, '_blank', 'noopener,noreferrer');
+            setApplied(prev => new Set([...prev, opp.id]));
+          }}
         />
       ))}
 
@@ -187,16 +191,24 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
           applying={applying === opp.id}
           applied={applied.has(opp.id) || opp.already_applied}
           onApply={() => handleApply(opp.id)}
+          onExternalApply={(url) => {
+            window.open(url, '_blank', 'noopener,noreferrer');
+            setApplied(prev => new Set([...prev, opp.id]));
+          }}
         />
       ))}
     </Wrap>
   );
 };
 
-const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
+const OppCard = ({ opp, isPro, applying, applied, onApply, onExternalApply }) => {
   const spotsLeft = opp.spots_left;
   const spotsPercent = Math.round(((opp.spots_total - spotsLeft) / opp.spots_total) * 100);
   const urgency = spotsLeft <= 1 ? 'critical' : spotsLeft <= 2 ? 'high' : 'normal';
+  const isExternal = Boolean(opp.external_apply_url) || opp.apply_mode === 'external';
+  const platformLabel = opp.source_platform
+    ? opp.source_platform.charAt(0).toUpperCase() + opp.source_platform.slice(1)
+    : 'listing';
 
   // Time urgency levels
   const daysLeft = opp.days_left;
@@ -301,15 +313,25 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
 
       {applied ? (
         <AppliedState>
-          <Check size={16} /> Applied - under brand review
+          <Check size={16} /> {isExternal ? 'Opened apply link' : 'Applied - under brand review'}
         </AppliedState>
+      ) : isExternal ? (
+        <ApplyBtn
+          type="button"
+          onClick={() => onExternalApply?.(opp.external_apply_url)}
+        >
+          Apply here{opp.source_platform ? ` · ${platformLabel}` : ''}
+        </ApplyBtn>
       ) : (
         <ApplyBtn onClick={onApply} disabled={applying}>
           {applying ? 'Sending...' : 'Apply Now'}
         </ApplyBtn>
       )}
 
-      {!applied && !isPro && (
+      {!applied && isExternal && (
+        <ApplyNote>Opens the brand’s apply page in a new tab</ApplyNote>
+      )}
+      {!applied && !isExternal && !isPro && (
         <ApplyNote>Uses 1 application credit</ApplyNote>
       )}
     </Card>
