@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
-import { Users, MapPin, Check, Clock } from 'lucide-react';
+import { Users, MapPin, Check } from 'lucide-react';
 
 // Social platform icons
 const TikTokIcon = () => (
@@ -58,12 +58,24 @@ const getApiBase = () => {
   return base.replace(/\/+$/, '');
 };
 const API_BASE = getApiBase();
+const FREE_APP_LIMIT = 3;
 
-const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) => {
+const inferNicheFromText = (text = '') => {
+  const t = text.toLowerCase();
+  if (/(parent|mom|dad|kids|family)/.test(t)) return 'Parenting';
+  if (/(beauty|skincare|makeup)/.test(t)) return 'Beauty';
+  if (/(fitness|gym|workout)/.test(t)) return 'Fitness';
+  if (/(food|recipe|cook)/.test(t)) return 'Food';
+  if (/(fashion|outfit|style)/.test(t)) return 'Fashion';
+  return null;
+};
+
+const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, onLimitsChange }) => {
   const [loading, setLoading] = useState(true);
   const [opportunities, setOpportunities] = useState({ matched: [], others: [] });
   const [applying, setApplying] = useState(null);
   const [applied, setApplied] = useState(new Set());
+  const [localUsed, setLocalUsed] = useState(null);
 
   useEffect(() => {
     fetchOpportunities();
@@ -89,18 +101,49 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
     }
   };
 
-  const handleApply = async (oppId) => {
-    if (!isPro && pitchLimits && !pitchLimits.canPitch) {
+  const usedApps = localUsed ?? pitchLimits?.used ?? 0;
+  const creditsLeft = isPro ? FREE_APP_LIMIT : Math.max(0, FREE_APP_LIMIT - usedApps);
+  const canApply = isPro || creditsLeft > 0;
+
+  const openApplyTarget = (mode, url, email) => {
+    if (mode === 'email' && email) {
+      window.location.href = `mailto:${email}?subject=${encodeURIComponent('Creator application via Newcollab')}`;
+      return;
+    }
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  /** Deduct quota via API, then open email / URL / kit success */
+  const handleApply = async (opp) => {
+    if (!canApply) {
       onShowUpgrade?.('opportunities');
       return;
     }
 
-    setApplying(oppId);
+    setApplying(opp.id);
     try {
-      await axios.post(`${API_BASE}/api/opportunities/${oppId}/apply`, {}, {
-        withCredentials: true
-      });
-      setApplied(prev => new Set([...prev, oppId]));
+      const response = await axios.post(
+        `${API_BASE}/api/opportunities/${opp.id}/apply`,
+        {},
+        { withCredentials: true }
+      );
+      const data = response.data || {};
+      setApplied(prev => new Set([...prev, opp.id]));
+      if (typeof data.used === 'number') {
+        setLocalUsed(data.used);
+        onLimitsChange?.(data.used);
+      } else {
+        setLocalUsed(usedApps + 1);
+      }
+
+      const mode = data.apply_mode || opp.apply_mode || 'kit';
+      const url = data.external_apply_url || opp.external_apply_url;
+      const email = data.apply_email || opp.apply_email;
+      if (mode === 'url' || mode === 'email' || mode === 'external') {
+        openApplyTarget(mode === 'external' ? (email && !url ? 'email' : 'url') : mode, url, email);
+      }
     } catch (err) {
       if (err.response?.data?.error === 'limit_reached') {
         onShowUpgrade?.('opportunities');
@@ -109,8 +152,6 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
       setApplying(null);
     }
   };
-
-  const creditsLeft = pitchLimits ? pitchLimits.limit - pitchLimits.used : 3;
 
   if (loading) {
     return <LoadingText>Finding opportunities for you...</LoadingText>;
@@ -135,16 +176,16 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
         <IntroIcon>📣</IntroIcon>
         <IntroText>
           <IntroTitle>Brands are looking for creators right now</IntroTitle>
-          <IntroSub>Tap Apply — some open your media kit, others take you straight to the brand’s apply page.</IntroSub>
+          <IntroSub>Apply with one tap — we open the brand’s form or email. Each apply uses 1 credit.</IntroSub>
         </IntroText>
       </IntroCard>
 
-      {/* Credit Indicator (free users only) */}
+      {/* Credit Indicator (free users only) — always 3/month for opportunities */}
       {!isPro && (
         <CreditRow>
           <CreditLeft>
             <CreditPips>
-              {[...Array(3)].map((_, i) => (
+              {[...Array(FREE_APP_LIMIT)].map((_, i) => (
                 <Pip key={i} $used={i >= creditsLeft} />
               ))}
             </CreditPips>
@@ -170,11 +211,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
           isPro={isPro}
           applying={applying === opp.id}
           applied={applied.has(opp.id) || opp.already_applied}
-          onApply={() => handleApply(opp.id)}
-          onExternalApply={(url) => {
-            window.open(url, '_blank', 'noopener,noreferrer');
-            setApplied(prev => new Set([...prev, opp.id]));
-          }}
+          onApply={() => handleApply(opp)}
         />
       ))}
 
@@ -190,33 +227,32 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange }) 
           isPro={isPro}
           applying={applying === opp.id}
           applied={applied.has(opp.id) || opp.already_applied}
-          onApply={() => handleApply(opp.id)}
-          onExternalApply={(url) => {
-            window.open(url, '_blank', 'noopener,noreferrer');
-            setApplied(prev => new Set([...prev, opp.id]));
-          }}
+          onApply={() => handleApply(opp)}
         />
       ))}
     </Wrap>
   );
 };
 
-const OppCard = ({ opp, isPro, applying, applied, onApply, onExternalApply }) => {
-  const spotsLeft = opp.spots_left;
-  const spotsPercent = Math.round(((opp.spots_total - spotsLeft) / opp.spots_total) * 100);
-  const urgency = spotsLeft <= 1 ? 'critical' : spotsLeft <= 2 ? 'high' : 'normal';
-  const isExternal = Boolean(opp.external_apply_url) || opp.apply_mode === 'external';
+const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
+  const mode = opp.apply_mode || (opp.external_apply_url ? 'url' : 'kit');
+  const isExternal = mode === 'url' || mode === 'email' || mode === 'external' || opp.is_sourced;
   const platformLabel = opp.source_platform
     ? opp.source_platform.charAt(0).toUpperCase() + opp.source_platform.slice(1)
-    : 'listing';
-
-  // Time urgency levels
-  const daysLeft = opp.days_left;
-  const timeUrgency = daysLeft !== null
-    ? (daysLeft <= 1 ? 'critical' : daysLeft <= 3 ? 'high' : daysLeft <= 7 ? 'normal' : null)
     : null;
 
-  // Render content types with colored badges
+  const nicheLabel =
+    opp.display_niche ||
+    (opp.creator_niches?.length ? opp.creator_niches.join(', ') : null) ||
+    inferNicheFromText(`${opp.product_name || ''} ${opp.campaign_description || ''}`) ||
+    (opp.brand_category && opp.brand_category.toLowerCase() !== 'other'
+      ? String(opp.brand_category).replace(/_/g, ' ')
+      : null) ||
+    'Creator gig';
+
+  const regions = (opp.shipping_regions || []).join(' / ') || 'Worldwide';
+  const payLabel = opp.pay_label || (opp.pr_value_usd ? `$${opp.pr_value_usd}` : null);
+
   const renderContentTypes = () => {
     if (!opp.content_types?.length) return null;
     return opp.content_types.map((type) => {
@@ -228,6 +264,13 @@ const OppCard = ({ opp, isPro, applying, applied, onApply, onExternalApply }) =>
         </PlatformBadge>
       );
     });
+  };
+
+  const buttonLabel = () => {
+    if (applying) return 'Applying...';
+    if (mode === 'email') return 'Email to apply';
+    if (isExternal) return platformLabel ? `Apply here · ${platformLabel}` : 'Apply here';
+    return 'Apply with media kit';
   };
 
   return (
@@ -246,28 +289,11 @@ const OppCard = ({ opp, isPro, applying, applied, onApply, onExternalApply }) =>
             </VerifiedBadge>
           </BrandNameRow>
           <BrandSub>
-            {opp.brand_category || 'Brand'} · Ships {(opp.shipping_regions || []).join(' / ') || 'Worldwide'}
+            {nicheLabel} · Ships {regions}
           </BrandSub>
         </BrandBlock>
         <BadgeStack>
           <OpenBadge><LiveDot />Open</OpenBadge>
-          {urgency === 'critical' && <UrgencyBadge>Last spot</UrgencyBadge>}
-          {urgency === 'high' && <UrgencyBadge $medium>{spotsLeft} spots left</UrgencyBadge>}
-          {timeUrgency === 'critical' && (
-            <ClosingBadge $critical>
-              <Clock size={10} /> {daysLeft === 0 ? 'Closes today' : 'Closes tomorrow'}
-            </ClosingBadge>
-          )}
-          {timeUrgency === 'high' && (
-            <ClosingBadge $high>
-              <Clock size={10} /> {daysLeft}d left
-            </ClosingBadge>
-          )}
-          {timeUrgency === 'normal' && (
-            <ClosingBadge>
-              <Clock size={10} /> {daysLeft}d left
-            </ClosingBadge>
-          )}
         </BadgeStack>
       </CardTop>
 
@@ -284,55 +310,35 @@ const OppCard = ({ opp, isPro, applying, applied, onApply, onExternalApply }) =>
         )}
       </ChipRow>
 
-      <StatsRow>
-        <Stat>
-          <StatVal $green>~${opp.pr_value_usd || '?'}</StatVal>
-          <StatLbl>PR Value</StatLbl>
-        </Stat>
-        <StatDivider />
-        <Stat>
-          <StatVal $amber>{opp.days_left !== null ? `${opp.days_left}d` : 'Open'}</StatVal>
-          <StatLbl>Closes in</StatLbl>
-        </Stat>
-        <StatDivider />
-        <Stat>
-          <StatVal $violet>{opp.spots_left}</StatVal>
-          <StatLbl>Spots left</StatLbl>
-        </Stat>
-      </StatsRow>
-
-      <SpotsRow>
-        <SpotsLabel>Spots</SpotsLabel>
-        <SpotsTrack>
-          <SpotsFill $percent={spotsPercent} $urgency={urgency} />
-        </SpotsTrack>
-        <SpotsCount $urgency={urgency}>
-          {spotsLeft} of {opp.spots_total} left
-        </SpotsCount>
-      </SpotsRow>
+      {payLabel && (
+        <StatsRow>
+          <Stat>
+            <StatVal $green>{payLabel.startsWith('$') || payLabel.startsWith('~') ? payLabel : `~${payLabel}`}</StatVal>
+            <StatLbl>{opp.is_sourced ? 'Pay' : 'PR Value'}</StatLbl>
+          </Stat>
+        </StatsRow>
+      )}
 
       {applied ? (
         <AppliedState>
-          <Check size={16} /> {isExternal ? 'Opened apply link' : 'Applied - under brand review'}
+          <Check size={16} /> {isExternal ? 'Applied — link opened' : 'Applied - under brand review'}
         </AppliedState>
-      ) : isExternal ? (
-        <ApplyBtn
-          type="button"
-          onClick={() => onExternalApply?.(opp.external_apply_url)}
-        >
-          Apply here{opp.source_platform ? ` · ${platformLabel}` : ''}
-        </ApplyBtn>
       ) : (
-        <ApplyBtn onClick={onApply} disabled={applying}>
-          {applying ? 'Sending...' : 'Apply Now'}
+        <ApplyBtn type="button" onClick={onApply} disabled={applying}>
+          {buttonLabel()}
         </ApplyBtn>
       )}
 
-      {!applied && isExternal && (
-        <ApplyNote>Opens the brand’s apply page in a new tab</ApplyNote>
-      )}
-      {!applied && !isExternal && !isPro && (
-        <ApplyNote>Uses 1 application credit</ApplyNote>
+      {!applied && (
+        <ApplyNote>
+          {mode === 'email'
+            ? 'Opens your email app · uses 1 application credit'
+            : isExternal
+              ? 'Opens the brand’s apply page · uses 1 application credit'
+              : isPro
+                ? 'Sends your media kit to the brand'
+                : 'Uses 1 application credit'}
+        </ApplyNote>
       )}
     </Card>
   );
