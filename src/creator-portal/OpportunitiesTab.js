@@ -70,6 +70,38 @@ const inferNicheFromText = (text = '') => {
   return null;
 };
 
+/** Clean scanner/PR blurbs for card display. */
+const normalizeDesc = (text = '') => {
+  let t = String(text || '').trim();
+  if (!t) return '';
+  t = t.replace(/\n*Apply here:\s*\S+/gi, '');
+  t = t.replace(/\n*Pay:\s*/gi, '\n');
+  t = t.replace(/[ \t]+\n/g, '\n');
+  t = t.replace(/\n{3,}/g, '\n\n');
+  return t.trim();
+};
+
+const DESC_COLLAPSE_CHARS = 240;
+
+const GigDesc = ({ text }) => {
+  const [expanded, setExpanded] = useState(false);
+  const cleaned = normalizeDesc(text);
+  if (!cleaned) return null;
+
+  const long = cleaned.length > DESC_COLLAPSE_CHARS || cleaned.split('\n').length > 4;
+
+  return (
+    <DescBlock>
+      <CardDesc $expanded={expanded || !long}>{cleaned}</CardDesc>
+      {long && (
+        <MoreBtn type="button" onClick={() => setExpanded((v) => !v)}>
+          {expanded ? 'Show less' : 'Show more'}
+        </MoreBtn>
+      )}
+    </DescBlock>
+  );
+};
+
 /** Compact pay signal for the card — never dump long compensation blurbs. */
 const formatPayLabel = (payLabel, prValueUsd) => {
   if (prValueUsd) return `$${prValueUsd}`;
@@ -252,9 +284,6 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
 const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
   const mode = opp.apply_mode || (opp.external_apply_url ? 'url' : 'kit');
   const isExternal = mode === 'url' || mode === 'email' || mode === 'external' || opp.is_sourced;
-  const platformLabel = opp.source_platform
-    ? opp.source_platform.charAt(0).toUpperCase() + opp.source_platform.slice(1)
-    : null;
 
   const inferredNiche = inferNicheFromText(
     `${opp.product_name || ''} ${opp.campaign_description || ''} ${(opp.creator_niches || []).join(' ')}`
@@ -291,7 +320,7 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
   const buttonLabel = () => {
     if (applying) return 'Applying...';
     if (mode === 'email') return 'Email to apply';
-    if (isExternal) return platformLabel ? `Apply here · ${platformLabel}` : 'Apply here';
+    if (isExternal) return 'Apply here';
     return 'Apply with media kit';
   };
 
@@ -320,7 +349,7 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
       </CardTop>
 
       {opp.product_name && <ProductName>{opp.product_name}</ProductName>}
-      <CardDesc>{opp.campaign_description}</CardDesc>
+      <GigDesc text={opp.campaign_description} />
 
       <ChipRow>
         {opp.follower_ranges?.length > 0 && (
@@ -602,11 +631,40 @@ const ProductName = styled.div`
   margin-bottom: 6px;
 `;
 
+const DescBlock = styled.div`
+  margin-bottom: 14px;
+`;
+
 const CardDesc = styled.p`
   font-size: 13px;
   color: ${tokens.textSecondary};
-  line-height: 1.6;
-  margin-bottom: 14px;
+  line-height: 1.55;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  ${p => !p.$expanded && `
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+  `}
+`;
+
+const MoreBtn = styled.button`
+  display: inline-block;
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${tokens.textPrimary};
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const ChipRow = styled.div`

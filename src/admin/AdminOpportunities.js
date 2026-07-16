@@ -191,7 +191,21 @@ const AdminOpportunities = () => {
 
   const handleSaveEdit = async () => {
     try {
-      await axios.patch(`${API_BASE}/api/opportunities/admin/${editingOpp.id}/edit`, editForm, {
+      const payload = {
+        ...editForm,
+        pr_value_usd:
+          editForm.pr_value_usd === '' || editForm.pr_value_usd == null
+            ? null
+            : parseInt(editForm.pr_value_usd, 10),
+        spots_total:
+          editForm.spots_total === '' || editForm.spots_total == null
+            ? null
+            : Math.max(1, parseInt(editForm.spots_total, 10) || 1),
+      };
+      if (payload.pr_value_usd != null && Number.isNaN(payload.pr_value_usd)) {
+        payload.pr_value_usd = null;
+      }
+      await axios.patch(`${API_BASE}/api/opportunities/admin/${editingOpp.id}/edit`, payload, {
         withCredentials: true,
         headers: { 'X-Admin-Token': ADMIN_TOKEN }
       });
@@ -199,7 +213,7 @@ const AdminOpportunities = () => {
       setEditingOpp(null);
       fetchOpportunities();
     } catch (error) {
-      message.error('Failed to update opportunity');
+      message.error(error.response?.data?.error || 'Failed to update opportunity');
     }
   };
 
@@ -523,7 +537,10 @@ const AdminOpportunities = () => {
                 <Input
                   type="number"
                   value={editForm.pr_value_usd}
-                  onChange={(e) => setEditForm({ ...editForm, pr_value_usd: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setEditForm({
+                    ...editForm,
+                    pr_value_usd: e.target.value === '' ? '' : (parseInt(e.target.value, 10) || ''),
+                  })}
                 />
               </EditField>
               <EditField>
@@ -531,7 +548,10 @@ const AdminOpportunities = () => {
                 <Input
                   type="number"
                   value={editForm.spots_total}
-                  onChange={(e) => setEditForm({ ...editForm, spots_total: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => setEditForm({
+                    ...editForm,
+                    spots_total: e.target.value === '' ? '' : (parseInt(e.target.value, 10) || 1),
+                  })}
                 />
               </EditField>
             </EditRow>
