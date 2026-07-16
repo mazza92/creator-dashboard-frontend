@@ -70,6 +70,21 @@ const inferNicheFromText = (text = '') => {
   return null;
 };
 
+/** Compact pay signal for the card — never dump long compensation blurbs. */
+const formatPayLabel = (payLabel, prValueUsd) => {
+  if (prValueUsd) return `$${prValueUsd}`;
+  if (!payLabel) return null;
+  const raw = String(payLabel).trim();
+  const dollar = raw.match(/\$[\d,]+(?:\s*[-–]\s*\$?[\d,]+)?(?:\s*\/\s*\w+)?/);
+  if (dollar) return dollar[0];
+  if (/gift|free\s*product|product\s*only|pr\s*package/i.test(raw)) return 'Gifted product';
+  if (/unpaid|no\s*pay/i.test(raw)) return 'Unpaid';
+  if (/performance|bonus|volume|per\s*video|videos?\s*per/i.test(raw)) return 'Paid · volume + bonuses';
+  if (/paid|ugc|rate|compensation/i.test(raw)) return 'Paid';
+  if (raw.length <= 32) return raw;
+  return 'Paid opportunity';
+};
+
 const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, onLimitsChange }) => {
   const [loading, setLoading] = useState(true);
   const [opportunities, setOpportunities] = useState({ matched: [], others: [] });
@@ -241,17 +256,24 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
     ? opp.source_platform.charAt(0).toUpperCase() + opp.source_platform.slice(1)
     : null;
 
-  const nicheLabel =
+  const inferredNiche = inferNicheFromText(
+    `${opp.product_name || ''} ${opp.campaign_description || ''} ${(opp.creator_niches || []).join(' ')}`
+  );
+  const rawNiche =
     opp.display_niche ||
-    (opp.creator_niches?.length ? opp.creator_niches.join(', ') : null) ||
-    inferNicheFromText(`${opp.product_name || ''} ${opp.campaign_description || ''}`) ||
+    (opp.creator_niches?.length ? opp.creator_niches[0] : null) ||
     (opp.brand_category && opp.brand_category.toLowerCase() !== 'other'
       ? String(opp.brand_category).replace(/_/g, ' ')
-      : null) ||
+      : null);
+  const nicheLabel =
+    (rawNiche && String(rawNiche).length <= 28 ? rawNiche : null) ||
+    inferredNiche ||
+    (rawNiche ? String(rawNiche).split(/[,·(]/)[0].trim().slice(0, 24) : null) ||
     'Creator gig';
 
   const regions = (opp.shipping_regions || []).join(' / ') || 'Worldwide';
-  const payLabel = opp.pay_label || (opp.pr_value_usd ? `$${opp.pr_value_usd}` : null);
+  const payLabel = formatPayLabel(opp.pay_label, opp.pr_value_usd);
+  const payIsMoney = Boolean(payLabel && /^\$|paid/i.test(payLabel));
 
   const renderContentTypes = () => {
     if (!opp.content_types?.length) return null;
@@ -311,12 +333,10 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
       </ChipRow>
 
       {payLabel && (
-        <StatsRow>
-          <Stat>
-            <StatVal $green>{payLabel.startsWith('$') || payLabel.startsWith('~') ? payLabel : `~${payLabel}`}</StatVal>
-            <StatLbl>{opp.is_sourced ? 'Pay' : 'PR Value'}</StatLbl>
-          </Stat>
-        </StatsRow>
+        <PayLine>
+          <PayKey>{opp.is_sourced ? 'Pay' : 'PR value'}</PayKey>
+          <PayVal $money={payIsMoney}>{payLabel}</PayVal>
+        </PayLine>
       )}
 
       {applied ? (
@@ -624,39 +644,29 @@ const PlatformBadge = styled.div`
   }
 `;
 
-const StatsRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr;
-  background: #f9fafb;
-  border: 1px solid ${tokens.border};
-  border-radius: 10px;
-  overflow: hidden;
+const PayLine = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   margin-bottom: 14px;
+  padding: 10px 0 0;
+  border-top: 1px solid ${tokens.border};
 `;
 
-const Stat = styled.div`
-  padding: 10px;
-  text-align: center;
-`;
-
-const StatDivider = styled.div`
-  width: 1px;
-  background: ${tokens.border};
-`;
-
-const StatVal = styled.div`
-  font-size: 15px;
-  font-weight: 800;
-  margin-bottom: 2px;
-  color: ${p => p.$green ? '#059669' : p.$amber ? '#d97706' : p.$violet ? tokens.violet : tokens.textPrimary};
-`;
-
-const StatLbl = styled.div`
-  font-size: 9px;
+const PayKey = styled.span`
+  flex-shrink: 0;
+  font-size: 11px;
   font-weight: 600;
   color: ${tokens.textMuted};
   text-transform: uppercase;
   letter-spacing: 0.06em;
+`;
+
+const PayVal = styled.span`
+  font-size: 13px;
+  font-weight: ${p => (p.$money ? 700 : 600)};
+  color: ${p => (p.$money ? '#059669' : tokens.textPrimary)};
+  line-height: 1.35;
 `;
 
 const SpotsRow = styled.div`
