@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Button, Input, message, Modal, Tag, Space, Card, Statistic, Row, Col, Popconfirm } from 'antd';
+import { Button, Input, message, Modal, Tag, Space, Card, Statistic, Row, Col, Popconfirm, Select } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
@@ -176,6 +176,7 @@ const AdminOpportunities = () => {
 
   const openEditModal = (opp) => {
     setEditingOpp(opp);
+    const via = (opp.apply_via || 'auto').toLowerCase();
     setEditForm({
       brand_name: opp.brand_name || '',
       brand_email: opp.brand_email || '',
@@ -185,12 +186,26 @@ const AdminOpportunities = () => {
       product_name: opp.product_name || '',
       campaign_description: opp.campaign_description || '',
       pr_value_usd: opp.pr_value_usd || '',
-      spots_total: opp.spots_total || 10
+      spots_total: opp.spots_total || 10,
+      apply_url: opp.external_apply_url || opp.brand_website || '',
+      apply_via: ['auto', 'url', 'email'].includes(via) ? via : 'auto',
     });
   };
 
   const handleSaveEdit = async () => {
     try {
+      if (editForm.apply_via === 'email') {
+        const email = (editForm.brand_email || '').trim().toLowerCase();
+        if (!email || !email.includes('@') || email === 'sourced@newcollab.co') {
+          message.error('Set a real Brand Email for Apply via Email');
+          return;
+        }
+      }
+      if (editForm.apply_via === 'url' && !(editForm.apply_url || '').trim()) {
+        message.error('Set an Application URL for Apply via URL');
+        return;
+      }
+
       const payload = {
         ...editForm,
         pr_value_usd:
@@ -201,6 +216,8 @@ const AdminOpportunities = () => {
           editForm.spots_total === '' || editForm.spots_total == null
             ? null
             : Math.max(1, parseInt(editForm.spots_total, 10) || 1),
+        apply_url: (editForm.apply_url || '').trim(),
+        apply_via: editForm.apply_via || 'auto',
       };
       if (payload.pr_value_usd != null && Number.isNaN(payload.pr_value_usd)) {
         payload.pr_value_usd = null;
@@ -305,6 +322,9 @@ const AdminOpportunities = () => {
                 </div>
               </OppBrand>
               <Space>
+                <Tag color={opp.apply_mode === 'email' ? 'blue' : opp.apply_mode === 'url' ? 'purple' : 'default'}>
+                  {opp.apply_mode === 'email' ? 'Apply: Email' : opp.apply_mode === 'url' ? 'Apply: URL' : 'Apply: Kit'}
+                </Tag>
                 <Button size="small" onClick={() => setExpandedId(expandedId === opp.id ? null : opp.id)}>
                   {expandedId === opp.id ? 'Collapse' : 'Expand'}
                 </Button>
@@ -497,6 +517,28 @@ const AdminOpportunities = () => {
               <Input
                 value={editForm.brand_email}
                 onChange={(e) => setEditForm({ ...editForm, brand_email: e.target.value })}
+                placeholder="Used when Apply via = Email"
+              />
+            </EditField>
+            <EditField>
+              <label>How creators apply</label>
+              <Select
+                style={{ width: '100%' }}
+                value={editForm.apply_via || 'auto'}
+                onChange={(value) => setEditForm({ ...editForm, apply_via: value })}
+                options={[
+                  { value: 'auto', label: 'Auto (URL if present, else email)' },
+                  { value: 'url', label: 'Application URL' },
+                  { value: 'email', label: 'Brand Email' },
+                ]}
+              />
+            </EditField>
+            <EditField>
+              <label>Application URL</label>
+              <Input
+                value={editForm.apply_url}
+                onChange={(e) => setEditForm({ ...editForm, apply_url: e.target.value })}
+                placeholder="https://…"
               />
             </EditField>
             <EditField>

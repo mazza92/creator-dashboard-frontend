@@ -152,22 +152,39 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
   const creditsLeft = isPro ? FREE_APP_LIMIT : Math.max(0, FREE_APP_LIMIT - usedApps);
   const canApply = isPro || creditsLeft > 0;
 
-  const openApplyTarget = (mode, url, email) => {
+  const openMailto = (email, opp) => {
+    if (!email) return;
+    const product = opp?.product_name || 'your opportunity';
+    const subject = `Creator application via NewCollab — ${product}`;
+    const body = `Hi,\n\nI'd like to apply for "${product}".\n\n`;
+    const href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Anchor click is more reliable than location.href after async requests
+    const a = document.createElement('a');
+    a.href = href;
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const launchApplyTarget = (mode, url, email, opp) => {
     if (mode === 'email' && email) {
-      window.location.href = `mailto:${email}?subject=${encodeURIComponent('Creator application via Newcollab')}`;
+      openMailto(email, opp);
       return;
     }
-    if (url) {
+    if ((mode === 'url' || mode === 'external') && url) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
-  /** Deduct quota via API, then open email / URL / kit success */
+  /** Deduct quota via API, then open URL, mailto (Brand Email), or kit success */
   const handleApply = async (opp) => {
-    if (!canApply) {
+    if (!canApply && !applied.has(opp.id)) {
       onShowUpgrade?.('opportunities');
       return;
     }
+
+    const fallbackMode = opp.apply_mode || (opp.external_apply_url ? 'url' : opp.apply_email ? 'email' : 'kit');
 
     setApplying(opp.id);
     try {
@@ -185,15 +202,20 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
         setLocalUsed(usedApps + 1);
       }
 
-      const mode = data.apply_mode || opp.apply_mode || 'kit';
-      const url = data.external_apply_url || opp.external_apply_url;
-      const email = data.apply_email || opp.apply_email;
-      if (mode === 'url' || mode === 'email' || mode === 'external') {
-        openApplyTarget(mode === 'external' ? (email && !url ? 'email' : 'url') : mode, url, email);
-      }
+      launchApplyTarget(
+        data.apply_mode || fallbackMode,
+        data.external_apply_url || opp.external_apply_url,
+        data.apply_email || opp.apply_email,
+        opp
+      );
     } catch (err) {
-      if (err.response?.data?.error === 'limit_reached') {
+      const errData = err.response?.data || {};
+      if (errData.error === 'limit_reached') {
         onShowUpgrade?.('opportunities');
+      } else if (err.response?.status === 409) {
+        // Already applied — still reopen mailto / URL so they can finish sending
+        setApplied(prev => new Set([...prev, opp.id]));
+        launchApplyTarget(fallbackMode, opp.external_apply_url, opp.apply_email, opp);
       }
     } finally {
       setApplying(null);
@@ -222,8 +244,10 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
       <IntroCard>
         <IntroIcon>📣</IntroIcon>
         <IntroText>
-          <IntroTitle>Brands are looking for creators right now</IntroTitle>
-          <IntroSub>Apply with one tap — we open the brand’s form or email. Each apply uses 1 credit.</IntroSub>
+          <IntroTitle>Brands want creators like you — right now</IntroTitle>
+          <IntroSub>
+            Apply to open UGC & gift gigs in one tap. Look professional, even with a small following. Each apply uses 1 credit.
+          </IntroSub>
         </IntroText>
       </IntroCard>
 
@@ -241,7 +265,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
             </CreditText>
           </CreditLeft>
           <CreditUpgrade onClick={() => onShowUpgrade?.('opportunities')}>
-            Unlimited with Pro ›
+            Unlimited applications with Pro ›
           </CreditUpgrade>
         </CreditRow>
       )}
@@ -319,8 +343,8 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
 
   const buttonLabel = () => {
     if (applying) return 'Applying...';
-    if (mode === 'email') return 'Email to apply';
-    if (isExternal) return 'Apply here';
+    if (mode === 'email') return 'Apply via email';
+    if (mode === 'url' || isExternal) return 'Apply here';
     return 'Apply with media kit';
   };
 
@@ -370,7 +394,12 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
 
       {applied ? (
         <AppliedState>
-          <Check size={16} /> {isExternal ? 'Applied — link opened' : 'Applied - under brand review'}
+          <Check size={16} />
+          {mode === 'email'
+            ? 'Applied — email opened'
+            : mode === 'url' || isExternal
+              ? 'Applied — link opened'
+              : 'Applied - under brand review'}
         </AppliedState>
       ) : (
         <ApplyBtn type="button" onClick={onApply} disabled={applying}>
@@ -381,8 +410,8 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
       {!applied && (
         <ApplyNote>
           {mode === 'email'
-            ? 'Opens your email app · uses 1 application credit'
-            : isExternal
+            ? 'Opens your email app with the brand as recipient · uses 1 credit'
+            : mode === 'url' || isExternal
               ? 'Opens the brand’s apply page · uses 1 application credit'
               : isPro
                 ? 'Sends your media kit to the brand'

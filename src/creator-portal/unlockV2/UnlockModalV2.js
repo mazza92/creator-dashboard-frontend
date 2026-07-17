@@ -6,7 +6,7 @@ import { message } from 'antd';
 
 import LootBoxLoading from './LootBoxLoading';
 import CompletionFlash from './CompletionFlash';
-import { LOADING, TOKENS, MENTOR_VERDICTS, MENTOR_SECTIONS, SEND_BUTTON } from './copyDictionary';
+import { LOADING, TOKENS, MENTOR_VERDICTS, MENTOR_SECTIONS, SEND_BUTTON, NEXT_ACTIONS } from './copyDictionary';
 import { apiClient } from '../../config/api';
 import UpgradeModal from '../UpgradeModal';
 
@@ -70,11 +70,12 @@ const Modal = styled(motion.div)`
 `;
 
 const Header = styled.div`
-  padding: 12px 16px 10px;
+  padding: ${p => (p.$minimal ? '10px 12px 6px' : '12px 16px 10px')};
   display: flex;
   align-items: center;
+  justify-content: ${p => (p.$minimal ? 'flex-end' : 'flex-start')};
   gap: 8px;
-  border-bottom: 1px solid #ececef;
+  border-bottom: ${p => (p.$minimal ? 'none' : '1px solid #ececef')};
   background: #fff;
   flex-shrink: 0;
 `;
@@ -1113,11 +1114,149 @@ const BackButton = styled.button`
   }
 `;
 
+const NextActionsScreen = styled(motion.div)`
+  padding: 4px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+`;
+
+const NextActionsHero = styled.div`
+  padding: 4px 4px 20px;
+  text-align: center;
+`;
+
+const NextActionsBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+`;
+
+const NextActionsTitle = styled.h3`
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: ${TOKENS.mentorTextPrimary};
+`;
+
+const NextActionsSub = styled.p`
+  margin: 0 auto;
+  max-width: 280px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: ${TOKENS.mentorTextSecondary};
+`;
+
+const NextActionsStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const NextActionPrimary = styled.div`
+  background: linear-gradient(180deg, #f8f7ff 0%, #f3f0ff 100%);
+  border: 1px solid #e8e4ff;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const NextActionSecondary = styled.div`
+  background: #fff;
+  border: 1px solid #eceef2;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const NextActionLabel = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${TOKENS.mentorTextPrimary};
+  line-height: 1.3;
+`;
+
+const NextActionTip = styled.div`
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: ${TOKENS.mentorTextSecondary};
+  margin-top: -4px;
+`;
+
+const NextActionBtn = styled.button`
+  width: 100%;
+  border: none;
+  border-radius: 11px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: ${p => (p.$secondary ? '#fff' : '#111827')};
+  color: ${p => (p.$secondary ? '#111827' : '#fff')};
+  border: ${p => (p.$secondary ? '1px solid #e5e7eb' : 'none')};
+  transition: transform 0.12s ease, background 0.12s ease;
+
+  &:hover {
+    background: ${p => (p.$secondary ? '#f9fafb' : '#1f2937')};
+  }
+
+  &:active {
+    transform: scale(0.985);
+  }
+`;
+
+const NextActionsFooter = styled.div`
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f2f4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
+const NextActionsNote = styled.p`
+  margin: 0;
+  font-size: 12px;
+  color: ${TOKENS.mentorTextSecondary};
+  text-align: center;
+  line-height: 1.45;
+  max-width: 260px;
+`;
+
+const NextActionLink = styled.button`
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 // Loading/Flash states
 const PHASE_LOADING = 'loading';
 const PHASE_FLASH = 'flash';
 const PHASE_MODAL = 'modal';
 const PHASE_OUTREACH = 'outreach';
+const PHASE_NEXT = 'next_actions';
 
 // Card timing configuration
 const CARD_TIMINGS = {
@@ -1135,6 +1274,7 @@ const UnlockModalV2 = ({
   creatorProfile,
   isPro = false,
   onUpgrade,
+  onOpenOpportunities,
 }) => {
   // Phase state
   const [phase, setPhase] = useState(PHASE_LOADING);
@@ -1416,8 +1556,18 @@ const UnlockModalV2 = ({
     const mailtoUrl = `mailto:${brandEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&bcc=creators@newcollab.co`;
     window.location.href = mailtoUrl;
 
-    // Notify parent with brand info
-    onPitchSent?.(brand, { method: 'email' });
+    // Record pitch but keep modal open for next actions (silence workaround)
+    onPitchSent?.(brand, { method: 'email', stayOpen: true });
+    setPhase(PHASE_NEXT);
+  };
+
+  const finishAndClose = (goPipeline = false) => {
+    onPitchSent?.(brand, {
+      method: 'email',
+      stayOpen: false,
+      alreadyRecorded: true,
+      goPipeline,
+    });
   };
 
   if (!isOpen) return null;
@@ -1440,22 +1590,30 @@ const UnlockModalV2 = ({
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={e => e.stopPropagation()}
         >
-          <Header>
-            <BrandLogo>
-              {brandLogo ? (
-                <img src={brandLogo} alt={brandName} />
-              ) : (
-                brandName.substring(0, 3).toLowerCase()
-              )}
-            </BrandLogo>
-            <BrandInfo>
-              <BrandName>{brandName}</BrandName>
-              <BrandCategory>{brandCategory}</BrandCategory>
-            </BrandInfo>
-            <CloseButton onClick={onClose}>
-              <FiX size={14} />
-            </CloseButton>
-          </Header>
+          {(phase === PHASE_OUTREACH || phase === PHASE_NEXT) ? (
+            <Header $minimal>
+              <CloseButton onClick={onClose}>
+                <FiX size={14} />
+              </CloseButton>
+            </Header>
+          ) : (
+            <Header>
+              <BrandLogo>
+                {brandLogo ? (
+                  <img src={brandLogo} alt={brandName} />
+                ) : (
+                  brandName.substring(0, 3).toLowerCase()
+                )}
+              </BrandLogo>
+              <BrandInfo>
+                <BrandName>{brandName}</BrandName>
+                <BrandCategory>{brandCategory}</BrandCategory>
+              </BrandInfo>
+              <CloseButton onClick={onClose}>
+                <FiX size={14} />
+              </CloseButton>
+            </Header>
+          )}
 
           <ModalBody>
             {phase === PHASE_LOADING && (
@@ -1970,10 +2128,79 @@ const UnlockModalV2 = ({
                     Open Email →
                   </OutreachCTA>
                   <BackButton onClick={() => setPhase(PHASE_MODAL)}>
-                    ← Back to analysis
+                    ← Back to strategy
                   </BackButton>
                 </OutreachFooter>
               </OutreachScreen>
+            )}
+
+            {/* NEXT ACTIONS — value continues even if brand never replies */}
+            {phase === PHASE_NEXT && packageData && (
+              <NextActionsScreen
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <NextActionsHero>
+                  <NextActionsBadge>✓ Email opened</NextActionsBadge>
+                  <NextActionsTitle>{NEXT_ACTIONS.title}</NextActionsTitle>
+                  <NextActionsSub>{NEXT_ACTIONS.subline}</NextActionsSub>
+                </NextActionsHero>
+
+                <NextActionsStack>
+                  <NextActionPrimary>
+                    <NextActionLabel>{NEXT_ACTIONS.opportunitiesTitle}</NextActionLabel>
+                    <NextActionTip>{NEXT_ACTIONS.opportunitiesBody}</NextActionTip>
+                    <NextActionBtn
+                      type="button"
+                      onClick={() => {
+                        onOpenOpportunities?.();
+                        onClose?.();
+                      }}
+                    >
+                      {NEXT_ACTIONS.opportunitiesCta}
+                    </NextActionBtn>
+                  </NextActionPrimary>
+
+                  {(packageData.status === 'not_yet' || packageData.status === 'almost') && (
+                    <NextActionSecondary>
+                      <NextActionLabel>{NEXT_ACTIONS.improveTitle}</NextActionLabel>
+                      <NextActionTip>
+                        {packageData.coaching?.action || packageData.coaching?.then_what || NEXT_ACTIONS.improveBody}
+                      </NextActionTip>
+                      <NextActionBtn
+                        $secondary
+                        type="button"
+                        onClick={() => setPhase(PHASE_MODAL)}
+                      >
+                        {NEXT_ACTIONS.improveCta}
+                      </NextActionBtn>
+                    </NextActionSecondary>
+                  )}
+
+                  <NextActionSecondary>
+                    <NextActionLabel>{NEXT_ACTIONS.anotherTitle}</NextActionLabel>
+                    <NextActionTip>{NEXT_ACTIONS.anotherBody}</NextActionTip>
+                    <NextActionBtn
+                      $secondary
+                      type="button"
+                      onClick={() => finishAndClose(false)}
+                    >
+                      {NEXT_ACTIONS.anotherCta}
+                    </NextActionBtn>
+                  </NextActionSecondary>
+                </NextActionsStack>
+
+                <NextActionsFooter>
+                  <NextActionsNote>{NEXT_ACTIONS.note}</NextActionsNote>
+                  <NextActionLink
+                    type="button"
+                    onClick={() => finishAndClose(true)}
+                  >
+                    {NEXT_ACTIONS.pipelineCta}
+                  </NextActionLink>
+                </NextActionsFooter>
+              </NextActionsScreen>
             )}
           </ModalBody>
         </Modal>

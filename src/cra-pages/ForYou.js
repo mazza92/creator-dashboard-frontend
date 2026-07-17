@@ -101,10 +101,20 @@ const ForYou = () => {
   const [pendingPitches, setPendingPitches] = useState([]);
 
   // Sub-tab state for Matches vs Opportunities
-  const [activeTab, setActiveTab] = useState('matches');
+  const [activeTab, setActiveTab] = useState(() => (
+    sessionStorage.getItem('foryouForceOpportunities') ? 'opportunities' : 'matches'
+  ));
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
   const [unlockBalance, setUnlockBalance] = useState({ remaining: 5, tier: 'free', reset_at: null, is_unlimited: false });
   const [opportunityCount, setOpportunityCount] = useState(0);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('foryouForceOpportunities')) {
+      sessionStorage.setItem('foryouTabPicked', '1');
+      sessionStorage.removeItem('foryouForceOpportunities');
+      setActiveTab('opportunities');
+    }
+  }, []);
 
   // Recent replies for social proof strip (notification feed)
   const [recentReplies, setRecentReplies] = useState([]);
@@ -328,7 +338,13 @@ const ForYou = () => {
       if (response.data.success) {
         const matched = response.data.matched || [];
         const others = response.data.others || [];
-        setOpportunityCount(matched.length + others.length);
+        const count = matched.length + others.length;
+        setOpportunityCount(count);
+        // Lead newbies to open gigs when inventory exists (once per session)
+        if (count > 0 && !sessionStorage.getItem('foryouTabPicked')) {
+          setActiveTab('opportunities');
+          sessionStorage.setItem('foryouTabPicked', '1');
+        }
       }
     } catch (error) {
       // Silently fail
@@ -561,54 +577,71 @@ const ForYou = () => {
   const handlePitchSent = useCallback(async (brandArg, context = {}) => {
     const contactedBrand = brandArg || pitchingBrand;
     const method = context?.method || 'email';
+    const stayOpen = Boolean(context?.stayOpen);
+    const alreadyRecorded = Boolean(context?.alreadyRecorded);
+    const goPipeline = context?.goPipeline;
 
-    if (contactedBrand) {
+    if (contactedBrand && !alreadyRecorded) {
       setPitchedIds(prev => new Set([...prev, contactedBrand.id]));
       setSavedIds(prev => new Set([...prev, contactedBrand.id]));
 
-      // Track in welcome flow if applicable
       if (isWelcomeFlow) {
         setWelcomePitchedIds(prev => new Set([...prev, contactedBrand.id]));
       }
     }
+
+    if (stayOpen) {
+      message.success(
+        method === 'form'
+          ? 'Form opened. Next: keep building while you wait.'
+          : 'Email opened. Next: keep building while you wait.'
+      );
+      try {
+        const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+          withCredentials: true
+        });
+        if (response.data.success) {
+          setPitchesSentThisMonth(response.data.used || 0);
+          setPitchLimits(response.data);
+        }
+      } catch (error) {
+        setPitchesSentThisMonth(prev => prev + 1);
+      }
+      return;
+    }
+
     setPitchingBrand(null);
 
-    try {
-      const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
-        withCredentials: true
-      });
-      if (response.data.success) {
-        setPitchesSentThisMonth(response.data.used || 0);
-        setPitchLimits(response.data);
+    if (!alreadyRecorded) {
+      try {
+        const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
+          withCredentials: true
+        });
+        if (response.data.success) {
+          setPitchesSentThisMonth(response.data.used || 0);
+          setPitchLimits(response.data);
+        }
+      } catch (error) {
+        setPitchesSentThisMonth(prev => prev + 1);
       }
-    } catch (error) {
-      setPitchesSentThisMonth(prev => prev + 1);
     }
 
     if (contactedBrand) {
-      message.success(
-        method === 'form'
-          ? 'PR form opened. Confirm your application in Saved.'
-          : 'Email opened. Confirm it in Saved so we can track follow-ups.'
-      );
-
-      // If in welcome flow, return to welcome modal instead of navigating
       if (isWelcomeFlow) {
-        // Check if all 5 welcome brands have been unlocked
-        // Use Set to calculate correct count (brand may already be tracked from onUnlockUsed)
         const newUnlockedCount = new Set([...welcomePitchedIds, contactedBrand.id]).size;
         if (newUnlockedCount >= 5) {
-          // All 5 done - close welcome flow
           setIsWelcomeFlow(false);
           setShowWelcomeModal(false);
-          message.success('You unlocked all 5 contacts! Check your pipeline for replies.');
+          message.success('Nice work. Check your pipeline for follow-ups.');
           navigate('/creator/dashboard/pr-pipeline');
         } else {
-          // More brands to unlock - show modal again
           setShowWelcomeModal(true);
         }
-      } else {
+      } else if (goPipeline) {
+        message.success('Saved. Confirm the send in your pipeline.');
         navigate(`/creator/dashboard/pr-pipeline?confirmBrand=${contactedBrand.id}&method=${method}`);
+      } else {
+        message.success('Pitch started. Unlock another brand or apply to open gigs.');
       }
     }
   }, [pitchingBrand, navigate, isWelcomeFlow, welcomePitchedIds]);
@@ -964,15 +997,21 @@ const ForYou = () => {
         <SubTabRow>
           <SubTab
             $active={activeTab === 'matches'}
-            onClick={() => setActiveTab('matches')}
+            onClick={() => {
+              sessionStorage.setItem('foryouTabPicked', '1');
+              setActiveTab('matches');
+            }}
           >
-            🎯 Matches
+            Matches
           </SubTab>
           <SubTab
             $active={activeTab === 'opportunities'}
-            onClick={() => setActiveTab('opportunities')}
+            onClick={() => {
+              sessionStorage.setItem('foryouTabPicked', '1');
+              setActiveTab('opportunities');
+            }}
           >
-            ⚡ Opportunities
+            Opportunities
             {opportunityCount > 0 && <CountBadge>{opportunityCount}</CountBadge>}
           </SubTab>
         </SubTabRow>
@@ -1336,12 +1375,21 @@ const ForYou = () => {
               }
             }}
             brand={pitchingBrand}
-            onPitchSent={(brand) => {
-              handlePitchSent(brand);
+            onPitchSent={(brand, ctx) => {
+              handlePitchSent(brand, ctx);
               fetchUnlockBalance();
               fetchUnlockedBrands();
-              if (isWelcomeFlow && pitchingBrand) {
+              if (isWelcomeFlow && pitchingBrand && !ctx?.stayOpen) {
                 setWelcomePitchedIds(prev => new Set([...prev, pitchingBrand.id]));
+              }
+            }}
+            onOpenOpportunities={() => {
+              sessionStorage.setItem('foryouTabPicked', '1');
+              setActiveTab('opportunities');
+              setPitchingBrand(null);
+              if (isWelcomeFlow) {
+                setIsWelcomeFlow(false);
+                setShowWelcomeModal(false);
               }
             }}
             isPro={isPro}
@@ -1396,18 +1444,18 @@ const ForYou = () => {
             <WelcomeEmoji>{welcomePitchedIds.size > 0 ? '🚀' : '✨'}</WelcomeEmoji>
             <WelcomeTitle>
               {welcomePitchedIds.size === 0
-                ? '5 Brand Contacts, On Us'
+                ? 'Start your first free product'
                 : welcomePitchedIds.size < 3
-                  ? 'Great start! Keep going'
+                  ? 'Nice — keep going'
                   : welcomePitchedIds.size < 5
                     ? 'Almost there!'
                     : 'All set!'}
             </WelcomeTitle>
             <WelcomeSub>
               {welcomePitchedIds.size === 0 ? (
-                <>Get <strong>5 PR Packages</strong> free this month. Each includes a verified contact + ready-to-send pitch.</>
+                <>Brands won’t find a small account on their own. Use your free PR Packages to pitch brands that gift — with a contact + pitch that looks professional.</>
               ) : (
-                <>Creators who contact 5+ brands are <strong>3x more likely</strong> to land PR packages.</>
+                <>Creators who pitch several brands are <strong>far more likely</strong> to land a free product.</>
               )}
             </WelcomeSub>
 
@@ -1417,12 +1465,12 @@ const ForYou = () => {
                   <WelcomeQuotaDot key={i} $filled={i < welcomePitchedIds.size} $completed={i < welcomePitchedIds.size} />
                 ))}
               </WelcomeQuotaDots>
-              <span>{welcomePitchedIds.size} of 5 unlocked</span>
+              <span>{welcomePitchedIds.size} of 5 packages started</span>
             </WelcomeQuota>
 
             {welcomePitchedIds.size === 0 && (
               <WelcomeUrgency>
-                <strong>Pro tip:</strong> Get your first PR Package now — verified contact + ready-to-send pitch.
+                <strong>Tip:</strong> Open a PR Package now — verified contact + ready-to-send pitch.
               </WelcomeUrgency>
             )}
 

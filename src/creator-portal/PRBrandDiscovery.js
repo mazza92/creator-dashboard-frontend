@@ -1581,11 +1581,19 @@ const PRBrandDiscovery = () => {
   };
 
   // Called when user sends a pitch from the modal
-  const handlePitchSent = (brand) => {
+  const handlePitchSent = (brand, context = {}) => {
+    if (context?.stayOpen) {
+      setPitchedBrands(prev => new Set([...prev, brand.id]));
+      return;
+    }
     setPitchedBrands(prev => new Set([...prev, brand.id]));
-    setPitchesSentThisWeek(prev => prev + 1);
+    if (!context?.alreadyRecorded) {
+      setPitchesSentThisWeek(prev => prev + 1);
+    }
     setShowPitchModal(false);
-    setCurrentIndex(prev => prev + 1);
+    if (context?.goPipeline !== false) {
+      setCurrentIndex(prev => prev + 1);
+    }
   };
 
   if (loading) {
@@ -1982,6 +1990,12 @@ const PRBrandDiscovery = () => {
           brand={selectedBrandForPitch}
           onPitchSent={handlePitchSent}
           isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+          onOpenOpportunities={() => {
+            sessionStorage.setItem('foryouForceOpportunities', '1');
+            sessionStorage.setItem('foryouTabPicked', '1');
+            setShowPitchModal(false);
+            window.location.href = '/creator/dashboard/for-you';
+          }}
           onUpgrade={() => {
             setUpgradeInfo({ currentCount: 5, limit: 5, feature: 'unlocks' });
             setShowUpgradeModal(true);

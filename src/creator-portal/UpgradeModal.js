@@ -33,10 +33,10 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   if (!isOpen) return null;
 
-  // Determine context-specific copy
-  let headline = 'Your matched brands are waiting.';
-  let subtext = '5 free PR Packages used this month. Upgrade for unlimited.';
-  let ctaText = 'Get Pro for $19/month';
+  // Determine context-specific copy — speak to newbie freebie / UGC starters
+  let headline = 'Brands that gift are one pitch away.';
+  let subtext = 'You’ve used your free PR Packages this month. Pro keeps you reaching brands that send free products.';
+  let ctaText = 'Get Pro — $19/month';
   let progressLabel = 'PR Packages';
 
   // Default values, can be overridden by feature
@@ -44,44 +44,43 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   let total = pitchLimits?.limit || limit || 3;
 
   if (feature === 'opportunities') {
-    headline = 'Brands are reviewing applications right now.';
-    subtext = `${used} free applications used this month. Pro gives you unlimited access.`;
-    ctaText = 'Unlock unlimited applications';
+    headline = 'Open gigs are waiting — don’t stop now.';
+    subtext = `${used} free applications used this month. Pro lets you keep applying to brands already looking for creators like you.`;
+    ctaText = 'Unlimited applications — $19/mo';
     progressLabel = 'applications';
 
   } else if (feature === 'locked' || feature === 'for_you') {
-    headline = 'Unlock your full PR toolkit.';
-    subtext = 'Direct access to 500+ brand PR Packages with verified contacts, ready-to-send pitches, and content ideas.';
-    ctaText = 'Get Pro for $19/month';
+    headline = 'Your personal talent manager — unlocked.';
+    subtext = 'Every brand unlock includes a full strategy: fit check, content tips, contact, and pitch. Pro keeps that manager on for every brand.';
+    ctaText = 'Get Pro — $19/month';
 
   } else if (feature === 'kit' || feature === 'kit_views') {
-    headline = 'Brands are already looking at you.';
-    subtext = 'See exactly who viewed your kit — and follow up before they forget.';
-    ctaText = 'Get Pro for $19/month';
+    headline = 'Someone checked out your kit.';
+    subtext = 'See who viewed you — and follow up while you’re still on their mind.';
+    ctaText = 'Get Pro — $19/month';
 
   } else if (feature === 'limit_reached') {
-    headline = 'Keep the momentum going.';
-    subtext = `You've opened ${used} PR Packages this month. Upgrade to unlock all your matched brands.`;
-    ctaText = 'Get Pro for $19/month';
+    headline = 'Keep your talent manager working.';
+    subtext = `You’ve used ${used} PR Packages this month. Upgrade to keep unlocking strategies, pitches, and brands that gift.`;
+    ctaText = 'Get Pro — $19/month';
 
   } else if (feature === 'bump_profile') {
-    headline = 'Bump your profile to the top.';
-    subtext = 'Brands get hundreds of pitches. A follow-up from the Newcollab team puts yours back at the top.';
-    ctaText = 'Get Pro for $19/month';
+    headline = 'Get back in front of the brand.';
+    subtext = 'A follow-up from NewCollab puts your pitch back at the top of their inbox.';
+    ctaText = 'Get Pro — $19/month';
 
   } else if (feature === 'pool') {
-    headline = 'Grow your following with real engagement.';
-    subtext = 'Pro members get unlimited Pool access — connect with creators in your niche who actually engage with your content.';
-    ctaText = 'Get Pro for $19/month';
+    headline = 'Grow with creators in your niche.';
+    subtext = 'Pro unlocks unlimited Pool access — real engagement from people who make content like yours.';
+    ctaText = 'Get Pro — $19/month';
 
   } else if (feature === 'unlock_paywall') {
-    // Credit limit reached - user has 0 remaining
-    headline = "0 remaining (5 used of 5)";
-    subtext = 'Each PR Package includes a verified contact, ready-to-send pitch in 3 tones, and content ideas.';
-    ctaText = 'Get Unlimited — $19/mo';
+    headline = 'Free strategies used up this month';
+    subtext = 'Each unlock builds your plan for that brand — what they’ll notice, how to improve, and a ready pitch. Pro = unlimited.';
+    ctaText = 'Unlimited strategies — $19/mo';
     progressLabel = 'PR Packages';
-    used = 5;
-    total = 5;
+    used = pitchLimits?.used || 5;
+    total = pitchLimits?.limit || 5;
   }
 
   // Feature list
@@ -89,45 +88,41 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   const features = isUnlockPaywall ? [
     {
-      text: <><strong>Unlimited PR Packages</strong> — reach any brand, anytime</>,
+      text: <><strong>Unlimited brand strategies</strong> — your AI talent manager for every unlock</>,
       highlight: true
     },
     {
-      text: <><strong>Verified PR contacts</strong> — direct emails that get read</>,
+      text: <><strong>Verified contacts + pitches</strong> — show up ready to collab</>,
       highlight: false
     },
     {
-      text: <><strong>Pitches in 3 tones</strong> — ready to copy and send</>,
+      text: <><strong>Content tips per brand</strong> — know what to post so brands take you seriously</>,
       highlight: false
     },
     {
-      text: <><strong>Reply tracking</strong> — know when brands respond</>,
+      text: <><strong>Open gigs to apply</strong> — brands already asking for creators</>,
       highlight: false
     },
   ] : [
     {
-      text: <><strong>Unlimited PR Packages</strong> — reach any brand, every month</>,
-      highlight: false
+      text: <><strong>AI talent manager</strong> — full strategy every time you unlock a brand</>,
+      highlight: feature === 'for_you' || feature === 'locked' || feature === 'limit_reached' || feature === 'unlock_paywall'
     },
     {
-      text: <><strong>500+ brand contacts</strong> with verified PR emails and forms</>,
-      highlight: false
+      text: <><strong>Unlimited applications</strong> — UGC & gift gigs that are open now</>,
+      highlight: feature === 'opportunities'
     },
     {
-      text: <><strong>Creator Pool</strong> — grow followers & engagement from your niche <NewTag>new</NewTag></>,
-      highlight: feature === 'pool'
+      text: <><strong>Unlimited PR Packages</strong> — discover, pitch, and track brands that gift</>,
+      highlight: feature === 'limit_reached' || feature === 'for_you' || feature === 'locked'
     },
     {
-      text: <><strong>Profile bumps</strong> — we email brands on your behalf</>,
-      highlight: feature === 'bump_profile'
+      text: <><strong>Collab-ready media kit</strong> — a clean portfolio brands can view</>,
+      highlight: feature === 'kit' || feature === 'kit_views'
     },
     {
-      text: <><strong>Apply to brand casting calls</strong> — exclusive opportunities</>,
-      highlight: false
-    },
-    {
-      text: <><strong>See which brands viewed your kit</strong> and when</>,
-      highlight: false
+      text: <><strong>See who viewed your kit</strong> — follow up while it’s hot</>,
+      highlight: feature === 'kit' || feature === 'kit_views'
     },
   ];
 
@@ -189,11 +184,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               </ProofStat>
               <ProofStat>
                 <ProofVal>~$45</ProofVal>
-                <ProofLbl>Avg PR value</ProofLbl>
+                <ProofLbl>Avg gift value</ProofLbl>
               </ProofStat>
               <ProofStat>
                 <ProofVal>∞</ProofVal>
-                <ProofLbl>PR Packages/mo</ProofLbl>
+                <ProofLbl>Applies & pitches</ProofLbl>
               </ProofStat>
             </ProofStrip>
 
@@ -203,7 +198,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 <ProLabel>Pro</ProLabel>
                 <ProPrice>$19<span>/month</span></ProPrice>
               </ProCardHeader>
-              <ProRoiLine>One gifted package covers your Pro for the year</ProRoiLine>
+              <ProRoiLine>One free product from a brand covers a year of Pro</ProRoiLine>
 
               {/* Feature List */}
               <FeatureList>
@@ -219,8 +214,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
               {/* ROI Box */}
               <RoiBox>
-                One PR package pays for a full year of Pro.<br />
-                <strong>Most creators land multiple packages per month.</strong>
+                Brands rarely reply on day one — and that’s OK.<br />
+                <strong>Pro keeps building your strategy, kit, and outreach until the first gift lands.</strong>
               </RoiBox>
             </ProCard>
           </ModalScroll>

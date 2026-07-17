@@ -621,34 +621,40 @@ const PRPipeline = () => {
 
   // Handle pitch sent
   const handlePitchSent = (brand, context = {}) => {
-    setShowPitchModal(false);
     const method = typeof context === 'string' ? context : context?.method;
     const hitLimit = typeof context === 'object' ? context?.hitLimit : false;
+    const stayOpen = typeof context === 'object' ? context?.stayOpen : false;
+    const alreadyRecorded = typeof context === 'object' ? context?.alreadyRecorded : false;
+    const goPipeline = typeof context === 'object' ? context?.goPipeline : undefined;
+
+    if (stayOpen) {
+      fetchPitchLimits();
+      return;
+    }
+
+    setShowPitchModal(false);
 
     // If user hit pitch limit, show upgrade modal instead of confirmation modal
     if (hitLimit && !isPro) {
       setUpgradeReason('limit_reached');
       setShowUpgradeModal(true);
-      // Still show success for the brand they just pitched
       const item = items.find(i => i.brand_id === brand.brand_id || i.id === brand.id);
       if (item) {
         showCardSuccess(item.id, '✓ Pitch sent! Upgrade to send more this month.');
       }
-    } else {
-      // Show confirmation modal
+    } else if (goPipeline !== false) {
       const item = items.find(i => i.brand_id === brand.brand_id || i.id === brand.id);
       if (item) {
-        // Optimistically update to 'pitched' so the card immediately shows
-        // "Waiting" instead of a stale stage (e.g. "They replied") while
-        // fetchPipelineData is still in flight.
         setItems(prev => prev.map(i =>
           i.id === item.id ? { ...i, pipeline_stage: 'pitched' } : i
         ));
         openConfirmation(item, method || 'email');
       }
     }
-    fetchPipelineData();
-    fetchPitchLimits();
+    if (!alreadyRecorded || goPipeline !== false) {
+      fetchPipelineData();
+      fetchPitchLimits();
+    }
   };
 
   // Remove brand from pipeline
@@ -1313,6 +1319,12 @@ const PRPipeline = () => {
           }}
           brand={selectedBrand}
           onPitchSent={handlePitchSent}
+          onOpenOpportunities={() => {
+            sessionStorage.setItem('foryouForceOpportunities', '1');
+            sessionStorage.setItem('foryouTabPicked', '1');
+            setShowPitchModal(false);
+            window.location.href = '/creator/dashboard/for-you';
+          }}
           isPro={isPro}
         />
       ) : (

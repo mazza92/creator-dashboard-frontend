@@ -394,16 +394,23 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const handlePitchSent = async (brandArg, context = {}) => {
     const contactedBrand = brandArg || selectedBrandForPitch;
     const method = context?.method || 'email';
+    const stayOpen = Boolean(context?.stayOpen);
+    const alreadyRecorded = Boolean(context?.alreadyRecorded);
+    const goPipeline = context?.goPipeline;
 
-    // Mark brand as contacted locally
-    if (contactedBrand) {
+    if (contactedBrand && !alreadyRecorded) {
       setPitchedBrands(prev => new Set([...prev, contactedBrand.id]));
       setSavedBrandIds(prev => new Set([...prev, contactedBrand.id]));
     }
+
+    if (stayOpen) {
+      message.success('Email opened. Keep going with your next steps.');
+      return;
+    }
+
     setShowPitchModal(false);
     setSelectedBrandForPitch(null);
 
-    // Re-fetch unlock balance from API to ensure accurate count
     try {
       const response = await axios.get(`${API_BASE}/api/pr-crm/unlocks/balance`, {
         withCredentials: true
@@ -417,7 +424,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         });
       }
     } catch (error) {
-      // Fallback to decrementing locally if API fails
       setUnlockBalance(prev => ({
         ...prev,
         remaining: Math.max(0, (prev.remaining ?? 5) - 1)
@@ -425,15 +431,18 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
 
     if (contactedBrand) {
-      message.success(
-        method === 'form'
-          ? 'PR form opened. Confirm your application in Saved so we can track follow-ups.'
-          : 'Email opened. Confirm it in Saved so we can track follow-ups.'
-      );
-
-      navigate(
-        `/creator/dashboard/pr-pipeline?confirmBrand=${contactedBrand.id}&method=${method}`
-      );
+      if (goPipeline) {
+        message.success(
+          method === 'form'
+            ? 'PR form opened. Confirm your application in Saved so we can track follow-ups.'
+            : 'Email opened. Confirm it in Saved so we can track follow-ups.'
+        );
+        navigate(
+          `/creator/dashboard/pr-pipeline?confirmBrand=${contactedBrand.id}&method=${method}`
+        );
+      } else {
+        message.success('Pitch started. Unlock another brand when you are ready.');
+      }
     }
   };
 
@@ -1041,10 +1050,19 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               setSelectedBrandForPitch(null);
             }}
             brand={selectedBrandForPitch}
-            onPitchSent={(brand) => {
-              handlePitchSent(brand);
-              fetchSubscriptionStatus();
-              fetchUnlockedBrands();
+            onPitchSent={(brand, ctx) => {
+              handlePitchSent(brand, ctx);
+              if (!ctx?.stayOpen) {
+                fetchSubscriptionStatus();
+                fetchUnlockedBrands();
+              }
+            }}
+            onOpenOpportunities={() => {
+              sessionStorage.setItem('foryouForceOpportunities', '1');
+              sessionStorage.setItem('foryouTabPicked', '1');
+              setShowPitchModal(false);
+              setSelectedBrandForPitch(null);
+              navigate('/creator/dashboard/for-you');
             }}
             isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
             onUpgrade={() => {

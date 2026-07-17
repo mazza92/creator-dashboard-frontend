@@ -1,41 +1,31 @@
 /**
- * Unlock Modal V2 - Locked Copy Dictionary
+ * Unlock Modal V2 - Copy Dictionary
  *
- * IMPORTANT: Every string in this file is locked. Do not paraphrase,
- * translate, or "improve" during implementation. The words themselves are the product.
- *
- * Forbidden words (never appear in any user-facing string):
- * - "Package" (deprecated internal term)
- * - "PR Kit," "Playbook," "Report"
- * - "Strong Match" (dating-app cliché)
- * - "3 wins" (opaque)
- * - "Elevate," "Unleash," "Leverage" (AI-tell)
- * - Em dashes anywhere
- * - Percentages on free tier (Pro only)
+ * Tone: personal talent manager for newbie creators chasing first gift / UGC.
+ * Avoid: Package, Strong Match, Elevate/Unleash/Leverage, em dashes.
  */
 
 // ============================================
 // LOOT-BOX LOADING
 // ============================================
 export const LOADING = {
-  title: '✨ Building your strategy',
+  title: 'Your talent manager is on it',
   cards: [
-    { key: 'inbox', pending: '⋯', done: '✓', text: 'Inbox Found' },
-    { key: 'pitch', pending: '⋯', done: '✓', text: 'Pitch Written' },
-    { key: 'strategy', pending: '⋯', done: '✓', text: 'Strategy Built' },
-    { key: 'ready', pending: '⋯', done: '✓', text: 'Analyzing Profile' },
+    { key: 'inbox', pending: '⋯', done: '✓', text: 'Contact found' },
+    { key: 'pitch', pending: '⋯', done: '✓', text: 'Pitch drafted' },
+    { key: 'strategy', pending: '⋯', done: '✓', text: 'Brand strategy ready' },
+    { key: 'ready', pending: '⋯', done: '✓', text: 'Profile checked' },
   ],
-  fallbackText: 'Almost done…',
-  // Cycling status texts - shown during slow API calls to keep users engaged
+  fallbackText: 'Almost ready…',
   cyclingTexts: [
-    'Analyzing your content...',
-    'Matching brand preferences...',
-    'Writing personalized pitch...',
-    'Checking best send times...',
-    'Finding contact info...',
-    'Finalizing strategy...',
+    'Reviewing your profile…',
+    'Checking what this brand looks for…',
+    'Writing a pitch that fits you…',
+    'Finding the right contact…',
+    'Building your plan to look collab-ready…',
+    'Finishing your strategy…',
   ],
-  cyclingIntervalMs: 2000, // Change text every 2 seconds
+  cyclingIntervalMs: 2000,
   maxTimeMs: 4000,
   minCardGapMs: 200,
 };
@@ -44,8 +34,8 @@ export const LOADING = {
 // COMPLETION FLASH
 // ============================================
 export const FLASH = {
-  title: 'Strategy Ready',
-  subline: 'Loading your personalized pitch...',
+  title: 'Strategy ready',
+  subline: 'Your plan for this brand is loading…',
 };
 
 // Flash duration based on user's total unlocks
@@ -153,10 +143,30 @@ export const MENTOR_SECTIONS = {
     icon: '⭐',
   },
   outreachTools: {
-    label: 'Ready To Send',
+    label: 'Ready to send',
     collapsedLabel: 'Contact, pitch, and timing ready',
     icon: '✉️',
   },
+};
+
+// ============================================
+// POST-PITCH NEXT ACTIONS (silence workaround)
+// Value continues even if the brand never replies
+// ============================================
+export const NEXT_ACTIONS = {
+  title: 'Pitch opened',
+  subline: 'Brands often take time to reply. Keep moving while you wait.',
+  improveTitle: 'Improve for this brand first',
+  improveBody: 'A few profile tweaks raise your odds before you pitch more brands.',
+  improveCta: 'Review tips',
+  opportunitiesTitle: 'Apply where brands are already hiring',
+  opportunitiesBody: 'Open gigs mean no waiting on a cold reply.',
+  opportunitiesCta: 'See open opportunities',
+  anotherTitle: 'Unlock another brand',
+  anotherBody: 'Build your next strategy while this one sits in their inbox.',
+  anotherCta: 'Back to matches',
+  pipelineCta: 'Track this pitch in pipeline',
+  note: 'Your talent manager already did the hard part — stay consistent.',
 };
 
 // ============================================
