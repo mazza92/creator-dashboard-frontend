@@ -65,7 +65,7 @@ const ForYou = () => {
     sessionStorage.getItem('foryouForceOpportunities') ? 'opportunities' : 'matches'
   ));
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
-  const [unlockBalance, setUnlockBalance] = useState({ remaining: 5, tier: 'free', reset_at: null, is_unlimited: false });
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, tier: 'free', reset_at: null, is_unlimited: false });
   const [opportunityCount, setOpportunityCount] = useState(0);
 
   useEffect(() => {
@@ -613,7 +613,7 @@ const ForYou = () => {
     if (contactedBrand) {
       if (isWelcomeFlow) {
         const newUnlockedCount = new Set([...welcomePitchedIds, contactedBrand.id]).size;
-        if (newUnlockedCount >= 5) {
+        if (newUnlockedCount >= 3) {
           setIsWelcomeFlow(false);
           setShowWelcomeModal(false);
           message.success('Nice work. Check your pipeline for follow-ups.');
@@ -663,7 +663,7 @@ const ForYou = () => {
 
         {/* Free plan: two clear credit trackers */}
         {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (() => {
-          const unlocksLeft = unlockBalance.remaining ?? 5;
+          const unlocksLeft = unlockBalance.remaining ?? 3;
           const appsUsed = Math.min(FREE_PITCH_LIMIT, pitchLimits?.used ?? pitchesSentThisMonth ?? 0);
           const appsLeft = Math.max(0, FREE_PITCH_LIMIT - appsUsed);
           const showUpgrade = unlocksLeft <= 0 || appsLeft <= 0;
@@ -674,11 +674,11 @@ const ForYou = () => {
                   <CreditTrackerTop>
                     <CreditTrackerLabel>Unlocks</CreditTrackerLabel>
                     <CreditTrackerCount $low={unlocksLeft <= 0}>
-                      {unlocksLeft}<CreditTrackerMax>/5</CreditTrackerMax>
+                      {unlocksLeft}<CreditTrackerMax>/3</CreditTrackerMax>
                     </CreditTrackerCount>
                   </CreditTrackerTop>
                   <CreditPipsRow>
-                    {[0, 1, 2, 3, 4].map((i) => (
+                    {[0, 1, 2].map((i) => (
                       <CreditPip key={i} $available={i < unlocksLeft} $tone="unlock" />
                     ))}
                   </CreditPipsRow>
@@ -1378,15 +1378,15 @@ const ForYou = () => {
             <WelcomeTitle>
               {welcomePitchedIds.size === 0
                 ? 'Start your first free product'
-                : welcomePitchedIds.size < 3
+                : welcomePitchedIds.size < 2
                   ? 'Nice — keep going'
-                  : welcomePitchedIds.size < 5
+                  : welcomePitchedIds.size < 3
                     ? 'Almost there!'
                     : 'All set!'}
             </WelcomeTitle>
             <WelcomeSub>
               {welcomePitchedIds.size === 0 ? (
-                <>Brands won’t find a small account on their own. Use your free PR Packages to pitch brands that gift — with a contact + pitch that looks professional.</>
+                <>Brands won’t find a small account on their own. Use your free unlocks to pitch brands that gift — with a contact + pitch that looks professional.</>
               ) : (
                 <>Creators who pitch several brands are <strong>far more likely</strong> to land a free product.</>
               )}
@@ -1394,21 +1394,21 @@ const ForYou = () => {
 
             <WelcomeQuota>
               <WelcomeQuotaDots>
-                {[0, 1, 2, 3, 4].map(i => (
+                {[0, 1, 2].map(i => (
                   <WelcomeQuotaDot key={i} $filled={i < welcomePitchedIds.size} $completed={i < welcomePitchedIds.size} />
                 ))}
               </WelcomeQuotaDots>
-              <span>{welcomePitchedIds.size} of 5 packages started</span>
+              <span>{welcomePitchedIds.size} of 3 unlocks started</span>
             </WelcomeQuota>
 
             {welcomePitchedIds.size === 0 && (
               <WelcomeUrgency>
-                <strong>Tip:</strong> Open a PR Package now — verified contact + ready-to-send pitch.
+                <strong>Tip:</strong> Unlock a brand now — verified contact + ready-to-send pitch.
               </WelcomeUrgency>
             )}
 
             <WelcomeBrands>
-              {data.matched.slice(0, 5).map((brand, idx) => {
+              {data.matched.slice(0, 3).map((brand, idx) => {
                 // Generate 2-char initials from brand name
                 const brandName = brand.name || brand.brand_name || '';
                 const words = brandName.split(' ').filter(Boolean);

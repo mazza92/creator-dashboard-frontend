@@ -1998,7 +1998,7 @@ const PRBrandDiscovery = () => {
             window.location.href = '/creator/dashboard/for-you';
           }}
           onUpgrade={() => {
-            setUpgradeInfo({ currentCount: 5, limit: 5, feature: 'unlocks' });
+            setUpgradeInfo({ currentCount: 3, limit: 3, feature: 'unlocks' });
             setShowUpgradeModal(true);
           }}
         />

@@ -989,7 +989,7 @@ ${creatorName}`;
                       setShowUpgradeOverlay(false);
                       onClose();
                     }}>×</UpgradeOverlayClose>
-                    <UpgradeOverlayTitle>0 remaining (5 used of 5)</UpgradeOverlayTitle>
+                    <UpgradeOverlayTitle>0 remaining (3 used of 3)</UpgradeOverlayTitle>
                     <UpgradeOverlayText>
                       Each contact reveals a verified PR email and generates a tailored pitch.
                     </UpgradeOverlayText>

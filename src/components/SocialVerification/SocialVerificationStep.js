@@ -587,7 +587,7 @@ const SocialVerificationStep = ({
             </SuccessStats>
           )}
           <Subline>
-            You're ready to start pitching brands. You have 5 free PR Packages this month.
+            You're ready to start pitching brands. You have 3 free unlocks this month.
           </Subline>
           <ContinueButton onClick={handleContinue}>
             Continue

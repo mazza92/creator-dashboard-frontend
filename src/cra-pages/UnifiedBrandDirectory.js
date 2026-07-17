@@ -56,9 +56,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [unlockBalance, setUnlockBalance] = useState({ remaining: 5, used: 0, tier: 'free', reset_at: null });
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, tier: 'free', reset_at: null });
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
-  const FREE_UNLOCK_LIMIT = 5; // Free users get 5 brand unlocks per month
+  const FREE_UNLOCK_LIMIT = 3; // Free users get 3 brand unlocks per month
 
   // Pitch modal state
   const [showPitchModal, setShowPitchModal] = useState(false);
@@ -195,7 +195,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       });
       if (balanceResponse.data) {
         setUnlockBalance({
-          remaining: balanceResponse.data.remaining ?? 5,
+          remaining: balanceResponse.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: balanceResponse.data.used ?? 0,
           tier: balanceResponse.data.tier || 'free',
           reset_at: balanceResponse.data.reset_at
@@ -409,7 +409,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       });
       if (response.data) {
         setUnlockBalance({
-          remaining: response.data.remaining ?? 5,
+          remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: response.data.used ?? 0,
           tier: response.data.tier || 'free',
           reset_at: response.data.reset_at
@@ -466,7 +466,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       });
       if (response.data) {
         setUnlockBalance({
-          remaining: response.data.remaining ?? 5,
+          remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: response.data.used ?? 0,
           tier: response.data.tier || 'free',
           reset_at: response.data.reset_at
@@ -475,7 +475,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     } catch (error) {
       setUnlockBalance(prev => ({
         ...prev,
-        remaining: Math.max(0, (prev.remaining ?? 5) - 1)
+        remaining: Math.max(0, (prev.remaining ?? FREE_UNLOCK_LIMIT) - 1)
       }));
     }
 
@@ -646,17 +646,17 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
           {/* Monthly Quota Tracker - Show for logged-in FREE users */}
           {user && subscriptionTier === 'free' && isDashboardView && (() => {
-            const remaining = unlockBalance.remaining ?? FREE_UNLOCK_LIMIT;
+            const remaining = Math.min(unlockBalance.remaining ?? FREE_UNLOCK_LIMIT, FREE_UNLOCK_LIMIT);
             const used = FREE_UNLOCK_LIMIT - remaining;
             return (
               <QuotaBanner $exhausted={remaining <= 0}>
                 <QuotaDots>
-                  {[0, 1, 2, 3, 4].map(i => (
+                  {[0, 1, 2].map(i => (
                     <QuotaDot key={i} $filled={i < used} />
                   ))}
                 </QuotaDots>
                 <QuotaText>
-                  <QuotaTitle>{remaining} of 5 unlocks left</QuotaTitle>
+                  <QuotaTitle>{remaining} of {FREE_UNLOCK_LIMIT} unlocks left</QuotaTitle>
                   <QuotaSub>
                     {remaining <= 0
                       ? 'Upgrade for unlimited'
