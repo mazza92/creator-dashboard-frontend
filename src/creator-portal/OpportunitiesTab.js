@@ -309,19 +309,22 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
   const mode = opp.apply_mode || (opp.external_apply_url ? 'url' : 'kit');
   const isExternal = mode === 'url' || mode === 'email' || mode === 'external' || opp.is_sourced;
 
-  const inferredNiche = inferNicheFromText(
-    `${opp.product_name || ''} ${opp.campaign_description || ''} ${(opp.creator_niches || []).join(' ')}`
-  );
+  // Prefer admin-set category (brand_category / display_niche). Infer only as last resort.
+  const bc = (opp.brand_category || '').trim();
+  const adminCategory =
+    bc && !['other', 'unknown', 'n/a', 'none'].includes(bc.toLowerCase())
+      ? String(bc).replace(/_/g, ' ')
+      : null;
   const rawNiche =
     opp.display_niche ||
-    (opp.creator_niches?.length ? opp.creator_niches[0] : null) ||
-    (opp.brand_category && opp.brand_category.toLowerCase() !== 'other'
-      ? String(opp.brand_category).replace(/_/g, ' ')
-      : null);
+    adminCategory ||
+    (opp.creator_niches?.length ? String(opp.creator_niches[0]).split(/[,·(]/)[0].trim() : null);
   const nicheLabel =
     (rawNiche && String(rawNiche).length <= 28 ? rawNiche : null) ||
-    inferredNiche ||
     (rawNiche ? String(rawNiche).split(/[,·(]/)[0].trim().slice(0, 24) : null) ||
+    inferNicheFromText(
+      `${opp.product_name || ''} ${opp.campaign_description || ''} ${(opp.creator_niches || []).join(' ')}`
+    ) ||
     'Creator gig';
 
   const regions = (opp.shipping_regions || []).join(' / ') || 'Worldwide';

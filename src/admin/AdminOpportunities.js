@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Button, Input, message, Modal, Tag, Space, Card, Statistic, Row, Col, Popconfirm, Select } from 'antd';
+import { Button, Input, message, Modal, Tag, Space, Card, Statistic, Row, Col, Popconfirm, Select, AutoComplete } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
@@ -177,11 +177,17 @@ const AdminOpportunities = () => {
   const openEditModal = (opp) => {
     setEditingOpp(opp);
     const via = (opp.apply_via || 'auto').toLowerCase();
+    const listingCategory =
+      (opp.brand_category && !['other', 'unknown', 'n/a', 'none'].includes(String(opp.brand_category).toLowerCase())
+        ? String(opp.brand_category).replace(/_/g, ' ')
+        : '') ||
+      (opp.creator_niches?.length ? String(opp.creator_niches[0]).split(/[,·(]/)[0].trim() : '') ||
+      '';
     setEditForm({
       brand_name: opp.brand_name || '',
       brand_email: opp.brand_email || '',
       brand_website: opp.brand_website || '',
-      brand_category: opp.brand_category || '',
+      brand_category: listingCategory,
       brand_logo_url: opp.brand_logo_url || '',
       product_name: opp.product_name || '',
       campaign_description: opp.campaign_description || '',
@@ -206,8 +212,14 @@ const AdminOpportunities = () => {
         return;
       }
 
+      const listingCategory = (editForm.brand_category || '').trim();
       const payload = {
         ...editForm,
+        brand_category: listingCategory || null,
+        // Keep matching niches aligned with the visible card label
+        creator_niches: listingCategory
+          ? [listingCategory]
+          : (editingOpp.creator_niches || []),
         pr_value_usd:
           editForm.pr_value_usd === '' || editForm.pr_value_usd == null
             ? null
@@ -325,6 +337,9 @@ const AdminOpportunities = () => {
                 <Tag color={opp.apply_mode === 'email' ? 'blue' : opp.apply_mode === 'url' ? 'purple' : 'default'}>
                   {opp.apply_mode === 'email' ? 'Apply: Email' : opp.apply_mode === 'url' ? 'Apply: URL' : 'Apply: Kit'}
                 </Tag>
+                {opp.brand_category && !['other', 'unknown'].includes(String(opp.brand_category).toLowerCase()) && (
+                  <Tag>{String(opp.brand_category).replace(/_/g, ' ')}</Tag>
+                )}
                 <Button size="small" onClick={() => setExpandedId(expandedId === opp.id ? null : opp.id)}>
                   {expandedId === opp.id ? 'Collapse' : 'Expand'}
                 </Button>
@@ -343,7 +358,7 @@ const AdminOpportunities = () => {
                   <DetailLabel>Brand Info</DetailLabel>
                   <DetailGrid>
                     <DetailItem><strong>Website:</strong> {opp.brand_website || 'N/A'}</DetailItem>
-                    <DetailItem><strong>Category:</strong> {opp.brand_category || 'N/A'}</DetailItem>
+                    <DetailItem><strong>Listing category:</strong> {opp.brand_category || 'N/A'}</DetailItem>
                     <DetailItem><strong>Email:</strong> {opp.brand_email}</DetailItem>
                   </DetailGrid>
                 </DetailSection>
@@ -546,6 +561,23 @@ const AdminOpportunities = () => {
               <Input
                 value={editForm.brand_website}
                 onChange={(e) => setEditForm({ ...editForm, brand_website: e.target.value })}
+              />
+            </EditField>
+            <EditField>
+              <label>Listing category (shown on cards)</label>
+              <AutoComplete
+                style={{ width: '100%' }}
+                options={[
+                  'Beauty', 'Fashion', 'Fitness', 'Food', 'Parenting',
+                  'Tech', 'Lifestyle', 'Health', 'Travel', 'Gaming',
+                  'Home', 'Pets', 'UGC', 'Creator gig',
+                ].map((c) => ({ value: c }))}
+                value={editForm.brand_category || ''}
+                onChange={(value) => setEditForm({ ...editForm, brand_category: value || '' })}
+                placeholder="e.g. Beauty, Tech, Fashion"
+                filterOption={(input, option) =>
+                  (option?.value || '').toLowerCase().includes(input.toLowerCase())
+                }
               />
             </EditField>
             <EditField>
