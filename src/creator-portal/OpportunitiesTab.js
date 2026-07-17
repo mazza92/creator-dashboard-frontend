@@ -123,6 +123,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
   const [applying, setApplying] = useState(null);
   const [applied, setApplied] = useState(new Set());
   const [localUsed, setLocalUsed] = useState(null);
+  const [lowFitConfirm, setLowFitConfirm] = useState(null); // opp awaiting confirm
 
   useEffect(() => {
     fetchOpportunities();
@@ -177,8 +178,16 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
     }
   };
 
+  const isLowFit = (opp) => {
+    if (opp?.is_matched) return false;
+    const label = opp?.fit_label;
+    if (label === 'poor' || label === 'low') return true;
+    if (typeof opp?.fit_score === 'number' && opp.fit_score < 55) return true;
+    return !opp?.is_matched;
+  };
+
   /** Deduct quota via API, then open URL, mailto (Brand Email), or kit success */
-  const handleApply = async (opp) => {
+  const executeApply = async (opp) => {
     if (!canApply && !applied.has(opp.id)) {
       onShowUpgrade?.('opportunities');
       return;
@@ -219,7 +228,21 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
       }
     } finally {
       setApplying(null);
+      setLowFitConfirm(null);
     }
+  };
+
+  const handleApply = async (opp) => {
+    if (!canApply && !applied.has(opp.id)) {
+      onShowUpgrade?.('opportunities');
+      return;
+    }
+    // Protect free credits: warn before burning on low-fit gigs
+    if (!isPro && !applied.has(opp.id) && isLowFit(opp) && lowFitConfirm?.id !== opp.id) {
+      setLowFitConfirm(opp);
+      return;
+    }
+    await executeApply(opp);
   };
 
   if (loading) {
@@ -251,7 +274,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
         </IntroText>
       </IntroCard>
 
-      {/* Credit Indicator (free users only) — always 3/month for opportunities */}
+      {/* Application credits (free users) — same 3 credits as brand pitches */}
       {!isPro && (
         <CreditRow>
           <CreditLeft>
@@ -261,13 +284,31 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
               ))}
             </CreditPips>
             <CreditText>
-              <strong>{creditsLeft} application{creditsLeft !== 1 ? 's' : ''}</strong> left this month
+              <strong>{creditsLeft} of {FREE_APP_LIMIT} applications</strong> left
+              <CreditHint> · open applications</CreditHint>
             </CreditText>
           </CreditLeft>
           <CreditUpgrade onClick={() => onShowUpgrade?.('opportunities')}>
-            Unlimited applications with Pro ›
+            Unlimited with Pro ›
           </CreditUpgrade>
         </CreditRow>
+      )}
+
+      {lowFitConfirm && (
+        <LowFitBanner>
+          <LowFitText>
+            <strong>Low fit for your niche</strong>
+            <span>
+              “{lowFitConfirm.brand_name}” may not match you. You have {creditsLeft} free credit{creditsLeft !== 1 ? 's' : ''} left — apply to stronger matches first when you can.
+            </span>
+          </LowFitText>
+          <LowFitActions>
+            <LowFitSecondary onClick={() => setLowFitConfirm(null)}>Cancel</LowFitSecondary>
+            <LowFitPrimary onClick={() => executeApply(lowFitConfirm)}>
+              Still apply
+            </LowFitPrimary>
+          </LowFitActions>
+        </LowFitBanner>
       )}
 
       {/* Matched to your niche */}
@@ -288,7 +329,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
 
       {/* Open opportunities */}
       {opportunities.others?.length > 0 && (
-        <SectionLabel style={{ marginTop: 8 }}>Open opportunities</SectionLabel>
+        <SectionLabel style={{ marginTop: 8 }}>Other open opportunities</SectionLabel>
       )}
 
       {(opportunities.others || []).map(opp => (
@@ -299,13 +340,14 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
           applying={applying === opp.id}
           applied={applied.has(opp.id) || opp.already_applied}
           onApply={() => handleApply(opp)}
+          showLowFitHint
         />
       ))}
     </Wrap>
   );
 };
 
-const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
+const OppCard = ({ opp, isPro, applying, applied, onApply, showLowFitHint }) => {
   const mode = opp.apply_mode || (opp.external_apply_url ? 'url' : 'kit');
   const isExternal = mode === 'url' || mode === 'email' || mode === 'external' || opp.is_sourced;
 
@@ -393,6 +435,10 @@ const OppCard = ({ opp, isPro, applying, applied, onApply }) => {
           <PayKey>{opp.is_sourced ? 'Pay' : 'PR value'}</PayKey>
           <PayVal $money={payIsMoney}>{payLabel}</PayVal>
         </PayLine>
+      )}
+
+      {showLowFitHint && !applied && (
+        <LowFitHint>Lower niche fit — uses a free credit</LowFitHint>
       )}
 
       {applied ? (
@@ -505,6 +551,69 @@ const CreditText = styled.div`
     color: ${tokens.textPrimary};
     font-weight: 700;
   }
+`;
+
+const CreditHint = styled.span`
+  font-weight: 500;
+  color: ${tokens.textMuted};
+`;
+
+const LowFitBanner = styled.div`
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const LowFitText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #92400e;
+
+  strong {
+    font-size: 13px;
+    color: #78350f;
+  }
+`;
+
+const LowFitActions = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+`;
+
+const LowFitSecondary = styled.button`
+  background: transparent;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+const LowFitPrimary = styled.button`
+  background: #111827;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const LowFitHint = styled.div`
+  font-size: 11px;
+  color: #b45309;
+  margin: 0 0 8px;
 `;
 
 const CreditUpgrade = styled.button`

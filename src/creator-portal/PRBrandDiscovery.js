@@ -1550,12 +1550,13 @@ const PRBrandDiscovery = () => {
       return;
     }
 
-    // Kit nudge interstitial - show once if creator has no kit
+    // Kit nudge AFTER first unlock — never block first aha
+    const unlockCount = Number(localStorage.getItem('nc_unlock_count') || '0');
     const hasSeenNudge = localStorage.getItem('nc_kit_nudge_seen');
     const hasKit = creatorProfile?.has_media_kit ||
                    (creatorProfile?.portfolio_post_count && creatorProfile.portfolio_post_count > 0);
 
-    if (!hasKit && !hasSeenNudge) {
+    if (!hasKit && !hasSeenNudge && unlockCount >= 1) {
       localStorage.setItem('nc_kit_nudge_seen', 'true');
       setKitNudgeBrand(brand);
       setShowKitNudge(true);

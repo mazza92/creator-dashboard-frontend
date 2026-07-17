@@ -28,30 +28,6 @@ const API_BASE = getApiBase();
 
 const FREE_PITCH_LIMIT = 3;
 
-// Niche options WITH emoji labels — MUST match onboarding for consistency
-// Keep in sync with CreatorOnboarding.js NICHES array
-const NICHE_OPTIONS = [
-  { id: 'beauty', label: '💄 Beauty' },
-  { id: 'skincare', label: '🧴 Skincare' },
-  { id: 'haircare', label: '💇 Haircare' },
-  { id: 'fashion', label: '👗 Fashion' },
-  { id: 'jewelry', label: '💍 Jewelry' },
-  { id: 'activewear', label: '🏃 Activewear' },
-  { id: 'fitness', label: '💪 Fitness' },
-  { id: 'wellness', label: '🌿 Wellness' },
-  { id: 'supplements', label: '💊 Supplements' },
-  { id: 'food', label: '🍽️ Food & Beverage' },
-  { id: 'travel', label: '✈️ Travel' },
-  { id: 'lifestyle', label: '🏠 Lifestyle' },
-  { id: 'home', label: '🏡 Home & Living' },
-  { id: 'tech', label: '💻 Tech' },
-  { id: 'gaming', label: '🎮 Gaming' },
-  { id: 'pet', label: '🐾 Pet' },
-  { id: 'baby', label: '🍼 Baby & Parenting' },
-  { id: 'sustainable', label: '♻️ Sustainable' },
-  { id: 'luxury', label: '✨ Luxury' },
-];
-
 const ForYou = () => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
@@ -67,25 +43,9 @@ const ForYou = () => {
   const [subscriptionTier, setSubscriptionTier] = useState('free');
   const [pitchesSentThisMonth, setPitchesSentThisMonth] = useState(0);
 
-  // Profile prompt state
+  // Profile niches (labels / hot section only — edit lives on Discover)
   const [selectedNiches, setSelectedNiches] = useState([]);
   const [followerCount, setFollowerCount] = useState('');
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [showNicheEditor, setShowNicheEditor] = useState(false);
-  const nicheEditorRef = useRef(null);
-
-  // Close niche editor when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (nicheEditorRef.current && !nicheEditorRef.current.contains(e.target)) {
-        setShowNicheEditor(false);
-      }
-    };
-    if (showNicheEditor) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNicheEditor]);
 
   // Kit nudge interstitial state
   const [kitNudgeBrand, setKitNudgeBrand] = useState(null);
@@ -432,9 +392,28 @@ const ForYou = () => {
         withCredentials: true
       });
       if (response.data.success) {
-        setData(response.data);
+        const payload = { ...response.data };
+        if (Array.isArray(payload.matched)) {
+          // Trust mentor LLM order from backend; light safety net only
+          payload.matched = [...payload.matched]
+            .filter((b) => {
+              const score = Number(b.match_score);
+              const tier = (b.fit_tier || '').toLowerCase();
+              const status = (b.fit_status || '').toLowerCase();
+              if (tier === 'stretch_match' || tier === 'not_recommended') return false;
+              if (status === 'poor_fit' || status === 'build_first') return false;
+              if (Number.isFinite(score) && score < 35) return false;
+              const cat = String(b.category || '').toLowerCase();
+              const niches = (payload.profile?.niches || []).join(' ').toLowerCase();
+              const parenting = /parent|baby|kid|family|mom|mum/.test(niches);
+              if (parenting && /fashion|luxury|apparel|clothing|streetwear/.test(cat)) return false;
+              return true;
+            });
+          // Keep backend mentor order — do not re-sort by SQL/price heuristics
+        }
+        setData(payload);
         if (response.data.profile) {
-          // Normalize niches to lowercase to match NICHE_OPTIONS IDs
+          // Normalize niches to lowercase for labels / hot section
           const rawNiches = response.data.profile.niches || [];
           const normalizedNiches = rawNiches.map(n =>
             typeof n === 'string' ? n.toLowerCase().trim() : ''
@@ -546,12 +525,13 @@ const ForYou = () => {
       }
     }
 
-    // Kit nudge interstitial - show once if creator has no kit
+    // Kit nudge AFTER first unlock/pitch — never block the first aha moment
+    const unlockCount = Number(localStorage.getItem('nc_unlock_count') || '0');
     const hasSeenNudge = localStorage.getItem('nc_kit_nudge_seen');
     const hasKit = creatorProfile?.has_media_kit ||
                    (creatorProfile?.portfolio_post_count && creatorProfile.portfolio_post_count > 0);
 
-    if (!hasKit && !hasSeenNudge) {
+    if (!hasKit && !hasSeenNudge && unlockCount >= 1) {
       localStorage.setItem('nc_kit_nudge_seen', 'true');
       setKitNudgeBrand(brand);
       setShowKitNudge(true);
@@ -584,6 +564,10 @@ const ForYou = () => {
     if (contactedBrand && !alreadyRecorded) {
       setPitchedIds(prev => new Set([...prev, contactedBrand.id]));
       setSavedIds(prev => new Set([...prev, contactedBrand.id]));
+      try {
+        const prev = Number(localStorage.getItem('nc_unlock_count') || '0');
+        localStorage.setItem('nc_unlock_count', String(prev + 1));
+      } catch (_) { /* ignore */ }
 
       if (isWelcomeFlow) {
         setWelcomePitchedIds(prev => new Set([...prev, contactedBrand.id]));
@@ -646,25 +630,6 @@ const ForYou = () => {
     }
   }, [pitchingBrand, navigate, isWelcomeFlow, welcomePitchedIds]);
 
-  const handleSaveProfile = async () => {
-    if (selectedNiches.length === 0) return;
-
-    setSavingProfile(true);
-    try {
-      await axios.patch(`${API_BASE}/api/pr-crm/creator-profile`, {
-        creator_niches: selectedNiches
-      }, { withCredentials: true });
-
-      message.success('Profile updated! Loading your personalized matches...');
-      fetchData();
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      message.error('Failed to save profile');
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
   // Direct Stripe checkout (skip settings page)
   const handleDirectUpgrade = async () => {
     try {
@@ -694,80 +659,60 @@ const ForYou = () => {
             <PageTitle>{data?.matched?.length || 0} brands matched to your content</PageTitle>
             <PageSub>Contact them in one tap — your free PR package is one pitch away</PageSub>
           </PageTitleWrap>
-          {data?.has_profile && (
-            <ProfilePillWrapper ref={nicheEditorRef}>
-              <ProfilePill onClick={() => setShowNicheEditor(!showNicheEditor)}>
-                <ProfileInfo>
-                  <ProfileName>
-                  ✦ {selectedNiches.slice(0, 2).map(n => CATEGORY_LABELS[n] || n).join(' & ')}
-                  {selectedNiches.length > 2 && <MoreNiches>+{selectedNiches.length - 2}</MoreNiches>}
-                </ProfileName>
-                  <ProfileNiche>
-                    {parseInt(followerCount) >= 1000
-                      ? `${(parseInt(followerCount) / 1000).toFixed(0)}K followers`
-                      : parseInt(followerCount) > 0
-                        ? `${followerCount} followers`
-                        : ''}
-                  </ProfileNiche>
-                </ProfileInfo>
-                <ProfileEditBtn>Edit</ProfileEditBtn>
-              </ProfilePill>
-              {showNicheEditor && (
-                <NicheEditorDropdown>
-                  <NicheEditorHeader>
-                    <NicheEditorTitle>Update your niche</NicheEditorTitle>
-                    <NicheEditorClose onClick={() => setShowNicheEditor(false)}>×</NicheEditorClose>
-                  </NicheEditorHeader>
-                  <NicheEditorGrid>
-                    {NICHE_OPTIONS.map(niche => (
-                      <NicheEditorChip
-                        key={niche.id}
-                        $selected={selectedNiches.includes(niche.id)}
-                        onClick={() => setSelectedNiches(prev =>
-                          prev.includes(niche.id) ? prev.filter(x => x !== niche.id) : [...prev, niche.id]
-                        )}
-                      >
-                        {niche.label}
-                      </NicheEditorChip>
-                    ))}
-                  </NicheEditorGrid>
-                  <NicheEditorSave
-                    disabled={selectedNiches.length === 0 || savingProfile}
-                    onClick={() => { handleSaveProfile(); setShowNicheEditor(false); }}
-                  >
-                    {savingProfile ? 'Saving...' : 'Save changes'}
-                  </NicheEditorSave>
-                </NicheEditorDropdown>
-              )}
-            </ProfilePillWrapper>
-          )}
         </PageHeader>
 
-        {/* Compact Unlock Tracker */}
+        {/* Free plan: two clear credit trackers */}
         {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (() => {
-          const remaining = unlockBalance.remaining || 0;
-          const used = 5 - remaining;
+          const unlocksLeft = unlockBalance.remaining ?? 5;
+          const appsUsed = Math.min(FREE_PITCH_LIMIT, pitchLimits?.used ?? pitchesSentThisMonth ?? 0);
+          const appsLeft = Math.max(0, FREE_PITCH_LIMIT - appsUsed);
+          const showUpgrade = unlocksLeft <= 0 || appsLeft <= 0;
           return (
-            <QuotaBanner $exhausted={remaining <= 0}>
-              <QuotaDots>
-                {[0, 1, 2, 3, 4].map(i => (
-                  <QuotaDot key={i} $filled={i < used} />
-                ))}
-              </QuotaDots>
-              <QuotaText>
-                <QuotaTitle>{remaining} of 5 unlocks left</QuotaTitle>
-                <QuotaSub>
-                  {remaining <= 0
-                    ? 'Upgrade for unlimited'
-                    : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
-                </QuotaSub>
-              </QuotaText>
-              {remaining <= 0 && (
-                <QuotaUpgrade onClick={handleDirectUpgrade}>
-                  Upgrade
-                </QuotaUpgrade>
+            <>
+              <CreditTrackers>
+                <CreditTracker $low={unlocksLeft <= 0}>
+                  <CreditTrackerTop>
+                    <CreditTrackerLabel>Unlocks</CreditTrackerLabel>
+                    <CreditTrackerCount $low={unlocksLeft <= 0}>
+                      {unlocksLeft}<CreditTrackerMax>/5</CreditTrackerMax>
+                    </CreditTrackerCount>
+                  </CreditTrackerTop>
+                  <CreditPipsRow>
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <CreditPip key={i} $available={i < unlocksLeft} $tone="unlock" />
+                    ))}
+                  </CreditPipsRow>
+                  <CreditTrackerHint>Strategy + brand contacts</CreditTrackerHint>
+                </CreditTracker>
+
+                <CreditTracker $low={appsLeft <= 0}>
+                  <CreditTrackerTop>
+                    <CreditTrackerLabel>Applications</CreditTrackerLabel>
+                    <CreditTrackerCount $low={appsLeft <= 0}>
+                      {appsLeft}<CreditTrackerMax>/3</CreditTrackerMax>
+                    </CreditTrackerCount>
+                  </CreditTrackerTop>
+                  <CreditPipsRow>
+                    {[0, 1, 2].map((i) => (
+                      <CreditPip key={i} $available={i < appsLeft} $tone="app" />
+                    ))}
+                  </CreditPipsRow>
+                  <CreditTrackerHint>Open applications</CreditTrackerHint>
+                </CreditTracker>
+              </CreditTrackers>
+              {showUpgrade && (
+                <CreditUpgradeBar>
+                  <CreditUpgradeHint>
+                    {unlocksLeft <= 0 && appsLeft <= 0
+                      ? "You're out of free unlocks and applications."
+                      : unlocksLeft <= 0
+                        ? "You're out of free unlocks."
+                        : "You're out of free applications."}
+                  </CreditUpgradeHint>
+                  <QuotaUpgrade onClick={handleDirectUpgrade}>Upgrade for unlimited</QuotaUpgrade>
+                </CreditUpgradeBar>
               )}
-            </QuotaBanner>
+            </>
           );
         })()}
 
@@ -776,13 +721,13 @@ const ForYou = () => {
           <QuotaBanner $isPro>
             <QuotaText>
               <QuotaTitle $isPro>Pro</QuotaTitle>
-              <QuotaSub $isPro>Unlimited unlocks</QuotaSub>
+              <QuotaSub $isPro>Unlimited unlocks & applications</QuotaSub>
             </QuotaText>
           </QuotaBanner>
         )}
 
-        {/* Enhanced Media Kit CTA - positioned right after unlock tracker */}
-        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && data?.has_profile && (
+        {/* Kit CTA after first unlock/pitch — don't compete with first aha */}
+        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && data?.has_profile && (pitchedIds.size > 0 || Number(localStorage.getItem('nc_unlock_count') || '0') >= 1) && (
           <KitBuilderCard onClick={() => navigate('/creator/dashboard/my-kit')}>
             <KitBuilderProgress>
               <FileText size={20} />
@@ -802,33 +747,15 @@ const ForYou = () => {
           </KitBuilderCard>
         )}
 
-        {/* Profile Prompt - shown when no niche data yet */}
+        {/* Profile Prompt - niches live on Discover now */}
         {!data?.has_profile && (
           <ProfilePromptCard>
             <PromptIcon>🎯</PromptIcon>
-            <PromptTitle>Tell us about your niche</PromptTitle>
-            <PromptSub>Takes 10 seconds and unlocks brands matched specifically to you</PromptSub>
-
-            <NicheGrid>
-              {NICHE_OPTIONS.map(niche => (
-                <NicheChip
-                  key={niche.id}
-                  $selected={selectedNiches.includes(niche.id)}
-                  onClick={() => setSelectedNiches(prev =>
-                    prev.includes(niche.id) ? prev.filter(x => x !== niche.id) : [...prev, niche.id]
-                  )}
-                >
-                  {niche.label}
-                </NicheChip>
-              ))}
-            </NicheGrid>
-
-            <SaveProfileBtn
-              disabled={selectedNiches.length === 0 || savingProfile}
-              onClick={handleSaveProfile}
-            >
-              {savingProfile ? 'Saving...' : 'Show my matches →'}
-            </SaveProfileBtn>
+            <PromptTitle>Complete your profile niches</PromptTitle>
+            <PromptSub>
+              Set niches during onboarding so Discover can prioritize relevant brands.
+              For You matches still use your real social content.
+            </PromptSub>
           </ProfilePromptCard>
         )}
 
@@ -948,7 +875,8 @@ const ForYou = () => {
           </KitViewsList>
         )}
 
-        {/* Pool Promo Banner - viral, exciting design */}
+        {/* Pool Promo — hide for free users until first pitch/apply */}
+        {(isPro || pitchedIds.size > 0 || (pitchLimits?.used || 0) > 0) && (
         <PoolPromoBanner onClick={() => navigate('/creator/dashboard/pool')}>
           <PoolAvatarStack>
             {poolActiveMembers.length > 0 ? (
@@ -992,6 +920,7 @@ const ForYou = () => {
             {hasRecentPoolActivity ? 'Keep boosting →' : 'Join Pool →'}
           </PoolBannerCTA>
         </PoolPromoBanner>
+        )}
 
         {/* Sub-tabs: Matches vs Opportunities */}
         <SubTabRow>
@@ -1728,6 +1657,104 @@ const QuotaBanner = styled.div`
   }
 `;
 
+const CreditTrackers = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+  align-items: stretch;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const CreditTracker = styled.div`
+  background: ${p => (p.$low ? '#FEF2F2' : '#F9FAFB')};
+  border: 1px solid ${p => (p.$low ? '#FECACA' : '#E5E7EB')};
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+`;
+
+const CreditTrackerTop = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+`;
+
+const CreditTrackerLabel = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.01em;
+`;
+
+const CreditTrackerCount = styled.div`
+  font-size: 18px;
+  font-weight: 800;
+  color: ${p => (p.$low ? '#DC2626' : '#111827')};
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+`;
+
+const CreditTrackerMax = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #9CA3AF;
+  margin-left: 1px;
+`;
+
+const CreditPipsRow = styled.div`
+  display: flex;
+  gap: 4px;
+`;
+
+const CreditPip = styled.div`
+  flex: 1;
+  max-width: 36px;
+  height: 7px;
+  border-radius: 999px;
+  background: ${p => {
+    if (!p.$available) return '#E5E7EB';
+    return p.$tone === 'app' ? '#6366F1' : '#10B981';
+  }};
+  transition: background 0.2s ease;
+`;
+
+const CreditTrackerHint = styled.div`
+  font-size: 11px;
+  color: #9CA3AF;
+  line-height: 1.3;
+`;
+
+const CreditUpgradeBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const CreditUpgradeHint = styled.div`
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 500;
+`;
+
 // Segmented progress bar - compact and modern
 const QuotaDots = styled.div`
   display: flex;
@@ -1780,8 +1807,8 @@ const QuotaUpgrade = styled.button`
   background: #111827;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 8px;
+  padding: 8px 14px;
   font-weight: 600;
   font-size: 12px;
   cursor: pointer;

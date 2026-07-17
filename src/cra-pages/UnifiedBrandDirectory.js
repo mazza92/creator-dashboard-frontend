@@ -48,6 +48,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [userNiches, setUserNiches] = useState([]); // silent soft-sort from saved niches
   const [loading, setLoading] = useState(true);
   const [openPrBrands, setOpenPrBrands] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, total: 0, limit: 24 });
@@ -88,12 +89,15 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       fetchSubscriptionStatus();
       fetchSavedBrands();
       fetchUnlockedBrands();
+      fetchUserNiches();
+    } else {
+      setUserNiches([]);
     }
   }, [user]);
 
   useEffect(() => {
     fetchBrands();
-  }, [pagination.page, filters]);
+  }, [pagination.page, filters, userNiches]);
 
   // V4: Check if user just completed onboarding (first login welcome experience)
   useEffect(() => {
@@ -237,6 +241,47 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
   };
 
+  const fetchUserNiches = async () => {
+    if (!isDashboardView) return;
+    try {
+      const { data } = await axios.get(`${API_BASE}/profile`, { withCredentials: true });
+      const raw =
+        data?.creator_niches ||
+        data?.niches ||
+        data?.niche ||
+        [];
+      let list = raw;
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          list = Array.isArray(parsed) ? parsed : raw.split(',');
+        } catch {
+          list = raw.split(',');
+        }
+      }
+      if (!Array.isArray(list)) list = [];
+      const normalized = list
+        .map((n) => String(n).trim().toLowerCase())
+        .filter(Boolean)
+        .flatMap((n) => {
+          if (n.includes('&') || n.includes(',')) {
+            return n.split(/[&,]/).map((p) => p.trim()).filter(Boolean);
+          }
+          return [n];
+        })
+        .map((n) => {
+          const canon = normalizeCategory(n);
+          if (n.includes('parent') || n.includes('baby')) return 'baby';
+          if (n.includes('beauty') || n.includes('makeup')) return 'beauty';
+          return canon && canon !== 'other' ? canon : n;
+        })
+        .filter(Boolean);
+      setUserNiches([...new Set(normalized)]);
+    } catch (error) {
+      console.warn('Could not load niches for Discover sort:', error);
+    }
+  };
+
   const fetchBrands = async () => {
     setLoading(true);
     try {
@@ -246,7 +291,11 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         ...(filters.search && { search: filters.search }),
         ...(filters.category && { category: filters.category }),
         ...(filters.activity && { activity: filters.activity }),
-        ...(filters.contactType && { contact_type: filters.contactType })
+        ...(filters.contactType && { contact_type: filters.contactType }),
+        // Soft sort from onboarding niches (no UI) — skip when category filter is set
+        ...(isDashboardView && user && userNiches.length > 0 && !filters.category && {
+          prefer_niches: userNiches.join(',')
+        })
       };
 
       const { data } = await axios.get(`${API_BASE}/api/public/brands`, { params });
@@ -655,12 +704,23 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               value={filters.activity || undefined}
               onChange={(value) => handleFilterChange('activity', value)}
               allowClear
-              style={{ minWidth: 160 }}
+              style={{ minWidth: 200 }}
+              popupMatchSelectWidth={false}
+              dropdownStyle={{ minWidth: 260 }}
+              optionLabelProp="label"
             >
-              <Select.Option value="new">Added This Week</Select.Option>
-              <Select.Option value="active">Actively Reviewing</Select.Option>
-              <Select.Option value="responsive">
-                High Response Rate {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && <ProBadgeInline>PRO</ProBadgeInline>}
+              <Select.Option value="new" label="Added This Week">Added This Week</Select.Option>
+              <Select.Option value="active" label="Actively Reviewing">Actively Reviewing</Select.Option>
+              <Select.Option
+                value="responsive"
+                label="High Response Rate"
+              >
+                <ActivityOptionRow>
+                  <span>High Response Rate</span>
+                  {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && (
+                    <ProBadgeInline>PRO</ProBadgeInline>
+                  )}
+                </ActivityOptionRow>
               </Select.Option>
             </Select>
           </SearchRow>
@@ -1384,11 +1444,23 @@ const FreeBadgeInline = styled.span`
 const ProBadgeInline = styled.span`
   background: ${tokens.proGradient};
   color: white;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
-  margin-left: 8px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1.4;
+`;
+
+const ActivityOptionRow = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
 `;
 
 const BrandGrid = styled.div`

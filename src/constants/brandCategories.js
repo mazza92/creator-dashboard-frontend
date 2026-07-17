@@ -67,6 +67,29 @@ export const CATEGORY_LABELS = {
   other: 'Other',
 };
 
+/** Niche picker options — keep in sync with CreatorOnboarding.js */
+export const NICHE_OPTIONS = [
+  { id: 'beauty', label: '💄 Beauty' },
+  { id: 'skincare', label: '🧴 Skincare' },
+  { id: 'haircare', label: '💇 Haircare' },
+  { id: 'fashion', label: '👗 Fashion' },
+  { id: 'jewelry', label: '💍 Jewelry' },
+  { id: 'activewear', label: '🏃 Activewear' },
+  { id: 'fitness', label: '💪 Fitness' },
+  { id: 'wellness', label: '🌿 Wellness' },
+  { id: 'supplements', label: '💊 Supplements' },
+  { id: 'food', label: '🍽️ Food & Beverage' },
+  { id: 'travel', label: '✈️ Travel' },
+  { id: 'lifestyle', label: '🏠 Lifestyle' },
+  { id: 'home', label: '🏡 Home & Living' },
+  { id: 'tech', label: '💻 Tech' },
+  { id: 'gaming', label: '🎮 Gaming' },
+  { id: 'pet', label: '🐾 Pet' },
+  { id: 'baby', label: '🍼 Baby & Parenting' },
+  { id: 'sustainable', label: '♻️ Sustainable' },
+  { id: 'luxury', label: '✨ Luxury' },
+];
+
 function slugKey(raw) {
   if (raw == null) return '';
   return String(raw)

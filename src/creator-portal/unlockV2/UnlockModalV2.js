@@ -1303,6 +1303,14 @@ const UnlockModalV2 = ({
   const [utilitiesExpanded, setUtilitiesExpanded] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [collabEmail, setCollabEmail] = useState(() => {
+    try {
+      return localStorage.getItem('nc_collab_email') || '';
+    } catch (_) {
+      return '';
+    }
+  });
+  const [collabEmailSaved, setCollabEmailSaved] = useState(false);
 
   const startTimeRef = useRef(0);
   const cardTimersRef = useRef([]);
@@ -1349,6 +1357,11 @@ const UnlockModalV2 = ({
       setApiComplete(true);
 
       if (response.data.success) {
+        try {
+          const prev = Number(localStorage.getItem('nc_unlock_count') || '0');
+          localStorage.setItem('nc_unlock_count', String(prev + 1));
+        } catch (_) { /* ignore */ }
+
         // Calculate when to show the final card
         // Must be at least CARD_TIMINGS.ready ms after start, or now if we're past that
         const readyDelay = Math.max(0, CARD_TIMINGS.ready - elapsed);
@@ -1971,10 +1984,10 @@ const UnlockModalV2 = ({
                           </>
                         )}
 
-                        {/* For not_yet (Growth Match): Encourage pitching but highlight improvement opportunity */}
+                        {/* Growth Match: pitch now is primary; tips stay secondary */}
                         {packageData.status === 'not_yet' && (
                           <>
-                            <SendButton onClick={handleSend} style={{ background: '#eab308' }}>
+                            <SendButton onClick={() => setPhase(PHASE_OUTREACH)}>
                               {SEND_BUTTON.labelTemplate(brandName)}
                             </SendButton>
                             <div style={{
@@ -1983,7 +1996,7 @@ const UnlockModalV2 = ({
                               color: '#6b7280',
                               marginTop: '8px'
                             }}>
-                              ⭐ Improve the above first for higher reply chance
+                              Tip above is optional — pitch now, improve while you wait
                             </div>
                           </>
                         )}
@@ -2062,6 +2075,53 @@ const UnlockModalV2 = ({
                 </OutreachHeader>
 
                 <OutreachContent>
+                  {/* Collab email — brands reply here; one-tap save before send */}
+                  <OutreachSection>
+                    <OutreachSectionLabel>
+                      <OutreachSectionIcon>📬</OutreachSectionIcon>
+                      Your collab email
+                    </OutreachSectionLabel>
+                    <ContactDisplay>
+                      <input
+                        type="email"
+                        value={collabEmail}
+                        placeholder="email brands can reply to"
+                        onChange={(e) => {
+                          setCollabEmail(e.target.value);
+                          setCollabEmailSaved(false);
+                        }}
+                        style={{
+                          flex: 1,
+                          border: 'none',
+                          outline: 'none',
+                          background: 'transparent',
+                          fontSize: 14,
+                          color: '#111827',
+                          minWidth: 0,
+                        }}
+                      />
+                      <ContactCopyBtn
+                        onClick={() => {
+                          const email = (collabEmail || '').trim();
+                          if (!email || !email.includes('@')) {
+                            message.warning('Add a valid email brands can reply to');
+                            return;
+                          }
+                          try {
+                            localStorage.setItem('nc_collab_email', email);
+                          } catch (_) { /* ignore */ }
+                          setCollabEmailSaved(true);
+                          message.success('Collab email saved');
+                        }}
+                      >
+                        {collabEmailSaved ? <><FiCheck size={12} /> Saved</> : 'Save'}
+                      </ContactCopyBtn>
+                    </ContactDisplay>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
+                      Put this in your TikTok/IG bio too — brands check before they reply.
+                    </div>
+                  </OutreachSection>
+
                   {/* Contact Section */}
                   <OutreachSection>
                     <OutreachSectionLabel>
