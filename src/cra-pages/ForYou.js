@@ -1003,6 +1003,9 @@ const ForYou = () => {
             }}
           >
             Matches
+            {(data?.matched?.length || 0) > 0 && (
+              <CountBadge>{data.matched.length}</CountBadge>
+            )}
           </SubTab>
           <SubTab
             $active={activeTab === 'opportunities'}
