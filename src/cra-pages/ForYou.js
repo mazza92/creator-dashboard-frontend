@@ -1435,7 +1435,8 @@ const ForYou = () => {
           onClose={() => setShowUpgrade(false)}
           currentCount={pitchesSentThisMonth}
           limit={FREE_PITCH_LIMIT}
-          feature={upgradeReason === 'matched' ? 'for_you' : 'limit_reached'}
+          pitchLimits={pitchLimits}
+          feature={upgradeReason === 'matched' ? 'for_you' : (upgradeReason || 'limit_reached')}
         />
       )}
 

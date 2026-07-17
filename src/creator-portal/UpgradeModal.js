@@ -44,10 +44,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   let total = pitchLimits?.limit || limit || 3;
 
   if (feature === 'opportunities') {
+    used = currentCount || pitchLimits?.used || 3;
+    total = limit || pitchLimits?.limit || 3;
     headline = 'Open gigs are waiting — don’t stop now.';
-    subtext = `${used} free applications used this month. Pro lets you keep applying to brands already looking for creators like you.`;
+    subtext = `You’ve used ${used} application credits this month. Pro lets you keep applying to brands already looking for creators like you.`;
     ctaText = 'Unlimited applications — $19/mo';
-    progressLabel = 'applications';
+    progressLabel = 'application credits';
 
   } else if (feature === 'locked' || feature === 'for_you') {
     headline = 'Your personal talent manager — unlocked.';
