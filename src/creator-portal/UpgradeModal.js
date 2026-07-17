@@ -80,9 +80,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     headline = 'Free strategies used up this month';
     subtext = 'Each unlock builds your plan for that brand — what they’ll notice, how to improve, and a ready pitch. Pro = unlimited.';
     ctaText = 'Unlimited strategies — $19/mo';
-    progressLabel = 'PR Packages';
-    used = pitchLimits?.used || 5;
-    total = pitchLimits?.limit || 5;
+    progressLabel = 'unlocks';
+    used = currentCount || pitchLimits?.used || 3;
+    total = limit || pitchLimits?.limit || 3;
   }
 
   // Feature list

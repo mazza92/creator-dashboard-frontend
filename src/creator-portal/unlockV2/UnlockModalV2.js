@@ -1654,8 +1654,8 @@ const UnlockModalV2 = ({
                     isOpen={true}
                     onClose={onClose}
                     feature="unlock_paywall"
-                    currentCount={5}
-                    limit={5}
+                    currentCount={3}
+                    limit={3}
                   />
                 ) : error ? (
                   <div style={{ padding: '40px 20px', textAlign: 'center' }}>
