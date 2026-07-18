@@ -74,9 +74,10 @@ const getBrandDescription = (brand) => {
 const Container = styled.div`
   width: 100%;
   max-width: 100%;
-  background: #FAFAFA;
+  background: #f7f5f0;
   padding: 0;
   min-height: 100vh;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 `;
 
 // Floating badge on saved brands
@@ -1243,6 +1244,47 @@ const PRBrandDiscovery = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // For You → Discover deep-link: ?q=BrandName runs existing discover search
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (!q || q.trim().length < 2) return;
+    const query = q.trim();
+    setSearchQuery(query);
+    const next = new URLSearchParams(searchParams);
+    next.delete('q');
+    setSearchParams(next, { replace: true });
+    (async () => {
+      setSearchLoading(true);
+      setSearchMode(true);
+      setSearchResult(null);
+      setDiscoveryError(null);
+      setRateLimitInfo(null);
+      try {
+        const response = await api.post('/api/pr-crm/brands/discover', { query });
+        if (response.data.success) {
+          if (response.data.found) {
+            setSearchResult({
+              brand: response.data.brand,
+              source: response.data.source,
+              discoveryTier: response.data.discovery_tier,
+              verifiedContact: response.data.verified_contact,
+              isNewDiscovery: response.data.is_new_discovery,
+            });
+          } else if (!response.data.can_discover) {
+            setRateLimitInfo(response.data.rate_limit);
+          } else {
+            setDiscoveryError(response.data.message || `We couldn't find "${query}" in our database.`);
+          }
+        }
+      } catch (error) {
+        console.error('Error searching brand from For You:', error);
+        setDiscoveryError('An error occurred while searching. Please try again.');
+      } finally {
+        setSearchLoading(false);
+      }
+    })();
+  }, [searchParams, setSearchParams]);
+
   // Handle brand URL param - opens unlock modal for specified brand slug
   useEffect(() => {
     const brandSlug = searchParams.get('brand');
@@ -1641,7 +1683,7 @@ const PRBrandDiscovery = () => {
       </div>
 
       <PageHeader>
-        <Title>Discover Brands</Title>
+        <Title>Brands that send PR to small creators</Title>
         <PlanBadge tier={subscriptionTier}>
           {subscriptionTier === 'elite' && (
             <>
@@ -1655,7 +1697,7 @@ const PRBrandDiscovery = () => {
           )}
           {subscriptionTier === 'free' && (
             <>
-              <FiSend size={14} /> {5 - pitchesSentThisWeek} free PR Packages this month
+              <FiSend size={14} /> {5 - pitchesSentThisWeek} free Brand PR unlocks this month
             </>
           )}
         </PlanBadge>
@@ -1667,7 +1709,7 @@ const PRBrandDiscovery = () => {
           <SearchInputWrapper>
             <SearchInput
               type="text"
-              placeholder="Search any brand (e.g., Glossier, Tower 28)"
+              placeholder="Search any brand — Rhode, e.l.f., Alo, Glossier…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1972,7 +2014,7 @@ const PRBrandDiscovery = () => {
               <FiSend />
             )}
             <span style={{ fontSize: '11px', marginTop: '4px' }}>
-              {pitchedBrands.has(currentBrand.id) ? 'Opened' : 'Get Package'}
+              {pitchedBrands.has(currentBrand.id) ? 'Opened' : 'Get Brand PR'}
             </span>
           </ActionButton>
         </ActionButtons>

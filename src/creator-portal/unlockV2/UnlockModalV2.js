@@ -49,33 +49,46 @@ const BrandLogoImg = ({ src, alt, fallback }) => {
 const Overlay = styled(motion.div)`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(18, 20, 26, 0.52);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 16px;
+  font-family: ${TOKENS.fontSans};
+
+  @media (max-width: 480px) {
+    align-items: flex-end;
+    padding: 0;
+  }
 `;
 
 const Modal = styled(motion.div)`
   background: #fff;
-  border-radius: 26px;
+  border-radius: 18px;
   width: 100%;
-  max-width: 420px;
-  max-height: 90vh;
+  max-width: 460px;
+  max-height: 92vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 24px 80px rgba(18, 20, 26, 0.28);
+  font-family: ${TOKENS.fontSans};
+
+  @media (max-width: 480px) {
+    max-width: 100%;
+    max-height: 94vh;
+    border-radius: 18px 18px 0 0;
+  }
 `;
 
 const Header = styled.div`
-  padding: ${p => (p.$minimal ? '10px 12px 6px' : '12px 16px 10px')};
+  padding: ${p => (p.$minimal ? '10px 12px 6px' : '14px 16px 12px')};
   display: flex;
   align-items: center;
   justify-content: ${p => (p.$minimal ? 'flex-end' : 'flex-start')};
-  gap: 8px;
-  border-bottom: ${p => (p.$minimal ? 'none' : '1px solid #ececef')};
+  gap: 10px;
+  border-bottom: ${p => (p.$minimal ? 'none' : `1px solid ${TOKENS.mentorBorder}`)};
   background: #fff;
   flex-shrink: 0;
 `;
@@ -148,10 +161,10 @@ const ModalBody = styled.div`
 // MENTOR VERDICT HERO
 // ============================================
 const VerdictHero = styled.div`
-  padding: 28px 20px 24px;
+  padding: 20px 20px 18px;
   background: #fff;
   text-align: center;
-  border-bottom: 1px solid #f4f4f6;
+  border-bottom: 1px solid ${TOKENS.mentorBorder};
 `;
 
 const VerdictEmoji = styled.div`
@@ -253,11 +266,11 @@ const SubScorePercent = styled.span`
 // Green = pitch now, Amber = improve first (still positive)
 const getConfidenceColor = (status) => {
   switch(status) {
-    case 'ready': return '#22c55e';      // Top Match - green
-    case 'almost': return '#22c55e';     // Good Match - green (still pitch today)
-    case 'not_yet': return '#eab308';    // Growth Match - amber
-    case 'poor_fit': return '#eab308';   // Stretch Match - amber (not red!)
-    case 'build_first': return '#f97316'; // Low Priority - orange
+    case 'ready': return TOKENS.accent;       // Top Match
+    case 'almost': return TOKENS.accent;      // Good Match — still get Brand PR
+    case 'not_yet': return '#eab308';         // Growth Match - amber
+    case 'poor_fit': return '#eab308';        // Stretch Match - amber
+    case 'build_first': return '#f97316';     // Low Priority - orange
     default: return '#eab308';
   }
 };
@@ -312,13 +325,13 @@ const VerdictDot = styled.div`
 // MENTOR SECTIONS
 // ============================================
 const MentorContent = styled.div`
-  padding: 0 20px;
-  background: #fff;
+  padding: 0;
+  background: transparent;
 `;
 
 const MentorSection = styled.div`
-  padding: 18px 0;
-  border-bottom: 1px solid #f4f4f6;
+  padding: 14px 0;
+  border-bottom: 1px solid ${TOKENS.mentorBorder};
 
   &:last-child {
     border-bottom: none;
@@ -329,11 +342,11 @@ const SectionLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 0.68rem;
   font-weight: 700;
   color: ${TOKENS.mentorTextSecondary};
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   margin-bottom: 10px;
 `;
 
@@ -357,9 +370,10 @@ const WhyItMatters = styled.div`
 `;
 
 const NextMoveCard = styled.div`
-  background: ${TOKENS.mentorBg};
+  background: #fff;
+  border: 1px solid ${TOKENS.mentorBorder};
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px;
 `;
 
 const NextMoveAction = styled.div`
@@ -392,25 +406,39 @@ const ThenWhat = styled.div`
 // PROFILE SNAPSHOT (Shows real scraped data)
 // ============================================
 const ProfileSnapshot = styled.div`
-  padding: 14px 20px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f2;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: ${TOKENS.paper};
+  border: 1px solid ${TOKENS.mentorBorder};
+  border-radius: 12px;
 `;
 
 const ProfileRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
 `;
 
-const PlatformIcon = styled.span`
-  font-size: 14px;
-  opacity: 0.7;
+const PlatformIcon = styled.div`
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
 `;
 
 const ProfileHandle = styled.span`
-  font-size: 13px;
+  font-size: 0.86rem;
   font-weight: 700;
   color: ${TOKENS.mentorTextPrimary};
 `;
@@ -421,31 +449,56 @@ const ProfileDivider = styled.span`
 `;
 
 const ProfileFollowers = styled.span`
-  font-size: 12px;
+  font-size: 0.8rem;
   color: ${TOKENS.mentorTextSecondary};
 `;
 
-const ProfileNiches = styled.div`
+const ProfileMeta = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 `;
 
 const NicheTag = styled.span`
   padding: 3px 8px;
-  background: #f3f4f6;
-  border-radius: 12px;
-  font-size: 11px;
-  color: #4b5563;
-  font-weight: 500;
+  background: #fff;
+  border: 1px solid ${TOKENS.mentorBorder};
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: ${TOKENS.mentorTextSecondary};
+  font-weight: 600;
+`;
+
+const MetaPill = styled.span`
+  padding: 3px 8px;
+  background: ${TOKENS.verdictGreenBg};
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: ${TOKENS.verdictGreenFg};
+  font-weight: 600;
 `;
 
 const ProfileBio = styled.div`
-  font-size: 12px;
+  font-size: 0.8rem;
   color: ${TOKENS.mentorTextSecondary};
-  line-height: 1.4;
-  margin-bottom: 10px;
+  line-height: 1.45;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  a {
+    color: ${TOKENS.accentDeep};
+    font-weight: 600;
+    text-decoration: none;
+  }
+`;
+
+const ProfileThemes = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
 `;
 
 const ProfileThumbnails = styled.div`
@@ -454,16 +507,22 @@ const ProfileThumbnails = styled.div`
 `;
 
 const ProfileThumb = styled.div`
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   background: #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  @media (max-width: 480px) {
+    width: 52px;
+    height: 52px;
   }
 `;
 
@@ -819,22 +878,29 @@ const SecondaryAction = styled.button`
 `;
 
 const SendButton = styled.button`
-  margin: 16px 20px 22px;
-  background: #15161a;
+  margin: 16px 16px 20px;
+  background: ${TOKENS.action};
   color: #fff;
   border: none;
-  border-radius: 14px;
-  padding: 14px 0;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  border-radius: 10px;
+  padding: 14px 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   text-align: center;
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
   flex-shrink: 0;
+  font-family: ${TOKENS.fontSans};
+
+  @media (max-width: 480px) {
+    margin: 12px 12px 16px;
+    padding: 15px 12px;
+    font-size: 1rem;
+  }
 
   &:hover {
-    background: #2a2b30;
+    background: #1c1c1c;
   }
 
   &:active {
@@ -902,8 +968,14 @@ const OutreachSubtitle = styled.div`
 `;
 
 const OutreachContent = styled.div`
-  padding: 0 20px;
+  padding: 12px 20px 4px;
   background: #fff;
+  flex: 1;
+  overflow-y: auto;
+
+  @media (max-width: 480px) {
+    padding: 10px 16px 4px;
+  }
 `;
 
 // Reuse MentorSection-style layout for consistency
@@ -1080,24 +1152,265 @@ const OutreachFooter = styled.div`
 
 const OutreachCTA = styled.button`
   width: 100%;
-  background: linear-gradient(135deg, #15161a 0%, #2a2b30 100%);
+  background: ${TOKENS.action};
   color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 14px 0;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: background 0.2s, transform 0.1s;
+  font-family: ${TOKENS.fontSans};
+
+  @media (max-width: 480px) {
+    padding: 15px 0;
+    font-size: 1rem;
+  }
 
   &:hover {
-    opacity: 0.9;
+    background: #1c1c1c;
   }
 
   &:active {
     transform: scale(0.98);
   }
+`;
+
+const PitchSection = styled.div`
+  background: #eef6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 0.65rem;
+`;
+
+const PitchSectionLabel = styled.div`
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3b6ea5;
+  margin-bottom: 0.45rem;
+`;
+
+const FormApplySection = styled.div`
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 0.9rem 0.95rem;
+  margin-bottom: 0.65rem;
+`;
+
+const FormApplyTitle = styled.div`
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #1e3a8a;
+  margin-bottom: 0.25rem;
+`;
+
+const FormApplyBody = styled.p`
+  margin: 0 0 0.75rem;
+  font-size: 0.86rem;
+  color: #1e40af;
+  line-height: 1.45;
+`;
+
+const FormApplyCTA = styled.button`
+  width: 100%;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  font-family: ${TOKENS.fontSans};
+  transition: background 0.2s, transform 0.1s;
+
+  &:hover {
+    background: #1e40af;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const FormNote = styled.div`
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.86rem;
+  color: #7c4a1a;
+  margin-bottom: 0.75rem;
+  line-height: 1.45;
+
+  strong {
+    display: block;
+    color: #b45309;
+    margin-bottom: 0.2rem;
+    font-weight: 700;
+  }
+`;
+
+const PrepList = styled.ul`
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    font-size: 0.84rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid ${TOKENS.mentorBorder};
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: ${TOKENS.mentorTextPrimary};
+  }
+
+  li:last-child { border: 0; }
+
+  button {
+    border: 0;
+    background: transparent;
+    color: ${TOKENS.accent};
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: ${TOKENS.fontSans};
+  }
+`;
+
+/* Rebuild package layout (Rhode-style preview) */
+const PkgPills = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+`;
+
+const PkgPill = styled.span`
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  background: ${p => (
+    p.$tone === 'ok' ? TOKENS.verdictGreenBg :
+    p.$tone === 'email' ? '#fef3c7' :
+    p.$tone === 'form' ? '#eff6ff' :
+    p.$tone === 'gift' ? '#fce7f3' :
+    '#f4f4f4'
+  )};
+  color: ${p => (
+    p.$tone === 'ok' ? TOKENS.verdictGreenFg :
+    p.$tone === 'email' ? '#92400e' :
+    p.$tone === 'form' ? '#1d4ed8' :
+    p.$tone === 'gift' ? '#9d174d' :
+    '#444'
+  )};
+`;
+
+const MatchBox = styled.div`
+  background: ${TOKENS.verdictGreenBg};
+  border-radius: 12px;
+  padding: 0.8rem 0.95rem;
+  margin-bottom: 0.75rem;
+`;
+
+const MatchBoxTitle = styled.div`
+  color: ${TOKENS.accentDeep};
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+`;
+
+const MatchBoxBody = styled.p`
+  margin: 0;
+  font-size: 0.88rem;
+  color: #1f4d3f;
+  line-height: 1.45;
+`;
+
+const InfoBlock = styled.div`
+  background: ${TOKENS.paper};
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 0.65rem;
+`;
+
+const InfoLabel = styled.div`
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 0.25rem;
+`;
+
+const InfoValue = styled.div`
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: ${TOKENS.ink};
+  word-break: break-all;
+  line-height: 1.35;
+`;
+
+const InfoMeta = styled.div`
+  font-size: 0.75rem;
+  color: ${TOKENS.mentorTextSecondary};
+  margin-top: 0.25rem;
+`;
+
+const InfoRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
+
+const GhostBtn = styled.button`
+  flex-shrink: 0;
+  border: 1px solid #ebebeb;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: ${TOKENS.ink};
+  cursor: pointer;
+  font-family: ${TOKENS.fontSans};
+
+  &:hover {
+    border-color: ${TOKENS.accentBorder};
+    color: ${TOKENS.accentDeep};
+  }
+`;
+
+const TipLine = styled.p`
+  font-size: 0.82rem;
+  color: ${TOKENS.mentorTextSecondary};
+  margin: 0.15rem 0 0.5rem;
+  line-height: 1.4;
+
+  b {
+    color: #e85d3b;
+    font-weight: 700;
+  }
+`;
+
+const StrategyPanel = styled.div`
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.9rem 0.95rem;
+  background: ${TOKENS.paper};
+  border: 1px solid ${TOKENS.mentorBorder};
+  border-radius: 12px;
 `;
 
 const BackButton = styled.button`
@@ -1303,14 +1616,6 @@ const UnlockModalV2 = ({
   const [utilitiesExpanded, setUtilitiesExpanded] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [collabEmail, setCollabEmail] = useState(() => {
-    try {
-      return localStorage.getItem('nc_collab_email') || '';
-    } catch (_) {
-      return '';
-    }
-  });
-  const [collabEmailSaved, setCollabEmailSaved] = useState(false);
 
   const startTimeRef = useRef(0);
   const cardTimersRef = useRef([]);
@@ -1554,22 +1859,35 @@ const UnlockModalV2 = ({
   };
 
   // Handle send button click
+  const handleOpenForm = () => {
+    const formUrl = packageData?.application_form_url;
+    if (!formUrl) return;
+    window.open(formUrl, '_blank', 'noopener,noreferrer');
+    onPitchSent?.(brand, { method: 'form', stayOpen: true });
+    setPhase(PHASE_NEXT);
+  };
+
   const handleSend = async () => {
+    const brandEmail = packageData?.brand_email || packageData?.contact?.email;
+    const formUrl = packageData?.application_form_url;
+
+    // Form-only brands: open signup in a new tab (user submits — we don't)
+    if (formUrl && !brandEmail) {
+      handleOpenForm();
+      return;
+    }
+
     if (!packageData?.package?.pitches) return;
 
     const pitch = packageData.package.pitches[selectedTone];
-    const brandEmail = packageData.brand_email || packageData.contact?.email;
     const subject = pitch?.subject || '';
     const body = pitch?.body_plain || '';
 
-    // Copy body to clipboard
     await copyToClipboard(body, 'pitch');
 
-    // Open email client with auto BCC for tracking
     const mailtoUrl = `mailto:${brandEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&bcc=creators@newcollab.co`;
     window.location.href = mailtoUrl;
 
-    // Record pitch but keep modal open for next actions (silence workaround)
     onPitchSent?.(brand, { method: 'email', stayOpen: true });
     setPhase(PHASE_NEXT);
   };
@@ -1588,6 +1906,22 @@ const UnlockModalV2 = ({
   const brandName = brand?.brand_name || brand?.name || 'Brand';
   const brandCategory = brand?.category || '';
   const brandLogo = brand?.logo || brand?.logo_url;
+  const brandEmail = packageData?.brand_email || packageData?.contact?.email;
+  const formUrl = packageData?.application_form_url;
+  const isFormPackage = !!(formUrl && !brandEmail);
+  const giftValue = brand?.price_point || packageData?.brand?.price_point || packageData?.package?.brand?.price_point || 45;
+  const matchLabel = packageData?.fit_score?.label
+    || packageData?.mentor_verdict?.confidenceLabel
+    || packageData?.verdict?.verdict_pill
+    || 'Good match';
+  const matchBlurb = packageData?.coaching?.coach_note
+    || packageData?.coaching?.observation
+    || packageData?.verdict?.headline
+    || (brandCategory
+      ? `${brandCategory} creators — unlock PR contact and pitch with a short, personal note.`
+      : 'Unlock the PR contact and pitch with a short, personal note.');
+  const minFollowers = brand?.min_followers ?? packageData?.brand?.min_followers;
+  const microOk = minFollowers == null || minFollowers === '' || Number(minFollowers) === 0 || Number(minFollowers) <= 10000;
 
   return (
     <AnimatePresence>
@@ -1603,7 +1937,7 @@ const UnlockModalV2 = ({
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={e => e.stopPropagation()}
         >
-          {(phase === PHASE_OUTREACH || phase === PHASE_NEXT) ? (
+          {phase === PHASE_NEXT ? (
             <Header $minimal>
               <CloseButton onClick={onClose}>
                 <FiX size={14} />
@@ -1620,7 +1954,13 @@ const UnlockModalV2 = ({
               </BrandLogo>
               <BrandInfo>
                 <BrandName>{brandName}</BrandName>
-                <BrandCategory>{brandCategory}</BrandCategory>
+                <BrandCategory>
+                  {phase === PHASE_OUTREACH
+                    ? (brandCategory
+                      ? `${brandCategory}${isFormPackage ? ' · Form package' : ' · PR email'}`
+                      : (isFormPackage ? 'Form package · 1 unlock' : 'PR email package · 1 unlock'))
+                    : brandCategory}
+                </BrandCategory>
               </BrandInfo>
               <CloseButton onClick={onClose}>
                 <FiX size={14} />
@@ -1649,7 +1989,6 @@ const UnlockModalV2 = ({
             {phase === PHASE_MODAL && (
               <>
                 {error === 'paywall' ? (
-                  // Use proper UpgradeModal for paywall
                   <UpgradeModal
                     isOpen={true}
                     onClose={onClose}
@@ -1665,283 +2004,201 @@ const UnlockModalV2 = ({
                   </div>
                 ) : packageData && (
                   <>
-                    {/* Profile Snapshot - Shows real scraped data */}
-                    {packageData.profile_snapshot && (
-                      <ProfileSnapshot>
-                        <ProfileRow>
-                          <PlatformIcon>
-                            {packageData.profile_snapshot.platform === 'tiktok' ? (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                              </svg>
-                            ) : packageData.profile_snapshot.platform === 'youtube' ? (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF0000">
-                                <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                              </svg>
-                            ) : (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                              </svg>
-                            )}
-                          </PlatformIcon>
-                          <ProfileHandle>@{packageData.profile_snapshot.handle}</ProfileHandle>
-                          <ProfileDivider>|</ProfileDivider>
-                          <ProfileFollowers>
-                            {(packageData.profile_snapshot.follower_count || 0).toLocaleString()} followers
-                          </ProfileFollowers>
-                        </ProfileRow>
-                        {(packageData.profile_snapshot.niches?.length > 0 || packageData.profile_snapshot.niche) && (
-                          <ProfileNiches>
-                            {packageData.profile_snapshot.niches?.length > 0
-                              ? packageData.profile_snapshot.niches.map((niche, i) => (
-                                  <NicheTag key={i}>{niche}</NicheTag>
-                                ))
-                              : <NicheTag>{packageData.profile_snapshot.niche}</NicheTag>
-                            }
-                          </ProfileNiches>
-                        )}
-                        {packageData.profile_snapshot.bio && (
-                          <ProfileBio>
-                            {packageData.profile_snapshot.bio}
-                            {packageData.profile_snapshot.bio.length >= 140 && '...'}
-                          </ProfileBio>
-                        )}
-                        {packageData.profile_snapshot.recent_thumbnails?.length > 0 && (
-                          <ProfileThumbnails>
-                            {packageData.profile_snapshot.recent_thumbnails.map((url, i) => (
-                              <ProfileThumb key={i}>
-                                <img src={url} alt={`Post ${i + 1}`} />
-                              </ProfileThumb>
-                            ))}
-                          </ProfileThumbnails>
-                        )}
-                      </ProfileSnapshot>
-                    )}
-
-                    {/* Mentor Verdict Hero */}
-                    <VerdictHero>
-                      {/* Confidence Stars - uses deterministic fit_score */}
-                      {(() => {
-                        const status = packageData.status || 'almost';
-                        const fitScore = packageData.fit_score;
-                        const verdict = MENTOR_VERDICTS[status] || MENTOR_VERDICTS.almost;
-                        const starColor = getConfidenceColor(status);
-                        // Use deterministic stars from fit_score, or fallback to verdict
-                        const filledStars = fitScore?.stars || verdict.confidenceStars || 3;
-                        const label = fitScore?.label || verdict.confidenceLabel || 'Good Fit';
+                    <OutreachContent>
+                      {packageData.profile_snapshot && (() => {
+                        const snap = packageData.profile_snapshot;
+                        const niches = (snap.niches?.length ? snap.niches : (snap.niche ? [snap.niche] : []))
+                          .filter(Boolean)
+                          .slice(0, 3);
+                        const themes = (snap.content_themes || []).filter(Boolean).slice(0, 3);
+                        const eng = Number(snap.engagement_rate);
+                        const bioRaw = snap.bio || '';
+                        // Linkify email if scraper put it in the bio
+                        const bioNodes = bioRaw.split(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi).map((part, i) => (
+                          part.includes('@') && part.includes('.')
+                            ? <a key={i} href={`mailto:${part}`}>{part}</a>
+                            : <React.Fragment key={i}>{part}</React.Fragment>
+                        ));
+                        const platform = (snap.platform || '').toLowerCase();
 
                         return (
-                          <ConfidenceIndicator>
-                            <ConfidenceStars>
-                              {[1, 2, 3, 4, 5].map(star => (
-                                <Star key={star} $filled={star <= filledStars} $color={starColor}>
-                                  ★
-                                </Star>
-                              ))}
-                            </ConfidenceStars>
-                            <ConfidenceLabel $color={starColor}>
-                              {label}
-                            </ConfidenceLabel>
-                          </ConfidenceIndicator>
+                          <ProfileSnapshot>
+                            <ProfileRow>
+                              <PlatformIcon aria-label={platform || 'social'}>
+                                {platform === 'tiktok' ? (
+                                  <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                                  </svg>
+                                ) : platform === 'youtube' ? (
+                                  <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                  </svg>
+                                ) : (
+                                  <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                                  </svg>
+                                )}
+                              </PlatformIcon>
+                              <ProfileHandle>@{snap.handle}</ProfileHandle>
+                              <ProfileDivider>|</ProfileDivider>
+                              <ProfileFollowers>
+                                {(snap.follower_count || 0).toLocaleString()} followers
+                              </ProfileFollowers>
+                            </ProfileRow>
+
+                            {(niches.length > 0 || (Number.isFinite(eng) && eng > 0) || snap.is_public === false) && (
+                              <ProfileMeta>
+                                {niches.map((n, i) => (
+                                  <NicheTag key={`${n}-${i}`}>{n}</NicheTag>
+                                ))}
+                                {Number.isFinite(eng) && eng > 0 && (
+                                  <MetaPill>{eng.toFixed(1)}% eng</MetaPill>
+                                )}
+                                {snap.is_public === false && (
+                                  <NicheTag>Private account</NicheTag>
+                                )}
+                              </ProfileMeta>
+                            )}
+
+                            {bioRaw && (
+                              <ProfileBio>{bioNodes}</ProfileBio>
+                            )}
+
+                            {themes.length > 0 && (
+                              <ProfileThemes>
+                                {themes.map((theme, i) => (
+                                  <NicheTag key={`${theme}-${i}`}>{theme}</NicheTag>
+                                ))}
+                              </ProfileThemes>
+                            )}
+
+                            {snap.recent_thumbnails?.length > 0 && (
+                              <ProfileThumbnails>
+                                {snap.recent_thumbnails.slice(0, 3).map((url, i) => (
+                                  <ProfileThumb key={i}>
+                                    <img src={url} alt={`Recent post ${i + 1}`} />
+                                  </ProfileThumb>
+                                ))}
+                              </ProfileThumbnails>
+                            )}
+                          </ProfileSnapshot>
                         );
                       })()}
 
-                      {/* Sub-scores breakdown - shows WHY the score is what it is */}
-                      {packageData.fit_score?.sub_scores && (
-                        <SubScoresContainer>
-                          <SubScoreItem>
-                            <SubScoreLabel>Niche</SubScoreLabel>
-                            <SubScoreValue>
-                              <SubScoreBar>
-                                <SubScoreBarFill $value={packageData.fit_score.sub_scores.niche} />
-                              </SubScoreBar>
-                              <SubScorePercent $value={packageData.fit_score.sub_scores.niche}>
-                                {packageData.fit_score.sub_scores.niche}%
-                              </SubScorePercent>
-                            </SubScoreValue>
-                          </SubScoreItem>
-                          <SubScoreItem>
-                            <SubScoreLabel>Content</SubScoreLabel>
-                            <SubScoreValue>
-                              <SubScoreBar>
-                                <SubScoreBarFill $value={packageData.fit_score.sub_scores.content} />
-                              </SubScoreBar>
-                              <SubScorePercent $value={packageData.fit_score.sub_scores.content}>
-                                {packageData.fit_score.sub_scores.content}%
-                              </SubScorePercent>
-                            </SubScoreValue>
-                          </SubScoreItem>
-                          <SubScoreItem>
-                            <SubScoreLabel>Engagement</SubScoreLabel>
-                            <SubScoreValue>
-                              <SubScoreBar>
-                                <SubScoreBarFill $value={packageData.fit_score.sub_scores.engagement} />
-                              </SubScoreBar>
-                              <SubScorePercent $value={packageData.fit_score.sub_scores.engagement}>
-                                {packageData.fit_score.sub_scores.engagement}%
-                              </SubScorePercent>
-                            </SubScoreValue>
-                          </SubScoreItem>
-                          <SubScoreItem>
-                            <SubScoreLabel>Consistency</SubScoreLabel>
-                            <SubScoreValue>
-                              <SubScoreBar>
-                                <SubScoreBarFill $value={packageData.fit_score.sub_scores.consistency} />
-                              </SubScoreBar>
-                              <SubScorePercent $value={packageData.fit_score.sub_scores.consistency}>
-                                {packageData.fit_score.sub_scores.consistency}%
-                              </SubScorePercent>
-                            </SubScoreValue>
-                          </SubScoreItem>
-                        </SubScoresContainer>
-                      )}
+                      <MatchBox>
+                        {(() => {
+                          const status = packageData.status || 'almost';
+                          const fitScore = packageData.fit_score;
+                          const verdict = MENTOR_VERDICTS[status] || MENTOR_VERDICTS.almost;
+                          const starColor = getConfidenceColor(status);
+                          const filledStars = fitScore?.stars || verdict.confidenceStars || 3;
+                          const label = fitScore?.label || verdict.confidenceLabel || matchLabel;
+                          return (
+                            <>
+                              <ConfidenceStars style={{ justifyContent: 'flex-start', marginBottom: 6 }}>
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star key={star} $filled={star <= filledStars} $color={starColor} style={{ fontSize: 16 }}>★</Star>
+                                ))}
+                              </ConfidenceStars>
+                              <MatchBoxTitle>{label}</MatchBoxTitle>
+                            </>
+                          );
+                        })()}
+                        <MatchBoxBody>{matchBlurb}</MatchBoxBody>
+                      </MatchBox>
 
-                      <CoachNote>
-                        {packageData.is_coaching && packageData.coaching?.coach_note
-                          ? packageData.coaching.coach_note
-                          : packageData.verdict?.headline || `You can pitch ${brandName} today.`}
-                      </CoachNote>
-                      <VerdictPill $color={packageData.mentor_verdict?.pillColor || packageData.verdict?.pill_color || 'green'}>
-                        <VerdictDot />
-                        {packageData.is_coaching
-                          ? packageData.mentor_verdict?.pill
-                          : packageData.verdict?.verdict_pill || 'Ready for outreach'}
-                      </VerdictPill>
-                    </VerdictHero>
-
-                    {/* Mentor Sections - only show if coaching mode */}
-                    {packageData.is_coaching && packageData.coaching ? (
-                      <MentorContent>
-                        {/* What Brand Will Notice / Lower Priority */}
-                        <MentorSection>
-                          <SectionLabel>
-                            <SectionIcon>
-                              {['poor_fit', 'build_first'].includes(packageData.status)
-                                ? MENTOR_SECTIONS.lowerPriority.icon
-                                : MENTOR_SECTIONS.whatBrandWillNotice.icon}
-                            </SectionIcon>
-                            {['poor_fit', 'build_first'].includes(packageData.status)
-                              ? MENTOR_SECTIONS.lowerPriority.label
-                              : MENTOR_SECTIONS.whatBrandWillNotice.labelTemplate(brandName)}
-                          </SectionLabel>
-                          <ObservationText>
-                            {packageData.coaching.observation}
-                          </ObservationText>
-                          {packageData.coaching.why_it_matters && (
-                            <WhyItMatters>
-                              {packageData.coaching.why_it_matters}
-                            </WhyItMatters>
+                      {packageData.is_low_follower && packageData.ugc_guide ? (
+                        <>
+                          <UGCGuideContainer>
+                            <UGCGuideTitle>{packageData.ugc_guide.title}</UGCGuideTitle>
+                            <UGCGuideIntro>{packageData.ugc_guide.intro}</UGCGuideIntro>
+                            <UGCStepsList>
+                              {packageData.ugc_guide.steps.map((step) => (
+                                <UGCStep key={step.step}>
+                                  <UGCStepNumber>{step.step}</UGCStepNumber>
+                                  <UGCStepContent>
+                                    <UGCStepTitle>{step.title}</UGCStepTitle>
+                                    <UGCStepDescription>{step.description}</UGCStepDescription>
+                                  </UGCStepContent>
+                                </UGCStep>
+                              ))}
+                            </UGCStepsList>
+                          </UGCGuideContainer>
+                          <PoolCTAButton href={packageData.ugc_guide.pool_cta.url}>
+                            {packageData.ugc_guide.pool_cta.text} →
+                          </PoolCTAButton>
+                        </>
+                      ) : (
+                        <>
+                          {packageData.is_coaching && packageData.coaching ? (
+                            <MentorContent style={{ padding: 0 }}>
+                              <MentorSection>
+                                <SectionLabel>
+                                  <SectionIcon>
+                                    {['poor_fit', 'build_first'].includes(packageData.status)
+                                      ? MENTOR_SECTIONS.lowerPriority.icon
+                                      : MENTOR_SECTIONS.whatBrandWillNotice.icon}
+                                  </SectionIcon>
+                                  {['poor_fit', 'build_first'].includes(packageData.status)
+                                    ? MENTOR_SECTIONS.lowerPriority.label
+                                    : MENTOR_SECTIONS.whatBrandWillNotice.labelTemplate(brandName)}
+                                </SectionLabel>
+                                <ObservationText>{packageData.coaching.observation}</ObservationText>
+                                {packageData.coaching.why_it_matters && (
+                                  <WhyItMatters>{packageData.coaching.why_it_matters}</WhyItMatters>
+                                )}
+                              </MentorSection>
+                              {packageData.status !== 'ready' && packageData.coaching.action && (
+                                <MentorSection>
+                                  <SectionLabel>
+                                    <SectionIcon>{MENTOR_SECTIONS.increaseReplyChance.icon}</SectionIcon>
+                                    {MENTOR_SECTIONS.increaseReplyChance.label}
+                                  </SectionLabel>
+                                  <NextMoveCard>
+                                    <NextMoveAction>{packageData.coaching.action}</NextMoveAction>
+                                    {packageData.coaching.reasoning && (
+                                      <NextMoveReasoning>{packageData.coaching.reasoning}</NextMoveReasoning>
+                                    )}
+                                  </NextMoveCard>
+                                </MentorSection>
+                              )}
+                            </MentorContent>
+                          ) : (
+                            <MentorContent style={{ padding: 0 }}>
+                              <MentorSection>
+                                <SectionLabel>
+                                  <SectionIcon>👀</SectionIcon>
+                                  What {brandName} Will Notice
+                                </SectionLabel>
+                                <ReasonsList>
+                                  {(packageData.reasons || []).map((reason, i) => (
+                                    <ReasonItem key={i}>
+                                      <ReasonDot $good={reason.dot === 'good'} />
+                                      <ReasonText>{reason.text}</ReasonText>
+                                    </ReasonItem>
+                                  ))}
+                                </ReasonsList>
+                              </MentorSection>
+                              {packageData.quick_win && (
+                                <MentorSection>
+                                  <SectionLabel>
+                                    <SectionIcon>⭐</SectionIcon>
+                                    Increase your reply chance
+                                  </SectionLabel>
+                                  <NextMoveCard>
+                                    <NextMoveAction>
+                                      {packageData.quick_win.emoji} {packageData.quick_win.action_title}
+                                    </NextMoveAction>
+                                    <NextMoveReasoning>{packageData.quick_win.note}</NextMoveReasoning>
+                                  </NextMoveCard>
+                                </MentorSection>
+                              )}
+                            </MentorContent>
                           )}
-                        </MentorSection>
 
-                        {/* Increase Reply Chance */}
-                        {packageData.status !== 'ready' && (
-                          <MentorSection>
-                            <SectionLabel>
-                              <SectionIcon>{MENTOR_SECTIONS.increaseReplyChance.icon}</SectionIcon>
-                              {MENTOR_SECTIONS.increaseReplyChance.label}
-                            </SectionLabel>
-                            <NextMoveCard>
-                              <NextMoveAction>
-                                {packageData.coaching.action}
-                              </NextMoveAction>
-                              {packageData.coaching.reasoning && (
-                                <NextMoveReasoning>
-                                  {packageData.coaching.reasoning}
-                                </NextMoveReasoning>
-                              )}
-                              {packageData.coaching.then_what && (
-                                <ThenWhat>
-                                  {packageData.coaching.then_what}
-                                </ThenWhat>
-                              )}
-                            </NextMoveCard>
-                          </MentorSection>
-                        )}
-                      </MentorContent>
-                    ) : (
-                      /* Legacy mode - show reasons and quick win as before */
-                      <MentorContent>
-                        <MentorSection>
-                          <SectionLabel>
-                            <SectionIcon>
-                              {['poor_fit', 'build_first'].includes(packageData.status) ? MENTOR_SECTIONS.lowerPriority.icon : '✅'}
-                            </SectionIcon>
-                            {['poor_fit', 'build_first'].includes(packageData.status)
-                              ? MENTOR_SECTIONS.lowerPriority.label
-                              : `What ${brandName} Will Notice`}
-                          </SectionLabel>
-                          <ReasonsList>
-                            {(packageData.reasons || []).map((reason, i) => (
-                              <ReasonItem key={i}>
-                                <ReasonDot $good={reason.dot === 'good'} />
-                                <ReasonText>{reason.text}</ReasonText>
-                              </ReasonItem>
-                            ))}
-                          </ReasonsList>
-                        </MentorSection>
-
-                        {packageData.quick_win && (
-                          <MentorSection>
-                            <SectionLabel>
-                              <SectionIcon>🎯</SectionIcon>
-                              Do this first
-                            </SectionLabel>
-                            <NextMoveCard>
-                              <NextMoveAction>
-                                {packageData.quick_win.emoji} {packageData.quick_win.action_title}
-                              </NextMoveAction>
-                              <NextMoveReasoning>
-                                {packageData.quick_win.note}
-                              </NextMoveReasoning>
-                              <ThenWhat>
-                                {packageData.quick_win.gain_pill}
-                              </ThenWhat>
-                            </NextMoveCard>
-                          </MentorSection>
-                        )}
-                      </MentorContent>
-                    )}
-
-                    {/* Low Follower Mode: Show UGC Guide and Pool CTA */}
-                    {packageData.is_low_follower && packageData.ugc_guide ? (
-                      <>
-                        <UGCGuideContainer>
-                          <UGCGuideTitle>
-                            {packageData.ugc_guide.title}
-                          </UGCGuideTitle>
-                          <UGCGuideIntro>
-                            {packageData.ugc_guide.intro}
-                          </UGCGuideIntro>
-                          <UGCStepsList>
-                            {packageData.ugc_guide.steps.map((step) => (
-                              <UGCStep key={step.step}>
-                                <UGCStepNumber>{step.step}</UGCStepNumber>
-                                <UGCStepContent>
-                                  <UGCStepTitle>{step.title}</UGCStepTitle>
-                                  <UGCStepDescription>{step.description}</UGCStepDescription>
-                                </UGCStepContent>
-                              </UGCStep>
-                            ))}
-                          </UGCStepsList>
-                        </UGCGuideContainer>
-
-                        <PoolCTAButton href={packageData.ugc_guide.pool_cta.url}>
-                          {packageData.ugc_guide.pool_cta.text} →
-                        </PoolCTAButton>
-                        <PoolCTADescription>
-                          {packageData.ugc_guide.pool_cta.description}
-                        </PoolCTADescription>
-                      </>
-                    ) : (
-                      <>
-                        {/* For poor_fit ONLY: Show alternative brands (niche mismatch = try different brands) */}
-                        {packageData.status === 'poor_fit' && packageData.better_matches?.length > 0 && (
-                          <>
+                          {packageData.status === 'poor_fit' && packageData.better_matches?.length > 0 && (
                             <BetterMatchesSection>
-                              <BetterMatchesTitle>
-                                <span>✨</span> Try these instead
-                              </BetterMatchesTitle>
+                              <BetterMatchesTitle><span>✨</span> Try these instead</BetterMatchesTitle>
                               <BetterMatchesList>
                                 {packageData.better_matches.map((match) => (
                                   <BetterMatchCard
@@ -1961,237 +2218,179 @@ const UnlockModalV2 = ({
                                       <BetterMatchName>{match.brand_name}</BetterMatchName>
                                       <BetterMatchCategory>{match.category}</BetterMatchCategory>
                                     </BetterMatchInfo>
-                                    <BetterMatchFit $status={match.fit_status}>
-                                      {match.fit_emoji} {match.fit_label}
-                                    </BetterMatchFit>
                                   </BetterMatchCard>
                                 ))}
                               </BetterMatchesList>
                             </BetterMatchesSection>
+                          )}
+                        </>
+                      )}
+                    </OutreachContent>
 
-                            <AlternativeCTA onClick={() => {
-                              const bestMatch = packageData.better_matches[0];
-                              if (bestMatch) {
-                                window.location.href = `/creator/dashboard/pr-brands?brand=${bestMatch.slug}`;
-                              }
-                            }}>
-                              Pitch {packageData.better_matches[0]?.brand_name} Instead →
-                            </AlternativeCTA>
-
-                            <SecondaryAction onClick={handleSend}>
-                              ✉️ Still Pitch {brandName}
-                            </SecondaryAction>
-                          </>
+                    {!packageData.is_low_follower && (
+                      <OutreachFooter>
+                        <OutreachCTA onClick={() => setPhase(PHASE_OUTREACH)}>
+                          {SEND_BUTTON.label}
+                        </OutreachCTA>
+                        {packageData.status === 'poor_fit' && packageData.better_matches?.length > 0 && (
+                          <BackButton type="button" onClick={() => setPhase(PHASE_OUTREACH)}>
+                            Still get Brand PR for {brandName}
+                          </BackButton>
                         )}
-
-                        {/* Growth Match: pitch now is primary; tips stay secondary */}
-                        {packageData.status === 'not_yet' && (
-                          <>
-                            <SendButton onClick={() => setPhase(PHASE_OUTREACH)}>
-                              {SEND_BUTTON.labelTemplate(brandName)}
-                            </SendButton>
-                            <div style={{
-                              textAlign: 'center',
-                              fontSize: '12px',
-                              color: '#6b7280',
-                              marginTop: '8px'
-                            }}>
-                              Tip above is optional — pitch now, improve while you wait
-                            </div>
-                          </>
-                        )}
-
-                        {/* For ready/almost OR poor_fit with no alternatives: Show pitch CTA (no accordion) */}
-                        {(!['poor_fit', 'not_yet'].includes(packageData.status) || (packageData.status === 'poor_fit' && !packageData.better_matches?.length)) && (
-                          <>
-                            {/* Clean pitch button - transitions to outreach screen */}
-                            <SendButton onClick={() => setPhase(PHASE_OUTREACH)}>
-                              {SEND_BUTTON.labelTemplate(brandName)}
-                            </SendButton>
-
-                            {/* For ready/almost: Show more brands at bottom to keep momentum */}
-                            {packageData.better_matches?.length > 0 && (
-                              <BetterMatchesSection style={{ marginTop: '8px' }}>
-                                <BetterMatchesTitle>
-                                  <span>🚀</span> More brands for you
-                                </BetterMatchesTitle>
-                                <BetterMatchesList>
-                                  {packageData.better_matches.map((match) => (
-                                    <BetterMatchCard
-                                      key={match.id}
-                                      onClick={() => {
-                                        window.location.href = `/creator/dashboard/pr-brands?brand=${match.slug}`;
-                                      }}
-                                    >
-                                      <BetterMatchLogo>
-                                        {match.logo ? (
-                                          <img src={match.logo} alt={match.brand_name} />
-                                        ) : (
-                                          match.brand_name?.substring(0, 2).toUpperCase()
-                                        )}
-                                      </BetterMatchLogo>
-                                      <BetterMatchInfo>
-                                        <BetterMatchName>{match.brand_name}</BetterMatchName>
-                                        <BetterMatchCategory>{match.category}</BetterMatchCategory>
-                                      </BetterMatchInfo>
-                                      <BetterMatchFit $status={match.fit_status}>
-                                        {match.fit_emoji} {match.fit_label}
-                                      </BetterMatchFit>
-                                    </BetterMatchCard>
-                                  ))}
-                                </BetterMatchesList>
-                              </BetterMatchesSection>
-                            )}
-                          </>
-                        )}
-                      </>
+                      </OutreachFooter>
                     )}
                   </>
                 )}
               </>
             )}
 
-            {/* OUTREACH SCREEN - Shown after clicking Pitch button */}
             {phase === PHASE_OUTREACH && packageData && (
-              <OutreachScreen
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                {/* Header with brand logo */}
-                <OutreachHeader>
-                  <OutreachBrandLogo>
-                    {brand?.logo ? (
-                      <img src={brand.logo} alt={brandName} />
-                    ) : (
-                      brandName?.substring(0, 2).toUpperCase()
-                    )}
-                  </OutreachBrandLogo>
-                  <OutreachHeaderText>
-                    <OutreachTitle>Pitch {brandName}</OutreachTitle>
-                    <OutreachSubtitle>Everything ready to send</OutreachSubtitle>
-                  </OutreachHeaderText>
-                </OutreachHeader>
-
+              <>
                 <OutreachContent>
-                  {/* Collab email — brands reply here; one-tap save before send */}
-                  <OutreachSection>
-                    <OutreachSectionLabel>
-                      <OutreachSectionIcon>📬</OutreachSectionIcon>
-                      Your collab email
-                    </OutreachSectionLabel>
-                    <ContactDisplay>
-                      <input
-                        type="email"
-                        value={collabEmail}
-                        placeholder="email brands can reply to"
-                        onChange={(e) => {
-                          setCollabEmail(e.target.value);
-                          setCollabEmailSaved(false);
-                        }}
-                        style={{
-                          flex: 1,
-                          border: 'none',
-                          outline: 'none',
-                          background: 'transparent',
-                          fontSize: 14,
-                          color: '#111827',
-                          minWidth: 0,
-                        }}
-                      />
-                      <ContactCopyBtn
-                        onClick={() => {
-                          const email = (collabEmail || '').trim();
-                          if (!email || !email.includes('@')) {
-                            message.warning('Add a valid email brands can reply to');
-                            return;
-                          }
-                          try {
-                            localStorage.setItem('nc_collab_email', email);
-                          } catch (_) { /* ignore */ }
-                          setCollabEmailSaved(true);
-                          message.success('Collab email saved');
-                        }}
-                      >
-                        {collabEmailSaved ? <><FiCheck size={12} /> Saved</> : 'Save'}
-                      </ContactCopyBtn>
-                    </ContactDisplay>
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
-                      Put this in your TikTok/IG bio too — brands check before they reply.
-                    </div>
-                  </OutreachSection>
+                  <PkgPills>
+                    {microOk && <PkgPill $tone="ok">Accepts micros</PkgPill>}
+                    {isFormPackage ? (
+                      <PkgPill $tone="form">Program form</PkgPill>
+                    ) : (
+                      <PkgPill $tone="email">PR email</PkgPill>
+                    )}
+                    <PkgPill $tone="gift">~${giftValue} avg gift</PkgPill>
+                    {formUrl && brandEmail && <PkgPill $tone="form">Has form</PkgPill>}
+                  </PkgPills>
 
-                  {/* Contact Section */}
-                  <OutreachSection>
-                    <OutreachSectionLabel>
-                      <OutreachSectionIcon>📧</OutreachSectionIcon>
-                      {packageData.contact?.verified ? 'Verified Contact' : 'Contact'}
-                    </OutreachSectionLabel>
-                    <ContactDisplay>
-                      <ContactEmail>
-                        {packageData.contact?.email || packageData.brand_email}
-                      </ContactEmail>
-                      <ContactCopyBtn onClick={() => copyToClipboard(packageData.contact?.email || packageData.brand_email, 'email')}>
-                        {copiedField === 'email' ? <><FiCheck size={12} /> Copied</> : 'Copy'}
-                      </ContactCopyBtn>
-                    </ContactDisplay>
-                  </OutreachSection>
+                  {isFormPackage ? (
+                    <>
+                      <FormNote>
+                        <strong>You submit this form — we don’t</strong>
+                        Affiliate / UGC portals need your login. We open the link and prep answers from My Kit.
+                      </FormNote>
+                      <InfoBlock>
+                        <InfoLabel>Program signup link</InfoLabel>
+                        <InfoRow>
+                          <InfoValue style={{ fontSize: '0.88rem' }}>{formUrl}</InfoValue>
+                          <GhostBtn type="button" onClick={() => copyToClipboard(formUrl, 'email')}>
+                            {copiedField === 'email' ? 'Copied' : 'Copy'}
+                          </GhostBtn>
+                        </InfoRow>
+                      </InfoBlock>
+                      <PitchSection>
+                        <PitchSectionLabel>Prep answers</PitchSectionLabel>
+                        <PrepList>
+                          <li>
+                            <span>Why you fit</span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(
+                                packageData.package?.pitches?.[selectedTone]?.body_plain || packageData.coaching?.coach_note || '',
+                                'pitch'
+                              )}
+                            >
+                              Copy
+                            </button>
+                          </li>
+                          {packageData.media_kit_url && (
+                            <li>
+                              <span>Media kit URL</span>
+                              <button type="button" onClick={() => copyToClipboard(packageData.media_kit_url, 'pitch')}>
+                                Copy
+                              </button>
+                            </li>
+                          )}
+                        </PrepList>
+                      </PitchSection>
+                    </>
+                  ) : (
+                    <>
+                      <InfoBlock>
+                        <InfoLabel>Verified PR email</InfoLabel>
+                        <InfoRow>
+                          <div>
+                            <InfoValue>{brandEmail}</InfoValue>
+                            <InfoMeta>Unlocked with Get Brand PR · 1 credit</InfoMeta>
+                          </div>
+                          <GhostBtn type="button" onClick={() => copyToClipboard(brandEmail, 'email')}>
+                            {copiedField === 'email' ? 'Copied' : 'Copy'}
+                          </GhostBtn>
+                        </InfoRow>
+                      </InfoBlock>
 
-                  {/* Pitch Section */}
-                  <OutreachSection>
-                    <OutreachSectionLabel>
-                      <OutreachSectionIcon>✍️</OutreachSectionIcon>
-                      Your Pitch
-                    </OutreachSectionLabel>
-                    <ToneTabs>
-                      {['short', 'growing', 'founder'].map(tone => (
-                        <ToneTab
-                          key={tone}
-                          $active={selectedTone === tone}
-                          onClick={() => setSelectedTone(tone)}
-                        >
-                          {tone}
-                        </ToneTab>
-                      ))}
-                    </ToneTabs>
-                    <PitchCard>
-                      <PitchText>
-                        {packageData.package?.pitches?.[selectedTone]?.body_plain || 'Pitch loading...'}
-                      </PitchText>
-                      <PitchCopyBtn onClick={() => copyToClipboard(packageData.package?.pitches?.[selectedTone]?.body_plain, 'pitch')}>
-                        {copiedField === 'pitch' ? <><FiCheck size={12} /> Copied!</> : <><FiCopy size={12} /> Copy pitch</>}
-                      </PitchCopyBtn>
-                    </PitchCard>
-                  </OutreachSection>
+                      <PitchSection>
+                        <PitchSectionLabel>Your pitch</PitchSectionLabel>
+                        <ToneTabs style={{ background: 'rgba(255,255,255,0.7)' }}>
+                          {['short', 'growing', 'founder'].map(tone => (
+                            <ToneTab
+                              key={tone}
+                              $active={selectedTone === tone}
+                              onClick={() => setSelectedTone(tone)}
+                            >
+                              {tone}
+                            </ToneTab>
+                          ))}
+                        </ToneTabs>
+                        <PitchCard style={{ background: '#fff', border: '1px solid #dbeafe' }}>
+                          <PitchText style={{ maxHeight: 160 }}>
+                            {packageData.package?.pitches?.[selectedTone]?.body_plain || 'Pitch loading...'}
+                          </PitchText>
+                          <PitchCopyBtn onClick={() => copyToClipboard(packageData.package?.pitches?.[selectedTone]?.body_plain, 'pitch')}>
+                            {copiedField === 'pitch' ? <><FiCheck size={12} /> Copied!</> : <><FiCopy size={12} /> Copy pitch</>}
+                          </PitchCopyBtn>
+                        </PitchCard>
+                      </PitchSection>
 
-                  {/* Timing Section */}
-                  <OutreachSection>
-                    <OutreachSectionLabel>
-                      <OutreachSectionIcon>⏰</OutreachSectionIcon>
-                      Best Time to Send
-                    </OutreachSectionLabel>
-                    <TimingCard>
-                      <TimingIcon>
-                        {packageData.best_time?.emoji_flame ? '🔥' : '📅'}
-                      </TimingIcon>
-                      <TimingInfo>
-                        <TimingPrimary>{packageData.best_time?.day}</TimingPrimary>
-                        <TimingSecondary>{packageData.best_time?.time_range}</TimingSecondary>
-                      </TimingInfo>
-                    </TimingCard>
-                  </OutreachSection>
+                      <InfoBlock>
+                        <InfoLabel>What they often gift</InfoLabel>
+                        <InfoValue>~${giftValue} avg gift</InfoValue>
+                      </InfoBlock>
+
+                      {formUrl && (
+                        <FormApplySection>
+                          <FormApplyTitle>Also has a PR / affiliate form</FormApplyTitle>
+                          <FormApplyBody>
+                            You can apply through their form too.
+                          </FormApplyBody>
+                        </FormApplySection>
+                      )}
+
+                      {(packageData.best_time?.day || packageData.best_time?.time_range) && (
+                        <TipLine>
+                          Best time: <b>{packageData.best_time?.day} {packageData.best_time?.time_range}</b>
+                        </TipLine>
+                      )}
+                    </>
+                  )}
                 </OutreachContent>
 
                 <OutreachFooter>
-                  <OutreachCTA onClick={handleSend}>
-                    Open Email →
-                  </OutreachCTA>
-                  <BackButton onClick={() => setPhase(PHASE_MODAL)}>
+                  {isFormPackage ? (
+                    <OutreachCTA onClick={handleOpenForm}>
+                      Open PR / affiliate form
+                    </OutreachCTA>
+                  ) : (
+                    <>
+                      <OutreachCTA onClick={handleSend}>
+                        {SEND_BUTTON.emailLabel}
+                      </OutreachCTA>
+                      {formUrl && (
+                        <FormApplyCTA type="button" onClick={handleOpenForm}>
+                          Apply via form
+                        </FormApplyCTA>
+                      )}
+                      {brandEmail && (
+                        <GhostBtn
+                          type="button"
+                          style={{ width: '100%', padding: '0.7rem 1rem', fontSize: '0.9rem', borderRadius: 10 }}
+                          onClick={() => copyToClipboard(brandEmail, 'email')}
+                        >
+                          {copiedField === 'email' ? 'Copied' : 'Copy email'}
+                        </GhostBtn>
+                      )}
+                    </>
+                  )}
+                  <BackButton type="button" onClick={() => setPhase(PHASE_MODAL)}>
                     ← Back to strategy
                   </BackButton>
                 </OutreachFooter>
-              </OutreachScreen>
+              </>
             )}
 
             {/* NEXT ACTIONS — value continues even if brand never replies */}
@@ -2202,7 +2401,9 @@ const UnlockModalV2 = ({
                 transition={{ duration: 0.2 }}
               >
                 <NextActionsHero>
-                  <NextActionsBadge>✓ Email opened</NextActionsBadge>
+                  <NextActionsBadge>
+                    {isFormPackage ? '✓ Form opened' : '✓ Email opened'}
+                  </NextActionsBadge>
                   <NextActionsTitle>{NEXT_ACTIONS.title}</NextActionsTitle>
                   <NextActionsSub>{NEXT_ACTIONS.subline}</NextActionsSub>
                 </NextActionsHero>

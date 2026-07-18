@@ -5,6 +5,7 @@ import { message, Spin } from 'antd';
 import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFileText } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
+import { creatorTokens as tokens } from '../theme/creatorTokens';
 // Media kit enforcement removed - let users try the feature immediately
 
 /**
@@ -733,8 +734,11 @@ ${creatorName}`;
 
               {/* Brand Unlocked Status Line - differentiate fresh vs already unlocked */}
               {!loading && pitch && (
-                <UnlockedStatus $wasAlreadyUnlocked={wasAlreadyUnlocked}>
-                  <span>✓</span> {wasAlreadyUnlocked ? 'Already unlocked · No credit used' : 'Brand unlocked · Verified contact below'}
+                  <UnlockedStatus $wasAlreadyUnlocked={wasAlreadyUnlocked}>
+                  <span>✓</span>{' '}
+                  {wasAlreadyUnlocked
+                    ? 'Already unlocked · No credit used'
+                    : 'Brand PR unlocked · Email or form below'}
                 </UnlockedStatus>
               )}
 
@@ -782,6 +786,7 @@ ${creatorName}`;
               {/* Content */}
               {loading ? (
             <LoadingState>
+              <LoadingEyebrow>Getting Brand PR</LoadingEyebrow>
               <LoadingBrandIcon>
                 {brand?.logo ? (
                   <img src={brand.logo} alt={brandName} />
@@ -790,109 +795,136 @@ ${creatorName}`;
                 )}
               </LoadingBrandIcon>
               <LoadingTitle>
-                {isFollowup ? 'Preparing follow-up' : 'Unlocking'} <LoadingBrandName>{brandName}</LoadingBrandName>
+                {isFollowup ? 'Preparing follow-up for' : 'Unlocking'}{' '}
+                <LoadingBrandName>{brandName}</LoadingBrandName>
               </LoadingTitle>
               <LoadingSteps>
                 <LoadingStepItem $active={loadingStep >= 0} $complete={loadingStep > 0}>
                   <LoadingStepDot $active={loadingStep === 0} $complete={loadingStep > 0}>
                     {loadingStep > 0 ? '✓' : '1'}
                   </LoadingStepDot>
-                  <LoadingStepLabel>Finding PR contact</LoadingStepLabel>
+                  <LoadingStepLabel>PR contact</LoadingStepLabel>
                 </LoadingStepItem>
                 <LoadingStepLine $complete={loadingStep > 0} />
                 <LoadingStepItem $active={loadingStep >= 1} $complete={loadingStep > 1}>
                   <LoadingStepDot $active={loadingStep === 1} $complete={loadingStep > 1}>
                     {loadingStep > 1 ? '✓' : '2'}
                   </LoadingStepDot>
-                  <LoadingStepLabel>Crafting pitch</LoadingStepLabel>
+                  <LoadingStepLabel>Pitch draft</LoadingStepLabel>
                 </LoadingStepItem>
                 <LoadingStepLine $complete={loadingStep > 1} />
                 <LoadingStepItem $active={loadingStep >= 2} $complete={loadingStep > 2}>
                   <LoadingStepDot $active={loadingStep === 2} $complete={loadingStep > 2}>
                     {loadingStep > 2 ? '✓' : '3'}
                   </LoadingStepDot>
-                  <LoadingStepLabel>Personalizing</LoadingStepLabel>
+                  <LoadingStepLabel>Package ready</LoadingStepLabel>
                 </LoadingStepItem>
               </LoadingSteps>
               <LoadingSubtext>
-                {loadingStep === 0 && 'Locating verified PR email...'}
-                {loadingStep === 1 && 'Writing custom outreach...'}
-                {loadingStep === 2 && 'Adding your profile details...'}
+                {loadingStep === 0 && 'Finding verified PR email or form…'}
+                {loadingStep === 1 && 'Drafting a short pitch for micros…'}
+                {loadingStep === 2 && 'Packing email + form prep…'}
               </LoadingSubtext>
             </LoadingState>
           ) : (
             <>
-              {/* Flow tab switcher — only show when brand has both email and form */}
-              {brandEmail && applicationFormUrl && (
-                <FlowTabs>
-                  <FlowTab
-                    active={contactMethod === 'email'}
-                    onClick={() => setContactMethod('email')}
-                  >
-                    Email pitch
-                  </FlowTab>
-                  <FlowTab
-                    active={contactMethod === 'form'}
-                    onClick={() => setContactMethod('form')}
-                  >
-                    Application form
-                  </FlowTab>
-                </FlowTabs>
-              )}
+              <PkgBody>
+                <PkgPills>
+                  <PkgPill $tone="ok">Accepts micros</PkgPill>
+                  {brandEmail && <PkgPill $tone="email">PR email</PkgPill>}
+                  {applicationFormUrl && <PkgPill $tone="form">Program form</PkgPill>}
+                  <PkgPill $tone="gift">~${brand?.price_point || 45} avg gift</PkgPill>
+                </PkgPills>
 
-              {/* Email fields */}
-              <EmailPreview>
-                <EmailFieldRow>
-                  <FieldLabel>To</FieldLabel>
-                  <FieldValue $masked={!contactRevealed && brandEmail}>
-                    {displayEmail || `${brandName} PR Team`}
-                    {!contactRevealed && brandEmail && <LockIcon>🔒</LockIcon>}
-                  </FieldValue>
-                </EmailFieldRow>
-                <EmailFieldRow>
-                  <FieldLabel>Subject</FieldLabel>
+                <MatchBox>
+                  <MatchBoxTitle>
+                    {brand?.match_score ? `${Math.min(Math.round(brand.match_score), 100)}% match` : 'Good match'}
+                  </MatchBoxTitle>
+                  <MatchBoxBody>
+                    {brand?.description
+                      || (brand?.category
+                        ? `${brand.category} creators — unlock PR contact and pitch with a short note.`
+                        : 'Unlock the PR contact and pitch with a short, personal note.')}
+                  </MatchBoxBody>
+                </MatchBox>
+
+                {brandEmail && applicationFormUrl && (
+                  <FlowTabs style={{ margin: '0 0 12px' }}>
+                    <FlowTab
+                      active={contactMethod === 'email'}
+                      onClick={() => setContactMethod('email')}
+                    >
+                      PR email
+                    </FlowTab>
+                    <FlowTab
+                      active={contactMethod === 'form'}
+                      onClick={() => setContactMethod('form')}
+                    >
+                      Program form
+                    </FlowTab>
+                  </FlowTabs>
+                )}
+
+                {(contactMethod === 'form' || (!brandEmail && applicationFormUrl)) && (
+                  <FormSubmitNote style={{ margin: '0 0 12px' }}>
+                    <strong>You submit this form — we don’t</strong>
+                    Affiliate / UGC portals need your login. We open the link and prep your pitch answers.
+                  </FormSubmitNote>
+                )}
+
+                {brandEmail && contactMethod === 'email' && (
+                  <InfoBlock>
+                    <InfoLabel>Verified PR email</InfoLabel>
+                    <InfoValue>{displayEmail || `${brandName} PR Team`}</InfoValue>
+                    <InfoMeta>
+                      {wasAlreadyUnlocked ? 'Already unlocked · no credit used' : 'Unlocked with Get Brand PR · 1 credit'}
+                    </InfoMeta>
+                  </InfoBlock>
+                )}
+
+                {applicationFormUrl && (contactMethod === 'form' || !brandEmail) && (
+                  <InfoBlock>
+                    <InfoLabel>Program signup link</InfoLabel>
+                    <InfoValue style={{ fontSize: '0.88rem' }}>{applicationFormUrl}</InfoValue>
+                  </InfoBlock>
+                )}
+
+                <InfoBlock>
+                  <InfoLabel>What they often gift</InfoLabel>
+                  <InfoValue>~${brand?.price_point || 45} avg gift</InfoValue>
+                </InfoBlock>
+
+                <InfoBlock>
+                  <InfoLabel>Your pitch</InfoLabel>
                   <SubjectInput
                     value={editedSubject}
                     onChange={e => setEditedSubject(e.target.value)}
                     placeholder="Subject line"
+                    style={{
+                      width: '100%',
+                      marginBottom: 8,
+                      padding: '8px 10px',
+                      border: '1px solid #ebebeb',
+                      borderRadius: 8,
+                      fontWeight: 600,
+                    }}
                   />
-                </EmailFieldRow>
-              </EmailPreview>
+                  <PitchTextarea
+                    value={editedBody}
+                    onChange={e => setEditedBody(e.target.value)}
+                    rows={6}
+                    style={{
+                      background: '#fff',
+                      border: '1px solid #ebebeb',
+                      borderRadius: 10,
+                      minHeight: 120,
+                    }}
+                  />
+                  <EditHint style={{ marginTop: 6, display: 'block' }}>Tap to edit</EditHint>
+                </InfoBlock>
+              </PkgBody>
 
-              {/* Editable pitch body */}
-              <PitchBodyWrap>
-                <PitchBodyHeader>
-                  Pitch
-                  <EditHint>Tap to edit</EditHint>
-                </PitchBodyHeader>
-                <PitchTextarea
-                  value={editedBody}
-                  onChange={e => setEditedBody(e.target.value)}
-                  rows={8}
-                />
-              </PitchBodyWrap>
-
-              {/* Personalization confirmation */}
-              {pitch?.creator_stats && (pitch.creator_stats.followers || pitch.creator_stats.niche) && (
-                <PersonalizationBar>
-                  <PersonalizationLabel>Written for your profile</PersonalizationLabel>
-                  <PersonalizationTags>
-                    {pitch.creator_stats.followers && (
-                      <PersonalizationTag>{pitch.creator_stats.followers} followers</PersonalizationTag>
-                    )}
-                    {pitch.creator_stats.niche && (
-                      <PersonalizationTag>{pitch.creator_stats.niche}</PersonalizationTag>
-                    )}
-                    {pitch.creator_stats.platform && (
-                      <PersonalizationTag>{pitch.creator_stats.platform}</PersonalizationTag>
-                    )}
-                  </PersonalizationTags>
-                </PersonalizationBar>
-              )}
-
-              {/* Primary CTA */}
               <Actions>
-                {/* Case 1: Form selected OR only form available (no email) */}
                 {(contactMethod === 'form' || !brandEmail) && applicationFormUrl ? (
                   <>
                     <PrimaryBtn
@@ -900,14 +932,13 @@ ${creatorName}`;
                       onClick={handleApplicationFormClick}
                       whileTap={{ scale: 0.98 }}
                     >
-                      Apply to PR List
+                      Open form in new tab →
                     </PrimaryBtn>
                     <FormTip>
-                      💡 Use the pitch above as a reference when filling out the form
+                      Use the pitch above as copy-paste answers when you submit.
                     </FormTip>
                   </>
                 ) : brandEmail ? (
-                  /* Case 2: Email available */
                   <>
                     <PrimaryBtn
                       as={motion.button}
@@ -915,23 +946,29 @@ ${creatorName}`;
                       disabled={sending}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {sending ? 'Sending...' : 'Send Pitch'}
+                      {sending ? 'Opening…' : 'Contact Brand'}
                     </PrimaryBtn>
-                    <MethodCaption>via email</MethodCaption>
+                    <SecondaryRow>
+                      <SecondaryBtn onClick={handleCopyPitch}>
+                        {copied ? 'Copied' : 'Copy pitch'}
+                      </SecondaryBtn>
+                      <SecondaryBtn onClick={() => {
+                        if (brandEmail && contactRevealed) {
+                          navigator.clipboard?.writeText(brandEmail);
+                          message.success('Email copied');
+                        } else if (displayEmail) {
+                          navigator.clipboard?.writeText(brandEmail || displayEmail);
+                        }
+                      }}>
+                        Copy email
+                      </SecondaryBtn>
+                    </SecondaryRow>
                   </>
                 ) : (
-                  /* Case 3: No contact info at all */
                   <NoContactNote>
-                    Brand currently has no dedicated PR email — DM them directly.
+                    No PR email or form on file yet — try Discover search or DM them.
                   </NoContactNote>
                 )}
-
-                <SecondaryRow>
-                  <SecondaryBtn onClick={handleCopyPitch}>
-                    {copied ? 'Copied' : 'Copy pitch'}
-                  </SecondaryBtn>
-                  {/* Rewrite pitch button removed to avoid LLM costs */}
-                </SecondaryRow>
               </Actions>
 
               {/* Media kit nudge — smart states based on kit status */}
@@ -1031,32 +1068,36 @@ const Overlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(18, 20, 26, 0.52);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  padding: 20px;
+  padding: 16px;
+  font-family: ${tokens.fontSans};
 
   @media (max-width: 768px) {
-    padding: 12px;
+    padding: 0;
     align-items: flex-end;
   }
 `;
 
 const Modal = styled(motion.div)`
-  background: white;
-  border-radius: 24px;
-  max-width: 600px;
+  background: ${tokens.white};
+  border-radius: 18px;
+  max-width: 460px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 92vh;
   overflow-y: auto;
   position: relative;
+  font-family: ${tokens.fontSans};
+  box-shadow: 0 24px 80px rgba(18, 20, 26, 0.28);
 
   @media (max-width: 768px) {
-    border-radius: 20px 20px 0 0;
-    max-height: 92vh;
+    border-radius: 18px 18px 0 0;
+    max-height: 94vh;
+    max-width: 100%;
   }
 `;
 
@@ -1340,30 +1381,44 @@ const PitchCounter = styled.div`
 `;
 
 const LoadingState = styled.div`
-  padding: 48px 24px 56px;
+  padding: 40px 20px 48px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: ${tokens.paper};
+
+  @media (max-width: 480px) {
+    padding: 28px 16px 40px;
+  }
+`;
+
+const LoadingEyebrow = styled.div`
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: ${tokens.accentDeep};
+  margin-bottom: 1rem;
 `;
 
 const LoadingBrandIcon = styled.div`
-  width: 72px;
-  height: 72px;
-  border-radius: 18px;
-  background: #F3F4F6;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: ${tokens.white};
+  border: 1px solid ${tokens.line};
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 12px;
+    padding: 10px;
   }
 `;
 
@@ -1374,14 +1429,15 @@ const LoadingBrandInitial = styled.div`
 `;
 
 const LoadingTitle = styled.div`
-  font-size: 18px;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 28px;
+  color: ${tokens.muted};
+  margin-bottom: 24px;
+  line-height: 1.35;
 `;
 
 const LoadingBrandName = styled.span`
-  color: #111827;
+  color: ${tokens.ink};
   font-weight: 700;
 `;
 
@@ -1416,10 +1472,10 @@ const LoadingStepDot = styled.div`
   transition: all 0.3s ease;
 
   ${p => p.$complete ? `
-    background: #10B981;
+    background: ${tokens.accent};
     color: white;
   ` : p.$active ? `
-    background: #111827;
+    background: ${tokens.action};
     color: white;
     animation: pulse 1.5s ease-in-out infinite;
   ` : `
@@ -1428,8 +1484,8 @@ const LoadingStepDot = styled.div`
   `}
 
   @keyframes pulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(17, 24, 39, 0.3); }
-    50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(17, 24, 39, 0); }
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(13, 122, 95, 0.25); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(13, 122, 95, 0); }
   }
 `;
 
@@ -1443,7 +1499,7 @@ const LoadingStepLabel = styled.div`
 const LoadingStepLine = styled.div`
   width: 32px;
   height: 2px;
-  background: ${p => p.$complete ? '#10B981' : '#E5E7EB'};
+  background: ${p => p.$complete ? tokens.accent : '#E5E7EB'};
   margin: 0 4px;
   margin-bottom: 24px;
   transition: background 0.3s ease;
@@ -2166,8 +2222,8 @@ const PitchBodyHeader = styled.div`
 const EditHint = styled.span`
   font-size: 10px;
   font-weight: 600;
-  color: #C4B5FD;
-  background: #F5F3FF;
+  color: ${tokens.accentDeep};
+  background: ${tokens.accentSoft};
   padding: 2px 8px;
   border-radius: 6px;
 `;
@@ -2238,32 +2294,28 @@ const PersonalizationTag = styled.span`
 const PrimaryBtn = styled.button`
   width: 100%;
   padding: 15px 20px;
-  background: #0F0F0F;
+  background: ${tokens.action};
   color: #fff;
-  font-size: 14px;
+  font-size: 0.95rem;
   font-weight: 700;
   border: none;
-  border-radius: 14px;
+  border-radius: 10px;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.15s;
+  transition: background 0.15s, transform 0.1s;
   box-sizing: border-box;
+  font-family: ${tokens.fontSans};
   &:disabled { opacity: 0.5; cursor: not-allowed; }
-  &:hover:not(:disabled) { opacity: 0.88; }
+  &:hover:not(:disabled) { background: ${tokens.actionHover}; }
+  &:active:not(:disabled) { transform: scale(0.98); }
 
   @media (max-width: 768px) {
-    padding: 13px 16px;
-    font-size: 13px;
-    border-radius: 12px;
-  }
-
-  @media (max-width: 380px) {
-    font-size: 12px;
-    padding: 12px 14px;
+    padding: 15px 16px;
+    font-size: 1rem;
   }
 `;
 
@@ -2276,14 +2328,14 @@ const SecondaryRow = styled.div`
 const SecondaryBtn = styled.button`
   flex: 1;
   padding: 10px;
-  background: #F3F4F6;
-  color: #374151;
+  background: ${tokens.white};
+  border: 1px solid #ebebeb;
+  color: ${tokens.ink};
   font-size: 12.5px;
   font-weight: 600;
-  border: none;
-  border-radius: 11px;
+  border-radius: 10px;
   cursor: pointer;
-  &:hover { background: #E5E7EB; }
+  &:hover { background: ${tokens.paper}; border-color: ${tokens.accentBorder}; }
 
   @media (max-width: 768px) {
     padding: 9px 8px;
@@ -2301,14 +2353,125 @@ const NoContactNote = styled.div`
   text-align: center;
 `;
 
+const FormSubmitNote = styled.div`
+  margin: 0 24px 12px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.86rem;
+  color: #7c4a1a;
+  line-height: 1.45;
+  text-align: left;
+
+  strong {
+    display: block;
+    color: #b45309;
+    margin-bottom: 0.2rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 768px) {
+    margin: 0 16px 10px;
+    font-size: 0.82rem;
+  }
+`;
+
+const PkgBody = styled.div`
+  padding: 0 20px 8px;
+
+  @media (max-width: 768px) {
+    padding: 0 16px 8px;
+  }
+`;
+
+const PkgPills = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+`;
+
+const PkgPill = styled.span`
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  background: ${p => (
+    p.$tone === 'ok' ? tokens.accentSoft :
+    p.$tone === 'email' ? '#fef3c7' :
+    p.$tone === 'form' ? '#eff6ff' :
+    p.$tone === 'gift' ? '#fce7f3' :
+    '#f4f4f4'
+  )};
+  color: ${p => (
+    p.$tone === 'ok' ? tokens.accentDeep :
+    p.$tone === 'email' ? '#92400e' :
+    p.$tone === 'form' ? '#1d4ed8' :
+    p.$tone === 'gift' ? '#9d174d' :
+    '#444'
+  )};
+`;
+
+const MatchBox = styled.div`
+  background: ${tokens.accentSoft};
+  border-radius: 12px;
+  padding: 0.8rem 0.95rem;
+  margin-bottom: 0.75rem;
+`;
+
+const MatchBoxTitle = styled.div`
+  color: ${tokens.accentDeep};
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+`;
+
+const MatchBoxBody = styled.p`
+  margin: 0;
+  font-size: 0.88rem;
+  color: #1f4d3f;
+  line-height: 1.45;
+`;
+
+const InfoBlock = styled.div`
+  background: ${tokens.paper};
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 0.65rem;
+`;
+
+const InfoLabel = styled.div`
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 0.25rem;
+`;
+
+const InfoValue = styled.div`
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: ${tokens.ink};
+  word-break: break-all;
+  line-height: 1.35;
+`;
+
+const InfoMeta = styled.div`
+  font-size: 0.75rem;
+  color: ${tokens.muted};
+  margin-top: 0.25rem;
+`;
+
 const FormTip = styled.div`
   margin-top: 10px;
   padding: 10px 14px;
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
+  background: ${tokens.accentSoft};
+  border: 1px solid ${tokens.accentBorder};
   border-radius: 10px;
   font-size: 13px;
-  color: #1E40AF;
+  color: ${tokens.accentDeep};
   text-align: center;
   line-height: 1.4;
   width: 100%;

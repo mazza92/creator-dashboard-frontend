@@ -912,7 +912,7 @@ const PRPipeline = () => {
                 $contact
                 onClick={() => handlePitch(item)}
               >
-                📦 View Package (unlocked)
+                View Brand PR (unlocked)
               </PrimaryBtn>
             ) : (
               <PrimaryBtn
@@ -1072,13 +1072,14 @@ const PRPipeline = () => {
     <Container>
       {/* Journey Header */}
       <JourneyHeader>
+        <JourneyEyebrow>Inbox · PR pipeline</JourneyEyebrow>
         <JourneyGreeting>My PR Pipeline</JourneyGreeting>
         <JourneySub>
           {stageCounts.waiting > 0
             ? `${stageCounts.waiting} pitch${stageCounts.waiting === 1 ? '' : 'es'} out · reply expected in ~5 days`
             : readyToPitchCount > 0
-              ? `${readyToPitchCount} brand${readyToPitchCount === 1 ? '' : 's'} ready to contact this month`
-              : 'Save brands from For You to start pitching'}
+              ? `${readyToPitchCount} brand${readyToPitchCount === 1 ? '' : 's'} ready. Email pitches + form applies you complete yourself.`
+              : 'Unlock Brand PR from For You — email pitches and form applies land here.'}
         </JourneySub>
         {/* Only show stats after first pitch - zeros are demoralizing */}
         {(stats.total_contacted > 0) && (
@@ -1121,8 +1122,8 @@ const PRPipeline = () => {
           <QuotaText>
             <QuotaTitle>
               {pitchLimits.limit - pitchLimits.used > 0
-                ? `${pitchLimits.limit - pitchLimits.used} free PR Package${pitchLimits.limit - pitchLimits.used === 1 ? '' : 's'} left this month`
-                : 'Monthly PR Packages used — upgrade to keep going'}
+                ? `${pitchLimits.limit - pitchLimits.used} free Brand PR unlock${pitchLimits.limit - pitchLimits.used === 1 ? '' : 's'} left this month`
+                : 'Monthly Brand PR unlocks used — upgrade to keep going'}
             </QuotaTitle>
             <QuotaSub>{pitchLimits.used} used · resets {getNextResetDate()}</QuotaSub>
           </QuotaText>
@@ -1300,7 +1301,7 @@ const PRPipeline = () => {
               <LockedTitle>
                 {stageCounts.saved > 3
                   ? `${stageCounts.saved - 3} more brands match your saved categories`
-                  : 'Unlock unlimited PR Packages every month'}
+                  : 'Unlock unlimited Brand PR every month'}
               </LockedTitle>
               <LockedSub>Pro removes the 5-package limit so you can contact all of them.</LockedSub>
             </LockedTextWrap>
@@ -1677,10 +1678,11 @@ const PRPipeline = () => {
 
 // Styled Components
 const Container = styled.div`
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   max-width: 600px;
   margin: 0 auto;
   padding: 32px 20px 100px;
-  background: #F5F5F7;
+  background: #f7f5f0;
   min-height: 100vh;
 
   @media (max-width: 480px) {
@@ -1703,22 +1705,36 @@ const JourneyHeader = styled.div`
   }
 `;
 
+const JourneyEyebrow = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+  margin-bottom: 0.35rem;
+`;
+
 const JourneyGreeting = styled.div`
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  margin-bottom: 4px;
-  color: #0F0F0F;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  color: #12141a;
 
   @media (max-width: 480px) {
-    font-size: 20px;
+    font-size: 1.55rem;
   }
 `;
 
 const JourneySub = styled.div`
-  font-size: 13px;
-  color: #8C8C8C;
+  font-size: 0.95rem;
+  color: #5c6470;
   margin-bottom: 20px;
+  max-width: 36rem;
+  line-height: 1.45;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 `;
 
 const JourneyStats = styled.div`

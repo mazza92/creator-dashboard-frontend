@@ -35,9 +35,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   // Determine context-specific copy — speak to newbie freebie / UGC starters
   let headline = 'Brands that gift are one pitch away.';
-  let subtext = 'You’ve used your free PR Packages this month. Pro keeps you reaching brands that send free products.';
+  let subtext = 'You’ve used your free Brand PR unlocks this month. Pro keeps you reaching brands that send free products.';
   let ctaText = 'Get Pro — $19/month';
-  let progressLabel = 'PR Packages';
+  let progressLabel = 'Brand PR unlocks';
 
   // Default values, can be overridden by feature
   let used = pitchLimits?.used || currentCount || 3;
@@ -63,7 +63,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   } else if (feature === 'limit_reached') {
     headline = 'Keep your talent manager working.';
-    subtext = `You’ve used ${used} PR Packages this month. Upgrade to keep unlocking strategies, pitches, and brands that gift.`;
+    subtext = `You’ve used ${used} Brand PR unlocks this month. Upgrade to keep unlocking strategies, pitches, and brands that gift.`;
     ctaText = 'Get Pro — $19/month';
 
   } else if (feature === 'bump_profile') {
@@ -115,7 +115,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       highlight: feature === 'opportunities'
     },
     {
-      text: <><strong>Unlimited PR Packages</strong> — discover, pitch, and track brands that gift</>,
+      text: <><strong>Unlimited Brand PR unlocks</strong> — discover, pitch, and track brands that gift</>,
       highlight: feature === 'limit_reached' || feature === 'for_you' || feature === 'locked'
     },
     {

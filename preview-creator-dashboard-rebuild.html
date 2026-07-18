@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NewCollab — Creator Dashboard Rebuild Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #12141a;
+      --muted: #5c6470;
+      --line: #e4e2dc;
+      --bg: #f7f5f0;
+      --white: #fff;
+      --accent: #0d7a5f;
+      --accent-deep: #095a46;
+      --chip: #eef6f3;
+      --hot: #e85d3b;
+      --black: #0f0f0f;
+      --shadow: 0 16px 48px rgba(18, 20, 26, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Outfit", system-ui, sans-serif;
+      background: #e8e4dc;
+      color: var(--ink);
+      line-height: 1.45;
+      min-height: 100vh;
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    .preview-bar {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+      padding: 0.6rem 1.25rem;
+      background: var(--ink); color: #f3f1ea; font-size: 0.8rem;
+    }
+    .preview-bar strong { color: #9fe0c9; }
+    .preview-bar span { opacity: 0.7; }
+
+    .shell {
+      max-width: 1180px;
+      margin: 1rem auto 2.5rem;
+      background: var(--bg);
+      border: 1px solid #d9d4c8;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      min-height: calc(100vh - 5rem);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== TOP NAV (existing IA) ===== */
+    .topnav {
+      height: 60px;
+      background: var(--white);
+      border-bottom: 1px solid #ebebeb;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.25rem;
+      flex-shrink: 0;
+    }
+    .logo { font-weight: 700; letter-spacing: -0.04em; font-size: 1.1rem; }
+    .logo span { color: var(--accent); }
+    .tabs {
+      display: flex; gap: 2px; background: #f4f4f4;
+      padding: 4px; border-radius: 100px;
+    }
+    .tab {
+      display: flex; align-items: center; gap: 6px;
+      border: 0; background: transparent;
+      padding: 8px 14px; border-radius: 100px;
+      font-size: 13px; font-weight: 500; color: #4b4b4b;
+    }
+    .tab.on { background: var(--black); color: #fff; font-weight: 600; }
+    .tab .badge {
+      min-width: 16px; height: 16px; padding: 0 4px;
+      border-radius: 100px; background: #ef4444; color: #fff;
+      font-size: 10px; font-weight: 700;
+      display: inline-grid; place-items: center;
+    }
+    .tab .new {
+      background: linear-gradient(135deg, #e11d48, #7c3aed);
+      color: #fff; font-size: 9px; font-weight: 700;
+      padding: 2px 6px; border-radius: 100px;
+    }
+    .user {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 13px; font-weight: 500; color: #4b4b4b;
+    }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #c7e6dc; color: var(--accent-deep);
+      display: grid; place-items: center; font-weight: 700; font-size: 0.85rem;
+    }
+
+    .main { flex: 1; padding: 1.35rem 1.35rem 2rem; }
+    .screen { display: none; animation: rise 0.3s ease; }
+    .screen.on { display: block; }
+
+    .eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #8a8a8a; margin-bottom: 0.35rem;
+    }
+    h1 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-weight: 400;
+      font-size: clamp(1.7rem, 3vw, 2.35rem);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 0.4rem;
+    }
+    h1 em { font-style: italic; color: var(--accent-deep); }
+    .sub { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.15rem; max-width: 36rem; }
+
+    /* Search — product front door */
+    .search-cta {
+      display: flex; gap: 0.45rem;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0.4rem;
+      box-shadow: var(--shadow);
+      max-width: 560px;
+      margin-bottom: 0.75rem;
+    }
+    .search-cta input {
+      flex: 1; border: 0; outline: none;
+      padding: 0.75rem 0.9rem; background: transparent; min-width: 0;
+    }
+    .search-cta button {
+      border: 0; background: var(--black); color: #fff;
+      padding: 0.75rem 1.15rem; border-radius: 10px; font-weight: 600;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.15rem; }
+    .chips button {
+      border: 1px solid var(--line); background: var(--white);
+      border-radius: 999px; padding: 0.3rem 0.7rem;
+      font-size: 0.78rem; color: var(--muted);
+    }
+    .chips button:hover { border-color: var(--accent); color: var(--accent-deep); }
+
+    .trackers {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;
+      margin-bottom: 1rem; max-width: 480px;
+    }
+    .tracker {
+      background: var(--white); border: 1px solid #ebebeb;
+      border-radius: 12px; padding: 0.75rem 0.9rem;
+    }
+    .tracker strong { display: block; font-size: 0.9rem; }
+    .tracker span { font-size: 0.78rem; color: var(--muted); }
+    .dots { display: flex; gap: 4px; margin-top: 0.4rem; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #e5e5e5; }
+    .dot.on { background: var(--accent); }
+    .dot.blue { background: #3b82f6; }
+
+    .seg { display: flex; gap: 0.75rem; margin-bottom: 0.85rem; border-bottom: 1px solid var(--line); }
+    .seg button {
+      border: 0; background: transparent; padding: 0.5rem 0.1rem 0.65rem;
+      font-weight: 600; font-size: 0.92rem; color: #999;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .seg button.on { color: var(--ink); border-bottom-color: var(--ink); }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.85rem; }
+    .card {
+      background: var(--white); border: 1px solid #ebebeb;
+      border-radius: 14px; padding: 1rem 1.05rem;
+      display: flex; flex-direction: column; gap: 0.55rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: #b8d5cb; transform: translateY(-2px); }
+    .card h3 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em; }
+    .card p { font-size: 0.86rem; color: var(--muted); flex: 1; }
+    .pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .pill {
+      font-size: 0.7rem; font-weight: 600;
+      padding: 0.22rem 0.5rem; border-radius: 6px;
+      background: #f4f4f4; color: #444;
+    }
+    .pill.ok { background: var(--chip); color: var(--accent-deep); }
+    .pill.email { background: #fef3c7; color: #92400e; }
+    .pill.form { background: #eff6ff; color: #1d4ed8; }
+    .pill.aff { background: #fce7f3; color: #9d174d; }
+    .stats {
+      display: flex; gap: 1rem; font-size: 0.8rem; font-weight: 600;
+    }
+    .stats em { display: block; font-style: normal; font-weight: 500; font-size: 0.68rem; color: var(--muted); }
+    .card .btn { margin-top: 0.25rem; width: 100%; }
+
+    .btn {
+      border: 0; border-radius: 10px; padding: 0.7rem 1rem;
+      font-weight: 600; font-size: 0.9rem;
+      transition: transform 0.12s, background 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-dark { background: var(--black); color: #fff; }
+    .btn-green { background: var(--accent); color: #fff; }
+    .btn-ghost { background: var(--white); border: 1px solid #ebebeb; color: var(--ink); }
+    .btn-soft { background: var(--chip); color: var(--accent-deep); }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+    .filter {
+      border: 1px solid #ebebeb; background: var(--white);
+      border-radius: 999px; padding: 0.4rem 0.85rem;
+      font-size: 0.82rem; font-weight: 500; color: #555;
+    }
+    .filter.on { background: var(--black); color: #fff; border-color: var(--black); }
+
+    .inbox-card {
+      background: var(--white); border: 1px solid #ebebeb;
+      border-radius: 14px; padding: 1rem 1.1rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; margin-bottom: 0.65rem;
+    }
+    .status {
+      display: inline-block; margin-top: 0.35rem;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 0.22rem 0.5rem; border-radius: 6px;
+    }
+    .status.ready { background: var(--chip); color: var(--accent-deep); }
+    .status.form { background: #eff6ff; color: #1d4ed8; }
+
+    .kit-card {
+      background: var(--white); border: 1px solid #ebebeb;
+      border-radius: 16px; padding: 1.25rem;
+      max-width: 420px;
+    }
+    .kit-card .big { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
+    .nudge {
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+      background: linear-gradient(90deg, #f0faf6, #fff7f3);
+      border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem;
+    }
+    .nudge strong { display: block; font-size: 0.95rem; }
+    .nudge p { font-size: 0.84rem; color: var(--muted); }
+
+    .pool-box {
+      background: var(--white); border: 1px solid #ebebeb;
+      border-radius: 16px; padding: 1.5rem; max-width: 480px;
+    }
+    .pool-box h2 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-weight: 400; font-size: 1.6rem; margin-bottom: 0.4rem;
+    }
+
+    .upgrade-fab {
+      position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 150;
+      background: var(--black); color: #fff;
+      border: 0; border-radius: 12px;
+      padding: 0.85rem 1.15rem; font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    /* Modal */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(15,15,15,0.5);
+      display: none; align-items: center; justify-content: center;
+      z-index: 300; padding: 1rem;
+    }
+    .overlay.on { display: flex; }
+    .modal {
+      width: min(460px, 100%);
+      background: #fff; border-radius: 18px;
+      max-height: 90vh; overflow: auto;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.28);
+      animation: rise 0.28s ease;
+    }
+    .modal header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 1.15rem 1.2rem 0.4rem;
+    }
+    .modal header h3 { font-size: 1.2rem; font-weight: 700; }
+    .modal header p { font-size: 0.85rem; color: var(--muted); }
+    .modal .x {
+      width: 32px; height: 32px; border: 0; border-radius: 50%;
+      background: #f4f4f4; font-size: 1.15rem;
+    }
+    .modal .body { padding: 0.4rem 1.2rem 1.25rem; }
+
+    .match {
+      background: var(--chip); border-radius: 12px;
+      padding: 0.8rem 0.95rem; margin: 0.6rem 0 0.85rem;
+    }
+    .match strong { color: var(--accent-deep); display: block; margin-bottom: 0.2rem; }
+    .match p { font-size: 0.88rem; color: #1f4d3f; }
+
+    .block {
+      background: #f7f5f0; border-radius: 12px;
+      padding: 0.85rem 0.95rem; margin-bottom: 0.65rem;
+    }
+    .block label {
+      display: block; font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: #888; margin-bottom: 0.25rem;
+    }
+    .block .val { font-weight: 600; font-size: 0.98rem; word-break: break-all; }
+
+    .form-note {
+      background: #fff7ed; border: 1px solid #fed7aa;
+      border-radius: 12px; padding: 0.8rem 0.95rem;
+      font-size: 0.86rem; color: #7c4a1a; margin-bottom: 0.75rem;
+    }
+    .form-note strong { display: block; color: #b45309; margin-bottom: 0.2rem; }
+
+    .prep li {
+      list-style: none; font-size: 0.84rem;
+      padding: 0.35rem 0; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between;
+    }
+    .prep li:last-child { border: 0; }
+    .prep button {
+      border: 0; background: transparent;
+      color: var(--accent); font-weight: 600; font-size: 0.8rem;
+    }
+
+    .tones { display: flex; gap: 0.35rem; margin: 0.65rem 0 0.45rem; }
+    .tones button {
+      border: 1px solid #ebebeb; background: #fff;
+      border-radius: 8px; padding: 0.3rem 0.6rem;
+      font-size: 0.76rem; font-weight: 600; color: var(--muted);
+    }
+    .tones button.on { background: var(--black); color: #fff; border-color: var(--black); }
+    .pitch {
+      border: 1px solid #ebebeb; border-radius: 12px;
+      padding: 0.8rem; font-size: 0.88rem; color: #333;
+      margin-bottom: 0.65rem; min-height: 96px;
+    }
+    .tip { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .tip b { color: var(--hot); }
+    .modal .actions { display: grid; gap: 0.45rem; }
+    .modal .actions .btn { width: 100%; }
+
+    .paywall {
+      width: min(400px, 100%);
+      background: #fff; border-radius: 18px; padding: 1.5rem 1.35rem;
+      text-align: center; animation: rise 0.28s ease;
+    }
+    .paywall h3 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-weight: 400; font-size: 1.65rem; margin: 0.5rem 0;
+    }
+    .paywall p { color: var(--muted); font-size: 0.92rem; margin-bottom: 1rem; }
+    .paywall .price {
+      font-size: 2.4rem; font-weight: 700; letter-spacing: -0.03em; margin: 0.5rem 0;
+    }
+    .paywall .price span { font-size: 1rem; font-weight: 500; color: var(--muted); }
+    .paywall ul {
+      text-align: left; list-style: none; margin: 1rem 0 1.25rem;
+      font-size: 0.9rem;
+    }
+    .paywall li {
+      padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0;
+      padding-left: 1rem; position: relative;
+    }
+    .paywall li::before {
+      content: ""; position: absolute; left: 0; top: 0.7rem;
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+    }
+
+    .opp-card {
+      background: var(--white); border: 1px solid #ebebeb;
+      border-radius: 14px; padding: 1rem 1.1rem; margin-bottom: 0.65rem;
+    }
+    .opp-card h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+    .opp-card p { font-size: 0.86rem; color: var(--muted); margin-bottom: 0.65rem; }
+    .pay-tag {
+      display: inline-block; font-size: 0.75rem; font-weight: 700;
+      background: #ecfdf5; color: #047857;
+      padding: 0.25rem 0.5rem; border-radius: 6px; margin-bottom: 0.65rem;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @media (max-width: 800px) {
+      .tabs { display: none; }
+      .grid, .trackers { grid-template-columns: 1fr; }
+      .shell { margin: 0.5rem; border-radius: 14px; }
+      .upgrade-fab { right: 1rem; bottom: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-bar">
+    <div><strong>HTML PREVIEW</strong> · Full creator dashboard rebuild · not live</div>
+    <span>Search-first · existing nav · email pitch + form prep</span>
+  </div>
+
+  <div class="shell">
+    <nav class="topnav">
+      <div class="logo">NEW<span>COLLAB</span></div>
+      <div class="tabs">
+        <button class="tab on" type="button" data-screen="foryou">For You <span class="badge">8</span></button>
+        <button class="tab" type="button" data-screen="discover">Discover</button>
+        <button class="tab" type="button" data-screen="inbox">Inbox <span class="badge">2</span></button>
+        <button class="tab" type="button" data-screen="pool">Pool <span class="new">NEW</span></button>
+        <button class="tab" type="button" data-screen="kit">My Kit</button>
+      </div>
+      <div class="user"><div class="avatar">N</div> nikkichavvez</div>
+    </nav>
+
+    <div class="main">
+      <!-- ========== FOR YOU ========== -->
+      <section class="screen on" id="foryou">
+        <div class="eyebrow">Personalized for you</div>
+        <h1>Find PR emails &amp; forms for <em>micro</em> creators</h1>
+        <p class="sub">Search any brand — unlock the contact or signup form, then pitch or apply. Built for under 10k followers.</p>
+
+        <form class="search-cta" onsubmit="return searchSubmit(event)">
+          <input id="q" type="search" placeholder="Rhode, e.l.f., Alo, Glossier, Pretty Farm Girl…" />
+          <button type="submit">Find PR</button>
+        </form>
+        <div class="chips">
+          <button type="button" onclick="quick('Glow Recipe')">pr@glowrecipe.com</button>
+          <button type="button" onclick="quick('e.l.f.')">elfpartners@…</button>
+          <button type="button" onclick="quick('Alo')">pr@aloyoga.com</button>
+          <button type="button" onclick="quick('Pretty Farm Girl')">PR form / signup</button>
+          <button type="button" onclick="quick('brands that send')">brands that send PR</button>
+        </div>
+
+        <div class="trackers">
+          <div class="tracker">
+            <strong>Unlocks 2/3</strong>
+            <span>Strategy + brand contacts</span>
+            <div class="dots"><i class="dot on"></i><i class="dot on"></i><i class="dot"></i></div>
+          </div>
+          <div class="tracker">
+            <strong>Applications 3/3</strong>
+            <span>Open UGC / gift gigs</span>
+            <div class="dots"><i class="dot blue"></i><i class="dot blue"></i><i class="dot blue"></i></div>
+          </div>
+        </div>
+
+        <div class="nudge">
+          <div>
+            <strong>Complete your media kit</strong>
+            <p>Powers form prep packs when brands use affiliate / UGC signups.</p>
+          </div>
+          <button class="btn btn-dark" type="button" onclick="go('kit')">Build kit →</button>
+        </div>
+
+        <div class="seg">
+          <button type="button" class="on" data-fy="matches">Matches 8</button>
+          <button type="button" data-fy="opps">Opportunities 14</button>
+        </div>
+
+        <div id="fy-matches">
+          <div class="grid" id="matchGrid"></div>
+        </div>
+        <div id="fy-opps" style="display:none">
+          <div class="opp-card">
+            <div class="pay-tag">PAY · up to $800</div>
+            <h3>Long-Term UGC · Kai language app</h3>
+            <p>20–45s verticals · ~5/week · no large following required. Uses 1 application credit.</p>
+            <button class="btn btn-dark" type="button">Apply via email</button>
+          </div>
+          <div class="opp-card">
+            <div class="pay-tag">PAY · $400–$700 retainer</div>
+            <h3>Gen Z UGC creators · mobile app</h3>
+            <p>Daily TikTok/IG · long-term. Existing Opportunities flow.</p>
+            <button class="btn btn-dark" type="button">Apply via email</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== DISCOVER ========== -->
+      <section class="screen" id="discover">
+        <div class="eyebrow">Discover</div>
+        <h1>Brands that send PR to <em>small</em> creators</h1>
+        <p class="sub">Same directory — defaulted to micro-friendly. Filter by PR email or program form.</p>
+        <form class="search-cta" onsubmit="return searchSubmit(event)">
+          <input type="search" placeholder="Search 500+ brands…" id="dq" />
+          <button type="submit">Search</button>
+        </form>
+        <div class="filters" id="discFilters">
+          <button class="filter on" type="button">Accepts under 10k</button>
+          <button class="filter" type="button">Has PR email</button>
+          <button class="filter" type="button">Has form / signup</button>
+          <button class="filter" type="button">Beauty</button>
+          <button class="filter" type="button">Fashion</button>
+          <button class="filter" type="button">Ships US</button>
+          <button class="filter" type="button">Canada</button>
+        </div>
+        <div class="grid" id="discoverGrid"></div>
+      </section>
+
+      <!-- ========== INBOX ========== -->
+      <section class="screen" id="inbox">
+        <div class="eyebrow">Inbox · PR pipeline</div>
+        <h1>My PR Pipeline</h1>
+        <p class="sub">2 brands ready. Email pitches + form applies you complete yourself.</p>
+        <div class="seg">
+          <button class="on" type="button">All (2)</button>
+          <button type="button">In Progress</button>
+          <button type="button">Replied</button>
+        </div>
+        <div class="inbox-card">
+          <div>
+            <strong style="font-size:1.05rem">Glow Recipe</strong>
+            <div style="font-size:0.86rem;color:var(--muted)">Beauty · AI pitch ready</div>
+            <span class="status ready">Ready to contact</span>
+          </div>
+          <button class="btn btn-dark" type="button" onclick="openPkg('glow recipe')">Pitch</button>
+        </div>
+        <div class="inbox-card">
+          <div>
+            <strong style="font-size:1.05rem">Pretty Farm Girl</strong>
+            <div style="font-size:0.86rem;color:var(--muted)">Program form · prep pack ready</div>
+            <span class="status form">Form opened · waiting on you</span>
+          </div>
+          <button class="btn btn-ghost" type="button" onclick="openPkg('pretty farm girl')">Resume</button>
+        </div>
+      </section>
+
+      <!-- ========== POOL ========== -->
+      <section class="screen" id="pool">
+        <div class="eyebrow">Pool · secondary</div>
+        <h1>Creator Pool</h1>
+        <p class="sub">Kept — not the homepage job for “PR brand email” traffic.</p>
+        <div class="pool-box">
+          <h2>Give-to-get growth</h2>
+          <p style="color:var(--muted);margin:0.5rem 0 1rem;font-size:0.95rem">Follow creators in your niche, get followed back. Separate from PR unlocks.</p>
+          <button class="btn btn-dark" type="button">Let's boost my followers</button>
+        </div>
+      </section>
+
+      <!-- ========== MY KIT ========== -->
+      <section class="screen" id="kit">
+        <div class="eyebrow">My Kit</div>
+        <h1>Media kit = form ammo</h1>
+        <p class="sub">Same kit editor. Used for public portfolio + prep packs on affiliate/UGC signup forms.</p>
+        <div class="kit-card">
+          <div class="avatar" style="width:48px;height:48px;font-size:1.1rem;margin-bottom:0.75rem">N</div>
+          <div class="big">nikkichavvez</div>
+          <p style="color:var(--muted);margin:0.25rem 0 0.75rem">Your tagline here</p>
+          <div style="font-weight:700;margin-bottom:0.75rem">7.7K FOLLOWERS</div>
+          <div class="pills" style="margin-bottom:1rem">
+            <span class="pill">lifestyle</span>
+            <span class="pill">beauty</span>
+            <span class="pill">wellness</span>
+            <span class="pill ok">Open to Gifted</span>
+          </div>
+          <button class="btn btn-dark" type="button" style="width:100%">Publish Media Kit</button>
+          <p style="font-size:0.8rem;color:var(--muted);margin-top:0.5rem;text-align:center">newcollab.co/kit/nikkichavvez</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <button class="upgrade-fab" type="button" onclick="openPaywall()">Upgrade to Pro</button>
+
+  <!-- Package modal -->
+  <div class="overlay" id="pkgOverlay" onclick="if(event.target===this)closePkg()">
+    <div class="modal">
+      <header>
+        <div>
+          <h3 id="mTitle">Brand</h3>
+          <p id="mSub">PR package</p>
+        </div>
+        <button class="x" type="button" onclick="closePkg()">×</button>
+      </header>
+      <div class="body" id="mBody"></div>
+    </div>
+  </div>
+
+  <!-- Paywall -->
+  <div class="overlay" id="payOverlay" onclick="if(event.target===this)closePaywall()">
+    <div class="paywall">
+      <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;color:var(--accent)">PRO</div>
+      <h3>Unlimited PR emails &amp; forms</h3>
+      <p>You've used your free unlocks. Keep finding brands that gift micros.</p>
+      <div class="price">$19<span>/month</span></div>
+      <p style="color:var(--accent-deep);font-weight:600;font-size:0.9rem">One free product covers a year of Pro</p>
+      <ul>
+        <li>Unlimited Get Package unlocks</li>
+        <li>AI pitches + Open Email</li>
+        <li>Form prep packs (you submit portals)</li>
+        <li>Micro-friendly Discover filters</li>
+        <li>Inbox pipeline + Opportunities</li>
+      </ul>
+      <button class="btn btn-green" type="button" style="width:100%">Get Pro — $19/month</button>
+      <button class="btn btn-ghost" type="button" style="width:100%;margin-top:0.45rem" onclick="closePaywall()">Not now</button>
+      <p style="font-size:0.75rem;color:#999;margin-top:0.75rem">Only show “0 unlocks left” when remaining is actually 0</p>
+    </div>
+  </div>
+
+  <script>
+    const BRANDS = [
+      { key: "glow recipe", name: "Glow Recipe", niche: "Skincare · Beauty", type: "email", email: "pr@glowrecipe.com", gift: "~$45", reply: "38%", micro: true, blurb: "Skincare — exact email people search on Bing." },
+      { key: "e.l.f.", name: "e.l.f. Cosmetics", niche: "Beauty · Makeup", type: "email", email: "elfpartners@elfcosmetics.com", gift: "~$28", reply: "High", micro: true, blurb: "Top CTR brand email in your keyword export." },
+      { key: "alo", name: "Alo Yoga", niche: "Fashion · Activewear", type: "email", email: "pr@aloyoga.com", gift: "~$90", reply: "32%", micro: true, blurb: "pr@aloyoga.com — high-intent exact lookup." },
+      { key: "rhode", name: "Rhode", niche: "Skincare · Beauty", type: "email", email: "pr@rhodeskin.com", gift: "~$42", reply: "35%", micro: true, blurb: "Beauty PR email + micro-friendly." },
+      { key: "milk makeup", name: "Milk Makeup", niche: "Beauty", type: "email", email: "pr@milkmakeup.com", gift: "~$40", reply: "30%", micro: true, blurb: "Beauty email unlock + AI pitch." },
+      { key: "good molecules", name: "Good Molecules", niche: "Skincare", type: "email", email: "pr@goodmolecules.com", gift: "~$35", reply: "40%", micro: true, blurb: "Skincare that works with micros." },
+      { key: "baggu", name: "Baggu", niche: "Lifestyle", type: "email", email: "ellen@baggu.com", gift: "~$40", reply: "45%", micro: true, blurb: "Lifestyle match for small influencers." },
+      { key: "pretty farm girl", name: "Pretty Farm Girl", niche: "UGC · Ambassador", type: "form", form: "prettyfarmgirlambassadors.superfiliate.com/…", gift: "Gift + perks", reply: "—", micro: true, blurb: "Superfiliate signup — you submit; we prep." },
+    ];
+
+    const PITCHES = {
+      "glow recipe": "Hi Glow Recipe team — your recent launches caught my attention. The aesthetic fits the skincare content I make for my 7.7k followers. Would love to be considered for PR.",
+      "e.l.f.": "Hi e.l.f. team — I create makeup/lifestyle TikToks and would love to try your products as a micro creator. Open to gifted collabs.",
+      default: "Hi team — I create lifestyle content for 7.7k followers and would love to be considered for a PR package. Happy to share an honest review on TikTok."
+    };
+
+    function go(id) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.screen === id));
+      document.getElementById(id).classList.add("on");
+    }
+
+    document.querySelectorAll(".tab").forEach(t => {
+      t.addEventListener("click", () => go(t.dataset.screen));
+    });
+
+    document.querySelectorAll("[data-fy]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-fy]").forEach(b => b.classList.remove("on"));
+        btn.classList.add("on");
+        const matches = btn.dataset.fy === "matches";
+        document.getElementById("fy-matches").style.display = matches ? "block" : "none";
+        document.getElementById("fy-opps").style.display = matches ? "none" : "block";
+      });
+    });
+
+    function cardHTML(b) {
+      const pills = b.type === "form"
+        ? `<span class="pill form">Program form</span><span class="pill aff">Affiliate signup</span><span class="pill ok">Micro OK</span>`
+        : `<span class="pill email">PR email</span><span class="pill ok">Micro-friendly</span>`;
+      return `
+        <article class="card">
+          <h3>${b.name}</h3>
+          <p>${b.blurb}</p>
+          <div class="pills">${pills}<span class="pill">${b.niche.split("·")[0].trim()}</span></div>
+          <div class="stats">
+            <div>${b.reply}<em>reply / demand</em></div>
+            <div>${b.gift}<em>PR value</em></div>
+          </div>
+          <button class="btn btn-dark" type="button" onclick="openPkg('${b.key}')">Get Package</button>
+        </article>`;
+    }
+
+    function renderGrids() {
+      document.getElementById("matchGrid").innerHTML = BRANDS.map(cardHTML).join("");
+      document.getElementById("discoverGrid").innerHTML = BRANDS.map(cardHTML).join("");
+    }
+
+    function find(q) {
+      const s = (q || "").toLowerCase().trim();
+      if (!s) return BRANDS[0];
+      if (s.includes("send") || s.includes("small")) return BRANDS.find(b => b.key === "baggu");
+      return BRANDS.find(b => s.includes(b.key) || b.name.toLowerCase().includes(s) || (b.email || "").includes(s.replace(/\s/g, ""))) || BRANDS[0];
+    }
+
+    function openPkg(key) {
+      const b = BRANDS.find(x => x.key === key) || find(key);
+      document.getElementById("mTitle").textContent = b.name;
+      document.getElementById("mSub").textContent = b.type === "form" ? "Program form package · 1 unlock" : "PR email package · 1 unlock";
+
+      if (b.type === "form") {
+        document.getElementById("mBody").innerHTML = `
+          <div class="form-note">
+            <strong>You submit this form — we don’t</strong>
+            Superfiliate-style portals need your login, terms, video, and address. We open the link + prep answers from My Kit.
+          </div>
+          <div class="match">
+            <strong>Eligibility</strong>
+            <p>${b.blurb} Often 800+ followers on IG/TikTok.</p>
+          </div>
+          <div class="block">
+            <label>Program signup link</label>
+            <div class="val" style="font-size:0.9rem">${b.form}</div>
+          </div>
+          <div class="block prep">
+            <label>Prep pack (My Kit)</label>
+            <ul style="margin-top:0.4rem">
+              <li><span>Name / reply email</span><button type="button">Copy</button></li>
+              <li><span>TikTok @nikkichavvez</span><button type="button">Copy</button></li>
+              <li><span>Why you fit</span><button type="button">Copy</button></li>
+              <li><span>Media kit URL</span><button type="button">Copy</button></li>
+            </ul>
+          </div>
+          <div class="actions">
+            <button class="btn btn-dark" type="button">Open form in new tab →</button>
+            <button class="btn btn-ghost" type="button" onclick="closePkg();go('inbox')">Mark submitted → Inbox</button>
+          </div>`;
+      } else {
+        const pitch = PITCHES[b.key] || PITCHES.default;
+        document.getElementById("mBody").innerHTML = `
+          <div class="match">
+            <strong>Good match</strong>
+            <p>${b.blurb}</p>
+          </div>
+          <div class="block">
+            <label>Verified PR email</label>
+            <div class="val">${b.email}</div>
+          </div>
+          <div class="block">
+            <label>What they often gift</label>
+            <div class="val">${b.gift} PR value</div>
+          </div>
+          <div class="tones">
+            <button type="button" class="on">short</button>
+            <button type="button">growing</button>
+            <button type="button">founder</button>
+          </div>
+          <div class="pitch">${pitch}</div>
+          <p class="tip">Best time: <b>Tuesday 2–5pm ET</b></p>
+          <div class="actions">
+            <button class="btn btn-dark" type="button">Open Email →</button>
+            <button class="btn btn-ghost" type="button">Copy pitch</button>
+            <button class="btn btn-soft" type="button">← Back to strategy</button>
+          </div>`;
+        document.querySelectorAll("#mBody .tones button").forEach(btn => {
+          btn.addEventListener("click", () => {
+            document.querySelectorAll("#mBody .tones button").forEach(x => x.classList.remove("on"));
+            btn.classList.add("on");
+          });
+        });
+      }
+      document.getElementById("pkgOverlay").classList.add("on");
+    }
+    function closePkg() { document.getElementById("pkgOverlay").classList.remove("on"); }
+
+    function searchSubmit(e) {
+      e.preventDefault();
+      const q = (document.getElementById("q")?.value || document.getElementById("dq")?.value || "").trim();
+      go("foryou");
+      openPkg(find(q).key);
+      return false;
+    }
+    function quick(q) {
+      document.getElementById("q").value = q;
+      go("foryou");
+      openPkg(find(q).key);
+    }
+
+    function openPaywall() { document.getElementById("payOverlay").classList.add("on"); }
+    function closePaywall() { document.getElementById("payOverlay").classList.remove("on"); }
+
+    document.getElementById("discFilters").addEventListener("click", (e) => {
+      if (e.target.classList.contains("filter")) {
+        [...e.currentTarget.children].forEach(c => c.classList.remove("on"));
+        e.target.classList.add("on");
+      }
+    });
+
+    renderGrids();
+  </script>
+</body>
+</html>

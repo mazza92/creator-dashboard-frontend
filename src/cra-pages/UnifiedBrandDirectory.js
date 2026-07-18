@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
-import { Input, Select, Spin, Pagination, Button, Progress, message } from 'antd';
-import { Search, Crown, Lock, Users, Mail, Heart, Sparkles, Zap, Check, Target, Clock, ExternalLink, Link2, X } from 'lucide-react';
-import { getCategoryColors } from '../utils/categoryColors';
+import { Spin, Pagination, message } from 'antd';
+import { Search, Lock, Mail, Heart, Sparkles, Check, Target, X, ChevronDown } from 'lucide-react';
 import { normalizeCategory, categoryLabel } from '../constants/brandCategories';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
@@ -12,11 +11,37 @@ import UpgradeModal from '../creator-portal/UpgradeModal';
 import PRPackageModal from '../creator-portal/PRPackageModal';
 import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
-import { tokens } from '../theme/tokens';
+import { creatorTokens as tokens } from '../theme/creatorTokens';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 // Feature flag for V2 modal testing
 const USE_UNLOCK_V2 = true;
+
+const isMicroFriendlyBrand = (brand) => {
+  if (!brand) return false;
+  if (brand.micro_friendly === true || brand.is_micro_friendly === true) return true;
+  if (brand.micro_friendly === false || brand.is_micro_friendly === false) return false;
+  const min = brand.minFollowers ?? brand.min_followers;
+  if (min == null || min === '' || Number(min) === 0) return true;
+  return Number(min) <= 10000;
+};
+
+const brandHasEmail = (brand) => {
+  const email = brand?.contact_email || brand?.pr_email || brand?.email || brand?.verified_email;
+  if (email && String(email).includes('@')) return true;
+  return !!(brand?.hasEmailContact || brand?.has_email_contact || brand?.has_email || brand?.verified_contact || brand?.hasEmail);
+};
+
+const brandHasForm = (brand) => {
+  const url = brand?.application_form_url || brand?.application_url || brand?.pr_form_url || brand?.form_url;
+  if (url && String(url).length > 4) return true;
+  return !!(brand?.has_application_form || brand?.hasApplication || brand?.has_application || brand?.hasForm);
+};
+
+const brandIsAffiliateForm = (brand) => {
+  const url = String(brand?.application_form_url || brand?.application_url || brand?.pr_form_url || '').toLowerCase();
+  return /superfiliate|affiliate|ambassador|portal\/sign/.test(url);
+};
 
 // Normalize API base URL - remove trailing slash to prevent double slashes
 const getApiBase = () => {
@@ -70,11 +95,39 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [showWelcomeCard, setShowWelcomeCard] = useState(false);
 
   const [filters, setFilters] = useState({
-    search: searchParams.get('search') || '',
+    // For You deep-link uses ?search= (also accept legacy ?q=)
+    search: searchParams.get('search') || searchParams.get('q') || '',
     category: searchParams.get('category') || '',
     activity: searchParams.get('activity') || '', // 'new', 'active', 'responsive'
-    contactType: searchParams.get('contactType') || '' // 'application', 'email', or '' for all
+    contactType: searchParams.get('contactType') || '', // 'application', 'email', or '' for all
+    // Dashboard Discover defaults to micro-friendly (preview parity); ?micro=0 turns it off
+    microOnly: searchParams.get('micro') === '0'
+      ? false
+      : (searchParams.get('micro') === '1'
+        || searchParams.get('filter') === 'micro'
+        || (location.pathname.startsWith('/creator/dashboard') && searchParams.get('micro') == null)),
+    region: searchParams.get('region') || '',
   });
+  const [searchDraft, setSearchDraft] = useState(
+    searchParams.get('search') || searchParams.get('q') || ''
+  );
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryQuery, setCategoryQuery] = useState('');
+  const categoryPickerRef = useRef(null);
+
+  // Keep search filter in sync when navigating from For You with ?search= / ?q=
+  useEffect(() => {
+    const incoming = searchParams.get('search') || searchParams.get('q');
+    if (incoming == null) return;
+    setFilters((prev) => (prev.search === incoming ? prev : { ...prev, search: incoming }));
+    setSearchDraft((prev) => (prev === incoming ? prev : incoming));
+    if (searchParams.get('q') && !searchParams.get('search')) {
+      const next = new URLSearchParams(searchParams);
+      next.set('search', incoming);
+      next.delete('q');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Discovery state
   const [discoveryLoading, setDiscoveryLoading] = useState(false);
@@ -292,6 +345,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         ...(filters.category && { category: filters.category }),
         ...(filters.activity && { activity: filters.activity }),
         ...(filters.contactType && { contact_type: filters.contactType }),
+        ...(filters.region && { region: filters.region }),
         // Soft sort from onboarding niches (no UI) — skip when category filter is set
         ...(isDashboardView && user && userNiches.length > 0 && !filters.category && {
           prefer_niches: userNiches.join(',')
@@ -496,12 +550,19 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   };
 
   const handleSearch = (value) => {
-    setFilters(prev => ({ ...prev, search: value }));
+    const next = typeof value === 'string' ? value : searchDraft;
+    setSearchDraft(next);
+    setFilters(prev => ({ ...prev, search: next }));
     setPagination(prev => ({ ...prev, page: 1 }));
     // Reset discovery state when search changes
     setDiscoveredBrand(null);
     setDiscoveryError('');
-    updateURLParams({ search: value });
+    updateURLParams({ search: next });
+  };
+
+  const handleSearchSubmit = (e) => {
+    e?.preventDefault?.();
+    handleSearch(searchDraft);
   };
 
   // Discovery function for brands not in curated list
@@ -575,19 +636,74 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     const nextValue = key === 'category' && value ? (normalizeCategory(value) || value) : value;
     setFilters(prev => ({ ...prev, [key]: nextValue }));
     setPagination(prev => ({ ...prev, page: 1 }));
-    updateURLParams({ [key]: nextValue });
+    if (key === 'microOnly') {
+      // Persist off-state so dashboard default (micro on) does not re-apply
+      updateURLParams({ micro: nextValue ? '1' : '0' });
+    } else {
+      updateURLParams({ [key]: nextValue });
+    }
   };
 
   const updateURLParams = (newParams) => {
     const params = new URLSearchParams(searchParams);
     Object.entries(newParams).forEach(([key, value]) => {
-      if (value) {
+      if (value !== undefined && value !== null && value !== '') {
         params.set(key, value);
       } else {
         params.delete(key);
       }
     });
     setSearchParams(params);
+  };
+
+  const displayedBrands = filters.microOnly
+    ? brands.filter((b) => {
+        if (b.micro_friendly === true || b.is_micro_friendly === true) return true;
+        if (b.micro_friendly === false || b.is_micro_friendly === false) return false;
+        const min = b.minFollowers ?? b.min_followers;
+        return min == null || min === 0 || Number(min) <= 10000;
+      })
+    : brands;
+
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.value === filters.category) || null,
+    [categories, filters.category]
+  );
+
+  const filteredCategories = useMemo(() => {
+    const q = categoryQuery.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((c) =>
+      `${c.label} ${c.value}`.toLowerCase().includes(q)
+    );
+  }, [categories, categoryQuery]);
+
+  useEffect(() => {
+    if (!categoryOpen) return undefined;
+    const onPointerDown = (e) => {
+      if (!categoryPickerRef.current?.contains(e.target)) {
+        setCategoryOpen(false);
+        setCategoryQuery('');
+      }
+    };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setCategoryOpen(false);
+        setCategoryQuery('');
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [categoryOpen]);
+
+  const pickCategory = (value) => {
+    handleFilterChange('category', value || '');
+    setCategoryOpen(false);
+    setCategoryQuery('');
   };
 
   const handlePageChange = (page) => {
@@ -623,6 +739,18 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         )}
 
         <ContentWrapper>
+          {isDashboardView && (
+            <DashboardDiscoverHeader>
+              <DashboardEyebrow>Discover</DashboardEyebrow>
+              <DashboardTitle>
+                Find PR emails & forms
+              </DashboardTitle>
+              <DashboardSub>
+                Search any brand for a verified PR contact or signup form. Filter for micros, email, or forms.
+              </DashboardSub>
+            </DashboardDiscoverHeader>
+          )}
+
           {/* V4: Welcome card for first-time users after onboarding */}
           {showWelcomeCard && isDashboardView && (
             <WelcomeCard>
@@ -634,7 +762,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   <WelcomeTag>You're in!</WelcomeTag>
                   <WelcomeTitle>Welcome to NewCollab</WelcomeTitle>
                   <WelcomeSub>
-                    We found <strong>{pagination.total || 500}+ brands</strong> that match your niche and are actively working with creators like you.
+                    We found <strong>{(pagination.total || 0).toLocaleString()} brands</strong> that match your niche and are actively working with creators like you.
                   </WelcomeSub>
                 </div>
                 <WelcomeBtn onClick={() => setShowWelcomeCard(false)}>
@@ -672,80 +800,131 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
             );
           })()}
 
-          {/* Search + Filters Row */}
-          <SearchRow>
-            <SearchWrap>
-              <Input
-                size="large"
-                placeholder="Search brand names..."
-                prefix={<Search size={17} />}
-                value={filters.search}
-                onChange={(e) => handleSearch(e.target.value)}
-                allowClear
+          {/* Search CTA + full category filter */}
+          <SearchToolsRow>
+            <SearchCtaForm onSubmit={handleSearchSubmit}>
+              <SearchCtaInput
+                type="search"
+                placeholder={
+                  pagination.total > 0
+                    ? `Search ${pagination.total.toLocaleString()} brands…`
+                    : 'Search brands…'
+                }
+                value={searchDraft}
+                onChange={(e) => setSearchDraft(e.target.value)}
+                aria-label="Search brands"
               />
-            </SearchWrap>
-            <Select
-              size="large"
-              placeholder="All Categories"
-              value={filters.category || undefined}
-              onChange={(value) => handleFilterChange('category', value)}
-              allowClear
-              style={{ minWidth: 160 }}
-            >
-              {categories.map(cat => (
-                <Select.Option key={cat.value} value={cat.value}>
-                  {cat.label} ({cat.count})
-                </Select.Option>
-              ))}
-            </Select>
-            <Select
-              size="large"
-              placeholder="All Brands"
-              value={filters.activity || undefined}
-              onChange={(value) => handleFilterChange('activity', value)}
-              allowClear
-              style={{ minWidth: 200 }}
-              popupMatchSelectWidth={false}
-              dropdownStyle={{ minWidth: 260 }}
-              optionLabelProp="label"
-            >
-              <Select.Option value="new" label="Added This Week">Added This Week</Select.Option>
-              <Select.Option value="active" label="Actively Reviewing">Actively Reviewing</Select.Option>
-              <Select.Option
-                value="responsive"
-                label="High Response Rate"
+              <SearchCtaButton type="submit">Search</SearchCtaButton>
+            </SearchCtaForm>
+            <CategoryPicker ref={categoryPickerRef}>
+              <CategoryTrigger
+                type="button"
+                $active={!!filters.category}
+                $open={categoryOpen}
+                onClick={() => setCategoryOpen((v) => !v)}
+                aria-haspopup="listbox"
+                aria-expanded={categoryOpen}
               >
-                <ActivityOptionRow>
-                  <span>High Response Rate</span>
-                  {subscriptionTier !== 'pro' && subscriptionTier !== 'elite' && (
-                    <ProBadgeInline>PRO</ProBadgeInline>
-                  )}
-                </ActivityOptionRow>
-              </Select.Option>
-            </Select>
-          </SearchRow>
+                <CategoryTriggerText>
+                  {selectedCategory ? selectedCategory.label : 'All categories'}
+                </CategoryTriggerText>
+                {filters.category ? (
+                  <CategoryClear
+                    type="button"
+                    aria-label="Clear category"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      pickCategory('');
+                    }}
+                  >
+                    <X size={14} />
+                  </CategoryClear>
+                ) : (
+                  <CategoryChevron $open={categoryOpen}>
+                    <ChevronDown size={16} />
+                  </CategoryChevron>
+                )}
+              </CategoryTrigger>
+
+              {categoryOpen && (
+                <CategoryMenu role="listbox">
+                  <CategorySearchWrap>
+                    <Search size={15} />
+                    <CategorySearchInput
+                      autoFocus
+                      type="search"
+                      placeholder="Filter categories…"
+                      value={categoryQuery}
+                      onChange={(e) => setCategoryQuery(e.target.value)}
+                    />
+                  </CategorySearchWrap>
+                  <CategoryList>
+                    <CategoryOption
+                      type="button"
+                      $active={!filters.category}
+                      onClick={() => pickCategory('')}
+                    >
+                      <span>All categories</span>
+                      {!filters.category && <Check size={14} />}
+                    </CategoryOption>
+                    {filteredCategories.map((cat) => (
+                      <CategoryOption
+                        key={cat.value}
+                        type="button"
+                        $active={filters.category === cat.value}
+                        onClick={() => pickCategory(cat.value)}
+                      >
+                        <span>
+                          {cat.label}
+                          <CategoryCount>{cat.count}</CategoryCount>
+                        </span>
+                        {filters.category === cat.value && <Check size={14} />}
+                      </CategoryOption>
+                    ))}
+                    {filteredCategories.length === 0 && (
+                      <CategoryEmpty>No categories match</CategoryEmpty>
+                    )}
+                  </CategoryList>
+                </CategoryMenu>
+              )}
+            </CategoryPicker>
+          </SearchToolsRow>
+
           <ContactFilterBar>
-            <ContactFilterLabel>How to apply:</ContactFilterLabel>
             <ContactPill
               type="button"
-              $active={!filters.contactType}
-              onClick={() => handleFilterChange('contactType', '')}
+              $active={!!filters.microOnly}
+              onClick={() => handleFilterChange('microOnly', !filters.microOnly)}
             >
-              All brands
-            </ContactPill>
-            <ContactPill
-              type="button"
-              $active={filters.contactType === 'application'}
-              onClick={() => handleFilterChange('contactType', 'application')}
-            >
-              <Link2 size={14} /> PR application form
+              Accepts under 10k
             </ContactPill>
             <ContactPill
               type="button"
               $active={filters.contactType === 'email'}
-              onClick={() => handleFilterChange('contactType', 'email')}
+              onClick={() => handleFilterChange('contactType', filters.contactType === 'email' ? '' : 'email')}
             >
-              <Mail size={14} /> PR email contact
+              Has PR email
+            </ContactPill>
+            <ContactPill
+              type="button"
+              $active={filters.contactType === 'application'}
+              onClick={() => handleFilterChange('contactType', filters.contactType === 'application' ? '' : 'application')}
+            >
+              Has form / signup
+            </ContactPill>
+            <ContactPill
+              type="button"
+              $active={filters.region === 'US'}
+              onClick={() => handleFilterChange('region', filters.region === 'US' ? '' : 'US')}
+            >
+              Ships US
+            </ContactPill>
+            <ContactPill
+              type="button"
+              $active={filters.region === 'Canada'}
+              onClick={() => handleFilterChange('region', filters.region === 'Canada' ? '' : 'Canada')}
+            >
+              Canada
             </ContactPill>
           </ContactFilterBar>
 
@@ -928,7 +1107,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           ) : (
             <>
               <BrandGrid>
-              {brands.map(brand => {
+              {displayedBrands.map(brand => {
                 const isSaved = isBrandSaved(brand.id);
                 const isPitched = pitchedBrands.has(brand.id);
                 const isUnlocked = unlockedBrands.has(brand.id);
@@ -940,130 +1119,123 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   ? `/creator/dashboard/brand/${brand.slug}`
                   : `/brand/${brand.slug}`;
 
+                const microFriendly = isMicroFriendlyBrand(brand);
+                const hasEmail = brandHasEmail(brand);
+                const hasForm = brandHasForm(brand);
+                const isAffiliate = hasForm && brandIsAffiliateForm(brand);
+                const minFollowers = brand.minFollowers ?? brand.min_followers;
+                const giftValue = brand.estimatedValue || brand.price_point || brand.pricePoint || 45;
+                const replyRate = brand.responseRate ?? brand.response_rate;
+                const blurb = brand.description
+                  || (brand.category
+                    ? `${categoryLabel(brand.category)} brand — unlock PR contact or form.`
+                    : 'Unlock a verified PR email or program form.');
+
                 return (
                   <BrandCard
                     key={brand.slug}
                     to={brandUrl}
                   >
-                    {brand.isFeatured && (
-                      <FeaturedBadge>
-                        <Sparkles size={14} /> Featured
-                      </FeaturedBadge>
+                    {(brand.isFeatured || isUnlocked) && (
+                      <CardTopMeta>
+                        {brand.isFeatured && (
+                          <MetaPill $tone="hot"><Sparkles size={12} /> Featured</MetaPill>
+                        )}
+                        {isUnlocked && (
+                          <UnlockedInline><Check size={12} /> Unlocked</UnlockedInline>
+                        )}
+                      </CardTopMeta>
                     )}
 
-                    {isUnlocked && !brand.isFeatured && (
-                      <UnlockedBadge>
-                        <Check size={14} /> Unlocked
-                      </UnlockedBadge>
-                    )}
-
-                    <BrandLogo>
+                    <CardNameRow>
                       {brand.logo ? (
-                        <LogoImg
+                        <CardAvatar
                           src={brand.logo}
-                          alt={brand.name}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.style.display = 'none';
-                            const placeholder = e.target.parentElement.querySelector('[data-placeholder]');
-                            if (placeholder) placeholder.style.display = 'flex';
-                          }}
+                          alt=""
+                          onError={(e) => { e.target.style.display = 'none'; }}
                         />
-                      ) : null}
-                      <LogoPlaceholder data-placeholder style={{ display: brand.logo ? 'none' : 'flex' }}>
-                        {brand.name.charAt(0)}
-                      </LogoPlaceholder>
-                    </BrandLogo>
-
-                    <BrandInfo>
-                      <BrandName>{brand.name}</BrandName>
-                      {brand.description && (
-                        <BrandDescription>{brand.description}</BrandDescription>
+                      ) : (
+                        <CardAvatarFallback>{(brand.name || '?').charAt(0)}</CardAvatarFallback>
                       )}
-
-                      {/* Quick Wins - Match Score & Value Badges */}
-                      <QuickWinBadges>
-                        {brand.responseRate >= 40 && (
-                          <MatchBadge>🔥 {brand.responseRate}% reply rate</MatchBadge>
+                      <div>
+                        <BrandName>{brand.name}</BrandName>
+                        {brand.category && (
+                          <CardNiche>{categoryLabel(brand.category)}</CardNiche>
                         )}
-                        {brand.estimatedValue && (
-                          <ValueBadge>💝 ~${brand.estimatedValue} value</ValueBadge>
-                        )}
-                      </QuickWinBadges>
+                      </div>
+                    </CardNameRow>
 
-                      <CardTags>
-                        {brand.category && (() => {
-                          const catStyle = getCategoryColors(brand.category);
-                          return (
-                            <CategoryTag $bg={catStyle.bg} $color={catStyle.text} $border={catStyle.border}>
-                              {categoryLabel(brand.category)}
-                            </CategoryTag>
-                          );
-                        })()}
-                        {brand.minFollowers !== null && brand.minFollowers !== undefined && brand.minFollowers > 0 && (
-                          <TagFollowers>{(brand.minFollowers / 1000).toFixed(0)}K+ followers</TagFollowers>
-                        )}
-                      </CardTags>
+                    <BrandDescription>{blurb}</BrandDescription>
 
-                      <CardDivider />
-
-                      <CardStats>
-                        {brand.responseRate !== null && brand.responseRate !== undefined && (
-                          <>
-                            <StatItem>
-                              <StatValue className="green">{brand.responseRate}%</StatValue>
-                              <StatLabel>Response rate</StatLabel>
-                            </StatItem>
-                            <StatDivider />
-                          </>
-                        )}
-                        {brand.pitchStats && brand.pitchStats.totalPitches > 0 && (
-                          <StatItem>
-                            <StatValue>{brand.pitchStats.totalPitches}</StatValue>
-                            <StatLabel>Creators pitched</StatLabel>
-                          </StatItem>
-                        )}
-                      </CardStats>
-
-                      {brand.pitchStats && brand.pitchStats.totalResponses > 0 && (
-                        <ResponsesLine>
-                          <PulsingDot /> <ResponsesCount>{brand.pitchStats.totalResponses}</ResponsesCount> creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got a reply recently
-                        </ResponsesLine>
+                    <CardTags>
+                      {microFriendly && <Pill $tone="ok">Micro-friendly</Pill>}
+                      {hasEmail && <Pill $tone="email">PR email</Pill>}
+                      {hasForm && <Pill $tone="form">Program form</Pill>}
+                      {isAffiliate && <Pill $tone="aff">Affiliate signup</Pill>}
+                      {minFollowers > 0 && (
+                        <Pill>{(Number(minFollowers) / 1000).toFixed(0)}K+ followers</Pill>
                       )}
+                    </CardTags>
 
-                      {/* Action buttons - only show in dashboard view for logged-in users */}
-                      {isDashboardView && user && (
-                        <CardActions>
-                          <PitchButton
-                            onClick={(e) => handlePitchBrand(brand, e)}
-                            $pitched={isPitched}
-                            disabled={isPitched}
-                          >
-                            {isPitched ? (
-                              <><Check size={16} /> Contacted</>
-                            ) : (
-                              <><Mail size={16} /> Get Package</>
-                            )}
-                          </PitchButton>
-                          <SaveActionButton
-                            onClick={(e) => handleSaveBrand(brand, e)}
-                            $saved={isSaved}
-                          >
-                            {isSaved ? (
-                              <><Heart size={16} fill="currentColor" /> Saved</>
-                            ) : (
-                              <><Heart size={16} /> Save</>
-                            )}
-                          </SaveActionButton>
-                        </CardActions>
+                    <PreviewStats>
+                      {replyRate != null && replyRate !== '' && (
+                        <PreviewStat>
+                          {replyRate}%
+                          <em>reply rate</em>
+                        </PreviewStat>
                       )}
+                      <PreviewStat>
+                        ~${giftValue}
+                        <em>PR value</em>
+                      </PreviewStat>
+                      {brand.pitchStats?.totalPitches > 0 && (
+                        <PreviewStat>
+                          {brand.pitchStats.totalPitches}
+                          <em>pitched</em>
+                        </PreviewStat>
+                      )}
+                    </PreviewStats>
 
-                      {!user && !isDashboardView && (
-                        <SignupCTA>
-                          <Lock size={16} /> Sign up to contact brand
-                        </SignupCTA>
-                      )}
-                    </BrandInfo>
+                    {brand.pitchStats?.totalResponses > 0 && (
+                      <ResponsesLine>
+                        <PulsingDot />
+                        <span>
+                          <ResponsesCount>{brand.pitchStats.totalResponses}</ResponsesCount>
+                          {' '}creator{brand.pitchStats.totalResponses !== 1 ? 's' : ''} got a reply recently
+                        </span>
+                      </ResponsesLine>
+                    )}
+
+                    {isDashboardView && user && (
+                      <CardActions>
+                        <PitchButton
+                          onClick={(e) => handlePitchBrand(brand, e)}
+                          $pitched={isPitched || isUnlocked}
+                          disabled={isPitched}
+                        >
+                          {isPitched ? (
+                            <><Check size={16} /> {tokens.ctaContacted}</>
+                          ) : isUnlocked ? (
+                            <><Mail size={16} /> {tokens.ctaViewBrandPr}</>
+                          ) : (
+                            <><Mail size={16} /> {tokens.ctaGetBrandPr}</>
+                          )}
+                        </PitchButton>
+                        <SaveActionButton
+                          onClick={(e) => handleSaveBrand(brand, e)}
+                          $saved={isSaved}
+                          aria-label={isSaved ? 'Unsave brand' : 'Save brand'}
+                        >
+                          <Heart size={16} fill={isSaved ? 'currentColor' : 'none'} />
+                        </SaveActionButton>
+                      </CardActions>
+                    )}
+
+                    {!user && !isDashboardView && (
+                      <SignupCTA>
+                        <Lock size={16} /> Sign up to contact brand
+                      </SignupCTA>
+                    )}
                   </BrandCard>
                 );
               })}
@@ -1159,18 +1331,299 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 // Styled Components
 const Container = styled.div`
   width: 100%;
-  background: ${props => props.$isDashboard ? 'transparent' : '#FAFAFA'};
+  background: ${props => props.$isDashboard ? tokens.paper : '#FAFAFA'};
   min-height: ${props => props.$isDashboard ? 'auto' : '100vh'};
   padding-bottom: ${props => props.$isDashboard ? '40px' : '80px'};
+  font-family: ${tokens.fontSans};
 `;
 
 const ContentWrapper = styled.div`
-  max-width: 1280px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 28px 32px;
+  padding: 1.35rem 1.35rem 2.5rem;
+  font-family: ${tokens.fontSans};
 
   @media (max-width: 768px) {
-    padding: 20px 16px;
+    padding: 1rem 0.9rem 5.5rem;
+  }
+`;
+
+const DashboardDiscoverHeader = styled.div`
+  margin-bottom: 1.15rem;
+`;
+
+const DashboardEyebrow = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+  margin-bottom: 0.35rem;
+`;
+
+const DashboardTitle = styled.h1`
+  font-family: ${tokens.fontDisplay};
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 0.4rem;
+  color: ${tokens.ink};
+`;
+
+const DashboardSub = styled.p`
+  margin: 0;
+  font-size: 0.95rem;
+  color: ${tokens.muted};
+  max-width: 36rem;
+  line-height: 1.45;
+`;
+
+const SearchToolsRow = styled.div`
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+  max-width: 720px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    max-width: none;
+  }
+`;
+
+const SearchCtaForm = styled.form`
+  display: flex;
+  gap: 0.45rem;
+  background: ${tokens.white};
+  border: 1px solid ${tokens.line};
+  border-radius: 14px;
+  padding: 0.4rem;
+  box-shadow: ${tokens.shadowCard};
+  flex: 1;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+`;
+
+const CategoryPicker = styled.div`
+  position: relative;
+  flex-shrink: 0;
+  width: 200px;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`;
+
+const CategoryTrigger = styled.button`
+  width: 100%;
+  height: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: ${p => (p.$active ? tokens.accentSoft : tokens.white)};
+  border: 1px solid ${p => (p.$open || p.$active ? tokens.accentBorder : tokens.line)};
+  border-radius: 14px;
+  box-shadow: ${tokens.shadowCard};
+  cursor: pointer;
+  font-family: ${tokens.fontSans};
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: ${tokens.accentBorder};
+  }
+
+  @media (max-width: 640px) {
+    min-height: 44px;
+  }
+`;
+
+const CategoryTriggerText = styled.span`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${tokens.ink};
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const CategoryChevron = styled.span`
+  display: grid;
+  place-items: center;
+  color: ${tokens.muted};
+  flex-shrink: 0;
+  transition: transform 0.15s;
+  transform: rotate(${p => (p.$open ? '180deg' : '0deg')});
+`;
+
+const CategoryClear = styled.button`
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: ${tokens.white};
+  color: ${tokens.muted};
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+
+  &:hover {
+    color: ${tokens.ink};
+    background: #f4f4f4;
+  }
+`;
+
+const CategoryMenu = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: ${tokens.white};
+  border: 1px solid ${tokens.line};
+  border-radius: 14px;
+  box-shadow: ${tokens.shadowHover};
+  overflow: hidden;
+  min-width: 220px;
+
+  @media (max-width: 640px) {
+    right: 0;
+    left: 0;
+    min-width: 0;
+  }
+`;
+
+const CategorySearchWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid ${tokens.line};
+  color: ${tokens.muted};
+`;
+
+const CategorySearchInput = styled.input`
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 0.86rem;
+  color: ${tokens.ink};
+  font-family: ${tokens.fontSans};
+  min-width: 0;
+
+  &::placeholder {
+    color: ${tokens.muted};
+  }
+
+  &::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+`;
+
+const CategoryList = styled.div`
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0.35rem;
+`;
+
+const CategoryOption = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 0;
+  background: ${p => (p.$active ? tokens.accentSoft : 'transparent')};
+  color: ${p => (p.$active ? tokens.accentDeep : tokens.ink)};
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.86rem;
+  font-weight: ${p => (p.$active ? 600 : 500)};
+  font-family: ${tokens.fontSans};
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: ${p => (p.$active ? tokens.accentSoft : tokens.paper)};
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: ${tokens.accent};
+  }
+`;
+
+const CategoryCount = styled.span`
+  margin-left: 0.35rem;
+  color: ${tokens.muted};
+  font-weight: 500;
+  font-size: 0.78rem;
+`;
+
+const CategoryEmpty = styled.div`
+  padding: 0.85rem 0.65rem;
+  font-size: 0.84rem;
+  color: ${tokens.muted};
+  text-align: center;
+`;
+
+const SearchCtaInput = styled.input`
+  flex: 1;
+  border: 0;
+  outline: none;
+  padding: 0.75rem 0.9rem;
+  background: transparent;
+  min-width: 0;
+  font-size: 0.95rem;
+  color: ${tokens.ink};
+  font-family: ${tokens.fontSans};
+
+  &::placeholder {
+    color: ${tokens.muted};
+  }
+
+  /* Hide native search clear on some browsers so layout stays clean */
+  &::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+`;
+
+const SearchCtaButton = styled.button`
+  border: 0;
+  background: ${tokens.action};
+  color: #fff;
+  padding: 0.75rem 1.15rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  font-family: ${tokens.fontSans};
+  flex-shrink: 0;
+  transition: background 0.2s, transform 0.1s;
+
+  &:hover {
+    background: ${tokens.actionHover};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    min-height: 44px;
   }
 `;
 
@@ -1322,15 +1775,17 @@ const QuotaBanner = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #F9FAFB;
-  border: 1px solid #E5E7EB;
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
+  background: ${tokens.white};
+  border: 1px solid #ebebeb;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  max-width: 480px;
 
   @media (max-width: 640px) {
     gap: 10px;
-    padding: 10px 12px;
+    padding: 0.7rem 0.8rem;
+    max-width: none;
   }
 `;
 
@@ -1392,497 +1847,298 @@ const QuotaUpgrade = styled.button`
   }
 `;
 
-const SearchRow = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-
-  .ant-select,
-  .ant-input-affix-wrapper {
-    border-radius: ${tokens.radiusInput};
-    border-color: ${tokens.border};
-
-    &:hover {
-      border-color: ${tokens.borderHover};
-    }
-
-    &:focus,
-    &.ant-input-affix-wrapper-focused {
-      border-color: ${tokens.action};
-      box-shadow: none;
-    }
-  }
-
-  .ant-select-selector {
-    border-radius: ${tokens.radiusInput} !important;
-    font-size: 13px;
-    font-weight: 500;
-    color: ${tokens.textSecondary};
-  }
-
-  .ant-input {
-    font-size: 13.5px;
-  }
-`;
-
-const SearchWrap = styled.div`
-  flex: 1;
-  min-width: 240px;
-`;
-
-const FreeBadgeInline = styled.span`
-  background: ${tokens.success};
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  margin-left: 8px;
-`;
-
-const ProBadgeInline = styled.span`
-  background: ${tokens.proGradient};
-  color: white;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
-  white-space: nowrap;
-  line-height: 1.4;
-`;
-
-const ActivityOptionRow = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  min-width: 0;
-`;
-
 const BrandGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
+    gap: 0.7rem;
   }
 `;
 
 const BrandCard = styled(Link)`
-  background: ${tokens.surface};
-  border: 1px solid ${tokens.border};
-  border-radius: ${tokens.radiusCard};
-  padding: 20px;
+  background: ${tokens.white};
+  border: 1px solid #ebebeb;
+  border-radius: 14px;
+  padding: 1rem 1.05rem;
   position: relative;
-  transition: all 0.2s;
+  transition: border-color 0.2s, transform 0.2s;
   display: flex;
   flex-direction: column;
+  gap: 0.55rem;
   text-decoration: none;
   color: inherit;
+  box-shadow: none;
 
   &:hover {
-    border-color: ${tokens.borderHover};
-    box-shadow: ${tokens.shadowHover};
+    border-color: #b8d5cb;
     transform: translateY(-2px);
   }
-`;
 
-const FeaturedBadge = styled.div`
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 10;
-  background: #FEF3C7;
-  color: #92400E;
-  padding: 4px 9px;
-  border-radius: ${tokens.radiusPill};
-  border: 1px solid #FDE68A;
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  letter-spacing: 0.2px;
-
-  svg {
-    width: 12px;
-    height: 12px;
+  @media (max-width: 640px) {
+    padding: 0.95rem 1rem;
   }
 `;
 
-const UnlockedBadge = styled.div`
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 10;
-  background: #D1FAE5;
-  color: #065F46;
-  padding: 4px 9px;
-  border-radius: ${tokens.radiusPill};
-  border: 1px solid #A7F3D0;
-  font-size: 10px;
-  font-weight: 700;
+const CardTopMeta = styled.div`
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+`;
+
+const MetaPill = styled.span`
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  letter-spacing: 0.2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  background: ${p => (p.$tone === 'hot' ? '#fdeee9' : tokens.accentSoft)};
+  color: ${p => (p.$tone === 'hot' ? '#b33a1f' : tokens.accentDeep)};
+`;
 
-  svg {
-    width: 12px;
-    height: 12px;
-  }
+const UnlockedInline = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: ${tokens.accent};
+`;
+
+const CardNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+`;
+
+const CardAvatar = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  flex-shrink: 0;
+`;
+
+const CardAvatarFallback = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #1a1a1a, #3d3d3d);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+`;
+
+const CardNiche = styled.div`
+  font-size: 0.8rem;
+  color: ${tokens.muted};
+  margin-top: 1px;
 `;
 
 const CardActions = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr auto;
   gap: 8px;
   margin-top: auto;
 `;
 
 const PitchButton = styled.button`
-  flex: 1;
-  background: ${props => props.$pitched ? tokens.successLight : tokens.action};
-  color: ${props => props.$pitched ? tokens.success : 'white'};
-  border: ${props => props.$pitched ? `1px solid ${tokens.successBorder}` : 'none'};
+  background: ${props => (props.$pitched ? tokens.accentSoft : tokens.action)};
+  color: ${props => (props.$pitched ? tokens.accentDeep : 'white')};
+  border: ${props => (props.$pitched ? `1px solid ${tokens.accentBorder}` : 'none')};
   border-radius: 10px;
-  padding: 9px 12px;
-  font-size: 13px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  letter-spacing: 0.1px;
-  cursor: ${props => props.$pitched || props.disabled ? 'default' : 'pointer'};
-  transition: all 0.15s;
+  cursor: ${props => (props.$pitched || props.disabled ? 'default' : 'pointer')};
+  transition: background 0.2s, transform 0.12s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 40px;
+  min-height: 42px;
+  font-family: ${tokens.fontSans};
+  width: 100%;
 
   &:hover:not(:disabled) {
-    background: ${props => props.$pitched ? tokens.successLight : tokens.actionHover};
-    transform: ${props => props.$pitched ? 'none' : 'translateY(-1px)'};
+    background: ${props => (props.$pitched ? tokens.accentSoft : tokens.actionHover)};
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  @media (max-width: 768px) {
-    padding: 12px 16px;
-    font-size: 14px;
-    min-height: 44px;
+    transform: scale(0.98);
   }
 `;
 
 const SaveActionButton = styled.button`
-  flex: 1;
-  background: ${props => props.$saved ? tokens.primaryLight : 'transparent'};
-  color: ${props => props.$saved ? tokens.primary : tokens.textSecondary};
-  border: 1px solid ${props => props.$saved ? tokens.primaryBorder : tokens.border};
+  width: 42px;
+  height: 42px;
+  background: ${props => (props.$saved ? tokens.accentSoft : tokens.white)};
+  color: ${props => (props.$saved ? tokens.accentDeep : tokens.textSecondary)};
+  border: 1px solid ${props => (props.$saved ? tokens.accentBorder : '#ebebeb')};
   border-radius: 10px;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
-  min-height: 40px;
-  letter-spacing: 0.1px;
+  flex-shrink: 0;
 
   &:hover {
-    background: ${props => props.$saved ? tokens.primaryLight : tokens.primaryLight};
-    color: ${props => props.$saved ? tokens.primary : tokens.primary};
-    border-color: ${props => props.$saved ? tokens.primaryBorder : tokens.primaryBorder};
+    border-color: ${tokens.accentBorder};
+    color: ${tokens.accentDeep};
+    background: ${tokens.accentSoft};
   }
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  @media (max-width: 768px) {
-    padding: 12px 16px;
-    font-size: 14px;
-    min-height: 44px;
-  }
-`;
-
-const BrandLogo = styled.div`
-  width: 100%;
-  aspect-ratio: 2.2 / 1;
-  background: #FFFFFF;
-  border: 1px solid #F0F0F0;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 14px;
-  overflow: hidden;
-  position: relative;
-`;
-
-const LogoImg = styled.img`
-  max-width: 65%;
-  max-height: 60%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  object-position: center;
-  image-rendering: -webkit-optimize-contrast;
-  mix-blend-mode: multiply;
-`;
-
-const LogoPlaceholder = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${tokens.textPrimary};
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -1px;
-`;
-
-const BrandInfo = styled.div`
-  text-align: center;
-  width: 100%;
 `;
 
 const BrandName = styled.h3`
-  font-size: 16px;
+  font-size: 1.05rem;
   font-weight: 700;
   color: ${tokens.textPrimary};
-  margin-bottom: 5px;
-  letter-spacing: -0.2px;
-  text-align: center;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-align: left;
+
+  @media (max-width: 640px) {
+    font-size: 1rem;
+  }
 `;
 
 const BrandDescription = styled.p`
-  font-size: 12.5px;
-  color: ${tokens.textMuted};
-  line-height: 1.55;
-  margin-bottom: 14px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-align: center;
+  font-size: 0.86rem;
+  color: ${tokens.muted};
+  line-height: 1.5;
+  margin: 0;
+  text-align: left;
 `;
 
-// Quick Wins Badges
-const QuickWinBadges = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 12px;
-`;
-
-const MatchBadge = styled.span`
-  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-  color: #92400E;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border: 1px solid #FCD34D;
-`;
-
-const ValueBadge = styled.span`
-  background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
-  color: #065F46;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border: 1px solid #A7F3D0;
+const Pill = styled.span`
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  background: ${p => (
+    p.$tone === 'ok' ? tokens.accentSoft :
+    p.$tone === 'email' ? '#fef3c7' :
+    p.$tone === 'form' ? '#eff6ff' :
+    p.$tone === 'aff' ? '#fce7f3' :
+    '#f4f4f4'
+  )};
+  color: ${p => (
+    p.$tone === 'ok' ? tokens.accentDeep :
+    p.$tone === 'email' ? '#92400e' :
+    p.$tone === 'form' ? '#1d4ed8' :
+    p.$tone === 'aff' ? '#9d174d' :
+    '#444'
+  )};
 `;
 
 const CardTags = styled.div`
   display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 14px;
   flex-wrap: wrap;
+  gap: 0.3rem;
 `;
 
-const CategoryTag = styled.span`
-  background: ${(p) => p.$bg};
-  color: ${(p) => p.$color};
-  border: 1px solid ${(p) => p.$border};
-  padding: 4px 10px;
-  border-radius: ${tokens.radiusPill};
-  font-size: 11px;
+const PreviewStats = styled.div`
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.1px;
-  text-transform: capitalize;
+  color: ${tokens.ink};
+`;
+
+const PreviewStat = styled.div`
+  em {
+    display: block;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 0.68rem;
+    color: ${tokens.muted};
+  }
 `;
 
 const ContactFilterBar = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  padding: 14px 16px;
-  background: ${tokens.surface};
-  border: 1px solid ${tokens.border};
-  border-radius: 14px;
-`;
+  gap: 0.4rem;
+  margin-bottom: 1.15rem;
 
-const ContactFilterLabel = styled.span`
-  font-size: 13px;
-  font-weight: 600;
-  color: ${tokens.textSecondary};
-  margin-right: 4px;
-  white-space: nowrap;
+  @media (max-width: 480px) {
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const ContactPill = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  border-radius: ${tokens.radiusPill};
-  font-size: 13px;
-  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  border: 1px solid ${(p) => (p.$active ? tokens.action : tokens.border)};
-  background: ${(p) => (p.$active ? tokens.action : tokens.surface)};
-  color: ${(p) => (p.$active ? '#FFFFFF' : tokens.textSecondary)};
+  border: 1px solid ${(p) => (p.$active ? tokens.action : '#ebebeb')};
+  background: ${(p) => (p.$active ? tokens.action : tokens.white)};
+  color: ${(p) => (p.$active ? '#fff' : '#555')};
+  font-family: ${tokens.fontSans};
+  -webkit-tap-highlight-color: transparent;
 
   &:hover {
-    border-color: ${tokens.action};
-    color: ${(p) => (p.$active ? '#FFFFFF' : tokens.textPrimary)};
+    border-color: ${(p) => (p.$active ? tokens.action : tokens.accent)};
+    color: ${(p) => (p.$active ? '#fff' : tokens.accentDeep)};
   }
-`;
 
-const TagFollowers = styled.span`
-  background: ${tokens.accentLight};
-  color: ${tokens.accent};
-  border: 1px solid ${tokens.accentBorder};
-  padding: 4px 10px;
-  border-radius: ${tokens.radiusPill};
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1px;
-`;
-
-const CardDivider = styled.div`
-  height: 1px;
-  background: ${tokens.border};
-  margin: 0 -20px 14px;
-`;
-
-const CardStats = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 14px;
-`;
-
-const StatItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-`;
-
-const StatValue = styled.div`
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: ${tokens.textPrimary};
-
-  &.green {
-    color: ${tokens.success};
+  @media (max-width: 480px) {
+    padding: 0.38rem 0.72rem;
+    font-size: 0.78rem;
+    min-height: 36px;
   }
-`;
-
-const StatLabel = styled.div`
-  font-size: 10px;
-  color: ${tokens.textMuted};
-  font-weight: 500;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-`;
-
-const StatDivider = styled.div`
-  width: 1px;
-  height: 28px;
-  background: ${tokens.border};
 `;
 
 const ResponsesLine = styled.div`
-  text-align: center;
-  font-size: 11.5px;
-  color: ${tokens.textMuted};
-  margin-bottom: 14px;
+  font-size: 0.75rem;
+  color: ${tokens.muted};
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
-
-  svg {
-    width: 12px;
-    height: 12px;
-  }
+  gap: 6px;
+  line-height: 1.35;
 `;
 
 const PulsingDot = styled.span`
-  width: 8px;
-  height: 8px;
-  background: #10B981;
+  width: 7px;
+  height: 7px;
+  background: ${tokens.accent};
   border-radius: 50%;
   display: inline-block;
-  animation: pulse 2s ease-in-out infinite;
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(1.2); }
-  }
+  flex-shrink: 0;
 `;
 
 const ResponsesCount = styled.span`
-  color: ${tokens.success};
+  color: ${tokens.accentDeep};
   font-weight: 700;
 `;
 
 const SignupCTA = styled.div`
-  margin-top: 16px;
-  padding: 10px 16px;
+  margin-top: 0.15rem;
+  padding: 0.7rem 1rem;
   background: transparent;
   color: ${tokens.textPrimary};
-  border: 1px solid ${tokens.border};
-  border-radius: ${tokens.radiusBtn};
-  font-size: 13px;
+  border: 1px solid #ebebeb;
+  border-radius: 10px;
+  font-size: 0.86rem;
   font-weight: 600;
   text-align: center;
   display: flex;

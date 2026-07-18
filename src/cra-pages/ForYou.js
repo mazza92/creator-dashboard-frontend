@@ -17,7 +17,7 @@ const USE_UNLOCK_V2 = true;
 import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { tokens } from '../theme/tokens';
+import { creatorTokens as tokens } from '../theme/creatorTokens';
 
 const getApiBase = () => {
   const base = process.env.REACT_APP_API_BASE ||
@@ -652,12 +652,24 @@ const ForYou = () => {
   return (
     <PageWrap>
       <PageInner>
-        {/* Page Header */}
+        {/* Page Header — match-first (search lives on Discover) */}
         <PageHeader>
           <PageTitleWrap>
-            <PageEyebrow><Sparkles size={14} /> Personalized for you</PageEyebrow>
-            <PageTitle>{data?.matched?.length || 0} brands matched to your content</PageTitle>
-            <PageSub>Contact them in one tap — your free PR package is one pitch away</PageSub>
+            <PageEyebrow>Personalized for you</PageEyebrow>
+            <PageTitle>
+              Brands matched to <PageTitleEm>your</PageTitleEm> content
+            </PageTitle>
+            <PageSub>
+              {data?.matched?.length
+                ? `${data.matched.length} brands that fit your niche — unlock the PR email or form, then pitch.`
+                : 'Unlock the PR email or form for brands that fit your niche, then pitch.'}
+            </PageSub>
+            <DiscoverLink
+              type="button"
+              onClick={() => navigate('/creator/dashboard/pr-brands')}
+            >
+              Search all brands <ArrowRight size={14} />
+            </DiscoverLink>
           </PageTitleWrap>
         </PageHeader>
 
@@ -734,15 +746,14 @@ const ForYou = () => {
             </KitBuilderProgress>
             <KitBuilderContent>
               <KitBuilderTitle>
-                <span>Complete your media kit</span>
+                <span>Create your portfolio</span>
               </KitBuilderTitle>
               <KitBuilderDesc>
-                Creators with kits get <strong>3× more replies</strong>
+                Most brands ask for one. Show your best work — and see who views it.
               </KitBuilderDesc>
             </KitBuilderContent>
             <KitBuilderBtn>
-              Build kit
-              <ArrowRight size={12} />
+              Create portfolio →
             </KitBuilderBtn>
           </KitBuilderCard>
         )}
@@ -875,52 +886,13 @@ const ForYou = () => {
           </KitViewsList>
         )}
 
-        {/* Pool Promo — hide for free users until first pitch/apply */}
+        {/* Pool Promo — commented out for For You rebuild (secondary nav only)
         {(isPro || pitchedIds.size > 0 || (pitchLimits?.used || 0) > 0) && (
         <PoolPromoBanner onClick={() => navigate('/creator/dashboard/pool')}>
-          <PoolAvatarStack>
-            {poolActiveMembers.length > 0 ? (
-              poolActiveMembers.slice(0, 3).map((member, i) => (
-                <PoolAvatarImg key={member.id} $index={i} $color={['#7C3AED', '#E11D48', '#0EA5E9'][i]}>
-                  {member.profile_image_url ? (
-                    <img src={member.profile_image_url} alt={member.username} />
-                  ) : (
-                    (member.display_name || member.username)?.[0]?.toUpperCase() || '?'
-                  )}
-                </PoolAvatarImg>
-              ))
-            ) : (
-              <>
-                <PoolAvatarImg $index={0} $color="#7C3AED">
-                  <img src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/@justavatar.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvQGp1c3RhdmF0YXIucG5nIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4MTc5NjcxMywiZXhwIjoyNDEyNTE2NzEzfQ.X-lOx8_72aWLHu2rC-MiqC2h43p5ebHIoqr98QAWcXo" alt="Creator" />
-                </PoolAvatarImg>
-                <PoolAvatarImg $index={1} $color="#E11D48">
-                  <img src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/@fitspace.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvQGZpdHNwYWNlLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODE3OTY3NDUsImV4cCI6MTgxMzMzMjc0NX0.ltLA07dWixaQfRTfHc3ff36XOWT_ObEfBQgx15s-BC4" alt="Creator" />
-                </PoolAvatarImg>
-                <PoolAvatarImg $index={2} $color="#0EA5E9">
-                  <img src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/fitness%20avatar.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvZml0bmVzcyBhdmF0YXIuanBlZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODE3OTY3NjYsImV4cCI6MTgxMzMzMjc2Nn0.QXbJRXzoXn1Kp_OoBaEl504k2qhoRybOCeSZIowPn40" alt="Creator" />
-                </PoolAvatarImg>
-              </>
-            )}
-          </PoolAvatarStack>
-          <PoolBannerContent>
-            {hasRecentPoolActivity && poolStats?.followers_this_month > 0 ? (
-              <>
-                <PoolBannerTitle>🔥 +{poolStats.followers_this_month} new followers this month</PoolBannerTitle>
-                <PoolBannerSubtitle>Keep boosting to grow faster</PoolBannerSubtitle>
-              </>
-            ) : (
-              <>
-                <PoolBannerTitle>🚀 Grow your followers fast</PoolBannerTitle>
-                <PoolBannerSubtitle>Join creators boosting each other</PoolBannerSubtitle>
-              </>
-            )}
-          </PoolBannerContent>
-          <PoolBannerCTA>
-            {hasRecentPoolActivity ? 'Keep boosting →' : 'Join Pool →'}
-          </PoolBannerCTA>
+          ...
         </PoolPromoBanner>
         )}
+        */}
 
         {/* Sub-tabs: Matches vs Opportunities */}
         <SubTabRow>
@@ -958,28 +930,16 @@ const ForYou = () => {
           />
         )}
 
-        {/* Matches Tab Content */}
+        {/* Matches Tab Content — rebuild: only matched brands (all 8) */}
         {activeTab === 'matches' && (
           <>
-        {/* Pending Pitch Banner — celebrates momentum */}
+        {/* Pending Pitch / View Inbox — commented out for For You rebuild
         {pendingPitches && pendingPitches.length > 0 && (
-          <PendingPitchBanner>
-            <PendingIcon>🎉</PendingIcon>
-            <PendingContent>
-              <PendingTitle>
-                Nice work! You've reached out to {pendingPitches.length} {pendingPitches.length === 1 ? 'brand' : 'brands'}
-              </PendingTitle>
-              <PendingSubtitle>
-                Keep going. Most creators land their first PR package after pitching 5-10 brands.
-              </PendingSubtitle>
-            </PendingContent>
-            <PendingLink onClick={() => navigate('/creator/dashboard/pr-pipeline')}>
-              View Inbox →
-            </PendingLink>
-          </PendingPitchBanner>
+          <PendingPitchBanner>...</PendingPitchBanner>
         )}
+        */}
 
-        {/* Live Activity Ticker - compact single line with horizontal scroll */}
+        {/* Live Activity Ticker — kept as light social proof under tabs */}
         {socialFeedNotifs.length > 0 && (
           <LiveTicker>
             <TickerContent>
@@ -997,295 +957,28 @@ const ForYou = () => {
           </LiveTicker>
         )}
 
-        {/* Section 1: Matched for You (Pro gate) */}
         <Section>
-          {isPro ? (
-            /* Pro users see all cards */
-            <CardGrid $cols={3}>
-              {data?.matched?.map(brand => (
-                <BrandCard
-                  key={brand.id}
-                  brand={brand}
-                  isPro={isPro}
-                  hasPitched={pitchedIds.has(brand.id)}
-                  isSaved={savedIds.has(brand.id)}
-                  isUnlocked={unlockedIds.has(brand.id)}
-                  atLimit={atLimit}
-                  onPitch={() => handlePitchNow(brand)}
-                  onUpgrade={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}
-                  matchScore={brand.match_score}
-                />
-              ))}
-            </CardGrid>
-          ) : (
-            /* Free users: 3 visible cards + locked cards with visible stats */
-            <>
-              {/* First 3 visible cards - creates curiosity to see more */}
-              <CardGrid $cols={3} style={{ marginBottom: 20 }}>
-                {data?.matched?.slice(0, 3).map(brand => (
-                  <BrandCard
-                    key={brand.id}
-                    brand={brand}
-                    isPro={isPro}
-                    hasPitched={pitchedIds.has(brand.id)}
-                    isSaved={savedIds.has(brand.id)}
-                    isUnlocked={unlockedIds.has(brand.id)}
-                    atLimit={atLimit}
-                    onPitch={() => handlePitchNow(brand)}
-                    onUpgrade={() => { setUpgradeReason('matched'); setShowUpgrade(true); }}
-                    matchScore={brand.match_score}
-                  />
-                ))}
-              </CardGrid>
-
-              {/* Locked matches section */}
-              {data?.matched?.length > 3 && (
-                <>
-                  <MatchSectionLabel>🔒 {(data?.matched?.length || 0) - 3} more matches</MatchSectionLabel>
-
-                  {/* Upgrade CTA — moved BEFORE locked cards for better visibility */}
-                  <UnlockBanner
-                    ref={bannerRef}
-                    onClick={() => {
-                      // Track click
-                      axios.post(`${API_BASE}/api/track-event`, {
-                        event: 'upgrade_cta_click',
-                        location: 'for_you_banner',
-                        user_id: user?.creator_id
-                      }).catch(err => console.error('Tracking error:', err));
-                      setUpgradeReason('matched_banner');
-                      setShowUpgrade(true);
-                    }}
-                  >
-                    <UnlockBannerContent>
-                      <UnlockBannerIcon>
-                        <Sparkles size={20} />
-                      </UnlockBannerIcon>
-                      <UnlockBannerText>
-                        <UnlockBannerTitle>
-                          {(data?.matched?.length || 0) - 3} more high-quality matches
-                        </UnlockBannerTitle>
-                        <UnlockBannerSub>
-                          Unlock them with Pro · $19/mo for unlimited contacts
-                        </UnlockBannerSub>
-                      </UnlockBannerText>
-                    </UnlockBannerContent>
-                    <UnlockBannerBtn>
-                      Get unlimited
-                      <ArrowRight size={16} />
-                    </UnlockBannerBtn>
-                  </UnlockBanner>
-
-                  {/* Locked match cards - modern glassmorphism design */}
-                  <LockedMatchList>
-                    {data?.matched?.slice(3, 6).map((brand, i) => {
-                      const CARD_STATS = [
-                        { rate: 48, multiplier: 5 },
-                        { rate: 37, multiplier: 4 },
-                        { rate: 29, multiplier: 3 },
-                      ];
-                      const stats = CARD_STATS[i] || CARD_STATS[0];
-                      const replyRate = brand.response_rate || stats.rate;
-                      return (
-                        <LockedMatchCard
-                          key={brand.id || i}
-                          onClick={() => {
-                            axios.post(`${API_BASE}/api/track-event`, {
-                              event: 'upgrade_cta_click',
-                              location: 'locked_card',
-                              user_id: user?.creator_id
-                            }).catch(err => console.error('Tracking error:', err));
-                            setUpgradeReason('locked_card');
-                            setShowUpgrade(true);
-                          }}
-                        >
-                          <LockedCardBlur>
-                            {brand.logo && <LockedBrandLogo src={brand.logo} alt="" />}
-                          </LockedCardBlur>
-                          <LockedCardContent>
-                            <LockedStatBadge>
-                              <LockedStatValue>{replyRate}%</LockedStatValue>
-                              <LockedStatLabel>reply rate</LockedStatLabel>
-                            </LockedStatBadge>
-                            <LockedMatchInfo>
-                              <LockedMatchHeadline>High-converting brand match</LockedMatchHeadline>
-                              <LockedMatchMeta>
-                                {brand.category && <span>{categoryLabel(brand.category)}</span>}
-                                <span> · ~${brand.price_point || 45} PR value</span>
-                              </LockedMatchMeta>
-                            </LockedMatchInfo>
-                            <LockedIcon>
-                              <Lock size={16} />
-                            </LockedIcon>
-                            {/* Hover CTA - appears on card hover */}
-                            <LockedCardCTA>
-                              <span>Unlock with Pro</span>
-                              <ArrowRight size={12} />
-                            </LockedCardCTA>
-                          </LockedCardContent>
-                        </LockedMatchCard>
-                      );
-                    })}
-                  </LockedMatchList>
-                </>
-              )}
-            </>
-          )}
+          <CardGrid $cols={2}>
+            {(data?.matched || []).map(brand => (
+              <BrandCard
+                key={brand.id}
+                brand={brand}
+                hasPitched={pitchedIds.has(brand.id)}
+                isUnlocked={unlockedIds.has(brand.id)}
+                onPitch={() => handlePitchNow(brand)}
+                matchScore={brand.match_score}
+              />
+            ))}
+          </CardGrid>
         </Section>
 
-        {/* Kit Builder Prompt - shown AFTER brand matches, so the reward (brands) is first */}
-        {/* Trending in your niche — strict filtering, honest labeling */}
-        {data?.hot?.length > 0 && selectedNiches.length > 0 && (
-          (() => {
-            // Beauty-related keywords to exclude from non-beauty niches
-            const beautyKeywords = ['beauty', 'skincare', 'makeup', 'cosmetic', 'lipstick', 'mascara', 'foundation', 'blush', 'eyeshadow', 'haircare', 'nail', 'fragrance', 'perfume', 'serum', 'moisturizer', 'cleanser', 'toner'];
+        {/* Trending Now — commented out for For You rebuild
+        {data?.hot?.length > 0 && (...)}
+        */}
 
-            // Check if brand is beauty-related (by name, description, or category)
-            const isBeautyBrand = (brand) => {
-              const name = (brand.name || '').toLowerCase();
-              const desc = (brand.description || '').toLowerCase();
-              const cat = (brand.category || '').toLowerCase();
-              return beautyKeywords.some(kw => name.includes(kw) || desc.includes(kw) || cat.includes(kw));
-            };
-
-            // Primary niche for title (first selected)
-            const primaryNiche = selectedNiches[0].toLowerCase();
-            const isPrimaryBeauty = ['beauty', 'skincare', 'makeup'].includes(primaryNiche);
-
-            // Strict filter: match PRIMARY niche only, exclude beauty from non-beauty niches
-            const nicheFiltered = data.hot.filter(b => {
-              const brandCat = (b.category || '').toLowerCase();
-
-              // If primary niche is NOT beauty-related, exclude beauty brands entirely
-              if (!isPrimaryBeauty && isBeautyBrand(b)) {
-                return false;
-              }
-
-              // Strict matching for primary niche only
-              if (primaryNiche === 'tech') {
-                return brandCat === 'tech' || ['technology', 'electronics', 'gadgets', 'software', 'gaming', 'apps'].some(t => brandCat.includes(t));
-              }
-              if (primaryNiche === 'lifestyle') {
-                // Lifestyle but NOT beauty/fashion/makeup
-                return (brandCat === 'lifestyle' || ['home', 'wellness', 'fitness', 'travel', 'food', 'decor'].some(t => brandCat.includes(t))) && !isBeautyBrand(b);
-              }
-              if (primaryNiche === 'fashion') {
-                return brandCat === 'fashion' || ['clothing', 'apparel', 'accessories', 'shoes', 'jewelry'].some(t => brandCat.includes(t));
-              }
-              if (primaryNiche === 'beauty' || primaryNiche === 'skincare' || primaryNiche === 'makeup') {
-                return isBeautyBrand(b) || brandCat === 'beauty' || ['skincare', 'makeup', 'cosmetics', 'haircare'].some(t => brandCat.includes(t));
-              }
-
-              // Default: exact or partial match
-              return brandCat === primaryNiche || brandCat.includes(primaryNiche);
-            });
-
-            // If no matches for primary niche, show generic section
-            const hasNicheMatches = nicheFiltered.length > 0;
-            const brandsToShow = hasNicheMatches ? nicheFiltered.slice(0, 3) : data.hot.slice(0, 3);
-            const sectionTitle = hasNicheMatches
-              ? `Trending in ${CATEGORY_LABELS[selectedNiches[0]] || selectedNiches[0]}`
-              : 'Trending Now';
-            const sectionDesc = hasNicheMatches
-              ? 'Popular with creators in your niche this week'
-              : 'Hot brands this week';
-
-            return (
-              <Section>
-                <SectionHeader>
-                  <SectionLeft>
-                    <SectionIcon $bg="#FFF7ED">🔥</SectionIcon>
-                    <SectionTitleWrap>
-                      <SectionTitle>{sectionTitle}</SectionTitle>
-                      <SectionDesc>{sectionDesc}</SectionDesc>
-                    </SectionTitleWrap>
-                  </SectionLeft>
-                </SectionHeader>
-
-                <CardGrid $cols={3}>
-                  {brandsToShow.map(brand => (
-                    <BrandCard
-                      key={brand.id}
-                      brand={brand}
-                      isPro={isPro}
-                      hasPitched={pitchedIds.has(brand.id)}
-                      isSaved={savedIds.has(brand.id)}
-                      isUnlocked={unlockedIds.has(brand.id)}
-                      atLimit={atLimit}
-                      onPitch={() => handlePitchNow(brand)}
-                      onUpgrade={() => { setUpgradeReason('limit'); setShowUpgrade(true); }}
-                      showMomentum
-                    />
-                  ))}
-                </CardGrid>
-              </Section>
-            );
-          })()
-        )}
-
-        {/* New Brands on newcollab — 4 most recently added (limited to 4) */}
-        {data?.newest?.length > 0 && (
-        <Section>
-          <SectionHeader>
-            <SectionLeft>
-              <SectionIcon $bg="#EEF2FF">✨</SectionIcon>
-              <SectionTitleWrap>
-                <SectionTitleRow>
-                  <SectionTitle>New brands on newcollab</SectionTitle>
-                  <NewCountPill>{data.newest.length} new</NewCountPill>
-                </SectionTitleRow>
-                <SectionDesc>Contact them now to unlock your next PR package</SectionDesc>
-              </SectionTitleWrap>
-            </SectionLeft>
-          </SectionHeader>
-
-          <SeasonalGrid>
-            {data?.newest?.slice(0, 4).map((brand, idx) => {
-              // Add variance to avoid identical stats looking auto-generated
-              const displayRate = brand.display_reply_rate ||
-                (brand.response_rate ? brand.response_rate + ((brand.id || idx) % 7) - 3 : null);
-              return (
-              <SeasonalCard key={brand.id}>
-                <SeasonalLogoBox>
-                  {brand.logo ? (
-                    <img src={brand.logo} alt={brand.name} onError={(e) => { e.target.style.display = 'none'; }} />
-                  ) : (
-                    <SeasonalLogoText>{brand.name?.charAt(0)}</SeasonalLogoText>
-                  )}
-                </SeasonalLogoBox>
-                <SeasonalInfo>
-                  <SeasonalName>{brand.name}</SeasonalName>
-                  <SeasonalReason>✨ Just added{brand.category ? ` · ${categoryLabel(brand.category)}` : ''}</SeasonalReason>
-                  <SeasonalStats>
-                    {displayRate && (
-                      <div>
-                        <SeasonalStatVal className="green">{Math.max(35, Math.min(65, displayRate))}%</SeasonalStatVal>
-                        <SeasonalStatLbl>Reply rate</SeasonalStatLbl>
-                      </div>
-                    )}
-                    <div>
-                      <SeasonalStatVal>~${brand.price_point || (35 + (idx * 15))}</SeasonalStatVal>
-                      <SeasonalStatLbl>PR value</SeasonalStatLbl>
-                    </div>
-                  </SeasonalStats>
-                  <SeasonalBtn
-                    onClick={() => handlePitchNow(brand)}
-                    disabled={pitchedIds.has(brand.id)}
-                    $pitched={pitchedIds.has(brand.id)}
-                  >
-                    {pitchedIds.has(brand.id) ? (
-                      <><Check size={14} /> Contacted</>
-                    ) : (
-                      <><Mail size={14} /> Get Package</>
-                    )}
-                  </SeasonalBtn>
-                </SeasonalInfo>
-              </SeasonalCard>
-              );
-            })}
-          </SeasonalGrid>
-        </Section>
-        )}
+        {/* New brands on newcollab — commented out for For You rebuild
+        {data?.newest?.length > 0 && (...)}
+        */}
           </>
         )}
       </PageInner>
@@ -1512,8 +1205,39 @@ const ForYou = () => {
 };
 
 // Brand Card Component (inline for this page)
-const BrandCard = ({ brand, isPro, hasPitched, isSaved, isUnlocked, atLimit, onPitch, onUpgrade, badge, matchScore, showMomentum }) => {
-  const catStyle = getCategoryColors(brand.category);
+const isMicroFriendlyBrand = (brand) => {
+  if (!brand) return false;
+  if (brand.micro_friendly === true || brand.is_micro_friendly === true) return true;
+  if (brand.micro_friendly === false || brand.is_micro_friendly === false) return false;
+  // Temporary heuristic until Claude enrichment assigns micro_friendly on brands
+  const min = brand.min_followers;
+  if (min == null || min === '' || Number(min) === 0) return true;
+  return Number(min) <= 10000;
+};
+
+const brandHasEmail = (brand) => {
+  const email = brand?.contact_email || brand?.pr_email || brand?.email || brand?.verified_email;
+  if (email && String(email).includes('@')) return true;
+  return !!(brand?.hasEmailContact || brand?.has_email_contact || brand?.has_email || brand?.verified_contact);
+};
+const brandHasForm = (brand) => {
+  const url = brand?.application_form_url || brand?.application_url || brand?.pr_form_url || brand?.form_url;
+  if (url && String(url).length > 4) return true;
+  return !!(brand?.has_application_form || brand?.hasApplication || brand?.has_application);
+};
+const brandIsAffiliateForm = (brand) => {
+  const url = String(brand?.application_form_url || brand?.application_url || brand?.pr_form_url || '').toLowerCase();
+  return /superfiliate|affiliate|ambassador|portal\/sign/.test(url);
+};
+
+const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore }) => {
+  const microFriendly = isMicroFriendlyBrand(brand);
+  const hasEmail = brandHasEmail(brand);
+  const hasForm = brandHasForm(brand);
+  const isAffiliate = hasForm && brandIsAffiliateForm(brand);
+  const blurb = brand.description || brand.match_reason || brand.why_match ||
+    (brand.category ? `${categoryLabel(brand.category)} brand matched to your content.` : 'Brand matched to your content.');
+  const minFollowers = brand.min_followers ?? brand.minFollowers;
 
   return (
     <Card
@@ -1522,85 +1246,70 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, isUnlocked, atLimit, onP
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <LogoBox>
-        {badge && (
-          <LogoBadge $type={badge.type}>{badge.label}</LogoBadge>
-        )}
-        {matchScore && !isUnlocked && (
-          <MatchBadge>{Math.round(matchScore)}% match</MatchBadge>
-        )}
-        {isUnlocked && (
-          <UnlockedBadge><Check size={12} /> Unlocked</UnlockedBadge>
-        )}
-        {brand.logo ? (
-          <LogoImg src={brand.logo} alt={brand.name} onError={(e) => { e.target.style.display = 'none'; }} />
-        ) : (
-          <LogoText>{brand.name?.charAt(0)}</LogoText>
-        )}
-      </LogoBox>
+      {isUnlocked && (
+        <CardTopMeta>
+          <UnlockedInline><Check size={12} /> Unlocked</UnlockedInline>
+        </CardTopMeta>
+      )}
 
-      <CardName>{brand.name}</CardName>
-      {brand.description && <CardDesc>{brand.description}</CardDesc>}
+      <CardNameRow>
+        {(brand.logo || brand.logo_url) ? (
+          <CardAvatar
+            src={brand.logo || brand.logo_url}
+            alt=""
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        ) : (
+          <CardAvatarFallback>{(brand.name || brand.brand_name || '?').charAt(0)}</CardAvatarFallback>
+        )}
+        <div>
+          <CardName>{brand.name || brand.brand_name}</CardName>
+          {brand.category && <CardNiche>{categoryLabel(brand.category)}</CardNiche>}
+        </div>
+      </CardNameRow>
+
+      <CardDesc>{blurb}</CardDesc>
 
       <CardTags>
-        {brand.category && (
-          <CategoryTag $bg={catStyle.bg} $color={catStyle.text} $border={catStyle.border}>
-            {categoryLabel(brand.category)}
-          </CategoryTag>
-        )}
-        {brand.min_followers > 0 && (
-          <TagFollowers>{(brand.min_followers / 1000).toFixed(0)}K+ followers</TagFollowers>
+        {microFriendly && <Pill $tone="ok">Micro-friendly</Pill>}
+        {hasEmail && <Pill $tone="email">PR email</Pill>}
+        {hasForm && <Pill $tone="form">Program form</Pill>}
+        {isAffiliate && <Pill $tone="aff">Affiliate signup</Pill>}
+        {minFollowers > 0 && (
+          <Pill>{(Number(minFollowers) / 1000).toFixed(0)}K+ followers</Pill>
         )}
       </CardTags>
 
-      {showMomentum && brand.response_rate && (
-        <Momentum>
-          <MomentumLabel>
-            <span>Reply rate this week</span>
-            <span className="rate">↑ {brand.response_rate}%</span>
-          </MomentumLabel>
-          <MomentumTrack>
-            <MomentumFill style={{ width: `${Math.min(brand.response_rate, 100)}%` }} />
-          </MomentumTrack>
-        </Momentum>
-      )}
-
-      {!showMomentum && (
-        <>
-          <CardDivider />
-          <CardStats>
-            {brand.response_rate && (
-              <>
-                <StatItem>
-                  <StatValue className="green">{brand.response_rate}%</StatValue>
-                  <StatLabel>Reply rate</StatLabel>
-                </StatItem>
-                <StatDivider />
-              </>
-            )}
-            <StatItem>
-              <StatValue>~${brand.price_point || 45}</StatValue>
-              <StatLabel>PR value</StatLabel>
-            </StatItem>
-          </CardStats>
-        </>
-      )}
-
-      {brand.pitched_this_week > 0 && (
-        <SocialProof>
-          <Users size={12} /> {brand.pitched_this_week} pitched · <span className="green">{brand.wins_this_week || 0} got packages</span>
-        </SocialProof>
-      )}
+      <PreviewStats>
+        {brand.response_rate != null && brand.response_rate !== '' && (
+          <PreviewStat>
+            {brand.response_rate}%
+            <em>reply rate</em>
+          </PreviewStat>
+        )}
+        <PreviewStat>
+          ~${brand.price_point || 45}
+          <em>PR value</em>
+        </PreviewStat>
+        {matchScore ? (
+          <PreviewStat>
+            {Math.round(matchScore)}%
+            <em>match</em>
+          </PreviewStat>
+        ) : null}
+      </PreviewStats>
 
       <PitchBtn
         onClick={onPitch}
-        $pitched={hasPitched}
+        $pitched={hasPitched || isUnlocked}
         disabled={hasPitched}
       >
         {hasPitched ? (
           <><Check size={16} /> Contacted</>
+        ) : isUnlocked ? (
+          <><Mail size={16} /> {tokens.ctaViewBrandPr}</>
         ) : (
-          <><Mail size={16} /> Get Package</>
+          <><Mail size={16} /> {tokens.ctaGetBrandPr}</>
         )}
       </PitchBtn>
     </Card>
@@ -1609,10 +1318,11 @@ const BrandCard = ({ brand, isPro, hasPitched, isSaved, isUnlocked, atLimit, onP
 
 // Styled Components
 const PageWrap = styled.div`
-  background: #F5F5F7;
+  background: ${tokens.paper};
   min-height: 100vh;
   overflow-x: hidden;
   width: 100%;
+  font-family: ${tokens.fontSans};
 `;
 
 const PageInner = styled.div`
@@ -1625,11 +1335,22 @@ const PageInner = styled.div`
   }
 `;
 
+const MicroFriendlyTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  background: ${tokens.accentSoft};
+  color: ${tokens.accentDeep};
+`;
+
 const PageHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
   gap: 16px;
 
   @media (max-width: 768px) {
@@ -1660,23 +1381,25 @@ const QuotaBanner = styled.div`
 const CreditTrackers = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  max-width: 480px;
   align-items: stretch;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
+    max-width: none;
   }
 `;
 
 const CreditTracker = styled.div`
-  background: ${p => (p.$low ? '#FEF2F2' : '#F9FAFB')};
-  border: 1px solid ${p => (p.$low ? '#FECACA' : '#E5E7EB')};
+  background: ${p => (p.$low ? '#FEF2F2' : tokens.white)};
+  border: 1px solid ${p => (p.$low ? '#FECACA' : '#ebebeb')};
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 0.75rem 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 `;
 
@@ -1831,10 +1554,10 @@ const PageTitleWrap = styled.div`
 const PageEyebrow = styled.div`
   font-size: 11px;
   font-weight: 700;
-  color: ${tokens.primary};
+  color: #8a8a8a;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 4px;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.35rem;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1845,24 +1568,59 @@ const PageEyebrow = styled.div`
 `;
 
 const PageTitle = styled.h1`
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  margin: 0 0 4px;
+  font-family: ${tokens.fontDisplay};
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 8px;
   color: ${tokens.textPrimary};
 
   @media (max-width: 640px) {
-    font-size: 20px;
+    font-size: 1.55rem;
   }
 `;
 
+const PageTitleEm = styled.span`
+  font-style: normal;
+  font-weight: 500;
+  color: ${tokens.accentDeep};
+  box-shadow: inset 0 -0.12em 0 ${tokens.accentBorder};
+`;
+
 const PageSub = styled.p`
-  font-size: 13px;
+  font-size: 0.95rem;
   color: ${tokens.textMuted};
   margin: 0;
+  max-width: 36rem;
+  line-height: 1.45;
 
   @media (max-width: 640px) {
-    font-size: 12px;
+    font-size: 0.88rem;
+  }
+`;
+
+const DiscoverLink = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0.85rem;
+  margin-bottom: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: ${tokens.fontSans};
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: ${tokens.accentDeep};
+  cursor: pointer;
+
+  &:hover {
+    color: ${tokens.accent};
+  }
+
+  svg {
+    flex-shrink: 0;
   }
 `;
 
@@ -2176,10 +1934,9 @@ const ProLabel = styled.span`
 
 const CardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(${p => p.$cols || 3}, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(${p => p.$cols || 2}, 1fr);
+  gap: 0.85rem;
 
-  @media (max-width: 1024px) { grid-template-columns: repeat(2, 1fr); }
   @media (max-width: 640px) { grid-template-columns: 1fr; }
 `;
 
@@ -2234,30 +1991,134 @@ const SeasonalGrid = styled.div`
   @media (max-width: 640px) { grid-template-columns: 1fr; }
 `;
 
-// Brand Card Styles
+// Brand Card Styles — matches preview-creator-dashboard-rebuild.html
 const Card = styled.div`
-  background: #fff;
-  border: 1px solid ${tokens.border};
-  border-radius: 18px;
-  padding: 18px;
-  padding-top: 22px;
+  background: ${tokens.white};
+  border: 1px solid #ebebeb;
+  border-radius: 14px;
+  padding: 1rem 1.05rem;
   position: relative;
-  transition: all 0.2s;
-  box-shadow: ${tokens.shadowCard};
+  transition: border-color 0.2s, transform 0.2s;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
+  gap: 0.55rem;
   overflow: visible;
 
   &:hover {
-    border-color: #D4D4D4;
-    box-shadow: ${tokens.shadowHover};
+    border-color: #b8d5cb;
     transform: translateY(-2px);
   }
 
   @media (max-width: 640px) {
-    padding: 12px;
-    padding-top: 18px;
-    border-radius: 14px;
+    padding: 0.95rem 1rem;
+  }
+`;
+
+const CardTopMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+`;
+
+const UnlockedInline = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: ${tokens.accent};
+`;
+
+const MetaPill = styled.span`
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  background: ${p => (
+    p.$tone === 'hot' ? '#fdeee9' :
+    p.$tone === 'match' ? '#f4f4f4' :
+    tokens.accentSoft
+  )};
+  color: ${p => (
+    p.$tone === 'hot' ? '#b33a1f' :
+    p.$tone === 'match' ? '#444' :
+    tokens.accentDeep
+  )};
+`;
+
+const CardNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+`;
+
+const CardAvatar = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  flex-shrink: 0;
+`;
+
+const CardAvatarFallback = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #1a1a1a, #3d3d3d);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+`;
+
+const CardNiche = styled.div`
+  font-size: 0.8rem;
+  color: ${tokens.muted};
+  margin-top: 1px;
+`;
+
+const Pill = styled.span`
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 6px;
+  background: ${p => (
+    p.$tone === 'ok' ? tokens.accentSoft :
+    p.$tone === 'email' ? '#fef3c7' :
+    p.$tone === 'form' ? '#eff6ff' :
+    p.$tone === 'aff' ? '#fce7f3' :
+    '#f4f4f4'
+  )};
+  color: ${p => (
+    p.$tone === 'ok' ? tokens.accentDeep :
+    p.$tone === 'email' ? '#92400e' :
+    p.$tone === 'form' ? '#1d4ed8' :
+    p.$tone === 'aff' ? '#9d174d' :
+    '#444'
+  )};
+`;
+
+const PreviewStats = styled.div`
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 0.1rem;
+`;
+
+const PreviewStat = styled.div`
+  em {
+    display: block;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 0.68rem;
+    color: ${tokens.muted};
   }
 `;
 
@@ -2378,36 +2239,37 @@ const UnlockedBadge = styled.div`
 `;
 
 const CardName = styled.div`
-  font-size: 16px;
+  font-size: 1.05rem;
   font-weight: 700;
-  text-align: center;
-  margin-bottom: 4px;
-  letter-spacing: -0.2px;
+  text-align: left;
+  margin-bottom: 0;
+  letter-spacing: -0.02em;
   word-break: break-word;
+  line-height: 1.2;
 
   @media (max-width: 640px) {
-    font-size: 14px;
+    font-size: 1rem;
   }
 `;
 
 const CardDesc = styled.div`
-  font-size: 12.5px;
-  color: ${tokens.textMuted};
-  text-align: center;
-  margin-bottom: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 0.86rem;
+  color: ${tokens.muted};
+  text-align: left;
+  margin-bottom: 0;
+  flex: 1;
   line-height: 1.5;
+  /* Full description — no clamp (rebuild preview) */
+  overflow: visible;
+  white-space: normal;
 `;
 
 const CardTags = styled.div`
   display: flex;
-  justify-content: center;
-  gap: 6px;
+  justify-content: flex-start;
+  gap: 0.3rem;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 `;
 
 const CategoryTag = styled.span`
@@ -2521,21 +2383,24 @@ const PitchBtn = styled.button`
   justify-content: center;
   gap: 7px;
   width: 100%;
-  padding: 12px;
-  background: ${p => p.$pitched ? tokens.successLight : tokens.action};
-  color: ${p => p.$pitched ? tokens.success : '#fff'};
-  border: ${p => p.$pitched ? `1.5px solid ${tokens.successBorder}` : 'none'};
+  padding: 0.7rem 1rem;
+  background: ${p => p.$pitched ? tokens.accentSoft : tokens.action};
+  color: ${p => p.$pitched ? tokens.accentDeep : '#fff'};
+  border: ${p => p.$pitched ? `1px solid ${tokens.accentBorder}` : 'none'};
   border-radius: 10px;
-  font-size: 13.5px;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: ${p => p.$pitched ? 'default' : 'pointer'};
-  font-family: inherit;
-  transition: all 0.15s;
-  margin-top: auto;
+  font-family: ${tokens.fontSans};
+  transition: transform 0.12s, background 0.2s;
+  margin-top: 0.25rem;
 
   &:hover:not(:disabled) {
-    background: ${p => p.$pitched ? tokens.successLight : '#1C1C1C'};
-    transform: ${p => p.$pitched ? 'none' : 'translateY(-1px)'};
+    background: ${p => p.$pitched ? tokens.accentSoft : '#1C1C1C'};
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
   }
 `;
 
@@ -3592,62 +3457,46 @@ const UnlockBannerBtn = styled.div`
 
 // Floating Action Button (FAB) for Upgrade - follows best practices from Notion, Linear, Grammarly
 const UpgradeFAB = styled.button`
-  /* Fixed positioning - always visible */
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 1.5rem;
+  right: 1.5rem;
   z-index: 999;
 
-  /* Styling */
-  background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+  background: ${tokens.action};
   color: white;
   border: none;
-  border-radius: 50px;
-  padding: 14px 24px 14px 20px;
+  border-radius: 12px;
+  padding: 0.85rem 1.15rem;
 
-  /* Typography */
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 600;
-  font-family: inherit;
+  font-family: ${tokens.fontSans};
   white-space: nowrap;
 
-  /* Flexbox for icon + text */
   display: flex;
   align-items: center;
   gap: 8px;
 
-  /* Elevation & shadows */
-  box-shadow:
-    0 4px 12px rgba(124, 58, 237, 0.25),
-    0 8px 24px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 
-  /* Interactions */
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.2s, transform 0.12s;
 
-  /* Prevent text selection */
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 
-  /* Hover state */
   &:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow:
-      0 6px 16px rgba(124, 58, 237, 0.3),
-      0 12px 32px rgba(124, 58, 237, 0.2);
-    background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+    background: ${tokens.accentDeep};
+    transform: translateY(-1px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
   }
 
-  /* Active state */
   &:active {
     transform: translateY(0) scale(0.98);
-    box-shadow:
-      0 2px 8px rgba(124, 58, 237, 0.25);
   }
 
-  /* Focus state for accessibility */
   &:focus-visible {
-    outline: 2px solid #8B5CF6;
+    outline: 2px solid ${tokens.accent};
     outline-offset: 2px;
   }
 
@@ -4314,36 +4163,37 @@ const RefreshHint = styled.div`
 `;
 
 
-// Sub-tabs for Matches vs Opportunities
+// Sub-tabs — preview .seg style
 const SubTabRow = styled.div`
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid ${tokens.border};
-  margin-bottom: 24px;
+  gap: 0.75rem;
+  border-bottom: 1px solid ${tokens.line};
+  margin-bottom: 0.85rem;
 `;
 
 const SubTab = styled.button`
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 18px;
-  font-size: 13px;
+  padding: 0.5rem 0.1rem 0.65rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: ${p => p.$active ? tokens.textPrimary : tokens.textMuted};
+  color: ${p => (p.$active ? tokens.ink : '#999')};
   background: none;
   border: none;
-  border-bottom: 2px solid ${p => p.$active ? tokens.textPrimary : 'transparent'};
+  border-bottom: 2px solid ${p => (p.$active ? tokens.ink : 'transparent')};
   margin-bottom: -1px;
   cursor: pointer;
-  transition: all 0.15s;
+  font-family: ${tokens.fontSans};
+  transition: color 0.15s;
 
   &:hover {
-    color: ${tokens.textPrimary};
+    color: ${tokens.ink};
   }
 `;
 
 const CountBadge = styled.span`
-  background: ${tokens.primary};
+  background: ${tokens.ink};
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -4877,61 +4727,35 @@ const KitViewAction = styled.button`
   }
 `;
 
-// Enhanced Media Kit CTA - More prominent with gradient and social proof
+// Kit nudge — preview .nudge style
 const KitBuilderCard = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 50%, #FDF2F8 100%);
-  border: 1.5px solid #C7D2FE;
+  justify-content: space-between;
+  gap: 1rem;
+  background: linear-gradient(90deg, #f0faf6, #fff7f3);
+  border: 1px solid ${tokens.line};
   border-radius: 12px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s;
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 120px;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.08));
-    pointer-events: none;
-  }
-
   &:hover {
-    border-color: #8B5CF6;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.15);
+    border-color: ${tokens.accentBorder};
   }
 
   @media (max-width: 700px) {
     flex-direction: column;
     align-items: stretch;
-    gap: 14px;
-    padding: 16px;
+    gap: 0.75rem;
   }
 `;
 
 const KitBuilderProgress = styled.div`
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-  border-radius: 10px;
-  color: white;
-  font-size: 20px;
-
-  @media (max-width: 700px) {
-    display: none;
-  }
+  display: none;
 `;
 
 const KitProgressRing = styled.div`
@@ -4952,9 +4776,9 @@ const KitBuilderContent = styled.div`
 `;
 
 const KitBuilderTitle = styled.h3`
-  font-size: 14px;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #4C1D95;
+  color: ${tokens.ink};
   margin: 0 0 3px;
   line-height: 1.3;
   display: flex;
@@ -4963,15 +4787,10 @@ const KitBuilderTitle = styled.h3`
 `;
 
 const KitBuilderDesc = styled.p`
-  font-size: 12px;
-  color: #6B7280;
+  font-size: 0.84rem;
+  color: ${tokens.muted};
   margin: 0;
   line-height: 1.4;
-
-  strong {
-    color: #7C3AED;
-    font-weight: 600;
-  }
 `;
 
 const KitBuilderStats = styled.div`
@@ -4986,27 +4805,26 @@ const KitBuilderBtn = styled.button`
   display: flex;
   align-items: center;
   gap: 5px;
-  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  background: ${tokens.action};
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 12px;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s;
-  font-family: inherit;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+  transition: background 0.2s;
+  font-family: ${tokens.fontSans};
+  box-shadow: none;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+    background: ${tokens.accentDeep};
   }
 
   @media (max-width: 700px) {
     justify-content: center;
-    padding: 12px 20px;
+    width: 100%;
   }
 `;
 

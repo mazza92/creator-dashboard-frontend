@@ -9,21 +9,22 @@
 // LOOT-BOX LOADING
 // ============================================
 export const LOADING = {
-  title: 'Your talent manager is on it',
+  title: 'Getting Brand PR',
+  subline: 'Unlocking the PR email or form + a pitch you can send.',
   cards: [
-    { key: 'inbox', pending: '⋯', done: '✓', text: 'Contact found' },
+    { key: 'inbox', pending: '⋯', done: '✓', text: 'PR contact found' },
     { key: 'pitch', pending: '⋯', done: '✓', text: 'Pitch drafted' },
-    { key: 'strategy', pending: '⋯', done: '✓', text: 'Brand strategy ready' },
-    { key: 'ready', pending: '⋯', done: '✓', text: 'Profile checked' },
+    { key: 'strategy', pending: '⋯', done: '✓', text: 'Match tips ready' },
+    { key: 'ready', pending: '⋯', done: '✓', text: 'Package ready' },
   ],
   fallbackText: 'Almost ready…',
   cyclingTexts: [
-    'Reviewing your profile…',
-    'Checking what this brand looks for…',
-    'Writing a pitch that fits you…',
-    'Finding the right contact…',
-    'Building your plan to look collab-ready…',
-    'Finishing your strategy…',
+    'Finding verified PR contact…',
+    'Checking if they use a signup form…',
+    'Drafting a short pitch for micros…',
+    'Matching your niche to this brand…',
+    'Packing email + form prep…',
+    'Almost done…',
   ],
   cyclingIntervalMs: 2000,
   maxTimeMs: 4000,
@@ -34,8 +35,8 @@ export const LOADING = {
 // COMPLETION FLASH
 // ============================================
 export const FLASH = {
-  title: 'Strategy ready',
-  subline: 'Your plan for this brand is loading…',
+  title: 'Brand PR ready',
+  subline: 'Your email or form package is loading…',
 };
 
 // Flash duration based on user's total unlocks
@@ -84,21 +85,21 @@ export const MENTOR_VERDICTS = {
     confidence: 'top',
     confidenceLabel: 'Top Match',
     confidenceStars: 5,
-    pill: 'Pitch Today',
+    pill: 'Ready to unlock',
     pillColor: 'green',
   },
   almost: {
     confidence: 'good',
     confidenceLabel: 'Good Match',
     confidenceStars: 4,
-    pill: 'Pitch Today',
+    pill: 'Ready to unlock',
     pillColor: 'green',
   },
   not_yet: {
     confidence: 'growth',
     confidenceLabel: 'Growth Match',
     confidenceStars: 3,
-    pill: 'Pitch + quick tips',
+    pill: 'Unlock + tips',
     pillColor: 'green',
   },
   poor_fit: {
@@ -144,7 +145,7 @@ export const MENTOR_SECTIONS = {
   },
   outreachTools: {
     label: 'Ready to send',
-    collapsedLabel: 'Contact, pitch, and timing ready',
+    collapsedLabel: 'PR email, pitch, and timing ready',
     icon: '✉️',
   },
 };
@@ -166,7 +167,7 @@ export const NEXT_ACTIONS = {
   anotherBody: 'Build your next strategy while this one sits in their inbox.',
   anotherCta: 'Back to matches',
   pipelineCta: 'Track this pitch in pipeline',
-  note: 'Your talent manager already did the hard part — stay consistent.',
+  note: 'Your Brand PR package is ready — stay consistent and unlock the next fit.',
 };
 
 // ============================================
@@ -243,25 +244,26 @@ export const EXPANDED_CONTENT = {
 // SEND BUTTON
 // ============================================
 export const SEND_BUTTON = {
-  // Dynamic label with brand name - more action-oriented
-  labelTemplate: (brandName) => `✉️ Pitch ${brandName}`,
-  label: '✉️ Pitch Brand', // Fallback
+  labelTemplate: (brandName) => `Get Brand PR — ${brandName}`,
+  label: 'Get Brand PR',
+  formLabel: 'Open form prep →',
+  emailLabel: 'Contact Brand',
 };
 
 // ============================================
 // DESIGN TOKENS
 // ============================================
 export const TOKENS = {
-  // Verdict pills
-  verdictGreenBg: '#dcfce7',
-  verdictGreenFg: '#0f7a44',
+  // Verdict pills (aligned with creatorTokens)
+  verdictGreenBg: '#eef6f3',
+  verdictGreenFg: '#095a46',
   verdictAmberBg: '#fef3c7',
   verdictAmberFg: '#92400e',
   verdictOrangeBg: '#ffedd5',
   verdictOrangeFg: '#c2410c',
   verdictRedBg: '#fee2e2',
   verdictRedFg: '#dc2626',
-  verdictProBg: 'linear-gradient(90deg, #8b5cf6, #c026d3)',
+  verdictProBg: 'linear-gradient(90deg, #0d7a5f, #095a46)',
 
   // Hero band
   heroEmSize: '44px',
@@ -270,27 +272,36 @@ export const TOKENS = {
   heroSublineSize: '11.5px',
 
   // Mentor section
-  mentorBg: '#f9fafb',
-  mentorBorder: '#e5e7eb',
-  mentorTextPrimary: '#111827',
-  mentorTextSecondary: '#6b7280',
-  mentorCoachNote: '#374151',
+  mentorBg: '#f7f5f0',
+  mentorBorder: '#e4e2dc',
+  mentorTextPrimary: '#12141a',
+  mentorTextSecondary: '#5c6470',
+  mentorCoachNote: '#2a2e38',
 
   // Accordion rows
   accRowMinHeight: '56px',
   accRowPadding: '16px 20px',
-  accRowBorder: '1px solid #f4f4f6',
-  accRowExpandedBg: '#fafbfd',
+  accRowBorder: '1px solid #e4e2dc',
+  accRowExpandedBg: '#fffdf8',
 
   // Pro row
-  proRowBg: 'linear-gradient(90deg, rgba(139,92,246,.04), rgba(192,38,211,.04))',
-  proRowBorder: '1.5px solid #d8b4fe',
+  proRowBg: 'linear-gradient(90deg, rgba(13,122,95,.06), rgba(9,90,70,.04))',
+  proRowBorder: '1.5px solid #b8d5cb',
 
   // Completion flash
-  flashBg: 'linear-gradient(160deg, #0b3d1e 0%, #0f7a44 100%)',
+  flashBg: 'linear-gradient(160deg, #095a46 0%, #0d7a5f 100%)',
 
-  // Loading
-  lootBg: 'linear-gradient(180deg, #0f1015 0%, #2a1335 100%)',
+  // Loading (legacy key kept for any remaining refs)
+  lootBg: '#f7f5f0',
   lootCardPopDuration: '400ms',
   lootCardPopEasing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+
+  // Shared rebuild surfaces
+  paper: '#f7f5f0',
+  ink: '#12141a',
+  action: '#0f0f0f',
+  accent: '#0d7a5f',
+  accentDeep: '#095a46',
+  fontSans: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  fontDisplay: "'Instrument Serif', Georgia, 'Times New Roman', serif",
 };

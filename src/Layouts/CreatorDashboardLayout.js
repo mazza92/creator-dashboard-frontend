@@ -10,6 +10,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import Logo from '../components/Logo';
 import api from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { creatorTokens } from '../theme/creatorTokens';
 
 // ============================================================
 // STYLED COMPONENTS
@@ -17,12 +18,15 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const LayoutContainer = styled.div`
   min-height: 100vh;
-  background: #FAFAFA;
+  background: ${creatorTokens.paper};
+  font-family: ${creatorTokens.fontSans};
+  color: ${creatorTokens.ink};
 `;
 
 const TopNav = styled.nav`
   background: #FFFFFF;
-  box-shadow: 0 1px 0 #EBEBEB;
+  border-bottom: 1px solid #ebebeb;
+  box-shadow: none;
   padding: 0 32px;
   display: flex;
   align-items: center;

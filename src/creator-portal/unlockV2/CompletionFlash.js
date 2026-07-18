@@ -38,24 +38,30 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background: #f7f5f0;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
   overflow: hidden;
-  min-height: 400px;
+  min-height: min(400px, 65vh);
+
+  @media (max-width: 480px) {
+    padding: 32px 20px;
+    min-height: min(360px, 60vh);
+  }
 `;
 
 const SuccessCircle = styled.div`
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: linear-gradient(135deg, #0d7a5f 0%, #095a46 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 24px;
   box-shadow:
-    0 0 0 8px rgba(34, 197, 94, 0.1),
-    0 10px 40px -10px rgba(34, 197, 94, 0.3);
+    0 0 0 8px rgba(13, 122, 95, 0.12),
+    0 10px 40px -10px rgba(13, 122, 95, 0.35);
   animation: ${scaleIn} 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 `;
 
@@ -76,17 +82,18 @@ const CheckIcon = styled.svg`
 `;
 
 const Title = styled.div`
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
+  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-size: 1.55rem;
+  font-weight: 400;
+  color: #12141a;
   letter-spacing: -0.02em;
   margin-bottom: 8px;
   animation: ${fadeUp} 0.4s ease-out 0.2s both;
 `;
 
 const Subline = styled.div`
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 0.9rem;
+  color: #5c6470;
   font-weight: 500;
   animation: ${fadeUp} 0.4s ease-out 0.35s both;
 `;
@@ -102,7 +109,7 @@ const Dot = styled.div`
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #22c55e;
+  background: #0d7a5f;
   opacity: ${props => 0.3 + (props.$index * 0.23)};
   animation: ${scaleIn} 0.3s ease-out ${props => 0.6 + (props.$index * 0.1)}s both;
 `;
