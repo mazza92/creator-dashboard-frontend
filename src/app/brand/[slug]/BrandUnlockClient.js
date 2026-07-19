@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { trackProBeginCheckout } from '../../../utils/subscriptionAnalytics';
 
 const API_BASE =
   typeof window !== 'undefined' && window.location.hostname === 'localhost'
@@ -101,6 +102,7 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
   // Handle upgrade - direct to Stripe checkout
   async function handleUpgrade() {
     try {
+      trackProBeginCheckout({ tier: 'pro', source: 'brand_unlock' });
       const res = await fetch(`${API_BASE}/api/subscription/create-checkout`, {
         method: 'POST',
         credentials: 'include',

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiCheckCircle, FiArrowRight } from 'react-icons/fi';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
+import { trackProPurchase } from '../utils/subscriptionAnalytics';
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
@@ -28,9 +29,18 @@ const SubscriptionSuccess = () => {
         const response = await api.get('/api/subscription/status');
         setSubscriptionInfo(response.data);
 
+        const tier = response.data?.tier || 'pro';
+        if (sessionId) {
+          trackProPurchase({ sessionId, tier });
+        }
+
         setLoading(false);
       } catch (error) {
         console.error('Error confirming subscription:', error);
+        // Still attribute purchase if Stripe redirected here with a session_id
+        if (sessionId) {
+          trackProPurchase({ sessionId, tier: 'pro' });
+        }
         setLoading(false);
       }
     };

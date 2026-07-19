@@ -18,6 +18,7 @@ import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
+import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
 const getApiBase = () => {
   const base = process.env.REACT_APP_API_BASE ||
@@ -628,6 +629,7 @@ const ForYou = () => {
   // Direct Stripe checkout (skip settings page)
   const handleDirectUpgrade = async () => {
     try {
+      trackProBeginCheckout({ tier: 'pro', source: 'for_you' });
       const response = await axios.post(`${API_BASE}/api/subscription/create-checkout`,
         { tier: 'pro' },
         { withCredentials: true }

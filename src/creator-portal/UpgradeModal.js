@@ -5,6 +5,7 @@ import { FiX, FiZap, FiLock, FiShield } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { tokens } from '../theme/tokens';
+import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
 const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt }) => {
   const [loading, setLoading] = useState(false);
@@ -12,6 +13,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   const handleUpgrade = async (tier) => {
     try {
       setLoading(true);
+      trackProBeginCheckout({ tier, source: feature || 'upgrade_modal' });
       const response = await api.post(
         '/api/subscription/create-checkout',
         { tier }

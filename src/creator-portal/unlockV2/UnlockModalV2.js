@@ -9,6 +9,7 @@ import CompletionFlash from './CompletionFlash';
 import { LOADING, TOKENS, MENTOR_VERDICTS, MENTOR_SECTIONS, SEND_BUTTON, NEXT_ACTIONS } from './copyDictionary';
 import { apiClient, getProxiedMediaUrl } from '../../config/api';
 import UpgradeModal from '../UpgradeModal';
+import { trackProBeginCheckout } from '../../utils/subscriptionAnalytics';
 
 // Brand logo with error handling - shows initials on broken images
 const BrandLogoImg = ({ src, alt, fallback }) => {
@@ -1857,6 +1858,7 @@ const UnlockModalV2 = ({
   // Handle upgrade to Pro via Stripe checkout
   const handleUpgradeClick = async () => {
     try {
+      trackProBeginCheckout({ tier: 'pro', source: 'unlock_modal_v2' });
       const response = await apiClient.post('/api/subscription/create-checkout', { tier: 'pro' });
       window.location.href = response.data.checkout_url;
     } catch (error) {

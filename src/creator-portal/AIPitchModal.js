@@ -6,6 +6,7 @@ import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFile
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
+import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 // Media kit enforcement removed - let users try the feature immediately
 
 /**
@@ -555,6 +556,7 @@ ${creatorName}`;
   const handleUpgrade = async () => {
     try {
       setUpgrading(true);
+      trackProBeginCheckout({ tier: 'pro', source: 'ai_pitch_modal' });
       const response = await api.post('/api/subscription/create-checkout', { tier: 'pro' });
       // Redirect to Stripe Checkout
       window.location.href = response.data.checkout_url;

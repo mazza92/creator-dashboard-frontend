@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
+import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
 /**
  * PR Package Modal - Complete PR Package with 6 sections:
@@ -49,6 +50,7 @@ const PRPackageModal = ({
   const handleUpgradeClick = async () => {
     try {
       setUpgradeLoading(true);
+      trackProBeginCheckout({ tier: 'pro', source: 'pr_package_modal' });
       const response = await apiClient.post('/api/subscription/create-checkout', { tier: 'pro' });
       // Redirect to Stripe Checkout
       window.location.href = response.data.checkout_url;
