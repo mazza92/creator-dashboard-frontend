@@ -240,15 +240,58 @@ export const apiClient = {
     delete: (url, config = {}) => api.delete(url, config),
 };
 
+const SOCIAL_CDN_SUFFIXES = [
+  'cdninstagram.com',
+  'fbcdn.net',
+  'fbsbx.com',
+  'imginn.com',
+  'tiktokcdn.com',
+  'tiktokcdn-us.com',
+  'tiktokcdn-eu.com',
+  'tiktokcdn-i18n.com',
+  'ttlivecdn.com',
+  'ibyteimg.com',
+  'muscdn.com',
+  'byteoversea.com',
+  'ibytedtos.com',
+];
+
+const isSocialCdnHost = (host) => {
+  const h = (host || '').toLowerCase();
+  return SOCIAL_CDN_SUFFIXES.some((suffix) => h === suffix || h.endsWith(`.${suffix}`));
+};
+
 /**
  * Rewrite Instagram/imginn/TikTok CDN image URLs through our backend proxy.
  * Those CDNs set Cross-Origin-Resource-Policy and break <img> embeds in the app.
+ * Always prefer absolute https://api... URLs so app.newcollab.co never 404s the proxy.
  */
 export const getProxiedMediaUrl = (url) => {
   if (!url || typeof url !== 'string') return url;
   const trimmed = url.trim();
   if (!trimmed) return trimmed;
-  if (trimmed.includes('/api/media-proxy')) return trimmed;
+
+  const base = getRuntimeApiUrl() || '';
+
+  // Already a media-proxy URL (relative or absolute) — pin to API origin
+  if (trimmed.includes('/api/media-proxy')) {
+    try {
+      if (trimmed.startsWith('/')) {
+        return `${base}${trimmed}`;
+      }
+      const parsed = new URL(trimmed);
+      if (parsed.pathname.includes('/api/media-proxy')) {
+        return base
+          ? `${base}${parsed.pathname}${parsed.search}`
+          : parsed.toString();
+      }
+    } catch {
+      if (trimmed.startsWith('/api/media-proxy')) {
+        return `${base}${trimmed}`;
+      }
+    }
+    return trimmed;
+  }
 
   let host = '';
   try {
@@ -257,23 +300,7 @@ export const getProxiedMediaUrl = (url) => {
     return trimmed;
   }
 
-  const allowedSuffixes = [
-    'cdninstagram.com',
-    'fbcdn.net',
-    'imginn.com',
-    'tiktokcdn.com',
-    'tiktokcdn-us.com',
-    'tiktokcdn-eu.com',
-    'muscdn.com',
-    'byteoversea.com',
-    'ibytedtos.com',
-  ];
-  const allowed = allowedSuffixes.some(
-    (suffix) => host === suffix || host.endsWith(`.${suffix}`)
-  );
-  if (!allowed) return trimmed;
-
-  const base = getRuntimeApiUrl() || '';
+  if (!isSocialCdnHost(host)) return trimmed;
   return `${base}/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
 };
 

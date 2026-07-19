@@ -33,6 +33,7 @@ const RecentPostThumb = ({ src, alt }) => {
   const proxied = getProxiedMediaUrl(src);
 
   if (!proxied || hasError) {
+    // Keep gray placeholder box (parent ProfileThumb) instead of broken-image icon
     return null;
   }
 
@@ -1102,6 +1103,8 @@ const PitchText = styled.div`
   max-height: 120px;
   overflow-y: auto;
   margin-bottom: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
 `;
 
 const PitchCopyBtn = styled.button`
