@@ -267,32 +267,9 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
       <IntroCard>
         <IntroIcon>📣</IntroIcon>
         <IntroText>
-          <IntroTitle>Brands want creators like you — right now</IntroTitle>
-          <IntroSub>
-            Apply to open UGC & gift gigs in one tap. Look professional, even with a small following. Each apply uses 1 credit.
-          </IntroSub>
+          <IntroTitle>Brand open PR & paid collaborations opportunities</IntroTitle>
         </IntroText>
       </IntroCard>
-
-      {/* Application credits (free users) — same 3 credits as brand pitches */}
-      {!isPro && (
-        <CreditRow>
-          <CreditLeft>
-            <CreditPips>
-              {[...Array(FREE_APP_LIMIT)].map((_, i) => (
-                <Pip key={i} $used={i >= creditsLeft} />
-              ))}
-            </CreditPips>
-            <CreditText>
-              <strong>{creditsLeft} of {FREE_APP_LIMIT} applications</strong> left
-              <CreditHint> · open applications</CreditHint>
-            </CreditText>
-          </CreditLeft>
-          <CreditUpgrade onClick={() => onShowUpgrade?.('opportunities')}>
-            Unlimited with Pro ›
-          </CreditUpgrade>
-        </CreditRow>
-      )}
 
       {lowFitConfirm && (
         <LowFitBanner>
@@ -309,11 +286,6 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
             </LowFitPrimary>
           </LowFitActions>
         </LowFitBanner>
-      )}
-
-      {/* Matched to your niche */}
-      {opportunities.matched?.length > 0 && (
-        <SectionLabel>Matched to your niche</SectionLabel>
       )}
 
       {(opportunities.matched || []).map(opp => (
@@ -505,57 +477,7 @@ const IntroTitle = styled.div`
   font-size: 14px;
   font-weight: 700;
   color: ${tokens.textPrimary};
-  margin-bottom: 3px;
-`;
-
-const IntroSub = styled.div`
-  font-size: 12px;
-  color: ${tokens.textMuted};
-  line-height: 1.5;
-`;
-
-const CreditRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  border: 1px solid ${tokens.border};
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-`;
-
-const CreditLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const CreditPips = styled.div`
-  display: flex;
-  gap: 4px;
-`;
-
-const Pip = styled.div`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${p => p.$used ? '#e5e7eb' : tokens.textPrimary};
-`;
-
-const CreditText = styled.div`
-  font-size: 12px;
-  color: ${tokens.textMuted};
-
-  strong {
-    color: ${tokens.textPrimary};
-    font-weight: 700;
-  }
-`;
-
-const CreditHint = styled.span`
-  font-weight: 500;
-  color: ${tokens.textMuted};
+  margin-bottom: 0;
 `;
 
 const LowFitBanner = styled.div`
@@ -614,16 +536,6 @@ const LowFitHint = styled.div`
   font-size: 11px;
   color: #b45309;
   margin: 0 0 8px;
-`;
-
-const CreditUpgrade = styled.button`
-  font-size: 12px;
-  font-weight: 700;
-  color: ${tokens.accent};
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
 `;
 
 const SectionLabel = styled.div`

@@ -240,6 +240,43 @@ export const apiClient = {
     delete: (url, config = {}) => api.delete(url, config),
 };
 
+/**
+ * Rewrite Instagram/imginn/TikTok CDN image URLs through our backend proxy.
+ * Those CDNs set Cross-Origin-Resource-Policy and break <img> embeds in the app.
+ */
+export const getProxiedMediaUrl = (url) => {
+  if (!url || typeof url !== 'string') return url;
+  const trimmed = url.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.includes('/api/media-proxy')) return trimmed;
+
+  let host = '';
+  try {
+    host = new URL(trimmed).hostname.toLowerCase();
+  } catch {
+    return trimmed;
+  }
+
+  const allowedSuffixes = [
+    'cdninstagram.com',
+    'fbcdn.net',
+    'imginn.com',
+    'tiktokcdn.com',
+    'tiktokcdn-us.com',
+    'tiktokcdn-eu.com',
+    'muscdn.com',
+    'byteoversea.com',
+    'ibytedtos.com',
+  ];
+  const allowed = allowedSuffixes.some(
+    (suffix) => host === suffix || host.endsWith(`.${suffix}`)
+  );
+  if (!allowed) return trimmed;
+
+  const base = getRuntimeApiUrl() || '';
+  return `${base}/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
+};
+
 // Export both the constant (for build-time) and the runtime function
 export { API_URL, getRuntimeApiUrl };
 export default api;

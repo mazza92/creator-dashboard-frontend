@@ -300,11 +300,6 @@ const ForYou = () => {
         const others = response.data.others || [];
         const count = matched.length + others.length;
         setOpportunityCount(count);
-        // Lead newbies to open gigs when inventory exists (once per session)
-        if (count > 0 && !sessionStorage.getItem('foryouTabPicked')) {
-          setActiveTab('opportunities');
-          sessionStorage.setItem('foryouTabPicked', '1');
-        }
       }
     } catch (error) {
       // Silently fail

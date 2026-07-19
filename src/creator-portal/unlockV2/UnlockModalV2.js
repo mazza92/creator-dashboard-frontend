@@ -7,7 +7,7 @@ import { message } from 'antd';
 import LootBoxLoading from './LootBoxLoading';
 import CompletionFlash from './CompletionFlash';
 import { LOADING, TOKENS, MENTOR_VERDICTS, MENTOR_SECTIONS, SEND_BUTTON, NEXT_ACTIONS } from './copyDictionary';
-import { apiClient } from '../../config/api';
+import { apiClient, getProxiedMediaUrl } from '../../config/api';
 import UpgradeModal from '../UpgradeModal';
 
 // Brand logo with error handling - shows initials on broken images
@@ -22,6 +22,26 @@ const BrandLogoImg = ({ src, alt, fallback }) => {
     <img
       src={src}
       alt={alt}
+      onError={() => setHasError(true)}
+    />
+  );
+};
+
+// Recent post thumbs — route social CDN URLs through media proxy (CORP blocks direct embeds)
+const RecentPostThumb = ({ src, alt }) => {
+  const [hasError, setHasError] = useState(false);
+  const proxied = getProxiedMediaUrl(src);
+
+  if (!proxied || hasError) {
+    return null;
+  }
+
+  return (
+    <img
+      src={proxied}
+      alt={alt}
+      loading="lazy"
+      referrerPolicy="no-referrer"
       onError={() => setHasError(true)}
     />
   );
@@ -2076,7 +2096,7 @@ const UnlockModalV2 = ({
                               <ProfileThumbnails>
                                 {snap.recent_thumbnails.slice(0, 3).map((url, i) => (
                                   <ProfileThumb key={i}>
-                                    <img src={url} alt={`Recent post ${i + 1}`} />
+                                    <RecentPostThumb src={url} alt={`Recent post ${i + 1}`} />
                                   </ProfileThumb>
                                 ))}
                               </ProfileThumbnails>
