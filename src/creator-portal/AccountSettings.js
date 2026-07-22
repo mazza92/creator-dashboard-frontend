@@ -44,6 +44,12 @@ const AccountSettings = () => {
   const [savingNiches, setSavingNiches] = useState(false);
   const [nichesDirty, setNichesDirty] = useState(false);
 
+  // Social scrape (PR-Ready)
+  const [socialPlatform, setSocialPlatform] = useState('instagram');
+  const [socialHandle, setSocialHandle] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [lastScan, setLastScan] = useState(null);
+
   useEffect(() => {
     fetchSubscriptionStatus();
     fetchCreatorProfile();
@@ -129,6 +135,40 @@ const AccountSettings = () => {
       message.error('Failed to save niches');
     } finally {
       setSavingNiches(false);
+    }
+  };
+
+  const scanSocialProfile = async () => {
+    const handle = socialHandle.trim().replace(/^@/, '');
+    if (!handle) {
+      message.warning('Enter your Instagram or TikTok username');
+      return;
+    }
+    if (handle.includes('..')) {
+      message.error('Username cannot have consecutive periods');
+      return;
+    }
+    setScanning(true);
+    try {
+      const res = await api.post('/api/pr-ready/refresh-scrape', {
+        handle,
+        platform: socialPlatform,
+      });
+      if (res.data?.warning) message.warning(res.data.warning);
+      else message.success(`Scanned @${handle}`);
+      setLastScan({
+        handle: res.data?.handle || handle,
+        platform: res.data?.platform || socialPlatform,
+        followers: res.data?.scrape?.follower_count,
+        posts: res.data?.scrape?.recent_posts?.length
+          || res.data?.scrape?.recent_thumbnails?.length
+          || 0,
+      });
+    } catch (error) {
+      console.error('Error scanning profile:', error);
+      message.error(error.response?.data?.error || 'Scan failed. Try again.');
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -346,6 +386,63 @@ const AccountSettings = () => {
             </>
           )}
         </PlanCard>
+      </Section>
+
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Social profile</SectionTitle>
+          <SectionSubtitle>
+            Scan Instagram or TikTok to power PR-Ready score, bio rewrite, and kit tools
+          </SectionSubtitle>
+        </SectionHeader>
+        <NicheCard>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            {['instagram', 'tiktok'].map((p) => (
+              <NicheChip
+                key={p}
+                $selected={socialPlatform === p}
+                onClick={() => setSocialPlatform(p)}
+                style={{ textTransform: 'capitalize' }}
+              >
+                {p}
+              </NicheChip>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ color: '#6B7280', fontWeight: 700 }}>@</span>
+            <input
+              value={socialHandle}
+              onChange={(e) =>
+                setSocialHandle(
+                  e.target.value.replace(/[^a-zA-Z0-9_.]/g, '').slice(0, 30).toLowerCase()
+                )
+              }
+              placeholder="yourhandle"
+              style={{
+                flex: 1,
+                border: '1px solid #E5E7EB',
+                borderRadius: 10,
+                padding: '10px 12px',
+                fontSize: 14,
+              }}
+            />
+          </div>
+          {lastScan && (
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280' }}>
+              Last scan: @{lastScan.handle} on {lastScan.platform}
+              {lastScan.followers != null ? ` · ${lastScan.followers} followers` : ''}
+              {lastScan.posts ? ` · ${lastScan.posts} posts` : ''}
+            </p>
+          )}
+          <SaveNichesButton
+            onClick={scanSocialProfile}
+            disabled={scanning || !socialHandle.trim()}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {scanning ? 'Scanning…' : 'Scan profile'}
+          </SaveNichesButton>
+        </NicheCard>
       </Section>
 
       {showUpgradeModal && (

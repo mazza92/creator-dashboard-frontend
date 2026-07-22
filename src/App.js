@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/react';
 import IndexNowInitializer from './components/IndexNowInitializer';
 import IndexNowTest from './components/IndexNowTest';
 import QueryParamRedirect from './components/QueryParamRedirect';
+import CreatorHomeRedirect from './components/CreatorHomeRedirect';
 import CreatorOverview from './creator-portal/CreatorOverview';
 import BrandOnboardingForm from './components/forms/BrandOnboardingForm';
 // eslint-disable-next-line no-unused-vars
@@ -61,6 +62,7 @@ import Pool from './cra-pages/Pool';
 import BrandSubmitPage from './cra-pages/BrandSubmitPage';
 import MediaKit from './creator-portal/MediaKit';
 import PortfolioBuilder from './creator-portal/PortfolioBuilder';
+import PRReady from './creator-portal/PRReady';
 import PublicMediaKit from './cra-pages/PublicMediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
 import VerifyEmailPending from './components/VerifyEmailPending';
@@ -477,8 +479,8 @@ function AppContent() {
                 path='/creator'
                 element={user ? <CreatorDashboardLayout /> : <Navigate to='/login' replace />}
             >
-                <Route index element={<Navigate to='/creator/dashboard/for-you' replace />} />
-                <Route path='dashboard' element={<Navigate to='/creator/dashboard/for-you' replace />} />
+                <Route index element={<CreatorHomeRedirect />} />
+                <Route path='dashboard' element={<CreatorHomeRedirect />} />
                 <Route path='dashboard/overview' element={<CreatorOverview />} />
                 <Route path='dashboard/bookings' element={<CreatorBookings />} />
                 <Route path='dashboard/campaign-invites' element={<CampaignInvites />} />
@@ -489,6 +491,7 @@ function AppContent() {
                 <Route path='dashboard/pr-pipeline' element={<PRPipeline />} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
                 <Route path='dashboard/for-you' element={<ForYou />} />
+                <Route path='dashboard/pr-ready' element={<PRReady />} />
                 <Route path='dashboard/pool' element={<Pool />} />
                 <Route path='dashboard/media-kit' element={<MediaKit />} />
                 <Route path='dashboard/my-kit' element={<PortfolioBuilder currentUser={user} />} />

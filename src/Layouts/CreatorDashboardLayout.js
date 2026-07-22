@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Inbox, Sparkles, FileText, Bell, Users } from 'lucide-react';
+import { Search, Inbox, Sparkles, FileText, Bell, Users, BadgeCheck } from 'lucide-react';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
@@ -34,9 +34,12 @@ const TopNav = styled.nav`
   position: sticky;
   top: 0;
   z-index: 50;
-  height: 60px;
+  height: 68px;
 
-  @media (max-width: 640px) { padding: 0 16px; }
+  @media (max-width: 640px) {
+    height: 60px;
+    padding: 0 16px;
+  }
 `;
 
 const NavLeft = styled.div`
@@ -60,7 +63,7 @@ const NavTab = styled(Link)`
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-radius: 100px;
   font-size: 13.5px;
   font-weight: ${p => (p.$active ? 600 : 500)};
@@ -163,7 +166,7 @@ const MobileTabBar = styled.nav`
   right: 0;
   background: white;
   border-top: 1px solid #EBEBEB;
-  padding: 6px 0 8px;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
   justify-content: space-around;
   z-index: 100;
 
@@ -261,9 +264,13 @@ const PoolMobileBadge = styled(CountBadge)`
 `;
 
 const Content = styled.main`
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 68px);
+  /* Breathing room between sticky nav and page title (desktop) */
+  padding-top: 12px;
 
   @media (max-width: 640px) {
+    min-height: calc(100vh - 60px);
+    padding-top: 8px;
     padding-bottom: 72px;
   }
 `;
@@ -385,10 +392,11 @@ const EmptyNotifications = styled.div`
 // ============================================================
 
 const navItems = [
+  { label: 'AI Manager', icon: BadgeCheck, path: '/creator/dashboard/pr-ready', isNew: true },
   { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
   { label: 'Inbox',    icon: Inbox,    path: '/creator/dashboard/pr-pipeline' },
-  { label: 'Pool',     icon: Users,    path: '/creator/dashboard/pool', isNew: true },
+  { label: 'Pool',     icon: Users,    path: '/creator/dashboard/pool' },
   { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/my-kit' },
 ];
 
@@ -566,11 +574,22 @@ const CreatorDashboardLayout = () => {
           <Logo />
           <NavTabs>
             {navItems.map(({ label, icon: Icon, path, isNew }) => (
-              <NavTab key={path} to={path} $active={location.pathname === path}>
+              <NavTab
+                key={path}
+                to={path}
+                $active={location.pathname === path}
+                onClick={() => {
+                  if (path.includes('pr-ready')) {
+                    sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
+                  } else if (location.pathname.includes('pr-ready')) {
+                    // Left Manager to browse — hide score bar briefly
+                    sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
+                  }
+                }}
+              >
                 <Icon />
                 {label}
-                {/* Hide "New" badge for Pool when there's a notification count */}
-                {isNew && !(label === 'Pool' && poolBadge > 0) && <NewBadge>New</NewBadge>}
+                {isNew && <NewBadge>New</NewBadge>}
                 {label === 'For You' && matchedRemaining > 0 && (
                   <ForYouDesktopBadge>{matchedRemaining}</ForYouDesktopBadge>
                 )}
@@ -668,11 +687,19 @@ const CreatorDashboardLayout = () => {
 
       <MobileTabBar>
         {navItems.map(({ label, icon: Icon, path, isNew }) => (
-          <MobileTab key={path} to={path} $active={location.pathname === path}>
+          <MobileTab
+            key={path}
+            to={path}
+            $active={location.pathname === path}
+            onClick={() => {
+              if (path.includes('pr-ready') || location.pathname.includes('pr-ready')) {
+                sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
+              }
+            }}
+          >
             <Icon />
             {label}
-            {/* Hide "New" badge for Pool when there's a notification count */}
-            {isNew && !(label === 'Pool' && poolBadge > 0) && <MobileNewBadge>New</MobileNewBadge>}
+            {isNew && <MobileNewBadge>New</MobileNewBadge>}
             {label === 'For You' && matchedRemaining > 0 && (
               <ForYouMobileBadge>{matchedRemaining}</ForYouMobileBadge>
             )}

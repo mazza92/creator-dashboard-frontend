@@ -241,10 +241,10 @@ const PortfolioBuilder = ({ currentUser }) => {
     try {
       await apiClient.patch('/api/portfolio/settings', { publish: true });
       message.success(kitSettings?.kit_published ? 'Kit updated and published' : 'Kit published');
-      await fetchKitSettings(); // Refresh to get updated kit_published_at
+      await fetchKitSettings();
       await fetchPosts();
-      setShowPublishNudge(false); // Hide nudge after publishing
-      setShowPublishModal(false); // Hide modal after publishing
+      setShowPublishNudge(false);
+      setShowPublishModal(false);
     } catch (e) {
       message.error('Failed to publish');
     } finally {
@@ -334,10 +334,20 @@ const PortfolioBuilder = ({ currentUser }) => {
         <DashActions>
           {posts.length > 0 && (
             <PublishSection>
-              <PreviewBtn onClick={handlePublish} disabled={publishing}>
-                {publishing ? 'Publishing...' : (kitSettings?.kit_published ? 'Publish updates' : 'Publish kit')}
+              <PreviewBtn
+                onClick={handlePublish}
+                disabled={publishing}
+              >
+                {publishing
+                  ? 'Publishing...'
+                  : kitSettings?.kit_published
+                    ? 'Publish updates'
+                    : 'Publish kit'}
               </PreviewBtn>
-              {kitSettings?.kit_published_at && (
+              {!isPro && (
+                <PublishDate>{Math.min(posts.length, FREE_POST_LIMIT)}/{FREE_POST_LIMIT} free posts · Pro adds kit views</PublishDate>
+              )}
+              {isPro && kitSettings?.kit_published_at && (
                 <PublishDate>Last: {formatPublishDate(kitSettings.kit_published_at)}</PublishDate>
               )}
             </PublishSection>
@@ -377,7 +387,11 @@ const PortfolioBuilder = ({ currentUser }) => {
         <PublishNudgeBanner>
           <PublishNudgeText>
             <PublishNudgeIcon>✨</PublishNudgeIcon>
-            <span>Content added! Publish to make it visible on your public kit.</span>
+            <span>
+              {isPro
+                ? 'Content added! Publish to make it visible on your public kit.'
+                : 'Content added! Publish so brands can see it — free kits include 3 posts.'}
+            </span>
           </PublishNudgeText>
           <PublishNudgeActions>
             <PublishNudgeBtn onClick={handlePublish} disabled={publishing}>
@@ -469,16 +483,18 @@ const PortfolioBuilder = ({ currentUser }) => {
                   <PostThumbMeta>
                     {post.collab_type}
                     {post.views > 0 && ` · ${formatNumber(post.views)} views`}
+                    {post.likes > 0 && ` · ${formatNumber(post.likes)} likes`}
+                    {post.comments > 0 && ` · ${formatNumber(post.comments)} comments`}
                   </PostThumbMeta>
                 </PostThumbInfo>
                 <PostThumbDelete onClick={() => handleDeletePost(post.id)}>✕</PostThumbDelete>
               </PostThumb>
             ))}
-            {atPostLimit ? (
-              <AddPostCard locked onClick={() => handleUpgradeClick('portfolio_limit')}>
+            {atPostLimit || (!isPro && posts.length >= FREE_POST_LIMIT) ? (
+              <AddPostCard locked onClick={() => handleUpgradeClick('pr_ready')}>
                 <AddPostIcon><FaLock size={16} /></AddPostIcon>
                 <AddPostLabel>Upgrade to add more</AddPostLabel>
-                <AddPostLimit>{posts.length}/{FREE_POST_LIMIT} posts</AddPostLimit>
+                <AddPostLimit>{Math.min(posts.length, FREE_POST_LIMIT)}/{FREE_POST_LIMIT} posts</AddPostLimit>
               </AddPostCard>
             ) : (
               <AddPostCard onClick={() => { resetForm(); setView('add'); }}>
@@ -529,6 +545,7 @@ const PortfolioBuilder = ({ currentUser }) => {
               <PublishModalTitle>Content added!</PublishModalTitle>
               <PublishModalBody>
                 Publish now to make it visible on your public kit. Brands can only see published content.
+                {!isPro && ' Free kits include up to 3 posts — Pro unlocks more posts and kit views.'}
               </PublishModalBody>
               <PublishModalActions>
                 <PublishModalPrimary onClick={handlePublish} disabled={publishing}>

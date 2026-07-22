@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import styled from 'styled-components';
 import { FaInstagram, FaTiktok, FaYoutube, FaShare, FaEye, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
 
@@ -270,10 +269,13 @@ const MediaKitClient = ({ mediaKit, username }) => {
                           {post.collab_type === 'own' ? 'Original' : post.collab_type}
                         </KitPostCollabChip>
                       </KitPostBrandRow>
-                      {(post.views || post.likes) > 0 && (
+                      {(post.views || post.likes || post.comments || post.shares || post.saves) > 0 && (
                         <KitPostStats>
                           {post.views > 0 && <span>{formatNumber(post.views)} views</span>}
                           {post.likes > 0 && <span>{formatNumber(post.likes)} likes</span>}
+                          {post.comments > 0 && <span>{formatNumber(post.comments)} comments</span>}
+                          {post.shares > 0 && <span>{formatNumber(post.shares)} shares</span>}
+                          {post.saves > 0 && <span>{formatNumber(post.saves)} saves</span>}
                         </KitPostStats>
                       )}
                     </KitPostBody>
@@ -377,13 +379,25 @@ const MediaKitClient = ({ mediaKit, username }) => {
           </>
         )}
 
-        {/* CTA */}
+        {/* CTA — mailto creator collab email when available */}
         <KitCTA>
           <KitCTAText>
             <KitCTATitle>Interested in working together?</KitCTATitle>
-            <KitCTASub>Sign up as a brand to connect with {mediaKit.display_name || username}</KitCTASub>
+            <KitCTASub>
+              {mediaKit.contact_email
+                ? `Email ${mediaKit.display_name || username} to collaborate`
+                : `Sign up as a brand to connect with ${mediaKit.display_name || username}`}
+            </KitCTASub>
           </KitCTAText>
-          <KitCTABtn href="/register/brand">
+          <KitCTABtn
+            href={
+              mediaKit.contact_email
+                ? `mailto:${mediaKit.contact_email}?subject=${encodeURIComponent(
+                    `Collab inquiry via Newcollab — ${mediaKit.display_name || username}`
+                  )}`
+                : '/register/brand'
+            }
+          >
             Get in touch
           </KitCTABtn>
         </KitCTA>
@@ -918,7 +932,7 @@ const KitCTASub = styled.div`
   color: rgba(255,255,255,0.5);
 `;
 
-const KitCTABtn = styled(Link)`
+const KitCTABtn = styled.a`
   background: #fff;
   color: #0F0F0F;
   font-size: 13px;

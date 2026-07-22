@@ -78,6 +78,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     subtext = 'Pro unlocks unlimited Pool access — real engagement from people who make content like yours.';
     ctaText = 'Get Pro — $19/month';
 
+  } else if (feature === 'pr_ready' || feature === 'pr-ready') {
+    headline = 'Look pro in minutes. Then pitch brands.';
+    subtext = 'Stop paying for more cold emails into silence. Unlock score fixes, kit export, and weekly UGC hooks — assets you keep even if brands don’t reply.';
+    ctaText = 'Start PR-Ready Pro · $19/mo';
+
   } else if (feature === 'unlock_paywall') {
     headline = 'Free strategies used up this month';
     subtext = 'Each unlock builds your plan for that brand — what they’ll notice, how to improve, and a ready pitch. Pro = unlimited.';
@@ -109,6 +114,18 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     },
   ] : [
     {
+      text: <><strong>Full readiness score + fix list</strong> — know exactly what brands skip</>,
+      highlight: feature === 'pr_ready' || feature === 'pr-ready'
+    },
+    {
+      text: <><strong>Media kit export</strong> — link + PDF brands open in one tap</>,
+      highlight: feature === 'pr_ready' || feature === 'pr-ready' || feature === 'kit' || feature === 'kit_views'
+    },
+    {
+      text: <><strong>Weekly UGC hooks</strong> — stay pitchable while waiting on replies</>,
+      highlight: feature === 'pr_ready' || feature === 'pr-ready'
+    },
+    {
       text: <><strong>AI talent manager</strong> — full strategy every time you unlock a brand</>,
       highlight: feature === 'for_you' || feature === 'locked' || feature === 'limit_reached' || feature === 'unlock_paywall'
     },
@@ -117,16 +134,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       highlight: feature === 'opportunities'
     },
     {
-      text: <><strong>Unlimited Brand PR unlocks</strong> — discover, pitch, and track brands that gift</>,
-      highlight: feature === 'limit_reached' || feature === 'for_you' || feature === 'locked'
-    },
-    {
-      text: <><strong>Collab-ready media kit</strong> — a clean portfolio brands can view</>,
-      highlight: feature === 'kit' || feature === 'kit_views'
+      text: <><strong>Unlimited Brand PR unlocks</strong> — bonus after you’re ready</>,
+      highlight: feature === 'limit_reached' || feature === 'for_you' || feature === 'locked' || feature === 'pr_ready' || feature === 'pr-ready'
     },
     {
       text: <><strong>See who viewed your kit</strong> — follow up while it’s hot</>,
-      highlight: feature === 'kit' || feature === 'kit_views'
+      highlight: feature === 'kit' || feature === 'kit_views' || feature === 'pr_ready' || feature === 'pr-ready'
     },
   ];
 

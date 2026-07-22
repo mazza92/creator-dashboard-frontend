@@ -178,12 +178,15 @@ export default function ProfileScrapingLoader({
   onComplete,
   onError,
   endpoint = '/api/pr-crm/creator/scrape', // Default endpoint, can be overridden for onboarding
+  frames = FRAMES,
+  doneLabel = 'Profile verified',
 }) {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [completedFrames, setCompletedFrames] = useState([]);
   const [scrapeResult, setScrapeResult] = useState(null);
   const [error, setError] = useState(null);
   const [scrapeStarted, setScrapeStarted] = useState(false);
+  const stepFrames = frames?.length ? frames : FRAMES;
 
   // Start frame animation and scrape simultaneously
   useEffect(() => {
@@ -194,8 +197,8 @@ export default function ProfileScrapingLoader({
     const frameInterval = setInterval(() => {
       setCurrentFrame((prev) => {
         const next = prev + 1;
-        if (next < FRAMES.length) {
-          setCompletedFrames((frames) => [...frames, prev]);
+        if (next < stepFrames.length) {
+          setCompletedFrames((framesDone) => [...framesDone, prev]);
           return next;
         }
         return prev;
@@ -213,23 +216,26 @@ export default function ProfileScrapingLoader({
         if (response.data.success) {
           setScrapeResult(response.data);
 
-          // Wait for frame 4 to complete before calling onComplete
-          const framesRemaining = FRAMES.length - currentFrame - 1;
+          // Wait for last frame to complete before calling onComplete
+          const framesRemaining = stepFrames.length - currentFrame - 1;
           const waitTime = Math.max(framesRemaining * FRAME_DURATION, 500);
 
           setTimeout(() => {
             // Complete all remaining frames
-            setCompletedFrames(FRAMES.map((_, i) => i));
-            setCurrentFrame(FRAMES.length - 1);
+            setCompletedFrames(stepFrames.map((_, i) => i));
+            setCurrentFrame(stepFrames.length - 1);
 
-            if (onComplete) {
-              onComplete(response.data);
-            }
+            // Brief beat so the verified summary is readable before handoff
+            setTimeout(() => {
+              if (onComplete) {
+                onComplete(response.data);
+              }
+            }, 900);
           }, waitTime);
         } else if (response.data.background) {
           // Background processing - complete frames and notify
-          setCompletedFrames(FRAMES.map((_, i) => i));
-          setCurrentFrame(FRAMES.length - 1);
+          setCompletedFrames(stepFrames.map((_, i) => i));
+          setCurrentFrame(stepFrames.length - 1);
           if (onComplete) {
             onComplete({ background: true });
           }
@@ -260,9 +266,10 @@ export default function ProfileScrapingLoader({
     return () => {
       clearInterval(frameInterval);
     };
-  }, [handle, platform, scrapeStarted, onComplete, onError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handle, platform, scrapeStarted]);
 
-  const isDone = scrapeResult && completedFrames.includes(FRAMES.length - 1);
+  const isDone = scrapeResult && completedFrames.includes(stepFrames.length - 1);
 
   return (
     <Container>
@@ -271,13 +278,13 @@ export default function ProfileScrapingLoader({
       </ProgressRing>
 
       <StatusText $done={isDone}>
-        {isDone ? 'Profile verified' : FRAMES[currentFrame]?.text}
+        {isDone ? doneLabel : stepFrames[currentFrame]?.text}
       </StatusText>
 
       <FrameList>
-        {FRAMES.map((frame, index) => (
+        {stepFrames.map((frame, index) => (
           <FrameItem
-            key={frame.id}
+            key={frame.id || index}
             $active={currentFrame === index && !error}
             $done={completedFrames.includes(index)}
           >
@@ -295,26 +302,47 @@ export default function ProfileScrapingLoader({
         </ErrorCard>
       )}
 
-      {scrapeResult?.summary && (
+      {(scrapeResult?.summary || scrapeResult?.scrape) && (
         <SummaryCard>
           <SummaryHeader>
             <span>✓</span> Verified @{handle.replace('@', '')}
           </SummaryHeader>
           <SummaryStats>
-            <StatItem>
-              <strong>{scrapeResult.summary.follower_display}</strong> followers
-            </StatItem>
-            {scrapeResult.summary.niche && (
+            {(scrapeResult.summary?.follower_display ||
+              scrapeResult.scrape?.follower_count != null) && (
               <StatItem>
-                <strong>{scrapeResult.summary.niche}</strong>
+                <strong>
+                  {scrapeResult.summary?.follower_display ||
+                    scrapeResult.scrape?.follower_count}
+                </strong>{' '}
+                followers
               </StatItem>
             )}
-            {scrapeResult.summary.latest_post_days_ago <= 7 && (
+            {(scrapeResult.summary?.post_count != null ||
+              scrapeResult.scrape?.post_count != null ||
+              scrapeResult.scrape?.recent_posts?.length > 0) && (
+              <StatItem>
+                <strong>
+                  {scrapeResult.summary?.post_count ??
+                    scrapeResult.scrape?.post_count ??
+                    scrapeResult.scrape?.recent_posts?.length}
+                </strong>{' '}
+                posts
+              </StatItem>
+            )}
+            {(scrapeResult.summary?.niche || scrapeResult.scrape?.primary_niche) && (
+              <StatItem>
+                <strong>
+                  {scrapeResult.summary?.niche || scrapeResult.scrape?.primary_niche}
+                </strong>
+              </StatItem>
+            )}
+            {scrapeResult.summary?.latest_post_days_ago <= 7 && (
               <StatItem>
                 Active
               </StatItem>
             )}
-            {scrapeResult.summary.aesthetic_descriptors?.length > 0 && (
+            {scrapeResult.summary?.aesthetic_descriptors?.length > 0 && (
               <StatItem>
                 {scrapeResult.summary.aesthetic_descriptors[0]}
               </StatItem>

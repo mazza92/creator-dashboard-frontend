@@ -3,11 +3,26 @@ import { Suspense } from 'react';
 import MediaKitClient from './MediaKitClient';
 import KitViewTracker from './KitViewTracker';
 
+function portfolioApiBase() {
+  // Prefer explicit env; in local Next.js always hit the local Flask API so
+  // contact_email / kit changes are visible without deploying api.newcollab.co.
+  const fromEnv =
+    process.env.NEXT_PUBLIC_API_BASE ||
+    process.env.REACT_APP_BACKEND_URL ||
+    process.env.REACT_APP_API_BASE;
+  if (fromEnv) return fromEnv.replace(/\/$/, '').replace(/\/api$/, '');
+  if (process.env.NODE_ENV !== 'production') return 'http://localhost:5000';
+  return 'https://api.newcollab.co';
+}
+
 // Fetch media kit data from portfolio API (without ref token - tracking done client-side)
 async function getMediaKit(username) {
   try {
-    const res = await fetch(`https://api.newcollab.co/api/portfolio/public/${username}`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+    const apiBase = portfolioApiBase();
+    const res = await fetch(`${apiBase}/api/portfolio/public/${username}`, {
+      // Dev: no cache so mailto/email updates show immediately
+      next: { revalidate: process.env.NODE_ENV === 'production' ? 3600 : 0 },
+      cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
     });
 
     if (!res.ok) {
@@ -50,6 +65,7 @@ async function getMediaKit(username) {
         socials: data.socials || {},
         regions: data.regions || [],
         primary_age_range: data.primary_age_range,
+        contact_email: data.contact_email || null,
       }
     };
   } catch (error) {

@@ -15,9 +15,13 @@ const SubscriptionSuccess = () => {
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
 
+    // Fire purchase immediately on landing (don't wait for API / don't require DebugView)
+    if (sessionId) {
+      trackProPurchase({ sessionId, tier: 'pro' });
+    }
+
     const confirmAndFetchStatus = async () => {
       try {
-        // First, confirm the checkout to activate subscription
         if (sessionId) {
           await api.post(
             '/api/subscription/confirm-checkout',
@@ -25,27 +29,27 @@ const SubscriptionSuccess = () => {
           );
         }
 
-        // Then fetch the updated subscription status
         const response = await api.get('/api/subscription/status');
         setSubscriptionInfo(response.data);
 
         const tier = response.data?.tier || 'pro';
-        if (sessionId) {
+        // Re-fire with correct tier if elite (deduped by session_id for pro→same id)
+        if (sessionId && tier === 'elite') {
+          try {
+            window.sessionStorage.removeItem(`ga4_purchase_${sessionId}`);
+          } catch (_) {
+            /* ignore */
+          }
           trackProPurchase({ sessionId, tier });
         }
 
         setLoading(false);
       } catch (error) {
         console.error('Error confirming subscription:', error);
-        // Still attribute purchase if Stripe redirected here with a session_id
-        if (sessionId) {
-          trackProPurchase({ sessionId, tier: 'pro' });
-        }
         setLoading(false);
       }
     };
 
-    // Small delay to ensure session is ready
     setTimeout(confirmAndFetchStatus, 1000);
   }, [searchParams]);
 
