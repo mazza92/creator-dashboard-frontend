@@ -39,9 +39,9 @@ const validateUsername = (value) => {
   if (value.length < 3) {
     return { valid: false, error: 'Username must be at least 3 characters' };
   }
-  // No consecutive periods or underscores
-  if (/[._]{2,}/.test(value)) {
-    return { valid: false, error: 'Username cannot have consecutive periods or underscores' };
+  // Instagram disallows consecutive periods; consecutive underscores are valid (e.g. jerricalee__)
+  if (/\.{2,}/.test(value)) {
+    return { valid: false, error: 'Username cannot have consecutive periods' };
   }
   return { valid: true, error: null };
 };
