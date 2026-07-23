@@ -683,7 +683,13 @@ const TierChip = styled.span`
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: ${({ $tone }) =>
-    $tone === 'pro' ? t.hot : $tone === 'open' ? t.accentDeep : t.muted};
+    $tone === 'pro'
+      ? t.hot
+      : $tone === 'critical'
+        ? '#b45309'
+        : $tone === 'open'
+          ? t.accentDeep
+          : t.muted};
 `;
 
 const ProBadge = styled.span`
@@ -2341,7 +2347,9 @@ export default function PRReady() {
                           {fix.title || fix.label}
                         </h4>
                       </div>
-                      <TierChip $tone="open">{isPro ? 'Open' : 'Included'}</TierChip>
+                      <TierChip $tone={fix.critical ? 'critical' : 'open'}>
+                        {fix.critical ? 'Critical' : isPro ? 'Open' : 'Included'}
+                      </TierChip>
                     </div>
                     <CoachMeta>
                       <span>Impact {Stars({ n: fix.impact || 3 })}</span>
