@@ -635,6 +635,11 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       setUpgradeModalVisible(true);
       return;
     }
+    // Micro-creator filter is Pro-gated (admin-curated micro_friendly flag)
+    if (key === 'microOnly' && value && subscriptionTier !== 'pro' && subscriptionTier !== 'elite') {
+      setUpgradeModalVisible(true);
+      return;
+    }
     const nextValue = key === 'category' && value ? (normalizeCategory(value) || value) : value;
     setFilters(prev => ({ ...prev, [key]: nextValue }));
     setPagination(prev => ({ ...prev, page: 1 }));
@@ -658,7 +663,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     setSearchParams(params);
   };
 
-  const displayedBrands = filters.microOnly
+  const isProUser = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  // Pro-gated: the micro filter only actually applies for Pro/Elite, even when
+  // the dashboard default or a ?micro=1 deep link sets it in state.
+  const microFilterActive = !!filters.microOnly && isProUser;
+
+  const displayedBrands = microFilterActive
     ? brands.filter((b) => {
         if (b.micro_friendly === true || b.is_micro_friendly === true) return true;
         if (b.micro_friendly === false || b.is_micro_friendly === false) return false;
@@ -895,10 +905,10 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           <ContactFilterBar>
             <ContactPill
               type="button"
-              $active={!!filters.microOnly}
-              onClick={() => handleFilterChange('microOnly', !filters.microOnly)}
+              $active={microFilterActive}
+              onClick={() => handleFilterChange('microOnly', !microFilterActive)}
             >
-              Accepts under 10k
+              {isProUser ? 'Works with micro-creators' : '🔒 Works with micro-creators'}
             </ContactPill>
             <ContactPill
               type="button"
@@ -1170,7 +1180,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                     <BrandDescription>{blurb}</BrandDescription>
 
                     <CardTags>
-                      {microFriendly && <Pill $tone="ok">Micro-friendly</Pill>}
+                      {microFriendly && <Pill $tone="ok">Works with micro-creators</Pill>}
                       {hasEmail && <Pill $tone="email">PR email</Pill>}
                       {hasForm && <Pill $tone="form">Program form</Pill>}
                       {isAffiliate && <Pill $tone="aff">Affiliate signup</Pill>}

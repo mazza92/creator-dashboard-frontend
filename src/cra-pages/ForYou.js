@@ -1388,7 +1388,7 @@ const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore }) => {
       <CardDesc>{blurb}</CardDesc>
 
       <CardTags>
-        {microFriendly && <Pill $tone="ok">Micro-friendly</Pill>}
+        {microFriendly && <Pill $tone="ok">Works with micro-creators</Pill>}
         {hasEmail && <Pill $tone="email">PR email</Pill>}
         {hasForm && <Pill $tone="form">Program form</Pill>}
         {isAffiliate && <Pill $tone="aff">Affiliate signup</Pill>}
