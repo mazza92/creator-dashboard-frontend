@@ -1122,7 +1122,7 @@ const PRPipeline = () => {
         <ManagerInviteBand>
           <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
           <ManagerInviteCopy>
-            Waiting on replies? Improve your hireability with AI Manager so brands are more likely to respond.
+            Waiting on replies? Boost your reply chance with AI Manager so brands are more likely to respond.
           </ManagerInviteCopy>
           <ManagerInviteCta
             type="button"

@@ -730,7 +730,7 @@ const ForYou = () => {
     <ManagerInviteBand>
       <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
       <ManagerInviteCopy>
-        Hireability {managerBar.score}% · {managerHeadline.replace(/\s*→\s*$/, '')}
+        Reply chance {managerBar.score}% · {managerHeadline.replace(/\s*→\s*$/, '')}
       </ManagerInviteCopy>
       <ManagerInviteCta
         type="button"
@@ -740,7 +740,7 @@ const ForYou = () => {
           goToManager('');
         }}
       >
-        Improve hireability
+        Boost reply chance
       </ManagerInviteCta>
       <ManagerInviteClose
         type="button"

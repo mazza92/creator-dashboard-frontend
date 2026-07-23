@@ -1095,6 +1095,15 @@ const ClimbFill = styled.div`
   transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
+const ClimbListLabel = styled.div`
+  margin: 2px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${t.muted};
+`;
+
 const ClimbSteps = styled.div`
   display: flex;
   flex-direction: column;
@@ -1107,8 +1116,9 @@ const ClimbStep = styled.div`
   gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: ${t.white};
-  border: 1px solid rgba(184, 213, 203, 0.7);
+  background: ${({ $done }) => ($done ? 'rgba(255, 255, 255, 0.55)' : t.white)};
+  border: 1px solid
+    ${({ $done }) => ($done ? 'rgba(184, 213, 203, 0.45)' : 'rgba(184, 213, 203, 0.7)')};
 `;
 
 const ClimbStepNum = styled.span`
@@ -1121,8 +1131,8 @@ const ClimbStepNum = styled.span`
   justify-content: center;
   font-size: 12px;
   font-weight: 800;
-  color: ${t.accentDeep};
-  background: ${t.accentSoft};
+  color: ${({ $done }) => ($done ? t.white : t.accentDeep)};
+  background: ${({ $done }) => ($done ? t.accent : t.accentSoft)};
 `;
 
 const ClimbStepBody = styled.div`
@@ -1130,7 +1140,7 @@ const ClimbStepBody = styled.div`
   min-width: 0;
   font-size: 13px;
   font-weight: 600;
-  color: ${t.inkSoft};
+  color: ${({ $done }) => ($done ? t.muted : t.inkSoft)};
   line-height: 1.3;
 `;
 
@@ -1138,8 +1148,8 @@ const ClimbStepPts = styled.span`
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 800;
-  color: ${t.accentDeep};
-  background: ${t.accentSoft};
+  color: ${({ $done }) => ($done ? t.muted : t.accentDeep)};
+  background: ${({ $done }) => ($done ? 'rgba(13, 92, 72, 0.08)' : t.accentSoft)};
   padding: 4px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -1171,6 +1181,57 @@ const ClimbOutcomeGain = styled.span`
   color: ${t.accentDeep};
   font-weight: 800;
   font-size: 12px;
+`;
+
+const ClimbRewardLabel = styled.span`
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${t.muted};
+`;
+
+const ClimbWeekPromise = styled.div`
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(13, 92, 72, 0.22);
+`;
+
+const ClimbWeekPromiseTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: ${t.ink};
+  line-height: 1.35;
+  margin-bottom: 4px;
+`;
+
+const ClimbWeekPromiseSub = styled.div`
+  font-size: 12px;
+  font-weight: 550;
+  color: ${t.muted};
+  line-height: 1.4;
+`;
+
+const ClimbUnlockBlock = styled.div`
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(13, 92, 72, 0.22);
+  text-align: center;
+`;
+
+const ClimbUnlockTitle = styled.div`
+  font-size: 13px;
+  font-weight: 750;
+  color: ${t.accentDeep};
+  line-height: 1.35;
+  margin-bottom: 4px;
+`;
+
+const ClimbUnlockSub = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${t.inkSoft};
+  line-height: 1.4;
 `;
 
 const EmailHint = styled.p`
@@ -2029,7 +2090,7 @@ export default function PRReady() {
   const meterWarn = !isPro && primaryMeter && primaryMeter.remaining === 0;
   const openFixes = fixes.length;
   const projectedScore = data?.projected_score;
-  const scoreLabel = data?.score_label || 'Hireability score';
+  const scoreLabel = data?.score_label || 'Reply Chance';
   const manager = data?.manager || {};
   const freeRunwayDone = !isPro && !!manager.free_runway_done;
   const nextMove = manager.next_move;
@@ -2093,7 +2154,7 @@ export default function PRReady() {
             <PathLine>{manager.path_line}</PathLine>
           ) : openFixes > 0 ? (
             <PathLine>
-              You&apos;re {score}% hireable today. Finish these priorities to become campaign-ready.
+              Your reply chance is {score}% today. Finish these priorities to become campaign-ready.
             </PathLine>
           ) : (
             <PathLine>{manager.path_line || "Here's your path to your first brand deal."}</PathLine>
@@ -2127,8 +2188,8 @@ export default function PRReady() {
               Meet your AI creator manager
             </ModalTitle>
             <HeroLead>
-              Scan your Instagram or TikTok once — we score hireability and coach the gaps that
-              block brand replies.
+              Scan your Instagram or TikTok once — we score your reply chance and coach the
+              gaps that block brand replies.
             </HeroLead>
             <Btn $variant="primary" onClick={openCoachModal}>
               Get my personal UGC coaching
@@ -2159,14 +2220,15 @@ export default function PRReady() {
                       </VisitDelta>
                     ) : null}
                     <p style={{ margin: scoreDeltaLabel || visitDelta?.delta ? '8px 0 0' : 0, fontSize: 13, color: t.muted, lineHeight: 1.45 }}>
-                      Not a follower score. This measures how ready your profile is for PR gifting,
-                      UGC campaigns, and paid brand outreach.
+                      Estimated from your profile · updates weekly. Based on your bio, portfolio,
+                      posting consistency, niche match, and pitch readiness — not your follower
+                      count.
                     </p>
                   </div>
                 </ScoreWrap>
                 <MetricGrid>
                   <Metric>
-                    Current hireability
+                    Current reply chance
                     <b>{score}%</b>
                   </Metric>
                   <Metric>
@@ -2199,13 +2261,30 @@ export default function PRReady() {
                   const steps = climb.steps || [];
                   const weekGain = climb.week_gain || 0;
                   const weekScore = climb.week_score;
+                  const targetPct = weekScore || potentialPct;
+                  const milestoneName = String(manager.milestone || 'Campaign Ready')
+                    .replace(/\s*\(.*\)$/, '')
+                    .trim();
+                  const milestoneNeeded = (manager.milestone_points_needed ?? 0) > 0;
+                  const goalReachesMilestone =
+                    milestoneNeeded &&
+                    Number(targetPct) >= Number(manager.milestone_threshold ?? 65);
+                  const goalTitle = goalReachesMilestone
+                    ? `Become ${milestoneName} (${targetPct}%)`
+                    : freeRunwayDone
+                      ? 'Keep your manager working every week'
+                      : `Climb from ${currentPct}% to ${targetPct}%`;
+                  // On Pro path: don't show finished free tasks — that makes free look bigger than Pro.
+                  const doneItems = freeRunwayDone
+                    ? []
+                    : checklist.filter((c) => c.done).slice(0, 3);
+                  const remainingSteps = steps;
+                  const lockedCount = remainingSteps.filter((s) => s.locked).length || remainingSteps.length;
                   return (
                     <ClimbCard>
                       <ClimbHead>
-                        <ClimbEyebrow>This week</ClimbEyebrow>
-                        <ClimbTitle>
-                          {climb.title || 'Projected score climb'}
-                        </ClimbTitle>
+                        <ClimbEyebrow>🎯 This week&apos;s goal</ClimbEyebrow>
+                        <ClimbTitle>{goalTitle}</ClimbTitle>
                       </ClimbHead>
 
                       <ClimbHero>
@@ -2226,32 +2305,73 @@ export default function PRReady() {
                         <ClimbFill $pct={fillPct} />
                       </ClimbTrack>
 
-                      {steps.length > 0 && (
-                        <ClimbSteps>
-                          {steps.map((step) => (
-                            <ClimbStep key={step.id || step.n}>
-                              <ClimbStepNum>
-                                {step.locked ? '🔒' : step.n}
-                              </ClimbStepNum>
-                              <ClimbStepBody>
-                                {step.title || `Complete step ${step.n}`}
-                              </ClimbStepBody>
-                              <ClimbStepPts>+{step.points}</ClimbStepPts>
-                            </ClimbStep>
-                          ))}
-                        </ClimbSteps>
+                      {(doneItems.length > 0 || remainingSteps.length > 0) && (
+                        <>
+                          <ClimbListLabel>
+                            {freeRunwayDone
+                              ? 'Remaining (this week only)'
+                              : 'Remaining'}
+                          </ClimbListLabel>
+                          <ClimbSteps>
+                            {doneItems.map((item) => (
+                              <ClimbStep key={`done-${item.id}`} $done>
+                                <ClimbStepNum $done>✓</ClimbStepNum>
+                                <ClimbStepBody $done>
+                                  {item.label || item.title}
+                                </ClimbStepBody>
+                                <ClimbStepPts $done>Done</ClimbStepPts>
+                              </ClimbStep>
+                            ))}
+                            {remainingSteps.map((step) => (
+                              <ClimbStep key={step.id || step.n}>
+                                <ClimbStepNum>
+                                  {step.locked ? '🔒' : step.n}
+                                </ClimbStepNum>
+                                <ClimbStepBody>
+                                  {step.title || `Complete step ${step.n}`}
+                                </ClimbStepBody>
+                                <ClimbStepPts>+{step.points}</ClimbStepPts>
+                              </ClimbStep>
+                            ))}
+                          </ClimbSteps>
+                        </>
                       )}
 
-                      {weekGain > 0 && (
+                      {freeRunwayDone && remainingSteps.length > 0 ? (
+                        <ClimbWeekPromise>
+                          <ClimbWeekPromiseTitle>
+                            Next Monday: your manager finds{' '}
+                            {Math.max(2, lockedCount)} new wins tailored to what brands
+                            are asking for this week
+                          </ClimbWeekPromiseTitle>
+                          <ClimbWeekPromiseSub>
+                            Every Pro creator gets a fresh weekly plan.
+                          </ClimbWeekPromiseSub>
+                        </ClimbWeekPromise>
+                      ) : null}
+
+                      {freeRunwayDone ? (
+                        <ClimbUnlockBlock>
+                          <ClimbUnlockTitle>
+                            Unlock · Weekly manager coaching + unlimited PR unlocks
+                          </ClimbUnlockTitle>
+                          <ClimbUnlockSub>
+                            {weekGain > 0
+                              ? `This week: +${weekGain} pts → ${weekScore || potentialPct}% · Every week: new plan`
+                              : 'Every week: a new plan tailored to what brands want'}
+                          </ClimbUnlockSub>
+                        </ClimbUnlockBlock>
+                      ) : weekGain > 0 ? (
                         <ClimbOutcome>
-                          <ClimbOutcomeGain>+{weekGain}</ClimbOutcomeGain>
+                          <ClimbRewardLabel>Reward</ClimbRewardLabel>
+                          <ClimbOutcomeGain>+{weekGain} points</ClimbOutcomeGain>
                           <span>
-                            {freeRunwayDone
-                              ? `Pro path → ${weekScore}%`
+                            {goalReachesMilestone
+                              ? `→ ${milestoneName} ✓`
                               : `→ ${weekScore}% by end of week`}
                           </span>
                         </ClimbOutcome>
-                      )}
+                      ) : null}
                     </ClimbCard>
                   );
                 })()}
@@ -2305,7 +2425,7 @@ export default function PRReady() {
                   <p style={{ margin: '0 0 12px', fontSize: 12, color: t.muted }}>
                     {freeRunwayDone
                       ? 'Your portfolio is live. Use a Brand PR unlock while the setup win is fresh.'
-                      : 'Real matches from your For You list. Close hireability gaps to compete harder.'}
+                      : 'Real matches from your For You list. Close readiness gaps to compete harder.'}
                   </p>
                   <BrandList>
                     {nearBrands.map((b) => (
@@ -2556,7 +2676,7 @@ export default function PRReady() {
                 <ProHero>
                   <ProHeroTitle>
                     {freeRunwayDone
-                      ? '⭐ Unlock the path to 100%'
+                      ? '⭐ Let your manager finish the job'
                       : `⭐ ${proFixes.length} more fix${proFixes.length === 1 ? '' : 'es'} available`}
                   </ProHeroTitle>
                   {freeRunwayDone ? (

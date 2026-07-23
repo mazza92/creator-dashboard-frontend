@@ -2026,7 +2026,7 @@ const UnlockModalV2 = ({
       <ManagerInviteBand>
         <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
         <ManagerInviteCopy>
-          Hireability {managerBar.score}% · Improve your chance of landing this deal with AI Manager
+          Reply chance {managerBar.score}% · Improve your chance of landing this deal with AI Manager
         </ManagerInviteCopy>
         <ManagerInviteCta type="button" onClick={goToAiManager}>
           Improve reply chance
