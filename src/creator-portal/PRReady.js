@@ -27,10 +27,10 @@ const KIT_BUILD_FRAMES = [
 const Wrap = styled.div`
   max-width: 980px;
   margin: 0 auto;
-  padding: 20px 4px 48px;
+  padding: 20px 20px 48px;
 
   @media (max-width: 640px) {
-    padding: 12px 4px 48px;
+    padding: 12px 16px 48px;
   }
 `;
 
@@ -650,7 +650,11 @@ const Skeleton = styled.div`
 const LoadWrap = styled.div`
   max-width: 980px;
   margin: 0 auto;
-  padding: 8px 4px 48px;
+  padding: 8px 20px 48px;
+
+  @media (max-width: 640px) {
+    padding: 8px 16px 48px;
+  }
 `;
 
 const LoadStatus = styled.div`

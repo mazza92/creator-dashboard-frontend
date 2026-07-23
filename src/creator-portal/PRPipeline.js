@@ -165,6 +165,9 @@ const PRPipeline = () => {
   const [receivingItem, setReceivingItem] = useState(null); // Track package value input
   const [packageValue, setPackageValue] = useState('');
   const [expandedSections, setExpandedSections] = useState({}); // Track expanded won/completed sections
+  const [showManagerBand, setShowManagerBand] = useState(() => (
+    sessionStorage.getItem('nc_pipeline_manager_band_dismissed') !== '1'
+  ));
 
   // Bump feature (Pro) - manual follow-up by Newcollab team
   const [showBumpModal, setShowBumpModal] = useState(false);
@@ -1115,6 +1118,31 @@ const PRPipeline = () => {
         )}
       </JourneyHeader>
 
+      {showManagerBand && (
+        <ManagerInviteBand>
+          <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
+          <ManagerInviteCopy>
+            Waiting on replies? Improve your hireability with AI Manager so brands are more likely to respond.
+          </ManagerInviteCopy>
+          <ManagerInviteCta
+            type="button"
+            onClick={() => navigate('/creator/dashboard/pr-ready')}
+          >
+            Improve reply chance
+          </ManagerInviteCta>
+          <ManagerInviteClose
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => {
+              sessionStorage.setItem('nc_pipeline_manager_band_dismissed', '1');
+              setShowManagerBand(false);
+            }}
+          >
+            ×
+          </ManagerInviteClose>
+        </ManagerInviteBand>
+      )}
+
       {/* Quota Bar - always visible for free users */}
       {!isPro && (
         <QuotaBar>
@@ -1702,6 +1730,94 @@ const JourneyHeader = styled.div`
     padding: 20px 16px;
     margin-bottom: 16px;
     border-radius: 16px;
+  }
+`;
+
+/** Bento-style dark invite band → AI Manager */
+const ManagerInviteBand = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 14px 44px 14px 16px;
+  border-radius: 14px;
+  background: #0d5c48;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(15, 15, 15, 0.08);
+
+  @media (max-width: 560px) {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 40px 14px 14px;
+  }
+`;
+
+const ManagerInviteIcon = styled.span`
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+  color: #d7f5ea;
+`;
+
+const ManagerInviteCopy = styled.p`
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
+
+  @media (max-width: 560px) {
+    flex: 1 1 calc(100% - 44px);
+    font-size: 12.5px;
+  }
+`;
+
+const ManagerInviteCta = styled.button`
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #fff;
+  color: #0d5c48;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f3faf7;
+  }
+
+  @media (max-width: 560px) {
+    width: 100%;
+  }
+`;
+
+const ManagerInviteClose = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-family: inherit;
+
+  &:hover {
+    color: #fff;
   }
 `;
 

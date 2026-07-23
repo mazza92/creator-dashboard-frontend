@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiChevronDown, FiChevronUp, FiCopy, FiCheck } from 'react-icons/fi';
 import { message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 import LootBoxLoading from './LootBoxLoading';
 import CompletionFlash from './CompletionFlash';
@@ -48,6 +49,63 @@ const RecentPostThumb = ({ src, alt }) => {
     />
   );
 };
+
+/**
+ * Strip HTML / og-description noise from a social bio for the unlock preview band.
+ */
+function cleanSocialBioSnippet(raw) {
+  if (!raw) return '';
+  let s = String(raw);
+
+  // Decode common HTML entities (and nested ones)
+  const decode = (value) => {
+    if (typeof document !== 'undefined') {
+      const el = document.createElement('textarea');
+      el.innerHTML = value;
+      return el.value;
+    }
+    return value
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#0?39;/g, "'")
+      .replace(/&#064;/g, '@')
+      .replace(/&nbsp;/g, ' ');
+  };
+  s = decode(s);
+  s = decode(s);
+
+  // Remove tags (handles broken scrapes like (@<b>handle</b>))
+  s = s.replace(/<[^>]*>/g, '');
+
+  // Prefer the quoted bio from IG/TikTok share snippets
+  const quoted = s.match(
+    /on\s+(?:Instagram|TikTok)\s*:\s*[“"']\s*(.+?)\s*[”"']\s*$/i
+  );
+  if (quoted?.[1]) {
+    s = quoted[1];
+  } else {
+    // Drop follower/following/posts prefixes (including truncated "llowers")
+    s = s.replace(
+      /^[\s\S]*?(?:F?ollowers|Following)\s*,\s*[\d,.]+\s*Following\s*,\s*[\d,.]+\s*Posts\s*[-–—:]?\s*/i,
+      ''
+    );
+    s = s.replace(/^[\s\S]*?on\s+(?:Instagram|TikTok)\s*:\s*/i, '');
+    s = s.replace(/^["“'\s]+|["”'\s]+$/g, '');
+  }
+
+  // Collapse whitespace / leftover markup crumbs
+  s = s
+    .replace(/\s+/g, ' ')
+    .replace(/\(\s*@\s*/g, '(@')
+    .trim();
+
+  // If still mostly meta junk, hide it
+  if (/^\d[\d,.]*\s*(followers|following|posts)\b/i.test(s)) return '';
+  if (s.length < 3) return '';
+  return s.slice(0, 180);
+}
 
 /**
  * UnlockModalV2 - Mentor-First Unlock Experience
@@ -1362,6 +1420,77 @@ const MatchBoxBody = styled.p`
   line-height: 1.45;
 `;
 
+/** Bento-style dark invite band → AI Manager */
+const ManagerInviteBand = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0.65rem 0 0.25rem;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #0d5c48;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(15, 15, 15, 0.08);
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+`;
+
+const ManagerInviteIcon = styled.span`
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 12px;
+  color: #d7f5ea;
+`;
+
+const ManagerInviteCopy = styled.p`
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
+
+  @media (max-width: 480px) {
+    flex: 1 1 calc(100% - 40px);
+    font-size: 12px;
+  }
+`;
+
+const ManagerInviteCta = styled.button`
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #0d5c48;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f3faf7;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+`;
+
 const InfoBlock = styled.div`
   background: ${TOKENS.paper};
   border-radius: 12px;
@@ -1640,7 +1769,9 @@ const UnlockModalV2 = ({
   const [utilitiesExpanded, setUtilitiesExpanded] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [managerBar, setManagerBar] = useState(null);
 
+  const navigate = useNavigate();
   const startTimeRef = useRef(0);
   const cardTimersRef = useRef([]);
   const fallbackTimerRef = useRef(null);
@@ -1851,9 +1982,58 @@ const UnlockModalV2 = ({
     };
   }, [isOpen, brand, startGeneration]);
 
+  // Hireability snapshot for AI Manager mini-band
+  useEffect(() => {
+    if (!isOpen) {
+      setManagerBar(null);
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiClient.get('/api/pr-ready');
+        if (cancelled || !res.data?.success) return;
+        setManagerBar(res.data.manager_bar || null);
+      } catch {
+        if (!cancelled) setManagerBar(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
   const handleFlashComplete = useCallback(() => {
     setPhase(PHASE_MODAL);
   }, []);
+
+  const goToAiManager = useCallback(() => {
+    const slug = brand?.slug || packageData?.brand?.slug || '';
+    const q = slug ? `?focus_brand=${encodeURIComponent(slug)}` : '';
+    sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
+    onClose?.();
+    navigate(`/creator/dashboard/pr-ready${q}`);
+  }, [brand?.slug, packageData?.brand?.slug, navigate, onClose]);
+
+  const showManagerMini =
+    !!managerBar &&
+    managerBar.score < 100 &&
+    !(isPro && managerBar.score >= 85);
+
+  const renderManagerMiniBand = () => {
+    if (!showManagerMini) return null;
+    return (
+      <ManagerInviteBand>
+        <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
+        <ManagerInviteCopy>
+          Hireability {managerBar.score}% · Improve your chance of landing this deal with AI Manager
+        </ManagerInviteCopy>
+        <ManagerInviteCta type="button" onClick={goToAiManager}>
+          Improve reply chance
+        </ManagerInviteCta>
+      </ManagerInviteBand>
+    );
+  };
 
   // Handle upgrade to Pro via Stripe checkout
   const handleUpgradeClick = async () => {
@@ -2037,7 +2217,7 @@ const UnlockModalV2 = ({
                           .slice(0, 3);
                         const themes = (snap.content_themes || []).filter(Boolean).slice(0, 3);
                         const eng = Number(snap.engagement_rate);
-                        const bioRaw = snap.bio || '';
+                        const bioRaw = cleanSocialBioSnippet(snap.bio || '');
                         // Linkify email if scraper put it in the bio
                         const bioNodes = bioRaw.split(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi).map((part, i) => (
                           part.includes('@') && part.includes('.')
@@ -2045,6 +2225,10 @@ const UnlockModalV2 = ({
                             : <React.Fragment key={i}>{part}</React.Fragment>
                         ));
                         const platform = (snap.platform || '').toLowerCase();
+                        const handleClean = String(snap.handle || '')
+                          .replace(/<[^>]*>/g, '')
+                          .replace(/^@/, '')
+                          .trim();
 
                         return (
                           <ProfileSnapshot>
@@ -2064,7 +2248,7 @@ const UnlockModalV2 = ({
                                   </svg>
                                 )}
                               </PlatformIcon>
-                              <ProfileHandle>@{snap.handle}</ProfileHandle>
+                              <ProfileHandle>@{handleClean}</ProfileHandle>
                               <ProfileDivider>|</ProfileDivider>
                               <ProfileFollowers>
                                 {(snap.follower_count || 0).toLocaleString()} followers
@@ -2250,6 +2434,8 @@ const UnlockModalV2 = ({
                           )}
                         </>
                       )}
+
+                      {renderManagerMiniBand()}
                     </OutreachContent>
 
                     {!packageData.is_low_follower && (
@@ -2383,6 +2569,8 @@ const UnlockModalV2 = ({
                       )}
                     </>
                   )}
+
+                  {renderManagerMiniBand()}
                 </OutreachContent>
 
                 <OutreachFooter>

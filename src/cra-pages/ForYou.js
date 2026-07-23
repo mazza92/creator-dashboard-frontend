@@ -16,8 +16,6 @@ import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 const USE_UNLOCK_V2 = true;
 // AI Manager routing mechanisms (independent flags — flip to false to revert)
 const AI_MANAGER_SCORE_BAR_V1 = true;
-const AI_MANAGER_BRAND_FIT_LINE_V1 = true;
-const AI_MANAGER_POST_ONBOARDING_LANDING_V1 = true;
 
 const MANAGER_TAB_RECENT_KEY = 'nc_manager_tab_clicked_at';
 const MANAGER_BAR_IGNORE_KEY = 'nc_manager_bar_ignore_sessions';
@@ -122,9 +120,9 @@ const ForYou = () => {
   const [poolActiveMembers, setPoolActiveMembers] = useState([]);
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false);
 
-  // AI Manager routing — score bar + per-brand fit
+  // AI Manager routing — top Bento hireability band
   const [managerBar, setManagerBar] = useState(null);
-  const [brandFitById, setBrandFitById] = useState({});
+  const [managerBandDismissed, setManagerBandDismissed] = useState(false);
 
   // Welcome modal for new users (post-onboarding)
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -184,46 +182,8 @@ const ForYou = () => {
     };
   }, [loading, data?.has_profile, isPro]);
 
-  // Mechanism 2 — per-brand fit + lift on Matches cards
-  useEffect(() => {
-    if (!AI_MANAGER_BRAND_FIT_LINE_V1 || activeTab !== 'matches') return undefined;
-    const matched = data?.matched || [];
-    if (!matched.length) return undefined;
-    let cancelled = false;
-    (async () => {
-      try {
-        const brands = matched.slice(0, 8).map((b) => ({
-          id: b.id || b.brand_id,
-          name: b.name || b.brand_name,
-          brand_name: b.brand_name || b.name,
-          category: b.category || '',
-          match_score: b.match_score,
-          slug: b.slug,
-        }));
-        const scored = await axios.post(
-          `${API_BASE}/api/pr-ready/brand-scores`,
-          { brands },
-          { withCredentials: true }
-        );
-        if (cancelled || !scored.data?.brands?.length) return;
-        const map = {};
-        scored.data.brands.forEach((s) => {
-          if (s?.id != null) map[String(s.id)] = s;
-        });
-        setBrandFitById(map);
-      } catch {
-        if (!cancelled) setBrandFitById({});
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [data?.matched, activeTab]);
-
   // Check for onboarding completion and show welcome modal
   useEffect(() => {
-    // When post-onboarding lands on Manager, skip For You welcome modal
-    if (AI_MANAGER_POST_ONBOARDING_LANDING_V1) return;
     const urlParams = new URLSearchParams(window.location.search);
     const justOnboarded = urlParams.get('onboarding') === 'complete' ||
                           sessionStorage.getItem('justCompletedOnboarding') === 'true';
@@ -735,63 +695,57 @@ const ForYou = () => {
     return ts && Date.now() - ts < 60_000;
   })();
   const barIgnoreSessions = Number(localStorage.getItem(MANAGER_BAR_IGNORE_KEY) || 0);
-  const showManagerBar =
+  const showManagerBand =
     AI_MANAGER_SCORE_BAR_V1 &&
     !!managerBar &&
-    !isPro &&
+    !managerBandDismissed &&
     managerBar.score < 100 &&
     !showUpgrade &&
     !pitchingBrand &&
     !recentlyLeftManager &&
     barIgnoreSessions < 10;
 
-  const managerBarCopy = (() => {
-    if (!managerBar) return '';
-    const n = managerBar.score;
-    const m = managerBar.fixes_remaining || 0;
-    const delta = managerBar.score_delta_last_7d || 0;
-    const est = managerBar.setup_incomplete_time_estimate_min || 20;
-    switch (managerBar.state) {
-      case 'climbed':
-        return `🎯 Hireability ${n}% · +${delta} this week · Your manager has ${m} more fixes →`;
-      case 'stalled':
-        return `🎯 Your score hasn't moved in a week. Your manager wrote a new brief →`;
-      case 'campaign_ready':
-        return `🎯 Campaign Ready ✓ · Your manager has ${Math.max(m, 3)} growth moves next →`;
-      case 'setup_incomplete':
-        return `🎯 Your manager set up your plan · ${est} min to complete setup →`;
-      default:
-        return m > 0
-          ? `🎯 Hireability ${n}% · Your manager has ${m} fixes waiting →`
-          : `🎯 Hireability ${n}% · Your manager has updates →`;
-    }
-  })();
+  const managerHeadline =
+    managerBar?.headline ||
+    'Work with your AI Manager to improve your chance of landing brand deals.';
 
   const goToManager = (query = '') => {
     sessionStorage.setItem(MANAGER_TAB_RECENT_KEY, String(Date.now()));
     navigate(`/creator/dashboard/pr-ready${query}`);
   };
 
+  const dismissManagerBand = () => {
+    localStorage.setItem(MANAGER_BAR_IGNORE_KEY, String(barIgnoreSessions + 1));
+    setManagerBandDismissed(true);
+  };
+
   return (
     <PageWrap>
       <PageInner>
-        {showManagerBar ? (
-          <ManagerScoreBar
-            type="button"
-            onClick={() => {
-              const clicks = Number(sessionStorage.getItem('nc_manager_bar_clicks') || 0) + 1;
-              sessionStorage.setItem('nc_manager_bar_clicks', String(clicks));
-              goToManager('');
-            }}
-          >
-            <ManagerScoreBarText>
-              <span>🎯</span>
-              <span>
-                {managerBarCopy.replace(/^🎯\s*/, '').replace(/\s*→\s*$/, '')}
-              </span>
-            </ManagerScoreBarText>
-            <ManagerScoreBarChevron aria-hidden>→</ManagerScoreBarChevron>
-          </ManagerScoreBar>
+        {showManagerBand ? (
+          <ManagerInviteBand>
+            <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
+            <ManagerInviteCopy>
+              Hireability {managerBar.score}% · {managerHeadline.replace(/\s*→\s*$/, '')}
+            </ManagerInviteCopy>
+            <ManagerInviteCta
+              type="button"
+              onClick={() => {
+                const clicks = Number(sessionStorage.getItem('nc_manager_bar_clicks') || 0) + 1;
+                sessionStorage.setItem('nc_manager_bar_clicks', String(clicks));
+                goToManager('');
+              }}
+            >
+              Improve hireability
+            </ManagerInviteCta>
+            <ManagerInviteClose
+              type="button"
+              aria-label="Dismiss"
+              onClick={dismissManagerBand}
+            >
+              ×
+            </ManagerInviteClose>
+          </ManagerInviteBand>
         ) : null}
 
         {/* Page Header — match-first (search lives on Discover) */}
@@ -1109,12 +1063,6 @@ const ForYou = () => {
                 isUnlocked={unlockedIds.has(brand.id)}
                 onPitch={() => handlePitchNow(brand)}
                 matchScore={brand.match_score}
-                fit={brandFitById[String(brand.id)]}
-                showFitLine={AI_MANAGER_BRAND_FIT_LINE_V1 && !unlockedIds.has(brand.id) && !pitchedIds.has(brand.id)}
-                onFitClick={() => {
-                  const slug = brand.slug || brand.id;
-                  goToManager(`?focus_brand=${encodeURIComponent(slug)}`);
-                }}
               />
             ))}
           </CardGrid>
@@ -1378,7 +1326,7 @@ const brandIsAffiliateForm = (brand) => {
   return /superfiliate|affiliate|ambassador|portal\/sign/.test(url);
 };
 
-const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore, fit, showFitLine, onFitClick }) => {
+const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore }) => {
   const microFriendly = isMicroFriendlyBrand(brand);
   const hasEmail = brandHasEmail(brand);
   const hasForm = brandHasForm(brand);
@@ -1386,21 +1334,6 @@ const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore, fit, sh
   const blurb = brand.description || brand.match_reason || brand.why_match ||
     (brand.category ? `${categoryLabel(brand.category)} brand matched to your content.` : 'Brand matched to your content.');
   const minFollowers = brand.min_followers ?? brand.minFollowers;
-
-  const fitScore = fit?.user_fit_score ?? fit?.score;
-  const liftFree = fit?.user_fit_lift_potential_free;
-  const fitTier = fit?.user_fit_tier;
-  const openFixes = fit?.user_fit_open_fixes ?? 0;
-  let fitLine = null;
-  if (showFitLine && fitScore != null) {
-    if (fitTier === 'high' || fitScore >= 60) {
-      fitLine = `Your fit: ${fitScore}% · Strong · Manager has ${Math.max(openFixes, 2)} refinements →`;
-    } else if (fitTier === 'medium' || fitScore >= 40) {
-      fitLine = `Your fit: ${fitScore}% · Manager can lift this to ${liftFree ?? fitScore}% →`;
-    } else {
-      fitLine = `Your fit: ${fitScore}% · Manager suggests fixing ${Math.max(openFixes, 3)} things first →`;
-    }
-  }
 
   return (
     <Card
@@ -1462,16 +1395,6 @@ const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore, fit, sh
         ) : null}
       </PreviewStats>
 
-      {fitLine ? (
-        <FitLiftBtn type="button" onClick={onFitClick}>
-          <FitLiftTop>
-            <span>Your fit: {fitScore}%</span>
-            {openFixes > 0 && fitScore < 60 ? <FitLocked>🔒 Locked reasons</FitLocked> : null}
-          </FitLiftTop>
-          <FitLiftCta>{fitLine.replace(/^Your fit: \d+% · /, '')}</FitLiftCta>
-        </FitLiftBtn>
-      ) : null}
-
       <PitchBtn
         onClick={onPitch}
         $pitched={hasPitched || isUnlocked}
@@ -1508,81 +1431,92 @@ const PageInner = styled.div`
   }
 `;
 
-const ManagerScoreBar = styled.button`
-  width: 100%;
+/** Bento-style dark invite band → AI Manager */
+const ManagerInviteBand = styled.div`
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-height: 40px;
-  margin: 0 0 14px;
-  padding: 8px 12px;
-  border: none;
-  border-bottom: 1px solid #ececef;
-  border-radius: 0;
-  background: #f9fafb;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 14px 44px 14px 16px;
+  border-radius: 14px;
+  background: #0d5c48;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(15, 15, 15, 0.08);
 
-  &:hover {
-    background: #f3f4f6;
+  @media (max-width: 560px) {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 40px 14px 14px;
   }
 `;
 
-const ManagerScoreBarText = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: ${tokens.inkSoft};
-  line-height: 1.35;
-`;
-
-const ManagerScoreBarChevron = styled.span`
+const ManagerInviteIcon = styled.span`
   flex-shrink: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: ${tokens.muted};
-`;
-
-const FitLiftBtn = styled.button`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  margin: 0 0 10px;
-  padding: 8px 0 2px;
-  border: none;
-  border-top: 1px dashed ${tokens.line};
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-`;
-
-const FitLiftTop = styled.span`
-  display: flex;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 650;
-  color: ${tokens.inkSoft};
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+  color: #d7f5ea;
 `;
 
-const FitLocked = styled.span`
-  font-size: 11px;
+const ManagerInviteCopy = styled.p`
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
   font-weight: 550;
-  color: ${tokens.muted};
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
+
+  @media (max-width: 560px) {
+    flex: 1 1 calc(100% - 44px);
+    font-size: 12.5px;
+  }
 `;
 
-const FitLiftCta = styled.span`
-  font-size: 12px;
-  font-weight: 550;
-  color: ${tokens.accent};
-  line-height: 1.35;
+const ManagerInviteCta = styled.button`
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #fff;
+  color: #0d5c48;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f3faf7;
+  }
+
+  @media (max-width: 560px) {
+    width: 100%;
+  }
+`;
+
+const ManagerInviteClose = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-family: inherit;
+
+  &:hover {
+    color: #fff;
+  }
 `;
 
 const MicroFriendlyTag = styled.span`

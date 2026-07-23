@@ -1029,31 +1029,15 @@ export default function CreatorOnboarding() {
     // This prevents the incomplete-profile guard from redirecting back to /onboarding
     await refreshUser();
     sessionStorage.setItem('justCompletedOnboarding', 'true');
-    // Mech 3: land on AI Manager after onboarding (feature-flagged)
-    const AI_MANAGER_POST_ONBOARDING_LANDING_V1 = true;
-    const defaultPath = AI_MANAGER_POST_ONBOARDING_LANDING_V1
-      ? '/creator/dashboard/pr-ready'
-      : '/creator/dashboard/for-you';
-    const baseRedirect = AI_MANAGER_POST_ONBOARDING_LANDING_V1
-      ? defaultPath
-      : (res?.data?.redirect || defaultPath);
+    const defaultPath = '/creator/dashboard/for-you';
+    const baseRedirect = res?.data?.redirect || defaultPath;
     try {
       const urlObj = new URL(baseRedirect, window.location.origin);
-      // Prefer pathname only when backend returns absolute for-you URL
-      if (AI_MANAGER_POST_ONBOARDING_LANDING_V1) {
-        urlObj.pathname = '/creator/dashboard/pr-ready';
-        urlObj.searchParams.set('onboarding', 'true');
-      } else {
-        urlObj.searchParams.set('onboarding', 'complete');
-      }
+      urlObj.pathname = '/creator/dashboard/for-you';
+      urlObj.searchParams.set('onboarding', 'complete');
       navigate(urlObj.pathname + urlObj.search + urlObj.hash, { replace: true });
     } catch (e) {
-      navigate(
-        AI_MANAGER_POST_ONBOARDING_LANDING_V1
-          ? '/creator/dashboard/pr-ready?onboarding=true'
-          : '/creator/dashboard/for-you?onboarding=complete',
-        { replace: true }
-      );
+      navigate('/creator/dashboard/for-you?onboarding=complete', { replace: true });
     }
   };
 
