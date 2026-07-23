@@ -1011,81 +1011,166 @@ const UnlockCard = styled.div`
   border-top: 1px solid ${t.line};
 `;
 
-const UnlockTitle = styled.h4`
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 800;
-  color: ${t.ink};
+const ClimbCard = styled.div`
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f4faf7 0%, #eef6f3 100%);
+  border: 1px solid ${t.accentBorder};
 `;
 
-const ClimbCard = styled.div`
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid ${t.line};
+const ClimbHead = styled.div`
+  margin-bottom: 14px;
+`;
+
+const ClimbEyebrow = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${t.accent};
+  margin-bottom: 4px;
+`;
+
+const ClimbTitle = styled.h4`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: ${t.ink};
+  line-height: 1.25;
+`;
+
+const ClimbHero = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 10px;
+`;
+
+const ClimbScoreBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  ${({ $align }) => $align === 'end' && 'align-items: flex-end; text-align: right;'}
+`;
+
+const ClimbScoreNum = styled.div`
+  font-size: ${({ $lg }) => ($lg ? '28px' : '22px')};
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: ${({ $muted }) => ($muted ? t.inkSoft : t.accentDeep)};
+`;
+
+const ClimbScoreLabel = styled.div`
+  font-size: 11px;
+  font-weight: 650;
+  color: ${t.muted};
+`;
+
+const ClimbArrow = styled.div`
+  padding-bottom: 14px;
+  font-size: 18px;
+  font-weight: 700;
+  color: ${t.accent};
+  line-height: 1;
 `;
 
 const ClimbTrack = styled.div`
   position: relative;
-  margin: 14px 0 8px;
-  height: 10px;
+  height: 8px;
   border-radius: 999px;
-  background: #e8e4db;
-  overflow: visible;
+  background: rgba(13, 92, 72, 0.12);
+  overflow: hidden;
+  margin-bottom: 14px;
 `;
 
 const ClimbFill = styled.div`
   height: 100%;
   border-radius: 999px;
-  background: ${t.accent};
+  background: linear-gradient(90deg, ${t.accent} 0%, ${t.accentDeep} 100%);
   width: ${({ $pct }) => Math.min(100, Math.max(0, $pct || 0))}%;
-  transition: width 0.4s ease;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
-const ClimbMarker = styled.div`
-  position: absolute;
-  top: -18px;
-  left: ${({ $pct }) => Math.min(92, Math.max(4, $pct || 0))}%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  font-weight: 800;
-  color: ${t.accentDeep};
-  white-space: nowrap;
-  &::after {
-    content: '↑';
-    display: block;
-    text-align: center;
-    line-height: 1;
-    margin-top: 2px;
-  }
-`;
-
-const ClimbEnds = styled.div`
+const ClimbSteps = styled.div`
   display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 750;
-  color: ${t.ink};
-  margin-bottom: 12px;
-  span {
-    color: ${t.muted};
-    font-weight: 600;
-  }
+  flex-direction: column;
+  gap: 8px;
 `;
 
 const ClimbStep = styled.div`
-  font-size: 13px;
-  color: ${t.inkSoft};
-  line-height: 1.45;
-  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: ${t.white};
+  border: 1px solid rgba(184, 213, 203, 0.7);
 `;
 
-const ClimbTotal = styled.div`
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed ${t.line};
-  font-size: 13px;
-  font-weight: 750;
+const ClimbStepNum = styled.span`
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
   color: ${t.accentDeep};
+  background: ${t.accentSoft};
+`;
+
+const ClimbStepBody = styled.div`
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${t.inkSoft};
+  line-height: 1.3;
+`;
+
+const ClimbStepPts = styled.span`
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: ${t.accentDeep};
+  background: ${t.accentSoft};
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+`;
+
+const ClimbOutcome = styled.div`
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 8px 4px 0;
+  border-top: 1px dashed rgba(13, 92, 72, 0.22);
+  color: ${t.accentDeep};
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-align: center;
+  line-height: 1.35;
+`;
+
+const ClimbOutcomeGain = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(13, 92, 72, 0.1);
+  color: ${t.accentDeep};
+  font-weight: 800;
+  font-size: 12px;
 `;
 
 const EmailHint = styled.p`
@@ -1697,7 +1782,7 @@ export default function PRReady() {
         deltaLabel
       );
       if (res.data.score_delta > 0) {
-        message.success("🎉 First win. Your manager's plan just updated.");
+        message.success("First win — your manager's plan just updated.");
         const payload = {
           delta: res.data.score_delta,
           since: 'just now',
@@ -1771,7 +1856,7 @@ export default function PRReady() {
         deltaLabel
       );
       if (res.data.score_delta > 0) {
-        message.success("🎉 First win. Your manager's plan just updated.");
+        message.success("First win — your manager's plan just updated.");
       } else if (res.data.published) {
         message.success('Portfolio published — brands can open your link now.');
       }
@@ -2105,54 +2190,71 @@ export default function PRReady() {
                   </Metric>
                 </MetricGrid>
 
-                {(manager.score_climb || projectedScore != null) && (
-                  <ClimbCard>
-                    <UnlockTitle>
-                      {manager.score_climb?.title || "This week's projected score climb"}
-                    </UnlockTitle>
-                    <ClimbEnds>
-                      <div>
-                        Current <span>{manager.score_climb?.current ?? score}%</span>
-                      </div>
-                      <div>
-                        <span>{manager.score_climb?.potential ?? projectedScore ?? score}%</span>{' '}
-                        {freeRunwayDone ? 'with Pro' : 'Potential'}
-                      </div>
-                    </ClimbEnds>
-                    <ClimbTrack>
-                      <ClimbFill
-                        $pct={
-                          ((manager.score_climb?.current ?? score) /
-                            Math.max(1, manager.score_climb?.potential ?? projectedScore ?? 100)) *
-                          100
-                        }
-                      />
-                      <ClimbMarker
-                        $pct={
-                          ((manager.score_climb?.current ?? score) /
-                            Math.max(1, manager.score_climb?.potential ?? projectedScore ?? 100)) *
-                          100
-                        }
-                      >
-                        {manager.score_climb?.marker_label || "you're here"}
-                      </ClimbMarker>
-                    </ClimbTrack>
-                    {(manager.score_climb?.steps || []).map((step) => (
-                      <ClimbStep key={step.id || step.n}>
-                        {step.locked ? '🔒 ' : ''}
-                        Complete #{step.n} → +{step.points} points
-                        {step.title ? ` · ${step.title}` : ''}
-                      </ClimbStep>
-                    ))}
-                    {(manager.score_climb?.week_gain || 0) > 0 && (
-                      <ClimbTotal>
-                        {freeRunwayDone ? 'Pro path: ' : ''}
-                        +{manager.score_climb.week_gain} → {manager.score_climb.week_score}% score
-                        {freeRunwayDone ? '' : ' by end of week'}
-                      </ClimbTotal>
-                    )}
-                  </ClimbCard>
-                )}
+                {(manager.score_climb || projectedScore != null) && (() => {
+                  const climb = manager.score_climb || {};
+                  const currentPct = climb.current ?? score;
+                  const potentialPct = climb.potential ?? projectedScore ?? score;
+                  const fillPct =
+                    (Number(currentPct) / Math.max(1, Number(potentialPct))) * 100;
+                  const steps = climb.steps || [];
+                  const weekGain = climb.week_gain || 0;
+                  const weekScore = climb.week_score;
+                  return (
+                    <ClimbCard>
+                      <ClimbHead>
+                        <ClimbEyebrow>This week</ClimbEyebrow>
+                        <ClimbTitle>
+                          {climb.title || 'Projected score climb'}
+                        </ClimbTitle>
+                      </ClimbHead>
+
+                      <ClimbHero>
+                        <ClimbScoreBlock>
+                          <ClimbScoreNum $muted>{currentPct}%</ClimbScoreNum>
+                          <ClimbScoreLabel>Now</ClimbScoreLabel>
+                        </ClimbScoreBlock>
+                        <ClimbArrow aria-hidden>→</ClimbArrow>
+                        <ClimbScoreBlock $align="end">
+                          <ClimbScoreNum $lg>{potentialPct}%</ClimbScoreNum>
+                          <ClimbScoreLabel>
+                            {freeRunwayDone ? 'With Pro' : 'Potential'}
+                          </ClimbScoreLabel>
+                        </ClimbScoreBlock>
+                      </ClimbHero>
+
+                      <ClimbTrack>
+                        <ClimbFill $pct={fillPct} />
+                      </ClimbTrack>
+
+                      {steps.length > 0 && (
+                        <ClimbSteps>
+                          {steps.map((step) => (
+                            <ClimbStep key={step.id || step.n}>
+                              <ClimbStepNum>
+                                {step.locked ? '🔒' : step.n}
+                              </ClimbStepNum>
+                              <ClimbStepBody>
+                                {step.title || `Complete step ${step.n}`}
+                              </ClimbStepBody>
+                              <ClimbStepPts>+{step.points}</ClimbStepPts>
+                            </ClimbStep>
+                          ))}
+                        </ClimbSteps>
+                      )}
+
+                      {weekGain > 0 && (
+                        <ClimbOutcome>
+                          <ClimbOutcomeGain>+{weekGain}</ClimbOutcomeGain>
+                          <span>
+                            {freeRunwayDone
+                              ? `Pro path → ${weekScore}%`
+                              : `→ ${weekScore}% by end of week`}
+                          </span>
+                        </ClimbOutcome>
+                      )}
+                    </ClimbCard>
+                  );
+                })()}
               </Card>
 
               {briefing && (

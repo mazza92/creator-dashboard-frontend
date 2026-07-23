@@ -6,7 +6,15 @@ import App from './App';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 import axios from 'axios';
+import { message } from 'antd';
 axios.defaults.withCredentials = true;
+
+// Global toast behavior — visual style lives in index.css (.ant-message overrides)
+message.config({
+  top: 16,
+  duration: 3,
+  maxCount: 2,
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

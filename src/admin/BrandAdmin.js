@@ -10,13 +10,14 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 import {
   Button, Input, message, Modal, Space, Tag, Form, Select,
   Upload, Tabs, Card, Statistic, Row, Col, Tooltip, Popconfirm,
-  Drawer, Switch, InputNumber
+  Drawer, Switch, InputNumber, Segmented
 } from 'antd';
 import {
   PlusOutlined, SaveOutlined, DeleteOutlined, UploadOutlined,
   ReloadOutlined, ExportOutlined, ImportOutlined, CopyOutlined,
-  CheckCircleOutlined, CloseCircleOutlined, EyeOutlined,
-  LockOutlined, UserOutlined, SearchOutlined, FilterOutlined
+  CheckCircleOutlined, CloseCircleOutlined,
+  LockOutlined, UserOutlined, SearchOutlined, FilterOutlined,
+  EditOutlined, ThunderboltOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
 
@@ -35,6 +36,72 @@ const PLATFORM_OPTIONS = ['Instagram', 'TikTok', 'YouTube', 'Twitter', 'Facebook
 // Region options
 const REGION_OPTIONS = ['USA', 'UK', 'Canada', 'Australia', 'Europe', 'Worldwide', 'Asia'];
 
+// ============================================================================
+// Bulk Edit config — every field here can be set on many selected brands at
+// once (mirrors /api/admin/brands/bulk-update's allowed_fields on the backend)
+// ============================================================================
+const BULK_EDIT_FIELDS = [
+  { group: 'Flags', key: 'micro_friendly', label: 'Micro-friendly', type: 'boolean' },
+  { group: 'Flags', key: 'accepting_pr', label: 'Accepting PR', type: 'boolean' },
+  { group: 'Flags', key: 'is_featured', label: 'Featured', type: 'boolean' },
+  { group: 'Flags', key: 'open_pr_featured', label: 'Open PR Featured', type: 'boolean' },
+  { group: 'Flags', key: 'roundup_featured', label: 'Roundup Featured', type: 'boolean' },
+  { group: 'Flags', key: 'is_premium', label: 'Premium', type: 'boolean' },
+  { group: 'Flags', key: 'has_application_form', label: 'Has Application Form', type: 'boolean' },
+  { group: 'Flags', key: 'payment_offered', label: 'Payment Offered', type: 'boolean' },
+  { group: 'Status', key: 'status', label: 'Status', type: 'select', options: [
+    { value: 'draft', label: 'Draft' },
+    { value: 'published', label: 'Published' },
+  ] },
+  { group: 'Status', key: 'category', label: 'Category', type: 'select', options: CATEGORY_OPTIONS },
+  { group: 'Collaboration', key: 'collaboration_type', label: 'Collaboration Type', type: 'select', options: [
+    { value: 'gifted', label: 'Gifted' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'affiliate', label: 'Affiliate' },
+    { value: 'ambassador', label: 'Ambassador' },
+    { value: 'mixed', label: 'Mixed' },
+  ] },
+  { group: 'Collaboration', key: 'application_method', label: 'Application Method', type: 'select', options: [
+    { value: 'form', label: 'Form' },
+    { value: 'email', label: 'Email' },
+    { value: 'dm', label: 'DM' },
+    { value: 'website', label: 'Website' },
+    { value: 'other', label: 'Other' },
+  ] },
+  { group: 'Collaboration', key: 'tone', label: 'Tone', type: 'select', options: [
+    'premium', 'casual', 'wellness', 'functional', 'luxury', 'playful', 'minimalist', 'bold'
+  ].map(v => ({ value: v, label: v[0].toUpperCase() + v.slice(1) })) },
+  { group: 'Requirements', key: 'platforms', label: 'Platforms', type: 'multiselect', options: PLATFORM_OPTIONS.map(p => ({ value: p, label: p })) },
+  { group: 'Requirements', key: 'regions', label: 'Regions', type: 'multiselect', options: REGION_OPTIONS.map(r => ({ value: r, label: r })) },
+  { group: 'Requirements', key: 'niches', label: 'Niches', type: 'tags' },
+  { group: 'Requirements', key: 'min_followers', label: 'Min Followers', type: 'number', min: 0 },
+  { group: 'Requirements', key: 'max_followers', label: 'Max Followers', type: 'number', min: 0 },
+  { group: 'Stats', key: 'response_rate', label: 'Response Rate (%)', type: 'number', min: 0, max: 100 },
+  { group: 'Stats', key: 'avg_response_time_days', label: 'Avg Response Time (days)', type: 'number', min: 0 },
+  { group: 'Stats', key: 'price_point', label: 'Price Point ($)', type: 'number', min: 0 },
+  { group: 'Stats', key: 'avg_product_value', label: 'Avg Product Value ($)', type: 'number', min: 0 },
+];
+
+const BULK_EDIT_GROUPS = [...new Set(BULK_EDIT_FIELDS.map(f => f.group))];
+
+const defaultBulkValueFor = (fieldKey) => {
+  const conf = BULK_EDIT_FIELDS.find(f => f.key === fieldKey);
+  if (!conf) return undefined;
+  if (conf.type === 'boolean') return true;
+  if (conf.type === 'multiselect' || conf.type === 'tags') return [];
+  return undefined;
+};
+
+const formatBulkValueForDisplay = (conf, value) => {
+  if (!conf) return '';
+  if (conf.type === 'boolean') return value ? 'Yes' : 'No';
+  if (conf.type === 'select') return conf.options.find(o => o.value === value)?.label || value;
+  if (conf.type === 'multiselect' || conf.type === 'tags') {
+    return Array.isArray(value) && value.length ? value.join(', ') : '(empty)';
+  }
+  return String(value);
+};
+
 const BrandAdmin = () => {
   const gridRef = useRef();
   const isReverting = useRef(false);
@@ -49,6 +116,10 @@ const BrandAdmin = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [unsavedChanges, setUnsavedChanges] = useState(new Set());
   const [form] = Form.useForm();
+  const [bulkEditVisible, setBulkEditVisible] = useState(false);
+  const [bulkField, setBulkField] = useState(null);
+  const [bulkValue, setBulkValue] = useState(undefined);
+  const [bulkApplying, setBulkApplying] = useState(false);
 
   // Check auth on mount
   useEffect(() => {
@@ -233,6 +304,50 @@ const BrandAdmin = () => {
     } catch (error) {
       console.error('Failed to bulk update:', error);
       message.error('Failed to update brands');
+    }
+  };
+
+  // Reset and open the bulk edit panel for the currently selected rows
+  const openBulkEdit = () => {
+    setBulkField(null);
+    setBulkValue(undefined);
+    setBulkEditVisible(true);
+  };
+
+  // Apply one field/value to every selected brand in a single request
+  const applyBulkEdit = async () => {
+    const fieldConf = BULK_EDIT_FIELDS.find(f => f.key === bulkField);
+    if (!fieldConf) {
+      message.warning('Choose a field to edit');
+      return;
+    }
+    if (bulkValue === undefined || bulkValue === null || bulkValue === '') {
+      message.warning('Set a value to apply');
+      return;
+    }
+
+    const ids = selectedRows.map(r => r.id);
+    setBulkApplying(true);
+    try {
+      await api.post(
+        '/api/admin/brands/bulk-update',
+        { ids, updates: { [bulkField]: bulkValue } },
+        getApiConfig()
+      );
+
+      setRowData(prev => prev.map(b =>
+        ids.includes(b.id) ? { ...b, [bulkField]: bulkValue } : b
+      ));
+
+      message.success(`Updated "${fieldConf.label}" for ${ids.length} brand${ids.length === 1 ? '' : 's'}`);
+      setBulkEditVisible(false);
+      setBulkField(null);
+      setBulkValue(undefined);
+    } catch (error) {
+      console.error('Bulk edit failed:', error);
+      message.error(error.response?.data?.error || 'Bulk edit failed');
+    } finally {
+      setBulkApplying(false);
     }
   };
 
@@ -517,7 +632,7 @@ const BrandAdmin = () => {
         <Tooltip title="Edit Details">
           <Button
             size="small"
-            icon={<EyeOutlined />}
+            icon={<EditOutlined />}
             onClick={() => openDetailDrawer(params.data)}
           />
         </Tooltip>
@@ -936,6 +1051,28 @@ const BrandAdmin = () => {
       }
     },
     {
+      field: 'micro_friendly',
+      headerName: 'Micro-friendly',
+      editable: false,
+      width: 120,
+      cellRenderer: (params) => {
+        const toggle = async () => {
+          const newVal = !params.data.micro_friendly;
+          params.data.micro_friendly = newVal;
+          params.api.refreshCells({ rowNodes: [params.node], columns: ['micro_friendly'], force: true });
+          try {
+            await api.patch(`/api/admin/brands/${params.data.id}`, { micro_friendly: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            message.success('Updated Micro-friendly', 1);
+          } catch (e) {
+            params.data.micro_friendly = !newVal;
+            params.api.refreshCells({ rowNodes: [params.node], columns: ['micro_friendly'], force: true });
+            message.error('Failed to save');
+          }
+        };
+        return <Tag color={params.value ? 'green' : 'default'} style={{ cursor: 'pointer' }} onClick={toggle}>{params.value ? 'Yes' : 'No'}</Tag>;
+      }
+    },
+    {
       field: 'roundup_featured',
       headerName: '📧 Roundup',
       editable: false,
@@ -1155,19 +1292,35 @@ const BrandAdmin = () => {
           {selectedRows.length > 0 && (
             <>
               <Button
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                onClick={openBulkEdit}
+              >
+                Bulk Edit ({selectedRows.length})
+              </Button>
+              <Button
                 icon={<CheckCircleOutlined />}
                 onClick={() => bulkUpdateStatus('published')}
               >
-                Publish ({selectedRows.length})
+                Publish
+              </Button>
+              <Button
+                icon={<CloseCircleOutlined />}
+                onClick={() => bulkUpdateStatus('draft')}
+              >
+                Unpublish
               </Button>
               <Popconfirm
                 title={`Delete ${selectedRows.length} brand(s)?`}
                 onConfirm={() => deleteBrands(selectedRows.map(r => r.id))}
               >
                 <Button danger icon={<DeleteOutlined />}>
-                  Delete ({selectedRows.length})
+                  Delete
                 </Button>
               </Popconfirm>
+              <Button type="link" onClick={() => gridRef.current?.api?.deselectAll()}>
+                Clear selection
+              </Button>
             </>
           )}
         </Space>
@@ -1221,6 +1374,105 @@ const BrandAdmin = () => {
           overlayNoRowsTemplate='<span class="ag-overlay-no-rows-center">No brands found. Click "Add Brand" to get started!</span>'
         />
       </GridContainer>
+
+      {/* Bulk Edit — set one field to one value across every selected brand */}
+      <Modal
+        title={`Bulk Edit — ${selectedRows.length} brand${selectedRows.length === 1 ? '' : 's'} selected`}
+        open={bulkEditVisible}
+        onCancel={() => setBulkEditVisible(false)}
+        footer={null}
+        width={480}
+        destroyOnClose
+      >
+        {(() => {
+          const fieldConf = BULK_EDIT_FIELDS.find(f => f.key === bulkField);
+          const canApply = !!fieldConf && bulkValue !== undefined && bulkValue !== null && bulkValue !== '';
+
+          return (
+            <>
+              <BulkFieldLabel>Field to update</BulkFieldLabel>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Choose a field..."
+                value={bulkField}
+                onChange={(val) => { setBulkField(val); setBulkValue(defaultBulkValueFor(val)); }}
+                showSearch
+                optionFilterProp="label"
+              >
+                {BULK_EDIT_GROUPS.map(group => (
+                  <Select.OptGroup key={group} label={group}>
+                    {BULK_EDIT_FIELDS.filter(f => f.group === group).map(f => (
+                      <Select.Option key={f.key} value={f.key} label={f.label}>{f.label}</Select.Option>
+                    ))}
+                  </Select.OptGroup>
+                ))}
+              </Select>
+
+              {fieldConf && (
+                <>
+                  <BulkFieldLabel style={{ marginTop: 20 }}>New value</BulkFieldLabel>
+                  {fieldConf.type === 'boolean' && (
+                    <Segmented
+                      block
+                      options={[
+                        { label: '✓ Yes', value: true },
+                        { label: '✕ No', value: false },
+                      ]}
+                      value={bulkValue}
+                      onChange={setBulkValue}
+                    />
+                  )}
+                  {fieldConf.type === 'select' && (
+                    <Select
+                      style={{ width: '100%' }}
+                      placeholder="Choose value..."
+                      value={bulkValue}
+                      onChange={setBulkValue}
+                      options={fieldConf.options}
+                    />
+                  )}
+                  {(fieldConf.type === 'multiselect' || fieldConf.type === 'tags') && (
+                    <>
+                      <Select
+                        mode={fieldConf.type === 'tags' ? 'tags' : 'multiple'}
+                        style={{ width: '100%' }}
+                        placeholder={fieldConf.type === 'tags' ? 'Type niches and press enter...' : 'Choose values...'}
+                        value={bulkValue}
+                        onChange={setBulkValue}
+                        options={fieldConf.options}
+                      />
+                      <BulkHint>This replaces the existing value on every selected brand.</BulkHint>
+                    </>
+                  )}
+                  {fieldConf.type === 'number' && (
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      min={fieldConf.min}
+                      max={fieldConf.max}
+                      value={bulkValue}
+                      onChange={setBulkValue}
+                    />
+                  )}
+                </>
+              )}
+
+              <BulkFooter>
+                <Button onClick={() => setBulkEditVisible(false)}>Cancel</Button>
+                <Popconfirm
+                  title={fieldConf ? `Set "${fieldConf.label}" to ${formatBulkValueForDisplay(fieldConf, bulkValue)} for ${selectedRows.length} brand(s)?` : ''}
+                  onConfirm={applyBulkEdit}
+                  okText="Apply"
+                  disabled={!canApply}
+                >
+                  <Button type="primary" icon={<SaveOutlined />} disabled={!canApply} loading={bulkApplying}>
+                    Apply to {selectedRows.length} brand{selectedRows.length === 1 ? '' : 's'}
+                  </Button>
+                </Popconfirm>
+              </BulkFooter>
+            </>
+          );
+        })()}
+      </Modal>
 
       {/* Detail Drawer for complex fields */}
       <Drawer
@@ -1400,6 +1652,14 @@ const BrandAdmin = () => {
               <Form.Item name="open_pr_featured" label="Open PR Featured" valuePropName="checked">
                 <Switch />
               </Form.Item>
+              <Form.Item
+                name="micro_friendly"
+                label="Micro-friendly"
+                valuePropName="checked"
+                tooltip="Brand genuinely works with micro-creators. Powers the Micro-friendly badge and the 'Accepts under 10k' filter in Discover."
+              >
+                <Switch />
+              </Form.Item>
               <Form.Item name="roundup_featured" label="📧 Feature in Next Roundup" valuePropName="checked">
                 <Switch />
               </Form.Item>
@@ -1462,6 +1722,29 @@ const PasteHint = styled.div`
   margin-bottom: 16px;
   font-size: 13px;
   color: #1890ff;
+`;
+
+const BulkFieldLabel = styled.label`
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #333;
+`;
+
+const BulkHint = styled.div`
+  font-size: 12px;
+  color: #999;
+  margin-top: 6px;
+`;
+
+const BulkFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
 `;
 
 const GridContainer = styled.div`

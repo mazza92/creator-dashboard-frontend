@@ -17,9 +17,20 @@ const USE_UNLOCK_V2 = true;
 // AI Manager routing mechanisms (independent flags — flip to false to revert)
 const AI_MANAGER_SCORE_BAR_V1 = true;
 
-const MANAGER_TAB_RECENT_KEY = 'nc_manager_tab_clicked_at';
 const MANAGER_BAR_IGNORE_KEY = 'nc_manager_bar_ignore_sessions';
 const MANAGER_SETUP_COMPLETE_KEY = 'nc_manager_setup_complete';
+const MANAGER_BAR_CACHE_KEY = 'nc_manager_bar_cache';
+
+const readCachedManagerBar = () => {
+  try {
+    const raw = sessionStorage.getItem(MANAGER_BAR_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
 
 import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
@@ -120,8 +131,8 @@ const ForYou = () => {
   const [poolActiveMembers, setPoolActiveMembers] = useState([]);
   const [hasRecentPoolActivity, setHasRecentPoolActivity] = useState(false);
 
-  // AI Manager routing — top Bento hireability band
-  const [managerBar, setManagerBar] = useState(null);
+  // AI Manager routing — top Bento hireability band (cache for instant paint)
+  const [managerBar, setManagerBar] = useState(readCachedManagerBar);
   const [managerBandDismissed, setManagerBandDismissed] = useState(false);
 
   // Welcome modal for new users (post-onboarding)
@@ -149,38 +160,44 @@ const ForYou = () => {
     fetchPoolData();
   }, []);
 
-  // Mechanism 1 — persistent manager score bar (For You only)
+  // Fetch manager bar in parallel with For You — don't wait for matches to load
   useEffect(() => {
-    if (!AI_MANAGER_SCORE_BAR_V1 || loading || !data?.has_profile) return undefined;
-    if (isPro && (managerBar?.score ?? 0) >= 85) return undefined;
+    if (!AI_MANAGER_SCORE_BAR_V1) return undefined;
     let cancelled = false;
     (async () => {
       try {
         const res = await axios.get(`${API_BASE}/api/pr-ready`, { withCredentials: true });
         if (cancelled || !res.data?.success) return;
-        const bar = res.data.manager_bar;
-        if (!bar) {
-          setManagerBar(null);
-          return;
-        }
-        // Persist setup-complete for post-onboarding routing
+        const bar = res.data.manager_bar || null;
+        // Persist setup-complete for any remaining setup nudges
         const checklist = res.data.checklist || [];
         const bioDone = checklist.some((c) => c.id === 'bio' && c.done);
         const kitDone = checklist.some((c) => c.id === 'kit' && c.done);
-        if (bioDone && kitDone) {
-          localStorage.setItem(MANAGER_SETUP_COMPLETE_KEY, '1');
+        localStorage.setItem(MANAGER_SETUP_COMPLETE_KEY, bioDone && kitDone ? '1' : '0');
+        if (bar) {
+          try {
+            sessionStorage.setItem(MANAGER_BAR_CACHE_KEY, JSON.stringify(bar));
+          } catch {
+            /* ignore quota */
+          }
+          setManagerBar(bar);
         } else {
-          localStorage.setItem(MANAGER_SETUP_COMPLETE_KEY, '0');
+          try {
+            sessionStorage.removeItem(MANAGER_BAR_CACHE_KEY);
+          } catch {
+            /* ignore */
+          }
+          setManagerBar(null);
         }
-        setManagerBar(bar);
       } catch {
-        if (!cancelled) setManagerBar(null);
+        // Keep cached bar on network failure so the invite still shows
+        if (!cancelled && !readCachedManagerBar()) setManagerBar(null);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [loading, data?.has_profile, isPro]);
+  }, []);
 
   // Check for onboarding completion and show welcome modal
   useEffect(() => {
@@ -686,23 +703,14 @@ const ForYou = () => {
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner text="Loading your recommendations..." minHeight="400px" />;
-  }
-
-  const recentlyLeftManager = (() => {
-    const ts = Number(sessionStorage.getItem(MANAGER_TAB_RECENT_KEY) || 0);
-    return ts && Date.now() - ts < 60_000;
-  })();
   const barIgnoreSessions = Number(localStorage.getItem(MANAGER_BAR_IGNORE_KEY) || 0);
   const showManagerBand =
     AI_MANAGER_SCORE_BAR_V1 &&
     !!managerBar &&
     !managerBandDismissed &&
-    managerBar.score < 100 &&
+    Number(managerBar.score) < 100 &&
     !showUpgrade &&
     !pitchingBrand &&
-    !recentlyLeftManager &&
     barIgnoreSessions < 10;
 
   const managerHeadline =
@@ -710,7 +718,6 @@ const ForYou = () => {
     'Work with your AI Manager to improve your chance of landing brand deals.';
 
   const goToManager = (query = '') => {
-    sessionStorage.setItem(MANAGER_TAB_RECENT_KEY, String(Date.now()));
     navigate(`/creator/dashboard/pr-ready${query}`);
   };
 
@@ -719,34 +726,47 @@ const ForYou = () => {
     setManagerBandDismissed(true);
   };
 
+  const managerBandEl = showManagerBand ? (
+    <ManagerInviteBand>
+      <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
+      <ManagerInviteCopy>
+        Hireability {managerBar.score}% · {managerHeadline.replace(/\s*→\s*$/, '')}
+      </ManagerInviteCopy>
+      <ManagerInviteCta
+        type="button"
+        onClick={() => {
+          const clicks = Number(sessionStorage.getItem('nc_manager_bar_clicks') || 0) + 1;
+          sessionStorage.setItem('nc_manager_bar_clicks', String(clicks));
+          goToManager('');
+        }}
+      >
+        Improve hireability
+      </ManagerInviteCta>
+      <ManagerInviteClose
+        type="button"
+        aria-label="Dismiss"
+        onClick={dismissManagerBand}
+      >
+        ×
+      </ManagerInviteClose>
+    </ManagerInviteBand>
+  ) : null;
+
+  if (loading) {
+    return (
+      <PageWrap>
+        <PageInner>
+          {managerBandEl}
+          <LoadingSpinner text="Loading your recommendations..." minHeight="400px" />
+        </PageInner>
+      </PageWrap>
+    );
+  }
+
   return (
     <PageWrap>
       <PageInner>
-        {showManagerBand ? (
-          <ManagerInviteBand>
-            <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
-            <ManagerInviteCopy>
-              Hireability {managerBar.score}% · {managerHeadline.replace(/\s*→\s*$/, '')}
-            </ManagerInviteCopy>
-            <ManagerInviteCta
-              type="button"
-              onClick={() => {
-                const clicks = Number(sessionStorage.getItem('nc_manager_bar_clicks') || 0) + 1;
-                sessionStorage.setItem('nc_manager_bar_clicks', String(clicks));
-                goToManager('');
-              }}
-            >
-              Improve hireability
-            </ManagerInviteCta>
-            <ManagerInviteClose
-              type="button"
-              aria-label="Dismiss"
-              onClick={dismissManagerBand}
-            >
-              ×
-            </ManagerInviteClose>
-          </ManagerInviteBand>
-        ) : null}
+        {managerBandEl}
 
         {/* Page Header — match-first (search lives on Discover) */}
         <PageHeader>
@@ -1303,9 +1323,10 @@ const ForYou = () => {
 // Brand Card Component (inline for this page)
 const isMicroFriendlyBrand = (brand) => {
   if (!brand) return false;
+  // Admin-curated flag from pr_brands.micro_friendly is the source of truth
   if (brand.micro_friendly === true || brand.is_micro_friendly === true) return true;
   if (brand.micro_friendly === false || brand.is_micro_friendly === false) return false;
-  // Temporary heuristic until Claude enrichment assigns micro_friendly on brands
+  // Fallback heuristic only for API responses that don't include the flag
   const min = brand.min_followers;
   if (min == null || min === '' || Number(min) === 0) return true;
   return Number(min) <= 10000;

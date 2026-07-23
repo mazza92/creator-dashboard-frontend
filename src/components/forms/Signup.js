@@ -1,207 +1,209 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { message, Typography } from 'antd';
+import { useNavigate, Link } from 'react-router-dom';
+import { message } from 'antd';
 import { UserContext } from '../../contexts/UserContext';
 import BrandOnboardingForm from './BrandOnboardingForm';
 import CreatorOnboardingForm from './CreatorOnboardingForm';
-import styled, { keyframes } from 'styled-components';
-import { motion } from 'framer-motion';
+import styled from 'styled-components';
 import { ShopOutlined, UserOutlined } from '@ant-design/icons';
 import './Signup.css';
 import { Helmet } from 'react-helmet-async';
 
-const { Title, Text } = Typography;
+// ============================================================================
+// V4 SIGNUP FLOW - Role chooser matching the CreatorSignup design language.
+// Creator -> /register/creator | Brand -> /for-brands
+// ============================================================================
 
-// Gradient animation
-// eslint-disable-next-line no-unused-vars
-const gradientShift = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-`;
+const colors = {
+  rose: '#E11D48',
+  black: '#0F0F0F',
+  violet: '#7C3AED',
+  border: '#EBEBEB',
+  text: '#0F0F0F',
+  text2: '#5A5A5A',
+  text3: '#A0A0A0',
+};
 
-// Styled Components
-const Container = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+const PageWrapper = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #a7c7ff 0%, #c3aed6 100%);
-  font-family: 'Inter', sans-serif;
-  padding: 24px 8px;
-  overflow-x: hidden;
-  box-sizing: border-box;
-`;
-
-const SignupCard = styled.div`
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(16,185,129,0.10);
-  padding: 40px 32px 32px 32px;
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-sizing: border-box;
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(16,185,129,0.15);
-  }
-  @media (max-width: 600px) {
-    padding: 18px 6px 18px 6px;
-    max-width: 100%;
-  }
-`;
-
-const RoleSelection = styled.div`
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(225,29,72,.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 90%, rgba(124,58,237,.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 75% 5%, rgba(251,146,60,.08) 0%, transparent 40%),
+    #FBF8F6;
   display: flex;
-  gap: 24px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-  @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 12px;
-  }
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Inter', sans-serif;
 `;
 
-const RoleCard = styled(motion.div)`
-  background: #fff;
-  border-radius: 16px;
-  border: 1.5px solid #e8ecef;
-  box-shadow: 0 6px 16px rgba(16,185,129,0.08);
-  padding: 28px 18px 22px 18px;
+const TopBar = styled.div`
   width: 100%;
-  max-width: 320px;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   box-sizing: border-box;
-  font-size: 17px;
-  font-weight: 600;
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(16,185,129,0.12);
-    border-color: #10b981;
-  }
-  @media (max-width: 600px) {
-    max-width: 95%;
-    padding: 16px 6px 14px 6px;
-    font-size: 15px;
-  }
 `;
 
-const StyledButton = styled.button`
-  border-radius: 12px;
-  padding: 14px 0;
-  background: linear-gradient(90deg, #10b981 0%, #4ade80 100%);
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
-  width: 100%;
-  border: none;
-  height: 48px;
-  margin-top: 8px;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-  box-shadow: 0 2px 8px rgba(16,185,129,0.08);
-  &:hover {
-    background: linear-gradient(90deg, #22d3ee 0%, #10b981 100%);
-    color: #fff;
-    transform: scale(1.02);
-  }
-  &:active {
-    transform: scale(0.98);
-  }
-  @media (max-width: 600px) {
-    font-size: 15px;
-    height: 44px;
-  }
+const LogoLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
 `;
 
-const TitleStyled = styled(Title)`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1f2937;
-  text-align: center;
-  margin-bottom: 12px;
-  font-family: 'Inter', 'Poppins', sans-serif;
-  @media (max-width: 600px) {
-    font-size: 24px;
-  }
-`;
-
-const Subtitle = styled(Text)`
+const LogoImg = styled.img`
+  height: 24px;
+  width: auto;
   display: block;
-  text-align: center;
-  color: #4b5563;
-  font-size: 15px;
-  margin-bottom: 28px;
-  font-family: 'Inter', 'Poppins', sans-serif;
-  @media (max-width: 600px) {
-    font-size: 13px;
-    margin-bottom: 18px;
-  }
 `;
 
-const BackHomeButton = styled.button`
-  position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  background: none;
-  border: 1px solid #D1D5DB;
-  color: #6B7280;
-  font-size: 0.875rem;
+const TopBarLink = styled.span`
+  font-size: 13px;
+  color: ${colors.text2};
   font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
-  &:hover {
-    background: #F9FAFB;
-    border-color: #9CA3AF;
-    color: #374151;
-  }
-  
-  @media (max-width: 768px) {
-    top: 1rem;
-    left: 1rem;
-    font-size: 0.8rem;
-    padding: 0.375rem 0.75rem;
-  }
-  
-  @media (max-width: 480px) {
-    top: 0.75rem;
-    left: 0.75rem;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.625rem;
-  }
+  a { color: ${colors.rose}; font-weight: 700; text-decoration: none; }
 `;
 
-const FormContainer = styled.div`
+const Card = styled.div`
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.07);
+  border-radius: 22px;
+  padding: 38px 36px;
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
+  max-width: 440px;
+  margin: 24px auto 40px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 8px 32px rgba(0,0,0,.07);
   box-sizing: border-box;
-  @media (max-width: 600px) {
-    padding: 0;
+
+  @media (max-width: 480px) {
+    padding: 28px 22px;
+    border-radius: 18px;
+    margin: 12px 16px 32px;
+    width: auto;
   }
 `;
 
-// Framer Motion variants
-const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
-};
+const Eyebrow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: ${colors.rose};
+  margin-bottom: 12px;
+  letter-spacing: 0.2px;
+`;
 
-const roleCardVariants = {
-  rest: { scale: 1 },
-  hover: { scale: 1.05, transition: { duration: 0.2 } },
-};
+const EyebrowDot = styled.div`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${colors.rose};
+`;
+
+const Headline = styled.h1`
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.7px;
+  line-height: 1.18;
+  margin: 0 0 10px;
+  color: ${colors.black};
+  em { font-style: normal; color: ${colors.rose}; }
+`;
+
+const Subline = styled.p`
+  font-size: 14px;
+  color: ${colors.text2};
+  line-height: 1.6;
+  margin: 0 0 22px;
+`;
+
+const RoleList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const RoleOption = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid ${colors.border};
+  border-radius: 14px;
+  padding: 18px 18px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+  box-sizing: border-box;
+
+  &:hover {
+    border-color: ${props => props.$accent || colors.rose};
+    box-shadow: 0 4px 16px rgba(0,0,0,.06);
+    transform: translateY(-1px);
+  }
+  &:active { transform: scale(0.99); }
+`;
+
+const RoleIconWrap = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  color: ${props => props.$accent || colors.rose};
+  background: ${props => props.$bg || 'rgba(225,29,72,.08)'};
+`;
+
+const RoleBody = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const RoleTag = styled.div`
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: ${props => props.$accent || colors.rose};
+  margin-bottom: 3px;
+`;
+
+const RoleTitle = styled.div`
+  font-size: 15.5px;
+  font-weight: 800;
+  color: ${colors.black};
+  letter-spacing: -0.2px;
+  margin-bottom: 3px;
+`;
+
+const RoleDesc = styled.div`
+  font-size: 12.5px;
+  color: ${colors.text2};
+  line-height: 1.45;
+`;
+
+const RoleArrow = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+  color: ${colors.text3};
+  flex-shrink: 0;
+`;
+
+const AltLink = styled.p`
+  font-size: 13px;
+  color: ${colors.text2};
+  font-weight: 500;
+  text-align: center;
+  margin: 18px 0 0;
+  a { color: ${colors.rose}; font-weight: 700; text-decoration: none; }
+`;
 
 function Signup({ defaultRole, redirectTo, onSuccess, isModal = false, onLoginClick }) {
   const [selectedRole, setSelectedRole] = useState(defaultRole || null);
@@ -476,91 +478,79 @@ function Signup({ defaultRole, redirectTo, onSuccess, isModal = false, onLoginCl
     );
   }
 
-  // Full-page version
+  // Full-page version — role chooser in the V4 signup design.
+  // Creators continue to /register/creator; brands go to the /for-brands flow.
   return (
     <>
       <Helmet>
+        <title>Sign Up | NewCollab</title>
         <link rel="canonical" href="https://newcollab.co/register" />
       </Helmet>
-      <Container>
-        <BackHomeButton type="button" onClick={() => navigate('/')}>
-          ← Back Home
-        </BackHomeButton>
-        <motion.div
-          variants={cardVariants}
-          initial="hidden"
-          animate="visible"
-          key={selectedRole ? 'form' : 'role-selection'}
-        >
-          {!selectedRole ? (
-            <SignupCard>
-              <TitleStyled>Start your next collaboration</TitleStyled>
-              <Subtitle>Whether you're a Brand or a Creator, grow your opportunities with us!</Subtitle>
-              <RoleSelection role="radiogroup" aria-label="Select your role">
-                <RoleCard
-                  variants={roleCardVariants}
-                  initial="rest"
-                  whileHover="hover"
-                  onClick={() => handleRoleChange('brand')}
-                  tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && handleRoleChange('brand')}
-                  role="radio"
-                  aria-checked={selectedRole === 'brand'}
-                  aria-label="Select Brand role"
-                >
-                  <ShopOutlined style={{ fontSize: '32px', color: '#26A69A', marginBottom: '16px' }} />
-                  <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#1f2937' }}>Brand</h3>
-                  <Text style={{ color: '#4b5563', fontSize: '14px' }}>
-                    Find the best content for your brand
-                  </Text>
-                </RoleCard>
-                <RoleCard
-                  variants={roleCardVariants}
-                  initial="rest"
-                  whileHover="hover"
-                  onClick={() => navigate('/register/creator')}
-                  tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && navigate('/register/creator')}
-                  role="radio"
-                  aria-checked={selectedRole === 'creator'}
-                  aria-label="Select Creator role"
-                >
-                  <UserOutlined style={{ fontSize: '32px', color: '#26A69A', marginBottom: '16px' }} />
-                  <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#1f2937' }}>Content creator</h3>
-                  <Text style={{ color: '#4b5563', fontSize: '14px' }}>
-                    Find the perfect partner for your next content
-                  </Text>
-                </RoleCard>
-              </RoleSelection>
-            </SignupCard>
-          ) : (
-            <FormContainer>
-              {selectedRole === 'brand' && (
-                <BrandOnboardingForm
-                  role="brand"
-                  onSuccess={handleFormSuccess}
-                  onError={handleFormError}
-                />
-              )}
-              {selectedRole === 'creator' && (
-                <CreatorOnboardingForm
-                  role="creator"
-                  onSuccess={handleFormSuccess}
-                  onError={handleFormError}
-                />
-              )}
-              <motion.div variants={roleCardVariants} whileHover="hover" style={{ marginTop: '16px', textAlign: 'center' }}>
-                <StyledButton
-                  onClick={() => setSelectedRole(null)}
-                  aria-label="Back to role selection"
-                >
-                  Back to Role Selection
-                </StyledButton>
-              </motion.div>
-            </FormContainer>
-          )}
-        </motion.div>
-      </Container>
+      <PageWrapper>
+        <TopBar>
+          <LogoLink to="/">
+            <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
+          </LogoLink>
+          <TopBarLink>
+            Already a member? <Link to="/login">Sign in</Link>
+          </TopBarLink>
+        </TopBar>
+
+        <Card>
+          <Eyebrow>
+            <EyebrowDot />
+            Free to join · No credit card
+          </Eyebrow>
+
+          <Headline>
+            Start your next <em>collaboration.</em>
+          </Headline>
+
+          <Subline>
+            Tell us who you are and we'll take you to the right place.
+          </Subline>
+
+          <RoleList>
+            <RoleOption
+              type="button"
+              $accent={colors.rose}
+              onClick={() => navigate('/register/creator')}
+              aria-label="Sign up as a content creator"
+            >
+              <RoleIconWrap $accent={colors.rose} $bg="rgba(225,29,72,.08)">
+                <UserOutlined />
+              </RoleIconWrap>
+              <RoleBody>
+                <RoleTag $accent={colors.rose}>For creators</RoleTag>
+                <RoleTitle>Content creator</RoleTitle>
+                <RoleDesc>Find brands, pitch with AI, and land PR packages and paid deals.</RoleDesc>
+              </RoleBody>
+              <RoleArrow>→</RoleArrow>
+            </RoleOption>
+
+            <RoleOption
+              type="button"
+              $accent={colors.violet}
+              onClick={() => navigate('/for-brands')}
+              aria-label="Get started as a brand"
+            >
+              <RoleIconWrap $accent={colors.violet} $bg="rgba(124,58,237,.08)">
+                <ShopOutlined />
+              </RoleIconWrap>
+              <RoleBody>
+                <RoleTag $accent={colors.violet}>For brands</RoleTag>
+                <RoleTitle>Brand</RoleTitle>
+                <RoleDesc>Get discovered by micro-creators actively looking for brands like yours.</RoleDesc>
+              </RoleBody>
+              <RoleArrow>→</RoleArrow>
+            </RoleOption>
+          </RoleList>
+
+          <AltLink>
+            Already a member? <Link to="/login">Sign in</Link>
+          </AltLink>
+        </Card>
+      </PageWrapper>
     </>
   );
 }

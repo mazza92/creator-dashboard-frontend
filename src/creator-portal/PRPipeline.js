@@ -1331,7 +1331,7 @@ const PRPipeline = () => {
                   ? `${stageCounts.saved - 3} more brands match your saved categories`
                   : 'Unlock unlimited Brand PR every month'}
               </LockedTitle>
-              <LockedSub>Pro removes the 5-package limit so you can contact all of them.</LockedSub>
+              <LockedSub>Pro gives you unlimited unlocks and applications — pitch every brand you want.</LockedSub>
             </LockedTextWrap>
             <LockedCta>$19/mo</LockedCta>
           </LockedCard>

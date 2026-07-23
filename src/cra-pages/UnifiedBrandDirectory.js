@@ -19,8 +19,10 @@ const USE_UNLOCK_V2 = true;
 
 const isMicroFriendlyBrand = (brand) => {
   if (!brand) return false;
+  // Admin-curated flag from pr_brands.micro_friendly is the source of truth
   if (brand.micro_friendly === true || brand.is_micro_friendly === true) return true;
   if (brand.micro_friendly === false || brand.is_micro_friendly === false) return false;
+  // Fallback heuristic only for API responses that don't include the flag
   const min = brand.minFollowers ?? brand.min_followers;
   if (min == null || min === '' || Number(min) === 0) return true;
   return Number(min) <= 10000;

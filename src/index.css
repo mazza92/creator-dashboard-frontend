@@ -19,3 +19,86 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ============================================================
+   Global feedback restyle (antd message + notification)
+   Modern dark-pill toasts and clean notification cards that
+   match the V4 design system (#0F0F0F, Inter, soft shadows).
+   Overrides antd v5 defaults app-wide — do not restyle per-page.
+   ============================================================ */
+
+.ant-message .ant-message-notice-wrapper .ant-message-notice-content {
+  background: #0f0f0f !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+  padding: 11px 18px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.1px;
+  line-height: 1.45;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22), 0 12px 32px rgba(0, 0, 0, 0.18) !important;
+}
+
+.ant-message .ant-message-notice-wrapper .anticon {
+  font-size: 15px !important;
+}
+
+.ant-message .ant-message-success .anticon {
+  color: #34d399 !important;
+}
+.ant-message .ant-message-error .anticon {
+  color: #fb7185 !important;
+}
+.ant-message .ant-message-warning .anticon {
+  color: #fbbf24 !important;
+}
+.ant-message .ant-message-info .anticon,
+.ant-message .ant-message-loading .anticon {
+  color: #a78bfa !important;
+}
+
+/* Corner notification cards (antd notification API) */
+.ant-notification .ant-notification-notice-wrapper .ant-notification-notice {
+  background: #fff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-radius: 16px !important;
+  padding: 16px 20px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 12px 36px rgba(0, 0, 0, 0.12) !important;
+}
+
+.ant-notification .ant-notification-notice .ant-notification-notice-message {
+  color: #0f0f0f !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.2px;
+  margin-bottom: 2px !important;
+}
+
+.ant-notification .ant-notification-notice .ant-notification-notice-description {
+  color: #5a5a5a !important;
+  font-size: 13px !important;
+  line-height: 1.5;
+}
+
+.ant-notification .ant-notification-notice .ant-notification-notice-close {
+  color: #a0a0a0 !important;
+  border-radius: 8px;
+}
+.ant-notification .ant-notification-notice .ant-notification-notice-close:hover {
+  color: #0f0f0f !important;
+  background: #f5f5f5 !important;
+}
+
+.ant-notification .ant-notification-notice-success .anticon {
+  color: #059669 !important;
+}
+.ant-notification .ant-notification-notice-error .anticon {
+  color: #e11d48 !important;
+}
+.ant-notification .ant-notification-notice-warning .anticon {
+  color: #d97706 !important;
+}
+.ant-notification .ant-notification-notice-info .anticon {
+  color: #7c3aed !important;
+}
