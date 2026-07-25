@@ -120,6 +120,7 @@ const BrandAdmin = () => {
   const [bulkField, setBulkField] = useState(null);
   const [bulkValue, setBulkValue] = useState(undefined);
   const [bulkApplying, setBulkApplying] = useState(false);
+  const [bulkEnriching, setBulkEnriching] = useState(false);
 
   // Check auth on mount
   useEffect(() => {
@@ -348,6 +349,49 @@ const BrandAdmin = () => {
       message.error(error.response?.data?.error || 'Bulk edit failed');
     } finally {
       setBulkApplying(false);
+    }
+  };
+
+  // Bulk AI enrich selected brands
+  const bulkAiEnrich = async () => {
+    const ids = selectedRows.map(r => r.id);
+    const brandsWithoutWebsite = selectedRows.filter(r => !r.website);
+
+    if (brandsWithoutWebsite.length > 0) {
+      message.warning(`${brandsWithoutWebsite.length} brand(s) have no website and will be skipped`);
+    }
+
+    setBulkEnriching(true);
+    const key = 'bulk-enrich';
+    message.loading({ content: `AI enriching ${ids.length} brands...`, key, duration: 0 });
+
+    try {
+      const { data } = await api.post(
+        '/api/admin/brands/bulk-enrich',
+        { ids, only_missing_fields: true },
+        getApiConfig()
+      );
+
+      if (data.success) {
+        // Refresh the grid to show enriched data
+        await fetchBrands();
+        message.success({
+          content: `Successfully enriched ${data.enriched} of ${data.total} brands`,
+          key
+        });
+        setSelectedRows([]);
+        gridRef.current?.api?.deselectAll();
+      } else {
+        message.error({ content: data.error || 'Bulk enrichment failed', key });
+      }
+    } catch (error) {
+      console.error('Bulk enrichment failed:', error);
+      message.error({
+        content: error.response?.data?.error || 'Bulk enrichment failed',
+        key
+      });
+    } finally {
+      setBulkEnriching(false);
     }
   };
 
@@ -655,7 +699,8 @@ const BrandAdmin = () => {
       checkboxSelection: true,
       width: 50,
       pinned: 'left',
-      lockPosition: true
+      lockPosition: true,
+      headerCheckboxSelectionFilteredOnly: true  // Only select filtered rows
     },
     {
       field: 'name',
@@ -1297,6 +1342,15 @@ const BrandAdmin = () => {
                 onClick={openBulkEdit}
               >
                 Bulk Edit ({selectedRows.length})
+              </Button>
+              <Button
+                type="primary"
+                icon={<span role="img" aria-label="ai">🤖</span>}
+                onClick={bulkAiEnrich}
+                loading={bulkEnriching}
+                disabled={bulkEnriching}
+              >
+                Bulk AI Enrich ({selectedRows.length})
               </Button>
               <Button
                 icon={<CheckCircleOutlined />}

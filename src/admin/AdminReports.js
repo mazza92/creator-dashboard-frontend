@@ -53,6 +53,8 @@ const AdminReports = () => {
   const [lastFetched, setLastFetched] = useState(null);
   const [atLimitPage, setAtLimitPage] = useState(1);
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
+  const [showBrandsTable, setShowBrandsTable] = useState(true);
+  const [showCategoryTable, setShowCategoryTable] = useState(false);
   const AT_LIMIT_PER_PAGE = 10;
 
   // Check auth on mount
@@ -258,12 +260,12 @@ const AdminReports = () => {
     );
   }
 
-  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month, top_brands = [] } = data;
+  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager } = data;
 
   // Calculate funnel percentages
   const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
-  const savedPct = calcPct(funnel.saved_brand, funnel.signed_up);
-  const pitchPct = calcPct(funnel.sent_pitch, funnel.saved_brand);
+  const unlockedPct = calcPct(funnel.unlocked_brand, funnel.signed_up);
+  const pitchPct = calcPct(funnel.sent_pitch, funnel.unlocked_brand);
   const multiPct = calcPct(funnel.pitched_multiple, funnel.sent_pitch);
 
   return (
@@ -338,19 +340,36 @@ const AdminReports = () => {
         </GoalCard>
 
         {/* 2. TOP BRANDS BY PITCHES */}
-        <SectionLabel>Top brands by pitches</SectionLabel>
+        <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>Top brands by pitches</span>
+          <button
+            onClick={() => setShowBrandsTable(!showBrandsTable)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: colors.text2,
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 500,
+              padding: '4px 8px'
+            }}
+          >
+            {showBrandsTable ? '▼ Collapse' : '▶ Expand'}
+          </button>
+        </SectionLabel>
 
-        <TodayCard>
-          <TodayHeader>
-            <TodayTitle>
-              <span style={{ fontSize: 16 }}>🎯</span>
-              Most pitched brands
-              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
-                {top_brands.length} brands
-              </span>
-            </TodayTitle>
-            <TodaySubtitle>All-time pitch volume by creators</TodaySubtitle>
-          </TodayHeader>
+        {showBrandsTable && (
+          <TodayCard>
+            <TodayHeader>
+              <TodayTitle>
+                <span style={{ fontSize: 16 }}>🎯</span>
+                Most pitched brands
+                <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
+                  {top_brands.length} brands
+                </span>
+              </TodayTitle>
+              <TodaySubtitle>All-time pitch volume by creators</TodaySubtitle>
+            </TodayHeader>
 
           {top_brands.length === 0 ? (
             <EmptyState>
@@ -362,10 +381,9 @@ const AdminReports = () => {
               <BrandTableHead>
                 <tr>
                   <th style={{ width: '40%' }}>Brand</th>
+                  <th>Unlocks</th>
                   <th>Saves</th>
                   <th>Pitches</th>
-                  <th>Replies</th>
-                  <th>Reply Rate</th>
                 </tr>
               </BrandTableHead>
               <tbody>
@@ -386,29 +404,112 @@ const AdminReports = () => {
                       </BrandCell>
                     </td>
                     <td>
-                      <StatValue>{brand.saves}</StatValue>
+                      <StatValue $color={brand.unlock_count > 0 ? colors.rose : undefined}>
+                        {brand.unlock_count || 0}
+                      </StatValue>
+                    </td>
+                    <td>
+                      <StatValue>{brand.saves || 0}</StatValue>
                     </td>
                     <td>
                       <StatValue $color={brand.pitch_count > 0 ? colors.violet : undefined}>
                         {brand.pitch_count || 0}
                       </StatValue>
                     </td>
-                    <td>
-                      <StatValue $color={brand.replies > 0 ? colors.green : undefined}>
-                        {brand.replies}
-                      </StatValue>
-                    </td>
-                    <td>
-                      <ReplyRateBadge $rate={brand.reply_rate}>
-                        {brand.reply_rate}%
-                      </ReplyRateBadge>
-                    </td>
                   </BrandTableRow>
                 ))}
               </tbody>
             </BrandTable>
           )}
-        </TodayCard>
+          </TodayCard>
+        )}
+
+        {/* 2.5. BRANDS BY CATEGORY */}
+        <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>Brands by category</span>
+          <button
+            onClick={() => setShowCategoryTable(!showCategoryTable)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: colors.text2,
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 500,
+              padding: '4px 8px'
+            }}
+          >
+            {showCategoryTable ? '▼ Collapse' : '▶ Expand'}
+          </button>
+        </SectionLabel>
+
+        {showCategoryTable && (
+          <TodayCard>
+            <TodayHeader>
+              <TodayTitle>
+                <span style={{ fontSize: 16 }}>📊</span>
+                Category breakdown
+                <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
+                  {brands_by_category.length} categories
+                </span>
+              </TodayTitle>
+              <TodaySubtitle>All-time unlocks and pitches by brand category</TodaySubtitle>
+            </TodayHeader>
+
+            {brands_by_category.length === 0 ? (
+              <EmptyState>
+                <strong>No category data yet</strong>
+                <p>When creators start unlocking brands, category data will appear here</p>
+              </EmptyState>
+            ) : (
+              <BrandTable>
+                <BrandTableHead>
+                  <tr>
+                    <th style={{ width: '30%' }}>Category</th>
+                    <th>Unlocks</th>
+                    <th>Unique users</th>
+                    <th>Pitches</th>
+                    <th>Pitch rate</th>
+                  </tr>
+                </BrandTableHead>
+                <tbody>
+                  {brands_by_category.map((cat, idx) => {
+                    const pitchRate = cat.unlock_count > 0 ? Math.round((cat.pitch_count / cat.unlock_count) * 100) : 0;
+                    return (
+                      <BrandTableRow key={cat.category}>
+                        <td>
+                          <BrandInfo>
+                            <BrandName style={{ textTransform: 'capitalize' }}>
+                              {cat.category || 'Uncategorized'}
+                            </BrandName>
+                          </BrandInfo>
+                        </td>
+                        <td>
+                          <StatValue $color={cat.unlock_count > 50 ? colors.rose : undefined}>
+                            {cat.unlock_count || 0}
+                          </StatValue>
+                        </td>
+                        <td>
+                          <StatValue>{cat.unique_users || 0}</StatValue>
+                        </td>
+                        <td>
+                          <StatValue $color={cat.pitch_count > 0 ? colors.violet : undefined}>
+                            {cat.pitch_count || 0}
+                          </StatValue>
+                        </td>
+                        <td>
+                          <ReplyRateBadge $rate={pitchRate}>
+                            {pitchRate}%
+                          </ReplyRateBadge>
+                        </td>
+                      </BrandTableRow>
+                    );
+                  })}
+                </tbody>
+              </BrandTable>
+            )}
+          </TodayCard>
+        )}
 
         {/* 3. HEALTH PULSE */}
         <SectionLabel>
@@ -431,7 +532,7 @@ const AdminReports = () => {
           </HealthCard>
 
           <HealthCard>
-            <HcLabel>Pitches sent</HcLabel>
+            <HcLabel>Brand unlocks</HcLabel>
             <HcValue $color="rose">{health.pitches.this_week}</HcValue>
             <HcDelta $up={health.pitches.change >= 0}>
               {health.pitches.change >= 0 ? '↑' : '↓'} {health.pitches.change >= 0 ? '+' : ''}{health.pitches.change} vs prev period
@@ -550,18 +651,31 @@ const AdminReports = () => {
                 ))}
               </TrafficPanel>
 
-              {/* Top pages */}
+              {/* AI Manager completion */}
               <TrafficPanel>
-                <PanelTitle>Top pages this week</PanelTitle>
-                {traffic.top_pages?.map(p => (
-                  <PageRow key={p.path}>
-                    <PagePath>{p.path.length > 22 ? p.path.slice(0, 22) + '…' : p.path}</PagePath>
-                    <span>
-                      <PageViews>{p.views?.toLocaleString()}</PageViews>
-                      {p.converts && <ConvertsBadge>converts</ConvertsBadge>}
-                    </span>
-                  </PageRow>
-                ))}
+                <PanelTitle>AI Manager completion</PanelTitle>
+                {ai_manager && (
+                  <>
+                    <PageRow>
+                      <PagePath>Optimized bio</PagePath>
+                      <span>
+                        <PageViews>{ai_manager.optimize_bio?.total || 0}</PageViews>
+                        <span style={{ fontSize: 11, color: colors.text3, marginLeft: 6 }}>
+                          (+{ai_manager.optimize_bio?.last_7d || 0} this week)
+                        </span>
+                      </span>
+                    </PageRow>
+                    <PageRow>
+                      <PagePath>Built portfolio</PagePath>
+                      <span>
+                        <PageViews>{ai_manager.build_portfolio?.total || 0}</PageViews>
+                        <span style={{ fontSize: 11, color: colors.text3, marginLeft: 6 }}>
+                          (+{ai_manager.build_portfolio?.last_7d || 0} this week)
+                        </span>
+                      </span>
+                    </PageRow>
+                  </>
+                )}
               </TrafficPanel>
             </TrafficBottom>
           </>
@@ -583,16 +697,16 @@ const AdminReports = () => {
               <FCount>{funnel.signed_up}</FCount>
             </FStep>
 
-            <FDrop $good={savedPct >= 50}>↓ {savedPct}% saved a brand — {savedPct >= 50 ? 'good' : 'needs work'}</FDrop>
+            <FDrop $good={unlockedPct >= 40}>↓ {unlockedPct}% unlocked a brand — {unlockedPct >= 40 ? 'good' : 'needs work'}</FDrop>
 
             <FStep>
-              <FLabel>Saved a brand</FLabel>
+              <FLabel>Unlocked brand</FLabel>
               <FBarTrack>
-                <FBarFill style={{ width: `${savedPct}%`, background: '#2563EB' }}>
-                  {funnel.saved_brand}
+                <FBarFill style={{ width: `${unlockedPct}%`, background: '#2563EB' }}>
+                  {funnel.unlocked_brand}
                 </FBarFill>
               </FBarTrack>
-              <FCount>{funnel.saved_brand}</FCount>
+              <FCount>{funnel.unlocked_brand}</FCount>
             </FStep>
 
             <FDrop $good={pitchPct >= 30}>↓ only {pitchPct}% sent a pitch — {pitchPct < 30 ? 'this is the problem' : 'decent'}</FDrop>
@@ -635,7 +749,7 @@ const AdminReports = () => {
           </FunnelSteps>
 
           <InsightBox>
-            <strong>The one thing to fix:</strong> {funnel.saved_brand - funnel.sent_pitch} people saved a brand but never pitched. That's your biggest growth lever. The "For You" tab + follow-up nudge emails target this gap directly — watch this number improve over the next 30 days.
+            <strong>The one thing to fix:</strong> {funnel.unlocked_brand - funnel.sent_pitch} people unlocked a brand but never pitched. That's your biggest growth lever. The "For You" tab + follow-up nudge emails target this gap directly — watch this number improve over the next 30 days.
           </InsightBox>
         </FunnelCard>
 
