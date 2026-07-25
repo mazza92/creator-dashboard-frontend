@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark, FiLock, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
+import { FiX, FiInstagram, FiExternalLink, FiZap, FiCheck, FiSend, FiBookmark, FiLock, FiAlertCircle, FiArrowRight, FiFilter, FiChevronDown } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -1185,11 +1185,330 @@ const EmptyState = styled.div`
   }
 `;
 
+// ============================================
+// INFINITE SCROLL GRID COMPONENTS
+// ============================================
+
+const BrandGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 0 20px 100px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 12px 100px;
+  }
+
+  @media (max-width: 380px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const GridCard = styled(motion.div)`
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const GridCardImage = styled.div`
+  position: relative;
+  width: 100%;
+  padding-top: 65%;
+  background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+  overflow: hidden;
+
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  ${GridCard}:hover & img {
+    transform: scale(1.05);
+  }
+`;
+
+const GridCardLogo = styled.div`
+  position: absolute;
+  bottom: -20px;
+  left: 12px;
+  width: 44px;
+  height: 44px;
+  background: white;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  @media (max-width: 640px) {
+    width: 36px;
+    height: 36px;
+    bottom: -16px;
+    left: 10px;
+  }
+`;
+
+const GridCardLogoPlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: ${primaryBlue};
+  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+  border-radius: 6px;
+`;
+
+const GridCardContent = styled.div`
+  padding: 28px 14px 14px;
+
+  @media (max-width: 640px) {
+    padding: 22px 10px 12px;
+  }
+`;
+
+const GridCardName = styled.h3`
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 640px) {
+    font-size: 13px;
+  }
+`;
+
+const GridCardCategory = styled.span`
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: capitalize;
+  margin-bottom: 8px;
+
+  @media (max-width: 640px) {
+    font-size: 10px;
+  }
+`;
+
+const GridCardMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+`;
+
+const GridMetaBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: ${props => props.variant === 'success' ? '#ECFDF5' : props.variant === 'value' ? '#FEF3C7' : '#F3F4F6'};
+  color: ${props => props.variant === 'success' ? '#059669' : props.variant === 'value' ? '#B45309' : '#4B5563'};
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+
+  @media (max-width: 640px) {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+`;
+
+const GridCardBadge = styled.div`
+  position: absolute;
+  top: 10px;
+  ${props => props.position === 'left' ? 'left: 10px;' : 'right: 10px;'}
+  padding: 5px 10px;
+  background: ${props => {
+    if (props.variant === 'match') return 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)';
+    if (props.variant === 'micro') return '#10B981';
+    if (props.variant === 'new') return '#3B82F6';
+    return 'rgba(0,0,0,0.6)';
+  }};
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 20px;
+  z-index: 3;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  @media (max-width: 640px) {
+    padding: 4px 8px;
+    font-size: 9px;
+  }
+`;
+
+const GridCardSaved = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F59E0B;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 3;
+
+  @media (max-width: 640px) {
+    width: 28px;
+    height: 28px;
+  }
+`;
+
+const LoadingSpinner = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+
+  &::after {
+    content: '';
+    width: 32px;
+    height: 32px;
+    border: 3px solid #E5E7EB;
+    border-top-color: ${primaryBlue};
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const LoadMoreTrigger = styled.div`
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const FilterBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  max-width: 1200px;
+  margin: 0 auto 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 640px) {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+`;
+
+const FilterChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: ${props => props.active ? '#111827' : 'white'};
+  color: ${props => props.active ? 'white' : '#374151'};
+  border: 1px solid ${props => props.active ? '#111827' : '#E5E7EB'};
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${props => props.active ? '#1F2937' : '#F9FAFB'};
+    border-color: ${props => props.active ? '#1F2937' : '#D1D5DB'};
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media (max-width: 640px) {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+`;
+
+const ResultsCount = styled.div`
+  padding: 0 20px;
+  max-width: 1200px;
+  margin: 0 auto 12px;
+  font-size: 13px;
+  color: #6B7280;
+
+  strong {
+    color: #111827;
+    font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+`;
+
+const EndOfResults = styled.div`
+  text-align: center;
+  padding: 40px 20px;
+  color: #9CA3AF;
+  font-size: 14px;
+
+  .emoji {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+`;
+
 const PRBrandDiscovery = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [brands, setBrands] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
@@ -1201,6 +1520,7 @@ const PRBrandDiscovery = () => {
   const [savedBrands, setSavedBrands] = useState(new Set()); // Track bookmarked brands
   const [seenBrandIds, setSeenBrandIds] = useState(new Set()); // Track all brands shown to avoid duplicates
   const [fetchingMore, setFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true); // Track if more brands available
   const [showPitchModal, setShowPitchModal] = useState(false);
   const [selectedBrandForPitch, setSelectedBrandForPitch] = useState(null);
   // Feature flag for PR Package pivot - set to true to enable new modal
@@ -1211,6 +1531,12 @@ const PRBrandDiscovery = () => {
   const [kitNudgeBrand, setKitNudgeBrand] = useState(null);
   const [showKitNudge, setShowKitNudge] = useState(false);
   const [creatorProfile, setCreatorProfile] = useState(null);
+  const [mediaKitComplete, setMediaKitComplete] = useState(false);
+  const [mediaKitCompleteness, setMediaKitCompleteness] = useState(null);
+
+  // Filter state
+  const [activeFilter, setActiveFilter] = useState('all');
+  const CATEGORY_FILTERS = ['all', 'beauty', 'skincare', 'fashion', 'wellness', 'lifestyle', 'food', 'fitness'];
 
   // Universal Brand Discovery state
   const [searchQuery, setSearchQuery] = useState('');
@@ -1219,6 +1545,10 @@ const PRBrandDiscovery = () => {
   const [searchResult, setSearchResult] = useState(null);
   const [discoveryError, setDiscoveryError] = useState(null);
   const [rateLimitInfo, setRateLimitInfo] = useState(null);
+
+  // Infinite scroll refs
+  const loadMoreRef = useRef(null);
+  const gridRef = useRef(null);
 
   // Using centralized api client from config/api.js
 
@@ -1388,44 +1718,76 @@ const PRBrandDiscovery = () => {
     }
   };
 
-  // Fetch more brands when nearing the end of current batch
-  useEffect(() => {
-    const fetchMoreIfNeeded = async () => {
-      // When we're 3 brands away from the end and not already fetching
-      if (currentIndex >= brands.length - 3 && !fetchingMore && brands.length > 0) {
-        setFetchingMore(true);
-        try {
-          const excludeArray = Array.from(seenBrandIds);
-          const response = await api.get(`/api/pr-crm/brands?limit=20&exclude_ids=${excludeArray.join(',')}`);
+  // Intersection Observer for infinite scroll
+  const loadMoreBrands = useCallback(async () => {
+    if (fetchingMore || !hasMore || searchMode) return;
 
-          if (response.data.success && response.data.brands.length > 0) {
-            const parsedBrands = response.data.brands.map(brand => ({
-              ...brand,
-              regions: typeof brand.regions === 'string' && brand.regions.startsWith('[')
-                ? JSON.parse(brand.regions)
-                : brand.regions,
-              niches: typeof brand.niches === 'string' && brand.niches.startsWith('[')
-                ? JSON.parse(brand.niches)
-                : brand.niches,
-            }));
+    setFetchingMore(true);
+    try {
+      const excludeArray = Array.from(seenBrandIds);
+      const categoryParam = activeFilter !== 'all' ? `&category=${activeFilter}` : '';
+      const response = await api.get(`/api/pr-crm/brands?limit=24&exclude_ids=${excludeArray.join(',')}${categoryParam}`);
 
-            // Append new brands to existing list
-            setBrands(prev => [...prev, ...parsedBrands]);
+      if (response.data.success) {
+        if (response.data.brands.length === 0) {
+          setHasMore(false);
+        } else {
+          const parsedBrands = response.data.brands.map(brand => ({
+            ...brand,
+            regions: typeof brand.regions === 'string' && brand.regions.startsWith('[')
+              ? JSON.parse(brand.regions)
+              : brand.regions,
+            niches: typeof brand.niches === 'string' && brand.niches.startsWith('[')
+              ? JSON.parse(brand.niches)
+              : brand.niches,
+          }));
 
-            // Track new brand IDs
-            const newSeenIds = new Set([...Array.from(seenBrandIds), ...parsedBrands.map(b => b.id)]);
-            setSeenBrandIds(newSeenIds);
+          // Append new brands to existing list
+          setBrands(prev => [...prev, ...parsedBrands]);
+
+          // Track new brand IDs
+          const newSeenIds = new Set([...Array.from(seenBrandIds), ...parsedBrands.map(b => b.id)]);
+          setSeenBrandIds(newSeenIds);
+
+          // Check if we got fewer brands than requested (end of results)
+          if (response.data.brands.length < 24) {
+            setHasMore(false);
           }
-        } catch (error) {
-          console.error('Error fetching more brands:', error);
-        } finally {
-          setFetchingMore(false);
         }
       }
-    };
+    } catch (error) {
+      console.error('Error fetching more brands:', error);
+    } finally {
+      setFetchingMore(false);
+    }
+  }, [fetchingMore, hasMore, seenBrandIds, activeFilter, searchMode]);
 
-    fetchMoreIfNeeded();
-  }, [currentIndex, brands.length, fetchingMore, seenBrandIds]);
+  // Set up Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading) {
+          loadMoreBrands();
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMoreBrands, loading]);
+
+  // Reset when filter changes
+  useEffect(() => {
+    setBrands([]);
+    setSeenBrandIds(new Set());
+    setHasMore(true);
+    fetchBrands();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
 
   const fetchSubscriptionStatus = async () => {
     try {
@@ -1451,12 +1813,13 @@ const PRBrandDiscovery = () => {
     }
   };
 
-  const fetchBrands = async (excludeIds = []) => {
+  const fetchBrands = async (excludeIds = [], reset = false) => {
     try {
       setLoading(true);
-      // Build query params with exclusions
+      // Build query params with exclusions and category filter
       const excludeIdsParam = excludeIds.length > 0 ? `&exclude_ids=${excludeIds.join(',')}` : '';
-      const response = await api.get(`/api/pr-crm/brands?limit=20${excludeIdsParam}`);
+      const categoryParam = activeFilter !== 'all' ? `&category=${activeFilter}` : '';
+      const response = await api.get(`/api/pr-crm/brands?limit=24${excludeIdsParam}${categoryParam}`);
 
       if (response.data.success) {
         const parsedBrands = response.data.brands.map(brand => ({
@@ -1468,12 +1831,23 @@ const PRBrandDiscovery = () => {
             ? JSON.parse(brand.niches)
             : brand.niches,
         }));
-        setBrands(parsedBrands);
+
+        if (reset) {
+          setBrands(parsedBrands);
+          setSeenBrandIds(new Set(parsedBrands.map(b => b.id)));
+        } else {
+          setBrands(prev => [...prev, ...parsedBrands]);
+          const newSeenIds = new Set([...Array.from(seenBrandIds), ...parsedBrands.map(b => b.id)]);
+          setSeenBrandIds(newSeenIds);
+        }
+
         // V4: Set brand match count for welcome card
         setBrandMatchCount(response.data.total_count || parsedBrands.length);
-        // Track these brand IDs as seen
-        const newSeenIds = new Set([...Array.from(seenBrandIds), ...parsedBrands.map(b => b.id)]);
-        setSeenBrandIds(newSeenIds);
+
+        // Check if we have more to load
+        if (parsedBrands.length < 24) {
+          setHasMore(false);
+        }
       }
     } catch (error) {
       console.error('Error fetching brands:', error);
@@ -1552,46 +1926,8 @@ const PRBrandDiscovery = () => {
     setRateLimitInfo(null);
   };
 
-  // Save brand for later (bookmark)
-  const handleSaveForLater = async () => {
-    if (currentIndex >= brands.length) return;
-    const brand = brands[currentIndex];
-
-    // Already saved?
-    if (savedBrands.has(brand.id)) {
-      message.info(`${brand.brand_name} is already saved`);
-      setCurrentIndex(prev => prev + 1);
-      return;
-    }
-
-    try {
-      await api.post('/api/pr-crm/pipeline/save', { brand_id: brand.id });
-      setSavedBrands(prev => new Set([...prev, brand.id]));
-      setSavedCount(prev => prev + 1);
-      message.success(`${brand.brand_name} saved for later!`);
-      setCurrentIndex(prev => prev + 1);
-    } catch (error) {
-      console.error('Error saving brand:', error);
-      message.error('Failed to save brand');
-    }
-  };
-
-  const handlePass = () => {
-    setCurrentIndex(prev => prev + 1);
-  };
-
-  // Open AI Pitch Modal - the main action (with kit nudge interstitial)
-  const handlePitchBrand = () => {
-    if (currentIndex >= brands.length) return;
-    const brand = brands[currentIndex];
-
-    // Check if already pitched
-    if (pitchedBrands.has(brand.id)) {
-      message.info(`You've already pitched ${brand.brand_name}`);
-      setCurrentIndex(prev => prev + 1);
-      return;
-    }
-
+  // Handle clicking on a brand card in the grid
+  const handleBrandClick = (brand) => {
     // Kit nudge AFTER first unlock — never block first aha
     const unlockCount = Number(localStorage.getItem('nc_unlock_count') || '0');
     const hasSeenNudge = localStorage.getItem('nc_kit_nudge_seen');
@@ -1605,9 +1941,40 @@ const PRBrandDiscovery = () => {
       return;
     }
 
-    // Open the AI pitch modal
+    // Open the unlock modal
     setSelectedBrandForPitch(brand);
     setShowPitchModal(true);
+  };
+
+  // Toggle save/bookmark brand
+  const handleToggleSave = async (e, brand) => {
+    e.stopPropagation(); // Prevent card click
+
+    if (savedBrands.has(brand.id)) {
+      // Remove from saved
+      try {
+        await api.delete(`/api/pr-crm/pipeline/${brand.id}`);
+        setSavedBrands(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(brand.id);
+          return newSet;
+        });
+        message.success('Removed from saved');
+      } catch (error) {
+        console.error('Error removing brand:', error);
+      }
+    } else {
+      // Add to saved
+      try {
+        await api.post('/api/pr-crm/pipeline/save', { brand_id: brand.id });
+        setSavedBrands(prev => new Set([...prev, brand.id]));
+        setSavedCount(prev => prev + 1);
+        message.success(`${brand.brand_name} saved!`);
+      } catch (error) {
+        console.error('Error saving brand:', error);
+        message.error('Failed to save brand');
+      }
+    }
   };
 
   const handleKitNudgeSkip = () => {
@@ -1639,19 +2006,8 @@ const PRBrandDiscovery = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Container>
-
-      <PageHeader>
-          <Title>Loading brands...</Title>
-        </PageHeader>
-
-      </Container>
-    );
-  }
-
-  const currentBrand = brands[currentIndex];
+  // Initial loading state - show skeleton grid
+  const isInitialLoading = loading && brands.length === 0;
 
   return (
     <Container>
@@ -1789,236 +2145,150 @@ const PRBrandDiscovery = () => {
         </div>
       )}
 
-      {/* Regular Discovery Feed (hidden during search mode) */}
+      {/* Regular Discovery Feed - Infinite Scroll Grid (hidden during search mode) */}
       {!searchMode && (
       <>
-      <CardArea>
-        <CardStack>
-          {!currentBrand ? (
-            <EmptyState>
-              <div className="emoji">🎉</div>
-              <h3>All caught up!</h3>
-              <p>You've viewed all available brands. Check back later for more.</p>
-            </EmptyState>
-          ) : (
-            <AnimatePresence>
-              <BrandCard
-                key={currentBrand.id}
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{
-                  x: 0,
-                  opacity: 0,
-                  transition: { duration: 0.2 }
-                }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        {/* Category Filter Bar */}
+        <FilterBar>
+          {CATEGORY_FILTERS.map(category => (
+            <FilterChip
+              key={category}
+              active={activeFilter === category}
+              onClick={() => setActiveFilter(category)}
+            >
+              {category === 'all' ? '✨ All' : category.charAt(0).toUpperCase() + category.slice(1)}
+            </FilterChip>
+          ))}
+        </FilterBar>
+
+        {/* Results Count */}
+        {brands.length > 0 && (
+          <ResultsCount>
+            <strong>{brandMatchCount || brands.length}+</strong> brands that work with micro-creators
+          </ResultsCount>
+        )}
+
+        {/* Initial Loading State */}
+        {isInitialLoading && (
+          <LoadingSpinner />
+        )}
+
+        {/* Brand Grid */}
+        <BrandGrid ref={gridRef}>
+          <AnimatePresence>
+            {brands.map((brand, index) => (
+              <GridCard
+                key={brand.id}
+                onClick={() => handleBrandClick(brand)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.3 }}
+                layout
               >
-                {/* Match Score Badge - shows high response rate */}
-                {currentBrand.response_rate >= 40 && (
-                  <MatchScoreBadge>
-                    🔥 {currentBrand.response_rate}% reply rate
-                  </MatchScoreBadge>
+                {/* Badges */}
+                {brand.response_rate >= 50 && (
+                  <GridCardBadge variant="match" position="left">
+                    🔥 {brand.response_rate}% reply
+                  </GridCardBadge>
+                )}
+                {brand.min_followers && brand.min_followers <= 5000 && (
+                  <GridCardBadge variant="micro" position="left">
+                    Micro-friendly
+                  </GridCardBadge>
                 )}
 
-                {/* Discovered Brand Badge - shows for non-curated brands */}
-                {currentBrand.source === 'discovered' && currentBrand.verified_contact !== false && (
-                  <DiscoveredBadge>
-                    ✨ Found via search
-                  </DiscoveredBadge>
+                {/* Saved indicator / Save button */}
+                {savedBrands.has(brand.id) && (
+                  <GridCardSaved onClick={(e) => handleToggleSave(e, brand)}>
+                    <FiBookmark size={16} fill="#F59E0B" />
+                  </GridCardSaved>
                 )}
 
-                {/* Unverified Contact Badge - shows for Tier 3 inferred contacts */}
-                {currentBrand.source === 'discovered' && currentBrand.verified_contact === false && (
-                  <UnverifiedBadge>
-                    ⚠️ Unverified contact
-                  </UnverifiedBadge>
+                {/* Already pitched indicator */}
+                {pitchedBrands.has(brand.id) && (
+                  <GridCardBadge variant="new" position="right">
+                    <FiCheck size={12} /> Opened
+                  </GridCardBadge>
                 )}
 
-                <BrandImage>
-                  {/* Cover Image */}
+                {/* Cover Image */}
+                <GridCardImage>
                   <img
-                    src={getBrandCoverImage(currentBrand)}
-                    alt={currentBrand.brand_name}
+                    src={getBrandCoverImage(brand)}
+                    alt={brand.brand_name}
+                    loading="lazy"
                   />
-
-                  {/* Logo Overlay */}
-                  <LogoOverlay>
-                    {getBrandLogoUrl(currentBrand) ? (
+                  <GridCardLogo>
+                    {getBrandLogoUrl(brand) ? (
                       <img
-                        src={getBrandLogoUrl(currentBrand)}
-                        alt={`${currentBrand.brand_name} logo`}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          const placeholder = e.target.parentElement.querySelector('div');
-                          if (placeholder) placeholder.style.display = 'flex';
-                        }}
+                        src={getBrandLogoUrl(brand)}
+                        alt={`${brand.brand_name} logo`}
+                        onError={(e) => { e.target.style.display = 'none'; }}
                       />
-                    ) : null}
-                    <LogoPlaceholder style={{ display: getBrandLogoUrl(currentBrand) ? 'none' : 'flex' }}>
-                      {currentBrand.brand_name.charAt(0)}
-                    </LogoPlaceholder>
-                  </LogoOverlay>
-                </BrandImage>
-
-                <CardContent>
-                  <BrandName>{currentBrand.brand_name}</BrandName>
-                  {getBrandDescription(currentBrand) && (
-                    <BrandDescription>{getBrandDescription(currentBrand)}</BrandDescription>
-                  )}
-                  {currentBrand.category && <Category>{currentBrand.category}</Category>}
-
-                  <InfoRow>
-                    {currentBrand.min_followers && (
-                      <InfoBadge>
-                        <FiInstagram size={14} />
-                        {currentBrand.min_followers.toLocaleString()}+ followers
-                      </InfoBadge>
+                    ) : (
+                      <GridCardLogoPlaceholder>
+                        {brand.brand_name.charAt(0)}
+                      </GridCardLogoPlaceholder>
                     )}
-                    {currentBrand.regions && (
-                      <InfoBadge>
-                        🌍 {Array.isArray(currentBrand.regions) ? currentBrand.regions.join(', ') : currentBrand.regions}
-                      </InfoBadge>
-                    )}
-                    {currentBrand.avg_product_value && (
-                      <ValueBadge>
-                        💰 ${currentBrand.avg_product_value} avg value
-                      </ValueBadge>
-                    )}
-                    {currentBrand.collaboration_type && (
-                      <InfoBadge>
-                        🤝 {currentBrand.collaboration_type}
-                      </InfoBadge>
-                    )}
-                    {currentBrand.payment_offered && (
-                      <ValueBadge>
-                        💵 Paid collaboration
-                      </ValueBadge>
-                    )}
-                  </InfoRow>
+                  </GridCardLogo>
+                </GridCardImage>
 
-                  {currentBrand.response_rate && (
-                    <ResponseRate>
-                      ⚡ {currentBrand.response_rate}% response rate
-                    </ResponseRate>
-                  )}
+                {/* Content */}
+                <GridCardContent>
+                  <GridCardName>{brand.brand_name}</GridCardName>
+                  <GridCardCategory>{brand.category || 'Lifestyle'}</GridCardCategory>
 
-                  {/* Estimated package value - uses API value or DB value */}
-                  {(currentBrand.avg_product_value || currentBrand.estimated_value) && (
-                    <EstimatedValue>
-                      💝 ~${currentBrand.avg_product_value || currentBrand.estimated_value} value
-                    </EstimatedValue>
-                  )}
-
-                  {currentBrand.pitch_advice && (
-                    <Description>💡 {currentBrand.pitch_advice}</Description>
-                  )}
-
-                  {/* Follow-up tip for medium response brands */}
-                  {currentBrand.response_rate >= 20 && currentBrand.response_rate < 50 && (
-                    <FollowUpHint>
-                      💡 Pro tip: Follow up in 7 days to double your reply chance
-                    </FollowUpHint>
-                  )}
-
-                  <ContactInfo>
-                    {/* Show Instagram handle (it's public anyway) */}
-                    {currentBrand.instagram_handle && (
-                      <ContactItem
-                        href={`https://instagram.com/${currentBrand.instagram_handle.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <FiInstagram size={16} />
-                        {currentBrand.instagram_handle}
-                      </ContactItem>
+                  <GridCardMeta>
+                    {brand.response_rate && brand.response_rate >= 30 && (
+                      <GridMetaBadge variant="success">
+                        ⚡ {brand.response_rate}% reply
+                      </GridMetaBadge>
                     )}
-                    {currentBrand.website && (
-                      <ContactItem
-                        href={currentBrand.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <FiExternalLink size={16} />
-                        Visit website
-                      </ContactItem>
+                    {(brand.avg_product_value || brand.estimated_value) && (
+                      <GridMetaBadge variant="value">
+                        💝 ~${brand.avg_product_value || brand.estimated_value}
+                      </GridMetaBadge>
                     )}
-                    {/* Show application form link if available - gated by quota */}
-                    {(currentBrand.application_form_url || currentBrand.application_url) && (() => {
-                      const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
-                      const atLimit = !isPro && pitchesSentThisWeek >= 3;
-                      if (atLimit) {
-                        return (
-                          <ContactItem
-                            as="button"
-                            onClick={() => {
-                              setUpgradeInfo({ currentCount: pitchesSentThisWeek, limit: 3, feature: 'limit_reached' });
-                              setShowUpgradeModal(true);
-                            }}
-                            style={{ color: '#9CA3AF', cursor: 'pointer', border: 'none', background: 'none' }}
-                          >
-                            <FiLock size={16} />
-                            Apply via Form
-                          </ContactItem>
-                        );
-                      }
-                      return (
-                        <ContactItem
-                          href={currentBrand.application_form_url || currentBrand.application_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: '#10B981' }}
-                        >
-                          <FiExternalLink size={16} />
-                          Apply via Form
-                        </ContactItem>
-                      );
-                    })()}
-                  </ContactInfo>
-                </CardContent>
-              </BrandCard>
-            </AnimatePresence>
-          )}
-        </CardStack>
-      </CardArea>
+                    {brand.collaboration_type && (
+                      <GridMetaBadge>
+                        {brand.collaboration_type === 'gifted' ? '🎁' : '💵'} {brand.collaboration_type}
+                      </GridMetaBadge>
+                    )}
+                  </GridCardMeta>
+                </GridCardContent>
+              </GridCard>
+            ))}
+          </AnimatePresence>
+        </BrandGrid>
 
-      {currentBrand && (
-        <ActionButtons>
-          <ActionButton
-            variant="pass"
-            onClick={handlePass}
-            whileTap={{ scale: 0.9 }}
-          >
-            <FiX />
-            <span style={{ fontSize: '11px', marginTop: '4px' }}>Skip</span>
-          </ActionButton>
-          <ActionButton
-            variant="bookmark"
-            onClick={handleSaveForLater}
-            whileTap={{ scale: 0.9 }}
-            disabled={savedBrands.has(currentBrand.id)}
-          >
-            <FiBookmark />
-            <span style={{ fontSize: '11px', marginTop: '4px' }}>
-              {savedBrands.has(currentBrand.id) ? 'Saved' : 'Save'}
-            </span>
-          </ActionButton>
-          <ActionButton
-            variant="pitch"
-            onClick={handlePitchBrand}
-            whileTap={{ scale: 0.9 }}
-            disabled={pitchedBrands.has(currentBrand.id)}
-          >
-            {pitchedBrands.has(currentBrand.id) ? (
-              <FiCheck />
-            ) : (
-              <FiSend />
-            )}
-            <span style={{ fontSize: '11px', marginTop: '4px' }}>
-              {pitchedBrands.has(currentBrand.id) ? 'Opened' : 'Get Brand PR'}
-            </span>
-          </ActionButton>
-        </ActionButtons>
-      )}
+        {/* Loading state */}
+        {(loading || fetchingMore) && (
+          <LoadingSpinner />
+        )}
+
+        {/* Load more trigger for infinite scroll */}
+        {!loading && hasMore && (
+          <LoadMoreTrigger ref={loadMoreRef}>
+            {fetchingMore && <LoadingSpinner />}
+          </LoadMoreTrigger>
+        )}
+
+        {/* End of results */}
+        {!loading && !hasMore && brands.length > 0 && (
+          <EndOfResults>
+            <div className="emoji">🎉</div>
+            You've seen all {brands.length} brands! Check back soon for new additions.
+          </EndOfResults>
+        )}
+
+        {/* Empty state */}
+        {!loading && brands.length === 0 && (
+          <EmptyState>
+            <div className="emoji">🔍</div>
+            <h3>No brands found</h3>
+            <p>Try a different category or search for a specific brand.</p>
+          </EmptyState>
+        )}
       </>
       )}
 
