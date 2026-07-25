@@ -104,6 +104,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   // V4: Welcome card for first-time users after onboarding
   const [showWelcomeCard, setShowWelcomeCard] = useState(false);
 
+  // Annual promotion banner state
+  const [showAnnualBanner, setShowAnnualBanner] = useState(() => {
+    const dismissed = localStorage.getItem('nc_annual_banner_dismissed');
+    return !dismissed;
+  });
+
   const [filters, setFilters] = useState({
     // For You deep-link uses ?search= (also accept legacy ?q=)
     search: searchParams.get('search') || searchParams.get('q') || '',
@@ -345,6 +351,26 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     } catch (error) {
       console.warn('Could not load niches for Discover sort:', error);
     }
+  };
+
+  // Handle annual subscription checkout
+  const handleAnnualUpgrade = async () => {
+    try {
+      const response = await axios.post(`${API_BASE}/api/subscription/create-checkout`, {
+        tier: 'pro',
+        interval: 'yearly'
+      }, { withCredentials: true });
+      window.location.href = response.data.checkout_url;
+    } catch (error) {
+      console.error('Annual upgrade error:', error);
+      message.error('Failed to start checkout. Please try again.');
+    }
+  };
+
+  // Dismiss annual banner
+  const dismissAnnualBanner = () => {
+    localStorage.setItem('nc_annual_banner_dismissed', 'true');
+    setShowAnnualBanner(false);
   };
 
   const fetchBrands = async (loadMore = false) => {
@@ -862,6 +888,29 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 Search any brand for a verified PR contact or signup form. Filter for micros, email, or forms.
               </DashboardSub>
             </DashboardDiscoverHeader>
+          )}
+
+          {/* Annual Subscription Urgency Banner - Free users only */}
+          {user && subscriptionTier === 'free' && showAnnualBanner && isDashboardView && (
+            <AnnualBanner>
+              <AnnualBannerText>
+                <Sparkles size={16} color="#F59E0B" />
+                <span>
+                  <strong>Lock in current pricing for a full year</strong>
+                  <span className="sep">·</span>
+                  Save over 33% before rates increase.
+                </span>
+              </AnnualBannerText>
+              <AnnualBannerActions>
+                <AnnualBannerButton onClick={handleAnnualUpgrade}>
+                  Subscribe annual
+                  <ChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} />
+                </AnnualBannerButton>
+                <AnnualBannerClose onClick={dismissAnnualBanner} aria-label="Dismiss">
+                  <X size={16} />
+                </AnnualBannerClose>
+              </AnnualBannerActions>
+            </AnnualBanner>
           )}
 
           {/* V4: Welcome card for first-time users after onboarding */}
@@ -1495,6 +1544,101 @@ const DashboardSub = styled.p`
   color: ${tokens.muted};
   max-width: 36rem;
   line-height: 1.45;
+`;
+
+// Annual Urgency Banner (Bento-style)
+const AnnualBanner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 12px;
+  margin-bottom: 16px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+`;
+
+const AnnualBannerText = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #92400E;
+  font-weight: 500;
+
+  strong {
+    font-weight: 700;
+  }
+
+  .sep {
+    color: #D97706;
+    margin: 0 2px;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 13px;
+  }
+`;
+
+const AnnualBannerActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`;
+
+const AnnualBannerButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: #1F2937;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #111827;
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 640px) {
+    flex: 1;
+    justify-content: center;
+  }
+`;
+
+const AnnualBannerClose = styled.button`
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  border-radius: 6px;
+
+  &:hover {
+    color: #6B7280;
+    background: rgba(0,0,0,0.05);
+  }
 `;
 
 const SearchToolsRow = styled.div`

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback, useRef, useMemo } 
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
-import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight, Eye, FileText, ArrowRight, Crown } from 'lucide-react';
+import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight, Eye, FileText, ArrowRight, Crown, X, Star } from 'lucide-react';
 import { message } from 'antd';
 import axios from 'axios';
 import { UserContext } from '../contexts/UserContext';
@@ -86,6 +86,13 @@ const ForYou = () => {
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
   const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, tier: 'free', reset_at: null, is_unlimited: false });
   const [opportunityCount, setOpportunityCount] = useState(0);
+
+  // Annual promotion banner state
+  const [showAnnualBanner, setShowAnnualBanner] = useState(() => {
+    // Show banner for free users who haven't dismissed it
+    const dismissed = localStorage.getItem('nc_annual_banner_dismissed');
+    return !dismissed;
+  });
 
   useEffect(() => {
     if (sessionStorage.getItem('foryouForceOpportunities')) {
@@ -567,6 +574,27 @@ const ForYou = () => {
     }
   };
 
+  // Handle annual subscription checkout
+  const handleAnnualUpgrade = async () => {
+    try {
+      trackProBeginCheckout({ tier: 'pro', source: 'annual_banner', interval: 'yearly' });
+      const response = await axios.post(`${API_BASE}/api/subscription/create-checkout`, {
+        tier: 'pro',
+        interval: 'yearly'
+      }, { withCredentials: true });
+      window.location.href = response.data.checkout_url;
+    } catch (error) {
+      console.error('Annual upgrade error:', error);
+      message.error('Failed to start checkout. Please try again.');
+    }
+  };
+
+  // Dismiss annual banner
+  const dismissAnnualBanner = () => {
+    localStorage.setItem('nc_annual_banner_dismissed', 'true');
+    setShowAnnualBanner(false);
+  };
+
   const handlePitchNow = useCallback(async (brand) => {
     // Auto-save to pipeline if not already saved
     if (!savedIds.has(brand.id)) {
@@ -767,6 +795,29 @@ const ForYou = () => {
     <PageWrap>
       <PageInner>
         {managerBandEl}
+
+        {/* Annual Subscription Urgency Banner - Free users only */}
+        {!isPro && showAnnualBanner && (
+          <AnnualBanner>
+            <AnnualBannerText>
+              <Star size={16} fill="#F59E0B" color="#F59E0B" />
+              <span>
+                <strong>Lock in current pricing for a full year</strong>
+                <span className="sep">·</span>
+                Save over 33% before rates increase.
+              </span>
+            </AnnualBannerText>
+            <AnnualBannerActions>
+              <AnnualBannerButton onClick={handleAnnualUpgrade}>
+                Subscribe annual
+                <ArrowRight size={14} />
+              </AnnualBannerButton>
+              <AnnualBannerClose onClick={dismissAnnualBanner} aria-label="Dismiss">
+                <X size={16} />
+              </AnnualBannerClose>
+            </AnnualBannerActions>
+          </AnnualBanner>
+        )}
 
         {/* Page Header — match-first (search lives on Discover) */}
         <PageHeader>
@@ -1449,6 +1500,101 @@ const PageInner = styled.div`
 
   @media (max-width: 640px) {
     padding: 16px 14px 80px;
+  }
+`;
+
+// Annual Urgency Banner (Bento-style)
+const AnnualBanner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 12px;
+  margin-bottom: 16px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+`;
+
+const AnnualBannerText = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #92400E;
+  font-weight: 500;
+
+  strong {
+    font-weight: 700;
+  }
+
+  .sep {
+    color: #D97706;
+    margin: 0 2px;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 13px;
+  }
+`;
+
+const AnnualBannerActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`;
+
+const AnnualBannerButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: #1F2937;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #111827;
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 640px) {
+    flex: 1;
+    justify-content: center;
+  }
+`;
+
+const AnnualBannerClose = styled.button`
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  border-radius: 6px;
+
+  &:hover {
+    color: #6B7280;
+    background: rgba(0,0,0,0.05);
   }
 `;
 

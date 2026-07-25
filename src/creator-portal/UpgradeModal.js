@@ -9,14 +9,15 @@ import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
 const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt }) => {
   const [loading, setLoading] = useState(false);
+  const [billingInterval, setBillingInterval] = useState('yearly'); // Default to yearly for better value
 
   const handleUpgrade = async (tier) => {
     try {
       setLoading(true);
-      trackProBeginCheckout({ tier, source: feature || 'upgrade_modal' });
+      trackProBeginCheckout({ tier, source: feature || 'upgrade_modal', interval: billingInterval });
       const response = await api.post(
         '/api/subscription/create-checkout',
-        { tier }
+        { tier, interval: billingInterval }
       );
 
       // Redirect to Stripe Checkout
@@ -209,13 +210,41 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               </ProofStat>
             </ProofStrip>
 
+            {/* Billing Toggle */}
+            <BillingToggle>
+              <BillingOption
+                $active={billingInterval === 'monthly'}
+                onClick={() => setBillingInterval('monthly')}
+              >
+                Monthly
+              </BillingOption>
+              <BillingOption
+                $active={billingInterval === 'yearly'}
+                onClick={() => setBillingInterval('yearly')}
+              >
+                Yearly
+                <SaveBadge>Save 33%</SaveBadge>
+              </BillingOption>
+            </BillingToggle>
+
             {/* Pro Card */}
             <ProCard>
               <ProCardHeader>
                 <ProLabel>Pro</ProLabel>
-                <ProPrice>$19<span>/month</span></ProPrice>
+                {billingInterval === 'yearly' ? (
+                  <ProPrice>
+                    <s style={{ fontSize: '14px', color: '#9CA3AF', fontWeight: '500' }}>$228</s>{' '}
+                    $152<span>/year</span>
+                  </ProPrice>
+                ) : (
+                  <ProPrice>$19<span>/month</span></ProPrice>
+                )}
               </ProCardHeader>
-              <ProRoiLine>One free product from a brand covers a year of Pro</ProRoiLine>
+              <ProRoiLine>
+                {billingInterval === 'yearly'
+                  ? 'Lock in this price — save $76/year vs monthly'
+                  : 'One free product from a brand covers a year of Pro'}
+              </ProRoiLine>
 
               {/* Feature List */}
               <FeatureList>
@@ -244,7 +273,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               disabled={loading}
               whileTap={{ scale: 0.98 }}
             >
-              {loading ? 'Processing...' : ctaText}
+              {loading
+                ? 'Processing...'
+                : billingInterval === 'yearly'
+                  ? 'Get Pro — $152/year (save 33%)'
+                  : ctaText}
             </CtaButton>
 
             {/* Secondary "Wait" option for unlock paywall */}
@@ -693,6 +726,53 @@ const FooterItem = styled.div`
 const FooterDot = styled.span`
   color: #d1d5db;
   font-size: 10px;
+`;
+
+// Billing Toggle Components
+const BillingToggle = styled.div`
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 12px;
+`;
+
+const BillingOption = styled.button`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: ${props => props.$active ? '#fff' : 'transparent'};
+  color: ${props => props.$active ? '#111827' : '#6b7280'};
+  box-shadow: ${props => props.$active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};
+
+  &:hover {
+    color: #111827;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: 9px 10px;
+  }
+`;
+
+const SaveBadge = styled.span`
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 `;
 
 export default UpgradeModal;
