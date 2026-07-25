@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useRef, useMemo, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import styled from 'styled-components';
-import { Spin, Pagination, message } from 'antd';
+import { Spin, message } from 'antd';
 import { Search, Lock, Mail, Heart, Sparkles, Check, Target, X, ChevronDown } from 'lucide-react';
 import { normalizeCategory, categoryLabel } from '../constants/brandCategories';
 import axios from 'axios';
@@ -81,6 +81,13 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [pagination, setPagination] = useState({ page: 1, total: 0, limit: 24 });
   const [savedBrandIds, setSavedBrandIds] = useState(new Set());
 
+  // Infinite scroll state
+  const [fetchingMore, setFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const loadMoreRef = useRef(null);
+  const isFetchingRef = useRef(false);
+  const hasMoreRef = useRef(true);
+
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
   const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, tier: 'free', reset_at: null });
@@ -150,9 +157,11 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
   }, [user]);
 
+  // Fetch brands when filters change (NOT on page change - that's handled by infinite scroll)
   useEffect(() => {
     fetchBrands();
-  }, [pagination.page, filters, userNiches]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, userNiches]);
 
   // V4: Check if user just completed onboarding (first login welcome experience)
   useEffect(() => {
@@ -337,11 +346,26 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
   };
 
-  const fetchBrands = async () => {
-    setLoading(true);
+  const fetchBrands = async (loadMore = false) => {
+    // Guard against multiple simultaneous fetches
+    if (loadMore && isFetchingRef.current) {
+      return;
+    }
+
+    if (loadMore) {
+      isFetchingRef.current = true;
+      setFetchingMore(true);
+    } else {
+      setLoading(true);
+      // Reset refs on fresh fetch
+      hasMoreRef.current = true;
+      setHasMore(true);
+    }
+
     try {
+      const pageToFetch = loadMore ? pagination.page + 1 : 1;
       const params = {
-        page: pagination.page,
+        page: pageToFetch,
         limit: pagination.limit,
         ...(filters.search && { search: filters.search }),
         ...(filters.category && { category: filters.category }),
@@ -355,14 +379,83 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       };
 
       const { data } = await axios.get(`${API_BASE}/api/public/brands`, { params });
-      setBrands(data.brands);
-      setPagination(prev => ({ ...prev, total: data.pagination.total }));
+
+      if (loadMore) {
+        // Append to existing brands
+        setBrands(prev => {
+          const newBrands = [...prev, ...data.brands];
+          // Check if we've loaded all brands
+          if (newBrands.length >= data.pagination.total || data.brands.length < pagination.limit) {
+            hasMoreRef.current = false;
+            setHasMore(false);
+          }
+          return newBrands;
+        });
+        setPagination(prev => ({ ...prev, page: pageToFetch, total: data.pagination.total }));
+      } else {
+        // Replace brands (initial load or filter change)
+        setBrands(data.brands);
+        setPagination(prev => ({ ...prev, page: 1, total: data.pagination.total }));
+        // Check if we've loaded all brands on initial load
+        if (data.brands.length >= data.pagination.total || data.brands.length < pagination.limit) {
+          hasMoreRef.current = false;
+          setHasMore(false);
+        }
+      }
     } catch (error) {
       console.error('Error fetching brands:', error);
     } finally {
       setLoading(false);
+      setFetchingMore(false);
+      isFetchingRef.current = false;
     }
   };
+
+  // Load more brands callback for infinite scroll - uses refs to avoid stale closures
+  const loadMoreBrands = useCallback(() => {
+    // Check refs instead of state to avoid dependency loops
+    if (!isFetchingRef.current && hasMoreRef.current) {
+      fetchBrands(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Intersection Observer for infinite scroll using callback ref
+  const observerRef = useRef(null);
+
+  const setLoadMoreRef = useCallback((node) => {
+    // Disconnect previous observer if exists
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    // Save the DOM node reference
+    loadMoreRef.current = node;
+
+    // If no node, nothing to observe
+    if (!node) return;
+
+    // Create new observer
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreRef.current && !isFetchingRef.current) {
+          loadMoreBrands();
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    observerRef.current.observe(node);
+  }, [loadMoreBrands]);
+
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
 
   const handleSaveBrand = async (brand, e) => {
     e.preventDefault(); // Prevent navigation
@@ -556,6 +649,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     setSearchDraft(next);
     setFilters(prev => ({ ...prev, search: next }));
     setPagination(prev => ({ ...prev, page: 1 }));
+    setHasMore(true); // Reset infinite scroll
     // Reset discovery state when search changes
     setDiscoveredBrand(null);
     setDiscoveryError('');
@@ -643,6 +737,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     const nextValue = key === 'category' && value ? (normalizeCategory(value) || value) : value;
     setFilters(prev => ({ ...prev, [key]: nextValue }));
     setPagination(prev => ({ ...prev, page: 1 }));
+    setHasMore(true); // Reset infinite scroll
     if (key === 'microOnly') {
       // Persist off-state so dashboard default (micro on) does not re-apply
       updateURLParams({ micro: nextValue ? '1' : '0' });
@@ -1253,18 +1348,23 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               })}
               </BrandGrid>
 
-              <PaginationContainer>
-                <Pagination
-                  current={pagination.page}
-                  total={pagination.total}
-                  pageSize={pagination.limit}
-                  onChange={handlePageChange}
-                  showSizeChanger={false}
-                  showTotal={(total) => `${total} brands`}
-                  showLessItems
-                  responsive
-                />
-              </PaginationContainer>
+              {/* Infinite Scroll: Loading more trigger */}
+              {hasMore && !loading && (
+                <LoadMoreTrigger ref={setLoadMoreRef}>
+                  {fetchingMore && (
+                    <LoadingSpinnerSmall>
+                      <Spin size="default" />
+                    </LoadingSpinnerSmall>
+                  )}
+                </LoadMoreTrigger>
+              )}
+
+              {/* End of results */}
+              {!hasMore && brands.length > 0 && !loading && (
+                <EndOfResults>
+                  🎉 You've seen all {pagination.total} brands! Check back for new additions.
+                </EndOfResults>
+              )}
             </>
           )}
         </ContentWrapper>
@@ -2266,6 +2366,35 @@ const PaginationContainer = styled.div`
       line-height: 28px;
       font-size: 12px;
     }
+  }
+`;
+
+// Infinite Scroll Components
+const LoadMoreTrigger = styled.div`
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+`;
+
+const LoadingSpinnerSmall = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const EndOfResults = styled.div`
+  text-align: center;
+  padding: 40px 20px;
+  color: #9CA3AF;
+  font-size: 14px;
+  margin-top: 24px;
+
+  @media (max-width: 768px) {
+    padding: 32px 16px;
+    font-size: 13px;
   }
 `;
 
