@@ -87,6 +87,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const loadMoreRef = useRef(null);
   const isFetchingRef = useRef(false);
   const hasMoreRef = useRef(true);
+  const pageRef = useRef(1); // Track current page to avoid stale closures
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
@@ -360,10 +361,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       // Reset refs on fresh fetch
       hasMoreRef.current = true;
       setHasMore(true);
+      pageRef.current = 1;
     }
 
     try {
-      const pageToFetch = loadMore ? pagination.page + 1 : 1;
+      // Use pageRef to avoid stale closure issues with loadMoreBrands callback
+      const pageToFetch = loadMore ? pageRef.current + 1 : 1;
       const params = {
         page: pageToFetch,
         limit: pagination.limit,
@@ -381,6 +384,8 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       const { data } = await axios.get(`${API_BASE}/api/public/brands`, { params });
 
       if (loadMore) {
+        // Update page ref BEFORE state updates
+        pageRef.current = pageToFetch;
         // Append to existing brands
         setBrands(prev => {
           const newBrands = [...prev, ...data.brands];
@@ -394,6 +399,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         setPagination(prev => ({ ...prev, page: pageToFetch, total: data.pagination.total }));
       } else {
         // Replace brands (initial load or filter change)
+        pageRef.current = 1;
         setBrands(data.brands);
         setPagination(prev => ({ ...prev, page: 1, total: data.pagination.total }));
         // Check if we've loaded all brands on initial load
