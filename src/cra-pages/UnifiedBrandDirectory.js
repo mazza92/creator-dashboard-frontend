@@ -88,6 +88,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const isFetchingRef = useRef(false);
   const hasMoreRef = useRef(true);
   const pageRef = useRef(1); // Track current page to avoid stale closures
+  const filtersRef = useRef(filters); // Track current filters to avoid stale closures in loadMoreBrands
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
@@ -163,6 +164,11 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       setUserNiches([]);
     }
   }, [user]);
+
+  // Keep filtersRef in sync to avoid stale closures in loadMoreBrands
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
 
   // Fetch brands when filters change (NOT on page change - that's handled by infinite scroll)
   useEffect(() => {
@@ -391,18 +397,20 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
 
     try {
-      // Use pageRef to avoid stale closure issues with loadMoreBrands callback
+      // Use pageRef and filtersRef to avoid stale closure issues with loadMoreBrands callback
       const pageToFetch = loadMore ? pageRef.current + 1 : 1;
+      // Use filtersRef.current to get latest filters (avoids stale closure in loadMoreBrands)
+      const currentFilters = filtersRef.current;
       const params = {
         page: pageToFetch,
         limit: pagination.limit,
-        ...(filters.search && { search: filters.search }),
-        ...(filters.category && { category: filters.category }),
-        ...(filters.activity && { activity: filters.activity }),
-        ...(filters.contactType && { contact_type: filters.contactType }),
-        ...(filters.region && { region: filters.region }),
+        ...(currentFilters.search && { search: currentFilters.search }),
+        ...(currentFilters.category && { category: currentFilters.category }),
+        ...(currentFilters.activity && { activity: currentFilters.activity }),
+        ...(currentFilters.contactType && { contact_type: currentFilters.contactType }),
+        ...(currentFilters.region && { region: currentFilters.region }),
         // Soft sort from onboarding niches (no UI) — skip when category filter is set
-        ...(isDashboardView && user && userNiches.length > 0 && !filters.category && {
+        ...(isDashboardView && user && userNiches.length > 0 && !currentFilters.category && {
           prefer_niches: userNiches.join(',')
         })
       };
