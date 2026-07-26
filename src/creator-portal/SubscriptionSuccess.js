@@ -18,6 +18,21 @@ const SubscriptionSuccess = () => {
     // Fire purchase immediately on landing (don't wait for API / don't require DebugView)
     if (sessionId) {
       trackProPurchase({ sessionId, tier: 'pro' });
+
+      // TikTok Pixel - CompletePayment event (deduped by session_id)
+      const ttqKey = `ttq_purchase_${sessionId}`;
+      try {
+        if (!window.sessionStorage.getItem(ttqKey) && window.ttq) {
+          window.ttq.track('CompletePayment', {
+            content_type: 'product',
+            content_id: 'pro_subscription',
+            content_name: 'NewCollab Pro',
+            value: 19,
+            currency: 'USD'
+          });
+          window.sessionStorage.setItem(ttqKey, '1');
+        }
+      } catch (_) { /* ignore */ }
     }
 
     const confirmAndFetchStatus = async () => {
@@ -33,8 +48,9 @@ const SubscriptionSuccess = () => {
         setSubscriptionInfo(response.data);
 
         const tier = response.data?.tier || 'pro';
-        // Re-fire with correct tier if elite (deduped by session_id for pro→same id)
-        if (sessionId && tier === 'elite') {
+
+        // Re-fire GA4 with correct tier if needed
+        if (sessionId && tier !== 'pro') {
           try {
             window.sessionStorage.removeItem(`ga4_purchase_${sessionId}`);
           } catch (_) {
