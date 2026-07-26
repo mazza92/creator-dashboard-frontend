@@ -88,7 +88,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const isFetchingRef = useRef(false);
   const hasMoreRef = useRef(true);
   const pageRef = useRef(1); // Track current page to avoid stale closures
-  const filtersRef = useRef(filters); // Track current filters to avoid stale closures in loadMoreBrands
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
@@ -125,6 +124,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         || (location.pathname.startsWith('/creator/dashboard') && searchParams.get('micro') == null)),
     region: searchParams.get('region') || '',
   });
+  const filtersRef = useRef(filters); // Track current filters to avoid stale closures in loadMoreBrands
   const [searchDraft, setSearchDraft] = useState(
     searchParams.get('search') || searchParams.get('q') || ''
   );
