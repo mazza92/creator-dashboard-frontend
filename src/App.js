@@ -44,6 +44,7 @@ import PrivacyPolicy from './cra-pages/PrivacyPolicy';
 import TermsOfService from './cra-pages/TermsOfService';
 import Unsubscribed from './cra-pages/Unsubscribed';
 import BrandPRPackagesPage from './cra-pages/BrandPRPackagesPage';
+import LandFirstPRPackage from './cra-pages/LandFirstPRPackage';
 // eslint-disable-next-line no-unused-vars
 import LandingPageLayout from './Layouts/LandingPageLayout';
 import ForgotPassword from './components/ForgotPassword';
@@ -226,6 +227,7 @@ function AppContent() {
                 '/c/',
                 '/kit/',
                 '/for-brands',
+                '/land-your-first-pr-package',
                 '/creator/dashboard/subscription/success',
                 '/creator/dashboard/subscription/cancel'
             ];
@@ -393,6 +395,8 @@ function AppContent() {
             {/* Brand PR Packages - Next.js has /app/brands/pr-packages, but keep CRA route for dev/fallback */}
             <Route path='/brands/pr-packages' element={<BrandPRPackagesPage />} />
             <Route path='/brands/send-pr-packages' element={<BrandPRPackagesPage />} />
+            {/* Google Ads Landing Page */}
+            <Route path='/land-your-first-pr-package' element={<LandFirstPRPackage />} />
             {/* /f50 redirects to / (handled by vercel.json redirect, / is Next.js) */}
             <Route path='/success' element={<SuccessPage />} />
             <Route path='/forgot-password' element={<ForgotPassword />} />
