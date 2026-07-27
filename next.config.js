@@ -133,12 +133,16 @@ const nextConfig = {
   
   // Rewrites for API
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'https://api.newcollab.co/:path*',
-      },
-    ];
+    return {
+      // beforeFiles rewrites are checked BEFORE Next.js pages/API routes
+      // afterFiles rewrites are checked AFTER (so local API routes take precedence)
+      afterFiles: [
+        {
+          source: '/api/:path*',
+          destination: 'https://api.newcollab.co/:path*',
+        },
+      ],
+    };
   },
 };
 

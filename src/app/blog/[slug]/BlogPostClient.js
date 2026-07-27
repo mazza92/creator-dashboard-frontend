@@ -6,7 +6,8 @@ import { HomeOutlined, CalendarOutlined, ClockCircleOutlined, QuestionCircleOutl
 import Link from 'next/link';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
-import { getPostContentHtml } from '../../../lib/blogContent';
+import { getPostContentHtml, isBlogWidgetEnabled } from '../../../lib/blogContent';
+import BlogBrandSearchWidget from '../../../components/BlogBrandSearchWidget';
 
 const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -305,6 +306,13 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
               </Space>
             </Space>
           </BlogHeader>
+
+          {/* Brand Search Widget (Phase 1: enabled posts only) */}
+          {isBlogWidgetEnabled(post.slug) && (
+            <div style={{ maxWidth: 800, margin: '0 auto' }}>
+              <BlogBrandSearchWidget postSlug={post.slug} />
+            </div>
+          )}
 
           <BlogContent dangerouslySetInnerHTML={{ __html: getPostContentHtml(post) }} />
 

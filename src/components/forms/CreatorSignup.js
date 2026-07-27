@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../../utils/api';
 import { Helmet } from 'react-helmet-async';
@@ -420,6 +420,19 @@ export default function CreatorSignup() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Extract signup context params from URL (blog widget, landing pages, etc.)
+  const signupContext = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return {
+      ref: params.get('ref') || null,  // e.g. "blog_widget"
+      brand: params.get('brand') || null,  // matched brand slug
+      brand_query: params.get('brand_query') || null,  // unmatched brand search
+      source_page: params.get('source_page') || null,  // blog post slug
+      intent: params.get('intent') || null,  // e.g. "brand_specific"
+    };
+  }, [location.search]);
 
   const googleEnabled = Boolean(firebaseConfigured && auth);
   const isValid = firstName.trim().length > 0 && email.includes('@') && password.length >= 8;
@@ -447,6 +460,12 @@ export default function CreatorSignup() {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         terms_accepted: true,
+        // Signup context from URL params (blog widget, landing pages)
+        ...(signupContext.ref && { signup_ref: signupContext.ref }),
+        ...(signupContext.brand && { first_unlock_intent: signupContext.brand }),
+        ...(signupContext.brand_query && { brand_query: signupContext.brand_query }),
+        ...(signupContext.source_page && { signup_source_page: signupContext.source_page }),
+        ...(signupContext.intent && { signup_intent: signupContext.intent }),
       }, { headers: { 'Content-Type': 'application/json' } });
 
       // Track signup completion in TikTok pixel with user data for better EMQ
@@ -490,6 +509,12 @@ export default function CreatorSignup() {
         idToken,
         email: result.user.email,
         name: result.user.displayName,
+        // Signup context from URL params (blog widget, landing pages)
+        ...(signupContext.ref && { signup_ref: signupContext.ref }),
+        ...(signupContext.brand && { first_unlock_intent: signupContext.brand }),
+        ...(signupContext.brand_query && { brand_query: signupContext.brand_query }),
+        ...(signupContext.source_page && { signup_source_page: signupContext.source_page }),
+        ...(signupContext.intent && { signup_intent: signupContext.intent }),
       });
 
       // Track signup completion in TikTok pixel (only for new accounts) with user data for better EMQ
