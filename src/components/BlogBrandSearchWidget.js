@@ -875,19 +875,19 @@ export default function BlogBrandSearchWidget({ postSlug }) {
 
           <ResultDivider>What we know publicly</ResultDivider>
           <ResultFacts>
-            {selectedBrand.minFollowers && (
+            {selectedBrand.minFollowers > 0 && (
               <li>Accepts creators from <strong>{selectedBrand.minFollowers}+ followers</strong></li>
             )}
-            {selectedBrand.responseRate && (
+            {selectedBrand.responseRate > 0 && (
               <li>Reply rate: <strong>{selectedBrand.responseRate}%</strong></li>
             )}
             {selectedBrand.collaborationType && (
               <li>Collab type: <strong>{selectedBrand.collaborationType}</strong></li>
             )}
-            {selectedBrand.avgValue && (
+            {selectedBrand.avgValue > 0 && (
               <li>Average PR value: <strong>${selectedBrand.avgValue}</strong></li>
             )}
-            {!selectedBrand.minFollowers && !selectedBrand.responseRate && (
+            {!(selectedBrand.minFollowers > 0) && !(selectedBrand.responseRate > 0) && (
               <li>Brand is in our verified database</li>
             )}
           </ResultFacts>
