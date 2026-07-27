@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiChevronDown, FiChevronUp, FiCopy, FiCheck } from 'react-icons/fi';
-import { message } from 'antd';
+import { FiX, FiChevronDown, FiChevronUp, FiCopy, FiCheck, FiFlag } from 'react-icons/fi';
+import { message, Tooltip } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 import LootBoxLoading from './LootBoxLoading';
@@ -1546,6 +1546,25 @@ const GhostBtn = styled.button`
   }
 `;
 
+const FlagBtn = styled.button`
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 0.35rem;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: #ef4444;
+    background: #fef2f2;
+  }
+`;
+
 const TipLine = styled.p`
   font-size: 0.82rem;
   color: ${TOKENS.mentorTextSecondary};
@@ -2519,9 +2538,23 @@ const UnlockModalV2 = ({
                             <InfoValue>{brandEmail}</InfoValue>
                             <InfoMeta>Unlocked with Get Brand PR · 1 credit</InfoMeta>
                           </div>
-                          <GhostBtn type="button" onClick={() => copyToClipboard(brandEmail, 'email')}>
-                            {copiedField === 'email' ? 'Copied' : 'Copy'}
-                          </GhostBtn>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Tooltip title="Report invalid or outdated email">
+                              <FlagBtn
+                                type="button"
+                                onClick={() => {
+                                  const subject = encodeURIComponent(`${brandName} - Invalid Contact Report`);
+                                  const body = encodeURIComponent(`Hi Newcollab team,\n\nThe contact email for ${brandName} (${brandEmail}) appears to be invalid or no longer active.\n\nPlease update this brand's contact information.\n\nThank you!`);
+                                  window.open(`mailto:team@newcollab.co?subject=${subject}&body=${body}`, '_blank');
+                                }}
+                              >
+                                <FiFlag size={14} />
+                              </FlagBtn>
+                            </Tooltip>
+                            <GhostBtn type="button" onClick={() => copyToClipboard(brandEmail, 'email')}>
+                              {copiedField === 'email' ? 'Copied' : 'Copy'}
+                            </GhostBtn>
+                          </div>
                         </InfoRow>
                       </InfoBlock>
 

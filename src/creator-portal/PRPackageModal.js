@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiCopy, FiCheck, FiClock, FiArrowRight, FiLock, FiExternalLink, FiStar } from 'react-icons/fi';
+import { FiX, FiCopy, FiCheck, FiClock, FiArrowRight, FiLock, FiExternalLink, FiStar, FiFlag } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../config/api';
-import { message } from 'antd';
+import { message, Tooltip } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
@@ -286,13 +286,27 @@ const PRPackageModal = ({
                   </SectionHeader>
                   <ContactCard>
                     <ContactEmail>{brandEmail || 'Loading...'}</ContactEmail>
-                    <CopyButton
-                      onClick={() => copyToClipboard(brandEmail, 'email')}
-                      $copied={copiedField === 'email'}
-                    >
-                      {copiedField === 'email' ? <FiCheck /> : <FiCopy />}
-                      {copiedField === 'email' ? 'Copied' : 'Copy'}
-                    </CopyButton>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Tooltip title="Report invalid or outdated email">
+                        <FlagBtn
+                          type="button"
+                          onClick={() => {
+                            const subject = encodeURIComponent(`${brandName} - Invalid Contact Report`);
+                            const body = encodeURIComponent(`Hi Newcollab team,\n\nThe contact email for ${brandName} (${brandEmail}) appears to be invalid or no longer active.\n\nPlease update this brand's contact information.\n\nThank you!`);
+                            window.open(`mailto:team@newcollab.co?subject=${subject}&body=${body}`, '_blank');
+                          }}
+                        >
+                          <FiFlag size={14} />
+                        </FlagBtn>
+                      </Tooltip>
+                      <CopyButton
+                        onClick={() => copyToClipboard(brandEmail, 'email')}
+                        $copied={copiedField === 'email'}
+                      >
+                        {copiedField === 'email' ? <FiCheck /> : <FiCopy />}
+                        {copiedField === 'email' ? 'Copied' : 'Copy'}
+                      </CopyButton>
+                    </div>
                   </ContactCard>
                   {applicationUrl && (
                     <ApplicationLink href={applicationUrl} target="_blank" rel="noopener noreferrer">
@@ -821,6 +835,25 @@ const CopyButton = styled.button`
   align-items: center;
   gap: 4px;
   transition: all 0.15s;
+`;
+
+const FlagBtn = styled.button`
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: #ef4444;
+    background: #fef2f2;
+  }
 `;
 
 const ApplicationLink = styled.a`

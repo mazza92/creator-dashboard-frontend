@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { message, Spin } from 'antd';
-import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFileText } from 'react-icons/fi';
+import { message, Spin, Tooltip } from 'antd';
+import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFileText, FiFlag } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
@@ -877,10 +877,26 @@ ${creatorName}`;
                 {brandEmail && contactMethod === 'email' && (
                   <InfoBlock>
                     <InfoLabel>Verified PR email</InfoLabel>
-                    <InfoValue>{displayEmail || `${brandName} PR Team`}</InfoValue>
-                    <InfoMeta>
-                      {wasAlreadyUnlocked ? 'Already unlocked · no credit used' : 'Unlocked with Get Brand PR · 1 credit'}
-                    </InfoMeta>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <div>
+                        <InfoValue>{displayEmail || `${brandName} PR Team`}</InfoValue>
+                        <InfoMeta>
+                          {wasAlreadyUnlocked ? 'Already unlocked · no credit used' : 'Unlocked with Get Brand PR · 1 credit'}
+                        </InfoMeta>
+                      </div>
+                      <Tooltip title="Report invalid or outdated email">
+                        <FlagBtn
+                          type="button"
+                          onClick={() => {
+                            const subject = encodeURIComponent(`${brandName} - Invalid Contact Report`);
+                            const body = encodeURIComponent(`Hi Newcollab team,\n\nThe contact email for ${brandName} (${brandEmail}) appears to be invalid or no longer active.\n\nPlease update this brand's contact information.\n\nThank you!`);
+                            window.open(`mailto:team@newcollab.co?subject=${subject}&body=${body}`, '_blank');
+                          }}
+                        >
+                          <FiFlag size={14} />
+                        </FlagBtn>
+                      </Tooltip>
+                    </div>
                   </InfoBlock>
                 )}
 
@@ -2464,6 +2480,26 @@ const InfoMeta = styled.div`
   font-size: 0.75rem;
   color: ${tokens.muted};
   margin-top: 0.25rem;
+`;
+
+const FlagBtn = styled.button`
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  margin-left: auto;
+
+  &:hover {
+    color: #ef4444;
+    background: #fef2f2;
+  }
 `;
 
 const FormTip = styled.div`
