@@ -1,13 +1,6 @@
 {
   "buildCommand": "npm run build",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src/ public/ package.json",
-  "redirects": [
-    {
-      "source": "/land-your-first-pr-package",
-      "destination": "https://app.newcollab.co/land-your-first-pr-package",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",
