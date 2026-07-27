@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import LandFirstPRPackageClient from './LandFirstPRPackageClient';
 
 export const metadata = {
@@ -22,5 +23,9 @@ export const metadata = {
 };
 
 export default function LandFirstPRPackagePage() {
-  return <LandFirstPRPackageClient />;
+  return (
+    <Suspense fallback={null}>
+      <LandFirstPRPackageClient />
+    </Suspense>
+  );
 }
