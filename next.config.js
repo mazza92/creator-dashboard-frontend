@@ -128,6 +128,12 @@ const nextConfig = {
         destination: 'https://app.newcollab.co/for-brands',
         permanent: false,
       },
+      // Google Ads landing page - hosted on CRA app
+      {
+        source: '/land-your-first-pr-package',
+        destination: 'https://app.newcollab.co/land-your-first-pr-package',
+        permanent: false,
+      },
     ];
   },
   
