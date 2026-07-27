@@ -94,7 +94,6 @@ const Brand = styled.a`
   display: flex;
   align-items: center;
   text-decoration: none;
-
   img {
     height: 34px;
     width: auto;
@@ -383,8 +382,8 @@ const ProblemSection = styled(Section)`
 
 const SectionTag = styled.span`
   display: inline-block;
-  background: #fce7f3;
-  color: #be185d;
+  background: ${props => props.$dark ? 'rgba(232,57,95,0.14)' : '#fce7f3'};
+  color: ${props => props.$dark ? '#ffb8c6' : '#be185d'};
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -400,6 +399,7 @@ const H2 = styled.h2`
   letter-spacing: -0.02em;
   line-height: 1.15;
   margin-bottom: 14px;
+  color: ${props => props.$light ? '#fff' : 'inherit'};
   @media (max-width: 640px) {
     font-size: 28px;
   }
@@ -407,7 +407,7 @@ const H2 = styled.h2`
 
 const Lead = styled.p`
   font-size: 17px;
-  color: #4b5563;
+  color: ${props => props.$light ? '#a0a3ad' : '#4b5563'};
   max-width: 640px;
   margin-bottom: 44px;
   line-height: 1.55;
@@ -499,6 +499,398 @@ const StepP = styled.p`
   line-height: 1.55;
 `;
 
+// SUCCESS STORIES
+const SuccessSection = styled(Section)`
+  background: #fff;
+  padding: 80px 0;
+`;
+
+const SuccessGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 44px;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StoryCard = styled.div`
+  background: #fafbfd;
+  border: 1px solid #ececef;
+  border-radius: 18px;
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #e8395f, #a93bd6);
+  }
+`;
+
+const StoryHead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const StoryAvatar = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: ${props => props.$variant === 'a' ? '#fce7f3' : props.$variant === 'b' ? '#dcfce7' : '#fef3c7'};
+  color: ${props => props.$variant === 'a' ? '#be185d' : props.$variant === 'b' ? '#065f46' : '#92400e'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 15px;
+  flex-shrink: 0;
+`;
+
+const StoryInfo = styled.div``;
+
+const StoryHandle = styled.div`
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 2px;
+`;
+
+const StoryMeta = styled.div`
+  font-size: 12px;
+  color: #6b7280;
+`;
+
+const StoryQuote = styled.div`
+  font-size: 15px;
+  color: #15161a;
+  line-height: 1.55;
+  font-weight: 500;
+  &::before {
+    content: """;
+    font-size: 34px;
+    color: #e8395f;
+    font-family: Georgia, serif;
+    line-height: 0;
+    position: relative;
+    top: 15px;
+    margin-right: 2px;
+  }
+`;
+
+const StoryResult = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  background: #dcfce7;
+  color: #0f7a44;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  width: fit-content;
+`;
+
+// FEATURES
+const FeaturesSection = styled(Section)`
+  background: #0f1015;
+  color: #fff;
+  padding: 80px 0;
+`;
+
+const FeatGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 36px;
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Feat = styled.div`
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 24px;
+`;
+
+const FeatEmoji = styled.div`
+  font-size: 24px;
+  margin-bottom: 10px;
+`;
+
+const FeatH3 = styled.h3`
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+`;
+
+const FeatP = styled.p`
+  font-size: 14px;
+  color: #a0a3ad;
+  line-height: 1.55;
+`;
+
+// BRAND WALL
+const BrandsSection = styled(Section)`
+  background: #fff;
+  padding: 60px 0;
+  text-align: center;
+`;
+
+const BrandsTitle = styled.div`
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 26px;
+`;
+
+const BrandWall = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 34px 44px;
+  filter: grayscale(1);
+  opacity: 0.7;
+`;
+
+const BrandName = styled.span`
+  font-family: ${props => props.$variant === 'serif' ? 'Georgia, serif' : props.$variant === 'sans' ? '-apple-system, sans-serif' : 'serif'};
+  font-size: ${props => props.$variant === 'sans' ? '16px' : '20px'};
+  font-weight: ${props => props.$variant === 'heavy' ? '900' : '800'};
+  color: #15161a;
+  font-style: ${props => props.$variant === 'serif' ? 'normal' : props.$variant === 'sans' ? 'normal' : 'italic'};
+  letter-spacing: ${props => props.$variant === 'sans' ? '0.05em' : props.$variant === 'heavy' ? '-0.02em' : 'normal'};
+  text-transform: ${props => props.$variant === 'sans' ? 'uppercase' : 'none'};
+`;
+
+const BrandsCount = styled.div`
+  display: inline-block;
+  margin-top: 24px;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+  b {
+    color: #15161a;
+    font-weight: 800;
+  }
+`;
+
+// PRICING
+const PricingSection = styled(Section)`
+  background: #f7f7f8;
+  padding: 80px 0;
+  text-align: center;
+`;
+
+const PricingGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 820px;
+  margin: 36px auto 0;
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PriceCard = styled.div`
+  background: #fff;
+  border: ${props => props.$pro ? '2px solid #15161a' : '1px solid #ececef'};
+  border-radius: 20px;
+  padding: 32px 26px;
+  text-align: left;
+  position: relative;
+  box-shadow: ${props => props.$pro ? '0 12px 40px rgba(0,0,0,0.08)' : 'none'};
+`;
+
+const ProBadge = styled.div`
+  position: absolute;
+  top: -11px;
+  left: 24px;
+  background: #15161a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 6px;
+`;
+
+const PriceTier = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 6px;
+`;
+
+const PriceNum = styled.div`
+  font-size: 44px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+  small {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 600;
+  }
+`;
+
+const PriceDesc = styled.div`
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 22px;
+  line-height: 1.5;
+`;
+
+const PriceList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 26px;
+`;
+
+const PriceItem = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+`;
+
+const Check = styled.span`
+  color: #0f7a44;
+  font-weight: 900;
+  flex-shrink: 0;
+  margin-top: 2px;
+`;
+
+const PriceCta = styled.button`
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 13px 0;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 800;
+  transition: transform 0.15s;
+  border: ${props => props.$pro ? 'none' : '1px solid #ececef'};
+  background: ${props => props.$pro ? '#15161a' : '#f4f4f6'};
+  color: ${props => props.$pro ? '#fff' : '#15161a'};
+  cursor: pointer;
+  &:hover {
+    transform: translateY(-1px);
+  }
+`;
+
+// FAQ
+const FAQSection = styled(Section)`
+  background: #fff;
+  padding: 80px 0;
+`;
+
+const FAQList = styled.div`
+  max-width: 720px;
+  margin: 36px auto 0;
+`;
+
+const FAQItem = styled.div`
+  border-bottom: 1px solid #ececef;
+`;
+
+const FAQQuestion = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 0;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  line-height: 1.4;
+  user-select: none;
+`;
+
+const Chevron = styled.span`
+  color: #8a8f98;
+  font-size: 20px;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  margin-left: 12px;
+  transform: ${props => props.$open ? 'rotate(45deg)' : 'none'};
+`;
+
+const FAQAnswer = styled.div`
+  max-height: ${props => props.$open ? '400px' : '0'};
+  overflow: hidden;
+  font-size: 15px;
+  color: #4b5563;
+  line-height: 1.6;
+  transition: max-height 0.3s, padding 0.2s;
+  padding: ${props => props.$open ? '0 0 24px' : '0'};
+`;
+
+// FINAL CTA
+const FinalCtaSection = styled.section`
+  background: linear-gradient(160deg, #0f1015 0%, #2a1335 100%);
+  color: #fff;
+  padding: 80px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  &::before {
+    content: "";
+    position: absolute;
+    top: -100px;
+    right: -50px;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(232, 57, 95, 0.24), transparent);
+    pointer-events: none;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -100px;
+    left: -50px;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(169, 59, 214, 0.18), transparent);
+    pointer-events: none;
+  }
+`;
+
+const FinalSub = styled.p`
+  color: #a0a3ad;
+  font-size: 17px;
+  max-width: 520px;
+  margin: 0 auto 32px;
+  position: relative;
+  line-height: 1.55;
+`;
+
+const TrustLine = styled.div`
+  position: relative;
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 20px;
+`;
+
 // FOOTER
 const Footer = styled.footer`
   background: #0a0a0d;
@@ -513,7 +905,6 @@ const FooterBrand = styled.div`
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
-
   img {
     height: 28px;
     width: auto;
@@ -563,6 +954,7 @@ const MobileStickyBtn = styled(BtnPrimary)`
 function LandFirstPRPackageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [openFaq, setOpenFaq] = useState(null);
 
   // Get intent from URL param
   const intent = searchParams.get('intent') || 'default';
@@ -572,11 +964,9 @@ function LandFirstPRPackageClient() {
   useEffect(() => {
     const gclid = searchParams.get('gclid');
     if (gclid) {
-      // Store in cookie for 90 days
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 90);
       document.cookie = `gclid=${gclid}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
-      // Also store in localStorage as backup
       localStorage.setItem('gclid', gclid);
       localStorage.setItem('gclid_timestamp', Date.now().toString());
     }
@@ -584,7 +974,6 @@ function LandFirstPRPackageClient() {
 
   // CTA click handler with tracking
   const handleCtaClick = useCallback((location, upgradeParam = false) => {
-    // Track click
     if (typeof window !== 'undefined' && window.dataLayer) {
       window.dataLayer.push({
         event: 'cta_click',
@@ -593,13 +982,11 @@ function LandFirstPRPackageClient() {
       });
     }
 
-    // Get gclid for URL
     const gclid = searchParams.get('gclid') || (typeof localStorage !== 'undefined' ? localStorage.getItem('gclid') : null);
     const utm_source = searchParams.get('utm_source');
     const utm_medium = searchParams.get('utm_medium');
     const utm_campaign = searchParams.get('utm_campaign');
 
-    // Build registration URL with tracking params
     let url = '/register/creator';
     const params = new URLSearchParams();
     if (upgradeParam) params.set('upgrade', 'pro');
@@ -614,6 +1001,33 @@ function LandFirstPRPackageClient() {
 
     router.push(url);
   }, [router, searchParams]);
+
+  const faqItems = [
+    {
+      q: "Do I need thousands of followers?",
+      a: "No. Newcollab is built specifically for micro creators. Our most active users have between 500 and 15K followers. Fit scores account for your size and match you with brands that gift creators like you. Many of our success stories start under 1,000 followers."
+    },
+    {
+      q: "Which brands are in your directory?",
+      a: "500+ brands across beauty, skincare, fashion, wellness, food, and lifestyle. Rhode, Poppi, Anua, Milk_shake, Ouai, Kosas, and 494 more. We update the directory weekly with new additions and remove brands that stop responding."
+    },
+    {
+      q: "How is this different from just DMing brands?",
+      a: "DMs are one of 30 things that go into landing a deal. We show you which brands actually reply to creators your size with real reply-rate data, write personalized pitches for you, and coach the follow-up sequence that gets 67% of replies. Guessing is the slowest path. Newcollab is the fastest."
+    },
+    {
+      q: "What if brands don't reply?",
+      a: "About 5-15% of first pitches get replies. Most creators land their first PR box between pitch 5 and 8. Your manager sends daily coaching, plans your follow-ups, and shows you exactly what's blocking replies. The creators who quit at pitch 3 are the ones who never see it."
+    },
+    {
+      q: "Can I cancel Pro anytime?",
+      a: "Yes. One tap in settings. No questions asked. No hidden fees. You'll be billed for the current month and downgraded to Free at renewal."
+    },
+    {
+      q: "Is my data safe?",
+      a: "Yes. We use OAuth for Instagram and TikTok, which means we never see your password. We only access public data plus your basic account info. Delete your account anytime and all your data is wiped within 30 days."
+    }
+  ];
 
   return (
     <PageContainer>
@@ -728,6 +1142,193 @@ function LandFirstPRPackageClient() {
           </HowGrid>
         </Wrap>
       </HowSection>
+
+      {/* SUCCESS STORIES */}
+      <SuccessSection>
+        <Wrap>
+          <SectionTag>Real creator wins</SectionTag>
+          <H2>Real creators. Real PR boxes.</H2>
+          <Lead>Small creators are landing brand deals through Newcollab every week. Here are three from this month.</Lead>
+          <SuccessGrid>
+            <StoryCard>
+              <StoryHead>
+                <StoryAvatar $variant="a">S</StoryAvatar>
+                <StoryInfo>
+                  <StoryHandle>@sarah.wellness</StoryHandle>
+                  <StoryMeta>340 followers &middot; UK</StoryMeta>
+                </StoryInfo>
+              </StoryHead>
+              <StoryQuote>Sent 4 pitches, got 2 replies. My first PR box arrived from a clean beauty brand in 3 weeks. I never thought this would work at my size.</StoryQuote>
+              <StoryResult><span>🎁</span>Landed 2 PR boxes in 3 weeks</StoryResult>
+            </StoryCard>
+            <StoryCard>
+              <StoryHead>
+                <StoryAvatar $variant="b">M</StoryAvatar>
+                <StoryInfo>
+                  <StoryHandle>@maya.eats</StoryHandle>
+                  <StoryMeta>12K followers &middot; US</StoryMeta>
+                </StoryInfo>
+              </StoryHead>
+              <StoryQuote>The manager told me exactly why brands were skipping me. Fixed my bio, added one Reel, next 3 pitches got replies. Poppi + Olipop shipped the same week.</StoryQuote>
+              <StoryResult><span>📦</span>4 brand replies in month 1</StoryResult>
+            </StoryCard>
+            <StoryCard>
+              <StoryHead>
+                <StoryAvatar $variant="c">N</StoryAvatar>
+                <StoryInfo>
+                  <StoryHandle>@naomigraciee</StoryHandle>
+                  <StoryMeta>146K followers &middot; US</StoryMeta>
+                </StoryInfo>
+              </StoryHead>
+              <StoryQuote>I already knew how to pitch. What I didn&apos;t know was which brands to prioritize. The reply rate data is honestly a cheat code.</StoryQuote>
+              <StoryResult><span>✨</span>Landed BY FAR + Summer Fridays</StoryResult>
+            </StoryCard>
+          </SuccessGrid>
+        </Wrap>
+      </SuccessSection>
+
+      {/* FEATURES */}
+      <FeaturesSection>
+        <Wrap>
+          <SectionTag $dark>What&apos;s inside</SectionTag>
+          <H2 $light>Your AI manager, built for the PR game.</H2>
+          <Lead $light>Not another directory. Not another pitch template. A coach who knows what works and tells you what to do next.</Lead>
+          <FeatGrid>
+            <Feat>
+              <FeatEmoji>🎯</FeatEmoji>
+              <FeatH3>Verified brand contacts</FeatH3>
+              <FeatP>500+ brands with real PR emails. Not scraped. Not guessed. Reviewed and updated weekly.</FeatP>
+            </Feat>
+            <Feat>
+              <FeatEmoji>🤖</FeatEmoji>
+              <FeatH3>Pitch written for you</FeatH3>
+              <FeatP>AI drafts each pitch personalized to the brand&apos;s aesthetic and your niche. Edit if you want. Send in 30 seconds.</FeatP>
+            </Feat>
+            <Feat>
+              <FeatEmoji>📊</FeatEmoji>
+              <FeatH3>Real reply rate data</FeatH3>
+              <FeatP>Fit scores and reply rates based on actual sent pitches, not category averages. Know what will convert before you spend an unlock.</FeatP>
+            </Feat>
+            <Feat>
+              <FeatEmoji>📬</FeatEmoji>
+              <FeatH3>Follow-up coaching</FeatH3>
+              <FeatP>67% of replies come after a follow-up. We draft yours, remind you when to send, and track opens.</FeatP>
+            </Feat>
+            <Feat>
+              <FeatEmoji>📋</FeatEmoji>
+              <FeatH3>Portfolio + media kit</FeatH3>
+              <FeatP>Auto-built from your socials. One link brands can open. Rates, past work, and audience data ready to share.</FeatP>
+            </Feat>
+            <Feat>
+              <FeatEmoji>📈</FeatEmoji>
+              <FeatH3>Hireability score</FeatH3>
+              <FeatP>Your manager audits your profile and shows exactly what&apos;s stopping brands from replying. Fix it and watch the score climb.</FeatP>
+            </Feat>
+          </FeatGrid>
+        </Wrap>
+      </FeaturesSection>
+
+      {/* BRAND WALL */}
+      <BrandsSection>
+        <Wrap>
+          <BrandsTitle>500+ brands your manager already knows</BrandsTitle>
+          <BrandWall>
+            <BrandName>rhode</BrandName>
+            <BrandName $variant="sans">Poppi</BrandName>
+            <BrandName $variant="heavy">OLIPOP</BrandName>
+            <BrandName>anua</BrandName>
+            <BrandName>milk_shake</BrandName>
+            <BrandName $variant="sans">OUAI</BrandName>
+            <BrandName $variant="heavy">KOSAS</BrandName>
+            <BrandName>Summer Fridays</BrandName>
+            <BrandName $variant="sans">Aveeno</BrandName>
+            <BrandName $variant="heavy">TARTE</BrandName>
+            <BrandName>Caudalie</BrandName>
+            <BrandName $variant="sans">ALO</BrandName>
+            <BrandName $variant="heavy">CeraVe</BrandName>
+            <BrandName>ILIA</BrandName>
+            <BrandName $variant="sans">Glossier</BrandName>
+            <BrandName $variant="heavy">FENTY</BrandName>
+            <BrandName $variant="sans">SUPERGOOP</BrandName>
+            <BrandName>Tower 28</BrandName>
+          </BrandWall>
+          <BrandsCount><b>And 480 more brands.</b> Updated weekly with new additions.</BrandsCount>
+        </Wrap>
+      </BrandsSection>
+
+      {/* PRICING */}
+      <PricingSection id="signup">
+        <Wrap>
+          <SectionTag>Pricing</SectionTag>
+          <H2>Start free. Upgrade when you&apos;re winning.</H2>
+          <Lead style={{ marginLeft: 'auto', marginRight: 'auto' }}>Most creators land their first PR box before they need to pay.</Lead>
+          <PricingGrid>
+            <PriceCard>
+              <PriceTier>FREE</PriceTier>
+              <PriceNum>$0<small> /month</small></PriceNum>
+              <PriceDesc>Everything you need to land your first PR box.</PriceDesc>
+              <PriceList>
+                <PriceItem><Check>✓</Check><span><b>3 brand unlocks per month</b> — real contacts, real reply data</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>AI-drafted pitches</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Fit scores and reply rates for every brand</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Portfolio + media kit auto-built</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Hireability score audit</span></PriceItem>
+              </PriceList>
+              <PriceCta onClick={() => handleCtaClick('pricing_free')}>Start free &rarr;</PriceCta>
+            </PriceCard>
+            <PriceCard $pro>
+              <ProBadge>MOST POPULAR</ProBadge>
+              <PriceTier>PRO</PriceTier>
+              <PriceNum>$19<small> /month</small></PriceNum>
+              <PriceDesc>Your full-time AI manager. Cancel anytime.</PriceDesc>
+              <PriceList>
+                <PriceItem><Check>✓</Check><span><b>Unlimited brand unlocks</b> — no monthly cap</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Weekly personalized coaching plan</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Auto follow-ups sent for you</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Priority brand matches (first look)</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Everything in Free</span></PriceItem>
+              </PriceList>
+              <PriceCta $pro onClick={() => handleCtaClick('pricing_pro', true)}>Start free, upgrade later &rarr;</PriceCta>
+            </PriceCard>
+          </PricingGrid>
+        </Wrap>
+      </PricingSection>
+
+      {/* FAQ */}
+      <FAQSection>
+        <Wrap>
+          <SectionTag>Real questions</SectionTag>
+          <H2>Everything creators ask before signing up.</H2>
+          <FAQList>
+            {faqItems.map((item, i) => (
+              <FAQItem key={i}>
+                <FAQQuestion onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                  {item.q}
+                  <Chevron $open={openFaq === i}>+</Chevron>
+                </FAQQuestion>
+                <FAQAnswer $open={openFaq === i}>
+                  <p>{item.a}</p>
+                </FAQAnswer>
+              </FAQItem>
+            ))}
+          </FAQList>
+        </Wrap>
+      </FAQSection>
+
+      {/* FINAL CTA */}
+      <FinalCtaSection>
+        <Wrap>
+          <H2 $light style={{ position: 'relative' }}>Your first PR box is one pitch away.</H2>
+          <FinalSub>Free to start. No credit card. Join 1,600 other creators already landing brand deals.</FinalSub>
+          <CtaRow style={{ position: 'relative' }}>
+            <BtnPrimary onClick={() => handleCtaClick('final')}>
+              <span>Start free — no card required</span>
+              <Arrow>&rarr;</Arrow>
+            </BtnPrimary>
+          </CtaRow>
+          <TrustLine>Cancel anytime. First PR box within 2-4 weeks typical.</TrustLine>
+        </Wrap>
+      </FinalCtaSection>
 
       {/* FOOTER */}
       <Footer>
