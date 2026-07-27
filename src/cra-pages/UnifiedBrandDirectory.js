@@ -156,10 +156,8 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     fetchCategories();
     fetchOpenPrBrands();
     if (user) {
-      fetchSubscriptionStatus();
-      fetchSavedBrands();
-      fetchUnlockedBrands();
-      fetchUserNiches();
+      // Use combined endpoint for faster loading (reduces 4 API calls to 1)
+      fetchDashboardInit();
     } else {
       setUserNiches([]);
     }
@@ -255,6 +253,62 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       setCategories(data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  // Combined dashboard initialization - replaces 4 separate API calls
+  const fetchDashboardInit = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/api/pr-crm/dashboard-init`, {
+        withCredentials: true
+      });
+      if (data.success) {
+        // Set subscription tier
+        setSubscriptionTier(data.subscription?.tier || 'free');
+
+        // Set unlock balance
+        if (data.unlock_balance) {
+          setUnlockBalance({
+            remaining: data.unlock_balance.remaining ?? FREE_UNLOCK_LIMIT,
+            used: data.unlock_balance.used ?? 0,
+            tier: data.unlock_balance.tier || 'free',
+            reset_at: data.unlock_balance.reset_at
+          });
+        }
+
+        // Set saved/pitched brands
+        setSavedBrandIds(new Set(data.saved_brand_ids || []));
+        setPitchedBrands(new Set(data.pitched_brand_ids || []));
+
+        // Set unlocked brands
+        setUnlockedBrands(new Set(data.unlocked_brand_ids || []));
+
+        // Set user niches
+        const niches = (data.user_niches || [])
+          .map((n) => String(n).trim().toLowerCase())
+          .filter(Boolean)
+          .flatMap((n) => {
+            if (n.includes('&') || n.includes(',')) {
+              return n.split(/[&,]/).map((p) => p.trim()).filter(Boolean);
+            }
+            return [n];
+          })
+          .map((n) => {
+            const canon = normalizeCategory(n);
+            if (n.includes('parent') || n.includes('baby')) return 'baby';
+            if (n.includes('beauty') || n.includes('makeup')) return 'beauty';
+            return canon && canon !== 'other' ? canon : n;
+          })
+          .filter(Boolean);
+        setUserNiches([...new Set(niches)]);
+      }
+    } catch (error) {
+      console.error('Error in dashboard init:', error);
+      // Fallback to individual calls if combined endpoint fails
+      fetchSubscriptionStatus();
+      fetchSavedBrands();
+      fetchUnlockedBrands();
+      fetchUserNiches();
     }
   };
 

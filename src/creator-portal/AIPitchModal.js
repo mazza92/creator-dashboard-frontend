@@ -881,7 +881,7 @@ ${creatorName}`;
                       <div>
                         <InfoValue>{displayEmail || `${brandName} PR Team`}</InfoValue>
                         <InfoMeta>
-                          {wasAlreadyUnlocked ? 'Already unlocked · no credit used' : 'Unlocked with Get Brand PR · 1 credit'}
+                          {wasAlreadyUnlocked ? 'Already unlocked' : '1 credit used'}
                         </InfoMeta>
                       </div>
                       <Tooltip title="Report invalid or outdated email">

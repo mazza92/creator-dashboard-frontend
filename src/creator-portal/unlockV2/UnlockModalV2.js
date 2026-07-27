@@ -2536,7 +2536,7 @@ const UnlockModalV2 = ({
                         <InfoRow>
                           <div>
                             <InfoValue>{brandEmail}</InfoValue>
-                            <InfoMeta>Unlocked with Get Brand PR · 1 credit</InfoMeta>
+                            <InfoMeta>1 credit used</InfoMeta>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                             <Tooltip title="Report invalid or outdated email">
