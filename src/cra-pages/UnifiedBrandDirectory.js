@@ -152,6 +152,14 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const [discoveryError, setDiscoveryError] = useState('');
   const [rateLimitInfo, setRateLimitInfo] = useState(null);
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const searchInputRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const debounceRef = useRef(null);
+
   useEffect(() => {
     fetchCategories();
     fetchOpenPrBrands();
@@ -752,8 +760,113 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   const handleSearchSubmit = (e) => {
     e?.preventDefault?.();
+    setShowAutocomplete(false);
+    setSuggestions([]);
     handleSearch(searchDraft);
   };
+
+  // Autocomplete: fetch suggestions with debounce
+  const fetchSuggestions = useCallback(async (query) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowAutocomplete(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_BASE}/api/pr-crm/brands/search-suggestions`, {
+        params: { q: query },
+        withCredentials: true
+      });
+
+      if (response.data.success) {
+        const newSuggestions = response.data.suggestions || [];
+        setSuggestions(newSuggestions);
+        setShowAutocomplete(true);
+        setActiveIndex(-1);
+      }
+    } catch (error) {
+      console.error('[Autocomplete] Error:', error);
+      setSuggestions([]);
+    }
+  }, []);
+
+  // Autocomplete: handle input change with debounce
+  const handleSearchInputChange = useCallback((value) => {
+    setSearchDraft(value);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 150);
+  }, [fetchSuggestions]);
+
+  // Autocomplete: keyboard navigation
+  const handleSearchKeyDown = (e) => {
+    if (!showAutocomplete || suggestions.length === 0) {
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setActiveIndex(prev => prev < suggestions.length - 1 ? prev + 1 : prev);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setActiveIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        if (activeIndex >= 0 && suggestions[activeIndex]) {
+          e.preventDefault();
+          handleSelectSuggestion(suggestions[activeIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Autocomplete: select a suggestion
+  const handleSelectSuggestion = (suggestion) => {
+    setShowAutocomplete(false);
+    setSuggestions([]);
+    setSearchDraft(suggestion.name);
+
+    // Find the brand in our list or open pitch modal directly
+    const existingBrand = brands.find(b => b.id === suggestion.id);
+    if (existingBrand) {
+      setSelectedBrandForPitch(existingBrand);
+      setShowPitchModal(true);
+    } else {
+      // Search for it to load into the grid
+      handleSearch(suggestion.name);
+    }
+  };
+
+  // Close autocomplete when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        autocompleteRef.current &&
+        !autocompleteRef.current.contains(event.target) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target)
+      ) {
+        setShowAutocomplete(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Discovery function for brands not in curated list
   const handleDiscoverBrand = async () => {
@@ -1026,8 +1139,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
           {/* Search CTA + full category filter */}
           <SearchToolsRow>
-            <SearchCtaForm onSubmit={handleSearchSubmit}>
+            <SearchCtaForm onSubmit={handleSearchSubmit} style={{ position: 'relative' }}>
               <SearchCtaInput
+                ref={searchInputRef}
                 type="search"
                 placeholder={
                   pagination.total > 0
@@ -1035,10 +1149,52 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                     : 'Search brands…'
                 }
                 value={searchDraft}
-                onChange={(e) => setSearchDraft(e.target.value)}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                onFocus={() => searchDraft.length >= 2 && suggestions.length > 0 && setShowAutocomplete(true)}
+                autoComplete="off"
                 aria-label="Search brands"
               />
               <SearchCtaButton type="submit">Search</SearchCtaButton>
+
+              {/* Autocomplete Dropdown */}
+              <AutocompleteDropdown $open={showAutocomplete && searchDraft.length >= 2} ref={autocompleteRef}>
+                {suggestions.length > 0 ? (
+                  suggestions.map((suggestion, idx) => (
+                    <AutocompleteItem
+                      key={suggestion.id}
+                      className={activeIndex === idx ? 'active' : ''}
+                      onMouseDown={() => handleSelectSuggestion(suggestion)}
+                      onMouseEnter={() => setActiveIndex(idx)}
+                    >
+                      <AutocompleteLogo $hasImage={!!suggestion.logo}>
+                        {suggestion.logo ? (
+                          <img
+                            src={suggestion.logo}
+                            alt=""
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.parentNode.textContent = suggestion.name.charAt(0).toUpperCase();
+                            }}
+                          />
+                        ) : (
+                          suggestion.name.charAt(0).toUpperCase()
+                        )}
+                      </AutocompleteLogo>
+                      <AutocompleteInfo>
+                        <AutocompleteName>{suggestion.name}</AutocompleteName>
+                        <AutocompleteCategory>{suggestion.category || 'Brand'}</AutocompleteCategory>
+                      </AutocompleteInfo>
+                    </AutocompleteItem>
+                  ))
+                ) : (
+                  searchDraft.length >= 2 && (
+                    <AutocompleteNoMatch>
+                      Press "Search" to find "{searchDraft}"
+                    </AutocompleteNoMatch>
+                  )
+                )}
+              </AutocompleteDropdown>
             </SearchCtaForm>
             <CategoryPicker ref={categoryPickerRef}>
               <CategoryTrigger
@@ -1949,6 +2105,90 @@ const SearchCtaButton = styled.button`
     width: 100%;
     min-height: 44px;
   }
+`;
+
+// Autocomplete dropdown styles
+const AutocompleteDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid ${tokens.border};
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  max-height: 320px;
+  overflow-y: auto;
+  display: ${props => props.$open ? 'block' : 'none'};
+`;
+
+const AutocompleteItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid ${tokens.border};
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover, &.active {
+    background: ${tokens.wash};
+  }
+`;
+
+const AutocompleteLogo = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: ${props => props.$hasImage ? '#fff' : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid ${tokens.border};
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 4px;
+  }
+`;
+
+const AutocompleteInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const AutocompleteName = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${tokens.ink};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const AutocompleteCategory = styled.div`
+  font-size: 12px;
+  color: ${tokens.muted};
+  text-transform: capitalize;
+`;
+
+const AutocompleteNoMatch = styled.div`
+  padding: 14px 16px;
+  text-align: center;
+  color: ${tokens.muted};
+  font-size: 13px;
 `;
 
 // V4: Welcome Card for first-time users after onboarding
