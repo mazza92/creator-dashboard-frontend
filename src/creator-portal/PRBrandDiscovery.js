@@ -278,6 +278,94 @@ const SearchButton = styled.button`
   }
 `;
 
+// Autocomplete dropdown styles
+const AutocompleteDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  max-height: 320px;
+  overflow-y: auto;
+  display: ${props => props.$open ? 'block' : 'none'};
+`;
+
+const AutocompleteItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #F3F4F6;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover, &.active {
+    background: #F9FAFB;
+  }
+
+  &.active {
+    background: #EEF2FF;
+  }
+`;
+
+const AutocompleteLogo = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: ${props => props.$hasImage ? '#fff' : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 4px;
+  }
+`;
+
+const AutocompleteInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const AutocompleteName = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const AutocompleteCategory = styled.div`
+  font-size: 13px;
+  color: #6B7280;
+  text-transform: capitalize;
+`;
+
+const AutocompleteNoMatch = styled.div`
+  padding: 16px;
+  text-align: center;
+  color: #6B7280;
+  font-size: 14px;
+`;
+
 const DiscoveryFallback = styled.div`
   max-width: 500px;
   margin: 40px auto;
@@ -1546,6 +1634,14 @@ const PRBrandDiscovery = () => {
   const [discoveryError, setDiscoveryError] = useState(null);
   const [rateLimitInfo, setRateLimitInfo] = useState(null);
 
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const searchInputRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const debounceRef = useRef(null);
+
   // Infinite scroll refs
   const loadMoreRef = useRef(null);
   const gridRef = useRef(null);
@@ -1858,6 +1954,134 @@ const PRBrandDiscovery = () => {
   };
 
   // ============================================
+  // AUTOCOMPLETE HANDLERS
+  // ============================================
+
+  // Fetch suggestions with debounce
+  const fetchSuggestions = useCallback(async (query) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowAutocomplete(false);
+      return;
+    }
+
+    try {
+      const response = await api.get(`/api/pr-crm/brands/search-suggestions?q=${encodeURIComponent(query)}`);
+      if (response.data.success) {
+        setSuggestions(response.data.suggestions || []);
+        setShowAutocomplete(true);
+        setActiveIndex(-1);
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+    }
+  }, []);
+
+  // Handle input change with debounce
+  const handleSearchInput = useCallback((value) => {
+    setSearchQuery(value);
+
+    // Clear previous debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // Debounce the API call
+    debounceRef.current = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 150);
+  }, [fetchSuggestions]);
+
+  // Handle keyboard navigation
+  const handleSearchKeyDown = (e) => {
+    if (!showAutocomplete || suggestions.length === 0) {
+      if (e.key === 'Enter') {
+        // Let form submit handle it
+        return;
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setActiveIndex(prev => prev < suggestions.length - 1 ? prev + 1 : prev);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setActiveIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (activeIndex >= 0 && suggestions[activeIndex]) {
+          handleSelectSuggestion(suggestions[activeIndex]);
+        } else {
+          setShowAutocomplete(false);
+          // Let form submit naturally
+          handleSearchSubmit(e);
+        }
+        break;
+      case 'Escape':
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Handle selecting a suggestion
+  const handleSelectSuggestion = async (suggestion) => {
+    setShowAutocomplete(false);
+    setSuggestions([]);
+    setSearchQuery(suggestion.name);
+
+    // Find the full brand from existing brands list or fetch it
+    const existingBrand = brands.find(b => b.id === suggestion.id);
+    if (existingBrand) {
+      // Open the pitch modal directly
+      setSelectedBrandForPitch(existingBrand);
+      setShowPitchModal(true);
+    } else {
+      // Fetch the brand details and open modal
+      try {
+        setSearchLoading(true);
+        const response = await api.post('/api/pr-crm/brands/discover', {
+          query: suggestion.name
+        });
+
+        if (response.data.success && response.data.found) {
+          setSelectedBrandForPitch(response.data.brand);
+          setShowPitchModal(true);
+        }
+      } catch (error) {
+        console.error('Error fetching brand:', error);
+        message.error('Failed to load brand details');
+      } finally {
+        setSearchLoading(false);
+      }
+    }
+  };
+
+  // Close autocomplete when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        autocompleteRef.current &&
+        !autocompleteRef.current.contains(event.target) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target)
+      ) {
+        setShowAutocomplete(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ============================================
   // UNIVERSAL BRAND DISCOVERY HANDLERS
   // ============================================
 
@@ -1867,6 +2091,10 @@ const PRBrandDiscovery = () => {
       message.warning('Please enter at least 2 characters');
       return;
     }
+
+    // Close autocomplete
+    setShowAutocomplete(false);
+    setSuggestions([]);
 
     setSearchLoading(true);
     setSearchMode(true);
@@ -2062,16 +2290,61 @@ const PRBrandDiscovery = () => {
       {/* Universal Brand Discovery Search */}
       <SearchContainer>
         <form onSubmit={handleSearchSubmit}>
-          <SearchInputWrapper>
+          <SearchInputWrapper ref={searchInputRef}>
             <SearchInput
               type="text"
               placeholder="Search any brand — Rhode, e.l.f., Alo, Glossier…"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => searchQuery.length >= 2 && suggestions.length > 0 && setShowAutocomplete(true)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
             />
             <SearchButton type="submit" disabled={searchLoading || searchQuery.trim().length < 2}>
               {searchLoading ? '...' : '🔍 Search'}
             </SearchButton>
+
+            {/* Autocomplete Dropdown */}
+            <AutocompleteDropdown $open={showAutocomplete && searchQuery.length >= 2} ref={autocompleteRef}>
+              {suggestions.length > 0 ? (
+                suggestions.map((suggestion, idx) => (
+                  <AutocompleteItem
+                    key={suggestion.id}
+                    className={activeIndex === idx ? 'active' : ''}
+                    onMouseDown={() => handleSelectSuggestion(suggestion)}
+                    onMouseEnter={() => setActiveIndex(idx)}
+                  >
+                    <AutocompleteLogo $hasImage={!!suggestion.logo}>
+                      {suggestion.logo ? (
+                        <img
+                          src={suggestion.logo}
+                          alt=""
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentNode.textContent = suggestion.name.charAt(0).toUpperCase();
+                          }}
+                        />
+                      ) : (
+                        suggestion.name.charAt(0).toUpperCase()
+                      )}
+                    </AutocompleteLogo>
+                    <AutocompleteInfo>
+                      <AutocompleteName>{suggestion.name}</AutocompleteName>
+                      <AutocompleteCategory>{suggestion.category || 'Brand'}</AutocompleteCategory>
+                    </AutocompleteInfo>
+                  </AutocompleteItem>
+                ))
+              ) : (
+                searchQuery.length >= 2 && (
+                  <AutocompleteNoMatch>
+                    Press "Search" to discover "{searchQuery}"
+                  </AutocompleteNoMatch>
+                )
+              )}
+            </AutocompleteDropdown>
           </SearchInputWrapper>
         </form>
       </SearchContainer>
