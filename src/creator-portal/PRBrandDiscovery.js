@@ -1966,15 +1966,25 @@ const PRBrandDiscovery = () => {
     }
 
     try {
+      console.log('[Autocomplete] Fetching suggestions for:', query);
       const response = await api.get(`/api/pr-crm/brands/search-suggestions?q=${encodeURIComponent(query)}`);
+      console.log('[Autocomplete] Response:', response.data);
+
       if (response.data.success) {
-        setSuggestions(response.data.suggestions || []);
+        const newSuggestions = response.data.suggestions || [];
+        console.log('[Autocomplete] Setting suggestions:', newSuggestions.length, 'items');
+        setSuggestions(newSuggestions);
         setShowAutocomplete(true);
         setActiveIndex(-1);
+      } else {
+        console.log('[Autocomplete] API returned success: false');
+        setSuggestions([]);
+        setShowAutocomplete(true); // Still show dropdown with "no results"
       }
     } catch (error) {
-      console.error('Error fetching suggestions:', error);
+      console.error('[Autocomplete] Error fetching suggestions:', error);
       setSuggestions([]);
+      setShowAutocomplete(true); // Show dropdown with "no results" on error
     }
   }, []);
 
@@ -2297,7 +2307,16 @@ const PRBrandDiscovery = () => {
               value={searchQuery}
               onChange={(e) => handleSearchInput(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              onFocus={() => searchQuery.length >= 2 && suggestions.length > 0 && setShowAutocomplete(true)}
+              onFocus={() => {
+                if (searchQuery.length >= 2) {
+                  if (suggestions.length > 0) {
+                    setShowAutocomplete(true);
+                  } else {
+                    // Trigger fetch on focus if we have a query but no suggestions yet
+                    fetchSuggestions(searchQuery);
+                  }
+                }
+              }}
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
