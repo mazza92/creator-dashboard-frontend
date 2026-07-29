@@ -6,7 +6,7 @@ import { FiX, FiSend, FiCopy, FiZap, FiUser, FiMail, FiLock, FiRefreshCw, FiFile
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
-import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
+import UpgradeModal from './UpgradeModal';
 // Media kit enforcement removed - let users try the feature immediately
 
 /**
@@ -28,7 +28,6 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   // NOTE: Rewrite/regenerate removed to avoid LLM costs per brief
   const [fetchedBrandEmail, setFetchedBrandEmail] = useState(null); // Email from API
   const [fetchedApplicationUrl, setFetchedApplicationUrl] = useState(null); // Application form URL from API
-  const [upgrading, setUpgrading] = useState(false); // Stripe checkout loading
   const [creditUsed, setCreditUsed] = useState(false);
   const [outreachStartedMethod, setOutreachStartedMethod] = useState(null);
   const [contactRevealed, setContactRevealed] = useState(false);
@@ -553,25 +552,6 @@ ${creatorName}`;
   // NOTE: handleRegenerate removed to avoid LLM costs
   // Each Gemini call costs ~$0.0002, regenerations add up
 
-  const handleUpgrade = async () => {
-    try {
-      setUpgrading(true);
-      trackProBeginCheckout({ tier: 'pro', source: 'ai_pitch_modal' });
-      const response = await api.post('/api/subscription/create-checkout', { tier: 'pro' });
-      // Redirect to Stripe Checkout
-      window.location.href = response.data.checkout_url;
-    } catch (error) {
-      console.error('Upgrade error:', error);
-      const errorData = error.response?.data;
-      if (errorData?.code === 'stripe_account_pending') {
-        message.warning('Payment processing is temporarily unavailable. Please try again later.');
-      } else {
-        message.error('Failed to start checkout. Please try again.');
-      }
-      setUpgrading(false);
-    }
-  };
-
   // Normalize brand property names (handle both API formats)
   // Priority: API fetched > brand prop variations
   const brandName = brand?.brand_name || brand?.name || 'Brand';
@@ -1036,45 +1016,26 @@ ${creatorName}`;
                 </PoolNudgeBanner>
               )}
 
-              {/* Inline upgrade overlay — shown when user runs out of unlocks */}
-              {showUpgradeOverlay && (
-                <UpgradeOverlay>
-                  <UpgradeOverlayCard>
-                    <UpgradeOverlayClose onClick={() => {
-                      setShowUpgradeOverlay(false);
-                      onClose();
-                    }}>×</UpgradeOverlayClose>
-                    <UpgradeOverlayTitle>0 remaining (3 used of 3)</UpgradeOverlayTitle>
-                    <UpgradeOverlayText>
-                      Each contact reveals a verified PR email and generates a tailored pitch.
-                    </UpgradeOverlayText>
-                    <UpgradeOverlayBtn
-                      onClick={handleUpgrade}
-                      disabled={upgrading}
-                    >
-                      {upgrading ? 'Processing...' : 'Get Unlimited — $19/mo'}
-                    </UpgradeOverlayBtn>
-                    {paywallData?.reset_at && (
-                      <UpgradeOverlayNote
-                        onClick={() => {
-                          setShowUpgradeOverlay(false);
-                          onClose();
-                        }}
-                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        Wait until {new Date(paywallData.reset_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
-                      </UpgradeOverlayNote>
-                    )}
-                  </UpgradeOverlayCard>
-                </UpgradeOverlay>
-              )}
-
-            </>
+                          </>
           )}
             </>
           )}
         </Modal>
       </Overlay>
+
+      {/* Unified upgrade modal — shown when user runs out of unlocks */}
+      <UpgradeModal
+        isOpen={showUpgradeOverlay}
+        onClose={() => {
+          setShowUpgradeOverlay(false);
+          onClose();
+        }}
+        currentCount={pitchLimits.used}
+        limit={pitchLimits.limit}
+        pitchLimits={pitchLimits}
+        resetAt={paywallData?.reset_at}
+        feature="ai_pitch_modal"
+      />
     </AnimatePresence>
   );
 };
@@ -1939,88 +1900,6 @@ const ApplicationFormButton = styled.a`
     padding: 10px 14px;
     font-size: 12px;
   }
-`;
-
-const UpgradePrompt = styled.div`
-  padding: 40px 24px;
-  text-align: center;
-`;
-
-const UpgradeIcon = styled.div`
-  width: 64px;
-  height: 64px;
-  background: #FEE2E2;
-  color: #DC2626;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 16px;
-  font-size: 28px;
-`;
-
-const UpgradeTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 8px;
-`;
-
-const UpgradeText = styled.p`
-  font-size: 14px;
-  color: #6B7280;
-  margin: 0 0 20px;
-`;
-
-const UpgradeButton = styled.a`
-  display: inline-block;
-  padding: 14px 28px;
-  background: linear-gradient(135deg, #3B82F6, #EC4899);
-  color: white;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s;
-  border: none;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-    color: white;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const UpgradeNote = styled.p`
-  margin-top: 12px;
-  font-size: 12px;
-  color: #9CA3AF;
-`;
-
-const UpgradeFeatures = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
-  text-align: left;
-  max-width: 280px;
-  margin-left: auto;
-  margin-right: auto;
-`;
-
-const UpgradeFeature = styled.div`
-  font-size: 14px;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 `;
 
 const MediaKitCTA = styled.div`
@@ -2986,82 +2865,6 @@ const SuccessSecondaryBtn = styled.button`
   border: none;
   cursor: pointer;
   text-align: center;
-`;
-
-// ── Upgrade overlay ────────────────────────────────────────────
-
-const UpgradeOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 20;
-`;
-
-const UpgradeOverlayCard = styled.div`
-  background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 20px;
-  padding: 32px 24px;
-  text-align: center;
-  max-width: 320px;
-  width: 100%;
-  position: relative;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-`;
-
-const UpgradeOverlayClose = styled.button`
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  background: none;
-  border: none;
-  font-size: 22px;
-  color: #9CA3AF;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0;
-  &:hover { color: #111827; }
-`;
-
-const UpgradeOverlayTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 8px;
-`;
-
-const UpgradeOverlayText = styled.p`
-  font-size: 14px;
-  color: #6B7280;
-  margin: 0 0 20px;
-  line-height: 1.5;
-`;
-
-const UpgradeOverlayBtn = styled.button`
-  width: 100%;
-  padding: 14px 20px;
-  background: #0F0F0F;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  &:hover:not(:disabled) { opacity: 0.85; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-`;
-
-const UpgradeOverlayNote = styled.p`
-  margin: 10px 0 0;
-  font-size: 12px;
-  color: #9CA3AF;
 `;
 
 export default AIPitchModal;

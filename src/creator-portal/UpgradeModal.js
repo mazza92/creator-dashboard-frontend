@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiZap, FiLock, FiShield } from 'react-icons/fi';
+import { FiX, FiLock, FiShield, FiClock } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
-import { tokens } from '../theme/tokens';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
-const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt }) => {
+const UpgradeModal = ({ isOpen, onClose, currentCount = 3, limit = 3, feature, pitchLimits, resetAt }) => {
   const [loading, setLoading] = useState(false);
-  const [billingInterval, setBillingInterval] = useState('yearly'); // Default to yearly for better value
+  const [billingInterval, setBillingInterval] = useState('monthly'); // Default to monthly
 
   const handleUpgrade = async (tier) => {
     try {
@@ -36,124 +35,48 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   if (!isOpen) return null;
 
-  // Determine context-specific copy — speak to newbie freebie / UGC starters
-  let headline = 'Brands that gift are one pitch away.';
-  let subtext = 'You’ve used your free Brand PR unlocks this month. Pro keeps you reaching brands that send free products.';
-  let ctaText = 'Get Pro — $19/month';
-  let progressLabel = 'Brand PR unlocks';
+  // Get usage stats
+  const used = pitchLimits?.used || currentCount || 3;
+  const total = pitchLimits?.limit || limit || 3;
 
-  // Default values, can be overridden by feature
-  let used = pitchLimits?.used || currentCount || 3;
-  let total = pitchLimits?.limit || limit || 3;
-
-  if (feature === 'opportunities') {
-    used = currentCount || pitchLimits?.used || 3;
-    total = limit || pitchLimits?.limit || 3;
-    headline = 'Open gigs are waiting — don’t stop now.';
-    subtext = `You’ve used ${used} application credits this month. Pro lets you keep applying to brands already looking for creators like you.`;
-    ctaText = 'Unlimited applications — $19/mo';
-    progressLabel = 'application credits';
-
-  } else if (feature === 'locked' || feature === 'for_you') {
-    headline = 'Your personal talent manager — unlocked.';
-    subtext = 'Every brand unlock includes a full strategy: fit check, content tips, contact, and pitch. Pro keeps that manager on for every brand.';
-    ctaText = 'Get Pro — $19/month';
-
-  } else if (feature === 'kit' || feature === 'kit_views') {
-    headline = 'Someone checked out your kit.';
-    subtext = 'See who viewed you — and follow up while you’re still on their mind.';
-    ctaText = 'Get Pro — $19/month';
-
-  } else if (feature === 'limit_reached') {
-    headline = 'Keep your talent manager working.';
-    subtext = `You’ve used ${used} Brand PR unlocks this month. Upgrade to keep unlocking strategies, pitches, and brands that gift.`;
-    ctaText = 'Get Pro — $19/month';
-
-  } else if (feature === 'bump_profile') {
-    headline = 'Get back in front of the brand.';
-    subtext = 'A follow-up from NewCollab puts your pitch back at the top of their inbox.';
-    ctaText = 'Get Pro — $19/month';
-
-  } else if (feature === 'pool') {
-    headline = 'Grow with creators in your niche.';
-    subtext = 'Pro unlocks unlimited Pool access — real engagement from people who make content like yours.';
-    ctaText = 'Get Pro — $19/month';
-
-  } else if (feature === 'pr_ready' || feature === 'pr-ready') {
-    headline = 'Look pro in minutes. Then pitch brands.';
-    subtext = 'Stop paying for more cold emails into silence. Unlock score fixes, kit export, and weekly UGC hooks — assets you keep even if brands don’t reply.';
-    ctaText = 'Start PR-Ready Pro · $19/mo';
-
-  } else if (feature === 'unlock_paywall') {
-    headline = 'Free strategies used up this month';
-    subtext = 'Each unlock builds your plan for that brand — what they’ll notice, how to improve, and a ready pitch. Pro = unlimited.';
-    ctaText = 'Unlimited strategies — $19/mo';
-    progressLabel = 'unlocks';
-    used = currentCount || pitchLimits?.used || 3;
-    total = limit || pitchLimits?.limit || 3;
-  }
-
-  // Feature list
-  const isUnlockPaywall = feature === 'unlock_paywall';
-
-  const features = isUnlockPaywall ? [
+  // Feature list with emoji icons
+  const features = [
     {
-      text: <><strong>Unlimited brand strategies</strong> — your AI talent manager for every unlock</>,
-      highlight: true
+      emoji: '🎯',
+      bg: '#fef2f4',
+      text: <><strong>Your AI talent manager</strong> optimizes your profile and builds a custom strategy to attract brands</>,
     },
     {
-      text: <><strong>Verified contacts + pitches</strong> — show up ready to collab</>,
-      highlight: false
+      emoji: '💵',
+      bg: '#dcfce7',
+      text: <><strong>Apply to paid UGC gigs</strong> from $150 (Evoto, Glossier, 20+ weekly)</>,
     },
     {
-      text: <><strong>Content tips per brand</strong> — know what to post so brands take you seriously</>,
-      highlight: false
+      emoji: '🔍',
+      bg: '#dbeafe',
+      text: <><strong>Search 2,000+ brands</strong> with filters like "works with micro creators", verified emails and forms</>,
     },
     {
-      text: <><strong>Open gigs to apply</strong> — brands already asking for creators</>,
-      highlight: false
-    },
-  ] : [
-    {
-      text: <><strong>Full readiness score + fix list</strong> — know exactly what brands skip</>,
-      highlight: feature === 'pr_ready' || feature === 'pr-ready'
+      emoji: '⭐',
+      bg: '#fef3c7',
+      text: <><strong>Brand matches for your niche</strong> with fit and reply scores</>,
     },
     {
-      text: <><strong>Media kit export</strong> — link + PDF brands open in one tap</>,
-      highlight: feature === 'pr_ready' || feature === 'pr-ready' || feature === 'kit' || feature === 'kit_views'
+      emoji: '🔁',
+      bg: '#ede9fe',
+      text: <><strong>Auto follow-ups sent for you</strong> (67% reply by the second follow-up)</>,
     },
     {
-      text: <><strong>Weekly UGC hooks</strong> — stay pitchable while waiting on replies</>,
-      highlight: feature === 'pr_ready' || feature === 'pr-ready'
+      emoji: '👀',
+      bg: '#fce7f3',
+      text: <><strong>See which brands opened your kit</strong> so you know who to chase</>,
     },
     {
-      text: <><strong>AI talent manager</strong> — full strategy every time you unlock a brand</>,
-      highlight: feature === 'for_you' || feature === 'locked' || feature === 'limit_reached' || feature === 'unlock_paywall'
-    },
-    {
-      text: <><strong>Unlimited applications</strong> — UGC & gift gigs that are open now</>,
-      highlight: feature === 'opportunities'
-    },
-    {
-      text: <><strong>Unlimited Brand PR unlocks</strong> — bonus after you’re ready</>,
-      highlight: feature === 'limit_reached' || feature === 'for_you' || feature === 'locked' || feature === 'pr_ready' || feature === 'pr-ready'
-    },
-    {
-      text: <><strong>See who viewed your kit</strong> — follow up while it’s hot</>,
-      highlight: feature === 'kit' || feature === 'kit_views' || feature === 'pr_ready' || feature === 'pr-ready'
+      emoji: '📈',
+      bg: '#ccfbf1',
+      text: <><strong>Grow your followers</strong> with unlimited creator boosts in the Pool</>,
     },
   ];
-
-  // Format reset date for display
-  const formatResetDate = (dateStr) => {
-    if (!dateStr) return 'next month';
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    } catch {
-      return 'next month';
-    }
-  };
 
   return (
     <AnimatePresence>
@@ -164,8 +87,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
         onClick={onClose}
       >
         <ModalWrapper
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          initial={{ y: 20, opacity: 0, scale: 0.94 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
           exit={{ y: 20, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
@@ -177,38 +100,43 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
             {/* Icon */}
             <ModalIcon>
-              <FiZap size={20} />
+              <BoltIcon />
             </ModalIcon>
 
             {/* Headline */}
-            <Headline>{headline}</Headline>
-            <Subtext>{subtext}</Subtext>
+            <Headline>
+              {used} brands checked.<br />Ready to <PinkSpan>get PR</PinkSpan> from 40 more?
+            </Headline>
+            <Subtext>
+              Your AI manager finds brands, drafts pitches, and chases replies until you land PR.
+            </Subtext>
 
             {/* Progress Bar */}
-            <ProgressRow>
-              <ProgressLabel>
-                <span>{used} / {total}</span> {progressLabel} used this month
-              </ProgressLabel>
+            <ProgressSection>
+              <ProgressHeader>
+                <span>Free unlocks this month</span>
+                <strong>{used} / {total} used</strong>
+              </ProgressHeader>
               <ProgressTrack>
                 <ProgressFill $width={Math.min((used / total) * 100, 100)} />
               </ProgressTrack>
-            </ProgressRow>
+            </ProgressSection>
 
-            {/* Proof Strip */}
-            <ProofStrip>
-              <ProofStat>
-                <ProofVal>500+</ProofVal>
-                <ProofLbl>Brands</ProofLbl>
-              </ProofStat>
-              <ProofStat>
-                <ProofVal>~$45</ProofVal>
-                <ProofLbl>Avg gift value</ProofLbl>
-              </ProofStat>
-              <ProofStat>
-                <ProofVal>∞</ProofVal>
-                <ProofLbl>Applies & pitches</ProofLbl>
-              </ProofStat>
-            </ProofStrip>
+            {/* Stat Chips */}
+            <StatsGrid>
+              <StatChip>
+                <StatValue>2,000+</StatValue>
+                <StatLabel>Brands</StatLabel>
+              </StatChip>
+              <StatChip>
+                <StatValue>$150-2K</StatValue>
+                <StatLabel>PR value</StatLabel>
+              </StatChip>
+              <StatChip>
+                <StatValue>55%</StatValue>
+                <StatLabel>Reply rate</StatLabel>
+              </StatChip>
+            </StatsGrid>
 
             {/* Billing Toggle */}
             <BillingToggle>
@@ -223,47 +151,47 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 onClick={() => setBillingInterval('yearly')}
               >
                 Yearly
-                <SaveBadge>Save 33%</SaveBadge>
+                <SaveBadge>SAVE 33%</SaveBadge>
               </BillingOption>
             </BillingToggle>
 
-            {/* Pro Card */}
-            <ProCard>
-              <ProCardHeader>
-                <ProLabel>Pro</ProLabel>
+            {/* Price Card */}
+            <PriceCard>
+              <ProBadge>Pro</ProBadge>
+              <PriceRow>
+                <PriceAmount id="price-amount">
+                  {billingInterval === 'yearly' ? '$152' : '$19'}
+                </PriceAmount>
+                <PricePer>
+                  / {billingInterval === 'yearly' ? 'year' : 'month'}
+                </PricePer>
+              </PriceRow>
+              <PriceSubline>
                 {billingInterval === 'yearly' ? (
-                  <ProPrice>
-                    <s style={{ fontSize: '14px', color: '#9CA3AF', fontWeight: '500' }}>$228</s>{' '}
-                    $152<span>/year</span>
-                  </ProPrice>
+                  <><s style={{ opacity: 0.65 }}>$228</s> <GreenText>Save $76 · 33% off</GreenText></>
                 ) : (
-                  <ProPrice>$19<span>/month</span></ProPrice>
+                  'Billed monthly · cancel or pause anytime'
                 )}
-              </ProCardHeader>
-              <ProRoiLine>
-                {billingInterval === 'yearly'
-                  ? 'Lock in this price — save $76/year vs monthly'
-                  : 'One free product from a brand covers a year of Pro'}
-              </ProRoiLine>
+              </PriceSubline>
+            </PriceCard>
 
-              {/* Feature List */}
-              <FeatureList>
-                {features.map((f, i) => (
-                  <FeatureItem key={i}>
-                    <FeatureCheck $highlight={f.highlight}>
-                      <CheckIcon />
-                    </FeatureCheck>
-                    <FeatureText>{f.text}</FeatureText>
-                  </FeatureItem>
-                ))}
-              </FeatureList>
+            {/* Feature List */}
+            <FeatureList>
+              {features.map((f, i) => (
+                <FeatureItem key={i}>
+                  <FeatureIcon style={{ background: f.bg }}>{f.emoji}</FeatureIcon>
+                  <FeatureText>{f.text}</FeatureText>
+                </FeatureItem>
+              ))}
+            </FeatureList>
 
-              {/* ROI Box */}
-              <RoiBox>
-                Brands rarely reply on day one — and that’s OK.<br />
-                <strong>Pro keeps building your strategy, kit, and outreach until the first gift lands.</strong>
-              </RoiBox>
-            </ProCard>
+            {/* Social Proof */}
+            <ProofBox>
+              <ProofIcon>✓</ProofIcon>
+              <ProofText>
+                <strong>The toolkit top creators use to get paid.</strong> Real contacts, custom strategy, paid gigs, all working the moment you upgrade.
+              </ProofText>
+            </ProofBox>
           </ModalScroll>
 
           {/* Sticky CTA Area */}
@@ -276,31 +204,25 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               {loading
                 ? 'Processing...'
                 : billingInterval === 'yearly'
-                  ? 'Get Pro — $152/year (save 33%)'
-                  : ctaText}
+                  ? 'Start getting PR · $152/year (save 33%)'
+                  : 'Start getting PR · $19/month'}
             </CtaButton>
 
-            {/* Secondary "Wait" option for unlock paywall */}
-            {isUnlockPaywall && (
-              <WaitButton onClick={onClose}>
-                Wait until {formatResetDate(resetAt)}
-              </WaitButton>
-            )}
-
             {/* Footer Trust Signals */}
-            <ModalFooter>
-              <FooterItem>
-                <FiLock size={10} /> Cancel anytime
-              </FooterItem>
-              <FooterDot>·</FooterDot>
-              <FooterItem>
-                <FiShield size={10} /> Secure
-              </FooterItem>
-              <FooterDot>·</FooterDot>
-              <FooterItem>
-                No commitment
-              </FooterItem>
-            </ModalFooter>
+            <TrustRow>
+              <TrustItem>
+                <FiLock size={12} />
+                Cancel anytime
+              </TrustItem>
+              <TrustItem>
+                <FiShield size={12} />
+                Secure checkout
+              </TrustItem>
+              <TrustItem>
+                <FiClock size={12} />
+                Pause anytime
+              </TrustItem>
+            </TrustRow>
           </CtaArea>
         </ModalWrapper>
       </Overlay>
@@ -315,12 +237,13 @@ const Overlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(15, 17, 20, 0.72);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  padding: 12px;
+  padding: 20px;
 
   @media (max-width: 480px) {
     padding: 0;
@@ -331,410 +254,204 @@ const Overlay = styled(motion.div)`
 const ModalWrapper = styled(motion.div)`
   background: #fff;
   border-radius: 20px;
-  max-width: 420px;
+  max-width: 460px;
   width: 100%;
-  max-height: 90vh;
+  max-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 24px 60px rgba(15, 17, 20, 0.24), 0 8px 20px rgba(15, 17, 20, 0.12);
 
   @media (max-width: 480px) {
     max-width: 100%;
-    max-height: 95vh;
+    max-height: 100vh;
     border-radius: 20px 20px 0 0;
+    margin-top: auto;
   }
 `;
 
 const ModalScroll = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 28px 24px 0;
+  padding: 36px 28px 20px;
   -webkit-overflow-scrolling: touch;
 
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
   @media (max-width: 480px) {
-    padding: 24px 20px 0;
+    padding: 32px 22px 18px;
   }
 `;
 
 const CloseButton = styled.button`
   position: absolute;
-  top: 14px;
-  right: 14px;
-  background: #f3f4f6;
+  top: 16px;
+  right: 16px;
+  background: #f7f7f8;
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #6b7280;
-  transition: all 0.15s;
+  color: #6b6f78;
+  transition: background 0.15s;
   z-index: 10;
   -webkit-tap-highlight-color: transparent;
 
-  &:hover, &:active {
+  &:hover {
     background: #e5e7eb;
-    color: #374151;
   }
 `;
 
 const ModalIcon = styled.div`
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7C3AED, #E11D48);
+  background: linear-gradient(135deg, #7c3aed 0%, #e8395f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 14px;
+  margin: 0 auto 18px;
   color: #fff;
-
-  @media (max-width: 480px) {
-    width: 44px;
-    height: 44px;
-    margin-bottom: 12px;
-  }
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.28);
 `;
 
-const Headline = styled.h2`
-  font-size: 19px;
-  font-weight: 900;
-  color: ${tokens.textPrimary};
+const Headline = styled.h1`
+  font-size: 22px;
+  font-weight: 800;
+  color: #15161a;
   letter-spacing: -0.02em;
   text-align: center;
   line-height: 1.25;
   margin: 0 0 6px 0;
-  padding: 0 10px;
 
   @media (max-width: 480px) {
-    font-size: 18px;
-    padding: 0;
+    font-size: 20px;
   }
 `;
+
+const PinkSpan = styled.span`
+  color: #e8395f;
+`;
+
+const BoltIcon = () => (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M13 2L4.5 12.5H11l-1 8.5 8.5-11H12l1-8z"/>
+  </svg>
+);
 
 const Subtext = styled.p`
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #6b6f78;
   text-align: center;
-  line-height: 1.45;
-  margin: 0 0 14px 0;
-
-  @media (max-width: 480px) {
-    font-size: 12px;
-    margin-bottom: 12px;
-  }
+  line-height: 1.5;
+  margin: 0 0 20px 0;
 `;
 
-const ProgressRow = styled.div`
-  background: #f9fafb;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
+const ProgressSection = styled.div`
+  margin-bottom: 20px;
 `;
 
-const ProgressLabel = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  color: #6b7280;
+const ProgressHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #6b6f78;
   margin-bottom: 6px;
+  font-weight: 500;
 
-  span {
-    font-weight: 800;
-    color: ${tokens.textPrimary};
+  strong {
+    color: #15161a;
+    font-weight: 700;
   }
 `;
 
 const ProgressTrack = styled.div`
-  height: 5px;
-  background: #e5e7eb;
-  border-radius: 4px;
+  height: 8px;
+  background: #f1f2f4;
+  border-radius: 100px;
   overflow: hidden;
+  position: relative;
 `;
 
 const ProgressFill = styled.div`
   height: 100%;
-  border-radius: 4px;
+  border-radius: 100px;
   width: ${p => p.$width}%;
-  background: linear-gradient(90deg, #7C3AED, #E11D48);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #e8395f 0%, #f472b6 100%);
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+    animation: shimmer 2.4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
 `;
 
-const ProofStrip = styled.div`
+const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 12px;
-`;
-
-const ProofStat = styled.div`
-  padding: 10px 6px;
-  text-align: center;
-  border-right: 1px solid #e5e7eb;
-  &:last-child { border-right: none; }
-`;
-
-const ProofVal = styled.div`
-  font-size: 15px;
-  font-weight: 900;
-  color: ${tokens.textPrimary};
-  margin-bottom: 1px;
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-  }
-`;
-
-const ProofLbl = styled.div`
-  font-size: 9px;
-  font-weight: 600;
-  color: #9ca3af;
-  line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-`;
-
-const ProCard = styled.div`
-  border: 1.5px solid #c4b5fd;
-  border-radius: 14px;
-  padding: 16px;
-  background: linear-gradient(160deg, #f8f7ff 0%, #fdf2f8 100%);
-  margin-bottom: 16px;
-
-  @media (max-width: 480px) {
-    padding: 14px;
-    margin-bottom: 12px;
-  }
-`;
-
-const ProCardHeader = styled.div`
-  display: flex;
-  align-items: baseline;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 22px;
 `;
 
-const ProLabel = styled.div`
-  font-size: 12px;
-  font-weight: 800;
-  color: ${tokens.accent};
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-`;
-
-const ProPrice = styled.div`
-  font-size: 24px;
-  font-weight: 900;
-  color: ${tokens.textPrimary};
-  letter-spacing: -0.03em;
-
-  span {
-    font-size: 13px;
-    font-weight: 500;
-    color: #6b7280;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 22px;
-
-    span {
-      font-size: 12px;
-    }
-  }
-`;
-
-const ProRoiLine = styled.div`
-  font-size: 11px;
-  color: ${tokens.success};
-  font-weight: 600;
-  margin-bottom: 12px;
-`;
-
-const FeatureList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-`;
-
-const FeatureItem = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12px;
-  color: #374151;
-  line-height: 1.4;
-
-  strong {
-    font-weight: 700;
-    color: ${tokens.textPrimary};
-  }
-
-  @media (max-width: 480px) {
-    font-size: 11.5px;
-    gap: 7px;
-  }
-`;
-
-const FeatureCheck = styled.div`
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: ${p => p.$highlight ? tokens.accent : tokens.success};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 1px;
-`;
-
-const CheckIcon = () => (
-  <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-    <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.6"/>
-  </svg>
-);
-
-const FeatureText = styled.div`
-  flex: 1;
-`;
-
-const NewTag = styled.span`
-  background: ${tokens.accent};
-  color: #fff;
-  font-size: 8px;
-  font-weight: 800;
-  padding: 2px 5px;
-  border-radius: 5px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-left: 3px;
-  vertical-align: middle;
-`;
-
-const RoiBox = styled.div`
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 11px;
-  color: #065f46;
-  line-height: 1.5;
-  text-align: center;
-
-  strong {
-    font-weight: 700;
-  }
-
-  @media (max-width: 480px) {
-    padding: 9px 10px;
-    font-size: 10.5px;
-  }
-`;
-
-const CtaArea = styled.div`
-  padding: 12px 24px 20px;
-  background: #fff;
-  border-top: 1px solid #f3f4f6;
-
-  @media (max-width: 480px) {
-    padding: 12px 20px 24px;
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
-  }
-`;
-
-const CtaButton = styled(motion.button)`
-  width: 100%;
-  padding: 14px 16px;
-  border: none;
+const StatChip = styled.div`
+  background: #f7f7f8;
   border-radius: 12px;
-  background: linear-gradient(135deg, #7C3AED, #E11D48);
-  color: #fff;
+  padding: 10px 8px;
+  text-align: center;
+  border: 1px solid #f1f2f4;
+`;
+
+const StatValue = styled.div`
   font-size: 15px;
   font-weight: 800;
-  cursor: pointer;
-  letter-spacing: -0.01em;
-  transition: opacity 0.15s, transform 0.1s;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-
-  &:hover:not(:disabled) {
-    opacity: 0.92;
-  }
-
-  &:active:not(:disabled) {
-    transform: scale(0.98);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  color: #15161a;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 
   @media (max-width: 480px) {
-    padding: 15px 16px;
     font-size: 14px;
-    border-radius: 11px;
   }
 `;
 
-const WaitButton = styled.button`
-  width: 100%;
-  padding: 12px 16px;
-  margin-top: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: transparent;
-  color: #6b7280;
-  font-size: 13px;
+const StatLabel = styled.div`
+  font-size: 10px;
+  color: #6b6f78;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-  }
 
   @media (max-width: 480px) {
-    font-size: 12px;
-    padding: 11px 14px;
+    font-size: 9px;
   }
 `;
 
-const ModalFooter = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 10px;
-`;
-
-const FooterItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  color: #9ca3af;
-`;
-
-const FooterDot = styled.span`
-  color: #d1d5db;
-  font-size: 10px;
-`;
-
-// Billing Toggle Components
 const BillingToggle = styled.div`
   display: flex;
-  background: #f3f4f6;
-  border-radius: 10px;
+  background: #f7f7f8;
+  border-radius: 12px;
   padding: 4px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 `;
 
 const BillingOption = styled.button`
@@ -743,36 +460,222 @@ const BillingOption = styled.button`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 12px;
+  padding: 11px 8px;
   border: none;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 9px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.18s;
+  font-family: inherit;
+  position: relative;
+  z-index: 2;
   background: ${props => props.$active ? '#fff' : 'transparent'};
-  color: ${props => props.$active ? '#111827' : '#6b7280'};
-  box-shadow: ${props => props.$active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};
+  color: ${props => props.$active ? '#15161a' : '#6b6f78'};
+  box-shadow: ${props => props.$active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'};
 
   &:hover {
-    color: #111827;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 12px;
-    padding: 9px 10px;
+    color: #15161a;
   }
 `;
 
 const SaveBadge = styled.span`
-  background: linear-gradient(135deg, #10B981, #059669);
-  color: white;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 3px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
+  background: #e8f7ed;
+  color: #0f9d58;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 6px;
   letter-spacing: 0.02em;
+`;
+
+const PriceCard = styled.div`
+  border: 1.5px solid #e8395f;
+  border-radius: 16px;
+  padding: 20px;
+  background: linear-gradient(180deg, #fef2f4 0%, #fff 60%);
+  position: relative;
+  margin-bottom: 20px;
+`;
+
+const ProBadge = styled.div`
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #15161a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+`;
+
+const PriceRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 4px;
+`;
+
+const PriceAmount = styled.span`
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #15161a;
+  line-height: 1;
+`;
+
+const PricePer = styled.span`
+  font-size: 15px;
+  color: #6b6f78;
+  font-weight: 500;
+`;
+
+const PriceSubline = styled.div`
+  text-align: center;
+  font-size: 13px;
+  color: #6b6f78;
+`;
+
+const GreenText = styled.span`
+  color: #0f9d58;
+  font-weight: 700;
+`;
+
+const FeatureList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+`;
+
+const FeatureItem = styled.li`
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 15px;
+  color: #2b2d33;
+  line-height: 1.4;
+  align-items: center;
+
+  strong {
+    color: #15161a;
+    font-weight: 700;
+  }
+`;
+
+const FeatureIcon = styled.span`
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+  line-height: 1;
+`;
+
+const FeatureText = styled.span`
+  flex: 1;
+`;
+
+const ProofBox = styled.div`
+  background: #e8f7ed;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #1a5638;
+  line-height: 1.5;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+
+  strong {
+    color: #0d3f26;
+  }
+`;
+
+const ProofIcon = styled.div`
+  width: 24px;
+  height: 24px;
+  background: #0f9d58;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 14px;
+`;
+
+const ProofText = styled.div``;
+
+const CtaArea = styled.div`
+  padding: 14px 28px 24px;
+  background: #fff;
+
+  @media (max-width: 480px) {
+    padding: 14px 22px 24px;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+`;
+
+const CtaButton = styled(motion.button)`
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #e8395f 0%, #c92549 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  font-family: inherit;
+  box-shadow: 0 8px 20px rgba(232, 57, 95, 0.28);
+  transition: transform 0.12s, box-shadow 0.12s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(232, 57, 95, 0.34);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const TrustRow = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding-top: 14px;
+  flex-wrap: wrap;
+`;
+
+const TrustItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6b6f78;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
 `;
 
 export default UpgradeModal;
