@@ -29,27 +29,45 @@ function gtagReady() {
   return typeof window !== 'undefined' && typeof window.gtag === 'function';
 }
 
-export function trackProBeginCheckout({ tier = 'pro', source, interval = 'monthly' } = {}) {
-  if (!gtagReady()) return;
+function fbqReady() {
+  return typeof window !== 'undefined' && typeof window.fbq === 'function';
+}
 
+export function trackProBeginCheckout({ tier = 'pro', source, interval = 'monthly' } = {}) {
   const value = tierValue(tier, interval);
-  window.gtag('event', 'begin_checkout', {
-    send_to: GA_MEASUREMENT_ID,
-    currency: 'USD',
-    value,
-    items: [
-      {
-        item_id: `subscription_${tier}_${interval}`,
-        item_name: tierItemName(tier, interval),
-        item_category: 'subscription',
-        item_variant: interval,
-        price: value,
-        quantity: 1,
-      },
-    ],
-    ...(source ? { checkout_source: source } : {}),
-    billing_interval: interval,
-  });
+
+  // GA4 begin_checkout
+  if (gtagReady()) {
+    window.gtag('event', 'begin_checkout', {
+      send_to: GA_MEASUREMENT_ID,
+      currency: 'USD',
+      value,
+      items: [
+        {
+          item_id: `subscription_${tier}_${interval}`,
+          item_name: tierItemName(tier, interval),
+          item_category: 'subscription',
+          item_variant: interval,
+          price: value,
+          quantity: 1,
+        },
+      ],
+      ...(source ? { checkout_source: source } : {}),
+      billing_interval: interval,
+    });
+  }
+
+  // Meta Pixel InitiateCheckout
+  if (fbqReady()) {
+    window.fbq('track', 'InitiateCheckout', {
+      content_type: 'product',
+      content_ids: [`subscription_${tier}_${interval}`],
+      content_name: tierItemName(tier, interval),
+      value,
+      currency: 'USD',
+      num_items: 1,
+    });
+  }
 }
 
 /**
@@ -57,33 +75,52 @@ export function trackProBeginCheckout({ tier = 'pro', source, interval = 'monthl
  * Call as soon as the success page loads — do not wait on API confirm.
  */
 export function trackProPurchase({ sessionId, tier = 'pro', interval = 'monthly' } = {}) {
-  if (!gtagReady()) return;
   if (!sessionId) return;
 
-  const storageKey = `ga4_purchase_${sessionId}`;
-  try {
-    if (window.sessionStorage.getItem(storageKey)) return;
-    window.sessionStorage.setItem(storageKey, '1');
-  } catch (_) {
-    /* ignore */
+  const value = tierValue(tier, interval);
+
+  // GA4 purchase (deduped by session_id)
+  if (gtagReady()) {
+    const ga4Key = `ga4_purchase_${sessionId}`;
+    try {
+      if (!window.sessionStorage.getItem(ga4Key)) {
+        window.sessionStorage.setItem(ga4Key, '1');
+        window.gtag('event', 'purchase', {
+          send_to: GA_MEASUREMENT_ID,
+          transaction_id: sessionId,
+          currency: 'USD',
+          value,
+          items: [
+            {
+              item_id: `subscription_${tier}_${interval}`,
+              item_name: tierItemName(tier, interval),
+              item_category: 'subscription',
+              item_variant: interval,
+              price: value,
+              quantity: 1,
+            },
+          ],
+          billing_interval: interval,
+        });
+      }
+    } catch (_) { /* ignore */ }
   }
 
-  const value = tierValue(tier, interval);
-  window.gtag('event', 'purchase', {
-    send_to: GA_MEASUREMENT_ID,
-    transaction_id: sessionId,
-    currency: 'USD',
-    value,
-    items: [
-      {
-        item_id: `subscription_${tier}_${interval}`,
-        item_name: tierItemName(tier, interval),
-        item_category: 'subscription',
-        item_variant: interval,
-        price: value,
-        quantity: 1,
-      },
-    ],
-    billing_interval: interval,
-  });
+  // Meta Pixel Purchase (deduped by session_id)
+  if (fbqReady()) {
+    const fbqKey = `fbq_purchase_${sessionId}`;
+    try {
+      if (!window.sessionStorage.getItem(fbqKey)) {
+        window.sessionStorage.setItem(fbqKey, '1');
+        window.fbq('track', 'Purchase', {
+          content_type: 'product',
+          content_ids: [`subscription_${tier}_${interval}`],
+          content_name: tierItemName(tier, interval),
+          value,
+          currency: 'USD',
+          num_items: 1,
+        });
+      }
+    } catch (_) { /* ignore */ }
+  }
 }
