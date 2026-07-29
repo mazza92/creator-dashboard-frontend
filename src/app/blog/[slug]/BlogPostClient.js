@@ -26,7 +26,6 @@ function formatDate(dateStr, monthFormat = 'long') {
 }
 
 const { Title, Paragraph } = Typography;
-const { Panel } = Collapse;
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -349,28 +348,26 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
                 ghost
                 expandIconPosition="end"
                 style={{ background: 'transparent' }}
-              >
-                {post.faq.map((faq, index) => (
-                  <Panel
-                    header={
-                      <span style={{ fontWeight: 600, color: '#26A69A', fontSize: '16px' }}>
-                        {faq.question}
-                      </span>
-                    }
-                    key={index}
-                    style={{
-                      background: '#f8f9fa',
-                      marginBottom: '1rem',
-                      border: 'none',
-                      borderRadius: '6px'
-                    }}
-                  >
+                items={post.faq.map((faq, index) => ({
+                  key: index,
+                  label: (
+                    <span style={{ fontWeight: 600, color: '#26A69A', fontSize: '16px' }}>
+                      {faq.question}
+                    </span>
+                  ),
+                  children: (
                     <Paragraph style={{ margin: 0, fontSize: '16px', lineHeight: '1.6' }}>
                       {faq.answer}
                     </Paragraph>
-                  </Panel>
-                ))}
-              </Collapse>
+                  ),
+                  style: {
+                    background: '#f8f9fa',
+                    marginBottom: '1rem',
+                    border: 'none',
+                    borderRadius: '6px'
+                  }
+                }))}
+              />
             </FAQSection>
           )}
 
