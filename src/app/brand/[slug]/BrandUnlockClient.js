@@ -304,7 +304,7 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
             Why sign up?
           </div>
           <div style={{ fontSize: '13px', color: '#6B7280', lineHeight: '1.6' }}>
-            Access verified PR contacts for 500+ brands. Join thousands of creators securing PR packages and paid collaborations.
+            Access verified PR contacts for 2,000+ brands. Join thousands of creators securing PR packages and paid collaborations.
           </div>
         </div>
       )}

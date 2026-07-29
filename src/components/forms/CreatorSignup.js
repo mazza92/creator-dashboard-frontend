@@ -587,7 +587,7 @@ export default function CreatorSignup() {
     <>
       <Helmet>
         <title>Sign Up | NewCollab - Get Brand Deals</title>
-        <meta name="description" content="Join NewCollab free. Find brands, write the perfect pitch, and track your outreach. 500+ brand contacts, AI pitch writer, and more." />
+        <meta name="description" content="Join NewCollab free. Find brands, write the perfect pitch, and track your outreach. 2,000+ brand contacts, AI pitch writer, and more." />
         <link rel="canonical" href="https://newcollab.co/register/creator" />
       </Helmet>
 
@@ -617,7 +617,7 @@ export default function CreatorSignup() {
           </Subline>
 
           <Benefits>
-            <BenefitPill>500+ brand contacts</BenefitPill>
+            <BenefitPill>2,000+ brand contacts</BenefitPill>
             <BenefitPill>AI pitch writer</BenefitPill>
             <BenefitPill>Track all outreach</BenefitPill>
             <BenefitPill>New brand alerts</BenefitPill>

@@ -30,7 +30,7 @@ const FAQ_ITEMS = [
   {
     question: 'Where can I find PR forms for brands?',
     answer:
-      "newcollab's brand directory lists 500+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. You can filter by niche and send a personalised AI pitch in one click — no need to hunt for contact emails or application URLs.",
+      "newcollab's brand directory lists 2,000+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. You can filter by niche and send a personalised AI pitch in one click — no need to hunt for contact emails or application URLs.",
   },
   {
     question: 'What is a brand PR application form?',

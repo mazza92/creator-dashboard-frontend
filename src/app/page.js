@@ -4,10 +4,10 @@ import HomeFaqSchemaScript from './HomeFaqSchemaScript';
 // SEO metadata for landing page
 export const metadata = {
   title: 'newcollab - Brand PR Forms & Outreach for Micro Creators',
-  description: 'Browse 500+ brands with open PR forms and direct application links. Send AI pitch emails, auto-generate your media kit, and track every outreach. The complete PR forms directory and brand deal system for micro creators.',
+  description: 'Browse 2,000+ brands with open PR forms and direct application links. Send AI pitch emails, auto-generate your media kit, and track every outreach. The complete PR forms directory and brand deal system for micro creators.',
   keywords: 'PR forms for brands, brand PR forms, PR application forms for influencers, brands with open PR forms, how to get brand deals, PR packages for micro creators, brand outreach tool, media kit for content creators, micro influencer brand deals, brand collaboration forms',
   openGraph: {
-    title: 'newcollab - 500+ Brand PR Forms & Outreach for Creators',
+    title: 'newcollab - 2,000+ Brand PR Forms & Outreach for Creators',
     description: 'Browse brands with open PR forms and application links. AI pitch emails, auto media kit, deal tracking — all in one place for nano and micro creators.',
     type: 'website',
     url: 'https://newcollab.co',
@@ -30,7 +30,7 @@ const websiteSchema = {
   name: 'newcollab',
   url: 'https://newcollab.co',
   description:
-    'PR forms directory and brand outreach tool for nano and micro creators — 500+ brands with open PR application forms, AI pitch emails, and auto media kit.',
+    'PR forms directory and brand outreach tool for nano and micro creators — 2,000+ brands with open PR application forms, AI pitch emails, and auto media kit.',
   potentialAction: {
     '@type': 'SearchAction',
     target: 'https://newcollab.co/brands?q={search_term_string}',

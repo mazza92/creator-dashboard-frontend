@@ -1009,7 +1009,7 @@ function LandFirstPRPackageClient() {
     },
     {
       q: "Which brands are in your directory?",
-      a: "500+ brands across beauty, skincare, fashion, wellness, food, and lifestyle. Rhode, Poppi, Anua, Milk_shake, Ouai, Kosas, and 494 more. We update the directory weekly with new additions and remove brands that stop responding."
+      a: "2,000+ brands across beauty, skincare, fashion, wellness, food, and lifestyle. Rhode, Poppi, Anua, Milk_shake, Ouai, Kosas, and 1,994 more. We update the directory weekly with new additions and remove brands that stop responding."
     },
     {
       q: "How is this different from just DMing brands?",
@@ -1197,7 +1197,7 @@ function LandFirstPRPackageClient() {
             <Feat>
               <FeatEmoji>🎯</FeatEmoji>
               <FeatH3>Verified brand contacts</FeatH3>
-              <FeatP>500+ brands with real PR emails. Not scraped. Not guessed. Reviewed and updated weekly.</FeatP>
+              <FeatP>2,000+ brands with real PR emails. Not scraped. Not guessed. Reviewed and updated weekly.</FeatP>
             </Feat>
             <Feat>
               <FeatEmoji>🤖</FeatEmoji>
@@ -1231,7 +1231,7 @@ function LandFirstPRPackageClient() {
       {/* BRAND WALL */}
       <BrandsSection>
         <Wrap>
-          <BrandsTitle>500+ brands your manager already knows</BrandsTitle>
+          <BrandsTitle>2,000+ brands your manager already knows</BrandsTitle>
           <BrandWall>
             <BrandName>rhode</BrandName>
             <BrandName $variant="sans">Poppi</BrandName>

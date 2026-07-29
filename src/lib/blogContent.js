@@ -7,7 +7,8 @@ const BLOG_WIDGET_ALLOWED_SLUGS = [
   'aussie-brands-pr-package-list-2026',
   'gaming-tech-brands-that-sponsor-small-streamers-2026',
   'pr-list-for-clothing-brands-micro-influencers-2025',
-  'companies-with-open-pr-application-forms-influencers-2025'
+  'companies-with-open-pr-application-forms-influencers-2025',
+  'ultimate-2026-directory-brands-with-open-pr-application-forms'
 ];
 
 /**

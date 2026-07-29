@@ -1628,7 +1628,7 @@ const Founding50 = () => {
               <HeroLeft>
                 <HeroHeadline>Land brand deals.<br />On repeat.<br /><em style={{ color: '#E11D48', fontStyle: 'italic' }}>No guessing.</em></HeroHeadline>
                 <HeroSub>
-                  500+ brands with open PR forms. AI pitch emails. Auto media kit. Deal tracking. All in one place.
+                  2,000+ brands with open PR forms. AI pitch emails. Auto media kit. Deal tracking. All in one place.
                 </HeroSub>
                 <HeroVideoMobile>
                   <ModernPhoneMockup>

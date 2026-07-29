@@ -2,18 +2,18 @@ import { Suspense } from 'react';
 import DirectoryClient from './DirectoryClient';
 
 export const metadata = {
-  title: '500+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
+  title: '2,000+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
   description:
-    'Browse 500+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free.',
+    'Browse 2,000+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free.',
   keywords:
     'pr forms for brands, pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, brands that send pr to small influencers, influencer pr list requirements',
   alternates: {
     canonical: 'https://newcollab.co/directory',
   },
   openGraph: {
-    title: '500+ PR Forms for Brands: Direct Application Links',
+    title: '2,000+ PR Forms for Brands: Direct Application Links',
     description:
-      'Verified PR forms for brands with direct application links. 500+ beauty, skincare, and lifestyle brands—micro-influencer friendly. Start applying today.',
+      'Verified PR forms for brands with direct application links. 2,000+ beauty, skincare, and lifestyle brands—micro-influencer friendly. Start applying today.',
     type: 'website',
     url: 'https://newcollab.co/directory',
     siteName: 'Newcollab',
@@ -56,7 +56,7 @@ export default async function DirectoryPage() {
 
   return (
     <>
-      <h1 style={srOnly}>500+ PR Forms for Brands: Direct Application Links</h1>
+      <h1 style={srOnly}>2,000+ PR Forms for Brands: Direct Application Links</h1>
       <Suspense fallback={null}>
         <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>

@@ -976,10 +976,10 @@ export default function DirectoryClient({
     <LandingPageLayoutNext canonicalUrl="https://newcollab.co/directory">
       <Page>
         <Hero>
-          <h1>{collectionTitle || '500+ PR Forms for Brands: Direct Application Links'}</h1>
+          <h1>{collectionTitle || '2,000+ PR Forms for Brands: Direct Application Links'}</h1>
           <p>
             {collectionDescription ||
-              'Browse 500+ verified brand PR forms with direct application links, response rates, and follower requirements. Find brands that reply to micro-influencer pitches in beauty, skincare, K-beauty, fashion, wellness, and more.'}
+              'Browse 2,000+ verified brand PR forms with direct application links, response rates, and follower requirements. Find brands that reply to micro-influencer pitches in beauty, skincare, K-beauty, fashion, wellness, and more.'}
           </p>
           {/* Only show QuickLinks when there are brands to filter, or when not on a country page */}
           {(!initialCountry || total > 0 || loading) && (
