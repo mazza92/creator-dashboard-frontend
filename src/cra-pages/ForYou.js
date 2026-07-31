@@ -147,6 +147,13 @@ const ForYou = () => {
   const [welcomePitchedIds, setWelcomePitchedIds] = useState(new Set()); // Track brands pitched within welcome flow
   const [isWelcomeFlow, setIsWelcomeFlow] = useState(false); // Flag to return to modal after pitch
 
+  // Mark welcome flow as completed once user unlocks their first brand
+  useEffect(() => {
+    if (welcomePitchedIds.size > 0) {
+      localStorage.setItem('welcomeFlowCompleted', 'true');
+    }
+  }, [welcomePitchedIds]);
+
   // Upgrade CTA impression tracking
   const [bannerSeen, setBannerSeen] = useState(false);
   const bannerRef = useRef(null);
@@ -212,23 +219,25 @@ const ForYou = () => {
     const justOnboarded = urlParams.get('onboarding') === 'complete' ||
                           sessionStorage.getItem('justCompletedOnboarding') === 'true';
 
-    if (justOnboarded && !loading && data?.matched?.length > 0) {
-      // Only show if user hasn't dismissed it before in this session
-      const hasSeenWelcome = sessionStorage.getItem('welcomeModalShown');
-      if (!hasSeenWelcome) {
-        setShowWelcomeModal(true);
-        sessionStorage.setItem('welcomeModalShown', 'true');
-        // Clean up the URL param
-        if (urlParams.get('onboarding')) {
-          urlParams.delete('onboarding');
-          const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-          window.history.replaceState({}, '', newUrl);
-        }
-        // Clear onboarding flag
-        sessionStorage.removeItem('justCompletedOnboarding');
+    // Show welcome modal if:
+    // 1. Just completed onboarding, OR
+    // 2. User has never used any unlocks (remaining === 3) and hasn't dismissed the modal
+    const hasCompletedWelcomeFlow = localStorage.getItem('welcomeFlowCompleted') === 'true';
+    const hasNeverUnlocked = unlockBalance.remaining === 3 && unlockBalance.tier === 'free';
+    const shouldShowWelcome = (justOnboarded || hasNeverUnlocked) && !hasCompletedWelcomeFlow;
+
+    if (shouldShowWelcome && !loading && data?.matched?.length > 0) {
+      setShowWelcomeModal(true);
+      // Clean up the URL param
+      if (urlParams.get('onboarding')) {
+        urlParams.delete('onboarding');
+        const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.history.replaceState({}, '', newUrl);
       }
+      // Clear onboarding flag
+      sessionStorage.removeItem('justCompletedOnboarding');
     }
-  }, [loading, data]);
+  }, [loading, data, unlockBalance]);
 
   // Check for upgrade query param (from email CTAs)
   useEffect(() => {
@@ -1233,22 +1242,26 @@ const ForYou = () => {
       {showWelcomeModal && data?.matched?.length > 0 && (
         <WelcomeOverlay>
           <WelcomeModal onClick={(e) => e.stopPropagation()}>
-            <WelcomeClose onClick={() => { setShowWelcomeModal(false); setIsWelcomeFlow(false); }}>×</WelcomeClose>
+            <WelcomeClose onClick={() => {
+              setShowWelcomeModal(false);
+              setIsWelcomeFlow(false);
+              localStorage.setItem('welcomeFlowCompleted', 'true');
+            }}>×</WelcomeClose>
             <WelcomeEmoji>{welcomePitchedIds.size > 0 ? '🚀' : '✨'}</WelcomeEmoji>
             <WelcomeTitle>
               {welcomePitchedIds.size === 0
-                ? 'Start your first free product'
+                ? 'Your first pitch, 1 tap away'
                 : welcomePitchedIds.size < 2
-                  ? 'Nice — keep going'
+                  ? 'Nice! Keep going'
                   : welcomePitchedIds.size < 3
                     ? 'Almost there!'
                     : 'All set!'}
             </WelcomeTitle>
             <WelcomeSub>
               {welcomePitchedIds.size === 0 ? (
-                <>Brands won’t find a small account on their own. Use your free unlocks to pitch brands that gift — with a contact + pitch that looks professional.</>
+                <>We matched 3 brands who gift small creators in your niche. Unlock one to get the verified email and a personalized pitch you can <strong>send now</strong>.</>
               ) : (
-                <>Creators who pitch several brands are <strong>far more likely</strong> to land a free product.</>
+                <>Creators who pitch several brands are <strong>far more likely</strong> to land free products.</>
               )}
             </WelcomeSub>
 
@@ -1258,12 +1271,21 @@ const ForYou = () => {
                   <WelcomeQuotaDot key={i} $filled={i < welcomePitchedIds.size} $completed={i < welcomePitchedIds.size} />
                 ))}
               </WelcomeQuotaDots>
-              <span>{welcomePitchedIds.size} of 3 unlocks started</span>
+              <span>{welcomePitchedIds.size === 0 ? '3 free unlocks ready' : `${3 - welcomePitchedIds.size} unlock${3 - welcomePitchedIds.size !== 1 ? 's' : ''} left`}</span>
             </WelcomeQuota>
 
             {welcomePitchedIds.size === 0 && (
+              <div style={{ textAlign: 'center' }}>
+                <WelcomeActivityChip>
+                  <WelcomePulse />
+                  8 creators unlocked a brand in the last hour
+                </WelcomeActivityChip>
+              </div>
+            )}
+
+            {welcomePitchedIds.size === 0 && (
               <WelcomeUrgency>
-                <strong>Tip:</strong> Unlock a brand now — verified contact + ready-to-send pitch.
+                <strong>Tip:</strong> Every unlock includes the verified PR contact plus a ready-to-send pitch personalized to your profile.
               </WelcomeUrgency>
             )}
 
@@ -1278,40 +1300,97 @@ const ForYou = () => {
                 const brandLogo = brand.logo || brand.logo_url;
                 const isPitched = welcomePitchedIds.has(brand.id);
 
+                // Get brand data for facts (using real database columns)
+                const minFollowers = brand.min_followers;
+                const replyRate = brand.response_rate; // existing column with 77% coverage
+                const avgPrValue = brand.avg_product_value || brand.price_point; // existing columns
+                const category = brand.category || 'Beauty';
+                // Format shipping from regions array if available
+                const shipsTo = brand.regions && Array.isArray(brand.regions) && brand.regions.length > 0
+                  ? `Ships ${brand.regions.slice(0, 3).join(', ')}`
+                  : null;
+
                 return (
                   <WelcomeBrandCard key={brand.id || idx} $pitched={isPitched}>
-                    <WelcomeBrandLogo $hasImage={!!brandLogo} $pitched={isPitched}>
-                      {isPitched ? (
-                        <span style={{ color: '#10B981', fontSize: 16 }}>✓</span>
-                      ) : brandLogo ? (
-                        <img src={brandLogo} alt={brandName} onError={(e) => { e.target.style.display = 'none'; }} />
-                      ) : (
-                        <span>{initials}</span>
-                      )}
-                    </WelcomeBrandLogo>
-                    <WelcomeBrandInfo>
-                      <WelcomeBrandName $pitched={isPitched}>{brandName}</WelcomeBrandName>
-                      <WelcomeBrandMeta>
-                        {isPitched ? (
-                          <span style={{ color: '#10B981', fontWeight: 600 }}>Unlocked ✓</span>
-                        ) : (
-                          <>
-                            {brand.match_score && <span className="pct">{brand.match_score}% match</span>}
-                            {brand.category && <><span>·</span><span>{brand.category}</span></>}
-                          </>
-                        )}
-                      </WelcomeBrandMeta>
-                    </WelcomeBrandInfo>
                     {isPitched ? (
-                      <WelcomePitchedBadge>✓</WelcomePitchedBadge>
+                      // Compact pitched state
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <WelcomeBrandLogo $hasImage={!!brandLogo}>
+                          <span style={{ color: '#10B981', fontSize: 16 }}>✓</span>
+                        </WelcomeBrandLogo>
+                        <WelcomeBrandInfo>
+                          <WelcomeBrandName>{brandName}</WelcomeBrandName>
+                          <WelcomeBrandMeta>
+                            <span style={{ color: '#10B981', fontWeight: 600 }}>Unlocked ✓</span>
+                          </WelcomeBrandMeta>
+                        </WelcomeBrandInfo>
+                      </div>
                     ) : (
-                      <WelcomePitchBtn onClick={() => {
-                        setIsWelcomeFlow(true);
-                        setShowWelcomeModal(false);
-                        setPitchingBrand(brand);
-                      }}>
-                        Unlock
-                      </WelcomePitchBtn>
+                      // Full card with facts
+                      <>
+                        <WelcomeBrandTop>
+                          <WelcomeBrandLogo $hasImage={!!brandLogo}>
+                            {brandLogo ? (
+                              <img src={brandLogo} alt={brandName} onError={(e) => { e.target.style.display = 'none'; }} />
+                            ) : (
+                              <span>{initials}</span>
+                            )}
+                          </WelcomeBrandLogo>
+                          <WelcomeBrandInfo>
+                            <WelcomeBrandName>{brandName}</WelcomeBrandName>
+                            <WelcomeBrandMeta>
+                              {category && <span>{category}</span>}
+                              {shipsTo && <><span className="sep">·</span><span>{shipsTo}</span></>}
+                            </WelcomeBrandMeta>
+                          </WelcomeBrandInfo>
+                          {replyRate >= 70 && (
+                            <WelcomeReplyTag>🔥 {replyRate}% reply</WelcomeReplyTag>
+                          )}
+                        </WelcomeBrandTop>
+                        <WelcomeBrandFacts>
+                          {minFollowers != null && (
+                            <WelcomeFact>
+                              <WelcomeFactCheck>✓</WelcomeFactCheck>
+                              Gifts creators from <strong>{minFollowers.toLocaleString()} followers</strong>
+                            </WelcomeFact>
+                          )}
+                          {brand.micro_friendly && !minFollowers && (
+                            <WelcomeFact>
+                              <WelcomeFactCheck>✓</WelcomeFactCheck>
+                              <strong>Micro-friendly</strong> (gifts small creators)
+                            </WelcomeFact>
+                          )}
+                          {replyRate > 0 && (
+                            <WelcomeFact>
+                              <WelcomeFactCheck>✓</WelcomeFactCheck>
+                              <strong>{replyRate}% response rate</strong> from pitches
+                            </WelcomeFact>
+                          )}
+                          {avgPrValue > 0 && (
+                            <WelcomeFact>
+                              <WelcomeFactCheck>✓</WelcomeFactCheck>
+                              Avg PR value: <strong>${avgPrValue}</strong>
+                            </WelcomeFact>
+                          )}
+                          {!minFollowers && !replyRate && !avgPrValue && (
+                            <WelcomeFact>
+                              <WelcomeFactCheck>✓</WelcomeFactCheck>
+                              <strong>Verified PR contact</strong> ready to pitch
+                            </WelcomeFact>
+                          )}
+                        </WelcomeBrandFacts>
+                        <WelcomePitchBtn onClick={() => {
+                          setIsWelcomeFlow(true);
+                          setShowWelcomeModal(false);
+                          setPitchingBrand(brand);
+                        }}>
+                          Unlock & Pitch {brandName}
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </WelcomePitchBtn>
+                      </>
                     )}
                   </WelcomeBrandCard>
                 );
@@ -1319,8 +1398,12 @@ const ForYou = () => {
             </WelcomeBrands>
 
             <WelcomeFooter>
-              <WelcomeSkip onClick={() => { setShowWelcomeModal(false); setIsWelcomeFlow(false); }}>
-                I'll explore first →
+              <WelcomeSkip onClick={() => {
+                setShowWelcomeModal(false);
+                setIsWelcomeFlow(false);
+                localStorage.setItem('welcomeFlowCompleted', 'true');
+              }}>
+                Not sure which? See all matches →
               </WelcomeSkip>
             </WelcomeFooter>
           </WelcomeModal>
@@ -4565,22 +4648,40 @@ const WelcomeOverlay = styled.div`
   justify-content: center;
   z-index: 10000;
   padding: 20px;
+
+  @media (max-width: 480px) {
+    padding: 0;
+    align-items: flex-end;
+  }
 `;
 
 const WelcomeModal = styled.div`
   background: white;
-  border-radius: 18px;
-  padding: 30px 26px 24px;
-  max-width: 420px;
+  border-radius: 20px;
+  padding: 32px 28px 24px;
+  max-width: 480px;
   width: 100%;
   position: relative;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
-  animation: slideUp 0.3s ease-out;
+  box-shadow: 0 24px 60px rgba(15, 17, 20, 0.22), 0 8px 20px rgba(15, 17, 20, 0.1);
+  animation: modalPop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+
+  @keyframes modalPop {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 
   @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(100%);
     }
     to {
       opacity: 1;
@@ -4588,9 +4689,21 @@ const WelcomeModal = styled.div`
     }
   }
 
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
   @media (max-width: 480px) {
-    padding: 24px 20px 20px;
-    border-radius: 16px;
+    padding: 24px 18px 28px;
+    border-radius: 20px 20px 0 0;
+    max-height: 90vh;
+    margin-top: auto;
+    animation: slideUp 0.3s ease-out;
+    padding-bottom: env(safe-area-inset-bottom, 28px);
   }
 `;
 
@@ -4617,28 +4730,37 @@ const WelcomeClose = styled.button`
 `;
 
 const WelcomeEmoji = styled.div`
-  font-size: 34px;
+  font-size: 26px;
   text-align: center;
-  margin-bottom: 6px;
+  margin-bottom: 12px;
+  line-height: 1;
 `;
 
 const WelcomeTitle = styled.h2`
-  font-size: 19px;
-  font-weight: 700;
-  color: #111827;
+  font-size: 22px;
+  font-weight: 800;
+  color: #15161a;
   text-align: center;
   margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const WelcomeSub = styled.p`
-  font-size: 13.5px;
-  color: #6B7280;
+  font-size: 14px;
+  color: #4a4d55;
   text-align: center;
-  line-height: 1.45;
-  margin: 0 0 4px 0;
+  line-height: 1.5;
+  margin: 0 auto 14px;
+  max-width: 360px;
 
   strong {
-    color: #111827;
+    color: #15161a;
+    font-weight: 700;
   }
 `;
 
@@ -4646,71 +4768,190 @@ const WelcomeQuota = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin: 14px 0 16px;
-  font-size: 12.5px;
-  color: #6B7280;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #6b6f78;
+`;
+
+const WelcomeActivityChip = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8f7ed;
+  color: #12683c;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 100px;
+  margin-top: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+`;
+
+const WelcomePulse = styled.span`
+  width: 6px;
+  height: 6px;
+  background: #0f9d58;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(1.5);
+    }
+  }
 `;
 
 const WelcomeQuotaDots = styled.div`
   display: flex;
   gap: 5px;
+  margin-right: 4px;
 `;
 
 const WelcomeQuotaDot = styled.div`
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: ${props => props.$filled ? '#10B981' : '#E5E7EB'};
+  background: ${props => props.$filled ? '#7c3aed' : '#c4c7ce'};
   transition: background 0.2s;
 `;
 
 const WelcomeUrgency = styled.div`
-  font-size: 12.5px;
-  text-align: center;
-  color: #111827;
-  background: #F4F3FF;
+  font-size: 13px;
+  color: #4a4d55;
+  background: #f5f3ff;
   border-radius: 10px;
-  padding: 8px 12px;
-  margin-bottom: 18px;
+  padding: 10px 14px;
+  margin: 16px 0 6px;
+  line-height: 1.5;
 
   strong {
-    color: #5B4DFF;
+    color: #7c3aed;
+    font-weight: 700;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: 10px 12px;
+    margin: 12px 0 6px;
   }
 `;
 
 const WelcomeBrands = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 10px;
+  padding: 14px 0 20px;
 `;
 
 const WelcomeBrandCard = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  background: ${props => props.$pitched ? '#F0FDF4' : 'white'};
-  border-radius: 12px;
-  border: 1px solid ${props => props.$pitched ? '#BBF7D0' : '#ECECEF'};
-  margin-bottom: 10px;
-  transition: background 0.2s, border-color 0.2s;
+  background: ${props => props.$pitched ? '#F0FDF4' : '#fff'};
+  border-radius: 14px;
+  border: 1px solid ${props => props.$pitched ? '#BBF7D0' : '#e5e7eb'};
+  padding: 14px 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
-  &:last-child {
-    margin-bottom: 0;
+  &:hover {
+    border-color: ${props => props.$pitched ? '#BBF7D0' : '#7c3aed'};
+    box-shadow: ${props => props.$pitched ? 'none' : '0 4px 14px rgba(124, 58, 237, 0.08)'};
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 14px;
+    border-radius: 12px;
   }
 `;
 
+const WelcomeBrandTop = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+  }
+`;
+
+const WelcomeReplyTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e8f7ed;
+  color: #12683c;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 100px;
+  flex-shrink: 0;
+`;
+
+const WelcomeBrandFacts = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+`;
+
+const WelcomeFact = styled.li`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #2b2d33;
+  line-height: 1.35;
+
+  strong {
+    color: #15161a;
+    font-weight: 700;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    gap: 6px;
+  }
+`;
+
+const WelcomeFactCheck = styled.span`
+  width: 15px;
+  height: 15px;
+  background: #e8f7ed;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #0f9d58;
+  font-weight: 800;
+  font-size: 9px;
+`;
+
 const WelcomeBrandLogo = styled.div`
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
-  background: #F1F2F4;
+  background: linear-gradient(135deg, #f5f5f5, #e8e8e8);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  font-weight: 800;
+  font-size: 14px;
+  color: #15161a;
+  letter-spacing: -0.02em;
 
   img {
     width: 100%;
@@ -4732,41 +4973,76 @@ const WelcomeBrandInfo = styled.div`
 
 const WelcomeBrandName = styled.div`
   font-weight: 700;
-  font-size: 13.5px;
-  color: #111827;
+  font-size: 15px;
+  color: #15161a;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const WelcomeBrandMeta = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
-  margin-top: 1px;
-  font-size: 11.5px;
-  color: #6B7280;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6b6f78;
+
+  .sep {
+    opacity: 0.5;
+  }
 
   .pct {
-    color: #1AA15D;
+    color: #12683c;
     font-weight: 700;
   }
 `;
 
 const WelcomePitchBtn = styled.button`
-  background: #5B4DFF;
+  display: flex;
+  width: 100%;
+  background: #7c3aed;
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-weight: 600;
-  font-size: 13px;
+  border-radius: 10px;
+  padding: 11px;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  transition: transform 0.15s, opacity 0.15s;
-  flex-shrink: 0;
+  font-family: inherit;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: -0.01em;
+  transition: background 0.12s, transform 0.1s;
 
   &:hover {
-    opacity: 0.9;
+    background: #6d28d9;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  svg {
+    transition: transform 0.15s;
+    flex-shrink: 0;
+  }
+
+  &:hover svg {
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    font-size: 13px;
+    border-radius: 10px;
   }
 `;
 
@@ -4781,21 +5057,22 @@ const WelcomePitchedBadge = styled.div`
 `;
 
 const WelcomeFooter = styled.div`
-  margin-top: 10px;
   text-align: center;
+  padding: 6px 0;
 `;
 
 const WelcomeSkip = styled.button`
   background: none;
   border: none;
-  color: #B6B9C0;
-  font-size: 11.5px;
+  color: #6b6f78;
+  font-size: 13px;
   cursor: pointer;
   padding: 4px 8px;
   text-decoration: none;
+  font-weight: 500;
 
   &:hover {
-    color: #9CA3AF;
+    color: #4a4d55;
   }
 `;
 

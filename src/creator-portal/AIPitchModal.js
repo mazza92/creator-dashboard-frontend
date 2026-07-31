@@ -950,16 +950,6 @@ ${creatorName}`;
                       <SecondaryBtn onClick={handleCopyPitch}>
                         {copied ? 'Copied' : 'Copy pitch'}
                       </SecondaryBtn>
-                      <SecondaryBtn onClick={() => {
-                        if (brandEmail && contactRevealed) {
-                          navigator.clipboard?.writeText(brandEmail);
-                          message.success('Email copied');
-                        } else if (displayEmail) {
-                          navigator.clipboard?.writeText(brandEmail || displayEmail);
-                        }
-                      }}>
-                        Copy email
-                      </SecondaryBtn>
                     </SecondaryRow>
                   </>
                 ) : (

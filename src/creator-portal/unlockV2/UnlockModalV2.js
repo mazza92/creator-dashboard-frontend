@@ -2621,15 +2621,6 @@ const UnlockModalV2 = ({
                           Apply via form
                         </FormApplyCTA>
                       )}
-                      {brandEmail && (
-                        <GhostBtn
-                          type="button"
-                          style={{ width: '100%', padding: '0.7rem 1rem', fontSize: '0.9rem', borderRadius: 10 }}
-                          onClick={() => copyToClipboard(brandEmail, 'email')}
-                        >
-                          {copiedField === 'email' ? 'Copied' : 'Copy email'}
-                        </GhostBtn>
-                      )}
                     </>
                   )}
                   <BackButton type="button" onClick={() => setPhase(PHASE_MODAL)}>
