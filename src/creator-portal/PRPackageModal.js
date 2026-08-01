@@ -128,6 +128,12 @@ const PRPackageModal = ({
         // Paywall triggered - show upgrade modal
         setShowPaywall(true);
         setShowAnimation(false);
+      } else if ([403, 500, 503].includes(err.response?.status)) {
+        // AI service temporarily unavailable (Gemini API issues)
+        console.log('[PRPackageModal] AI service temporarily unavailable');
+        message.warning('AI service temporarily unavailable. Please try again in a few minutes.');
+        setError('AI service temporarily unavailable. Please try again shortly.');
+        setShowAnimation(false);
       } else {
         // Media kit enforcement removed - let users try the feature
         // Backend should also be updated to remove the media_kit_required check

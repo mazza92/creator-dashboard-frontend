@@ -509,6 +509,12 @@ export default function Register() {
         navigate(redirectUrl);
       }
     } catch (err) {
+      // Handle user-cancelled popup - not an error, just ignore silently
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        setGoogleLoading(false);
+        return;
+      }
+
       const msg = err.response?.data?.error || err.message || 'Google sign-in failed';
       // Check for region restriction (403 with "region" in message)
       if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {

@@ -234,6 +234,13 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
         return null;
       }
 
+      // Handle AI service errors (403, 500, 503) - Gemini API issues
+      const isAIServiceError = [403, 500, 503].includes(error.response?.status);
+      if (isAIServiceError) {
+        console.log('[AIPitchModal] AI service temporarily unavailable, using template');
+        message.info('Using personalized template (AI temporarily unavailable)');
+      }
+
       // AI endpoint not ready - use the Golden Template with real data
       const fallbackPitch = isFollowup
         ? generateFollowupTemplate(brand, profile)

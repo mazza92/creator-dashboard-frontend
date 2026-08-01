@@ -1960,6 +1960,11 @@ const UnlockModalV2 = ({
 
       if (err.response?.status === 402) {
         setError('paywall');
+      } else if ([403, 500, 503].includes(err.response?.status)) {
+        // AI service temporarily unavailable (Gemini API issues)
+        console.log('[UnlockModalV2] AI service temporarily unavailable');
+        message.warning('AI service temporarily unavailable. Please try again shortly.');
+        setError('AI service temporarily unavailable. Please try again in a few minutes.');
       } else {
         setError(err.response?.data?.error || 'Failed to generate package');
       }

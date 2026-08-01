@@ -618,7 +618,15 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
       console.log('🔄 Navigating to:', redirectUrl);
       navigate(redirectUrl, { replace: true });
     } catch (err) {
+      // Handle user-cancelled popup - not an error, just ignore silently
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        console.log('ℹ️ Google Sign-In cancelled by user');
+        setGoogleLoading(false);
+        return;
+      }
+
       console.error('❌ Google Sign-In error:', {
+        code: err.code,
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
