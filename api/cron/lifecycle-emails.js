@@ -3,10 +3,12 @@
  *
  * Runs hourly to send lifecycle emails based on creator state.
  * Protected by CRON_SECRET environment variable.
+ *
+ * @version 1.0.1
  */
 
-import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
 
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -459,7 +461,7 @@ async function processReengagement() {
   return sent;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Verify cron secret
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${CRON_SECRET}`) {
