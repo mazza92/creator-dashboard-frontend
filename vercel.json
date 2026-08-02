@@ -1,7 +1,17 @@
 {
   "buildCommand": "npm run build",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src/ public/ package.json",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src/ public/ package.json api/",
+  "crons": [
+    {
+      "path": "/api/cron/lifecycle-emails",
+      "schedule": "0 * * * *"
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/api/cron/:path*",
+      "destination": "/api/cron/:path*"
+    },
     {
       "source": "/api/:path*",
       "destination": "https://api.newcollab.co/:path*"
