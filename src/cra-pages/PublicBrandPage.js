@@ -9,7 +9,7 @@ import { FiInstagram } from 'react-icons/fi';
 import { UserContext } from '../contexts/UserContext';
 import { getRuntimeApiUrl } from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
-import AIPitchModal from '../creator-portal/AIPitchModal';
+import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import BrandLogo from '../components/BrandLogo';
 import { formatFollowers } from '../utils/format';
 import { resolveBrandStats } from '../utils/brandStats';
@@ -32,7 +32,7 @@ const PublicBrandPage = () => {
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
   const [subscriptionTier, setSubscriptionTier] = useState('free');
   const [pitchesSentThisMonth, setPitchesSentThisMonth] = useState(0);
-  const [showPitchModal, setShowPitchModal] = useState(false);
+  const [pitchingBrand, setPitchingBrand] = useState(null);
   const [hasPitched, setHasPitched] = useState(false);
   const [relatedBrands, setRelatedBrands] = useState([]);
 
@@ -158,17 +158,22 @@ const PublicBrandPage = () => {
       return;
     }
     if (hasPitched) return;
-    if (isLocked || atLimit) {
-      setUpgradeModalVisible(true);
-      return;
-    }
-    setShowPitchModal(true);
+    // UnlockModalV2 handles upgrade prompts internally, so we can open it directly
+    setPitchingBrand({
+      ...brand,
+      brand_id: brand.id,
+      brand_name: brand.brand_name || brand.name,
+      logo_url: brand.logo,
+      slug: slug
+    });
   };
 
-  const handlePitchSent = () => {
+  const handlePitchSent = (brand, ctx) => {
     setPitchesSentThisMonth(prev => prev + 1);
     setHasPitched(true);
-    setShowPitchModal(false);
+    if (!ctx?.stayOpen) {
+      setPitchingBrand(null);
+    }
     message.success('Pitch sent successfully!');
   };
 
@@ -566,19 +571,17 @@ const PublicBrandPage = () => {
         </PageInner>
       </PageWrap>
 
-      {/* AI Pitch Modal */}
-      {showPitchModal && brand && (
-        <AIPitchModal
-          isOpen={showPitchModal}
-          onClose={() => setShowPitchModal(false)}
-          brand={{
-            ...brand,
-            brand_id: brand.id,
-            brand_name: brand.brand_name || brand.name,
-            logo_url: brand.logo,
-            slug: slug
+      {/* Unlock Modal V2 - Same as For You / Discover */}
+      {pitchingBrand && (
+        <UnlockModalV2
+          isOpen={!!pitchingBrand}
+          onClose={() => {
+            setPitchingBrand(null);
+            fetchSubscriptionStatus();
           }}
+          brand={pitchingBrand}
           onPitchSent={handlePitchSent}
+          isPro={isPro}
         />
       )}
 
