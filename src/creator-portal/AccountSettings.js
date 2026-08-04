@@ -265,7 +265,7 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited brand saves
                 </Feature>
                 <Feature>
-                  <FiCheck /> 5 PR Packages per month
+                  <FiCheck /> 3 PR Packages per month
                 </Feature>
                 <Feature>
                   <FiCheck /> Full brand directory access

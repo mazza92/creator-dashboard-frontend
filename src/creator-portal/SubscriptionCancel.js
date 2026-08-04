@@ -28,7 +28,7 @@ const SubscriptionCancel = () => {
           <InfoTitle>Your Free Tier Includes:</InfoTitle>
           <Features>
             <Feature>✓ Save up to 5 brands</Feature>
-            <Feature>✓ Get up to 5 PR Packages per month</Feature>
+            <Feature>✓ Get up to 3 PR Packages per month</Feature>
             <Feature>✓ Access to basic brand directory</Feature>
           </Features>
         </FreeTierInfo>
