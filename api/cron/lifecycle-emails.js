@@ -14,8 +14,8 @@ const FROM_NAME = 'Your Newcollab Manager';
 const LOGO_URL = 'https://app.newcollab.co/newcollab-logo-dark.png';
 const CRON_SECRET = process.env.CRON_SECRET;
 const MAX_EMAILS_PER_DAY = 2;
-const BATCH_SIZE = 200; // Increased from 50 to process more users per cron run
-const DELAY_BETWEEN_EMAILS = 100; // Reduced delay for faster processing
+const BATCH_SIZE = 50; // Reduced to avoid Gmail rate limits
+const DELAY_BETWEEN_EMAILS = 2000; // 2 seconds between emails to avoid Gmail rate limiting
 
 export const config = {
   maxDuration: 300, // 5 minutes max for Vercel Pro
