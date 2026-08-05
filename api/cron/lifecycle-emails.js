@@ -359,8 +359,8 @@ async function processEducationSeries() {
       await supabase.from('lifecycle_email_sends').insert({
         creator_id: user.id,
         template_slug: templateSlug,
-        to_email: email,
-        subject: template.subject,
+        email_address: email,
+        subject_rendered: template.subject,
         status: 'sent',
         sent_at: new Date().toISOString()
       });
@@ -438,8 +438,8 @@ async function processMaximizerSeries() {
       await supabase.from('lifecycle_email_sends').insert({
         creator_id: user.id,
         template_slug: templateSlug,
-        to_email: email,
-        subject: subject,
+        email_address: email,
+        subject_rendered: subject,
         status: 'sent',
         sent_at: new Date().toISOString()
       });
@@ -520,8 +520,8 @@ async function processReengagement() {
       await supabase.from('lifecycle_email_sends').insert({
         creator_id: user.id,
         template_slug: templateSlug,
-        to_email: email,
-        subject: subject,
+        email_address: email,
+        subject_rendered: subject,
         status: 'sent',
         sent_at: new Date().toISOString()
       });
