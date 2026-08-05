@@ -277,11 +277,13 @@ async function processEducationSeries() {
   const EDUCATION_DAY_MAX = 30; // Allow backfill up to day 30
 
   // Target both 'new' and 'explorer' states (per strategy brief)
+  // Order by education_series_position ASC NULLS FIRST to prioritize users who haven't started
   const { data: users, error } = await supabase
     .from('creators')
     .select('id, user_id, username, education_series_position, lifecycle_emails_sent_today, created_at, last_education_email_at, subscription_tier, pitches_sent_total, daily_unlocks_used, lifecycle_state')
     .in('lifecycle_state', ['new', 'explorer', 'engaged'])
     .or('education_series_position.is.null,education_series_position.lt.5')
+    .order('education_series_position', { ascending: true, nullsFirst: true })
     .limit(BATCH_SIZE);
 
   console.log(`[EDU] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
@@ -384,6 +386,7 @@ async function processMaximizerSeries() {
     .select('id, user_id, username, lifecycle_emails_sent_today, maximizer_series_position, maximizer_series_started_at, subscription_tier')
     .eq('lifecycle_state', 'maximizer')
     .or('maximizer_series_position.is.null,maximizer_series_position.lt.3')
+    .order('maximizer_series_position', { ascending: true, nullsFirst: true })
     .limit(BATCH_SIZE);
 
   console.log(`[MAX] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
@@ -484,6 +487,7 @@ async function processReengagement() {
     .select('id, user_id, username, lifecycle_emails_sent_today, reengagement_series_position, reengagement_series_started_at, lifecycle_state_updated_at, pitches_sent_total, created_at')
     .eq('lifecycle_state', 'dormant')
     .or('reengagement_series_position.is.null,reengagement_series_position.lt.2')
+    .order('reengagement_series_position', { ascending: true, nullsFirst: true })
     .limit(BATCH_SIZE);
 
   console.log(`[REENG] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
