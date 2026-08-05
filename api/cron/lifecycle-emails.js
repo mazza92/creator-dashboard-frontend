@@ -9,13 +9,15 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const FROM_NAME = 'Your Newcollab Manager';
+const FROM_EMAIL = 'manager@newcollab.co';
 const LOGO_URL = 'https://app.newcollab.co/newcollab-logo-dark.png';
 const CRON_SECRET = process.env.CRON_SECRET;
 const MAX_EMAILS_PER_DAY = 2;
-const BATCH_SIZE = 50; // Reduced to avoid Gmail rate limits
-const DELAY_BETWEEN_EMAILS = 2000; // 2 seconds between emails to avoid Gmail rate limiting
+const BATCH_SIZE = 50;
+const DELAY_BETWEEN_EMAILS = 100; // Resend handles rate limiting, minimal delay needed
 
 export const config = {
   maxDuration: 300, // 5 minutes max for Vercel Pro
@@ -23,7 +25,8 @@ export const config = {
 
 // Lazy-initialized clients (created on first request to ensure env vars are loaded)
 let supabase = null;
-let transporter = null;
+let resendClient = null;
+let nodemailerTransporter = null;
 
 function getSupabase() {
   if (!supabase) {
@@ -37,18 +40,25 @@ function getSupabase() {
   return supabase;
 }
 
-function getTransporter() {
-  if (!transporter) {
+function getResend() {
+  if (!resendClient && process.env.RESEND_API_KEY) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
+
+function getNodemailer() {
+  if (!nodemailerTransporter) {
     const user = process.env.SMTP_USER || process.env.GMAIL_USER;
     const pass = process.env.SMTP_PASSWORD || process.env.GMAIL_PASSWORD;
     if (user && pass) {
-      transporter = nodemailer.createTransport({
+      nodemailerTransporter = nodemailer.createTransport({
         service: 'gmail',
         auth: { user, pass }
       });
     }
   }
-  return transporter;
+  return nodemailerTransporter;
 }
 
 function generateEmailHtml({ bodyText, primaryCta, preheader = '', utmCampaign = 'lifecycle' }) {
@@ -267,8 +277,29 @@ const TEMPLATES = {
 };
 
 async function sendEmail(to, subject, html) {
-  const mailer = getTransporter();
-  if (!mailer) return false;
+  // Try Resend first (preferred - no rate limits)
+  const resend = getResend();
+  if (resend) {
+    try {
+      await resend.emails.send({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to,
+        subject,
+        html
+      });
+      return true;
+    } catch (error) {
+      console.error(`Resend error for ${to}:`, error.message);
+      return false;
+    }
+  }
+
+  // Fallback to nodemailer/Gmail
+  const mailer = getNodemailer();
+  if (!mailer) {
+    console.error('No email provider configured (need RESEND_API_KEY or SMTP credentials)');
+    return false;
+  }
   try {
     const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER;
     await mailer.sendMail({
