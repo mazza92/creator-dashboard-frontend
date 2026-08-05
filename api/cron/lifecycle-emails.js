@@ -536,9 +536,12 @@ async function processReengagement() {
 }
 
 module.exports = async function handler(req, res) {
-  // Verify cron secret
+  // Verify cron secret - accept both Vercel internal cron and manual triggers
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+  const isVercelCron = req.headers['x-vercel-cron'] === '1' || req.headers['user-agent']?.includes('vercel-cron');
+
+  if (!isVercelCron && authHeader !== `Bearer ${CRON_SECRET}`) {
+    console.log('[AUTH] Rejected - not Vercel cron and invalid token');
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
