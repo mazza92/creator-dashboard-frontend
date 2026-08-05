@@ -12,6 +12,7 @@ const nodemailer = require('nodemailer');
 
 const FROM_NAME = 'Your Newcollab Manager';
 const LOGO_URL = 'https://app.newcollab.co/newcollab-logo-dark.png';
+const CRON_SECRET = process.env.CRON_SECRET;
 const MAX_EMAILS_PER_DAY = 2;
 const BATCH_SIZE = 200; // Increased from 50 to process more users per cron run
 const DELAY_BETWEEN_EMAILS = 100; // Reduced delay for faster processing
