@@ -10,14 +10,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const nodemailer = require('nodemailer');
 
-const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SMTP_USER = process.env.SMTP_USER || process.env.GMAIL_USER;
-const SMTP_PASSWORD = process.env.SMTP_PASSWORD || process.env.GMAIL_PASSWORD;
 const FROM_NAME = 'Your Newcollab Manager';
-const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
-const CRON_SECRET = process.env.CRON_SECRET;
-
 const LOGO_URL = 'https://app.newcollab.co/newcollab-logo-dark.png';
 const MAX_EMAILS_PER_DAY = 2;
 const BATCH_SIZE = 200; // Increased from 50 to process more users per cron run
@@ -27,15 +20,34 @@ export const config = {
   maxDuration: 300, // 5 minutes max for Vercel Pro
 };
 
-// Initialize clients
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// Lazy-initialized clients (created on first request to ensure env vars are loaded)
+let supabase = null;
 let transporter = null;
 
-if (SMTP_USER && SMTP_PASSWORD) {
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: SMTP_USER, pass: SMTP_PASSWORD }
-  });
+function getSupabase() {
+  if (!supabase) {
+    const url = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) {
+      throw new Error(`Missing Supabase config: url=${!!url}, key=${!!key}`);
+    }
+    supabase = createClient(url, key);
+  }
+  return supabase;
+}
+
+function getTransporter() {
+  if (!transporter) {
+    const user = process.env.SMTP_USER || process.env.GMAIL_USER;
+    const pass = process.env.SMTP_PASSWORD || process.env.GMAIL_PASSWORD;
+    if (user && pass) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass }
+      });
+    }
+  }
+  return transporter;
 }
 
 function generateEmailHtml({ bodyText, primaryCta, preheader = '', utmCampaign = 'lifecycle' }) {
@@ -254,10 +266,12 @@ const TEMPLATES = {
 };
 
 async function sendEmail(to, subject, html) {
-  if (!transporter) return false;
+  const mailer = getTransporter();
+  if (!mailer) return false;
   try {
-    await transporter.sendMail({
-      from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+    const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER;
+    await mailer.sendMail({
+      from: `"${FROM_NAME}" <${fromEmail}>`,
       to, subject, html
     });
     return true;
@@ -268,7 +282,7 @@ async function sendEmail(to, subject, html) {
 }
 
 async function getUserEmail(userId) {
-  const { data } = await supabase.from('users').select('email').eq('id', userId).single();
+  const { data } = await getSupabase().from('users').select('email').eq('id', userId).single();
   return data?.email || null;
 }
 
@@ -278,7 +292,7 @@ async function processEducationSeries() {
 
   // Target both 'new' and 'explorer' states (per strategy brief)
   // Order by education_series_position ASC NULLS FIRST to prioritize users who haven't started
-  const { data: users, error } = await supabase
+  const { data: users, error } = await getSupabase()
     .from('creators')
     .select('id, user_id, username, education_series_position, lifecycle_emails_sent_today, created_at, last_education_email_at, subscription_tier, pitches_sent_total, daily_unlocks_used, lifecycle_state')
     .in('lifecycle_state', ['new', 'explorer', 'engaged'])
@@ -352,7 +366,7 @@ async function processEducationSeries() {
     const templateSlug = `edu_${['5reasons', '60sec', 'pitch', 'followup', 'edge'][position]}`;
     if (success) {
       // Update creator record
-      await supabase.from('creators').update({
+      await getSupabase().from('creators').update({
         education_series_position: position + 1,
         last_education_email_at: new Date().toISOString(),
         lifecycle_emails_sent_today: (user.lifecycle_emails_sent_today || 0) + 1,
@@ -361,7 +375,7 @@ async function processEducationSeries() {
       }).eq('id', user.id);
 
       // Log to lifecycle_email_sends for tracking/stats
-      await supabase.from('lifecycle_email_sends').insert({
+      await getSupabase().from('lifecycle_email_sends').insert({
         creator_id: user.id,
         template_slug: templateSlug,
         email_address: email,
@@ -381,7 +395,7 @@ async function processEducationSeries() {
 }
 
 async function processMaximizerSeries() {
-  const { data: users, error } = await supabase
+  const { data: users, error } = await getSupabase()
     .from('creators')
     .select('id, user_id, username, lifecycle_emails_sent_today, maximizer_series_position, maximizer_series_started_at, subscription_tier')
     .eq('lifecycle_state', 'maximizer')
@@ -459,10 +473,10 @@ async function processMaximizerSeries() {
         last_any_email_sent: new Date().toISOString()
       };
       if (position === 0) updateData.maximizer_series_started_at = new Date().toISOString();
-      await supabase.from('creators').update(updateData).eq('id', user.id);
+      await getSupabase().from('creators').update(updateData).eq('id', user.id);
 
       // Log to lifecycle_email_sends for tracking/stats
-      await supabase.from('lifecycle_email_sends').insert({
+      await getSupabase().from('lifecycle_email_sends').insert({
         creator_id: user.id,
         template_slug: templateSlug,
         email_address: email,
@@ -482,7 +496,7 @@ async function processMaximizerSeries() {
 }
 
 async function processReengagement() {
-  const { data: users, error } = await supabase
+  const { data: users, error } = await getSupabase()
     .from('creators')
     .select('id, user_id, username, lifecycle_emails_sent_today, reengagement_series_position, reengagement_series_started_at, lifecycle_state_updated_at, pitches_sent_total, created_at')
     .eq('lifecycle_state', 'dormant')
@@ -564,10 +578,10 @@ async function processReengagement() {
         last_any_email_sent: new Date().toISOString()
       };
       if (position === 0) updateData.reengagement_series_started_at = new Date().toISOString();
-      await supabase.from('creators').update(updateData).eq('id', user.id);
+      await getSupabase().from('creators').update(updateData).eq('id', user.id);
 
       // Log to lifecycle_email_sends for tracking/stats
-      await supabase.from('lifecycle_email_sends').insert({
+      await getSupabase().from('lifecycle_email_sends').insert({
         creator_id: user.id,
         template_slug: templateSlug,
         email_address: email,
@@ -601,7 +615,7 @@ module.exports = async function handler(req, res) {
   try {
     // Reset daily counters
     const today = new Date().toISOString().split('T')[0];
-    await supabase
+    await getSupabase()
       .from('creators')
       .update({ lifecycle_emails_sent_today: 0 })
       .or(`lifecycle_last_email_date.is.null,lifecycle_last_email_date.neq.${today}`);
