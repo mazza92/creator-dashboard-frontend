@@ -277,21 +277,32 @@ async function processEducationSeries() {
   const EDUCATION_DAY_MAX = 30; // Allow backfill up to day 30
 
   // Target both 'new' and 'explorer' states (per strategy brief)
-  const { data: users } = await supabase
+  const { data: users, error } = await supabase
     .from('creators')
     .select('id, user_id, username, education_series_position, lifecycle_emails_sent_today, created_at, last_education_email_at, subscription_tier, pitches_sent_total, daily_unlocks_used, lifecycle_state')
     .in('lifecycle_state', ['new', 'explorer', 'engaged'])
     .or('education_series_position.is.null,education_series_position.lt.5')
-    .or('lifecycle_emails_sent_today.is.null,lifecycle_emails_sent_today.lt.2')
     .limit(BATCH_SIZE);
 
+  console.log(`[EDU] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
   if (!users?.length) return 0;
 
   const now = new Date();
   let sent = 0;
+  let skipped = { pro: 0, daily_limit: 0, day_early: 0, day_late: 0, cooldown: 0, no_email: 0, no_template: 0 };
 
   for (const user of users) {
-    if (user.subscription_tier === 'pro' || user.subscription_tier === 'premium') continue;
+    if (user.subscription_tier === 'pro' || user.subscription_tier === 'premium') {
+      skipped.pro++;
+      continue;
+    }
+
+    // Daily throttle check (moved from query to ensure proper null handling)
+    const emailsToday = user.lifecycle_emails_sent_today || 0;
+    if (emailsToday >= MAX_EMAILS_PER_DAY) {
+      skipped.daily_limit++;
+      continue;
+    }
 
     const position = user.education_series_position || 0;
 
@@ -301,19 +312,34 @@ async function processEducationSeries() {
     const targetDay = EDUCATION_DAY_TRIGGERS[position];
 
     // Check day window: must be at or past target day, and not past max backfill
-    if (daysSinceSignup < targetDay) continue;
-    if (daysSinceSignup > EDUCATION_DAY_MAX && user.lifecycle_state !== 'new') continue;
+    if (daysSinceSignup < targetDay) {
+      skipped.day_early++;
+      continue;
+    }
+    if (daysSinceSignup > EDUCATION_DAY_MAX && user.lifecycle_state !== 'new') {
+      skipped.day_late++;
+      continue;
+    }
 
     if (position > 0 && user.last_education_email_at) {
       const daysSinceLastEmail = Math.floor((now - new Date(user.last_education_email_at)) / (1000 * 60 * 60 * 24));
-      if (daysSinceLastEmail < 3) continue;
+      if (daysSinceLastEmail < 3) {
+        skipped.cooldown++;
+        continue;
+      }
     }
 
     const email = await getUserEmail(user.user_id);
-    if (!email) continue;
+    if (!email) {
+      skipped.no_email++;
+      continue;
+    }
 
     const template = TEMPLATES[`education_${position + 1}`];
-    if (!template) continue;
+    if (!template) {
+      skipped.no_template++;
+      continue;
+    }
 
     const firstName = user.username || 'there';
     const success = await sendEmail(email, template.subject, template.getHtml(firstName));
@@ -332,6 +358,7 @@ async function processEducationSeries() {
     await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
   }
 
+  console.log(`[EDU] Sent: ${sent}, Skipped: ${JSON.stringify(skipped)}`);
   return sent;
 }
 
