@@ -311,12 +311,15 @@ async function processEducationSeries() {
     const daysSinceSignup = Math.floor((now - new Date(user.created_at)) / (1000 * 60 * 60 * 24));
     const targetDay = EDUCATION_DAY_TRIGGERS[position];
 
-    // Check day window: must be at or past target day, and not past max backfill
+    // Check day window: must be at or past target day
     if (daysSinceSignup < targetDay) {
       skipped.day_early++;
       continue;
     }
-    if (daysSinceSignup > EDUCATION_DAY_MAX && user.lifecycle_state !== 'new') {
+    // For users who never received any education email (position 0), allow unlimited backfill
+    // This catches existing users who signed up before lifecycle system was implemented
+    // For subsequent emails (position > 0), apply the 30-day limit to avoid overwhelming old users
+    if (position > 0 && daysSinceSignup > EDUCATION_DAY_MAX && user.lifecycle_state !== 'new') {
       skipped.day_late++;
       continue;
     }
