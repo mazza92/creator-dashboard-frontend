@@ -376,14 +376,14 @@ async function processEducationSeries() {
 }
 
 async function processMaximizerSeries() {
-  const { data: users } = await supabase
+  const { data: users, error } = await supabase
     .from('creators')
     .select('id, user_id, username, lifecycle_emails_sent_today, maximizer_series_position, maximizer_series_started_at, subscription_tier')
     .eq('lifecycle_state', 'maximizer')
-    .lt('lifecycle_emails_sent_today', MAX_EMAILS_PER_DAY)
     .or('maximizer_series_position.is.null,maximizer_series_position.lt.3')
     .limit(BATCH_SIZE);
 
+  console.log(`[MAX] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
   if (!users?.length) return 0;
 
   const now = new Date();
@@ -393,19 +393,40 @@ async function processMaximizerSeries() {
   const currentMonth = now.toLocaleDateString('en-US', { month: 'long' });
 
   let sent = 0;
+  let skipped = { pro: 0, daily_limit: 0, cooldown: 0, no_email: 0 };
+
   for (const user of users) {
-    if (user.subscription_tier === 'pro' || user.subscription_tier === 'premium') continue;
+    if (user.subscription_tier === 'pro' || user.subscription_tier === 'premium') {
+      skipped.pro++;
+      continue;
+    }
+
+    // Daily throttle check
+    const emailsToday = user.lifecycle_emails_sent_today || 0;
+    if (emailsToday >= MAX_EMAILS_PER_DAY) {
+      skipped.daily_limit++;
+      continue;
+    }
 
     const position = user.maximizer_series_position || 0;
 
     if (position > 0 && user.maximizer_series_started_at) {
       const hoursSinceStart = (now - new Date(user.maximizer_series_started_at)) / (1000 * 60 * 60);
-      if (position === 1 && hoursSinceStart < 48) continue;
-      if (position === 2 && hoursSinceStart < 168) continue;
+      if (position === 1 && hoursSinceStart < 48) {
+        skipped.cooldown++;
+        continue;
+      }
+      if (position === 2 && hoursSinceStart < 168) {
+        skipped.cooldown++;
+        continue;
+      }
     }
 
     const email = await getUserEmail(user.user_id);
-    if (!email) continue;
+    if (!email) {
+      skipped.no_email++;
+      continue;
+    }
 
     const firstName = user.username || 'there';
     let subject, html;
@@ -450,18 +471,19 @@ async function processMaximizerSeries() {
     await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
   }
 
+  console.log(`[MAX] Sent: ${sent}, Skipped: ${JSON.stringify(skipped)}`);
   return sent;
 }
 
 async function processReengagement() {
-  const { data: users } = await supabase
+  const { data: users, error } = await supabase
     .from('creators')
     .select('id, user_id, username, lifecycle_emails_sent_today, reengagement_series_position, reengagement_series_started_at, lifecycle_state_updated_at, pitches_sent_total, created_at')
     .eq('lifecycle_state', 'dormant')
-    .or('lifecycle_emails_sent_today.is.null,lifecycle_emails_sent_today.lt.2')
     .or('reengagement_series_position.is.null,reengagement_series_position.lt.2')
     .limit(BATCH_SIZE);
 
+  console.log(`[REENG] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
   if (!users?.length) return 0;
 
   const now = new Date();
@@ -470,7 +492,16 @@ async function processReengagement() {
   const newBrandsCount = Math.floor(Math.random() * 10) + 10;
 
   let sent = 0;
+  let skipped = { daily_limit: 0, not_dormant_long: 0, cooldown: 0, no_email: 0 };
+
   for (const user of users) {
+    // Daily throttle check
+    const emailsToday = user.lifecycle_emails_sent_today || 0;
+    if (emailsToday >= MAX_EMAILS_PER_DAY) {
+      skipped.daily_limit++;
+      continue;
+    }
+
     const position = user.reengagement_series_position || 0;
     // Use lifecycle_state_updated_at if available, else estimate from created_at + 14 days
     const dormantSince = user.lifecycle_state_updated_at
@@ -479,18 +510,30 @@ async function processReengagement() {
 
     const daysDormant = Math.floor((now - dormantSince) / (1000 * 60 * 60 * 24));
 
-    // Email 19: dormant 14+ days (pitches_sent_total requirement per strategy brief)
-    if (position === 0 && daysDormant < 14) continue;
+    // Email 19: dormant 14+ days
+    if (position === 0 && daysDormant < 14) {
+      skipped.not_dormant_long++;
+      continue;
+    }
     if (position === 1) {
-      if (daysDormant < 21) continue;
+      if (daysDormant < 21) {
+        skipped.not_dormant_long++;
+        continue;
+      }
       if (user.reengagement_series_started_at) {
         const daysSinceEmail19 = Math.floor((now - new Date(user.reengagement_series_started_at)) / (1000 * 60 * 60 * 24));
-        if (daysSinceEmail19 < 7) continue;
+        if (daysSinceEmail19 < 7) {
+          skipped.cooldown++;
+          continue;
+        }
       }
     }
 
     const email = await getUserEmail(user.user_id);
-    if (!email) continue;
+    if (!email) {
+      skipped.no_email++;
+      continue;
+    }
 
     const firstName = user.username || 'there';
     let subject, html;
@@ -532,6 +575,7 @@ async function processReengagement() {
     await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
   }
 
+  console.log(`[REENG] Sent: ${sent}, Skipped: ${JSON.stringify(skipped)}`);
   return sent;
 }
 
