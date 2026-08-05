@@ -20,8 +20,8 @@ const CRON_SECRET = process.env.CRON_SECRET;
 
 const LOGO_URL = 'https://app.newcollab.co/newcollab-logo-dark.png';
 const MAX_EMAILS_PER_DAY = 2;
-const BATCH_SIZE = 50;
-const DELAY_BETWEEN_EMAILS = 200;
+const BATCH_SIZE = 200; // Increased from 50 to process more users per cron run
+const DELAY_BETWEEN_EMAILS = 100; // Reduced delay for faster processing
 
 export const config = {
   maxDuration: 300, // 5 minutes max for Vercel Pro
