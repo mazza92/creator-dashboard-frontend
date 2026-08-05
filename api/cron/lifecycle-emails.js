@@ -344,7 +344,9 @@ async function processEducationSeries() {
     const firstName = user.username || 'there';
     const success = await sendEmail(email, template.subject, template.getHtml(firstName));
 
+    const templateSlug = `edu_${['5reasons', '60sec', 'pitch', 'followup', 'edge'][position]}`;
     if (success) {
+      // Update creator record
       await supabase.from('creators').update({
         education_series_position: position + 1,
         last_education_email_at: new Date().toISOString(),
@@ -352,6 +354,17 @@ async function processEducationSeries() {
         lifecycle_last_email_date: new Date().toISOString().split('T')[0],
         last_any_email_sent: new Date().toISOString()
       }).eq('id', user.id);
+
+      // Log to lifecycle_email_sends for tracking/stats
+      await supabase.from('lifecycle_email_sends').insert({
+        creator_id: user.id,
+        template_slug: templateSlug,
+        to_email: email,
+        subject: template.subject,
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      });
+
       sent++;
     }
 
@@ -408,6 +421,7 @@ async function processMaximizerSeries() {
       html = TEMPLATES.maximizer_3.getHtml(firstName, daysUntilReset);
     }
 
+    const templateSlug = ['max_quota_hit', 'max_3things', 'max_30day'][position];
     const success = await sendEmail(email, subject, html);
 
     if (success) {
@@ -419,6 +433,17 @@ async function processMaximizerSeries() {
       };
       if (position === 0) updateData.maximizer_series_started_at = new Date().toISOString();
       await supabase.from('creators').update(updateData).eq('id', user.id);
+
+      // Log to lifecycle_email_sends for tracking/stats
+      await supabase.from('lifecycle_email_sends').insert({
+        creator_id: user.id,
+        template_slug: templateSlug,
+        to_email: email,
+        subject: subject,
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      });
+
       sent++;
     }
 
@@ -478,6 +503,7 @@ async function processReengagement() {
       html = TEMPLATES.reengagement_2.getHtml(firstName, newBrandsCount);
     }
 
+    const templateSlug = position === 0 ? 'reengagement_new' : 'reengagement_soft';
     const success = await sendEmail(email, subject, html);
 
     if (success) {
@@ -489,6 +515,17 @@ async function processReengagement() {
       };
       if (position === 0) updateData.reengagement_series_started_at = new Date().toISOString();
       await supabase.from('creators').update(updateData).eq('id', user.id);
+
+      // Log to lifecycle_email_sends for tracking/stats
+      await supabase.from('lifecycle_email_sends').insert({
+        creator_id: user.id,
+        template_slug: templateSlug,
+        to_email: email,
+        subject: subject,
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      });
+
       sent++;
     }
 
