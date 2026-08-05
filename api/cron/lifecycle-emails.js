@@ -274,10 +274,13 @@ async function getUserEmail(userId) {
 
 async function processEducationSeries() {
   const EDUCATION_DAY_TRIGGERS = [5, 8, 12, 16, 20];
+  const EDUCATION_DAY_MAX = 30; // Allow backfill up to day 30
+
+  // Target both 'new' and 'explorer' states (per strategy brief)
   const { data: users } = await supabase
     .from('creators')
-    .select('id, user_id, username, education_series_position, lifecycle_emails_sent_today, created_at, last_education_email_at, subscription_tier, pitches_sent_total, daily_unlocks_used')
-    .eq('lifecycle_state', 'new')
+    .select('id, user_id, username, education_series_position, lifecycle_emails_sent_today, created_at, last_education_email_at, subscription_tier, pitches_sent_total, daily_unlocks_used, lifecycle_state')
+    .in('lifecycle_state', ['new', 'explorer', 'engaged'])
     .or('education_series_position.is.null,education_series_position.lt.5')
     .or('lifecycle_emails_sent_today.is.null,lifecycle_emails_sent_today.lt.2')
     .limit(BATCH_SIZE);
@@ -291,11 +294,15 @@ async function processEducationSeries() {
     if (user.subscription_tier === 'pro' || user.subscription_tier === 'premium') continue;
 
     const position = user.education_series_position || 0;
-    const hasActivity = (user.pitches_sent_total >= 1) || (user.daily_unlocks_used >= 1);
-    if (position === 0 && !hasActivity) continue;
 
+    // For 'new' state, start education series on day 5 without requiring activity
+    // For explorers/engaged (who have activity), allow backfill
     const daysSinceSignup = Math.floor((now - new Date(user.created_at)) / (1000 * 60 * 60 * 24));
-    if (daysSinceSignup < EDUCATION_DAY_TRIGGERS[position]) continue;
+    const targetDay = EDUCATION_DAY_TRIGGERS[position];
+
+    // Check day window: must be at or past target day, and not past max backfill
+    if (daysSinceSignup < targetDay) continue;
+    if (daysSinceSignup > EDUCATION_DAY_MAX && user.lifecycle_state !== 'new') continue;
 
     if (position > 0 && user.last_education_email_at) {
       const daysSinceLastEmail = Math.floor((now - new Date(user.last_education_email_at)) / (1000 * 60 * 60 * 24));
@@ -397,7 +404,7 @@ async function processMaximizerSeries() {
 async function processReengagement() {
   const { data: users } = await supabase
     .from('creators')
-    .select('id, user_id, username, lifecycle_emails_sent_today, reengagement_series_position, reengagement_series_started_at, lifecycle_state_updated_at, pitches_sent_total')
+    .select('id, user_id, username, lifecycle_emails_sent_today, reengagement_series_position, reengagement_series_started_at, lifecycle_state_updated_at, pitches_sent_total, created_at')
     .eq('lifecycle_state', 'dormant')
     .or('lifecycle_emails_sent_today.is.null,lifecycle_emails_sent_today.lt.2')
     .or('reengagement_series_position.is.null,reengagement_series_position.lt.2')
@@ -413,12 +420,15 @@ async function processReengagement() {
   let sent = 0;
   for (const user of users) {
     const position = user.reengagement_series_position || 0;
-    const dormantSince = user.lifecycle_state_updated_at ? new Date(user.lifecycle_state_updated_at) : null;
-    if (!dormantSince) continue;
+    // Use lifecycle_state_updated_at if available, else estimate from created_at + 14 days
+    const dormantSince = user.lifecycle_state_updated_at
+      ? new Date(user.lifecycle_state_updated_at)
+      : new Date(new Date(user.created_at).getTime() + 14 * 24 * 60 * 60 * 1000);
 
     const daysDormant = Math.floor((now - dormantSince) / (1000 * 60 * 60 * 24));
 
-    if (position === 0 && (daysDormant < 14 || !user.pitches_sent_total)) continue;
+    // Email 19: dormant 14+ days (pitches_sent_total requirement per strategy brief)
+    if (position === 0 && daysDormant < 14) continue;
     if (position === 1) {
       if (daysDormant < 21) continue;
       if (user.reengagement_series_started_at) {
