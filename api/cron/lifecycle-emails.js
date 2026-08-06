@@ -273,6 +273,102 @@ const TEMPLATES = {
       primaryCta: { label: "See what's new", url: "https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=lifecycle&utm_campaign=reengagement_soft" },
       utmCampaign: 'reengagement_soft'
     })
+  },
+  doubter_1: {
+    subject: "a story you'll want to read",
+    getHtml: (firstName) => generateEmailHtml({
+      bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
+<p style="margin:0 0 20px 0;">I want to tell you about Sarah.</p>
+<p style="margin:0 0 20px 0;">She joined Newcollab 6 weeks ago with 340 followers. She's a nursing student who posts skincare content between shifts.</p>
+<p style="margin:0 0 20px 0;">Her first 3 pitches got 0 replies. She almost quit.</p>
+<p style="margin:0 0 20px 0;">On pitch 4 — she used the follow-up sequence I laid out in your plan — she got a reply from a small clean-beauty brand offering to send her their new serum.</p>
+<p style="margin:0 0 20px 0;">Pitch 5: another yes. Pitch 6: no reply. Pitch 7: yes.</p>
+<p style="margin:0 0 20px 0;">By pitch 10, she had 4 brand replies, 2 free PR boxes, and 1 conversation about a paid post.</p>
+<p style="margin:0 0 20px 0;"><strong>She has 340 followers.</strong></p>
+<p style="margin:0 0 12px 0;">Here's what she did differently:</p>
+<p style="margin:0 0 12px 0;"><strong>1.</strong> Every pitch had a specific creative angle for that brand</p>
+<p style="margin:0 0 12px 0;"><strong>2.</strong> Every unanswered pitch got a follow-up on day 6</p>
+<p style="margin:0 0 20px 0;"><strong>3.</strong> Her bio included "collab: sarah@..." so brands could find her</p>
+<p style="margin:0 0 0 0;">You're a few pitches in. Statistically, your reply is close. Most creators who quit at pitch 3-5 would have gotten one on pitch 6-8.</p>`,
+      preheader: "Sarah has 340 followers.",
+      primaryCta: { label: "Send your next pitch", url: "https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=lifecycle&utm_campaign=doubter_story" },
+      utmCampaign: 'doubter_story'
+    })
+  },
+  doubter_2: {
+    subject: "the 5-pitch rule nobody talks about",
+    getHtml: (firstName, pitchesSent) => generateEmailHtml({
+      bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
+<p style="margin:0 0 20px 0;">Here's something most creators don't know:</p>
+<p style="margin:0 0 20px 0;"><strong>The average creator who lands their first brand deal sends 5-8 pitches before getting a yes.</strong></p>
+<p style="margin:0 0 20px 0;">You've sent ${pitchesSent || 'a few'} so far. That's not failure — that's progress.</p>
+<p style="margin:0 0 20px 0;">The creators who quit at pitch 2 or 3 never find out they were one or two pitches away.</p>
+<p style="margin:0 0 12px 0;">Here's what changes after pitch 5:</p>
+<p style="margin:0 0 12px 0;"><strong>1.</strong> Your pitches get sharper (you learn what works)</p>
+<p style="margin:0 0 12px 0;"><strong>2.</strong> Your profile gets stronger (you optimize as you go)</p>
+<p style="margin:0 0 20px 0;"><strong>3.</strong> Law of numbers kicks in (more shots = more replies)</p>
+<p style="margin:0 0 0 0;">Most brand deals don't come from luck. They come from persistence.</p>`,
+      preheader: "The stat that changes everything.",
+      primaryCta: { label: "Keep going", url: "https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=lifecycle&utm_campaign=doubter_5pitch" },
+      utmCampaign: 'doubter_5pitch'
+    })
+  },
+  weekly_digest: {
+    subject: "your monday brief from your manager",
+    getHtml: (context) => {
+      // Build the progress section
+      const progressHtml = `
+        <div style="background:#f8f9fa;border-radius:8px;padding:20px;margin:20px 0;">
+          <p style="margin:0 0 12px 0;font-weight:600;color:#374151;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">YOUR PROGRESS</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">
+            <tr>
+              <td style="padding:8px 0;color:#6b7280;">Reply Chance:</td>
+              <td style="padding:8px 0;text-align:right;font-weight:600;">${context.current_score || 0}% ${context.score_delta > 0 ? `<span style="color:#22c55e;">(+${context.score_delta} potential)</span>` : ''}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#6b7280;">Unlocks:</td>
+              <td style="padding:8px 0;text-align:right;font-weight:600;">${context.unlocks_used || 0} used of ${context.unlocks_quota || 3}</td>
+            </tr>
+          </table>
+        </div>`;
+
+      // Build the manager plan section
+      let planHtml = '';
+      if (context.pending_plans && context.pending_plans.length > 0) {
+        const planItems = context.pending_plans.map(p =>
+          `<p style="margin:0 0 8px 0;"><strong>#${p.number}</strong> ${p.title}</p>`
+        ).join('');
+        planHtml = `
+          <div style="margin:20px 0;">
+            <p style="margin:0 0 12px 0;font-weight:600;color:#374151;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">YOUR MANAGER'S PLAN</p>
+            ${planItems}
+          </div>`;
+      }
+
+      // Build the new brands section
+      let brandsHtml = '';
+      if (context.new_brands && context.new_brands.length > 0) {
+        const brandItems = context.new_brands.map(b =>
+          `<p style="margin:0 0 12px 0;"><strong>${b.name}</strong> — ${b.reason || b.category || ''}</p>`
+        ).join('');
+        brandsHtml = `
+          <div style="margin:20px 0;">
+            <p style="margin:0 0 12px 0;font-weight:600;color:#374151;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">NEW BRANDS IN YOUR <span style="background:#fef3c7;padding:2px 6px;border-radius:4px;">MATCH</span> LIST</p>
+            ${brandItems}
+          </div>`;
+      }
+
+      return generateEmailHtml({
+        bodyText: `<p style="margin:0 0 20px 0;">Hi ${context.first_name || 'there'},</p>
+<p style="margin:0 0 20px 0;">Here's what's new this week.</p>
+${progressHtml}
+${planHtml}
+${brandsHtml}`,
+        preheader: "Your weekly update from your Newcollab manager.",
+        primaryCta: { label: "See my full plan", url: "https://app.newcollab.co/creator/dashboard/pr-ready?utm_source=email&utm_medium=lifecycle&utm_campaign=weekly_digest" },
+        utmCampaign: 'weekly_digest'
+      });
+    }
   }
 };
 
@@ -676,6 +772,216 @@ async function processReengagement() {
   return sent;
 }
 
+async function processWeeklyDigest() {
+  // Only run on Mondays (day 1 in JS, 0 = Sunday)
+  const dayOfWeek = new Date().getDay();
+  if (dayOfWeek !== 1) {
+    console.log(`[DIGEST] Skipping - not Monday (day ${dayOfWeek})`);
+    return 0;
+  }
+
+  // Get eligible creators for weekly digest (verified, not unsubscribed)
+  const { data: users, error } = await getSupabase()
+    .from('creators')
+    .select('id, user_id, username, last_weekly_digest_at, subscription_tier')
+    .not('lifecycle_state', 'eq', 'dormant')
+    .limit(BATCH_SIZE);
+
+  console.log(`[DIGEST] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
+  if (!users?.length) return 0;
+
+  const now = new Date();
+  const weekKey = `${now.getFullYear()}-W${Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000))}`;
+  let sent = 0;
+  let skipped = { already_sent: 0, no_context: 0, no_email: 0, api_error: 0 };
+
+  for (const user of users) {
+    // Check if already sent this week
+    if (user.last_weekly_digest_at) {
+      const lastSent = new Date(user.last_weekly_digest_at);
+      const lastWeekKey = `${lastSent.getFullYear()}-W${Math.ceil((lastSent - new Date(lastSent.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000))}`;
+      if (lastWeekKey === weekKey) {
+        skipped.already_sent++;
+        continue;
+      }
+    }
+
+    const email = await getUserEmail(user.user_id);
+    if (!email) {
+      skipped.no_email++;
+      continue;
+    }
+
+    // Fetch context from Python backend API
+    let context;
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://api.newcollab.co';
+      const response = await fetch(`${apiUrl}/api/lifecycle-email/context/weekly-digest/${user.id}`, {
+        headers: { 'X-Admin-Token': process.env.ADMIN_TOKEN || 'pr-hunter-admin-2026' }
+      });
+
+      if (response.ok) {
+        context = await response.json();
+      } else {
+        // Fallback: build basic context from Supabase data
+        context = {
+          first_name: user.username || 'there',
+          current_score: 0,
+          score_delta: 0,
+          unlocks_used: 0,
+          unlocks_quota: user.subscription_tier === 'pro' ? '∞' : 3,
+          pending_plans: [],
+          new_brands: []
+        };
+      }
+    } catch (err) {
+      console.log(`[DIGEST] API error for ${user.id}: ${err.message}, using fallback`);
+      context = {
+        first_name: user.username || 'there',
+        current_score: 0,
+        score_delta: 0,
+        unlocks_used: 0,
+        unlocks_quota: 3,
+        pending_plans: [],
+        new_brands: []
+      };
+    }
+
+    if (!context || !context.first_name) {
+      skipped.no_context++;
+      continue;
+    }
+
+    const subject = TEMPLATES.weekly_digest.subject;
+    const html = TEMPLATES.weekly_digest.getHtml(context);
+
+    const success = await sendEmail(email, subject, html);
+
+    if (success) {
+      await getSupabase()
+        .from('creators')
+        .update({ last_weekly_digest_at: new Date().toISOString() })
+        .eq('id', user.id);
+
+      await getSupabase().from('lifecycle_email_sends').insert({
+        creator_id: user.id,
+        template_slug: 'weekly_digest',
+        email_address: email,
+        subject_rendered: subject,
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      });
+
+      sent++;
+    }
+
+    await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
+  }
+
+  console.log(`[DIGEST] Sent: ${sent}, Skipped: ${JSON.stringify(skipped)}`);
+  return sent;
+}
+
+async function processDoubterSeries() {
+  // Doubter: 2+ unlocks used, 14+ days since signup, still in explorer/engaged state
+  // These are users who tried the product but haven't progressed to maximizer/winner
+  const { data: users, error } = await getSupabase()
+    .from('creators')
+    .select('id, user_id, username, lifecycle_emails_sent_today, doubter_series_position, doubter_series_started_at, created_at, pitches_sent_total, daily_unlocks_used, subscription_tier')
+    .in('lifecycle_state', ['explorer', 'engaged'])
+    .gte('daily_unlocks_used', 2)
+    .or('doubter_series_position.is.null,doubter_series_position.lt.2')
+    .order('doubter_series_position', { ascending: true, nullsFirst: true })
+    .limit(BATCH_SIZE);
+
+  console.log(`[DOUBT] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
+  if (!users?.length) return 0;
+
+  const now = new Date();
+  let sent = 0;
+  let skipped = { pro: 0, daily_limit: 0, not_old_enough: 0, cooldown: 0, no_email: 0 };
+
+  for (const user of users) {
+    if (user.subscription_tier === 'pro' || user.subscription_tier === 'premium') {
+      skipped.pro++;
+      continue;
+    }
+
+    // Daily throttle check
+    const emailsToday = user.lifecycle_emails_sent_today || 0;
+    if (emailsToday >= MAX_EMAILS_PER_DAY) {
+      skipped.daily_limit++;
+      continue;
+    }
+
+    const position = user.doubter_series_position || 0;
+    const daysSinceSignup = Math.floor((now - new Date(user.created_at)) / (1000 * 60 * 60 * 24));
+
+    // Doubter email 1: 14+ days since signup
+    if (position === 0 && daysSinceSignup < 14) {
+      skipped.not_old_enough++;
+      continue;
+    }
+    // Doubter email 2: 4+ days after email 1
+    if (position === 1 && user.doubter_series_started_at) {
+      const daysSinceEmail1 = Math.floor((now - new Date(user.doubter_series_started_at)) / (1000 * 60 * 60 * 24));
+      if (daysSinceEmail1 < 4) {
+        skipped.cooldown++;
+        continue;
+      }
+    }
+
+    const email = await getUserEmail(user.user_id);
+    if (!email) {
+      skipped.no_email++;
+      continue;
+    }
+
+    const firstName = user.username || 'there';
+    let subject, html, templateSlug;
+
+    if (position === 0) {
+      subject = TEMPLATES.doubter_1.subject;
+      html = TEMPLATES.doubter_1.getHtml(firstName);
+      templateSlug = 'doubter_story';
+    } else {
+      subject = TEMPLATES.doubter_2.subject;
+      html = TEMPLATES.doubter_2.getHtml(firstName, user.pitches_sent_total);
+      templateSlug = 'doubter_5pitch';
+    }
+
+    const success = await sendEmail(email, subject, html);
+
+    if (success) {
+      const updateData = {
+        doubter_series_position: position + 1,
+        lifecycle_emails_sent_today: (user.lifecycle_emails_sent_today || 0) + 1,
+        lifecycle_last_email_date: new Date().toISOString().split('T')[0],
+        last_any_email_sent: new Date().toISOString()
+      };
+      if (position === 0) updateData.doubter_series_started_at = new Date().toISOString();
+      await getSupabase().from('creators').update(updateData).eq('id', user.id);
+
+      // Log to lifecycle_email_sends
+      await getSupabase().from('lifecycle_email_sends').insert({
+        creator_id: user.id,
+        template_slug: templateSlug,
+        email_address: email,
+        subject_rendered: subject,
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      });
+
+      sent++;
+    }
+
+    await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
+  }
+
+  console.log(`[DOUBT] Sent: ${sent}, Skipped: ${JSON.stringify(skipped)}`);
+  return sent;
+}
+
 module.exports = async function handler(req, res) {
   // Verify cron secret - accept both Vercel internal cron and manual triggers
   const authHeader = req.headers.authorization;
@@ -701,7 +1007,9 @@ module.exports = async function handler(req, res) {
 
     const educationSent = await processEducationSeries();
     const maximizerSent = await processMaximizerSeries();
+    const doubterSent = await processDoubterSeries();
     const reengagementSent = await processReengagement();
+    const digestSent = await processWeeklyDigest();
 
     const result = {
       success: true,
@@ -710,8 +1018,10 @@ module.exports = async function handler(req, res) {
       sent: {
         education: educationSent,
         maximizer: maximizerSent,
+        doubter: doubterSent,
         reengagement: reengagementSent,
-        total: educationSent + maximizerSent + reengagementSent
+        weekly_digest: digestSent,
+        total: educationSent + maximizerSent + doubterSent + reengagementSent + digestSent
       }
     };
 
