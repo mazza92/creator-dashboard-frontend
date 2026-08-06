@@ -883,18 +883,45 @@ async function processWeeklyDigest() {
 }
 
 async function processDoubterSeries() {
-  // Doubter: 2+ unlocks used, 14+ days since signup, still in explorer/engaged state
+  // Doubter: 2+ total unlocks used (lifetime), 14+ days since signup, still in explorer/engaged state
   // These are users who tried the product but haven't progressed to maximizer/winner
-  const { data: users, error } = await getSupabase()
+
+  // Step 1: Get creators who might be eligible (explorer/engaged, not completed doubter series)
+  const { data: potentialUsers, error: usersError } = await getSupabase()
     .from('creators')
-    .select('id, user_id, username, lifecycle_emails_sent_today, doubter_series_position, doubter_series_started_at, created_at, pitches_sent_total, daily_unlocks_used, subscription_tier')
+    .select('id, user_id, username, lifecycle_emails_sent_today, doubter_series_position, doubter_series_started_at, created_at, pitches_sent_total, subscription_tier')
     .in('lifecycle_state', ['explorer', 'engaged'])
-    .gte('daily_unlocks_used', 2)
     .or('doubter_series_position.is.null,doubter_series_position.lt.2')
     .order('doubter_series_position', { ascending: true, nullsFirst: true })
-    .limit(BATCH_SIZE);
+    .limit(200); // Fetch more to filter down
 
-  console.log(`[DOUBT] Query returned ${users?.length || 0} users, error: ${error?.message || 'none'}`);
+  if (usersError || !potentialUsers?.length) {
+    console.log(`[DOUBT] Query returned ${potentialUsers?.length || 0} potential users, error: ${usersError?.message || 'none'}`);
+    return 0;
+  }
+
+  // Step 2: Get total unlock counts for these creators from brand_unlocks table
+  const creatorIds = potentialUsers.map(u => u.id);
+  const { data: unlockCounts, error: unlockError } = await getSupabase()
+    .from('brand_unlocks')
+    .select('creator_id')
+    .in('creator_id', creatorIds);
+
+  if (unlockError) {
+    console.log(`[DOUBT] Error fetching unlock counts: ${unlockError.message}`);
+    return 0;
+  }
+
+  // Count unlocks per creator
+  const unlocksByCreator = {};
+  for (const unlock of (unlockCounts || [])) {
+    unlocksByCreator[unlock.creator_id] = (unlocksByCreator[unlock.creator_id] || 0) + 1;
+  }
+
+  // Step 3: Filter to only creators with 2+ total unlocks
+  const users = potentialUsers.filter(u => (unlocksByCreator[u.id] || 0) >= 2).slice(0, BATCH_SIZE);
+
+  console.log(`[DOUBT] Query returned ${users?.length || 0} users with 2+ unlocks (from ${potentialUsers.length} potential), error: none`);
   if (!users?.length) return 0;
 
   const now = new Date();
