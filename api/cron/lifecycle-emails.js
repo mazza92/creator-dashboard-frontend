@@ -918,10 +918,10 @@ async function processDoubterSeries() {
     unlocksByCreator[unlock.creator_id] = (unlocksByCreator[unlock.creator_id] || 0) + 1;
   }
 
-  // Step 3: Filter to only creators with 2+ total unlocks
-  const users = potentialUsers.filter(u => (unlocksByCreator[u.id] || 0) >= 2).slice(0, BATCH_SIZE);
+  // Step 3: Filter to only creators with 1+ total unlocks (tried the product but stuck)
+  const users = potentialUsers.filter(u => (unlocksByCreator[u.id] || 0) >= 1).slice(0, BATCH_SIZE);
 
-  console.log(`[DOUBT] Query returned ${users?.length || 0} users with 2+ unlocks (from ${potentialUsers.length} potential), error: none`);
+  console.log(`[DOUBT] Query returned ${users?.length || 0} users with 1+ unlocks (from ${potentialUsers.length} potential), error: none`);
   if (!users?.length) return 0;
 
   const now = new Date();
