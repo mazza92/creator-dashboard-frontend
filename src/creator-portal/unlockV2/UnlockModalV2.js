@@ -145,25 +145,26 @@ const Overlay = styled(motion.div)`
 
 const Modal = styled(motion.div)`
   background: #fff;
-  border-radius: 18px;
+  border-radius: 20px;
   width: 100%;
-  max-width: 460px;
-  max-height: 92vh;
+  max-width: 540px;
+  max-height: calc(100vh - 40px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 24px 80px rgba(18, 20, 26, 0.28);
+  box-shadow: 0 24px 60px rgba(15, 17, 20, 0.22), 0 8px 20px rgba(15, 17, 20, 0.10);
   font-family: ${TOKENS.fontSans};
 
   @media (max-width: 480px) {
     max-width: 100%;
-    max-height: 94vh;
-    border-radius: 18px 18px 0 0;
+    max-height: 100vh;
+    border-radius: 20px 20px 0 0;
+    margin-top: auto;
   }
 `;
 
 const Header = styled.div`
-  padding: ${p => (p.$minimal ? '10px 12px 6px' : '14px 16px 12px')};
+  padding: ${p => (p.$minimal ? '10px 12px 6px' : '14px 20px 12px')};
   display: flex;
   align-items: center;
   justify-content: ${p => (p.$minimal ? 'flex-end' : 'flex-start')};
@@ -1188,6 +1189,785 @@ const PitchCopyBtn = styled.button`
   }
 `;
 
+// ============================================
+// PREMIUM PITCH MODAL DESIGN TOKENS (V2 - AI Assist)
+// ============================================
+const PITCH_TOKENS = {
+  // Brand pink palette
+  pinkPrimary: '#e8395f',
+  pinkHover: '#c92549',
+  pinkSoft: '#fef2f4',
+  pinkTint: '#fde8ec',
+
+  // Purple palette (for Boost card)
+  purple: '#7c3aed',
+  purpleHover: '#6d28d9',
+  purpleSoft: '#f5f3ff',
+  purpleTint: '#ede9fe',
+
+  // Ink colors
+  inkPrimary: '#15161a',
+  inkSecondary: '#2b2d33',
+  inkSoft: '#4a4d55',
+  muted: '#6b6f78',
+  muted2: '#9ca0a8',
+
+  // Success green
+  greenSuccess: '#0f9d58',
+  greenSoft: '#e8f7ed',
+  greenDark: '#0d6b3b',
+
+  // Amber
+  amber: '#f59e0b',
+  amberSoft: '#fef3c7',
+
+  // Lines and backgrounds
+  lineDefault: '#e5e7eb',
+  lineSoft: '#f1f2f4',
+  bgDefault: '#ffffff',
+  bgSoft: '#f7f7f8',
+  bgTint: '#fafafa',
+
+  // Chip colors
+  chipGreen: '#dcfce7',
+  chipGreenText: '#166534',
+  chipAmber: '#fef3c7',
+  chipAmberText: '#8a5d0a',
+  chipPink: '#fde8ec',
+  chipPinkText: '#a11536',
+  chipBlue: '#dbeafe',
+  chipBlueText: '#1e40af',
+};
+
+// ============================================
+// CHIP ROW (informational badges)
+// ============================================
+const ChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 20px 6px;
+`;
+
+const Chip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1;
+  background: ${props => props.$bg || PITCH_TOKENS.chipGreen};
+  color: ${props => props.$color || PITCH_TOKENS.chipGreenText};
+`;
+
+// ============================================
+// VERIFIED EMAIL COMPACT STRIP
+// ============================================
+const VerifiedEmailStrip = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  margin: 6px 20px 0;
+  background: ${PITCH_TOKENS.bgTint};
+  border: 1px solid ${PITCH_TOKENS.lineSoft};
+  border-radius: 10px;
+`;
+
+const VerifiedEmailLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const VerifiedBadge = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: ${PITCH_TOKENS.greenSoft};
+  border-radius: 7px;
+  color: ${PITCH_TOKENS.greenSuccess};
+  font-size: 12px;
+  flex-shrink: 0;
+`;
+
+const VerifiedEmailInfo = styled.div``;
+
+const VerifiedEmailLabel = styled.div`
+  font-size: 10px;
+  font-weight: 700;
+  color: ${PITCH_TOKENS.muted};
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+`;
+
+const VerifiedEmailValue = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkPrimary};
+`;
+
+const CompactCopyBtn = styled.button`
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid ${PITCH_TOKENS.lineDefault};
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkSoft};
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: ${PITCH_TOKENS.bgSoft};
+    color: ${PITCH_TOKENS.inkPrimary};
+  }
+`;
+
+// ============================================
+// PITCH WORKSPACE (the hero editing area)
+// ============================================
+const PitchWorkspace = styled.div`
+  padding: 14px 20px 0;
+  flex: 1;
+`;
+
+const PitchWorkspaceLabel = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: ${PITCH_TOKENS.muted};
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+
+  &::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    background: ${PITCH_TOKENS.pinkPrimary};
+    border-radius: 50%;
+  }
+`;
+
+const FieldLabel = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.muted};
+  margin-bottom: 5px;
+  letter-spacing: -0.005em;
+`;
+
+const FieldWrapper = styled.div`
+  margin-bottom: 12px;
+`;
+
+const PitchSubjectInput = styled.input`
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid ${PITCH_TOKENS.lineDefault};
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkPrimary};
+  background: #fff;
+  margin-bottom: 10px;
+  transition: all 0.15s;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: ${PITCH_TOKENS.pinkPrimary};
+    box-shadow: 0 0 0 3px ${PITCH_TOKENS.pinkSoft};
+  }
+
+  &::placeholder {
+    color: ${PITCH_TOKENS.muted};
+    font-weight: 400;
+  }
+`;
+
+const PitchBodyTextarea = styled.textarea`
+  width: 100%;
+  min-height: 180px;
+  max-height: 280px;
+  padding: 14px;
+  border: 1.5px solid ${PITCH_TOKENS.lineDefault};
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: ${PITCH_TOKENS.inkPrimary};
+  background: #fff;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+
+  &:focus {
+    outline: none;
+    border-color: ${PITCH_TOKENS.pinkPrimary};
+    box-shadow: 0 0 0 3px ${PITCH_TOKENS.pinkSoft};
+  }
+
+  &::placeholder {
+    color: ${PITCH_TOKENS.muted};
+  }
+`;
+
+// ============================================
+// PROGRESS ROW (ambient feedback, not judgment)
+// ============================================
+const ProgressRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: ${props => props.$ready ? PITCH_TOKENS.greenSoft : PITCH_TOKENS.pinkSoft};
+  border-radius: 10px;
+  transition: background 0.3s ease;
+`;
+
+const ProgressRingContainer = styled.div`
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+`;
+
+const ProgressText = styled.div`
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.4;
+  color: ${props => props.$ready ? PITCH_TOKENS.chipGreenText : PITCH_TOKENS.inkSecondary};
+`;
+
+const ProgressTextBold = styled.span`
+  font-weight: 600;
+`;
+
+// ============================================
+// AI BOOST SECTION (inline suggestions - modern approach)
+// ============================================
+const BoostSection = styled.div`
+  margin: 16px 22px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid ${PITCH_TOKENS.lineDefault};
+`;
+
+const BoostHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+const BoostHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const BoostIcon = styled.span`
+  font-size: 16px;
+`;
+
+const BoostTitle = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkPrimary};
+`;
+
+const BoostBadge = styled.span`
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: ${props => props.$hot ? PITCH_TOKENS.pinkPrimary : PITCH_TOKENS.purple};
+  padding: 3px 8px;
+  border-radius: 100px;
+`;
+
+const SuggestionsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SuggestionItem = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: ${props => props.$added ? PITCH_TOKENS.greenSoft : '#fff'};
+  border: 1px solid ${props => props.$added ? 'rgba(15, 157, 88, 0.3)' : PITCH_TOKENS.lineDefault};
+  border-radius: 8px;
+  cursor: ${props => props.$added ? 'default' : 'pointer'};
+  text-align: left;
+  font-family: inherit;
+  transition: all 0.15s;
+
+  ${props => !props.$added && `
+    &:hover {
+      border-color: ${PITCH_TOKENS.purple};
+      background: ${PITCH_TOKENS.purpleSoft};
+    }
+  `}
+`;
+
+const SuggestionIcon = styled.span`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: ${props => props.$added ? PITCH_TOKENS.greenSuccess : PITCH_TOKENS.purple};
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+`;
+
+const SuggestionText = styled.span`
+  flex: 1;
+  font-size: 12.5px;
+  color: ${props => props.$added ? PITCH_TOKENS.greenDark : PITCH_TOKENS.inkSecondary};
+  line-height: 1.4;
+`;
+
+const SuggestionAction = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${props => props.$added ? PITCH_TOKENS.greenSuccess : PITCH_TOKENS.purple};
+  flex-shrink: 0;
+`;
+
+// ============================================
+// UTILITY ROW (regenerate button)
+// ============================================
+const UtilRow = styled.div`
+  display: flex;
+  gap: 6px;
+  margin: 12px 0 0;
+  justify-content: flex-end;
+`;
+
+const RegenRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+`;
+
+const RegenButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid ${PITCH_TOKENS.lineDefault};
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkSoft};
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s;
+
+  &:hover:not(:disabled) {
+    border-color: ${PITCH_TOKENS.inkPrimary};
+    color: ${PITCH_TOKENS.inkPrimary};
+    background: ${PITCH_TOKENS.bgSoft};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+
+const RegenCount = styled.span`
+  font-size: 11px;
+  color: ${PITCH_TOKENS.muted};
+  margin-left: 2px;
+`;
+
+// ============================================
+// PROGRESS INDICATOR (ready to send feedback)
+// ============================================
+const ProgressIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  background: ${props => props.$ready ? PITCH_TOKENS.greenSoft : '#fafafa'};
+  border: 1px solid ${props => props.$ready ? 'rgba(15, 157, 88, 0.2)' : PITCH_TOKENS.lineDefault};
+  border-radius: 8px;
+`;
+
+const ProgressDot = styled.div`
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid ${props => props.$ready ? PITCH_TOKENS.greenSuccess : PITCH_TOKENS.lineDefault};
+  background: ${props => props.$ready ? PITCH_TOKENS.greenSuccess : 'transparent'};
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::after {
+    content: '${props => props.$ready ? '✓' : ''}';
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+  }
+`;
+
+const ProgressLabel = styled.div`
+  font-size: 12px;
+  color: ${PITCH_TOKENS.inkSecondary};
+  line-height: 1.4;
+
+  strong {
+    color: ${PITCH_TOKENS.inkPrimary};
+  }
+`;
+
+const BackToStrategyLink = styled.button`
+  background: none;
+  border: none;
+  color: ${PITCH_TOKENS.muted};
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 0 0;
+  margin-top: 4px;
+  font-family: inherit;
+  width: 100%;
+  text-align: center;
+
+  &:hover {
+    color: ${PITCH_TOKENS.inkPrimary};
+  }
+`;
+
+// ============================================
+// META INFO (below fold, context only)
+// ============================================
+const MetaInfoCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 20px 12px;
+  padding: 10px 12px;
+  background: ${PITCH_TOKENS.bgTint};
+  border: 1px solid ${PITCH_TOKENS.lineSoft};
+  border-radius: 8px;
+`;
+
+const MetaInfoIcon = styled.div`
+  width: 24px;
+  height: 24px;
+  background: ${PITCH_TOKENS.amberSoft};
+  color: ${PITCH_TOKENS.chipAmberText};
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+`;
+
+const MetaInfoText = styled.div`
+  font-size: 12px;
+  color: ${PITCH_TOKENS.inkSecondary};
+  line-height: 1.4;
+`;
+
+// ============================================
+// STICKY ACTION BAR (always visible)
+// ============================================
+const StickyActionBar = styled.div`
+  border-top: 1px solid ${PITCH_TOKENS.lineSoft};
+  padding: 12px 20px 14px;
+  background: #fff;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
+`;
+
+const SendBtn = styled.button`
+  width: 100%;
+  padding: 14px 16px;
+  background: ${PITCH_TOKENS.pinkPrimary};
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  letter-spacing: -0.01em;
+  transition: background 0.12s, transform 0.1s;
+  box-shadow: 0 4px 12px rgba(232, 57, 95, 0.24);
+
+  &:hover {
+    background: ${PITCH_TOKENS.pinkHover};
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+`;
+
+const SendBtnLeft = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ReplyRateChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: ${props => props.$hot ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)'};
+  padding: 4px 9px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  transition: all 0.3s;
+`;
+
+const PrimaryActionBtn = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+
+  ${props => props.$ready ? `
+    background: ${PITCH_TOKENS.pinkPrimary};
+    color: #fff;
+
+    &:hover {
+      background: ${PITCH_TOKENS.pinkHover};
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  ` : `
+    background: ${PITCH_TOKENS.lineSoft};
+    color: ${PITCH_TOKENS.muted};
+    cursor: not-allowed;
+  `}
+`;
+
+const SecondaryLinks = styled.div`
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+  font-size: 12.5px;
+`;
+
+const SecondaryLink = styled.button`
+  background: none;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.muted};
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.12s;
+
+  &:hover {
+    color: ${PITCH_TOKENS.inkPrimary};
+    background: ${PITCH_TOKENS.bgSoft};
+  }
+`;
+
+const LinkSeparator = styled.span`
+  color: ${PITCH_TOKENS.muted2};
+`;
+
+const SendBypassLink = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 10px;
+  font-size: 11px;
+  color: ${PITCH_TOKENS.muted};
+  cursor: pointer;
+  text-decoration: underline;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
+// ============================================
+// COMPACT SENT STATE
+// ============================================
+const SentStateContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+`;
+
+const SentCheckmark = styled.div`
+  width: 64px;
+  height: 64px;
+  background: ${PITCH_TOKENS.greenSoft};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+
+  svg {
+    width: 32px;
+    height: 32px;
+    color: ${PITCH_TOKENS.greenSuccess};
+  }
+`;
+
+const SentTitle = styled.h2`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${PITCH_TOKENS.inkPrimary};
+  margin: 0 0 8px 0;
+`;
+
+const SentSubtitle = styled.p`
+  font-size: 13px;
+  color: ${PITCH_TOKENS.muted};
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+  max-width: 280px;
+`;
+
+const SentSecondaryBtn = styled.button`
+  padding: 12px 24px;
+  background: ${PITCH_TOKENS.bgSoft};
+  border: 1px solid ${PITCH_TOKENS.lineDefault};
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkSecondary};
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: ${PITCH_TOKENS.lineSoft};
+  }
+`;
+
+// ============================================
+// FRICTION MODAL (send without editing)
+// ============================================
+const FrictionModalOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 20, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+`;
+
+const FrictionModalContent = styled(motion.div)`
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+`;
+
+const FrictionModalTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 700;
+  color: ${TOKENS.mentorTextPrimary};
+  margin: 0 0 8px 0;
+`;
+
+const FrictionModalText = styled.p`
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+`;
+
+const FrictionModalButtons = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const FrictionModalBtn = styled.button`
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  ${props => props.$primary ? `
+    background: ${PITCH_TOKENS.pinkPrimary};
+    border: none;
+    color: #fff;
+
+    &:hover {
+      background: ${PITCH_TOKENS.pinkHover};
+    }
+  ` : `
+    background: #fff;
+    border: 1px solid ${PITCH_TOKENS.lineDefault};
+    color: ${PITCH_TOKENS.inkPrimary};
+
+    &:hover {
+      background: ${PITCH_TOKENS.bgSoft};
+    }
+  `}
+`;
+
+// Regenerate confirmation modal (reuse friction modal styles)
+const RegenConfirmModal = FrictionModalOverlay;
+const RegenConfirmContent = FrictionModalContent;
+
 // Timing display
 const TimingCard = styled.div`
   display: flex;
@@ -1743,6 +2523,62 @@ const PHASE_MODAL = 'modal';
 const PHASE_OUTREACH = 'outreach';
 const PHASE_NEXT = 'next_actions';
 
+// ============================================
+// PROGRESS RING SVG COMPONENT
+// ============================================
+const ProgressRing = ({ progress, ready }) => {
+  const radius = 10;
+  const stroke = 3;
+  const normalizedRadius = radius - stroke / 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg width={radius * 2 + 4} height={radius * 2 + 4} style={{ display: 'block' }}>
+      {/* Background circle */}
+      <circle
+        stroke={ready ? PITCH_TOKENS.greenSoft : PITCH_TOKENS.pinkTint}
+        fill="none"
+        strokeWidth={stroke}
+        r={normalizedRadius}
+        cx={radius + 2}
+        cy={radius + 2}
+      />
+      {/* Progress circle */}
+      <circle
+        stroke={ready ? PITCH_TOKENS.greenSuccess : PITCH_TOKENS.pinkPrimary}
+        fill="none"
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circumference + ' ' + circumference}
+        style={{
+          strokeDashoffset,
+          transition: 'stroke-dashoffset 0.2s ease',
+          transform: 'rotate(-90deg)',
+          transformOrigin: '50% 50%',
+        }}
+        r={normalizedRadius}
+        cx={radius + 2}
+        cy={radius + 2}
+      />
+      {/* Center checkmark when ready */}
+      {ready && (
+        <text
+          x={radius + 2}
+          y={radius + 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="10"
+          fill={PITCH_TOKENS.greenSuccess}
+          fontWeight="bold"
+        >
+          ✓
+        </text>
+      )}
+    </svg>
+  );
+};
+
 // Card timing configuration
 const CARD_TIMINGS = {
   inbox: 400,      // Card 1 at 400ms
@@ -1789,6 +2625,22 @@ const UnlockModalV2 = ({
   const [copiedField, setCopiedField] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [managerBar, setManagerBar] = useState(null);
+
+  // Editable pitch state (V2 single-pitch flow)
+  const [editedSubject, setEditedSubject] = useState('');
+  const [editedBody, setEditedBody] = useState('');
+  const [originalSubject, setOriginalSubject] = useState('');
+  const [originalBody, setOriginalBody] = useState('');
+  const [regenCount, setRegenCount] = useState(0);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [showFrictionModal, setShowFrictionModal] = useState(false);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
+  const [pitchSent, setPitchSent] = useState(false);
+
+  // AI Boost state (new UX)
+  const [boostOpen, setBoostOpen] = useState(true); // Start expanded
+  const [addedSuggestions, setAddedSuggestions] = useState([]); // indices of added suggestions
+  const [showNudgeModal, setShowNudgeModal] = useState(false); // last-chance nudge
 
   const navigate = useNavigate();
   const startTimeRef = useRef(0);
@@ -1984,6 +2836,17 @@ const UnlockModalV2 = ({
       setUtilitiesExpanded(false);
       setApiComplete(false);
 
+      // Reset editable pitch state
+      setEditedSubject('');
+      setEditedBody('');
+      setOriginalSubject('');
+      setOriginalBody('');
+      setRegenCount(0);
+      setIsRegenerating(false);
+      setShowFrictionModal(false);
+      setShowRegenConfirm(false);
+      setPitchSent(false);
+
       // Clear any existing timers
       cardTimersRef.current.forEach(timer => clearTimeout(timer));
       cardTimersRef.current = [];
@@ -2005,6 +2868,19 @@ const UnlockModalV2 = ({
       }
     };
   }, [isOpen, brand, startGeneration]);
+
+  // Initialize editable pitch when packageData loads
+  useEffect(() => {
+    if (packageData?.package?.pitches?.growing) {
+      const pitch = packageData.package.pitches.growing;
+      const subject = pitch?.subject || '';
+      const body = pitch?.body_plain || '';
+      setOriginalSubject(subject);
+      setOriginalBody(body);
+      setEditedSubject(subject);
+      setEditedBody(body);
+    }
+  }, [packageData]);
 
   // Hireability snapshot for AI Manager mini-band
   useEffect(() => {
@@ -2087,6 +2963,51 @@ const UnlockModalV2 = ({
     }
   };
 
+  // Check if user has made meaningful edits
+  const hasUserEdits = () => {
+    const subjectChanged = editedSubject !== originalSubject;
+    const bodyChanged = editedBody !== originalBody;
+    return subjectChanged || bodyChanged;
+  };
+
+  // Handle regenerate - check for unsaved edits first
+  const handleRegenerate = async (confirmed = false) => {
+    if (regenCount >= 3 || isRegenerating) return;
+
+    // If user has edits and hasn't confirmed, show confirmation modal
+    if (hasUserEdits() && !confirmed) {
+      setShowRegenConfirm(true);
+      return;
+    }
+
+    setShowRegenConfirm(false);
+    setIsRegenerating(true);
+    try {
+      const response = await apiClient.post('/api/pr-crm/generate-pr-package', {
+        brand_id: brand.brand_id || brand.id,
+        slug: brand.slug,
+        is_for_you_match: brand.is_for_you_match || false,
+        regenerate: true,
+      });
+
+      if (response.data.success && response.data.package?.pitches?.growing) {
+        const pitch = response.data.package.pitches.growing;
+        const newSubject = pitch?.subject || '';
+        const newBody = pitch?.body_plain || '';
+        setOriginalSubject(newSubject);
+        setOriginalBody(newBody);
+        setEditedSubject(newSubject);
+        setEditedBody(newBody);
+        setRegenCount(prev => prev + 1);
+      }
+    } catch (err) {
+      console.error('Regenerate failed:', err);
+      message.error('Failed to generate new version');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   // Handle send button click
   const handleOpenForm = () => {
     const formUrl = packageData?.application_form_url;
@@ -2096,7 +3017,38 @@ const UnlockModalV2 = ({
     setPhase(PHASE_NEXT);
   };
 
-  const handleSend = async () => {
+  // Calculate if user has edited enough
+  const getCharDelta = () => {
+    const subjectDelta = Math.abs(editedSubject.length - originalSubject.length);
+    const bodyDelta = Math.abs(editedBody.length - originalBody.length);
+    return subjectDelta + bodyDelta;
+  };
+
+  // Calculate reply rate based on suggestions and edits
+  // Baseline 2%, +1.5% per suggestion, +1% per 20 chars edited (max 8%)
+  const calculateReplyRate = () => {
+    const charDelta = getCharDelta();
+    const suggestionBonus = addedSuggestions.length * 1.5;
+    const editBonus = Math.floor(charDelta / 20) * 1;
+    return Math.min(8, 2 + suggestionBonus + editBonus);
+  };
+
+  // AI suggestions for personalization
+  const boostSuggestions = [
+    `I spotted your ${packageData?.brand_name || 'brand'} feature in [magazine/outlet] — my audience loved it.`,
+    `My last collab with a similar brand drove 12K saves. Happy to share the case study.`,
+    `I'm planning a spring content drop — ${packageData?.brand_name || 'your products'} would be perfect for it.`,
+  ];
+
+  // Add a suggestion to the pitch body
+  const handleAddSuggestion = (index) => {
+    if (addedSuggestions.includes(index)) return;
+    const suggestion = boostSuggestions[index];
+    setEditedBody(prev => prev.trim() + '\n\n' + suggestion);
+    setAddedSuggestions(prev => [...prev, index]);
+  };
+
+  const handleSend = async (skipNudge = false) => {
     const brandEmail = packageData?.brand_email || packageData?.contact?.email;
     const formUrl = packageData?.application_form_url;
 
@@ -2106,19 +3058,42 @@ const UnlockModalV2 = ({
       return;
     }
 
-    if (!packageData?.package?.pitches) return;
+    // Soft nudge: if user hasn't personalized, show last-chance nudge (not blocking)
+    const charDelta = getCharDelta();
+    if (charDelta < 20 && addedSuggestions.length === 0 && !skipNudge) {
+      setShowNudgeModal(true);
+      return;
+    }
 
-    const pitch = packageData.package.pitches[selectedTone];
-    const subject = pitch?.subject || '';
-    const body = pitch?.body_plain || '';
+    // Use edited values (V2 single-pitch flow)
+    const subject = editedSubject || '';
+    const body = editedBody || '';
 
     await copyToClipboard(body, 'pitch');
 
     const mailtoUrl = `mailto:${brandEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&bcc=creators@newcollab.co`;
     window.location.href = mailtoUrl;
 
+    // Show compact sent state instead of PHASE_NEXT
+    setPitchSent(true);
     onPitchSent?.(brand, { method: 'email', stayOpen: true });
-    setPhase(PHASE_NEXT);
+  };
+
+  // Handle nudge modal actions
+  const handleNudgeSendAnyway = () => {
+    setShowNudgeModal(false);
+    handleSend(true);
+  };
+
+  const handleNudgeGoBack = () => {
+    setShowNudgeModal(false);
+    setBoostOpen(true); // Open boost card to encourage adding suggestions
+  };
+
+  // Legacy friction modal handler (kept for compatibility)
+  const handleFrictionConfirm = () => {
+    setShowFrictionModal(false);
+    handleSend(true);
   };
 
   const finishAndClose = (goPipeline = false) => {
@@ -2481,157 +3456,185 @@ const UnlockModalV2 = ({
 
             {phase === PHASE_OUTREACH && packageData && (
               <>
-                <OutreachContent>
-                  <PkgPills>
-                    {microOk && <PkgPill $tone="ok">Accepts micros</PkgPill>}
-                    {isFormPackage ? (
-                      <PkgPill $tone="form">Program form</PkgPill>
-                    ) : (
-                      <PkgPill $tone="email">PR email</PkgPill>
-                    )}
-                    <PkgPill $tone="gift">~${giftValue} avg gift</PkgPill>
-                    {formUrl && brandEmail && <PkgPill $tone="form">Has form</PkgPill>}
-                  </PkgPills>
+                {/* COMPACT SENT STATE */}
+                {pitchSent ? (
+                  <SentStateContainer
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SentCheckmark>
+                      <FiCheck />
+                    </SentCheckmark>
+                    <SentTitle>Pitch sent to {brandName}</SentTitle>
+                    <SentSubtitle>
+                      Reply tracking active. We'll notify you the moment {brandName} responds. Typical reply window: 3-7 days.
+                    </SentSubtitle>
+                    <SentSecondaryBtn onClick={() => setPhase(PHASE_MODAL)}>
+                      Back to strategy
+                    </SentSecondaryBtn>
+                  </SentStateContainer>
+                ) : (
+                  <>
+                    {/* CHIP ROW - informational badges */}
+                    <ChipRow>
+                      {microOk && (
+                        <Chip $bg={PITCH_TOKENS.chipGreen} $color={PITCH_TOKENS.chipGreenText}>
+                          ✓ Accepts micros
+                        </Chip>
+                      )}
+                      {isFormPackage ? (
+                        <Chip $bg={PITCH_TOKENS.chipBlue} $color={PITCH_TOKENS.chipBlueText}>
+                          Program form
+                        </Chip>
+                      ) : (
+                        <Chip $bg={PITCH_TOKENS.chipAmber} $color={PITCH_TOKENS.chipAmberText}>
+                          PR email
+                        </Chip>
+                      )}
+                      <Chip $bg={PITCH_TOKENS.chipPink} $color={PITCH_TOKENS.chipPinkText}>
+                        ~${giftValue} avg gift
+                      </Chip>
+                      {formUrl && brandEmail && (
+                        <Chip $bg={PITCH_TOKENS.chipBlue} $color={PITCH_TOKENS.chipBlueText}>
+                          Has form
+                        </Chip>
+                      )}
+                    </ChipRow>
 
-                  {isFormPackage ? (
-                    <>
-                      <FormNote>
-                        <strong>You submit this form — we don’t</strong>
-                        Affiliate / UGC portals need your login. We open the link and prep answers from My Kit.
-                      </FormNote>
-                      <InfoBlock>
-                        <InfoLabel>Program signup link</InfoLabel>
-                        <InfoRow>
-                          <InfoValue style={{ fontSize: '0.88rem' }}>{formUrl}</InfoValue>
-                          <GhostBtn type="button" onClick={() => copyToClipboard(formUrl, 'email')}>
-                            {copiedField === 'email' ? 'Copied' : 'Copy'}
-                          </GhostBtn>
-                        </InfoRow>
-                      </InfoBlock>
-                      <PitchSection>
-                        <PitchSectionLabel>Prep answers</PitchSectionLabel>
-                        <PrepList>
-                          <li>
-                            <span>Why you fit</span>
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(
-                                packageData.package?.pitches?.[selectedTone]?.body_plain || packageData.coaching?.coach_note || '',
-                                'pitch'
-                              )}
-                            >
-                              Copy
-                            </button>
-                          </li>
-                          {packageData.media_kit_url && (
+                    {isFormPackage ? (
+                      /* FORM-ONLY BRANDS */
+                      <OutreachContent>
+                        <FormNote>
+                          <strong>You submit this form — we don't</strong>
+                          Affiliate / UGC portals need your login. We open the link and prep answers from My Kit.
+                        </FormNote>
+                        <InfoBlock>
+                          <InfoLabel>Program signup link</InfoLabel>
+                          <InfoRow>
+                            <InfoValue style={{ fontSize: '0.88rem' }}>{formUrl}</InfoValue>
+                            <GhostBtn type="button" onClick={() => copyToClipboard(formUrl, 'email')}>
+                              {copiedField === 'email' ? 'Copied' : 'Copy'}
+                            </GhostBtn>
+                          </InfoRow>
+                        </InfoBlock>
+                        <PitchSection>
+                          <PitchSectionLabel>Prep answers</PitchSectionLabel>
+                          <PrepList>
                             <li>
-                              <span>Media kit URL</span>
-                              <button type="button" onClick={() => copyToClipboard(packageData.media_kit_url, 'pitch')}>
+                              <span>Why you fit</span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(
+                                  packageData.package?.pitches?.[selectedTone]?.body_plain || packageData.coaching?.coach_note || '',
+                                  'pitch'
+                                )}
+                              >
                                 Copy
                               </button>
                             </li>
-                          )}
-                        </PrepList>
-                      </PitchSection>
-                    </>
-                  ) : (
-                    <>
-                      <InfoBlock>
-                        <InfoLabel>Verified PR email</InfoLabel>
-                        <InfoRow>
-                          <div>
-                            <InfoValue>{brandEmail}</InfoValue>
-                            <InfoMeta>1 credit used</InfoMeta>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Tooltip title="Report invalid or outdated email">
-                              <FlagBtn
-                                type="button"
-                                onClick={() => {
-                                  const subject = encodeURIComponent(`${brandName} - Invalid Contact Report`);
-                                  const body = encodeURIComponent(`Hi Newcollab team,\n\nThe contact email for ${brandName} (${brandEmail}) appears to be invalid or no longer active.\n\nPlease update this brand's contact information.\n\nThank you!`);
-                                  window.open(`mailto:team@newcollab.co?subject=${subject}&body=${body}`, '_blank');
-                                }}
-                              >
-                                <FiFlag size={14} />
-                              </FlagBtn>
-                            </Tooltip>
-                            <GhostBtn type="button" onClick={() => copyToClipboard(brandEmail, 'email')}>
-                              {copiedField === 'email' ? 'Copied' : 'Copy'}
-                            </GhostBtn>
-                          </div>
-                        </InfoRow>
-                      </InfoBlock>
+                            {packageData.media_kit_url && (
+                              <li>
+                                <span>Media kit URL</span>
+                                <button type="button" onClick={() => copyToClipboard(packageData.media_kit_url, 'pitch')}>
+                                  Copy
+                                </button>
+                              </li>
+                            )}
+                          </PrepList>
+                        </PitchSection>
+                        <StickyActionBar>
+                          <PrimaryActionBtn $ready onClick={handleOpenForm}>
+                            ➤ Open PR / affiliate form
+                          </PrimaryActionBtn>
+                          <BackButton type="button" onClick={() => setPhase(PHASE_MODAL)}>
+                            ← Back to strategy
+                          </BackButton>
+                        </StickyActionBar>
+                      </OutreachContent>
+                    ) : (
+                      /* EMAIL BRANDS - PREMIUM PITCH WORKSPACE */
+                      <>
+                        {/* VERIFIED EMAIL COMPACT STRIP */}
+                        <VerifiedEmailStrip>
+                          <VerifiedEmailLeft>
+                            <VerifiedBadge>✓</VerifiedBadge>
+                            <VerifiedEmailInfo>
+                              <VerifiedEmailLabel>Verified PR email</VerifiedEmailLabel>
+                              <VerifiedEmailValue>{brandEmail}</VerifiedEmailValue>
+                            </VerifiedEmailInfo>
+                          </VerifiedEmailLeft>
+                        </VerifiedEmailStrip>
 
-                      <PitchSection>
-                        <PitchSectionLabel>Your pitch</PitchSectionLabel>
-                        <ToneTabs style={{ background: 'rgba(255,255,255,0.7)' }}>
-                          {['short', 'growing', 'founder'].map(tone => (
-                            <ToneTab
-                              key={tone}
-                              $active={selectedTone === tone}
-                              onClick={() => setSelectedTone(tone)}
+                        {/* PITCH WORKSPACE - the hero editing area */}
+                        <PitchWorkspace>
+                          <PitchWorkspaceLabel>Your pitch</PitchWorkspaceLabel>
+
+                          <FieldLabel>Subject</FieldLabel>
+                          <PitchSubjectInput
+                            type="text"
+                            value={editedSubject}
+                            onChange={(e) => setEditedSubject(e.target.value)}
+                            placeholder="Subject line..."
+                          />
+
+                          <FieldLabel>Message</FieldLabel>
+                          <PitchBodyTextarea
+                            value={editedBody}
+                            onChange={(e) => setEditedBody(e.target.value)}
+                            placeholder="Your pitch..."
+                          />
+
+                          {/* REGENERATE BUTTON */}
+                          <RegenRow>
+                            <RegenButton
+                              onClick={() => handleRegenerate(false)}
+                              disabled={regenCount >= 3 || isRegenerating}
                             >
-                              {tone}
-                            </ToneTab>
-                          ))}
-                        </ToneTabs>
-                        <PitchCard style={{ background: '#fff', border: '1px solid #dbeafe' }}>
-                          <PitchText style={{ maxHeight: 160 }}>
-                            {packageData.package?.pitches?.[selectedTone]?.body_plain || 'Pitch loading...'}
-                          </PitchText>
-                          <PitchCopyBtn onClick={() => copyToClipboard(packageData.package?.pitches?.[selectedTone]?.body_plain, 'pitch')}>
-                            {copiedField === 'pitch' ? <><FiCheck size={12} /> Copied!</> : <><FiCopy size={12} /> Copy pitch</>}
-                          </PitchCopyBtn>
-                        </PitchCard>
-                      </PitchSection>
+                              {isRegenerating ? (
+                                '↻ Generating...'
+                              ) : regenCount >= 3 ? (
+                                'Max versions reached'
+                              ) : (
+                                `↻ Try another version  ${3 - regenCount} left`
+                              )}
+                            </RegenButton>
+                          </RegenRow>
+                        </PitchWorkspace>
 
-                      <InfoBlock>
-                        <InfoLabel>What they often gift</InfoLabel>
-                        <InfoValue>~${giftValue} avg gift</InfoValue>
-                      </InfoBlock>
+                        {/* META INFO */}
+                        <MetaInfoCard>
+                          <MetaInfoIcon>🎁</MetaInfoIcon>
+                          <MetaInfoText>
+                            <strong>{brandName}</strong> often gifts ~<strong>${giftValue} devices</strong> to creators like you.
+                          </MetaInfoText>
+                        </MetaInfoCard>
 
-                      {formUrl && (
-                        <FormApplySection>
-                          <FormApplyTitle>Also has a PR / affiliate form</FormApplyTitle>
-                          <FormApplyBody>
-                            You can apply through their form too.
-                          </FormApplyBody>
-                        </FormApplySection>
-                      )}
+                        {/* STICKY ACTION BAR */}
+                        <StickyActionBar>
+                          <PrimaryActionBtn $ready onClick={() => handleSend(true)}>
+                            ✉ Send pitch to {brandName}
+                          </PrimaryActionBtn>
 
-                      {(packageData.best_time?.day || packageData.best_time?.time_range) && (
-                        <TipLine>
-                          Best time: <b>{packageData.best_time?.day} {packageData.best_time?.time_range}</b>
-                        </TipLine>
-                      )}
-                    </>
-                  )}
+                          <SecondaryLinks>
+                            {formUrl && (
+                              <SecondaryLink onClick={handleOpenForm}>
+                                Apply via form
+                              </SecondaryLink>
+                            )}
+                            <SecondaryLink onClick={() => copyToClipboard(editedBody, 'pitch')}>
+                              {copiedField === 'pitch' ? 'Copied!' : 'Copy to send from your email'}
+                            </SecondaryLink>
+                          </SecondaryLinks>
 
-                  {renderManagerMiniBand()}
-                </OutreachContent>
-
-                <OutreachFooter>
-                  {isFormPackage ? (
-                    <OutreachCTA onClick={handleOpenForm}>
-                      Open PR / affiliate form
-                    </OutreachCTA>
-                  ) : (
-                    <>
-                      <OutreachCTA onClick={handleSend}>
-                        {SEND_BUTTON.emailLabel}
-                      </OutreachCTA>
-                      {formUrl && (
-                        <FormApplyCTA type="button" onClick={handleOpenForm}>
-                          Apply via form
-                        </FormApplyCTA>
-                      )}
-                    </>
-                  )}
-                  <BackButton type="button" onClick={() => setPhase(PHASE_MODAL)}>
-                    ← Back to strategy
-                  </BackButton>
-                </OutreachFooter>
+                          <BackToStrategyLink onClick={() => setPhase(PHASE_MODAL)}>
+                            ← Back to strategy
+                          </BackToStrategyLink>
+                        </StickyActionBar>
+                      </>
+                    )}
+                  </>
+                )}
               </>
             )}
 
@@ -2708,6 +3711,93 @@ const UnlockModalV2 = ({
           </ModalBody>
         </Modal>
       </Overlay>
+
+      {/* Friction modal for sending without edits */}
+      {showFrictionModal && (
+        <FrictionModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowFrictionModal(false)}
+        >
+          <FrictionModalContent
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <FrictionModalTitle>Send without personalizing?</FrictionModalTitle>
+            <FrictionModalText>
+              Personalized pitches reply at 5x the rate. Send this one as-is?
+            </FrictionModalText>
+            <FrictionModalButtons>
+              <FrictionModalBtn onClick={() => setShowFrictionModal(false)}>
+                Back to edit
+              </FrictionModalBtn>
+              <FrictionModalBtn $primary onClick={handleFrictionConfirm}>
+                Send anyway
+              </FrictionModalBtn>
+            </FrictionModalButtons>
+          </FrictionModalContent>
+        </FrictionModalOverlay>
+      )}
+
+      {/* Last-chance nudge modal (soft, not blocking) */}
+      {showNudgeModal && (
+        <FrictionModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleNudgeGoBack}
+        >
+          <FrictionModalContent
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <FrictionModalTitle>Quick tip before sending</FrictionModalTitle>
+            <FrictionModalText>
+              Adding one AI Boost suggestion can increase your reply rate from 2% to 4%. It only takes 10 seconds!
+            </FrictionModalText>
+            <FrictionModalButtons>
+              <FrictionModalBtn $primary onClick={handleNudgeGoBack}>
+                Add a suggestion
+              </FrictionModalBtn>
+              <FrictionModalBtn onClick={handleNudgeSendAnyway}>
+                Send as-is
+              </FrictionModalBtn>
+            </FrictionModalButtons>
+          </FrictionModalContent>
+        </FrictionModalOverlay>
+      )}
+
+      {/* Regenerate confirmation modal */}
+      {showRegenConfirm && (
+        <FrictionModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowRegenConfirm(false)}
+        >
+          <FrictionModalContent
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <FrictionModalTitle>You have unsaved edits</FrictionModalTitle>
+            <FrictionModalText>
+              Regenerating will replace your current pitch with a new version. Your edits will be lost.
+            </FrictionModalText>
+            <FrictionModalButtons>
+              <FrictionModalBtn onClick={() => setShowRegenConfirm(false)}>
+                Keep editing
+              </FrictionModalBtn>
+              <FrictionModalBtn $primary onClick={() => handleRegenerate(true)}>
+                Regenerate anyway
+              </FrictionModalBtn>
+            </FrictionModalButtons>
+          </FrictionModalContent>
+        </FrictionModalOverlay>
+      )}
     </AnimatePresence>
   );
 };
