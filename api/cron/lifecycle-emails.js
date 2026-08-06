@@ -297,21 +297,35 @@ const TEMPLATES = {
   },
   doubter_2: {
     subject: "the 5-pitch rule nobody talks about",
-    getHtml: (firstName, pitchesSent) => generateEmailHtml({
-      bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
+    getHtml: (firstName, pitchesSent, unlocksUsed) => {
+      // Dynamic copy based on unlock count
+      let unlockMessage;
+      const remaining = 3 - (unlocksUsed || 0);
+      if (unlocksUsed === 1) {
+        unlockMessage = `You've used 1 unlock so far. You have 2 more this month — use them.`;
+      } else if (unlocksUsed === 2) {
+        unlockMessage = `You've used 2 unlocks. One more pitch could be the one that lands.`;
+      } else {
+        unlockMessage = `You still have ${remaining > 0 ? remaining : 'more'} unlocks this month. Use them before they reset.`;
+      }
+
+      return generateEmailHtml({
+        bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
 <p style="margin:0 0 20px 0;">Here's something most creators don't know:</p>
 <p style="margin:0 0 20px 0;"><strong>The average creator who lands their first brand deal sends 5-8 pitches before getting a yes.</strong></p>
 <p style="margin:0 0 20px 0;">You've sent ${pitchesSent || 'a few'} so far. That's not failure — that's progress.</p>
+<p style="margin:0 0 20px 0;"><strong>${unlockMessage}</strong></p>
 <p style="margin:0 0 20px 0;">The creators who quit at pitch 2 or 3 never find out they were one or two pitches away.</p>
 <p style="margin:0 0 12px 0;">Here's what changes after pitch 5:</p>
 <p style="margin:0 0 12px 0;"><strong>1.</strong> Your pitches get sharper (you learn what works)</p>
 <p style="margin:0 0 12px 0;"><strong>2.</strong> Your profile gets stronger (you optimize as you go)</p>
 <p style="margin:0 0 20px 0;"><strong>3.</strong> Law of numbers kicks in (more shots = more replies)</p>
 <p style="margin:0 0 0 0;">Most brand deals don't come from luck. They come from persistence.</p>`,
-      preheader: "The stat that changes everything.",
-      primaryCta: { label: "Keep going", url: "https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=lifecycle&utm_campaign=doubter_5pitch" },
-      utmCampaign: 'doubter_5pitch'
-    })
+        preheader: "The stat that changes everything.",
+        primaryCta: { label: "Keep going", url: "https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=lifecycle&utm_campaign=doubter_5pitch" },
+        utmCampaign: 'doubter_5pitch'
+      });
+    }
   },
   weekly_digest: {
     subject: "your monday brief from your manager",
@@ -965,6 +979,7 @@ async function processDoubterSeries() {
     }
 
     const firstName = user.username || 'there';
+    const userUnlockCount = unlocksByCreator[user.id] || 0;
     let subject, html, templateSlug;
 
     if (position === 0) {
@@ -973,7 +988,7 @@ async function processDoubterSeries() {
       templateSlug = 'doubter_story';
     } else {
       subject = TEMPLATES.doubter_2.subject;
-      html = TEMPLATES.doubter_2.getHtml(firstName, user.pitches_sent_total);
+      html = TEMPLATES.doubter_2.getHtml(firstName, user.pitches_sent_total, userUnlockCount);
       templateSlug = 'doubter_5pitch';
     }
 
