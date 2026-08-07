@@ -31,9 +31,9 @@ const validateUsername = (value) => {
   if (/https?|www\.|\.com|\.co|\.net|\.org|facebook|instagram|tiktok/i.test(value)) {
     return { valid: false, error: 'Please enter a username, not a URL' };
   }
-  // Must start with letter or number
-  if (!/^[a-zA-Z0-9]/.test(value)) {
-    return { valid: false, error: 'Username must start with a letter or number' };
+  // Allow letters, numbers, underscores, or periods at start (TikTok allows _username)
+  if (!/^[a-zA-Z0-9_.]/.test(value)) {
+    return { valid: false, error: 'Username contains invalid characters' };
   }
   // Minimum length
   if (value.length < 3) {

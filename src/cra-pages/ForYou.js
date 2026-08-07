@@ -11,6 +11,7 @@ import AIPitchModal from '../creator-portal/AIPitchModal';
 import PRPackageModal from '../creator-portal/PRPackageModal';
 import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
+import WelcomeTour from '../components/WelcomeTour';
 
 // Feature flag for V2 modal testing - set to true to use new verdict-first design
 const USE_UNLOCK_V2 = true;
@@ -142,7 +143,8 @@ const ForYou = () => {
   const [managerBar, setManagerBar] = useState(readCachedManagerBar);
   const [managerBandDismissed, setManagerBandDismissed] = useState(false);
 
-  // Welcome modal for new users (post-onboarding)
+  // Welcome tour + modal for new users (post-onboarding)
+  const [showWelcomeTour, setShowWelcomeTour] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [welcomePitchedIds, setWelcomePitchedIds] = useState(new Set()); // Track brands pitched within welcome flow
   const [isWelcomeFlow, setIsWelcomeFlow] = useState(false); // Flag to return to modal after pitch
@@ -213,31 +215,41 @@ const ForYou = () => {
     };
   }, []);
 
-  // Check for onboarding completion and show welcome modal
+  // Check for onboarding completion and show welcome tour/modal
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const justOnboarded = urlParams.get('onboarding') === 'complete' ||
                           sessionStorage.getItem('justCompletedOnboarding') === 'true';
+    const forceTour = urlParams.get('force_tour') === 'true';
 
-    // Show welcome modal if:
-    // 1. Just completed onboarding, OR
-    // 2. User has never used any unlocks (remaining === 3) and hasn't dismissed the modal
+    const hasCompletedTour = localStorage.getItem('welcomeTourCompleted') === 'true';
     const hasCompletedWelcomeFlow = localStorage.getItem('welcomeFlowCompleted') === 'true';
     const hasNeverUnlocked = unlockBalance.remaining === 3 && unlockBalance.tier === 'free';
-    const shouldShowWelcome = (justOnboarded || hasNeverUnlocked) && !hasCompletedWelcomeFlow;
 
-    if (shouldShowWelcome && !loading && data?.matched?.length > 0) {
-      setShowWelcomeModal(true);
-      // Clean up the URL param
-      if (urlParams.get('onboarding')) {
+    // Show welcome tour for users who just completed onboarding and haven't seen it
+    // Also allow ?force_tour=true to bypass localStorage check for testing
+    if ((justOnboarded || forceTour) && (!hasCompletedTour || forceTour) && !loading) {
+      setShowWelcomeTour(true);
+      // Clean up the URL params
+      if (urlParams.get('onboarding') || urlParams.get('force_tour')) {
         urlParams.delete('onboarding');
+        urlParams.delete('force_tour');
         const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
         window.history.replaceState({}, '', newUrl);
       }
       // Clear onboarding flag
       sessionStorage.removeItem('justCompletedOnboarding');
+      return;
     }
-  }, [loading, data, unlockBalance]);
+
+    // Show welcome modal for returning users who haven't completed the welcome flow
+    // (already saw tour but didn't finish unlocking brands)
+    const shouldShowWelcome = (hasCompletedTour || hasNeverUnlocked) && !hasCompletedWelcomeFlow;
+
+    if (shouldShowWelcome && !loading && data?.matched?.length > 0 && !showWelcomeTour) {
+      setShowWelcomeModal(true);
+    }
+  }, [loading, data, unlockBalance, showWelcomeTour]);
 
   // Check for upgrade query param (from email CTAs)
   useEffect(() => {
@@ -1238,8 +1250,26 @@ const ForYou = () => {
         />
       )}
 
+      {/* Welcome Tour - Full product tour shown after onboarding */}
+      {showWelcomeTour && (
+        <WelcomeTour
+          onComplete={() => {
+            setShowWelcomeTour(false);
+            localStorage.setItem('welcomeTourCompleted', 'true');
+            // After tour, show the welcome modal with brand matches
+            if (data?.matched?.length > 0) {
+              setShowWelcomeModal(true);
+            }
+          }}
+          onSkip={() => {
+            setShowWelcomeTour(false);
+            localStorage.setItem('welcomeTourCompleted', 'true');
+          }}
+        />
+      )}
+
       {/* Welcome Modal - Post-onboarding first pitch guide */}
-      {showWelcomeModal && data?.matched?.length > 0 && (
+      {showWelcomeModal && data?.matched?.length > 0 && !showWelcomeTour && (
         <WelcomeOverlay>
           <WelcomeModal onClick={(e) => e.stopPropagation()}>
             <WelcomeClose onClick={() => {
