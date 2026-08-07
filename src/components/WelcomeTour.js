@@ -88,7 +88,13 @@ const Overlay = styled.div`
   justify-content: center;
   padding: 20px;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
+
+  @media (max-width: 520px) {
+    padding: 0;
+    align-items: flex-end;
+  }
 `;
 
 const TourCard = styled.div`
@@ -108,7 +114,9 @@ const TourCard = styled.div`
   @media (max-width: 520px) {
     border-radius: 24px 24px 0 0;
     min-height: 100vh;
+    min-height: 100dvh;
     max-height: 100vh;
+    max-height: 100dvh;
     max-width: 100%;
     position: fixed;
     bottom: 0;
@@ -127,7 +135,7 @@ const Header = styled.div`
   border-bottom: 1px solid #f0f0f0;
 
   @media (max-width: 520px) {
-    padding: 16px 16px 10px;
+    padding: calc(16px + env(safe-area-inset-top, 0)) 16px 10px;
     gap: 12px;
   }
 `;
