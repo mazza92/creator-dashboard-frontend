@@ -3564,6 +3564,18 @@ const UnlockModalV2 = ({
                               <VerifiedEmailValue>{brandEmail}</VerifiedEmailValue>
                             </VerifiedEmailInfo>
                           </VerifiedEmailLeft>
+                          <Tooltip title="Report invalid email">
+                            <FlagBtn
+                              type="button"
+                              onClick={() => {
+                                const subject = encodeURIComponent(`${brand?.name || 'Brand'} - Invalid Contact Report`);
+                                const body = encodeURIComponent(`Hi Newcollab team,\n\nThe contact email for ${brand?.name || 'this brand'} (${brandEmail}) appears to be invalid or no longer active.\n\nPlease update this brand's contact information.\n\nThank you!`);
+                                window.open(`mailto:team@newcollab.co?subject=${subject}&body=${body}`, '_blank');
+                              }}
+                            >
+                              <FiFlag size={14} />
+                            </FlagBtn>
+                          </Tooltip>
                         </VerifiedEmailStrip>
 
                         {/* PITCH WORKSPACE - the hero editing area */}
