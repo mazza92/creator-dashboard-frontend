@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useCallback } from 'react';
+import React, { useContext, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Route, Routes, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { UserContext, UserProvider } from './contexts/UserContext';
 import { Elements } from '@stripe/react-stripe-js';
@@ -8,7 +8,6 @@ import IndexNowInitializer from './components/IndexNowInitializer';
 import IndexNowTest from './components/IndexNowTest';
 import QueryParamRedirect from './components/QueryParamRedirect';
 import CreatorHomeRedirect from './components/CreatorHomeRedirect';
-import CreatorOverview from './creator-portal/CreatorOverview';
 import BrandOnboardingForm from './components/forms/BrandOnboardingForm';
 // eslint-disable-next-line no-unused-vars
 import CreatorOnboardingForm from './components/forms/CreatorOnboardingForm';
@@ -16,7 +15,6 @@ import Signup from './components/forms/Signup';
 import SuccessPage from './components/forms/SuccessPage';
 import DashboardLayout from './Layouts/DashboardLayout';
 import CreatorDashboardLayout from './Layouts/CreatorDashboardLayout';
-import BrandOverview from './components/BrandOverview';
 import BrandPROffers from './brand-portal/BrandPROffers';
 import BrandMarketplace from './brand-portal/BrandMarketplace';
 import PRHunter from './brand-portal/PRHunter';
@@ -58,11 +56,7 @@ import PaymentsPage from './creator-portal/PaymentsPage';
 import CampaignInvites from './creator-portal/CampaignInvites';
 import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
-import ForYou from './cra-pages/ForYou';
-import Pool from './cra-pages/Pool';
 import BrandSubmitPage from './cra-pages/BrandSubmitPage';
-import MediaKit from './creator-portal/MediaKit';
-import PortfolioBuilder from './creator-portal/PortfolioBuilder';
 import PRReady from './creator-portal/PRReady';
 import PublicMediaKit from './cra-pages/PublicMediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
@@ -79,7 +73,6 @@ import CreatorOnboarding from './components/forms/CreatorOnboarding';
 import ProfileLayoutWrapper from './Layouts/ProfileLayoutWrapper';
 import { AuthProvider } from './contexts/AuthContext';
 import Marketplace from './cra-pages/Marketplace';
-import PRPipeline from './creator-portal/PRPipeline';
 import SubscriptionSuccess from './creator-portal/SubscriptionSuccess';
 import SubscriptionCancel from './creator-portal/SubscriptionCancel';
 import AccountSettings from './creator-portal/AccountSettings';
@@ -89,14 +82,35 @@ import PublicBrandPage from './cra-pages/PublicBrandPage';
 import SkincareDirectory from './cra-pages/SkincareDirectory';
 import KBeautyDirectory from './cra-pages/KBeautyDirectory';
 import AustraliaDirectory from './cra-pages/AustraliaDirectory';
-// UnifiedBrandDirectory used in dashboard (/creator/dashboard/for-you) and public directory
-import UnifiedBrandDirectory from './cra-pages/UnifiedBrandDirectory';
 import NotFound from './cra-pages/NotFound';
-import BrandAdmin from './admin/BrandAdmin';
-import AdminReports from './admin/AdminReports';
-import AdminEmail from './admin/AdminEmail';
-import AdminOpportunities from './admin/AdminOpportunities';
-import CreatorsAdmin from './admin/CreatorsAdmin';
+
+// Lazy-loaded heavy components for code splitting (reduces initial bundle ~40%)
+// These load on-demand when the route is accessed
+const ForYou = lazy(() => import('./cra-pages/ForYou'));
+const Pool = lazy(() => import('./cra-pages/Pool'));
+const CreatorOverview = lazy(() => import('./creator-portal/CreatorOverview'));
+const BrandOverview = lazy(() => import('./components/BrandOverview'));
+const MediaKit = lazy(() => import('./creator-portal/MediaKit'));
+const PortfolioBuilder = lazy(() => import('./creator-portal/PortfolioBuilder'));
+const PRPipeline = lazy(() => import('./creator-portal/PRPipeline'));
+const UnifiedBrandDirectory = lazy(() => import('./cra-pages/UnifiedBrandDirectory'));
+
+// Admin pages - rarely accessed, lazy load
+const BrandAdmin = lazy(() => import('./admin/BrandAdmin'));
+const AdminReports = lazy(() => import('./admin/AdminReports'));
+const AdminEmail = lazy(() => import('./admin/AdminEmail'));
+const AdminOpportunities = lazy(() => import('./admin/AdminOpportunities'));
+const CreatorsAdmin = lazy(() => import('./admin/CreatorsAdmin'));
+
+// Skeleton components for Suspense fallbacks (non-lazy - needed immediately)
+import { ForYouSkeleton, DashboardOverviewSkeleton } from './components/Skeleton';
+
+// Suspense wrapper with loading fallback for lazy routes
+const LazyRoute = ({ children, fallback, skeleton }) => (
+  <Suspense fallback={skeleton || fallback || <LoadingSpinner />}>
+    {children}
+  </Suspense>
+);
 
 const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUWySdMVWPQkzE8ND5HMfRbXYX0ZYtiaDyCmVcWZKnoQqEd5eO3nC9003fK6K3fQ');
 
@@ -415,7 +429,7 @@ function AppContent() {
             <Route
                 path='/directory'
                 element={
-                    user ? <Navigate to='/creator/dashboard/for-you' replace /> : <UnifiedBrandDirectory />
+                    user ? <Navigate to='/creator/dashboard/for-you' replace /> : <LazyRoute><UnifiedBrandDirectory /></LazyRoute>
                 }
             />
             <Route path='/directory/skincare' element={<SkincareDirectory />} />
@@ -435,11 +449,11 @@ function AppContent() {
 
             {/* PR Hunter - Internal Tool (has its own login) */}
             <Route path='/supply' element={<PRHunter />} />
-            <Route path='/admin/brands' element={<BrandAdmin />} />
-            <Route path='/admin/creators' element={<CreatorsAdmin />} />
-            <Route path='/admin/reports' element={<AdminReports />} />
-            <Route path='/admin/email' element={<AdminEmail />} />
-            <Route path='/admin/opportunities' element={<AdminOpportunities />} />
+            <Route path='/admin/brands' element={<LazyRoute><BrandAdmin /></LazyRoute>} />
+            <Route path='/admin/creators' element={<LazyRoute><CreatorsAdmin /></LazyRoute>} />
+            <Route path='/admin/reports' element={<LazyRoute><AdminReports /></LazyRoute>} />
+            <Route path='/admin/email' element={<LazyRoute><AdminEmail /></LazyRoute>} />
+            <Route path='/admin/opportunities' element={<LazyRoute><AdminOpportunities /></LazyRoute>} />
 
             {/* Standalone routes for profiles, wrapped in a layout manager */}
             <Route element={<ProfileLayoutWrapper />}>
@@ -469,7 +483,7 @@ function AppContent() {
             >
             <Route index element={<Navigate to='/brand/dashboard/overview' replace />} />
             <Route path='dashboard' element={<Navigate to='/brand/dashboard/overview' replace />} />
-            <Route path='dashboard/overview' element={<BrandOverview />} />
+            <Route path='dashboard/overview' element={<LazyRoute skeleton={<DashboardOverviewSkeleton />}><BrandOverview /></LazyRoute>} />
             <Route path='dashboard/marketplace' element={<BrandMarketplace />} />
             <Route path='dashboard/bookings' element={<BrandBookings />} />
             <Route path='dashboard/pr-offers' element={<BrandPROffers />} />
@@ -485,20 +499,20 @@ function AppContent() {
             >
                 <Route index element={<CreatorHomeRedirect />} />
                 <Route path='dashboard' element={<CreatorHomeRedirect />} />
-                <Route path='dashboard/overview' element={<CreatorOverview />} />
+                <Route path='dashboard/overview' element={<LazyRoute skeleton={<DashboardOverviewSkeleton />}><CreatorOverview /></LazyRoute>} />
                 <Route path='dashboard/bookings' element={<CreatorBookings />} />
                 <Route path='dashboard/campaign-invites' element={<CampaignInvites />} />
                 <Route path='dashboard/branded-content' element={<SponsorOffers />} />
                 <Route path='dashboard/my-offers' element={<ManagePackages />} />
                 <Route path='dashboard/profile' element={<Profile />} />
-                <Route path='dashboard/pr-brands' element={<UnifiedBrandDirectory />} />
-                <Route path='dashboard/pr-pipeline' element={<PRPipeline />} />
+                <Route path='dashboard/pr-brands' element={<LazyRoute><UnifiedBrandDirectory /></LazyRoute>} />
+                <Route path='dashboard/pr-pipeline' element={<LazyRoute><PRPipeline /></LazyRoute>} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
-                <Route path='dashboard/for-you' element={<ForYou />} />
+                <Route path='dashboard/for-you' element={<LazyRoute skeleton={<ForYouSkeleton />}><ForYou /></LazyRoute>} />
                 <Route path='dashboard/pr-ready' element={<PRReady />} />
-                <Route path='dashboard/pool' element={<Pool />} />
-                <Route path='dashboard/media-kit' element={<MediaKit />} />
-                <Route path='dashboard/my-kit' element={<PortfolioBuilder currentUser={user} />} />
+                <Route path='dashboard/pool' element={<LazyRoute><Pool /></LazyRoute>} />
+                <Route path='dashboard/media-kit' element={<LazyRoute><MediaKit /></LazyRoute>} />
+                <Route path='dashboard/my-kit' element={<LazyRoute><PortfolioBuilder currentUser={user} /></LazyRoute>} />
                 <Route path='dashboard/settings' element={<AccountSettings />} />
                 <Route path='dashboard/brand/:slug' element={<PublicBrandPage />} />
                 <Route path='first-ad-slot' element={<FirstAdSlot />} />

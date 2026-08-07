@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Inbox, Sparkles, FileText, Bell, Users, BadgeCheck } from 'lucide-react';
@@ -11,6 +11,7 @@ import Logo from '../components/Logo';
 import api from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { creatorTokens } from '../theme/creatorTokens';
+import { usePrefetch } from '../components/PrefetchLink';
 
 // ============================================================
 // STYLED COMPONENTS
@@ -413,6 +414,12 @@ const CreatorDashboardLayout = () => {
   const isFetching = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { prefetch } = usePrefetch();
+
+  // Prefetch data on nav hover for instant navigation
+  const handleNavHover = useCallback((path) => {
+    prefetch(path);
+  }, [prefetch]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -578,6 +585,7 @@ const CreatorDashboardLayout = () => {
                 key={path}
                 to={path}
                 $active={location.pathname === path}
+                onMouseEnter={() => handleNavHover(path)}
                 onClick={() => {
                   if (path.includes('pr-ready')) {
                     sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));

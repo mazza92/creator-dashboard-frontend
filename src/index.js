@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { QueryProvider } from './providers/QueryProvider';
 import App from './App';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
@@ -19,9 +20,11 @@ message.config({
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <HelmetProvider>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <QueryProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </QueryProvider>
   </HelmetProvider>
 );
 
