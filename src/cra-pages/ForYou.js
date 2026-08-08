@@ -226,9 +226,10 @@ const ForYou = () => {
     const hasCompletedWelcomeFlow = localStorage.getItem('welcomeFlowCompleted') === 'true';
     const hasNeverUnlocked = unlockBalance.remaining === 3 && unlockBalance.tier === 'free';
 
-    // Show welcome tour for users who just completed onboarding and haven't seen it
-    // Also allow ?force_tour=true to bypass localStorage check for testing
-    if ((justOnboarded || forceTour) && (!hasCompletedTour || forceTour) && !loading) {
+    // Show welcome tour for users who just completed onboarding
+    // justOnboarded bypasses localStorage check (stale from dev testing / different account)
+    // force_tour param also bypasses for manual testing
+    if ((justOnboarded || forceTour) && !loading) {
       setShowWelcomeTour(true);
       // Clean up the URL params
       if (urlParams.get('onboarding') || urlParams.get('force_tour')) {
