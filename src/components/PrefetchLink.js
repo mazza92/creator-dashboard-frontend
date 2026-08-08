@@ -110,16 +110,28 @@ const PREFETCH_CONFIG = {
   },
 
   '/creator/dashboard/my-kit': async (queryClient) => {
-    await queryClient.prefetchQuery({
-      queryKey: ['portfolio'],
-      queryFn: async () => {
-        const response = await axios.get(`${API_BASE}/api/portfolio`, {
-          withCredentials: true,
-        });
-        return response.data;
-      },
-      staleTime: 5 * 60 * 1000,
-    });
+    await Promise.all([
+      queryClient.prefetchQuery({
+        queryKey: ['portfolio', 'posts'],
+        queryFn: async () => {
+          const response = await axios.get(`${API_BASE}/api/portfolio/posts`, {
+            withCredentials: true,
+          });
+          return response.data;
+        },
+        staleTime: 5 * 60 * 1000,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ['portfolio', 'settings'],
+        queryFn: async () => {
+          const response = await axios.get(`${API_BASE}/api/portfolio/settings`, {
+            withCredentials: true,
+          });
+          return response.data;
+        },
+        staleTime: 5 * 60 * 1000,
+      }),
+    ]);
   },
 };
 
