@@ -2120,6 +2120,60 @@ const FormNote = styled.div`
   }
 `;
 
+const FollowupTimingBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: ${props => {
+    switch (props.$status) {
+      case 'optimal': return 'linear-gradient(135deg, #d1fae5, #a7f3d0)';
+      case 'good': return 'linear-gradient(135deg, #dbeafe, #bfdbfe)';
+      case 'urgent': return 'linear-gradient(135deg, #fef3c7, #fde68a)';
+      case 'closed': return 'linear-gradient(135deg, #fee2e2, #fecaca)';
+      default: return 'linear-gradient(135deg, #f3f4f6, #e5e7eb)';
+    }
+  }};
+  border-radius: 12px;
+  margin-bottom: 12px;
+`;
+
+const FollowupTimingIcon = styled.span`
+  font-size: 1.2rem;
+`;
+
+const FollowupTimingText = styled.div`
+  flex: 1;
+`;
+
+const FollowupTimingTitle = styled.div`
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: ${props => {
+    switch (props.$status) {
+      case 'optimal': return '#065f46';
+      case 'good': return '#1e40af';
+      case 'urgent': return '#92400e';
+      case 'closed': return '#991b1b';
+      default: return '#374151';
+    }
+  }};
+`;
+
+const FollowupTimingSubtext = styled.div`
+  font-size: 0.8rem;
+  color: ${props => {
+    switch (props.$status) {
+      case 'optimal': return '#047857';
+      case 'good': return '#3b82f6';
+      case 'urgent': return '#b45309';
+      case 'closed': return '#b91c1c';
+      default: return '#6b7280';
+    }
+  }};
+  margin-top: 2px;
+`;
+
 const PrepList = styled.ul`
   margin: 0.4rem 0 0;
   padding: 0;
@@ -2597,6 +2651,9 @@ const UnlockModalV2 = ({
   onUpgrade,
   onOpenOpportunities,
 }) => {
+  // Check if this is a follow-up (brand already pitched)
+  const isFollowup = brand?.isFollowup || false;
+
   // Phase state
   const [phase, setPhase] = useState(PHASE_LOADING);
 
@@ -2642,6 +2699,9 @@ const UnlockModalV2 = ({
   const [addedSuggestions, setAddedSuggestions] = useState([]); // indices of added suggestions
   const [showNudgeModal, setShowNudgeModal] = useState(false); // last-chance nudge
 
+  // Follow-up state (Pro feature)
+  const [timingRecommendation, setTimingRecommendation] = useState(null);
+
   const navigate = useNavigate();
   const startTimeRef = useRef(0);
   const cardTimersRef = useRef([]);
@@ -2676,26 +2736,105 @@ const UnlockModalV2 = ({
       cardTimersRef.current.push(timer);
     });
 
-    // Make the API call - regular endpoint now has AI Depth
+    // Make the API call - use follow-up endpoint for follow-ups, PR package for initial unlocks
     try {
-      const response = await apiClient.post('/api/pr-crm/generate-pr-package', {
-        brand_id: brand.brand_id || brand.id,
-        slug: brand.slug,
-        is_for_you_match: brand.is_for_you_match || false,
-      });
+      let response;
+
+      if (isFollowup) {
+        // Follow-up: use the simpler generate-pitch endpoint with follow-up flag
+        response = await apiClient.post('/api/pr-crm/generate-pitch', {
+          brand_id: brand.brand_id || brand.id,
+          slug: brand.slug,
+          is_followup: true,
+        });
+
+        // Store timing recommendation if provided
+        if (response.data.timing_recommendation) {
+          setTimingRecommendation(response.data.timing_recommendation);
+        }
+      } else {
+        // Initial unlock: use full PR package endpoint
+        response = await apiClient.post('/api/pr-crm/generate-pr-package', {
+          brand_id: brand.brand_id || brand.id,
+          slug: brand.slug,
+          is_for_you_match: brand.is_for_you_match || false,
+        });
+      }
 
       const elapsed = Date.now() - startTimeRef.current;
       setApiComplete(true);
 
-      if (response.data.success) {
-        try {
-          const prev = Number(localStorage.getItem('nc_unlock_count') || '0');
-          localStorage.setItem('nc_unlock_count', String(prev + 1));
-        } catch (_) { /* ignore */ }
+      if (response.data.success || isFollowup) {
+        // Only increment unlock count for initial unlocks, not follow-ups
+        if (!isFollowup) {
+          try {
+            const prev = Number(localStorage.getItem('nc_unlock_count') || '0');
+            localStorage.setItem('nc_unlock_count', String(prev + 1));
+          } catch (_) { /* ignore */ }
+        }
 
         // Calculate when to show the final card
         // Must be at least CARD_TIMINGS.ready ms after start, or now if we're past that
         const readyDelay = Math.max(0, CARD_TIMINGS.ready - elapsed);
+
+        // Handle follow-up response differently - it has simpler structure
+        if (isFollowup) {
+          setTimeout(() => {
+            revealCard('ready');
+
+            const brandName = brand?.brand_name || brand?.name || 'Brand';
+
+            // Create a follow-up-compatible package structure
+            const followupPkg = {
+              pitches: {
+                growing: {
+                  subject: response.data.subject || `Following up - ${brandName} collaboration`,
+                  body: response.data.body || 'Hi there, I wanted to follow up on my previous message...'
+                }
+              },
+              brand: {
+                name: brandName,
+                category: brand?.category || ''
+              }
+            };
+
+            setPackageData({
+              success: true,
+              is_followup: true,
+              is_coaching: false,
+              coaching: null,
+              status: 'ready',
+              mentor_verdict: MENTOR_VERDICTS.ready,
+              package: followupPkg,
+              contact: {
+                verified: true,
+                email: brand?.brand_email || brand?.email,
+                email_display: brand?.brand_email ?
+                  `${brand.brand_email.substring(0, 12)}...` : 'Verified'
+              },
+              brand_email: brand?.brand_email || brand?.email,
+              timing_recommendation: response.data.timing_recommendation
+            });
+
+            // Set edited pitch directly from response
+            setEditedSubject(response.data.subject || `Following up - ${brandName} collaboration`);
+            setEditedBody(response.data.body || '');
+            setOriginalSubject(response.data.subject || '');
+            setOriginalBody(response.data.body || '');
+
+            // Clear fallback timer
+            if (fallbackTimerRef.current) {
+              clearTimeout(fallbackTimerRef.current);
+            }
+
+            // Go straight to outreach phase for editing (skip strategy)
+            setTimeout(() => {
+              setPhase(PHASE_OUTREACH);
+            }, 600);
+          }, readyDelay);
+
+          return; // Exit early for follow-ups
+        }
 
         setTimeout(() => {
           revealCard('ready');
@@ -2874,7 +3013,8 @@ const UnlockModalV2 = ({
     if (packageData?.package?.pitches?.growing) {
       const pitch = packageData.package.pitches.growing;
       const subject = pitch?.subject || '';
-      const body = pitch?.body_plain || '';
+      // Follow-ups use 'body', regular unlocks use 'body_plain'
+      const body = pitch?.body_plain || pitch?.body || '';
       setOriginalSubject(subject);
       setOriginalBody(body);
       setEditedSubject(subject);
@@ -2983,22 +3123,45 @@ const UnlockModalV2 = ({
     setShowRegenConfirm(false);
     setIsRegenerating(true);
     try {
-      const response = await apiClient.post('/api/pr-crm/generate-pr-package', {
-        brand_id: brand.brand_id || brand.id,
-        slug: brand.slug,
-        is_for_you_match: brand.is_for_you_match || false,
-        regenerate: true,
-      });
+      let response;
 
-      if (response.data.success && response.data.package?.pitches?.growing) {
-        const pitch = response.data.package.pitches.growing;
-        const newSubject = pitch?.subject || '';
-        const newBody = pitch?.body_plain || '';
-        setOriginalSubject(newSubject);
-        setOriginalBody(newBody);
-        setEditedSubject(newSubject);
-        setEditedBody(newBody);
-        setRegenCount(prev => prev + 1);
+      if (isFollowup) {
+        // Follow-up: use the generate-pitch endpoint with follow-up flag
+        response = await apiClient.post('/api/pr-crm/generate-pitch', {
+          brand_id: brand.brand_id || brand.id,
+          slug: brand.slug,
+          is_followup: true,
+          regenerate: true,
+        });
+
+        if (response.data.subject && response.data.body) {
+          const newSubject = response.data.subject;
+          const newBody = response.data.body;
+          setOriginalSubject(newSubject);
+          setOriginalBody(newBody);
+          setEditedSubject(newSubject);
+          setEditedBody(newBody);
+          setRegenCount(prev => prev + 1);
+        }
+      } else {
+        // Initial unlock: use PR package endpoint
+        response = await apiClient.post('/api/pr-crm/generate-pr-package', {
+          brand_id: brand.brand_id || brand.id,
+          slug: brand.slug,
+          is_for_you_match: brand.is_for_you_match || false,
+          regenerate: true,
+        });
+
+        if (response.data.success && response.data.package?.pitches?.growing) {
+          const pitch = response.data.package.pitches.growing;
+          const newSubject = pitch?.subject || '';
+          const newBody = pitch?.body_plain || '';
+          setOriginalSubject(newSubject);
+          setOriginalBody(newBody);
+          setEditedSubject(newSubject);
+          setEditedBody(newBody);
+          setRegenCount(prev => prev + 1);
+        }
       }
     } catch (err) {
       console.error('Regenerate failed:', err);
@@ -3466,12 +3629,15 @@ const UnlockModalV2 = ({
                     <SentCheckmark>
                       <FiCheck />
                     </SentCheckmark>
-                    <SentTitle>Pitch sent to {brandName}</SentTitle>
+                    <SentTitle>{packageData?.is_followup ? 'Follow-up sent' : 'Pitch sent'} to {brandName}</SentTitle>
                     <SentSubtitle>
-                      Reply tracking active. We'll notify you the moment {brandName} responds. Typical reply window: 3-7 days.
+                      {packageData?.is_followup
+                        ? `Follow-up sent! Brands often reply to the 2nd or 3rd message. Good luck!`
+                        : `Reply tracking active. We'll notify you the moment ${brandName} responds. Typical reply window: 3-7 days.`
+                      }
                     </SentSubtitle>
-                    <SentSecondaryBtn onClick={() => setPhase(PHASE_MODAL)}>
-                      Back to strategy
+                    <SentSecondaryBtn onClick={() => packageData?.is_followup ? onClose?.() : setPhase(PHASE_MODAL)}>
+                      {packageData?.is_followup ? 'Done' : 'Back to strategy'}
                     </SentSecondaryBtn>
                   </SentStateContainer>
                 ) : (
@@ -3578,9 +3744,30 @@ const UnlockModalV2 = ({
                           </Tooltip>
                         </VerifiedEmailStrip>
 
+                        {/* TIMING GUIDANCE FOR FOLLOW-UPS */}
+                        {packageData?.is_followup && packageData?.timing_recommendation && (
+                          <FollowupTimingBanner $status={packageData.timing_recommendation.status}>
+                            <FollowupTimingIcon>
+                              {packageData.timing_recommendation.icon || (
+                                packageData.timing_recommendation.status === 'optimal' ? '✨' :
+                                packageData.timing_recommendation.status === 'good' ? '👍' :
+                                packageData.timing_recommendation.status === 'urgent' ? '⚡' : '⏰'
+                              )}
+                            </FollowupTimingIcon>
+                            <FollowupTimingText>
+                              <FollowupTimingTitle $status={packageData.timing_recommendation.status}>
+                                {packageData.timing_recommendation.title}
+                              </FollowupTimingTitle>
+                              <FollowupTimingSubtext $status={packageData.timing_recommendation.status}>
+                                {packageData.timing_recommendation.message}
+                              </FollowupTimingSubtext>
+                            </FollowupTimingText>
+                          </FollowupTimingBanner>
+                        )}
+
                         {/* PITCH WORKSPACE - the hero editing area */}
                         <PitchWorkspace>
-                          <PitchWorkspaceLabel>Your pitch</PitchWorkspaceLabel>
+                          <PitchWorkspaceLabel>{packageData?.is_followup ? 'Your follow-up' : 'Your pitch'}</PitchWorkspaceLabel>
 
                           <FieldLabel>Subject</FieldLabel>
                           <PitchSubjectInput
@@ -3625,7 +3812,7 @@ const UnlockModalV2 = ({
                         {/* STICKY ACTION BAR */}
                         <StickyActionBar>
                           <PrimaryActionBtn $ready onClick={() => handleSend(true)}>
-                            ✉ Send pitch to {brandName}
+                            ✉ {packageData?.is_followup ? 'Send follow-up' : 'Send pitch'} to {brandName}
                           </PrimaryActionBtn>
 
                           <SecondaryLinks>

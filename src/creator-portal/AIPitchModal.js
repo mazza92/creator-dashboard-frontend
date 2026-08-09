@@ -46,6 +46,9 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
 
+  // Timing guidance for follow-ups (Pro feature)
+  const [timingRecommendation, setTimingRecommendation] = useState(null);
+
   // Fetch creator profile and generate pitch when modal opens
   useEffect(() => {
     if (isOpen && brand) {
@@ -103,7 +106,10 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       const response = await api.post('/api/pr-crm/track-pitch', {
         brand_id: brand.brand_id || brand.id,
         slug: brand.slug,
-        pipeline_id: brand.id
+        pipeline_id: brand.id,
+        // Store original pitch for follow-up context (Pro feature)
+        pitch_subject: editedSubject || pitch?.subject,
+        pitch_body: editedBody || pitch?.body
       });
       // Credit deducted successfully
       setCreditUsed(true);
@@ -202,6 +208,10 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       // Store the application form URL from API if available
       if (response.data.application_form_url) {
         setFetchedApplicationUrl(response.data.application_form_url);
+      }
+      // Store timing recommendation for follow-ups (Pro feature)
+      if (response.data.timing_recommendation) {
+        setTimingRecommendation(response.data.timing_recommendation);
       }
       // Brand is now unlocked - reveal the contact info immediately
       setContactRevealed(true);
@@ -899,8 +909,23 @@ ${creatorName}`;
                   <InfoValue>~${brand?.price_point || 45} avg gift</InfoValue>
                 </InfoBlock>
 
+                {/* Timing guidance for follow-ups (Pro feature) */}
+                {isFollowup && timingRecommendation && (
+                  <TimingGuidance $status={timingRecommendation.status}>
+                    <TimingIcon>{timingRecommendation.icon}</TimingIcon>
+                    <TimingText>
+                      <TimingTitle $status={timingRecommendation.status}>
+                        {timingRecommendation.title}
+                      </TimingTitle>
+                      <TimingMessage $status={timingRecommendation.status}>
+                        {timingRecommendation.message}
+                      </TimingMessage>
+                    </TimingText>
+                  </TimingGuidance>
+                )}
+
                 <InfoBlock>
-                  <InfoLabel>Your pitch</InfoLabel>
+                  <InfoLabel>{isFollowup ? 'Your follow-up' : 'Your pitch'}</InfoLabel>
                   <SubjectInput
                     value={editedSubject}
                     onChange={e => setEditedSubject(e.target.value)}
@@ -2356,6 +2381,61 @@ const InfoMeta = styled.div`
   font-size: 0.75rem;
   color: ${tokens.muted};
   margin-top: 0.25rem;
+`;
+
+// Timing guidance for follow-ups (Pro feature)
+const TimingGuidance = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: ${props => {
+    switch (props.$status) {
+      case 'optimal': return 'linear-gradient(135deg, #d1fae5, #a7f3d0)';
+      case 'good': return 'linear-gradient(135deg, #dbeafe, #bfdbfe)';
+      case 'urgent': return 'linear-gradient(135deg, #fef3c7, #fde68a)';
+      case 'closed': return 'linear-gradient(135deg, #fee2e2, #fecaca)';
+      default: return 'linear-gradient(135deg, #f3f4f6, #e5e7eb)';
+    }
+  }};
+  border-radius: 12px;
+  margin-bottom: 12px;
+`;
+
+const TimingIcon = styled.span`
+  font-size: 20px;
+`;
+
+const TimingText = styled.div`
+  flex: 1;
+`;
+
+const TimingTitle = styled.div`
+  font-weight: 700;
+  font-size: 13px;
+  color: ${props => {
+    switch (props.$status) {
+      case 'optimal': return '#065f46';
+      case 'good': return '#1e40af';
+      case 'urgent': return '#92400e';
+      case 'closed': return '#991b1b';
+      default: return '#374151';
+    }
+  }};
+`;
+
+const TimingMessage = styled.div`
+  font-size: 11px;
+  color: ${props => {
+    switch (props.$status) {
+      case 'optimal': return '#047857';
+      case 'good': return '#1d4ed8';
+      case 'urgent': return '#b45309';
+      case 'closed': return '#b91c1c';
+      default: return '#6b7280';
+    }
+  }};
+  margin-top: 2px;
 `;
 
 const FlagBtn = styled.button`

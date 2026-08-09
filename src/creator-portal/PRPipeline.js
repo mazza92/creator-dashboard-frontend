@@ -236,6 +236,46 @@ const PRPipeline = () => {
     }
   }, [items, searchParams, setSearchParams]);
 
+  // Handle deep link for follow-up notifications (Pro feature)
+  // URL format: ?followup={pipeline_id}&brand={brand_name}
+  useEffect(() => {
+    const followupId = searchParams.get('followup');
+    if (!followupId || items.length === 0 || !isPro) return;
+
+    const item = items.find(i =>
+      String(i.id) === String(followupId) ||
+      String(i.brand_id) === String(followupId)
+    );
+
+    if (item) {
+      // Track notification click-through (analytics)
+      const trackFollowupClick = async () => {
+        try {
+          const apiBase = getApiBase();
+          await axios.post(`${apiBase}/api/pr-crm/followup-reminder/clicked`, {
+            pipeline_id: item.id
+          }, { withCredentials: true });
+        } catch (e) {
+          // Silent fail - not critical
+        }
+      };
+      trackFollowupClick();
+
+      // Open follow-up modal directly
+      setSelectedBrand({ ...item, isFollowup: true });
+      setShowPitchModal(true);
+
+      // Clear URL params
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('followup');
+      nextParams.delete('brand');
+      nextParams.delete('utm_source');
+      nextParams.delete('utm_medium');
+      nextParams.delete('utm_campaign');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [items, searchParams, setSearchParams, isPro]);
+
   const fetchPipelineData = async () => {
     try {
       setLoading(true);

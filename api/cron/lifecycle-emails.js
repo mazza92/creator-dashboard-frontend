@@ -383,6 +383,59 @@ ${brandsHtml}`,
         utmCampaign: 'weekly_digest'
       });
     }
+  },
+
+  // ============================================
+  // FOLLOW-UP REMINDER TEMPLATES (Pro only)
+  // Sent at Day 6, 10, and 14 after initial pitch
+  // ============================================
+
+  followup_day_6: {
+    subject: (brandName) => `Time to follow up with ${brandName} - draft ready`,
+    getHtml: (firstName, brandName, deepLink, heroProduct) => generateEmailHtml({
+      bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
+<p style="margin:0 0 20px 0;">It's been 6 days since you pitched <strong>${brandName}</strong>. This is the sweet spot for follow-ups.</p>
+<p style="margin:0 0 20px 0;font-size:18px;font-weight:700;color:#059669;">67% of brand replies come after a follow-up.</p>
+<p style="margin:0 0 20px 0;">I've drafted a follow-up for you${heroProduct ? ` that references their ${heroProduct}` : ''} and adds a fresh angle. One click to review and send.</p>`,
+      preheader: `Day 6 - optimal follow-up timing for ${brandName}`,
+      primaryCta: {
+        label: "Review your follow-up",
+        url: deepLink
+      },
+      utmCampaign: 'followup_day_6'
+    })
+  },
+
+  followup_day_10: {
+    subject: (brandName) => `Last chance reminder for ${brandName}`,
+    getHtml: (firstName, brandName, deepLink) => generateEmailHtml({
+      bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
+<p style="margin:0 0 20px 0;">10 days since your pitch to <strong>${brandName}</strong>. Window's still open, but closing.</p>
+<p style="margin:0 0 20px 0;">Brands get flooded with emails. A friendly nudge now could be the difference between getting noticed and getting buried.</p>
+<p style="margin:0 0 20px 0;">Your follow-up draft is ready.</p>`,
+      preheader: `Don't let ${brandName} slip away - follow up today`,
+      primaryCta: {
+        label: "Send your follow-up",
+        url: deepLink
+      },
+      utmCampaign: 'followup_day_10'
+    })
+  },
+
+  followup_day_14: {
+    subject: (brandName) => `Window closing today for ${brandName}`,
+    getHtml: (firstName, brandName, deepLink) => generateEmailHtml({
+      bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
+<p style="margin:0 0 20px 0;"><strong>Day 14.</strong> After today, reply rates for <strong>${brandName}</strong> drop significantly.</p>
+<p style="margin:0 0 20px 0;">This is your final follow-up window. If you're going to send one more note, make it today.</p>
+<p style="margin:0 0 20px 0;">I've kept your draft short and direct. Perfect for a last touch.</p>`,
+      preheader: `Final day to follow up with ${brandName}`,
+      primaryCta: {
+        label: "Send final follow-up",
+        url: deepLink
+      },
+      utmCampaign: 'followup_day_14'
+    })
   }
 };
 
@@ -1024,6 +1077,137 @@ async function processDoubterSeries() {
   return sent;
 }
 
+// ============================================
+// FOLLOW-UP REMINDERS (Pro only)
+// Sends reminder emails at Day 6, 10, 14 after pitch
+// ============================================
+
+async function processFollowupReminders() {
+  const now = new Date();
+
+  // Query pipeline items needing reminders (Pro users only, not already sent)
+  // Uses raw SQL through Supabase RPC or direct query
+  const { data: items, error } = await getSupabase()
+    .from('creator_pipeline')
+    .select(`
+      id,
+      creator_id,
+      brand_id,
+      pitched_at,
+      day_6_reminder_sent,
+      day_10_reminder_sent,
+      day_14_reminder_sent,
+      pr_brands!inner(brand_name, hero_product, category),
+      creators!inner(id, user_id, username, subscription_tier, lifecycle_emails_sent_today, followup_notifications_enabled)
+    `)
+    .in('stage', ['waiting', 'pitched'])
+    .eq('send_confirmed', true)
+    .not('pitched_at', 'is', null)
+    .eq('creators.subscription_tier', 'pro')
+    .eq('creators.followup_notifications_enabled', true)
+    .limit(BATCH_SIZE);
+
+  console.log(`[FOLLOWUP] Query returned ${items?.length || 0} items, error: ${error?.message || 'none'}`);
+  if (!items?.length) return 0;
+
+  let sent = 0;
+  const skipped = { daily_limit: 0, already_sent: 0, not_ready: 0, no_email: 0 };
+
+  for (const item of items) {
+    const creator = item.creators;
+    const brand = item.pr_brands;
+
+    // Daily limit check
+    if ((creator.lifecycle_emails_sent_today || 0) >= MAX_EMAILS_PER_DAY) {
+      skipped.daily_limit++;
+      continue;
+    }
+
+    // Calculate days since pitch
+    const pitchedAt = new Date(item.pitched_at);
+    const daysSincePitch = Math.floor((now - pitchedAt) / (1000 * 60 * 60 * 24));
+
+    // Determine which reminder to send
+    let reminderType = null;
+    let template = null;
+    let updateColumn = null;
+
+    if (daysSincePitch >= 6 && daysSincePitch < 8 && !item.day_6_reminder_sent) {
+      reminderType = 'day_6';
+      template = TEMPLATES.followup_day_6;
+      updateColumn = 'day_6_reminder_sent';
+    } else if (daysSincePitch >= 10 && daysSincePitch < 12 && !item.day_10_reminder_sent) {
+      reminderType = 'day_10';
+      template = TEMPLATES.followup_day_10;
+      updateColumn = 'day_10_reminder_sent';
+    } else if (daysSincePitch >= 14 && daysSincePitch <= 15 && !item.day_14_reminder_sent) {
+      reminderType = 'day_14';
+      template = TEMPLATES.followup_day_14;
+      updateColumn = 'day_14_reminder_sent';
+    } else {
+      skipped.not_ready++;
+      continue;
+    }
+
+    // Get user email
+    const email = await getUserEmail(creator.user_id);
+    if (!email) {
+      skipped.no_email++;
+      continue;
+    }
+
+    // Build deep link
+    const brandName = brand.brand_name || 'the brand';
+    const heroProduct = brand.hero_product || brand.category;
+    const deepLink = `https://app.newcollab.co/creator/dashboard/pr-pipeline?` +
+      `followup=${item.id}&brand=${encodeURIComponent(brandName)}` +
+      `&utm_source=email&utm_medium=followup_reminder&utm_campaign=${reminderType}`;
+
+    // Generate email
+    const firstName = creator.username || 'there';
+    const subject = template.subject(brandName);
+    const html = template.getHtml(firstName, brandName, deepLink, heroProduct);
+
+    const success = await sendEmail(email, subject, html);
+
+    if (success) {
+      // Update pipeline item to mark reminder as sent
+      await getSupabase()
+        .from('creator_pipeline')
+        .update({ [updateColumn]: true })
+        .eq('id', item.id);
+
+      // Log the send
+      await getSupabase().from('followup_reminder_sends').insert({
+        creator_id: creator.id,
+        pipeline_id: item.id,
+        brand_name: brandName,
+        reminder_type: reminderType,
+        email_address: email,
+        sent_at: new Date().toISOString()
+      });
+
+      // Update creator email count
+      await getSupabase()
+        .from('creators')
+        .update({
+          lifecycle_emails_sent_today: (creator.lifecycle_emails_sent_today || 0) + 1,
+          lifecycle_last_email_date: new Date().toISOString().split('T')[0],
+          last_followup_notification_at: new Date().toISOString()
+        })
+        .eq('id', creator.id);
+
+      sent++;
+      console.log(`[FOLLOWUP] Sent ${reminderType} to ${email} for ${brandName}`);
+    }
+
+    await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
+  }
+
+  console.log(`[FOLLOWUP] Sent: ${sent}, Skipped: ${JSON.stringify(skipped)}`);
+  return sent;
+}
+
 module.exports = async function handler(req, res) {
   // Verify cron secret - accept both Vercel internal cron and manual triggers
   const authHeader = req.headers.authorization;
@@ -1052,6 +1236,7 @@ module.exports = async function handler(req, res) {
     const doubterSent = await processDoubterSeries();
     const reengagementSent = await processReengagement();
     const digestSent = await processWeeklyDigest();
+    const followupRemindersSent = await processFollowupReminders();
 
     const result = {
       success: true,
@@ -1063,7 +1248,8 @@ module.exports = async function handler(req, res) {
         doubter: doubterSent,
         reengagement: reengagementSent,
         weekly_digest: digestSent,
-        total: educationSent + maximizerSent + doubterSent + reengagementSent + digestSent
+        followup_reminders: followupRemindersSent,
+        total: educationSent + maximizerSent + doubterSent + reengagementSent + digestSent + followupRemindersSent
       }
     };
 
