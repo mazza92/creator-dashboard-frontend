@@ -61,6 +61,106 @@ function getNodemailer() {
   return nodemailerTransporter;
 }
 
+/**
+ * Build weekly digest context from Supabase when Python API is unavailable
+ * Fetches real user data instead of returning zeros
+ */
+async function buildFallbackDigestContext(user) {
+  try {
+    // Get full creator data including first_name from users table
+    const { data: creator, error: creatorError } = await getSupabase()
+      .from('creators')
+      .select(`
+        id, username, subscription_tier, unlocks_remaining,
+        total_pitches_sent, total_replies_received, kit_published,
+        user_id
+      `)
+      .eq('id', user.id)
+      .single();
+
+    if (creatorError || !creator) {
+      console.log(`[DIGEST FALLBACK] No creator data for ${user.id}`);
+      return {
+        first_name: user.username || 'there',
+        current_score: 0,
+        score_delta: 0,
+        unlocks_used: 0,
+        unlocks_quota: user.subscription_tier === 'pro' ? '∞' : 3,
+        pending_plans: [],
+        new_brands: []
+      };
+    }
+
+    // Get user's first name
+    const { data: userData } = await getSupabase()
+      .from('users')
+      .select('first_name, email')
+      .eq('id', creator.user_id)
+      .single();
+
+    const firstName = userData?.first_name || creator.username || 'there';
+    const isPro = creator.subscription_tier === 'pro';
+
+    // Calculate unlocks used
+    let unlocksUsed = 0;
+    let unlocksQuota = 3;
+    if (isPro) {
+      unlocksUsed = 0;
+      unlocksQuota = '∞';
+    } else if (creator.unlocks_remaining !== null) {
+      unlocksUsed = Math.max(0, 3 - creator.unlocks_remaining);
+    }
+
+    // Calculate a basic reply chance based on profile completeness
+    let replyChance = 0;
+    if (creator.kit_published) replyChance += 15;
+    if (creator.total_pitches_sent > 0) replyChance += 10;
+    if (creator.total_replies_received > 0) replyChance += 20;
+
+    // Get 3 recent brands from pr_brands as recommendations
+    const { data: brands } = await getSupabase()
+      .from('pr_brands')
+      .select('brand_name, category')
+      .eq('status', 'active')
+      .eq('is_hidden', false)
+      .order('updated_at', { ascending: false })
+      .limit(3);
+
+    const newBrands = (brands || []).map(b => ({
+      name: b.brand_name,
+      category: b.category || '',
+      reason: `New in ${b.category || 'directory'}`
+    }));
+
+    console.log(`[DIGEST FALLBACK] Built context for ${user.id}: score=${replyChance}, unlocks=${unlocksUsed}, brands=${newBrands.length}`);
+
+    return {
+      first_name: firstName,
+      current_score: replyChance,
+      score_delta: creator.kit_published ? 0 : 15,
+      unlocks_used: unlocksUsed,
+      unlocks_quota: unlocksQuota,
+      pending_plans: creator.kit_published ? [] : [
+        { number: 1, title: 'Publish your Media Kit' }
+      ],
+      new_brands: newBrands.length > 0 ? newBrands : [
+        { name: 'Explore brands', category: 'Various', reason: 'Browse the directory' }
+      ]
+    };
+  } catch (err) {
+    console.log(`[DIGEST FALLBACK] Error building context: ${err.message}`);
+    return {
+      first_name: user.username || 'there',
+      current_score: 0,
+      score_delta: 0,
+      unlocks_used: 0,
+      unlocks_quota: 3,
+      pending_plans: [],
+      new_brands: []
+    };
+  }
+}
+
 function generateEmailHtml({ bodyText, primaryCta, preheader = '', utmCampaign = 'lifecycle' }) {
   const preheaderPadding = '\u200C\u00A0'.repeat(90);
   const primaryCtaHtml = primaryCta ? `
@@ -889,29 +989,16 @@ async function processWeeklyDigest() {
 
       if (response.ok) {
         context = await response.json();
+        console.log(`[DIGEST] Got context for ${user.id}: score=${context.current_score}, unlocks=${context.unlocks_used}`);
       } else {
-        // Fallback: build basic context from Supabase data
-        context = {
-          first_name: user.username || 'there',
-          current_score: 0,
-          score_delta: 0,
-          unlocks_used: 0,
-          unlocks_quota: user.subscription_tier === 'pro' ? '∞' : 3,
-          pending_plans: [],
-          new_brands: []
-        };
+        const errorText = await response.text().catch(() => 'unknown');
+        console.log(`[DIGEST] API returned ${response.status} for ${user.id}: ${errorText.substring(0, 200)}`);
+        // Fallback: build context from Supabase data
+        context = await buildFallbackDigestContext(user);
       }
     } catch (err) {
       console.log(`[DIGEST] API error for ${user.id}: ${err.message}, using fallback`);
-      context = {
-        first_name: user.username || 'there',
-        current_score: 0,
-        score_delta: 0,
-        unlocks_used: 0,
-        unlocks_quota: 3,
-        pending_plans: [],
-        new_brands: []
-      };
+      context = await buildFallbackDigestContext(user);
     }
 
     if (!context || !context.first_name) {
