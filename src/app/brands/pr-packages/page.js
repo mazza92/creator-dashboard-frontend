@@ -1,27 +1,27 @@
 import PRPackagesClient from './PRPackagesClient';
 
 export const metadata = {
-  title: 'Send PR Packages to Influencers | Brand PR Packages | Newcollab',
+  title: 'Newcollab for Brands | The UGC Content Library You Own',
   description:
-    'Send PR packages to influencers and turn gifting into paid partnerships. Find creators, run PR campaigns, and grow your brand with Newcollab.',
+    'Ship gifted product to 5 vetted creators every month. Get 5-10 UGC videos with full copyright. Run them as paid ads. $299/month, first campaign free.',
   keywords:
-    'send pr packages to influencers, brand pr packages, influencer gifting, pr packages for creators, influencer marketing, creator partnerships',
+    'ugc content, ugc videos, brand ugc, influencer gifting, pr packages for brands, ugc creators, content library, paid ads creative, tiktok ads, meta ads, creator content',
   alternates: {
     canonical: 'https://newcollab.co/brands/pr-packages',
   },
   openGraph: {
-    title: 'Send PR Packages to Influencers | Newcollab',
+    title: 'The UGC Content Library You Own | Newcollab for Brands',
     description:
-      'Send PR packages to influencers and turn gifting into paid partnerships with Newcollab.',
+      '5-10 UGC videos every month. Full copyright. $299/month, first campaign free.',
     type: 'website',
     url: 'https://newcollab.co/brands/pr-packages',
     siteName: 'Newcollab',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Send PR Packages to Influencers | Newcollab',
+    title: 'The UGC Content Library You Own | Newcollab for Brands',
     description:
-      'Send PR packages to influencers and turn gifting into paid partnerships with Newcollab.',
+      '5-10 UGC videos every month. Full copyright. $299/month, first campaign free.',
     creator: '@newcollab',
   },
 };
@@ -29,4 +29,3 @@ export const metadata = {
 export default function PRPackagesPage() {
   return <PRPackagesClient />;
 }
-

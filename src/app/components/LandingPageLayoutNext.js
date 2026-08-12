@@ -621,6 +621,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
             <NavLink href="/directory" prefetch={false} $isSignupPage={isTransparentHeader}>Brands</NavLink>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
             <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
+            <NavLink href="/brands/pr-packages" prefetch={false} $isSignupPage={isTransparentHeader}>For Brands</NavLink>
             <NavLink href="/about" prefetch={false} $isSignupPage={isTransparentHeader}>About</NavLink>
           </NavLinks>
           <AuthButtons>
@@ -675,6 +676,9 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
           <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('pricing'); }}>
             Pricing
           </MobileHashNavLink>
+          <MobileNavLink href="/brands/pr-packages" prefetch={false} onClick={closeMobileMenu}>
+            For Brands
+          </MobileNavLink>
           <MobileNavLink href="/about" prefetch={false} onClick={closeMobileMenu}>
             About
           </MobileNavLink>
@@ -695,6 +699,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
         <Footer>
           <FooterLinks>
             <FooterLink href="/about">About us</FooterLink>
+            <FooterLink href="/brands/pr-packages">For Brands</FooterLink>
             <FooterLink href="/blog">Blog</FooterLink>
             <FooterLink href="/contact">Contact</FooterLink>
             <FooterLink href="/privacy-policy">Privacy</FooterLink>

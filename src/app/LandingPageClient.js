@@ -1362,6 +1362,89 @@ const FAQAnswer = styled.div`
 `;
 
 // ═══════════════════════════════════════════════════════════════════
+// FOR BRANDS CTA
+// ═══════════════════════════════════════════════════════════════════
+const BrandsCTASection = styled.section`
+  padding: 80px 0;
+  background: linear-gradient(135deg, ${colors.roseBg} 0%, #fff 100%);
+  border-top: 1px solid ${colors.border};
+  border-bottom: 1px solid ${colors.border};
+`;
+
+const BrandsCTAInner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+  }
+`;
+
+const BrandsCTACopy = styled.div`
+  flex: 1;
+
+  h3 {
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 800;
+    color: ${colors.text};
+    margin: 0 0 12px;
+    line-height: 1.2;
+
+    span {
+      color: ${colors.rose};
+    }
+  }
+
+  p {
+    font-size: 16px;
+    color: ${colors.text2};
+    margin: 0;
+    max-width: 480px;
+    line-height: 1.6;
+
+    @media (max-width: 768px) {
+      margin: 0 auto;
+    }
+  }
+`;
+
+const BrandsCTAAction = styled.div`
+  flex-shrink: 0;
+`;
+
+const BrandsCTABtn = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 28px;
+  background: ${colors.rose};
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.15s;
+  box-shadow: 0 4px 14px rgba(232, 57, 95, 0.25);
+
+  &:hover {
+    background: #c92549;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(232, 57, 95, 0.35);
+  }
+
+  svg {
+    transition: transform 0.15s;
+  }
+
+  &:hover svg {
+    transform: translateX(3px);
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════
 // FINAL CTA
 // ═══════════════════════════════════════════════════════════════════
 const FinalCTASection = styled.section`
@@ -2554,6 +2637,29 @@ const LandingPage = () => {
             </FAQList>
           </Container>
         </FAQSection>
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/* FOR BRANDS CTA */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        <BrandsCTASection>
+          <Container>
+            <BrandsCTAInner>
+              <BrandsCTACopy>
+                <h3>Are you a <span>brand?</span></h3>
+                <p>Get 5-10 UGC videos every month from vetted creators. Full copyright. $299/month, first campaign free.</p>
+              </BrandsCTACopy>
+              <BrandsCTAAction>
+                <BrandsCTABtn href="/brands/pr-packages">
+                  Learn more
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                  </svg>
+                </BrandsCTABtn>
+              </BrandsCTAAction>
+            </BrandsCTAInner>
+          </Container>
+        </BrandsCTASection>
 
         {/* ════════════════════════════════════════════════════════════════ */}
         {/* FINAL CTA */}
