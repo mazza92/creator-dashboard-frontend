@@ -1567,7 +1567,7 @@ const Founding50 = () => {
         <meta property="og:url" content="https://newcollab.co/" />
         <meta property="og:title" content="Get PR Packages & Paid Partnerships from Brands | Free PR Packages for Creators" />
         <meta property="og:description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 1,000+ brands sending PR packages to small influencers. Free signup, instant access." />
-        <meta property="og:image" content="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/creator%20platform%20bidding%20newcollab.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvY3JlYXRvciBwbGF0Zm9ybSBiaWRkaW5nIG5ld2NvbGxhYi5wbmciLCJpYXQiOjE3NDg5NjE4MDMsImV4cCI6MTc4MDQ5NzgwM30.phXlWgOo0CJLMxAunr1R9oxjqqTDGSIkjdUwO39Q5k4" />
+        <meta property="og:image" content="https://newcollab.co/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="Newcollab" />
@@ -1578,7 +1578,7 @@ const Founding50 = () => {
         <meta property="twitter:url" content="https://newcollab.co/" />
         <meta property="twitter:title" content="Get PR Packages & Paid Partnerships from Brands | Free PR Packages" />
         <meta property="twitter:description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 1,000+ brands. Free signup." />
-        <meta property="twitter:image" content="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/creator%20platform%20bidding%20newcollab.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvY3JlYXRvciBwbGF0Zm9ybSBiaWRkaW5nIG5ld2NvbGxhYi5wbmciLCJpYXQiOjE3NDg5NjE4MDMsImV4cCI6MTc4MDQ5NzgwM30.phXlWgOo0CJLMxAunr1R9oxjqqTDGSIkjdUwO39Q5k4" />
+        <meta property="twitter:image" content="https://newcollab.co/og-image.png" />
         <meta property="twitter:site" content="@newcollab" />
         <meta property="twitter:creator" content="@newcollab" />
       
@@ -1904,7 +1904,7 @@ const Founding50 = () => {
               "@type": "VideoObject",
               "name": "Newcollab PR Packages & Brand Partnerships Demo",
               "description": "Watch how creators receive free PR packages and paid brand partnerships through Newcollab. See the demo of our platform connecting creators with brands.",
-              "thumbnailUrl": "https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/public/creators//newcolla-biolink-sponsoring-tool%20(1).png",
+              "thumbnailUrl": "https://newcollab.co/og-image.png",
               "uploadDate": "2025-08-04T00:00:00Z",
               "duration": "PT30S",
               "contentUrl": "https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4",
@@ -2126,8 +2126,8 @@ const Founding50 = () => {
                    <FaMagic />
                    <span>Takes less than 2 minutes</span>
                  </div>
-                 <img 
-                   src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/claim_newcollab_bio_link.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvY2xhaW1fbmV3Y29sbGFiX2Jpb19saW5rLnBuZyIsImlhdCI6MTc1NDE0NzkzNywiZXhwIjoxNzg1NjgzOTM3fQ.-u1JB1ifgUfCHFoEpm3ZwlxtV9WQIREWySvnOSBsA4Q"
+                 <img
+                   src="/images/marketing/claim_bio_link.png"
                    alt="Claim your Newcollab bio link"
                    style={{ 
                      width: '100%', 
@@ -2183,8 +2183,8 @@ const Founding50 = () => {
                    <FaTag />
                    <span>Set your minimum bid</span>
                  </div>
-                 <img 
-                   src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab_bid_creators1.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmV3Y29sbGFiX2JpZF9jcmVhdG9yczEucG5nIiwiaWF0IjoxNzU0MTQ4ODc2LCJleHAiOjE3ODU2ODQ4NzZ9.PSqc3jPJAFaMOy-q738EoPYCE6Svnn3tgnBCFgBUtnc"
+                 <img
+                   src="/images/marketing/claim_bio_link.png"
                    alt="Creator listing ad slots"
                    style={{ 
                      width: '100%', 
@@ -2240,8 +2240,8 @@ const Founding50 = () => {
                    <FaMoneyBillWave />
                    <span>Real bids only</span>
                  </div>
-                 <img 
-                   src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab_get_brand_sponsorships.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmV3Y29sbGFiX2dldF9icmFuZF9zcG9uc29yc2hpcHMucG5nIiwiaWF0IjoxNzU0MTQ2OTI4LCJleHAiOjE3ODU2ODI5Mjh9.ERzjFjOVncxclXLg_JoTuNn2W_3hPd0tvqhjXK6Rt2Q"
+                 <img
+                   src="/images/marketing/claim_bio_link.png"
                    alt="Brand sponsorship offers"
                    style={{ 
                      width: '100%', 

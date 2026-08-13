@@ -1148,7 +1148,7 @@ export default function PRPackagesClient() {
           <CreatorsGrid>
             <CreatorCard>
               <CreatorScreenshot
-                src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ugc_example_1%20(1).PNG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWdjX2V4YW1wbGVfMSAoMSkuUE5HIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NjU0OTA5NiwiZXhwIjoxODE4MDg1MDk2fQ.5KAMdYJlKQA2E-ahi_gZPrPAZrtyedCH_fWCGbXOiqg"
+                src="/images/marketing/ugc_example_1.PNG"
                 alt="UGC creator profile example"
               />
               <CreatorCaption>
@@ -1157,7 +1157,7 @@ export default function PRPackagesClient() {
             </CreatorCard>
             <CreatorCard>
               <CreatorScreenshot
-                src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ugc_example_2.PNG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWdjX2V4YW1wbGVfMi5QTkciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg2MTI1Mjg3LCJleHAiOjE4MTc2NjEyODd9.rk7qwahtdbs7fxNCXlCCqZt8ZMTZyOqEQ9aGUtkEW-w"
+                src="/images/marketing/ugc_example_2.PNG"
                 alt="UGC creator profile example"
               />
               <CreatorCaption>
@@ -1166,7 +1166,7 @@ export default function PRPackagesClient() {
             </CreatorCard>
             <CreatorCard>
               <CreatorScreenshot
-                src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ugc_example_3.PNG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWdjX2V4YW1wbGVfMy5QTkciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg2MTI1MjkzLCJleHAiOjE4MTc2NjEyOTN9.3tDd7OJj_3DTE5sv02fT2rYWRW-Iq-XroaZWeIzF3DE"
+                src="/images/marketing/ugc_example_3.PNG"
                 alt="UGC creator profile example"
               />
               <CreatorCaption>

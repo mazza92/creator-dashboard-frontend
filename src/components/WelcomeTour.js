@@ -37,7 +37,7 @@ const PHASES = {
 const HERO_VIDEO_URL = 'https://pub-528caee7e6db4ebc850280fe142043c7.r2.dev/prpack_newcollab%20(1).mp4';
 
 // Feed quality example screenshot
-const FEED_QUALITY_EXAMPLE = 'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ugc_example_4.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWdjX2V4YW1wbGVfNC5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg2MTI3Nzk1LCJleHAiOjE4MTc2NjM3OTV9.rZuoDfkH1Fcjfp_XMwZbUq16S3syzmfxo5aV2ZcnXOM';
+const FEED_QUALITY_EXAMPLE = '/images/marketing/ugc_example_4.png';
 
 // ============================================================================
 // ANIMATIONS
@@ -1173,12 +1173,12 @@ const StepCount = styled.span`
 // Upload screenshots to R2 and update URLs below
 // ============================================================================
 
-// Real creator profile screenshots from Supabase
+// Real creator profile screenshots (local)
 const PROFILE_EXAMPLES = [
   {
     name: 'Creator 1',
     handle: '@creator1',
-    screenshot: 'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ugc_example_1.PNG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWdjX2V4YW1wbGVfMS5QTkciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg2MTI1MjcyLCJleHAiOjE4MTc2NjEyNzJ9.IDWIY6Rn8JD8VTP8hYIihhbq3ih4Pb0hTH4lwnGPT1M',
+    screenshot: '/images/marketing/ugc_example_1.PNG',
     tags: [
       { text: 'Clear niche', color: 'green' },
       { text: 'UK based', color: 'blue' },
@@ -1189,7 +1189,7 @@ const PROFILE_EXAMPLES = [
   {
     name: 'Creator 2',
     handle: '@creator2',
-    screenshot: 'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ugc_example_2.PNG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWdjX2V4YW1wbGVfMi5QTkciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg2MTI1Mjg3LCJleHAiOjE4MTc2NjEyODd9.rk7qwahtdbs7fxNCXlCCqZt8ZMTZyOqEQ9aGUtkEW-w',
+    screenshot: '/images/marketing/ugc_example_2.PNG',
     tags: [
       { text: 'Clear niche', color: 'green' },
       { text: 'Bio structured', color: 'blue' },
@@ -1200,7 +1200,7 @@ const PROFILE_EXAMPLES = [
   {
     name: 'Creator 3',
     handle: '@creator3',
-    screenshot: 'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/ugc_example_3.PNG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvdWdjX2V4YW1wbGVfMy5QTkciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg2MTI1MjkzLCJleHAiOjE4MTc2NjEyOTN9.3tDd7OJj_3DTE5sv02fT2rYWRW-Iq-XroaZWeIzF3DE',
+    screenshot: '/images/marketing/ugc_example_3.PNG',
     tags: [
       { text: 'UGC creator', color: 'green' },
       { text: 'Ireland', color: 'blue' },

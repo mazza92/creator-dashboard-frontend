@@ -1801,8 +1801,8 @@ const Founding50 = () => {
                    <FaMagic />
                    <span>Takes less than 2 minutes</span>
                  </div>
-                 <img 
-                   src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/claim_newcollab_bio_link.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvY2xhaW1fbmV3Y29sbGFiX2Jpb19saW5rLnBuZyIsImlhdCI6MTc1NDE0NzkzNywiZXhwIjoxNzg1NjgzOTM3fQ.-u1JB1ifgUfCHFoEpm3ZwlxtV9WQIREWySvnOSBsA4Q"
+                 <img
+                   src="/images/marketing/claim_bio_link.png"
                    alt="Claim your Newcollab bio link"
                    style={{ 
                      width: '100%', 
@@ -1858,8 +1858,8 @@ const Founding50 = () => {
                    <FaTag />
                    <span>Set your minimum bid</span>
                  </div>
-                 <img 
-                   src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab_bid_creators1.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmV3Y29sbGFiX2JpZF9jcmVhdG9yczEucG5nIiwiaWF0IjoxNzU0MTQ4ODc2LCJleHAiOjE3ODU2ODQ4NzZ9.PSqc3jPJAFaMOy-q738EoPYCE6Svnn3tgnBCFgBUtnc"
+                 <img
+                   src="/images/marketing/claim_bio_link.png"
                    alt="Creator listing ad slots"
                    style={{ 
                      width: '100%', 
@@ -1915,8 +1915,8 @@ const Founding50 = () => {
                    <FaMoneyBillWave />
                    <span>Real bids only</span>
                  </div>
-                 <img 
-                   src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/newcollab_get_brand_sponsorships.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvbmV3Y29sbGFiX2dldF9icmFuZF9zcG9uc29yc2hpcHMucG5nIiwiaWF0IjoxNzU0MTQ2OTI4LCJleHAiOjE3ODU2ODI5Mjh9.ERzjFjOVncxclXLg_JoTuNn2W_3hPd0tvqhjXK6Rt2Q"
+                 <img
+                   src="/images/marketing/claim_bio_link.png"
                    alt="Brand sponsorship offers"
                    style={{ 
                      width: '100%', 
