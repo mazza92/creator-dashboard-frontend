@@ -7,12 +7,11 @@ import {
   Row,
   Col,
   Select,
-  Upload,
   InputNumber,
   message,
   Typography,
 } from 'antd';
-import { UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { CountryDropdown } from 'react-country-region-selector';
 import {
   FaInstagram,
@@ -479,8 +478,8 @@ function CreatorOnboardingForm({ role, onSuccess }) {
       return true;
     }
     if (currentStep === 3) {
-      if (!formData.audience.primaryAgeRange || !formData.audience.regions.length || !formData.audience.interests.length || !formData.imageProfile) {
-        message.error('Please complete all audience fields and upload a profile picture.');
+      if (!formData.audience.primaryAgeRange || !formData.audience.regions.length || !formData.audience.interests.length) {
+        message.error('Please complete all audience fields.');
         return false;
       }
       return true;
@@ -576,16 +575,6 @@ function CreatorOnboardingForm({ role, onSuccess }) {
   const removeSocialLink = (index) => {
     const updatedSocialLinks = formData.socialLinks.filter((_, i) => i !== index);
     setFormData({ ...formData, socialLinks: updatedSocialLinks });
-  };
-
-  const handleFileChange = (file) => {
-    const isPngOrJpeg = file.type === 'image/png' || file.type === 'image/jpeg';
-    if (!isPngOrJpeg) {
-      message.error('You can only upload PNG or JPEG files!');
-      return Upload.LIST_IGNORE;
-    }
-    setFormData({ ...formData, imageProfile: file });
-    return false;
   };
 
   const handleNextStep = async () => {
@@ -1103,25 +1092,6 @@ function CreatorOnboardingForm({ role, onSuccess }) {
                     placeholder="Select interests"
                     aria-label="Interests"
                   />
-                </Form.Item>
-
-                <Form.Item
-                  label="Profile Picture"
-                  name="imageProfile"
-                  rules={[{ required: true, message: 'Please upload a profile picture' }]}
-                >
-                  <Upload
-                    name="profilePic"
-                    listType="picture"
-                    beforeUpload={handleFileChange}
-                    maxCount={1}
-                    fileList={formData.imageProfile ? [formData.imageProfile] : []}
-                    onRemove={() => setFormData({ ...formData, imageProfile: null })}
-                  >
-                    <StyledButton icon={<UploadOutlined />} aria-label="Upload Profile Picture">
-                      Upload Profile Picture (PNG or JPEG)
-                    </StyledButton>
-                  </Upload>
                 </Form.Item>
 
                 <Row gutter={16}>

@@ -966,7 +966,7 @@ export default function CreatorOnboarding() {
 
   const handleStep2 = async () => {
     setError('');
-    if (!photoFile) { setError('Please upload a profile photo'); return; }
+    // Photo upload is optional - profile image is scraped from social during onboarding
     if (!bio.trim()) { setError('Please write a short bio'); return; }
     if (!ageRange) { setError('Please select your audience age range'); return; }
     if (regions.length === 0) { setError('Please select at least one region'); return; }
@@ -1291,29 +1291,6 @@ export default function CreatorOnboarding() {
             <Subline>Complete your profile so brands know who they're working with.</Subline>
 
             <FormGroup>
-              <FormLabel>Profile photo</FormLabel>
-              <AvatarUpload htmlFor="avatar-upload">
-                <AvatarCircle $hasPhoto={!!photoPreview}>
-                  {photoPreview
-                    ? <AvatarImg src={photoPreview} alt="preview" />
-                    : <span style={{ fontSize: 24, color: colors.text3 }}>+</span>
-                  }
-                </AvatarCircle>
-                <AvatarHint>
-                  <strong>{photoPreview ? 'Photo selected ✓' : 'Upload a photo'}</strong>
-                  JPG, PNG or WebP · auto-compressed
-                </AvatarHint>
-              </AvatarUpload>
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style={{ display: 'none' }}
-                onChange={handlePhotoChange}
-              />
-            </FormGroup>
-
-            <FormGroup>
               <FormLabel>Your bio</FormLabel>
               <Textarea
                 placeholder="e.g. Beauty & skincare creator based in NYC. I help brands connect with women 25–34 who care about clean ingredients."
@@ -1358,7 +1335,7 @@ export default function CreatorOnboarding() {
 
             <BtnRow>
               <BackBtn onClick={() => setStep(1)} disabled={loading}>← Back</BackBtn>
-              <ContinueBtn onClick={handleStep2} disabled={loading || !photoFile || !bio.trim() || !ageRange || regions.length === 0}>
+              <ContinueBtn onClick={handleStep2} disabled={loading || !bio.trim() || !ageRange || regions.length === 0}>
                 {loading ? 'Saving...' : 'Continue →'}
               </ContinueBtn>
             </BtnRow>
