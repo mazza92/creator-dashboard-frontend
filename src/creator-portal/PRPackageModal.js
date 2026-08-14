@@ -533,6 +533,9 @@ const PRPackageModal = ({
           onClose();
         }}
         feature="unlock_paywall"
+        currentCount={3}
+        limit={3}
+        unlockRemaining={0}
       />
 
     </AnimatePresence>

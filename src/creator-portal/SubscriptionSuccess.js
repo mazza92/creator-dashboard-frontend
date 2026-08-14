@@ -4,22 +4,38 @@ import { motion } from 'framer-motion';
 import { FiCheckCircle, FiArrowRight } from 'react-icons/fi';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
-import { trackProPurchase } from '../utils/subscriptionAnalytics';
+import { trackPackPurchase, trackProPurchase } from '../utils/subscriptionAnalytics';
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [packInfo, setPackInfo] = useState(null);
+  const isPackPurchase = searchParams.get('product') === 'packs';
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
+    const packs = searchParams.get('product') === 'packs';
 
-    // Fire purchase immediately on landing (don't wait for API / don't require DebugView)
-    if (sessionId) {
+    if (sessionId && packs) {
+      trackPackPurchase({ sessionId });
+      try {
+        const ttqKey = `ttq_purchase_${sessionId}`;
+        if (!window.sessionStorage.getItem(ttqKey) && window.ttq) {
+          window.ttq.track('CompletePayment', {
+            content_type: 'product',
+            content_id: 'pack_bundle_3',
+            content_name: 'NewCollab 3 Packs',
+            value: 9,
+            currency: 'USD'
+          });
+          window.sessionStorage.setItem(ttqKey, '1');
+        }
+      } catch (_) { /* ignore */ }
+    } else if (sessionId) {
       trackProPurchase({ sessionId, tier: 'pro' });
 
-      // TikTok Pixel - CompletePayment event (deduped by session_id)
       const ttqKey = `ttq_purchase_${sessionId}`;
       try {
         if (!window.sessionStorage.getItem(ttqKey) && window.ttq) {
@@ -37,6 +53,16 @@ const SubscriptionSuccess = () => {
 
     const confirmAndFetchStatus = async () => {
       try {
+        if (sessionId && packs) {
+          const packRes = await api.post(
+            '/api/subscription/confirm-pack-checkout',
+            { session_id: sessionId }
+          );
+          setPackInfo(packRes.data);
+          setLoading(false);
+          return;
+        }
+
         if (sessionId) {
           await api.post(
             '/api/subscription/confirm-checkout',
@@ -49,7 +75,6 @@ const SubscriptionSuccess = () => {
 
         const tier = response.data?.tier || 'pro';
 
-        // Re-fire GA4 with correct tier if needed
         if (sessionId && tier !== 'pro') {
           try {
             window.sessionStorage.removeItem(`ga4_purchase_${sessionId}`);
@@ -61,13 +86,48 @@ const SubscriptionSuccess = () => {
 
         setLoading(false);
       } catch (error) {
-        console.error('Error confirming subscription:', error);
+        console.error('Error confirming checkout:', error);
         setLoading(false);
       }
     };
 
     setTimeout(confirmAndFetchStatus, 1000);
   }, [searchParams]);
+
+  if (isPackPurchase) {
+    const packsAdded = packInfo?.packs || 3;
+    return (
+      <Container>
+        <SuccessCard
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <IconWrapper>
+            <FiCheckCircle size={80} />
+          </IconWrapper>
+
+          <Title>3 packs added</Title>
+
+          <Message>
+            {loading
+              ? 'Confirming your packs...'
+              : `You have ${packsAdded} more emails and pitches ready to send. Go unlock the next brand that fits.`}
+          </Message>
+
+          <ButtonGroup>
+            <PrimaryButton
+              onClick={() => navigate('/creator/dashboard/for-you')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Back to For You <FiArrowRight />
+            </PrimaryButton>
+          </ButtonGroup>
+        </SuccessCard>
+      </Container>
+    );
+  }
 
   return (
     <Container>

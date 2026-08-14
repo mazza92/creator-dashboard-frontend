@@ -8,6 +8,7 @@ const GA_MEASUREMENT_ID = 'G-5RET5C6MZ8';
 // Monthly pricing
 const PRO_PRICE_USD = 19;
 const ELITE_PRICE_USD = 49;
+const PACK_BUNDLE_PRICE_USD = 9;
 
 // Annual pricing (with 33% discount)
 const PRO_ANNUAL_PRICE_USD = 152;  // Save 33% ($228 → $152)
@@ -118,6 +119,88 @@ export function trackProPurchase({ sessionId, tier = 'pro', interval = 'monthly'
           content_type: 'product',
           content_ids: [`subscription_${tier}_${interval}`],
           content_name: tierItemName(tier, interval),
+          value,
+          currency: 'USD',
+          num_items: 1,
+        });
+      }
+    } catch (_) { /* ignore */ }
+  }
+}
+
+export function trackPackBeginCheckout({ source } = {}) {
+  const value = PACK_BUNDLE_PRICE_USD;
+
+  if (gtagReady()) {
+    window.gtag('event', 'begin_checkout', {
+      send_to: GA_MEASUREMENT_ID,
+      currency: 'USD',
+      value,
+      items: [
+        {
+          item_id: 'pack_bundle_3',
+          item_name: 'NewCollab 3 Packs',
+          item_category: 'packs',
+          price: value,
+          quantity: 1,
+        },
+      ],
+      ...(source ? { checkout_source: source } : {}),
+    });
+  }
+
+  if (fbqReady()) {
+    try {
+      window.fbq('track', 'InitiateCheckout', {
+        content_type: 'product',
+        content_ids: ['pack_bundle_3'],
+        content_name: 'NewCollab 3 Packs',
+        value,
+        currency: 'USD',
+        num_items: 1,
+      });
+    } catch (_) { /* pixel blockers must not break checkout */ }
+  }
+}
+
+export function trackPackPurchase({ sessionId } = {}) {
+  if (!sessionId) return;
+
+  const value = PACK_BUNDLE_PRICE_USD;
+
+  if (gtagReady()) {
+    const ga4Key = `ga4_purchase_${sessionId}`;
+    try {
+      if (!window.sessionStorage.getItem(ga4Key)) {
+        window.sessionStorage.setItem(ga4Key, '1');
+        window.gtag('event', 'purchase', {
+          send_to: GA_MEASUREMENT_ID,
+          transaction_id: sessionId,
+          currency: 'USD',
+          value,
+          items: [
+            {
+              item_id: 'pack_bundle_3',
+              item_name: 'NewCollab 3 Packs',
+              item_category: 'packs',
+              price: value,
+              quantity: 1,
+            },
+          ],
+        });
+      }
+    } catch (_) { /* ignore */ }
+  }
+
+  if (fbqReady()) {
+    const fbqKey = `fbq_purchase_${sessionId}`;
+    try {
+      if (!window.sessionStorage.getItem(fbqKey)) {
+        window.sessionStorage.setItem(fbqKey, '1');
+        window.fbq('track', 'Purchase', {
+          content_type: 'product',
+          content_ids: ['pack_bundle_3'],
+          content_name: 'NewCollab 3 Packs',
           value,
           currency: 'USD',
           num_items: 1,

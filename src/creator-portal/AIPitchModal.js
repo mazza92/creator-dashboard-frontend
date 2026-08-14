@@ -1052,9 +1052,9 @@ ${creatorName}`;
           setShowUpgradeOverlay(false);
           onClose();
         }}
-        currentCount={pitchLimits.used}
-        limit={pitchLimits.limit}
-        pitchLimits={pitchLimits}
+        currentCount={3}
+        limit={3}
+        unlockRemaining={pitchLimits.is_unlimited ? null : (pitchLimits.remaining ?? 0)}
         resetAt={paywallData?.reset_at}
         feature="ai_pitch_modal"
       />

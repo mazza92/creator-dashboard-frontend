@@ -4,22 +4,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiLock, FiShield, FiClock } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
-import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
+import { trackPackBeginCheckout, trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
-const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt }) => {
+const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining }) => {
   const [loading, setLoading] = useState(false);
+  const [packLoading, setPackLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState('monthly'); // Default to monthly
 
+  const remainingKnown = unlockRemaining != null && Number.isFinite(Number(unlockRemaining));
+  const rawUsed = remainingKnown ? currentCount : (pitchLimits?.used ?? currentCount);
+  const used = Number.isFinite(Number(rawUsed)) ? Number(rawUsed) : 0;
+  const total = Number(limit || 3) || 3;
+  const atCap = remainingKnown ? Number(unlockRemaining) <= 0 : used >= total;
+
   const handleUpgrade = async (tier) => {
+    const interval = atCap ? 'monthly' : billingInterval;
     try {
       setLoading(true);
-      trackProBeginCheckout({ tier, source: feature || 'upgrade_modal', interval: billingInterval });
+      trackProBeginCheckout({ tier, source: feature || 'upgrade_modal', interval });
       const response = await api.post(
         '/api/subscription/create-checkout',
-        { tier, interval: billingInterval }
+        { tier, interval }
       );
 
-      // Redirect to Stripe Checkout
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);
@@ -33,13 +40,27 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     }
   };
 
+  const handlePackCheckout = async () => {
+    try {
+      setPackLoading(true);
+      trackPackBeginCheckout({ source: feature || 'upgrade_modal' });
+      const response = await api.post('/api/subscription/create-pack-checkout', {});
+      window.location.href = response.data.checkout_url;
+    } catch (error) {
+      console.error('Pack checkout error:', error);
+      const errorData = error.response?.data;
+      if (errorData?.code === 'stripe_account_pending') {
+        message.warning('Payment processing is temporarily unavailable. Please try again later or contact support@newcollab.co');
+      } else {
+        message.error('Failed to start checkout. Please try again.');
+      }
+      setPackLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  // Never default used to the limit — `|| 3` showed 3/3 after one unlock.
-  const rawUsed = pitchLimits?.used ?? currentCount;
-  const used = Number.isFinite(Number(rawUsed)) ? Number(rawUsed) : 0;
-  const total = Number(pitchLimits?.limit || limit || 3) || 3;
-  const atCap = used >= total;
+  const busy = loading || packLoading;
 
   const features = [
     {
@@ -108,7 +129,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               )}
             </Headline>
             <Subtext>
-              Every extra brand you reach raises the odds of your first yes. You get the contact and a pitch that's ready to send. Pro is how you keep doing that all month, like a professional.
+              {atCap
+                ? 'Three more brand emails and pitches, ready to send. Or go unlimited this month.'
+                : 'Every extra brand you reach raises the odds of your first yes. You get the contact and a pitch that\'s ready to send. Pro is how you keep doing that all month, like a professional.'}
             </Subtext>
 
             {/* Progress Bar */}
@@ -122,6 +145,17 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               </ProgressTrack>
             </ProgressSection>
 
+            {atCap ? (
+              <PriceCard>
+                <ProBadge>3 packs</ProBadge>
+                <PriceRow>
+                  <PriceAmount>$9</PriceAmount>
+                  <PricePer>one-time</PricePer>
+                </PriceRow>
+                <PriceSubline>Email plus a pitch for three more brands</PriceSubline>
+              </PriceCard>
+            ) : (
+              <>
             {/* Stat Chips */}
             <StatsGrid>
               <StatChip>
@@ -184,6 +218,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </FeatureItem>
               ))}
             </FeatureList>
+              </>
+            )}
 
             {/* Social Proof */}
             <ProofBox>
@@ -196,17 +232,36 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
           {/* Sticky CTA Area */}
           <CtaArea>
-            <CtaButton
-              onClick={() => handleUpgrade('pro')}
-              disabled={loading}
-              whileTap={{ scale: 0.98 }}
-            >
-              {loading
-                ? 'Processing...'
-                : billingInterval === 'yearly'
-                  ? 'Unlock unlimited packs · $152/year (save 33%)'
-                  : 'Unlock unlimited packs · $19/month'}
-            </CtaButton>
+            {atCap ? (
+              <>
+                <CtaButton
+                  onClick={handlePackCheckout}
+                  disabled={busy}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {packLoading ? 'Processing...' : 'Unlock 3 more packs · $9'}
+                </CtaButton>
+                <SecondaryCta
+                  type="button"
+                  onClick={() => handleUpgrade('pro')}
+                  disabled={busy}
+                >
+                  {loading ? 'Processing...' : 'Unlimited this month · $19/mo Pro'}
+                </SecondaryCta>
+              </>
+            ) : (
+              <CtaButton
+                onClick={() => handleUpgrade('pro')}
+                disabled={busy}
+                whileTap={{ scale: 0.98 }}
+              >
+                {loading
+                  ? 'Processing...'
+                  : billingInterval === 'yearly'
+                    ? 'Unlock unlimited packs · $152/year (save 33%)'
+                    : 'Unlock unlimited packs · $19/month'}
+              </CtaButton>
+            )}
 
             {/* Footer Trust Signals */}
             <TrustRow>
@@ -649,6 +704,31 @@ const CtaButton = styled(motion.button)`
 
   &:active:not(:disabled) {
     transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const SecondaryCta = styled.button`
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  color: #15161a;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
   }
 
   &:disabled {

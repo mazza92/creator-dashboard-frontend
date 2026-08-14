@@ -627,6 +627,12 @@ const PRPipeline = () => {
   };
 
   // Handle pitch/contact click
+  const packsRemaining = (isPro || pitchLimits?.is_unlimited)
+    ? Infinity
+    : (pitchLimits?.remaining != null
+      ? Number(pitchLimits.remaining)
+      : Math.max(0, (pitchLimits.limit || 3) - (pitchLimits.used || 0)));
+
   const handlePitch = (item) => {
     setSelectedBrand(item);
     setShowPitchModal(true);
@@ -634,7 +640,7 @@ const PRPipeline = () => {
 
   // Handle PR form link click - show confirmation modal after (if not at limit)
   const handleFormLinkClick = (e, item) => {
-    const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
+    const atLimit = !isPro && packsRemaining <= 0;
     // Already-unlocked packs keep form access even at 3/3
     if (atLimit && !hasUnlockedPack(item)) {
       e.preventDefault();
@@ -905,7 +911,7 @@ const PRPipeline = () => {
         )}
 
         {isSavedToUnlock(item) && (() => {
-          const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
+          const atLimit = !isPro && packsRemaining <= 0;
           if (atLimit) {
             return (
               <PrimaryBtn
@@ -972,7 +978,7 @@ const PRPipeline = () => {
         <SecondaryRow>
           {isSaved && item.application_form_url && (
             (() => {
-              const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
+              const atLimit = !isPro && packsRemaining <= 0;
               const formLocked = atLimit && !hasUnlockedPack(item);
               if (formLocked) {
                 return (
@@ -1053,7 +1059,7 @@ const PRPipeline = () => {
   const packCount = stageCounts.packs;
   const followupCount = stageCounts.followup;
   const savedUnlockCount = stageCounts.saved;
-  const atCap = !isPro && pitchLimits.used >= (pitchLimits.limit || 3);
+  const atCap = !isPro && packsRemaining <= 0;
   const nextFollowupDays = (() => {
     const waiting = items.filter(i =>
       ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage) &&
@@ -1084,7 +1090,7 @@ const PRPipeline = () => {
       return `${savedUnlockCount} saved brand${savedUnlockCount === 1 ? '' : 's'}. Unlock a pack to get the email and a pitch.`;
     }
     if (atCap) {
-      return 'Free packs used this month. Pro keeps you sending.';
+      return 'Free packs used this month. Three more for $9, or go unlimited.';
     }
     return 'Unlock a brand on For You. Packs you open land here.';
   })();
@@ -1130,9 +1136,9 @@ const PRPipeline = () => {
           <QuotaIcon>📨</QuotaIcon>
           <QuotaText>
             <QuotaTitle>
-              {pitchLimits.limit - pitchLimits.used > 0
-                ? `${pitchLimits.limit - pitchLimits.used} free Brand PR unlock${pitchLimits.limit - pitchLimits.used === 1 ? '' : 's'} left this month`
-                : 'Monthly Brand PR unlocks used. Upgrade to keep going'}
+              {packsRemaining > 0 && packsRemaining !== Infinity
+                ? `${packsRemaining} pack${packsRemaining === 1 ? '' : 's'} left this month`
+                : 'Monthly packs used. Unlock 3 more or go unlimited'}
             </QuotaTitle>
             <QuotaSub>{pitchLimits.used} used · resets {getNextResetDate()}</QuotaSub>
           </QuotaText>
@@ -1276,17 +1282,17 @@ const PRPipeline = () => {
         )}
 
         {/* Locked Upgrade Card — only when this month's packs are used */}
-        {!isPro && filteredItems.length > 0 && pitchLimits?.used >= (pitchLimits?.limit || 3) && (
+        {!isPro && filteredItems.length > 0 && (pitchLimits?.remaining ?? Math.max(0, (pitchLimits?.limit || 3) - (pitchLimits?.used || 0))) <= 0 && (
           <LockedCard onClick={() => {
-            setUpgradeReason('saved');
+            setUpgradeReason('unlock_paywall');
             setShowUpgradeModal(true);
           }}>
             <LockIconWrap>🔒</LockIconWrap>
             <LockedTextWrap>
               <LockedTitle>Keep sending this month</LockedTitle>
-              <LockedSub>Unlimited emails and pitches so you can land that first yes.</LockedSub>
+              <LockedSub>Three more packs for $9, or unlimited this month.</LockedSub>
             </LockedTextWrap>
-            <LockedCta>$19/mo</LockedCta>
+            <LockedCta>$9</LockedCta>
           </LockedCard>
         )}
       </BrandList>
@@ -1327,8 +1333,8 @@ const PRPipeline = () => {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         currentCount={pitchLimits.used}
-        limit={pitchLimits.limit}
-        pitchLimits={pitchLimits}
+        limit={pitchLimits.limit || 3}
+        unlockRemaining={pitchLimits.remaining}
         feature={upgradeReason}
       />
 

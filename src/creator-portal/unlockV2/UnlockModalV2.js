@@ -3293,6 +3293,7 @@ const UnlockModalV2 = ({
                     feature="unlock_paywall"
                     currentCount={3}
                     limit={3}
+                    unlockRemaining={0}
                   />
                 ) : error ? (
                   <div style={{ padding: '40px 20px', textAlign: 'center' }}>

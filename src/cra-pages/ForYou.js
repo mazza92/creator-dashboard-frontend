@@ -37,7 +37,6 @@ import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
-import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
 const getApiBase = () => {
   const base = process.env.REACT_APP_API_BASE ||
@@ -85,7 +84,7 @@ const ForYou = () => {
     sessionStorage.getItem('foryouForceOpportunities') ? 'opportunities' : 'matches'
   ));
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
-  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, tier: 'free', reset_at: null, is_unlimited: false });
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, pack_credits: 0, tier: 'free', reset_at: null, is_unlimited: false });
   const [opportunityCount, setOpportunityCount] = useState(0);
 
   useEffect(() => {
@@ -687,22 +686,6 @@ const ForYou = () => {
     }
   }, [pitchingBrand, navigate, isWelcomeFlow, welcomePitchedIds]);
 
-  // Direct Stripe checkout (skip settings page)
-  const handleDirectUpgrade = async () => {
-    try {
-      trackProBeginCheckout({ tier: 'pro', source: 'for_you' });
-      const response = await axios.post(`${API_BASE}/api/subscription/create-checkout`,
-        { tier: 'pro' },
-        { withCredentials: true }
-      );
-      window.location.href = response.data.checkout_url;
-    } catch (error) {
-      console.error('Upgrade error:', error);
-      // Fallback to settings page
-      navigate('/creator/dashboard/settings');
-    }
-  };
-
   const barIgnoreSessions = Number(localStorage.getItem(MANAGER_BAR_IGNORE_KEY) || 0);
   const showManagerBand =
     AI_MANAGER_SCORE_BAR_V1 &&
@@ -794,31 +777,41 @@ const ForYou = () => {
         {/* Free plan: one unlock meter. Paywall only at 0 left. */}
         {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (() => {
           const unlocksLeft = unlockBalance.remaining ?? 3;
-          const showUpgrade = unlocksLeft <= 0;
+          const packCredits = unlockBalance.pack_credits || 0;
+          const packsExhausted = unlocksLeft <= 0;
+          const pipCount = packCredits > 0 ? Math.min(Math.max(unlocksLeft, 3), 6) : 3;
           return (
             <>
               <CreditTrackers>
-                <CreditTracker $low={unlocksLeft <= 0}>
+                <CreditTracker $low={packsExhausted}>
                   <CreditTrackerTop>
                     <CreditTrackerLabel>Packs this month</CreditTrackerLabel>
-                    <CreditTrackerCount $low={unlocksLeft <= 0}>
-                      {unlocksLeft}<CreditTrackerMax>/3</CreditTrackerMax>
+                    <CreditTrackerCount $low={packsExhausted}>
+                      {unlocksLeft}
+                      {packCredits > 0 ? null : <CreditTrackerMax>/3</CreditTrackerMax>}
                     </CreditTrackerCount>
                   </CreditTrackerTop>
                   <CreditPipsRow>
-                    {[0, 1, 2].map((i) => (
+                    {Array.from({ length: pipCount }).map((_, i) => (
                       <CreditPip key={i} $available={i < unlocksLeft} $tone="unlock" />
                     ))}
                   </CreditPipsRow>
-                  <CreditTrackerHint>Email plus a pitch, ready to send</CreditTrackerHint>
+                  <CreditTrackerHint>
+                    {packCredits > 0
+                      ? `${packCredits} extra pack${packCredits === 1 ? '' : 's'} from your $9 bundle`
+                      : 'Email plus a pitch, ready to send'}
+                  </CreditTrackerHint>
                 </CreditTracker>
               </CreditTrackers>
-              {showUpgrade && (
+              {packsExhausted && (
                 <CreditUpgradeBar>
                   <CreditUpgradeHint>
-                    Free packs used. Pro keeps you sending emails and pitches this month.
+                    Free packs used. Three more for $9, or unlimited this month.
                   </CreditUpgradeHint>
-                  <QuotaUpgrade onClick={handleDirectUpgrade}>Keep sending. $19/mo</QuotaUpgrade>
+                  <QuotaUpgrade onClick={() => {
+                    setUpgradeReason('unlock_paywall');
+                    setShowUpgrade(true);
+                  }}>Unlock 3 more · $9</QuotaUpgrade>
                 </CreditUpgradeBar>
               )}
             </>
@@ -1151,9 +1144,9 @@ const ForYou = () => {
         <UpgradeModal
           isOpen={showUpgrade}
           onClose={() => setShowUpgrade(false)}
-          currentCount={pitchesSentThisMonth}
+          currentCount={unlockBalance.used ?? Math.max(0, FREE_PITCH_LIMIT - (unlockBalance.remaining ?? FREE_PITCH_LIMIT))}
           limit={FREE_PITCH_LIMIT}
-          pitchLimits={pitchLimits}
+          unlockRemaining={unlockBalance.is_unlimited ? null : (unlockBalance.remaining ?? 0)}
           feature={upgradeReason === 'matched' ? 'for_you' : (upgradeReason || 'limit_reached')}
         />
       )}

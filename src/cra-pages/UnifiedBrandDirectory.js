@@ -91,7 +91,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, tier: 'free', reset_at: null });
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, pack_credits: 0, tier: 'free', reset_at: null });
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
   const FREE_UNLOCK_LIMIT = 3; // Free users get 3 brand unlocks per month
 
@@ -273,6 +273,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           setUnlockBalance({
             remaining: data.unlock_balance.remaining ?? FREE_UNLOCK_LIMIT,
             used: data.unlock_balance.used ?? 0,
+            pack_credits: data.unlock_balance.pack_credits ?? 0,
             tier: data.unlock_balance.tier || 'free',
             reset_at: data.unlock_balance.reset_at
           });
@@ -330,6 +331,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         setUnlockBalance({
           remaining: balanceResponse.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: balanceResponse.data.used ?? 0,
+          pack_credits: balanceResponse.data.pack_credits ?? 0,
           tier: balanceResponse.data.tier || 'free',
           reset_at: balanceResponse.data.reset_at
         });
@@ -636,6 +638,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         setUnlockBalance({
           remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: response.data.used ?? 0,
+          pack_credits: response.data.pack_credits ?? 0,
           tier: response.data.tier || 'free',
           reset_at: response.data.reset_at
         });
@@ -693,6 +696,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         setUnlockBalance({
           remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: response.data.used ?? 0,
+          pack_credits: response.data.pack_credits ?? 0,
           tier: response.data.tier || 'free',
           reset_at: response.data.reset_at
         });
@@ -1062,8 +1066,9 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
           {/* Monthly Quota Tracker - Show for logged-in FREE users */}
           {user && subscriptionTier === 'free' && isDashboardView && (() => {
-            const remaining = Math.min(unlockBalance.remaining ?? FREE_UNLOCK_LIMIT, FREE_UNLOCK_LIMIT);
-            const used = FREE_UNLOCK_LIMIT - remaining;
+            const remaining = unlockBalance.remaining ?? FREE_UNLOCK_LIMIT;
+            const packCredits = unlockBalance.pack_credits || 0;
+            const used = unlockBalance.used ?? Math.max(0, FREE_UNLOCK_LIMIT - Math.min(remaining, FREE_UNLOCK_LIMIT));
             return (
               <QuotaBanner $exhausted={remaining <= 0}>
                 <QuotaDots>
@@ -1072,16 +1077,20 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   ))}
                 </QuotaDots>
                 <QuotaText>
-                  <QuotaTitle>{remaining} of {FREE_UNLOCK_LIMIT} unlocks left</QuotaTitle>
+                  <QuotaTitle>
+                    {packCredits > 0
+                      ? `${remaining} packs left`
+                      : `${remaining} of ${FREE_UNLOCK_LIMIT} unlocks left`}
+                  </QuotaTitle>
                   <QuotaSub>
                     {remaining <= 0
-                      ? 'Upgrade for unlimited'
+                      ? '3 more for $9, or unlimited this month'
                       : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
                   </QuotaSub>
                 </QuotaText>
                 {remaining <= 0 && (
                   <QuotaUpgrade onClick={() => setUpgradeModalVisible(true)}>
-                    Upgrade
+                    Unlock 3 more · $9
                   </QuotaUpgrade>
                 )}
               </QuotaBanner>
@@ -1603,6 +1612,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           limit={FREE_UNLOCK_LIMIT}
           feature={unlockBalance.remaining <= 0 ? 'unlock_paywall' : 'pitch'}
           resetAt={unlockBalance.reset_at}
+          unlockRemaining={unlockBalance.remaining}
         />
       )}
 
