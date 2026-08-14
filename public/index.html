@@ -2,6 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script>
+      // Swallow Meta Pixel / extension fetch failures before CRA's overlay listens.
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event.reason;
+        var msg = String((reason && reason.message) || reason || '');
+        var stack = String((reason && reason.stack) || '');
+        if (
+          msg.indexOf('Failed to fetch') !== -1 &&
+          (stack.indexOf('fbevents.js') !== -1 ||
+            stack.indexOf('connect.facebook.net') !== -1 ||
+            stack.indexOf('chrome-extension://') !== -1)
+        ) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      }, true);
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#26A69A" />
     <meta

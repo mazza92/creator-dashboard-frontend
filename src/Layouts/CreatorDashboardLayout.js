@@ -469,8 +469,19 @@ const CreatorDashboardLayout = () => {
       try {
         const response = await api.get('/api/pr-crm/pipeline/full');
         if (response.data?.items) {
-          const saved = response.data.items.filter(item => item.pipeline_stage === 'saved');
-          setSavedCount(saved.length);
+          const actionCount = response.data.items.filter((item) => {
+            const contacted = Boolean(item.send_confirmed) || Boolean(item.pitched_at);
+            const packReady = Boolean(item.has_pr_package) && !contacted;
+            const stage = item.pipeline_stage;
+            const followupDue =
+              stage === 'replied' ||
+              (stage === 'followup' && (item.days_since_followup || 0) >= 7) ||
+              ((stage === 'waiting' || stage === 'pitched') &&
+                (item.days_since_pitched || 0) >= 7 &&
+                contacted);
+            return packReady || followupDue;
+          }).length;
+          setSavedCount(actionCount);
         }
       } catch (error) {
         console.error('Error fetching saved count:', error);

@@ -2638,8 +2638,17 @@ const CARD_TIMINGS = {
   inbox: 400,      // Card 1 at 400ms
   pitch: 800,      // Card 2 at 800ms
   strategy: 1200,  // Card 3 at 1200ms
-  ready: 1600,     // Card 4 at 1600ms (or when API completes)
+  ready: 0,        // Show pack as soon as the API returns
 };
+
+const GENERIC_INBOX_RE = /^(info|support|help|hello|contact|care|customerservice)@/i;
+
+function resolvePackEmail(packageData) {
+  const raw = packageData?.brand_email || packageData?.contact?.email;
+  const formUrl = packageData?.application_form_url;
+  const generic = GENERIC_INBOX_RE.test(String(raw || '').trim());
+  return { raw, formUrl, generic, email: raw || null };
+}
 
 const UnlockModalV2 = ({
   isOpen,
@@ -2687,10 +2696,7 @@ const UnlockModalV2 = ({
   const [editedBody, setEditedBody] = useState('');
   const [originalSubject, setOriginalSubject] = useState('');
   const [originalBody, setOriginalBody] = useState('');
-  const [regenCount, setRegenCount] = useState(0);
-  const [isRegenerating, setIsRegenerating] = useState(false);
   const [showFrictionModal, setShowFrictionModal] = useState(false);
-  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [pitchSent, setPitchSent] = useState(false);
 
   // AI Boost state (new UX)
@@ -2829,7 +2835,7 @@ const UnlockModalV2 = ({
             // Go straight to outreach phase for editing (skip strategy)
             setTimeout(() => {
               setPhase(PHASE_OUTREACH);
-            }, 600);
+            }, 0);
           }, readyDelay);
 
           return; // Exit early for follow-ups
@@ -2936,10 +2942,7 @@ const UnlockModalV2 = ({
             clearTimeout(fallbackTimerRef.current);
           }
 
-          // Transition to flash after card animation
-          setTimeout(() => {
-            setPhase(PHASE_FLASH);
-          }, 600);
+          setPhase(PHASE_MODAL);
         }, readyDelay);
       } else {
         setError(response.data.error || 'Failed to generate package');
@@ -2979,10 +2982,7 @@ const UnlockModalV2 = ({
       setEditedBody('');
       setOriginalSubject('');
       setOriginalBody('');
-      setRegenCount(0);
-      setIsRegenerating(false);
       setShowFrictionModal(false);
-      setShowRegenConfirm(false);
       setPitchSent(false);
 
       // Clear any existing timers
@@ -3054,10 +3054,7 @@ const UnlockModalV2 = ({
     navigate(`/creator/dashboard/pr-ready${q}`);
   }, [brand?.slug, packageData?.brand?.slug, navigate, onClose]);
 
-  const showManagerMini =
-    !!managerBar &&
-    managerBar.score < 100 &&
-    !(isPro && managerBar.score >= 85);
+  const showManagerMini = false;
 
   const renderManagerMiniBand = () => {
     if (!showManagerMini) return null;
@@ -3102,74 +3099,6 @@ const UnlockModalV2 = ({
     }
   };
 
-  // Check if user has made meaningful edits
-  const hasUserEdits = () => {
-    const subjectChanged = editedSubject !== originalSubject;
-    const bodyChanged = editedBody !== originalBody;
-    return subjectChanged || bodyChanged;
-  };
-
-  // Handle regenerate - check for unsaved edits first
-  const handleRegenerate = async (confirmed = false) => {
-    if (regenCount >= 3 || isRegenerating) return;
-
-    // If user has edits and hasn't confirmed, show confirmation modal
-    if (hasUserEdits() && !confirmed) {
-      setShowRegenConfirm(true);
-      return;
-    }
-
-    setShowRegenConfirm(false);
-    setIsRegenerating(true);
-    try {
-      let response;
-
-      if (isFollowup) {
-        // Follow-up: use the generate-pitch endpoint with follow-up flag
-        response = await apiClient.post('/api/pr-crm/generate-pitch', {
-          brand_id: brand.brand_id || brand.id,
-          slug: brand.slug,
-          is_followup: true,
-          regenerate: true,
-        });
-
-        if (response.data.subject && response.data.body) {
-          const newSubject = response.data.subject;
-          const newBody = response.data.body;
-          setOriginalSubject(newSubject);
-          setOriginalBody(newBody);
-          setEditedSubject(newSubject);
-          setEditedBody(newBody);
-          setRegenCount(prev => prev + 1);
-        }
-      } else {
-        // Initial unlock: use PR package endpoint
-        response = await apiClient.post('/api/pr-crm/generate-pr-package', {
-          brand_id: brand.brand_id || brand.id,
-          slug: brand.slug,
-          is_for_you_match: brand.is_for_you_match || false,
-          regenerate: true,
-        });
-
-        if (response.data.success && response.data.package?.pitches?.growing) {
-          const pitch = response.data.package.pitches.growing;
-          const newSubject = pitch?.subject || '';
-          const newBody = pitch?.body_plain || '';
-          setOriginalSubject(newSubject);
-          setOriginalBody(newBody);
-          setEditedSubject(newSubject);
-          setEditedBody(newBody);
-          setRegenCount(prev => prev + 1);
-        }
-      }
-    } catch (err) {
-      console.error('Regenerate failed:', err);
-      message.error('Failed to generate new version');
-    } finally {
-      setIsRegenerating(false);
-    }
-  };
-
   // Handle send button click
   const handleOpenForm = () => {
     const formUrl = packageData?.application_form_url;
@@ -3211,8 +3140,7 @@ const UnlockModalV2 = ({
   };
 
   const handleSend = async (skipNudge = false) => {
-    const brandEmail = packageData?.brand_email || packageData?.contact?.email;
-    const formUrl = packageData?.application_form_url;
+    const { email: brandEmail, formUrl } = resolvePackEmail(packageData);
 
     // Form-only brands: open signup in a new tab (user submits — we don't)
     if (formUrl && !brandEmail) {
@@ -3231,14 +3159,20 @@ const UnlockModalV2 = ({
     const subject = editedSubject || '';
     const body = editedBody || '';
 
-    await copyToClipboard(body, 'pitch');
-
-    const mailtoUrl = `mailto:${brandEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&bcc=creators@newcollab.co`;
-    window.location.href = mailtoUrl;
+    try {
+      await copyToClipboard(body, 'pitch');
+      const mailtoUrl = `mailto:${brandEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&bcc=creators@newcollab.co`;
+      window.location.href = mailtoUrl;
+    } catch (err) {
+      console.warn('Send pitch:', err);
+    }
 
     // Show compact sent state instead of PHASE_NEXT
     setPitchSent(true);
-    onPitchSent?.(brand, { method: 'email', stayOpen: true });
+    onPitchSent?.(brand, {
+      method: packageData?.is_followup ? 'followup' : 'email',
+      stayOpen: true,
+    });
   };
 
   // Handle nudge modal actions
@@ -3272,10 +3206,8 @@ const UnlockModalV2 = ({
   const brandName = brand?.brand_name || brand?.name || 'Brand';
   const brandCategory = brand?.category || '';
   const brandLogo = brand?.logo || brand?.logo_url;
-  const brandEmail = packageData?.brand_email || packageData?.contact?.email;
-  const formUrl = packageData?.application_form_url;
+  const { formUrl, generic: emailIsGeneric, email: brandEmail } = resolvePackEmail(packageData);
   const isFormPackage = !!(formUrl && !brandEmail);
-  const giftValue = brand?.price_point || packageData?.brand?.price_point || packageData?.package?.brand?.price_point || 45;
   const matchLabel = packageData?.fit_score?.label
     || packageData?.mentor_verdict?.confidenceLabel
     || packageData?.verdict?.verdict_pill
@@ -3553,7 +3485,7 @@ const UnlockModalV2 = ({
                                 <MentorSection>
                                   <SectionLabel>
                                     <SectionIcon>⭐</SectionIcon>
-                                    Increase your reply chance
+                                    Increase your chance of a reply
                                   </SectionLabel>
                                   <NextMoveCard>
                                     <NextMoveAction>
@@ -3631,8 +3563,8 @@ const UnlockModalV2 = ({
                     <SentTitle>{packageData?.is_followup ? 'Follow-up sent' : 'Pitch sent'} to {brandName}</SentTitle>
                     <SentSubtitle>
                       {packageData?.is_followup
-                        ? `Follow-up sent! Brands often reply to the 2nd or 3rd message. Good luck!`
-                        : `Reply tracking active. We'll notify you the moment ${brandName} responds. Typical reply window: 3-7 days.`
+                        ? `Follow-up copied. Confirm you sent it so we can remind you to nudge again.`
+                        : `Email opened. Confirm you sent it so we can remind you to follow up in 7 days.`
                       }
                     </SentSubtitle>
                     <SentSecondaryBtn onClick={() => packageData?.is_followup ? onClose?.() : setPhase(PHASE_MODAL)}>
@@ -3657,9 +3589,6 @@ const UnlockModalV2 = ({
                           PR email
                         </Chip>
                       )}
-                      <Chip $bg={PITCH_TOKENS.chipPink} $color={PITCH_TOKENS.chipPinkText}>
-                        ~${giftValue} avg gift
-                      </Chip>
                       {formUrl && brandEmail && (
                         <Chip $bg={PITCH_TOKENS.chipBlue} $color={PITCH_TOKENS.chipBlueText}>
                           Has form
@@ -3723,9 +3652,9 @@ const UnlockModalV2 = ({
                         {/* VERIFIED EMAIL COMPACT STRIP */}
                         <VerifiedEmailStrip>
                           <VerifiedEmailLeft>
-                            <VerifiedBadge>✓</VerifiedBadge>
+                            <VerifiedBadge>{emailIsGeneric ? '!' : '✓'}</VerifiedBadge>
                             <VerifiedEmailInfo>
-                              <VerifiedEmailLabel>Brand email</VerifiedEmailLabel>
+                              <VerifiedEmailLabel>{emailIsGeneric ? 'Public inbox' : 'Brand email'}</VerifiedEmailLabel>
                               <VerifiedEmailValue>{brandEmail}</VerifiedEmailValue>
                             </VerifiedEmailInfo>
                           </VerifiedEmailLeft>
@@ -3782,31 +3711,7 @@ const UnlockModalV2 = ({
                             onChange={(e) => setEditedBody(e.target.value)}
                             placeholder="Your pitch..."
                           />
-
-                          {/* REGENERATE BUTTON */}
-                          <RegenRow>
-                            <RegenButton
-                              onClick={() => handleRegenerate(false)}
-                              disabled={regenCount >= 3 || isRegenerating}
-                            >
-                              {isRegenerating ? (
-                                '↻ Generating...'
-                              ) : regenCount >= 3 ? (
-                                'Max versions reached'
-                              ) : (
-                                `↻ Try another version  ${3 - regenCount} left`
-                              )}
-                            </RegenButton>
-                          </RegenRow>
                         </PitchWorkspace>
-
-                        {/* META INFO */}
-                        <MetaInfoCard>
-                          <MetaInfoIcon>🎁</MetaInfoIcon>
-                          <MetaInfoText>
-                            <strong>{brandName}</strong> often gifts ~<strong>${giftValue} devices</strong> to creators like you.
-                          </MetaInfoText>
-                        </MetaInfoCard>
 
                         {/* STICKY ACTION BAR */}
                         <StickyActionBar>
@@ -3954,7 +3859,7 @@ const UnlockModalV2 = ({
           >
             <FrictionModalTitle>Quick tip before sending</FrictionModalTitle>
             <FrictionModalText>
-              Adding one AI Boost suggestion can increase your reply rate from 2% to 4%. It only takes 10 seconds!
+              Add one personal detail so this does not read like a template. Takes about 10 seconds.
             </FrictionModalText>
             <FrictionModalButtons>
               <FrictionModalBtn $primary onClick={handleNudgeGoBack}>
@@ -3962,35 +3867,6 @@ const UnlockModalV2 = ({
               </FrictionModalBtn>
               <FrictionModalBtn onClick={handleNudgeSendAnyway}>
                 Send as-is
-              </FrictionModalBtn>
-            </FrictionModalButtons>
-          </FrictionModalContent>
-        </FrictionModalOverlay>
-      )}
-
-      {/* Regenerate confirmation modal */}
-      {showRegenConfirm && (
-        <FrictionModalOverlay
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setShowRegenConfirm(false)}
-        >
-          <FrictionModalContent
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <FrictionModalTitle>You have unsaved edits</FrictionModalTitle>
-            <FrictionModalText>
-              Regenerating will replace your current pitch with a new version. Your edits will be lost.
-            </FrictionModalText>
-            <FrictionModalButtons>
-              <FrictionModalBtn onClick={() => setShowRegenConfirm(false)}>
-                Keep editing
-              </FrictionModalBtn>
-              <FrictionModalBtn $primary onClick={() => handleRegenerate(true)}>
-                Regenerate anyway
               </FrictionModalBtn>
             </FrictionModalButtons>
           </FrictionModalContent>

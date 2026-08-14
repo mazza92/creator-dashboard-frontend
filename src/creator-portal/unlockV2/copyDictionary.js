@@ -140,7 +140,7 @@ export const MENTOR_SECTIONS = {
   },
   increaseReplyChance: {
     // Reframes "your next move" around value prop
-    label: 'Increase your reply chance',
+    label: 'One tweak before you send',
     icon: '⭐',
   },
   outreachTools: {

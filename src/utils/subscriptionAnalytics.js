@@ -59,14 +59,16 @@ export function trackProBeginCheckout({ tier = 'pro', source, interval = 'monthl
 
   // Meta Pixel InitiateCheckout
   if (fbqReady()) {
-    window.fbq('track', 'InitiateCheckout', {
-      content_type: 'product',
-      content_ids: [`subscription_${tier}_${interval}`],
-      content_name: tierItemName(tier, interval),
-      value,
-      currency: 'USD',
-      num_items: 1,
-    });
+    try {
+      window.fbq('track', 'InitiateCheckout', {
+        content_type: 'product',
+        content_ids: [`subscription_${tier}_${interval}`],
+        content_name: tierItemName(tier, interval),
+        value,
+        currency: 'USD',
+        num_items: 1,
+      });
+    } catch (_) { /* pixel blockers must not break checkout */ }
   }
 }
 

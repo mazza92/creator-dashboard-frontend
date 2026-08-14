@@ -15,8 +15,8 @@ import WelcomeTour from '../components/WelcomeTour';
 
 // Feature flag for V2 modal testing - set to true to use new verdict-first design
 const USE_UNLOCK_V2 = true;
-// AI Manager routing mechanisms (independent flags — flip to false to revert)
-const AI_MANAGER_SCORE_BAR_V1 = true;
+// AI Manager hireability band. Off: it scores outcomes we do not control.
+const AI_MANAGER_SCORE_BAR_V1 = false;
 
 const MANAGER_BAR_IGNORE_KEY = 'nc_manager_bar_ignore_sessions';
 const MANAGER_SETUP_COMPLETE_KEY = 'nc_manager_setup_complete';
@@ -215,33 +215,24 @@ const ForYou = () => {
                           sessionStorage.getItem('justCompletedOnboarding') === 'true';
     const forceTour = urlParams.get('force_tour') === 'true';
 
-    const hasCompletedTour = localStorage.getItem('welcomeTourCompleted') === 'true';
-    const hasCompletedWelcomeFlow = localStorage.getItem('welcomeFlowCompleted') === 'true';
-    const hasNeverUnlocked = unlockBalance.remaining === 3 && unlockBalance.tier === 'free';
-
-    // Show welcome tour for users who just completed onboarding
-    // justOnboarded bypasses localStorage check (stale from dev testing / different account)
-    // force_tour param also bypasses for manual testing
-    if ((justOnboarded || forceTour) && !loading) {
-      setShowWelcomeTour(true);
-      // Clean up the URL params
-      if (urlParams.get('onboarding') || urlParams.get('force_tour')) {
+    // First session: matches on screen, not an 8-step tour. force_tour still works for QA.
+    if (justOnboarded && !loading) {
+      localStorage.setItem('welcomeTourCompleted', 'true');
+      localStorage.setItem('welcomeFlowCompleted', 'true');
+      if (urlParams.get('onboarding')) {
         urlParams.delete('onboarding');
-        urlParams.delete('force_tour');
         const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
         window.history.replaceState({}, '', newUrl);
       }
-      // Clear onboarding flag
       sessionStorage.removeItem('justCompletedOnboarding');
-      return;
     }
 
-    // Show welcome modal for returning users who haven't completed the welcome flow
-    // (already saw tour but didn't finish unlocking brands)
-    const shouldShowWelcome = (hasCompletedTour || hasNeverUnlocked) && !hasCompletedWelcomeFlow;
-
-    if (shouldShowWelcome && !loading && data?.matched?.length > 0 && !showWelcomeTour) {
-      setShowWelcomeModal(true);
+    if (forceTour && !loading) {
+      setShowWelcomeTour(true);
+      urlParams.delete('force_tour');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+      return;
     }
   }, [loading, data, unlockBalance, showWelcomeTour]);
 
@@ -604,20 +595,7 @@ const ForYou = () => {
       }
     }
 
-    // Kit nudge AFTER first unlock/pitch — never block the first aha moment
-    const unlockCount = Number(localStorage.getItem('nc_unlock_count') || '0');
-    const hasSeenNudge = localStorage.getItem('nc_kit_nudge_seen');
-    const hasKit = creatorProfile?.has_media_kit ||
-                   (creatorProfile?.portfolio_post_count && creatorProfile.portfolio_post_count > 0);
-
-    if (!hasKit && !hasSeenNudge && unlockCount >= 1) {
-      localStorage.setItem('nc_kit_nudge_seen', 'true');
-      setKitNudgeBrand(brand);
-      setShowKitNudge(true);
-      return;
-    }
-
-    // Mark brand as coming from For You to ensure consistent fit rating
+    // Open the pack immediately. Kit upsell must not sit in front of send.
     setPitchingBrand({ ...brand, is_for_you_match: true });
   }, [atLimit, savedIds, creatorProfile]);
 
@@ -640,25 +618,8 @@ const ForYou = () => {
     const alreadyRecorded = Boolean(context?.alreadyRecorded);
     const goPipeline = context?.goPipeline;
 
-    if (contactedBrand && !alreadyRecorded) {
-      setPitchedIds(prev => new Set([...prev, contactedBrand.id]));
-      setSavedIds(prev => new Set([...prev, contactedBrand.id]));
-      try {
-        const prev = Number(localStorage.getItem('nc_unlock_count') || '0');
-        localStorage.setItem('nc_unlock_count', String(prev + 1));
-      } catch (_) { /* ignore */ }
-
-      if (isWelcomeFlow) {
-        setWelcomePitchedIds(prev => new Set([...prev, contactedBrand.id]));
-      }
-    }
-
     if (stayOpen) {
-      message.success(
-        method === 'form'
-          ? 'Form opened. Next: keep building while you wait.'
-          : 'Email opened. Next: keep building while you wait.'
-      );
+      setPitchingBrand(null);
       try {
         const response = await axios.get(`${API_BASE}/api/pr-crm/pitch-limits`, {
           withCredentials: true
@@ -670,7 +631,24 @@ const ForYou = () => {
       } catch (error) {
         setPitchesSentThisMonth(prev => prev + 1);
       }
+      const brandId = contactedBrand?.id || contactedBrand?.brand_id;
+      if (brandId) {
+        navigate(`/creator/dashboard/pr-pipeline?confirmBrand=${brandId}&method=${method || 'email'}`);
+      }
       return;
+    }
+
+    if (contactedBrand && !alreadyRecorded) {
+      setPitchedIds(prev => new Set([...prev, contactedBrand.id]));
+      setSavedIds(prev => new Set([...prev, contactedBrand.id]));
+      try {
+        const prev = Number(localStorage.getItem('nc_unlock_count') || '0');
+        localStorage.setItem('nc_unlock_count', String(prev + 1));
+      } catch (_) { /* ignore */ }
+
+      if (isWelcomeFlow) {
+        setWelcomePitchedIds(prev => new Set([...prev, contactedBrand.id]));
+      }
     }
 
     setPitchingBrand(null);
@@ -813,18 +791,16 @@ const ForYou = () => {
           </PageTitleWrap>
         </PageHeader>
 
-        {/* Free plan: two clear credit trackers */}
+        {/* Free plan: one unlock meter. Paywall only at 0 left. */}
         {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (() => {
           const unlocksLeft = unlockBalance.remaining ?? 3;
-          const appsUsed = Math.min(FREE_PITCH_LIMIT, pitchLimits?.used ?? pitchesSentThisMonth ?? 0);
-          const appsLeft = Math.max(0, FREE_PITCH_LIMIT - appsUsed);
-          const showUpgrade = unlocksLeft <= 0 || appsLeft <= 0;
+          const showUpgrade = unlocksLeft <= 0;
           return (
             <>
               <CreditTrackers>
                 <CreditTracker $low={unlocksLeft <= 0}>
                   <CreditTrackerTop>
-                    <CreditTrackerLabel>Unlocks</CreditTrackerLabel>
+                    <CreditTrackerLabel>Packs this month</CreditTrackerLabel>
                     <CreditTrackerCount $low={unlocksLeft <= 0}>
                       {unlocksLeft}<CreditTrackerMax>/3</CreditTrackerMax>
                     </CreditTrackerCount>
@@ -834,34 +810,15 @@ const ForYou = () => {
                       <CreditPip key={i} $available={i < unlocksLeft} $tone="unlock" />
                     ))}
                   </CreditPipsRow>
-                  <CreditTrackerHint>Strategy + brand contacts</CreditTrackerHint>
-                </CreditTracker>
-
-                <CreditTracker $low={appsLeft <= 0}>
-                  <CreditTrackerTop>
-                    <CreditTrackerLabel>Applications</CreditTrackerLabel>
-                    <CreditTrackerCount $low={appsLeft <= 0}>
-                      {appsLeft}<CreditTrackerMax>/3</CreditTrackerMax>
-                    </CreditTrackerCount>
-                  </CreditTrackerTop>
-                  <CreditPipsRow>
-                    {[0, 1, 2].map((i) => (
-                      <CreditPip key={i} $available={i < appsLeft} $tone="app" />
-                    ))}
-                  </CreditPipsRow>
-                  <CreditTrackerHint>Open applications</CreditTrackerHint>
+                  <CreditTrackerHint>Email plus a pitch, ready to send</CreditTrackerHint>
                 </CreditTracker>
               </CreditTrackers>
               {showUpgrade && (
                 <CreditUpgradeBar>
                   <CreditUpgradeHint>
-                    {unlocksLeft <= 0 && appsLeft <= 0
-                      ? "You're out of free unlocks and applications."
-                      : unlocksLeft <= 0
-                        ? "You're out of free unlocks."
-                        : "You're out of free applications."}
+                    Free packs used. Pro keeps you sending emails and pitches this month.
                   </CreditUpgradeHint>
-                  <QuotaUpgrade onClick={handleDirectUpgrade}>Upgrade for unlimited</QuotaUpgrade>
+                  <QuotaUpgrade onClick={handleDirectUpgrade}>Keep sending. $19/mo</QuotaUpgrade>
                 </CreditUpgradeBar>
               )}
             </>
@@ -873,13 +830,13 @@ const ForYou = () => {
           <QuotaBanner $isPro>
             <QuotaText>
               <QuotaTitle $isPro>Pro</QuotaTitle>
-              <QuotaSub $isPro>Unlimited unlocks & applications</QuotaSub>
+              <QuotaSub $isPro>Unlimited emails and pitches</QuotaSub>
             </QuotaText>
           </QuotaBanner>
         )}
 
         {/* Kit CTA after first unlock/pitch — don't compete with first aha */}
-        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && data?.has_profile && (pitchedIds.size > 0 || Number(localStorage.getItem('nc_unlock_count') || '0') >= 1) && (
+        {creatorProfile && !creatorProfile.has_media_kit && (!creatorProfile.portfolio_post_count || creatorProfile.portfolio_post_count === 0) && data?.has_profile && pitchedIds.size > 0 && (
           <KitBuilderCard onClick={() => navigate('/creator/dashboard/my-kit')}>
             <KitBuilderProgress>
               <FileText size={20} />
@@ -904,8 +861,7 @@ const ForYou = () => {
             <PromptIcon>🎯</PromptIcon>
             <PromptTitle>Complete your profile niches</PromptTitle>
             <PromptSub>
-              Set niches during onboarding so Discover can prioritize relevant brands.
-              For You matches still use your real social content.
+              Set niches during onboarding so For You can prioritize relevant brands.
             </PromptSub>
           </ProfilePromptCard>
         )}
@@ -1208,9 +1164,9 @@ const ForYou = () => {
           onComplete={() => {
             setShowWelcomeTour(false);
             localStorage.setItem('welcomeTourCompleted', 'true');
-            // After tour, show the welcome modal with brand matches
+            // After tour, land on matches. Do not reopen the first-pitch modal.
             if (data?.matched?.length > 0) {
-              setShowWelcomeModal(true);
+              setShowWelcomeModal(false);
             }
           }}
           onSkip={() => {
@@ -1284,8 +1240,6 @@ const ForYou = () => {
 
                 // Get brand data for facts (using real database columns)
                 const minFollowers = brand.min_followers;
-                const replyRate = brand.response_rate; // existing column with 77% coverage
-                const avgPrValue = brand.avg_product_value || brand.price_point; // existing columns
                 const category = brand.category || 'Beauty';
                 // Format shipping from regions array if available
                 const shipsTo = brand.regions && Array.isArray(brand.regions) && brand.regions.length > 0
@@ -1325,41 +1279,24 @@ const ForYou = () => {
                               {shipsTo && <><span className="sep">·</span><span>{shipsTo}</span></>}
                             </WelcomeBrandMeta>
                           </WelcomeBrandInfo>
-                          {replyRate >= 70 && (
-                            <WelcomeReplyTag>🔥 {replyRate}% reply</WelcomeReplyTag>
-                          )}
                         </WelcomeBrandTop>
                         <WelcomeBrandFacts>
                           {minFollowers != null && (
                             <WelcomeFact>
                               <WelcomeFactCheck>✓</WelcomeFactCheck>
-                              Gifts creators from <strong>{minFollowers.toLocaleString()} followers</strong>
+                              Open to creators from <strong>{minFollowers.toLocaleString()} followers</strong>
                             </WelcomeFact>
                           )}
                           {brand.micro_friendly && !minFollowers && (
                             <WelcomeFact>
                               <WelcomeFactCheck>✓</WelcomeFactCheck>
-                              <strong>Micro-friendly</strong> (gifts small creators)
+                              <strong>Micro-friendly</strong> (works with small creators)
                             </WelcomeFact>
                           )}
-                          {replyRate > 0 && (
-                            <WelcomeFact>
-                              <WelcomeFactCheck>✓</WelcomeFactCheck>
-                              <strong>{replyRate}% response rate</strong> from pitches
-                            </WelcomeFact>
-                          )}
-                          {avgPrValue > 0 && (
-                            <WelcomeFact>
-                              <WelcomeFactCheck>✓</WelcomeFactCheck>
-                              Avg PR value: <strong>${avgPrValue}</strong>
-                            </WelcomeFact>
-                          )}
-                          {!minFollowers && !replyRate && !avgPrValue && (
-                            <WelcomeFact>
-                              <WelcomeFactCheck>✓</WelcomeFactCheck>
-                              <strong>Brand email or form</strong> ready to pitch
-                            </WelcomeFact>
-                          )}
+                          <WelcomeFact>
+                            <WelcomeFactCheck>✓</WelcomeFactCheck>
+                            <strong>Brand email or form</strong> ready to pitch
+                          </WelcomeFact>
                         </WelcomeBrandFacts>
                         <WelcomePitchBtn onClick={() => {
                           setIsWelcomeFlow(true);
@@ -1497,16 +1434,6 @@ const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore }) => {
       </CardTags>
 
       <PreviewStats>
-        {brand.response_rate != null && brand.response_rate !== '' && (
-          <PreviewStat>
-            {brand.response_rate}%
-            <em>reply rate</em>
-          </PreviewStat>
-        )}
-        <PreviewStat>
-          ~${brand.price_point || 45}
-          <em>PR value</em>
-        </PreviewStat>
         {matchScore ? (
           <PreviewStat>
             {Math.round(matchScore)}%
@@ -1684,14 +1611,13 @@ const QuotaBanner = styled.div`
 
 const CreditTrackers = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.65rem;
   margin-bottom: 1rem;
-  max-width: 480px;
+  max-width: 320px;
   align-items: stretch;
 
   @media (max-width: 640px) {
-    grid-template-columns: 1fr;
     max-width: none;
   }
 `;

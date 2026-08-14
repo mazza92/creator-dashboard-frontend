@@ -126,18 +126,42 @@ const getBestMove = (items) => {
   return overdue[0] || null;
 };
 
-// Static platform activity — replace with real API in Phase 3
-const MOCK_ACTIVITY = [
-  { icon: '💌', text: 'A creator got a reply from a skincare brand · 2h ago', type: 'green' },
-  { icon: '🔥', text: 'Reply rates are up 18% in Beauty this week', type: 'amber' },
-  { icon: '📦', text: '4 packages landed in Wellness this week', type: 'green' },
-];
+const isContactedItem = (item) => Boolean(item?.send_confirmed) || Boolean(item?.pitched_at);
 
-// Stage filter options - simplified for better UX
+const hasUnlockedPack = (item) => Boolean(item?.has_pr_package);
+
+// Quota gates new unlocks only. An already-unlocked pack (email, pitch, form) stays open.
+
+const isPackReady = (item) => hasUnlockedPack(item) && !isContactedItem(item);
+
+const isSavedToUnlock = (item) =>
+  item?.pipeline_stage === 'saved' && !hasUnlockedPack(item) && !isContactedItem(item);
+
+const isFollowupDueItem = (item) => {
+  if (!item) return false;
+  const stage = item.pipeline_stage;
+  if (stage === 'replied') return true;
+  if (stage === 'followup') return (item.days_since_followup || 0) >= 7;
+  return (
+    (stage === 'waiting' || stage === 'pitched') &&
+    (item.days_since_pitched || 0) >= 7 &&
+    isContactedItem(item)
+  );
+};
+
+const FILTER_ALIASES = {
+  waiting: 'sent',
+  saved: 'packs',
+  needs_followup: 'followup',
+  action: 'followup',
+  replied: 'followup',
+};
+
 const STAGE_FILTERS = [
   { key: 'all', label: 'All' },
-  { key: 'waiting', label: 'In Progress' },
-  { key: 'replied', label: 'Replied' },
+  { key: 'packs', label: 'Packs' },
+  { key: 'followup', label: 'Follow up' },
+  { key: 'sent', label: 'Sent' },
 ];
 
 const PRPipeline = () => {
@@ -165,9 +189,6 @@ const PRPipeline = () => {
   const [receivingItem, setReceivingItem] = useState(null); // Track package value input
   const [packageValue, setPackageValue] = useState('');
   const [expandedSections, setExpandedSections] = useState({}); // Track expanded won/completed sections
-  const [showManagerBand, setShowManagerBand] = useState(() => (
-    sessionStorage.getItem('nc_pipeline_manager_band_dismissed') !== '1'
-  ));
 
   // Bump feature (Pro) - manual follow-up by Newcollab team
   const [showBumpModal, setShowBumpModal] = useState(false);
@@ -207,7 +228,8 @@ const PRPipeline = () => {
   }, []);
 
   useEffect(() => {
-    const filter = searchParams.get('filter');
+    const raw = searchParams.get('filter');
+    const filter = FILTER_ALIASES[raw] || raw;
     if (filter && STAGE_FILTERS.some(f => f.key === filter)) {
       setActiveFilter(filter);
     }
@@ -240,40 +262,46 @@ const PRPipeline = () => {
   // URL format: ?followup={pipeline_id}&brand={brand_name}
   useEffect(() => {
     const followupId = searchParams.get('followup');
-    if (!followupId || items.length === 0 || !isPro) return;
+    if (!followupId || items.length === 0) return;
 
     const item = items.find(i =>
       String(i.id) === String(followupId) ||
       String(i.brand_id) === String(followupId)
     );
 
-    if (item) {
-      // Track notification click-through (analytics)
-      const trackFollowupClick = async () => {
-        try {
-          const apiBase = getApiBase();
-          await axios.post(`${apiBase}/api/pr-crm/followup-reminder/clicked`, {
-            pipeline_id: item.id
-          }, { withCredentials: true });
-        } catch (e) {
-          // Silent fail - not critical
-        }
-      };
-      trackFollowupClick();
+    if (!item) return;
 
-      // Open follow-up modal directly
-      setSelectedBrand({ ...item, isFollowup: true });
-      setShowPitchModal(true);
-
-      // Clear URL params
+    if (!isPro) {
+      setActiveFilter('followup');
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('followup');
       nextParams.delete('brand');
-      nextParams.delete('utm_source');
-      nextParams.delete('utm_medium');
-      nextParams.delete('utm_campaign');
       setSearchParams(nextParams, { replace: true });
+      return;
     }
+
+    const trackFollowupClick = async () => {
+      try {
+        const apiBase = getApiBase();
+        await axios.post(`${apiBase}/api/pr-crm/followup-reminder/clicked`, {
+          pipeline_id: item.id
+        }, { withCredentials: true });
+      } catch (e) {
+        // Silent fail - not critical
+      }
+    };
+    trackFollowupClick();
+
+    setSelectedBrand({ ...item, isFollowup: true });
+    setShowPitchModal(true);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('followup');
+    nextParams.delete('brand');
+    nextParams.delete('utm_source');
+    nextParams.delete('utm_medium');
+    nextParams.delete('utm_campaign');
+    setSearchParams(nextParams, { replace: true });
   }, [items, searchParams, setSearchParams, isPro]);
 
   const fetchPipelineData = async () => {
@@ -322,71 +350,51 @@ const PRPipeline = () => {
 
   // Filter items based on active filter
   const filteredItems = useMemo(() => {
-    if (activeFilter === 'all') {
-      // Smart sorting: prioritize items that drive engagement
-      return [...items].sort((a, b) => {
-        // Priority function: lower number = higher priority
-        const getPriority = (item) => {
-          const stage = item.pipeline_stage;
-          const isContacted = Boolean(item.send_confirmed) || Boolean(item.pitched_at);
-
-          // Priority 1: Ready to Contact (saved but not contacted) - drives credit usage
-          if (stage === 'saved' && !isContacted) return 1;
-
-          // Priority 2: Action Needed (replied or overdue)
-          if (stage === 'replied') return 2;
-          if ((stage === 'waiting' || stage === 'pitched') && item.days_since_pitched >= 7) return 2;
-          if (stage === 'followup' && item.days_since_followup >= 7) return 2;
-
-          // Priority 3: Waiting for response (active pitches)
-          if (['waiting', 'followup', 'pitched'].includes(stage)) return 3;
-
-          // Priority 4: Won/Completed
-          if (['won', 'received', 'success'].includes(stage)) return 4;
-
-          // Priority 5: Everything else (including contacted saved items)
-          return 5;
-        };
-
-        const priorityDiff = getPriority(a) - getPriority(b);
-        if (priorityDiff !== 0) return priorityDiff;
-
-        // Within same priority, sort by most recent activity
-        const aDate = new Date(a.pitched_at || a.saved_at || 0);
-        const bDate = new Date(b.pitched_at || b.saved_at || 0);
-        return bDate - aDate;
-      });
-    }
-    if (activeFilter === 'action') {
-      return items.filter(i =>
-        i.pipeline_stage === 'replied' ||
-        ((i.pipeline_stage === 'waiting' || i.pipeline_stage === 'pitched') && i.days_since_pitched >= 7)
-      );
-    }
-    // Map filter to stage(s)
-    const stageMap = {
-      'waiting': ['waiting', 'followup', 'pitched'],
-      'replied': ['replied'],
-      'won': ['won', 'received', 'success'],
-      'saved': ['saved']
+    const packFirstSort = (a, b) => {
+      const getPriority = (item) => {
+        if (isFollowupDueItem(item)) return 1;
+        if (isPackReady(item)) return 2;
+        if (isSavedToUnlock(item)) return 3;
+        if (['waiting', 'followup', 'pitched'].includes(item.pipeline_stage) && isContactedItem(item)) return 4;
+        if (['won', 'received', 'success'].includes(item.pipeline_stage)) return 5;
+        return 6;
+      };
+      const priorityDiff = getPriority(a) - getPriority(b);
+      if (priorityDiff !== 0) return priorityDiff;
+      const aDate = new Date(a.pitched_at || a.saved_at || 0);
+      const bDate = new Date(b.pitched_at || b.saved_at || 0);
+      return bDate - aDate;
     };
-    const stages = stageMap[activeFilter] || [activeFilter];
-    let filtered = items.filter(i => stages.includes(i.pipeline_stage));
 
-    // For saved filter, sort by not-yet-contacted brands first (ready to pitch)
-    if (activeFilter === 'saved') {
-      filtered = [...filtered].sort((a, b) => {
-        // Explicit boolean conversion for reliable comparison
-        const aContacted = Boolean(a.send_confirmed) || Boolean(a.pitched_at);
-        const bContacted = Boolean(b.send_confirmed) || Boolean(b.pitched_at);
-        // Not contacted brands should appear first
-        if (!aContacted && bContacted) return -1;
-        if (aContacted && !bContacted) return 1;
-        // Then by saved date (newest first)
+    if (activeFilter === 'all') {
+      return [...items].sort(packFirstSort);
+    }
+    if (activeFilter === 'packs') {
+      return items.filter(i => isPackReady(i) || isSavedToUnlock(i)).sort((a, b) => {
+        if (isPackReady(a) && !isPackReady(b)) return -1;
+        if (!isPackReady(a) && isPackReady(b)) return 1;
         return new Date(b.saved_at || 0) - new Date(a.saved_at || 0);
       });
     }
-    return filtered;
+    if (activeFilter === 'followup') {
+      return items.filter(isFollowupDueItem);
+    }
+    if (activeFilter === 'sent') {
+      return items.filter(i =>
+        ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage) && isContactedItem(i)
+      );
+    }
+    if (activeFilter === 'action') {
+      return items.filter(isFollowupDueItem);
+    }
+    const stageMap = {
+      waiting: ['waiting', 'followup', 'pitched'],
+      replied: ['replied'],
+      won: ['won', 'received', 'success'],
+      saved: ['saved'],
+    };
+    const stages = stageMap[activeFilter] || [activeFilter];
+    return items.filter(i => stages.includes(i.pipeline_stage));
   }, [items, activeFilter]);
 
   // Nudge items: overdue follow-ups (7+ days since last contact)
@@ -406,45 +414,42 @@ const PRPipeline = () => {
   // Count items by stage
   const stageCounts = useMemo(() => {
     return {
-      waiting: items.filter(i => ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage)).length,
+      waiting: items.filter(i => ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage) && isContactedItem(i)).length,
       replied: items.filter(i => i.pipeline_stage === 'replied').length,
       won: items.filter(i => ['won', 'received', 'success'].includes(i.pipeline_stage)).length,
-      saved: items.filter(i => i.pipeline_stage === 'saved').length,
+      saved: items.filter(isSavedToUnlock).length,
+      packs: items.filter(isPackReady).length,
+      followup: items.filter(isFollowupDueItem).length,
     };
   }, [items]);
 
-  // Group items by section for 'all' view
   const groupedItems = useMemo(() => {
     if (activeFilter !== 'all') return null;
 
     const getSection = (item) => {
-      const stage = item.pipeline_stage;
-      const isContacted = Boolean(item.send_confirmed) || Boolean(item.pitched_at);
-
-      if (stage === 'saved' && !isContacted) return 'ready';
-      if (stage === 'replied') return 'action';
-      if ((stage === 'waiting' || stage === 'pitched') && item.days_since_pitched >= 7) return 'action';
-      if (stage === 'followup' && item.days_since_followup >= 7) return 'action';
-      if (['waiting', 'followup', 'pitched'].includes(stage)) return 'waiting';
-      if (['won', 'received', 'success'].includes(stage)) return 'completed';
+      if (isFollowupDueItem(item)) return 'followup';
+      if (isPackReady(item)) return 'packs';
+      if (isSavedToUnlock(item)) return 'saved';
+      if (['waiting', 'followup', 'pitched'].includes(item.pipeline_stage) && isContactedItem(item)) return 'waiting';
+      if (['won', 'received', 'success'].includes(item.pipeline_stage)) return 'completed';
       return 'other';
     };
 
-    const groups = { ready: [], action: [], waiting: [], completed: [], other: [] };
+    const groups = { followup: [], packs: [], saved: [], waiting: [], completed: [], other: [] };
     filteredItems.forEach(item => {
-      const section = getSection(item);
-      groups[section].push(item);
+      groups[getSection(item)].push(item);
     });
 
     return groups;
   }, [filteredItems, activeFilter]);
 
   const SECTION_CONFIG = {
-    ready: { emoji: '📌', title: 'Ready to Contact', priority: 1 },
-    action: { emoji: '⚡', title: 'Action Needed', priority: 2 },
-    waiting: { emoji: '⏳', title: 'In Progress', priority: 3 },
-    completed: { emoji: '🎁', title: 'Completed', priority: 4 },
-    other: { emoji: '📋', title: 'Other', priority: 5 }
+    followup: { emoji: '⚡', title: 'Follow up' },
+    packs: { emoji: '📬', title: 'Your packs' },
+    saved: { emoji: '📌', title: 'Saved' },
+    waiting: { emoji: '⏳', title: 'Sent' },
+    completed: { emoji: '✓', title: 'Completed' },
+    other: { emoji: '📋', title: 'Other' },
   };
 
   const COMPLETED_LIMIT = 3; // Show only 3 completed items by default
@@ -629,11 +634,9 @@ const PRPipeline = () => {
 
   // Handle PR form link click - show confirmation modal after (if not at limit)
   const handleFormLinkClick = (e, item) => {
-    // Check if user is at or over pitch limit
     const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
-
-    if (atLimit) {
-      // BLOCK the link from opening - user must upgrade
+    // Already-unlocked packs keep form access even at 3/3
+    if (atLimit && !hasUnlockedPack(item)) {
       e.preventDefault();
       setUpgradeReason('limit_reached');
       setShowUpgradeModal(true);
@@ -672,6 +675,17 @@ const PRPipeline = () => {
 
     if (stayOpen) {
       fetchPitchLimits();
+      const item = items.find(i =>
+        String(i.brand_id) === String(brand?.brand_id) ||
+        String(i.id) === String(brand?.id) ||
+        String(i.brand_id) === String(brand?.id)
+      );
+      // Pack send used to skip this and never started the 7-day follow-up.
+      // Same confirm step as Open PR Form: mailto/form opens, then we ask.
+      if (item && (method === 'email' || method === 'form' || method === 'followup')) {
+        setShowPitchModal(false);
+        setTimeout(() => openConfirmation(item, method), 1500);
+      }
       return;
     }
 
@@ -790,15 +804,17 @@ const PRPipeline = () => {
             $waiting={isWaiting && !isOverdue}
             $overdue={isWaiting && isOverdue}
             $won={isWon}
-            $saved={isSaved}
+            $ready={isPackReady(item)}
+            $saved={isSavedToUnlock(item)}
             $replied={isReplied}
             $followupSent={isFollowupStage && !isOverdue}
           >
             {isReplied && '💬 Replied!'}
             {isWaiting && isOverdue && `⚠ ${daysSinceLastContact}d`}
-            {isWaiting && !isOverdue && (isFollowupStage ? '🔄 Followed up' : '● In Progress')}
+            {isWaiting && !isOverdue && (isFollowupStage ? 'Followed up' : 'Sent')}
             {isWon && '🎁 Won'}
-            {isSaved && '📌 Saved'}
+            {isPackReady(item) && 'Pack ready'}
+            {isSavedToUnlock(item) && 'Saved'}
             {isReceived && '✅ Received'}
           </StatusBadge>
         </CardTop>
@@ -814,20 +830,6 @@ const PRPipeline = () => {
           </SuccessMessage>
         )}
 
-        {/* Pulse signal for waiting/pitched items */}
-        {isWaiting && !cardSuccessStates[item.id] && (() => {
-          const pulse = getPulseSignal(item.response_rate);
-          return pulse ? (
-            <BrandPulseRow>
-              <PulseDotSmall $color={pulse.color} />
-              <PulseText $color={pulse.textColor}>
-                {pulse.label}
-                {item.response_rate ? ` · ${item.response_rate}% reply rate` : ''}
-              </PulseText>
-            </BrandPulseRow>
-          ) : null;
-        })()}
-
         {/* Countdown bar for overdue items */}
         {isWaiting && isOverdue && !cardSuccessStates[item.id] && (() => {
           const countdown = getCountdownLabel(item.pitched_at);
@@ -839,90 +841,44 @@ const PRPipeline = () => {
           );
         })()}
 
-        {/* Waiting state info for non-overdue - Progress Timeline */}
-        {isWaiting && !isOverdue && !cardSuccessStates[item.id] && (() => {
-          const daysWaiting = daysSinceLastContact;
-          const avgResponseDays = Math.max(4, Math.round((100 - (item.response_rate || 30)) / 15));
-          const progressPercent = Math.min(95, (daysWaiting / avgResponseDays) * 100);
-          const daysRemaining = Math.max(0, 7 - daysWaiting);
-
-          // Format opened timestamp if available
-          const openedTime = item.email_opened_at
-            ? new Date(item.email_opened_at).toLocaleString('en-US', {
-                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-              })
-            : null;
-
-          return (
-            <WaitingProgressBox>
-              <ProgressTimeline>
-                <TimelineStep $done>
-                  <TimelineCheck>✓</TimelineCheck>
-                  <TimelineLabel>Sent</TimelineLabel>
-                </TimelineStep>
-                <TimelineLine $done />
-                <TimelineStep $done $opened={item.email_opened}>
-                  <TimelineCheck $opened={item.email_opened}>
-                    {item.email_opened ? '👁' : '✓'}
-                  </TimelineCheck>
-                  <TimelineLabel $opened={item.email_opened}>
-                    {item.email_opened ? 'Opened' : 'Delivered'}
-                  </TimelineLabel>
-                </TimelineStep>
-                <TimelineLine $progress={progressPercent} />
-                <TimelineStep $active>
-                  <TimelineCircle />
-                  <TimelineLabel>Response</TimelineLabel>
-                </TimelineStep>
-              </ProgressTimeline>
-
-              {/* Show opened timestamp */}
-              {item.email_opened && openedTime && (
-                <OpenedBadge>
-                  👁 Brand viewed your pitch · {openedTime}
-                </OpenedBadge>
-              )}
-
-              <WaitingMeta>
-                <WaitingMetaLeft>
-                  {daysRemaining > 0
-                    ? `Follow-up ready in ${daysRemaining} days`
-                    : 'Follow-up ready now'}
-                </WaitingMetaLeft>
-                <WaitingMetaRight onClick={() => setReplyingItem(item)}>
-                  Got a reply? →
-                </WaitingMetaRight>
-              </WaitingMeta>
-            </WaitingProgressBox>
-          );
-        })()}
+        {isWaiting && !isOverdue && !cardSuccessStates[item.id] && (
+          <WaitingProgressBox>
+            {item.email_opened && (
+              <OpenedBadge>
+                Brand opened your pitch
+                {item.email_opened_at
+                  ? ` · ${new Date(item.email_opened_at).toLocaleString('en-US', {
+                      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+                    })}`
+                  : ''}
+              </OpenedBadge>
+            )}
+            <WaitingMeta>
+              <WaitingMetaLeft>
+                {Math.max(0, 7 - daysSinceLastContact) > 0
+                  ? `Follow-up ready in ${Math.max(0, 7 - daysSinceLastContact)} day${Math.max(0, 7 - daysSinceLastContact) === 1 ? '' : 's'}`
+                  : 'Follow-up ready now'}
+              </WaitingMetaLeft>
+            </WaitingMeta>
+          </WaitingProgressBox>
+        )}
 
         {/* Brand description for saved items */}
-        {isSaved && item.description && !cardSuccessStates[item.id] && (
+        {isSaved && !hasUnlockedPack(item) && item.description && !cardSuccessStates[item.id] && (
           <BrandDesc>{item.description}</BrandDesc>
         )}
 
-        {/* Info pills for saved items */}
-        {isSaved && !cardSuccessStates[item.id] && (
-          <InfoRow>
-            {item.response_rate && (
-              <InfoPill $green={item.response_rate >= 40}>
-                {item.response_rate >= 50 ? '🔥 ' : ''}{item.response_rate}% response rate
-              </InfoPill>
-            )}
-            {item.has_application_form && (
-              <InfoPill>📋 Has PR form</InfoPill>
-            )}
-          </InfoRow>
-        )}
-
-        {/* Social proof line for saved items */}
-        {isSaved && !cardSuccessStates[item.id] && (
+        {isPackReady(item) && !cardSuccessStates[item.id] && (
           <SocialProofLine>
             <GreenDotSm />
-            {item.recent_creator_replies && item.recent_creator_replies > 0
-              ? `${item.recent_creator_replies} ${item.category || 'creator'}${item.recent_creator_replies > 1 ? 's' : ''} got a reply this month`
-              : `Active this week · ${item.response_rate || 20}% reply rate`}
+            Email or form plus a pitch, ready to send
+          </SocialProofLine>
+        )}
+
+        {isSavedToUnlock(item) && !cardSuccessStates[item.id] && (
+          <SocialProofLine>
+            <MutedDot />
+            Unlock to get the brand email and a pitch
           </SocialProofLine>
         )}
 
@@ -935,73 +891,66 @@ const PRPipeline = () => {
         )}
 
         {/* Won card value display */}
-        {isWon && (
-          <WinValue onClick={() => {
-            if (!isPro) {
-              setUpgradeReason('pr_value');
-              setShowUpgradeModal(true);
-            }
-          }}>
-            🎁 {isPro ? `~$${item.package_value || '??'}` : '~$?? '}
-            {!isPro && <LockIcon>🔒</LockIcon>}
+        {isWon && isPro && (
+          <WinValue>
+            🎁 {`~$${item.package_value || '??'}`}
           </WinValue>
         )}
 
         {/* Primary action button */}
-        {isSaved && (
-          <>
-            {item.has_pr_package ? (
+        {isPackReady(item) && (
+          <PrimaryBtn $contact onClick={() => handlePitch(item)}>
+            Open pack
+          </PrimaryBtn>
+        )}
+
+        {isSavedToUnlock(item) && (() => {
+          const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
+          if (atLimit) {
+            return (
               <PrimaryBtn
-                $contact
-                onClick={() => handlePitch(item)}
-              >
-                View Brand PR (unlocked)
-              </PrimaryBtn>
-            ) : (
-              <PrimaryBtn
-                $contact
-                onClick={() => handlePitch(item)}
-                disabled={!isPro && pitchLimits.used >= pitchLimits.limit}
-                style={{
-                  background: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#f3f4f6' : undefined,
-                  color: (!isPro && pitchLimits.used >= pitchLimits.limit) ? '#9ca3af' : undefined,
-                  cursor: (!isPro && pitchLimits.used >= pitchLimits.limit) ? 'not-allowed' : undefined
+                $upgrade
+                onClick={() => {
+                  setUpgradeReason('limit_reached');
+                  setShowUpgradeModal(true);
                 }}
               >
-                ✉️ Send Pitch to {item.brand_name}
+                Unlock more packs
               </PrimaryBtn>
-            )}
-          </>
-        )}
+            );
+          }
+          return (
+            <PrimaryBtn $contact onClick={() => handlePitch(item)}>
+              Unlock pack
+            </PrimaryBtn>
+          );
+        })()}
 
         {isWaiting && isOverdue && (
           <PrimaryBtn $followup onClick={() => handleFollowup(item)}>
-            🔄 Send Follow-up
+            Send follow-up
           </PrimaryBtn>
         )}
 
         {isWaiting && !isOverdue && (
           <>
             <WaitingActionsRow>
-              <SimilarBrandsBtn onClick={() => navigate(`/creator/dashboard/pr-brands?category=${encodeURIComponent(item.category || '')}`)}>
-                🔍 Similar brands in {item.category || 'this niche'}
+              <SimilarBrandsBtn onClick={() => navigate(`/creator/dashboard/for-you`)}>
+                Unlock another brand
               </SimilarBrandsBtn>
-              {bumpedItems[item.id] ? (
-                <BumpedBadge>
-                  ✓ Bump requested
-                </BumpedBadge>
-              ) : (
-                <BumpBtn onClick={() => {
-                    if (!isPro) {
-                      setUpgradeReason('bump_profile');
-                      setShowUpgradeModal(true);
-                    } else {
-                      setBumpingItem(item);
-                      setShowBumpModal(true);
-                    }
+              {isPro && (
+                bumpedItems[item.id] ? (
+                  <BumpedBadge>
+                    ✓ Bump requested
+                  </BumpedBadge>
+                ) : (
+                  <BumpBtn onClick={() => {
+                    setBumpingItem(item);
+                    setShowBumpModal(true);
                   }}>
-                  ⚡ Bump profile {!isPro && <BumpProTag>PRO</BumpProTag>}
-                </BumpBtn>
+                    ⚡ Bump profile
+                  </BumpBtn>
+                )
               )}
             </WaitingActionsRow>
           </>
@@ -1024,10 +973,11 @@ const PRPipeline = () => {
           {isSaved && item.application_form_url && (
             (() => {
               const atLimit = !isPro && pitchLimits.used >= pitchLimits.limit;
-              // Don't expose URL in DOM when user is at limit
-              if (atLimit) {
+              const formLocked = atLimit && !hasUnlockedPack(item);
+              if (formLocked) {
                 return (
                   <SecondaryBtn
+                    $locked
                     onClick={() => {
                       setUpgradeReason('limit_reached');
                       setShowUpgradeModal(true);
@@ -1050,10 +1000,9 @@ const PRPipeline = () => {
               );
             })()
           )}
-          {/* Only show "They Replied" in secondary row when overdue (primary shows Follow-up) */}
           {isWaiting && isOverdue && (
-            <SecondaryBtn onClick={() => setReplyingItem(item)}>
-              💬 They Replied
+            <SecondaryBtn onClick={() => handlePitch(item)}>
+              Open pack
             </SecondaryBtn>
           )}
           {isReplied && (
@@ -1101,8 +1050,44 @@ const PRPipeline = () => {
     ? getConfirmationCopy(confirmingItem._confirmMethod)
     : null;
 
-  // Calculate ready-to-pitch brands count
-  const readyToPitchCount = items.filter(i => i.pipeline_stage === 'saved' && !i.pitched_at && !i.send_confirmed).length;
+  const packCount = stageCounts.packs;
+  const followupCount = stageCounts.followup;
+  const savedUnlockCount = stageCounts.saved;
+  const atCap = !isPro && pitchLimits.used >= (pitchLimits.limit || 3);
+  const nextFollowupDays = (() => {
+    const waiting = items.filter(i =>
+      ['waiting', 'followup', 'pitched'].includes(i.pipeline_stage) &&
+      isContactedItem(i) &&
+      !isFollowupDueItem(i)
+    );
+    if (!waiting.length) return null;
+    return Math.min(...waiting.map(i =>
+      Math.max(0, 7 - (i.days_since_pitched || getDaysSincePitched(i.pitched_at)))
+    ));
+  })();
+  const outreachStat = followupCount > 0
+    ? { value: followupCount, label: 'Follow-ups', filter: 'followup' }
+    : packCount > 0
+      ? { value: packCount, label: 'Packs ready', filter: 'packs' }
+      : nextFollowupDays != null
+        ? { value: `${nextFollowupDays}d`, label: 'Next follow-up', filter: 'sent' }
+        : null;
+
+  const inboxSub = (() => {
+    if (followupCount > 0) {
+      return `${followupCount} follow-up${followupCount === 1 ? '' : 's'} ready. Send the second note.`;
+    }
+    if (packCount > 0) {
+      return `${packCount} pack${packCount === 1 ? '' : 's'} ready. Open the email and send.`;
+    }
+    if (savedUnlockCount > 0 && !atCap) {
+      return `${savedUnlockCount} saved brand${savedUnlockCount === 1 ? '' : 's'}. Unlock a pack to get the email and a pitch.`;
+    }
+    if (atCap) {
+      return 'Free packs used this month. Pro keeps you sending.';
+    }
+    return 'Unlock a brand on For You. Packs you open land here.';
+  })();
 
   // Calculate next reset date
   const getNextResetDate = () => {
@@ -1115,77 +1100,33 @@ const PRPipeline = () => {
     <Container>
       {/* Journey Header */}
       <JourneyHeader>
-        <JourneyEyebrow>Inbox · PR pipeline</JourneyEyebrow>
-        <JourneyGreeting>My PR Pipeline</JourneyGreeting>
-        <JourneySub>
-          {stageCounts.waiting > 0
-            ? `${stageCounts.waiting} pitch${stageCounts.waiting === 1 ? '' : 'es'} out · reply expected in ~5 days`
-            : readyToPitchCount > 0
-              ? `${readyToPitchCount} brand${readyToPitchCount === 1 ? '' : 's'} ready. Email pitches + form applies you complete yourself.`
-              : 'Unlock Brand PR from For You. Email pitches and form applies land here.'}
-        </JourneySub>
-        {/* Only show stats after first pitch - zeros are demoralizing */}
-        {(stats.total_contacted > 0) && (
-          <JourneyStats>
-            <JStat>
+        <JourneyEyebrow>Inbox</JourneyEyebrow>
+        <JourneyGreeting>Your packs</JourneyGreeting>
+        <JourneySub>{inboxSub}</JourneySub>
+        {stats.total_contacted > 0 && (
+          <JourneyStats $cols={outreachStat ? 2 : 1}>
+            <JStat $clickable onClick={() => setActiveFilter('sent')}>
               <JStatVal $rose>{stats.total_contacted}</JStatVal>
-              <JStatLabel>Contacted</JStatLabel>
+              <JStatLabel>Sent</JStatLabel>
             </JStat>
-            <JStat>
-              <JStatVal $green>{stats.total_responded || 0}</JStatVal>
-              <JStatLabel>Responded</JStatLabel>
-            </JStat>
-            <JStat
-              $clickable={!isPro}
-              onClick={() => {
-                if (!isPro) {
-                  setUpgradeReason('pr_value');
-                  setShowUpgradeModal(true);
-                }
-              }}
-            >
-              {isPro ? (
-                <JStatVal $purple>${stats.pr_value_earned || 0}</JStatVal>
-              ) : (
-                <LockedValue>
-                  <LockedIcon>📊</LockedIcon>
-                  <UnlockLabel>Unlock</UnlockLabel>
-                </LockedValue>
-              )}
-              <JStatLabel>PR Value</JStatLabel>
-            </JStat>
+            {outreachStat && (
+              <JStat $clickable onClick={() => setActiveFilter(outreachStat.filter)}>
+                <JStatVal>{outreachStat.value}</JStatVal>
+                <JStatLabel>{outreachStat.label}</JStatLabel>
+              </JStat>
+            )}
           </JourneyStats>
         )}
       </JourneyHeader>
 
-      {showManagerBand && (
-        <ManagerInviteBand>
-          <ManagerInviteIcon aria-hidden>✦</ManagerInviteIcon>
-          <ManagerInviteCopy>
-            Waiting on replies? Boost your reply chance with AI Manager so brands are more likely to respond.
-          </ManagerInviteCopy>
-          <ManagerInviteCta
-            type="button"
-            onClick={() => navigate('/creator/dashboard/pr-ready')}
-          >
-            Improve reply chance
-          </ManagerInviteCta>
-          <ManagerInviteClose
-            type="button"
-            aria-label="Dismiss"
-            onClick={() => {
-              sessionStorage.setItem('nc_pipeline_manager_band_dismissed', '1');
-              setShowManagerBand(false);
-            }}
-          >
-            ×
-          </ManagerInviteClose>
-        </ManagerInviteBand>
-      )}
-
-      {/* Quota Bar - always visible for free users */}
       {!isPro && (
-        <QuotaBar>
+        <QuotaBar
+          onClick={atCap ? () => {
+            setUpgradeReason('limit_reached');
+            setShowUpgradeModal(true);
+          } : undefined}
+          style={atCap ? { cursor: 'pointer' } : undefined}
+        >
           <QuotaIcon>📨</QuotaIcon>
           <QuotaText>
             <QuotaTitle>
@@ -1203,35 +1144,17 @@ const PRPipeline = () => {
         </QuotaBar>
       )}
 
-      {/* Pipeline Health Card - State-based messaging */}
-      {stats.total_contacted > 0 && (() => {
-        const pipelineStatus = getPipelineMessage(items);
-        const hasReplies = items.filter(i => i.pipeline_stage === 'replied').length > 0;
-        const hasWins = items.filter(i => ['won', 'received', 'success'].includes(i.pipeline_stage)).length > 0;
-        const statusColor = hasWins ? '#059669' : hasReplies ? '#059669' : '#6366F1';
-        return (
-          <HealthCard>
-            <HealthInfo style={{ marginLeft: 0 }}>
-              <HealthLabel>Pipeline Status</HealthLabel>
-              <HealthTitle style={{ color: statusColor }}>{pipelineStatus.title}</HealthTitle>
-              <HealthTip>{pipelineStatus.message}</HealthTip>
-            </HealthInfo>
-          </HealthCard>
-        );
-      })()}
-
-      {/* Best Move Card */}
+      {/* Best Move: follow-up due */}
       {(() => {
         const bestMove = getBestMove(items);
-        if (!bestMove || activeFilter !== 'all') return null;
+        if (!bestMove || (activeFilter !== 'all' && activeFilter !== 'followup')) return null;
         const countdown = getCountdownLabel(bestMove.pitched_at);
-        const pulse = getPulseSignal(bestMove.response_rate);
         const days = bestMove.days_since_pitched || getDaysSincePitched(bestMove.pitched_at);
         const progressPercent = Math.min(100, (days / 14) * 100);
 
         return (
           <BestMoveCard>
-            <BestMoveLabel>🎯 Best move right now</BestMoveLabel>
+            <BestMoveLabel>Follow up</BestMoveLabel>
             <BestMoveBrand>
               <BrandLogo style={{ width: 40, height: 40, borderRadius: 10 }}>
                 <LogoImg
@@ -1253,19 +1176,9 @@ const PRPipeline = () => {
               <StatusBadge $overdue>⚠ {days}d</StatusBadge>
             </BestMoveBrand>
 
-            {pulse && (
-              <BrandPulseRow>
-                <PulseDotSmall $color={pulse.color} />
-                <PulseText $color={pulse.textColor}>
-                  {pulse.label}
-                  {bestMove.response_rate ? ` · ${bestMove.response_rate}% reply rate` : ''}
-                </PulseText>
-              </BrandPulseRow>
-            )}
-
             <CountdownBar $urgent={countdown.urgent}>
-              <CountdownLeft>⏳ {countdown.text}</CountdownLeft>
-              <CountdownSub>Reply chance drops 60% after day 14</CountdownSub>
+              <CountdownLeft>{countdown.text}</CountdownLeft>
+              <CountdownSub>A follow-up is the next professional move.</CountdownSub>
             </CountdownBar>
 
             <ProgressTrack>
@@ -1273,11 +1186,8 @@ const PRPipeline = () => {
             </ProgressTrack>
 
             <PrimaryBtn $followup onClick={() => handleFollowup(bestMove)}>
-              ✉ Send Follow-up (Draft Ready)
+              Send follow-up
             </PrimaryBtn>
-            <SecondaryBtnGreen onClick={() => setReplyingItem(bestMove)}>
-              ✓ They Replied
-            </SecondaryBtnGreen>
           </BestMoveCard>
         );
       })()}
@@ -1292,8 +1202,9 @@ const PRPipeline = () => {
           >
             {filter.label}
             {filter.key === 'all' ? ` (${items.length})` : ''}
-            {filter.key === 'waiting' && stageCounts.waiting > 0 && ` (${stageCounts.waiting})`}
-            {filter.key === 'replied' && stageCounts.replied > 0 && ` (${stageCounts.replied})`}
+            {filter.key === 'packs' && (stageCounts.packs + stageCounts.saved) > 0 && ` (${stageCounts.packs + stageCounts.saved})`}
+            {filter.key === 'followup' && stageCounts.followup > 0 && ` (${stageCounts.followup})`}
+            {filter.key === 'sent' && stageCounts.waiting > 0 && ` (${stageCounts.waiting})`}
           </FilterTab>
         ))}
       </FilterTabs>
@@ -1304,20 +1215,26 @@ const PRPipeline = () => {
           <LoadingSpinner text="Loading your pipeline..." minHeight="320px" />
         ) : filteredItems.length === 0 ? (
           <EmptyState>
-            <EmptyEmoji>📋</EmptyEmoji>
-            <EmptyTitle>No brands here yet</EmptyTitle>
+            <EmptyEmoji>📬</EmptyEmoji>
+            <EmptyTitle>
+              {activeFilter === 'followup' ? 'No follow-ups yet' : 'No packs here yet'}
+            </EmptyTitle>
             <EmptyText>
-              {activeFilter === 'saved' && 'Save brands from Discover to contact them later'}
-              {activeFilter === 'waiting' && 'Brands you\'ve contacted will appear here'}
-              {activeFilter === 'won' && 'Brands that confirm a package will show here'}
-              {activeFilter === 'action' && 'No action needed right now - great job!'}
-              {activeFilter === 'all' && 'Save some brands from Discover to get started'}
+              {activeFilter === 'packs' && 'Unlock a brand on For You. The email and pitch will show up here.'}
+              {activeFilter === 'followup' && 'Follow-ups show here 7 days after you send. Keep using your packs.'}
+              {activeFilter === 'sent' && 'Pitches you send will land here so you can follow up.'}
+              {activeFilter === 'all' && 'Unlock a brand on For You. Packs you open land here.'}
             </EmptyText>
+            {(activeFilter === 'all' || activeFilter === 'packs') && (
+              <PrimaryBtn $contact onClick={() => navigate('/creator/dashboard/for-you')} style={{ marginTop: 12 }}>
+                Go to For You
+              </PrimaryBtn>
+            )}
           </EmptyState>
         ) : activeFilter === 'all' && groupedItems ? (
           // Sectioned view for 'all' filter
           <AnimatePresence>
-            {['ready', 'action', 'waiting', 'completed'].map((sectionKey, sectionIdx) => {
+            {['followup', 'packs', 'saved', 'waiting', 'completed'].map((sectionKey, sectionIdx) => {
               const sectionItems = groupedItems[sectionKey];
               if (!sectionItems || sectionItems.length === 0) return null;
 
@@ -1366,12 +1283,8 @@ const PRPipeline = () => {
           }}>
             <LockIconWrap>🔒</LockIconWrap>
             <LockedTextWrap>
-              <LockedTitle>
-                {stageCounts.saved > 3
-                  ? `${stageCounts.saved - 3} more brands match your saved categories`
-                  : 'Unlock unlimited brand emails and pitches'}
-              </LockedTitle>
-              <LockedSub>Keep pitching. Unlimited emails and drafts so you can land that first yes.</LockedSub>
+              <LockedTitle>Keep sending this month</LockedTitle>
+              <LockedSub>Unlimited emails and pitches so you can land that first yes.</LockedSub>
             </LockedTextWrap>
             <LockedCta>$19/mo</LockedCta>
           </LockedCard>
@@ -1896,7 +1809,7 @@ const JourneySub = styled.div`
 
 const JourneyStats = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(${props => props.$cols || 2}, 1fr);
   gap: 10px;
 `;
 
@@ -2347,6 +2260,12 @@ const StatusBadge = styled.div`
     border: 1px solid #E8E8E8;
   `}
 
+  ${props => props.$ready && `
+    background: #ECFDF5;
+    color: #059669;
+    border: 1px solid #A7F3D0;
+  `}
+
   ${props => props.$replied && `
     background: #ECFDF5;
     color: #059669;
@@ -2439,7 +2358,17 @@ const PrimaryBtn = styled.button`
   ${props => props.$contact && `
     background: #0F0F0F;
     color: #fff;
-    &:hover:not(:disabled) { background: #E11D48; }
+    &:hover:not(:disabled) { background: #1F1F1F; }
+  `}
+
+  ${props => props.$upgrade && `
+    background: linear-gradient(135deg, #7C3AED, #E11D48);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.22);
+    &:hover:not(:disabled) {
+      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
+      transform: translateY(-1px);
+    }
   `}
 
   ${props => props.$followup && `
@@ -2485,7 +2414,7 @@ const SecondaryBtn = styled.button`
   padding: 9px;
   border-radius: 9px;
   background: #F4F4F4;
-  border: none;
+  border: 1px solid transparent;
   font-size: 12.5px;
   font-weight: 600;
   color: #4B4B4B;
@@ -2499,6 +2428,16 @@ const SecondaryBtn = styled.button`
     background: #E8E8E8;
     color: #0F0F0F;
   }
+
+  ${props => props.$locked && `
+    background: #FAFAFA;
+    color: #9CA3AF;
+    border: 1px dashed #E5E7EB;
+    &:hover {
+      background: #F4F4F4;
+      color: #6B7280;
+    }
+  `}
 `;
 
 const RemoveBtn = styled.button`
@@ -3164,26 +3103,6 @@ const ProgressFill = styled.div`
   transition: width 0.3s;
 `;
 
-const SecondaryBtnGreen = styled.button`
-  width: 100%;
-  padding: 11px;
-  border-radius: 10px;
-  border: 1.5px solid #D1FAE5;
-  background: #F0FDF4;
-  font-size: 13px;
-  font-weight: 600;
-  color: #059669;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s;
-  margin-top: 8px;
-
-  &:hover {
-    background: #D1FAE5;
-    border-color: #059669;
-  }
-`;
-
 const WaitingDetail = styled.div`
   background: #EFF6FF;
   border-radius: 10px;
@@ -3290,18 +3209,6 @@ const WaitingMetaLeft = styled.span`
   font-size: 12px;
   color: #475569;
   font-weight: 500;
-`;
-
-const WaitingMetaRight = styled.span`
-  font-size: 12px;
-  color: #6366F1;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    color: #4F46E5;
-    text-decoration: underline;
-  }
 `;
 
 const PitchMoreNudge = styled.div`
@@ -3903,6 +3810,10 @@ const GreenDotSm = styled.div`
   border-radius: 50%;
   background: #059669;
   flex-shrink: 0;
+`;
+
+const MutedDot = styled(GreenDotSm)`
+  background: #D1D5DB;
 `;
 
 const CtaCredit = styled.div`
