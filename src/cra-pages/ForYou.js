@@ -35,7 +35,6 @@ const readCachedManagerBar = () => {
 
 import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
-import LoadingSpinner from '../components/LoadingSpinner';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 
 const getApiBase = () => {
@@ -46,13 +45,36 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 
 const FREE_PITCH_LIMIT = 3;
+const FORYOU_CACHE_KEY = 'nc_foryou_feed_v1';
+const FORYOU_CACHE_MS = 5 * 60 * 1000;
+
+const readCachedForYou = () => {
+  try {
+    const raw = sessionStorage.getItem(FORYOU_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.data?.matched) return null;
+    if (Date.now() - (parsed.ts || 0) > FORYOU_CACHE_MS) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedForYou = (payload) => {
+  try {
+    sessionStorage.setItem(FORYOU_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: payload }));
+  } catch {
+    /* ignore quota */
+  }
+};
 
 const ForYou = () => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => readCachedForYou());
+  const [loading, setLoading] = useState(() => !readCachedForYou());
   const [pitchingBrand, setPitchingBrand] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState('');
@@ -157,15 +179,18 @@ const ForYou = () => {
 
   useEffect(() => {
     fetchData();
-    fetchSubscriptionStatus();
-    fetchSavedBrands();
-    fetchUnlockedBrands();
-    fetchCreatorProfile();
-    fetchKitViews();
-    fetchOpportunityCount();
-    fetchRecentReplies();
-    fetchSocialProofBrands();
-    fetchPoolData();
+    const deferred = window.setTimeout(() => {
+      fetchSubscriptionStatus();
+      fetchSavedBrands();
+      fetchUnlockedBrands();
+      fetchCreatorProfile();
+      fetchKitViews();
+      fetchOpportunityCount();
+      fetchRecentReplies();
+      fetchSocialProofBrands();
+      fetchPoolData();
+    }, 200);
+    return () => window.clearTimeout(deferred);
   }, []);
 
   // Fetch manager bar in parallel with For You — don't wait for matches to load
@@ -455,7 +480,8 @@ const ForYou = () => {
   };
 
   const fetchData = async () => {
-    setLoading(true);
+    const cached = readCachedForYou();
+    if (!cached) setLoading(true);
     try {
       const response = await axios.get(`${API_BASE}/api/pr-crm/for-you`, {
         withCredentials: true
@@ -481,6 +507,7 @@ const ForYou = () => {
           // Keep backend mentor order — do not re-sort by SQL/price heuristics
         }
         setData(payload);
+        writeCachedForYou(payload);
         if (response.data.profile) {
           // Normalize niches to lowercase for labels / hot section
           const rawNiches = response.data.profile.niches || [];
@@ -735,16 +762,7 @@ const ForYou = () => {
     </ManagerInviteBand>
   ) : null;
 
-  if (loading) {
-    return (
-      <PageWrap>
-        <PageInner>
-          {managerBandEl}
-          <LoadingSpinner text="Loading your recommendations..." minHeight="400px" />
-        </PageInner>
-      </PageWrap>
-    );
-  }
+  const showFeedSkeleton = loading && !(data?.matched?.length);
 
   return (
     <PageWrap>
@@ -761,9 +779,11 @@ const ForYou = () => {
               Brands matched to <PageTitleEm>your</PageTitleEm> content
             </PageTitle>
             <PageSub>
-              {data?.matched?.length
-                ? `${data.matched.length} brands that fit your niche. Unlock the email or form, then pitch.`
-                : 'Unlock the PR email or form for brands that fit your niche, then pitch.'}
+              {showFeedSkeleton
+                ? 'Finding brands that fit your niche...'
+                : data?.matched?.length
+                  ? `${data.matched.length} brands that fit your niche. Unlock the email or form, then pitch.`
+                  : 'Unlock the PR email or form for brands that fit your niche, then pitch.'}
             </PageSub>
             <DiscoverLink
               type="button"
@@ -1048,7 +1068,9 @@ const ForYou = () => {
 
         <Section>
           <CardGrid $cols={2}>
-            {(data?.matched || []).map(brand => (
+            {showFeedSkeleton
+              ? [0, 1, 2, 3, 4, 5].map((i) => <CardSkeleton key={i} />)
+              : (data?.matched || []).map(brand => (
               <BrandCard
                 key={brand.id}
                 brand={brand}
@@ -1375,6 +1397,25 @@ const brandIsAffiliateForm = (brand) => {
   const url = String(brand?.application_form_url || brand?.application_url || brand?.pr_form_url || '').toLowerCase();
   return /superfiliate|affiliate|ambassador|portal\/sign/.test(url);
 };
+
+const CardSkeleton = () => (
+  <Card aria-hidden>
+    <CardNameRow>
+      <SkeletonBlock $w="40px" $h="40px" $r="10px" />
+      <div style={{ flex: 1 }}>
+        <SkeletonBlock $w="58%" $h="14px" $mb="8px" />
+        <SkeletonBlock $w="34%" $h="11px" />
+      </div>
+    </CardNameRow>
+    <SkeletonBlock $w="100%" $h="12px" $mb="6px" />
+    <SkeletonBlock $w="78%" $h="12px" $mb="10px" />
+    <CardTags>
+      <SkeletonBlock $w="88px" $h="22px" $r="6px" />
+      <SkeletonBlock $w="72px" $h="22px" $r="6px" />
+    </CardTags>
+    <SkeletonBlock $w="100%" $h="40px" $r="10px" $mt="8px" />
+  </Card>
+);
 
 const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore }) => {
   const microFriendly = isMicroFriendlyBrand(brand);
@@ -2153,6 +2194,23 @@ const ProLabel = styled.span`
   background: ${tokens.proGradient};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+`;
+
+const skeletonPulse = keyframes`
+  0% { opacity: 0.55; }
+  50% { opacity: 1; }
+  100% { opacity: 0.55; }
+`;
+
+const SkeletonBlock = styled.div`
+  display: block;
+  width: ${p => p.$w || '100%'};
+  height: ${p => p.$h || '12px'};
+  margin-bottom: ${p => p.$mb || '0'};
+  margin-top: ${p => p.$mt || '0'};
+  border-radius: ${p => p.$r || '6px'};
+  background: #ececec;
+  animation: ${skeletonPulse} 1.1s ease-in-out infinite;
 `;
 
 const CardGrid = styled.div`
