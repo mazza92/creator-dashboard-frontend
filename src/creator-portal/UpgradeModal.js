@@ -6,7 +6,7 @@ import api from '../config/api';
 import { message } from 'antd';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
-const UpgradeModal = ({ isOpen, onClose, currentCount = 3, limit = 3, feature, pitchLimits, resetAt }) => {
+const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt }) => {
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState('monthly'); // Default to monthly
 
@@ -35,46 +35,37 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 3, limit = 3, feature, p
 
   if (!isOpen) return null;
 
-  // Get usage stats
-  const used = pitchLimits?.used || currentCount || 3;
-  const total = pitchLimits?.limit || limit || 3;
+  // Never default used to the limit — `|| 3` showed 3/3 after one unlock.
+  const rawUsed = pitchLimits?.used ?? currentCount;
+  const used = Number.isFinite(Number(rawUsed)) ? Number(rawUsed) : 0;
+  const total = Number(pitchLimits?.limit || limit || 3) || 3;
+  const atCap = used >= total;
 
-  // Feature list with emoji icons
   const features = [
     {
-      emoji: '🎯',
-      bg: '#fef2f4',
-      text: <><strong>Your AI talent manager</strong> optimizes your profile and builds a custom strategy to attract brands</>,
-    },
-    {
-      emoji: '💵',
-      bg: '#dcfce7',
-      text: <><strong>Apply to paid UGC gigs</strong> from $150 (Evoto, Glossier, 20+ weekly)</>,
+      emoji: '📬',
+      bg: '#dbeafe',
+      text: <><strong>Unlimited brand emails and pitches</strong> this month. Keep sending to every brand that fits.</>,
     },
     {
       emoji: '🔍',
-      bg: '#dbeafe',
-      text: <><strong>Search 2,000+ brands</strong> with filters like "works with micro creators", verified emails and forms</>,
+      bg: '#fef2f4',
+      text: <><strong>Search 2,000+ brands</strong> for a contact or signup form, including micro-friendly filters</>,
     },
     {
       emoji: '⭐',
       bg: '#fef3c7',
-      text: <><strong>Brand matches for your niche</strong> with fit and reply scores</>,
+      text: <><strong>Matches for your niche</strong> with a ready-to-send pitch on every unlock</>,
     },
     {
       emoji: '🔁',
       bg: '#ede9fe',
-      text: <><strong>Auto follow-ups sent for you</strong> (67% reply by the second follow-up)</>,
+      text: <><strong>Follow-ups drafted for you</strong> so you can stay consistent without rewriting</>,
     },
     {
       emoji: '👀',
       bg: '#fce7f3',
-      text: <><strong>See which brands opened your kit</strong> so you know who to chase</>,
-    },
-    {
-      emoji: '📈',
-      bg: '#ccfbf1',
-      text: <><strong>Grow your followers</strong> with unlimited creator boosts in the Pool</>,
+      text: <><strong>See which brands opened your kit</strong></>,
     },
   ];
 
@@ -103,12 +94,21 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 3, limit = 3, feature, p
               <BoltIcon />
             </ModalIcon>
 
-            {/* Headline */}
             <Headline>
-              {used} brands checked.<br />Ready to <PinkSpan>get PR</PinkSpan> from 40 more?
+              {atCap ? (
+                <>
+                  {used} of {total} free packs used.<br />
+                  Keep sending. That's how <PinkSpan>first PR</PinkSpan> happens.
+                </>
+              ) : (
+                <>
+                  {used} of {total} free packs used.<br />
+                  Go Pro and pitch every brand that <PinkSpan>fits</PinkSpan>.
+                </>
+              )}
             </Headline>
             <Subtext>
-              Your AI manager finds brands, drafts pitches, and chases replies until you land PR.
+              Every extra brand you reach raises the odds of your first yes. You get the contact and a pitch that's ready to send. Pro is how you keep doing that all month, like a professional.
             </Subtext>
 
             {/* Progress Bar */}
@@ -129,12 +129,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 3, limit = 3, feature, p
                 <StatLabel>Brands</StatLabel>
               </StatChip>
               <StatChip>
-                <StatValue>$150-2K</StatValue>
-                <StatLabel>PR value</StatLabel>
+                <StatValue>Unlimited</StatValue>
+                <StatLabel>Packs / month</StatLabel>
               </StatChip>
               <StatChip>
-                <StatValue>55%</StatValue>
-                <StatLabel>Reply rate</StatLabel>
+                <StatValue>Ready</StatValue>
+                <StatLabel>Pitches</StatLabel>
               </StatChip>
             </StatsGrid>
 
@@ -189,7 +189,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 3, limit = 3, feature, p
             <ProofBox>
               <ProofIcon>✓</ProofIcon>
               <ProofText>
-                <strong>The toolkit top creators use to get paid.</strong> Real contacts, custom strategy, paid gigs, all working the moment you upgrade.
+                <strong>Treat outreach like a professional.</strong> Find the contact, send the pitch, follow up. We make that the easy part.
               </ProofText>
             </ProofBox>
           </ModalScroll>
@@ -204,8 +204,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 3, limit = 3, feature, p
               {loading
                 ? 'Processing...'
                 : billingInterval === 'yearly'
-                  ? 'Start getting PR · $152/year (save 33%)'
-                  : 'Start getting PR · $19/month'}
+                  ? 'Unlock unlimited packs · $152/year (save 33%)'
+                  : 'Unlock unlimited packs · $19/month'}
             </CtaButton>
 
             {/* Footer Trust Signals */}

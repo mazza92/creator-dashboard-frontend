@@ -2680,7 +2680,6 @@ const UnlockModalV2 = ({
   const [selectedTone, setSelectedTone] = useState('growing');
   const [utilitiesExpanded, setUtilitiesExpanded] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [managerBar, setManagerBar] = useState(null);
 
   // Editable pitch state (V2 single-pitch flow)
@@ -3198,9 +3197,9 @@ const UnlockModalV2 = ({
 
   // AI suggestions for personalization
   const boostSuggestions = [
-    `I spotted your ${packageData?.brand_name || 'brand'} feature in [magazine/outlet] — my audience loved it.`,
+    `I spotted your ${packageData?.brand_name || 'brand'} feature in [magazine/outlet]. My audience loved it.`,
     `My last collab with a similar brand drove 12K saves. Happy to share the case study.`,
-    `I'm planning a spring content drop — ${packageData?.brand_name || 'your products'} would be perfect for it.`,
+    `I'm planning a spring content drop. ${packageData?.brand_name || 'Your products'} would be perfect for it.`,
   ];
 
   // Add a suggestion to the pitch body
@@ -3285,7 +3284,7 @@ const UnlockModalV2 = ({
     || packageData?.coaching?.observation
     || packageData?.verdict?.headline
     || (brandCategory
-      ? `${brandCategory} creators — unlock PR contact and pitch with a short, personal note.`
+      ? `${brandCategory} creators. Unlock the contact and pitch with a short, personal note.`
       : 'Unlock the PR contact and pitch with a short, personal note.');
   const minFollowers = brand?.min_followers ?? packageData?.brand?.min_followers;
   const microOk = minFollowers == null || minFollowers === '' || Number(minFollowers) === 0 || Number(minFollowers) <= 10000;
@@ -3672,7 +3671,7 @@ const UnlockModalV2 = ({
                       /* FORM-ONLY BRANDS */
                       <OutreachContent>
                         <FormNote>
-                          <strong>You submit this form — we don't</strong>
+                          <strong>You submit this form. We don't.</strong>
                           Affiliate / UGC portals need your login. We open the link and prep answers from My Kit.
                         </FormNote>
                         <InfoBlock>
@@ -3726,7 +3725,7 @@ const UnlockModalV2 = ({
                           <VerifiedEmailLeft>
                             <VerifiedBadge>✓</VerifiedBadge>
                             <VerifiedEmailInfo>
-                              <VerifiedEmailLabel>Verified PR email</VerifiedEmailLabel>
+                              <VerifiedEmailLabel>Brand email</VerifiedEmailLabel>
                               <VerifiedEmailValue>{brandEmail}</VerifiedEmailValue>
                             </VerifiedEmailInfo>
                           </VerifiedEmailLeft>

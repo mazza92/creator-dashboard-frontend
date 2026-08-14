@@ -265,8 +265,12 @@ const AdminReports = () => {
   // Calculate funnel percentages
   const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
   const unlockedPct = calcPct(funnel.unlocked_brand, funnel.signed_up);
-  const pitchPct = calcPct(funnel.sent_pitch, funnel.unlocked_brand);
-  const multiPct = calcPct(funnel.pitched_multiple, funnel.sent_pitch);
+  const multiPct = calcPct(funnel.pitched_multiple, funnel.unlocked_brand);
+  const subscribedPro = funnel.subscribed_pro ?? mrr.total_paid ?? 0;
+  const proFromMultiPct = calcPct(subscribedPro, funnel.pitched_multiple);
+  const neverUnlocked = Math.max(0, (funnel.signed_up || 0) - (funnel.unlocked_brand || 0));
+  const unlockedOnceOnly = Math.max(0, (funnel.unlocked_brand || 0) - (funnel.pitched_multiple || 0));
+  const multiNoPro = Math.max(0, (funnel.pitched_multiple || 0) - subscribedPro);
 
   return (
     <>
@@ -709,22 +713,10 @@ const AdminReports = () => {
               <FCount>{funnel.unlocked_brand}</FCount>
             </FStep>
 
-            <FDrop $good={pitchPct >= 30}>↓ only {pitchPct}% sent a pitch — {pitchPct < 30 ? 'this is the problem' : 'decent'}</FDrop>
+            <FDrop $good={multiPct >= 50}>↓ {multiPct}% unlocked over 2 brands — {multiPct >= 50 ? 'sticky once started' : 'needs improvement'}</FDrop>
 
             <FStep>
-              <FLabel>Sent pitch</FLabel>
-              <FBarTrack>
-                <FBarFill style={{ width: `${calcPct(funnel.sent_pitch, funnel.signed_up)}%`, background: 'var(--violet)' }}>
-                  {funnel.sent_pitch}
-                </FBarFill>
-              </FBarTrack>
-              <FCount>{funnel.sent_pitch}</FCount>
-            </FStep>
-
-            <FDrop $good={multiPct >= 50}>↓ {multiPct}% pitched more than once — {multiPct >= 50 ? 'sticky once started' : 'needs improvement'}</FDrop>
-
-            <FStep>
-              <FLabel>Pitched 2+ brands</FLabel>
+              <FLabel>Over 2 brands unlocked</FLabel>
               <FBarTrack>
                 <FBarFill style={{ width: `${calcPct(funnel.pitched_multiple, funnel.signed_up)}%`, background: 'var(--rose)' }}>
                   {funnel.pitched_multiple}
@@ -733,23 +725,27 @@ const AdminReports = () => {
               <FCount>{funnel.pitched_multiple}</FCount>
             </FStep>
 
-            <FDrop $good={false}>↓ {funnel.got_package > 0 ? `${funnel.got_package} confirmed` : 'no data yet — pipeline tracking will fill this'}</FDrop>
+            <FDrop $good={proFromMultiPct >= 5}>↓ {proFromMultiPct}% of those subscribed Pro — {proFromMultiPct >= 5 ? 'converting' : 'this is the conversion problem'}</FDrop>
 
             <FStep>
-              <FLabel>Got a package</FLabel>
+              <FLabel>Subscribed Pro</FLabel>
               <FBarTrack>
-                <FBarFill style={{ width: `${Math.max(calcPct(funnel.got_package, funnel.signed_up), 1)}%`, background: 'var(--green)' }}>
-                  {funnel.got_package > 0 ? funnel.got_package : '??'}
+                <FBarFill style={{ width: `${Math.max(calcPct(subscribedPro, funnel.signed_up), 1)}%`, background: 'var(--green)' }}>
+                  {subscribedPro}
                 </FBarFill>
               </FBarTrack>
-              <FCount style={{ color: funnel.got_package > 0 ? 'inherit' : 'var(--text-3)' }}>
-                {funnel.got_package > 0 ? funnel.got_package : '??'}
-              </FCount>
+              <FCount>{subscribedPro}</FCount>
             </FStep>
           </FunnelSteps>
 
           <InsightBox>
-            <strong>The one thing to fix:</strong> {funnel.unlocked_brand - funnel.sent_pitch} people unlocked a brand but never pitched. That's your biggest growth lever. The "For You" tab + follow-up nudge emails target this gap directly — watch this number improve over the next 30 days.
+            <strong>The one thing to fix:</strong>{' '}
+            {neverUnlocked >= unlockedOnceOnly && neverUnlocked >= multiNoPro
+              ? `${neverUnlocked} signed up and never unlocked a brand.`
+              : unlockedOnceOnly >= multiNoPro
+                ? `${unlockedOnceOnly} unlocked once and never went over 2 brands.`
+                : `${multiNoPro} unlocked over 2 brands and did not subscribe Pro.`}
+            {' '}Funnel is signup → unlock → over 2 unlocks → Pro.
           </InsightBox>
         </FunnelCard>
 
@@ -763,7 +759,7 @@ const AdminReports = () => {
               <WcDelta $up>nudge them</WcDelta>
             </WcTop>
             <WcValue style={{ color: 'var(--amber)' }}>{at_limit_count}</WcValue>
-            <WcSub>Free users who maxed 3 pitches — prime upgrade moment</WcSub>
+            <WcSub>Free users who maxed 3 unlocks — prime upgrade moment</WcSub>
           </WeekCard>
 
           <WeekCard>
@@ -772,16 +768,16 @@ const AdminReports = () => {
               <WcDelta>watch them</WcDelta>
             </WcTop>
             <WcValue style={{ color: 'var(--black)' }}>{near_limit_count}</WcValue>
-            <WcSub>One more pitch and they hit the wall — will convert next</WcSub>
+            <WcSub>One more unlock and they hit the wall — will convert next</WcSub>
           </WeekCard>
 
           <WeekCard>
             <WcTop>
-              <WcLabel>Total pitches sent</WcLabel>
+              <WcLabel>Brand unlocks this month</WcLabel>
               <WcDelta $up>↑ vs last month</WcDelta>
             </WcTop>
             <WcValue>{this_month.pitches}</WcValue>
-            <WcSub>Lifetime · {this_month.unique_pitch_users} unique creators used AI contact</WcSub>
+            <WcSub>This month · {this_month.unique_pitch_users} unique creators unlocked a brand (all time)</WcSub>
           </WeekCard>
 
           <WeekCard>

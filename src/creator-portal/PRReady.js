@@ -2761,9 +2761,11 @@ export default function PRReady() {
                       ) : null}
                     </SuccessStory>
                   ) : null}
-                  <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                    Unlock Pro — {plan?.price || '$19/mo'}
-                  </Btn>
+                  {unlocksLeft === 0 && (
+                    <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
+                      Unlock Pro — {plan?.price || '$19/mo'}
+                    </Btn>
+                  )}
                 </ProHero>
               )}
             </Card>
@@ -3026,7 +3028,7 @@ export default function PRReady() {
                 Copy share link
               </Btn>
             ) : null}
-            {!isPro && (
+            {!isPro && unlocksLeft === 0 && (
               <>
                 <p
                   style={{
@@ -3071,6 +3073,9 @@ export default function PRReady() {
         isOpen={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
         feature={upgradeFeature}
+        currentCount={primaryMeter?.used ?? 0}
+        limit={primaryMeter?.limit || 3}
+        pitchLimits={primaryMeter}
       />
     </Wrap>
   );

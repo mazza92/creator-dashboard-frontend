@@ -269,7 +269,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
    */
   const generateGoldenTemplate = (brand, profile) => {
     // Extract creator data with smart defaults
-    const creatorName = profile?.username || profile?.name || '';
+    const creatorName = (profile?.username || profile?.social_handle || '').replace(/^@/, '') || profile?.name || '';
     const followers = formatFollowers(profile?.followers_count);
     const niche = getNiche(profile);
     const platform = getPrimaryPlatform(profile);
@@ -330,7 +330,7 @@ ${creatorName}`;
    * Shorter, friendlier, with a clear CTA
    */
   const generateFollowupTemplate = (brand, profile) => {
-    const creatorName = profile?.username || profile?.name || '';
+    const creatorName = (profile?.username || profile?.social_handle || '').replace(/^@/, '') || profile?.name || '';
     const followers = formatFollowers(profile?.followers_count);
     const niche = getNiche(profile);
     const platform = getPrimaryPlatform(profile);
@@ -768,7 +768,7 @@ ${creatorName}`;
                       <CelebrationBrandName>{brandName}</CelebrationBrandName>
                       <CelebrationDetails>
                         <CelebrationDetail>
-                          <span>✓</span> Verified PR email revealed
+                          <span>✓</span> Brand email revealed
                         </CelebrationDetail>
                         <CelebrationDetail>
                           <span>✓</span> Custom pitch generated
@@ -820,7 +820,7 @@ ${creatorName}`;
                 </LoadingStepItem>
               </LoadingSteps>
               <LoadingSubtext>
-                {loadingStep === 0 && 'Finding verified PR email or form…'}
+                {loadingStep === 0 && 'Finding brand email or form…'}
                 {loadingStep === 1 && 'Drafting a short pitch for micros…'}
                 {loadingStep === 2 && 'Packing email + form prep…'}
               </LoadingSubtext>
@@ -842,7 +842,7 @@ ${creatorName}`;
                   <MatchBoxBody>
                     {brand?.description
                       || (brand?.category
-                        ? `${brand.category} creators — unlock PR contact and pitch with a short note.`
+                        ? `${brand.category} creators. Unlock the contact and pitch with a short note.`
                         : 'Unlock the PR contact and pitch with a short, personal note.')}
                   </MatchBoxBody>
                 </MatchBox>
@@ -866,14 +866,14 @@ ${creatorName}`;
 
                 {(contactMethod === 'form' || (!brandEmail && applicationFormUrl)) && (
                   <FormSubmitNote style={{ margin: '0 0 12px' }}>
-                    <strong>You submit this form — we don’t</strong>
+                    <strong>You submit this form. We don't.</strong>
                     Affiliate / UGC portals need your login. We open the link and prep your pitch answers.
                   </FormSubmitNote>
                 )}
 
                 {brandEmail && contactMethod === 'email' && (
                   <InfoBlock>
-                    <InfoLabel>Verified PR email</InfoLabel>
+                    <InfoLabel>Brand email</InfoLabel>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
                       <div>
                         <InfoValue>{displayEmail || `${brandName} PR Team`}</InfoValue>
@@ -986,7 +986,7 @@ ${creatorName}`;
                   </>
                 ) : (
                   <NoContactNote>
-                    No PR email or form on file yet — try Discover search or DM them.
+                    No PR email or form on file yet. Try Discover search or DM them.
                   </NoContactNote>
                 )}
               </Actions>

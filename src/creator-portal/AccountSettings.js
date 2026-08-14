@@ -282,7 +282,7 @@ const AccountSettings = () => {
                   <FiCheck /> Unlimited PR Packages
                 </Feature>
                 <Feature>
-                  <FiCheck /> Verified PR contacts
+                  <FiCheck /> Brand emails and forms
                 </Feature>
                 <Feature>
                   <FiCheck /> Ready-to-send pitches in 3 tones

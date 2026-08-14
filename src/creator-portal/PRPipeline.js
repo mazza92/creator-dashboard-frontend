@@ -1122,7 +1122,7 @@ const PRPipeline = () => {
             ? `${stageCounts.waiting} pitch${stageCounts.waiting === 1 ? '' : 'es'} out · reply expected in ~5 days`
             : readyToPitchCount > 0
               ? `${readyToPitchCount} brand${readyToPitchCount === 1 ? '' : 's'} ready. Email pitches + form applies you complete yourself.`
-              : 'Unlock Brand PR from For You — email pitches and form applies land here.'}
+              : 'Unlock Brand PR from For You. Email pitches and form applies land here.'}
         </JourneySub>
         {/* Only show stats after first pitch - zeros are demoralizing */}
         {(stats.total_contacted > 0) && (
@@ -1191,7 +1191,7 @@ const PRPipeline = () => {
             <QuotaTitle>
               {pitchLimits.limit - pitchLimits.used > 0
                 ? `${pitchLimits.limit - pitchLimits.used} free Brand PR unlock${pitchLimits.limit - pitchLimits.used === 1 ? '' : 's'} left this month`
-                : 'Monthly Brand PR unlocks used — upgrade to keep going'}
+                : 'Monthly Brand PR unlocks used. Upgrade to keep going'}
             </QuotaTitle>
             <QuotaSub>{pitchLimits.used} used · resets {getNextResetDate()}</QuotaSub>
           </QuotaText>
@@ -1358,8 +1358,8 @@ const PRPipeline = () => {
           </AnimatePresence>
         )}
 
-        {/* Locked Upgrade Card - desire-driven */}
-        {!isPro && filteredItems.length > 0 && (
+        {/* Locked Upgrade Card — only when this month's packs are used */}
+        {!isPro && filteredItems.length > 0 && pitchLimits?.used >= (pitchLimits?.limit || 3) && (
           <LockedCard onClick={() => {
             setUpgradeReason('saved');
             setShowUpgradeModal(true);
@@ -1369,9 +1369,9 @@ const PRPipeline = () => {
               <LockedTitle>
                 {stageCounts.saved > 3
                   ? `${stageCounts.saved - 3} more brands match your saved categories`
-                  : 'Unlock unlimited Brand PR every month'}
+                  : 'Unlock unlimited brand emails and pitches'}
               </LockedTitle>
-              <LockedSub>Pro gives you unlimited unlocks and applications — pitch every brand you want.</LockedSub>
+              <LockedSub>Keep pitching. Unlimited emails and drafts so you can land that first yes.</LockedSub>
             </LockedTextWrap>
             <LockedCta>$19/mo</LockedCta>
           </LockedCard>
@@ -1415,6 +1415,7 @@ const PRPipeline = () => {
         onClose={() => setShowUpgradeModal(false)}
         currentCount={pitchLimits.used}
         limit={pitchLimits.limit}
+        pitchLimits={pitchLimits}
         feature={upgradeReason}
       />
 

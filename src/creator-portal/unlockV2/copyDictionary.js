@@ -19,7 +19,7 @@ export const LOADING = {
   ],
   fallbackText: 'Almost ready…',
   cyclingTexts: [
-    'Finding verified PR contact…',
+    'Finding brand email or form…',
     'Checking if they use a signup form…',
     'Drafting a short pitch for micros…',
     'Matching your niche to this brand…',
@@ -106,7 +106,7 @@ export const MENTOR_VERDICTS = {
     confidence: 'stretch',
     confidenceLabel: 'Stretch Match',
     confidenceStars: 2,
-    pill: 'Optional — try stronger fits first',
+    pill: 'Optional. Try stronger fits first',
     pillColor: 'amber',
   },
   build_first: {
@@ -167,7 +167,7 @@ export const NEXT_ACTIONS = {
   anotherBody: 'Build your next strategy while this one sits in their inbox.',
   anotherCta: 'Back to matches',
   pipelineCta: 'Track this pitch in pipeline',
-  note: 'Your Brand PR package is ready — stay consistent and unlock the next fit.',
+  note: 'Your Brand PR package is ready. Stay consistent and unlock the next fit.',
 };
 
 // ============================================
@@ -244,7 +244,7 @@ export const EXPANDED_CONTENT = {
 // SEND BUTTON
 // ============================================
 export const SEND_BUTTON = {
-  labelTemplate: (brandName) => `Get Brand PR — ${brandName}`,
+  labelTemplate: (brandName) => `Get Brand PR · ${brandName}`,
   label: 'Get Brand PR',
   formLabel: 'Open form prep →',
   emailLabel: 'Contact Brand',
