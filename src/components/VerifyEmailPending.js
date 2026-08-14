@@ -165,7 +165,12 @@ const VerifyEmailPending = () => {
     setResendSuccess(false);
 
     try {
-      await api.post('/api/resend-verification', { email });
+      const { data } = await api.post('/api/resend-verification', { email });
+      if (data?.verified) {
+        message.success(data.message || 'You can continue setup now.');
+        window.location.assign(data.redirect_url || '/onboarding');
+        return;
+      }
       setResendSuccess(true);
       setResendCount(prev => prev + 1);
       setCountdown(60); // 60 second cooldown
@@ -259,9 +264,16 @@ const VerifyEmailPending = () => {
         </ResendSection>
 
         <div style={{ marginTop: 24 }}>
-          <Text style={{ color: '#9CA3AF', fontSize: 13 }}>
-            Wrong email? <Link to="/register/creator" style={{ color: '#8B5CF6' }}>Start over</Link>
-          </Text>
+          <Link to="/onboarding">
+            <Button type="link" style={{ color: '#8B5CF6' }}>
+              Continue setup
+            </Button>
+          </Link>
+          <div style={{ marginTop: 8 }}>
+            <Text style={{ color: '#9CA3AF', fontSize: 13 }}>
+              Wrong email? <Link to="/register/creator" style={{ color: '#8B5CF6' }}>Start over</Link>
+            </Text>
+          </div>
         </div>
       </Card>
     </Container>

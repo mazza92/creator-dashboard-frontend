@@ -20,6 +20,9 @@ import {
   Statistic,
   Divider,
   Typography,
+  Modal,
+  Alert,
+  Popconfirm,
 } from 'antd';
 import {
   MailOutlined,
@@ -172,6 +175,15 @@ const CreatorsAdmin = () => {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState(null);
 
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [resumeSending, setResumeSending] = useState(false);
+  const [resumeTesting, setResumeTesting] = useState(false);
+  const [resumeSince, setResumeSince] = useState('2026-08-12');
+  const [resumeUntil, setResumeUntil] = useState('2026-08-13');
+  const [resumePreview, setResumePreview] = useState(null);
+  const [resumeResult, setResumeResult] = useState(null);
+
   const getApiConfig = () => ({
     headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' },
   });
@@ -235,6 +247,78 @@ const CreatorsAdmin = () => {
     setSelectedCreator(record);
     setDrawerOpen(true);
     fetchCreatorDetails(record.creator_id);
+  };
+
+  const fetchResumePreview = useCallback(async (since = resumeSince, until = resumeUntil) => {
+    setResumeLoading(true);
+    setResumeResult(null);
+    try {
+      const params = new URLSearchParams();
+      params.set('since_date', since);
+      params.set('until_date', until);
+      const { data } = await api.get(
+        `/api/admin/creators/resume-onboarding/preview?${params.toString()}`,
+        getApiConfig()
+      );
+      setResumePreview(data);
+    } catch (e) {
+      console.error(e);
+      message.error(e.response?.data?.error || 'Failed to load resume-onboarding cohort');
+    } finally {
+      setResumeLoading(false);
+    }
+  }, [resumeSince, resumeUntil]);
+
+  const openResumeModal = () => {
+    setResumeOpen(true);
+    setResumeResult(null);
+    fetchResumePreview();
+  };
+
+  const sendResumeTest = async () => {
+    setResumeTesting(true);
+    try {
+      const { data } = await api.post(
+        '/api/admin/creators/resume-onboarding/send',
+        { test_email: ADMIN_EMAIL },
+        { ...getApiConfig(), timeout: 30000 }
+      );
+      message.success(`Test email sent to ${data.sent_to || ADMIN_EMAIL}`);
+    } catch (e) {
+      console.error(e);
+      message.error(e.response?.data?.error || 'Failed to send test email');
+    } finally {
+      setResumeTesting(false);
+    }
+  };
+
+  const sendResumeInvites = async () => {
+    const count = resumePreview?.count || 0;
+    if (!count) {
+      message.warning('No incomplete creators in this date range');
+      return;
+    }
+    setResumeSending(true);
+    setResumeResult(null);
+    try {
+      const { data } = await api.post(
+        '/api/admin/creators/resume-onboarding/send',
+        {
+          since_date: resumeSince,
+          until_date: resumeUntil,
+          dry_run: false,
+        },
+        { ...getApiConfig(), timeout: 180000 }
+      );
+      setResumeResult(data);
+      message.success(`Sent ${data.sent} resume invite${data.sent === 1 ? '' : 's'}`);
+      fetchResumePreview();
+    } catch (e) {
+      console.error(e);
+      message.error(e.response?.data?.error || 'Failed to send resume invites');
+    } finally {
+      setResumeSending(false);
+    }
   };
 
   const handleTableChange = (pagination, _filters, sorter) => {
@@ -505,6 +589,9 @@ const CreatorsAdmin = () => {
           <p>Search, scan, and inspect your creator community.</p>
         </div>
         <Space>
+          <Button icon={<MailOutlined />} onClick={openResumeModal}>
+            Resume onboarding invite
+          </Button>
           <Button icon={<ReloadOutlined />} onClick={fetchCreators}>Refresh</Button>
           <Button onClick={handleLogout}>Logout</Button>
         </Space>
@@ -767,6 +854,113 @@ const CreatorsAdmin = () => {
           <DrawerLoading><Text type="secondary">No creator selected.</Text></DrawerLoading>
         )}
       </Drawer>
+
+      <Modal
+        title="Resume onboarding invite"
+        open={resumeOpen}
+        onCancel={() => setResumeOpen(false)}
+        width={720}
+        footer={null}
+        destroyOnClose={false}
+      >
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          Emails incomplete signups (missing username or niche) to log in and finish.
+          Photo upload is no longer required. Does not create new accounts.
+        </Text>
+
+        <Space wrap style={{ marginBottom: 12 }}>
+          <Input
+            type="date"
+            value={resumeSince}
+            onChange={(e) => setResumeSince(e.target.value)}
+            style={{ width: 160 }}
+          />
+          <Text type="secondary">to</Text>
+          <Input
+            type="date"
+            value={resumeUntil}
+            onChange={(e) => setResumeUntil(e.target.value)}
+            style={{ width: 160 }}
+          />
+          <Button onClick={() => fetchResumePreview()} loading={resumeLoading}>
+            Preview
+          </Button>
+        </Space>
+
+        {resumeResult ? (
+          <Alert
+            type={resumeResult.failed ? 'warning' : 'success'}
+            showIcon
+            style={{ marginBottom: 12 }}
+            message={`Sent ${resumeResult.sent || 0} of ${resumeResult.count || 0}`}
+            description={
+              resumeResult.failed
+                ? `${resumeResult.failed} failed. ${
+                    (resumeResult.errors || []).map((err) => err.email).filter(Boolean).join(', ')
+                  }`
+                : 'They can log in with the same email and continue onboarding.'
+            }
+          />
+        ) : null}
+
+        {resumeLoading && !resumePreview ? (
+          <div style={{ textAlign: 'center', padding: 32 }}><Spin /></div>
+        ) : (
+          <>
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 12 }}
+              message={`${resumePreview?.count || 0} incomplete creator${(resumePreview?.count || 0) === 1 ? '' : 's'} in this window`}
+              description="CTA goes to login. Already-invited in the last 7 days are skipped."
+            />
+            <Table
+              rowKey="creator_id"
+              size="small"
+              pagination={false}
+              scroll={{ y: 280 }}
+              loading={resumeLoading}
+              dataSource={resumePreview?.recipients || []}
+              columns={[
+                {
+                  title: 'Handle',
+                  dataIndex: 'username',
+                  render: (val) => val ? `@${val}` : '—',
+                },
+                { title: 'Email', dataIndex: 'email', ellipsis: true },
+                {
+                  title: 'Signed up',
+                  dataIndex: 'signup_date',
+                  width: 120,
+                  render: (val) => formatDate(val),
+                },
+              ]}
+            />
+            <Space style={{ marginTop: 16 }} wrap>
+              <Button onClick={sendResumeTest} loading={resumeTesting}>
+                Send test to {ADMIN_EMAIL}
+              </Button>
+              <Popconfirm
+                title={`Send resume invite to ${resumePreview?.count || 0} creator${(resumePreview?.count || 0) === 1 ? '' : 's'}?`}
+                description="This emails them to log in, not sign up again."
+                okText="Send now"
+                cancelText="Cancel"
+                disabled={!resumePreview?.count}
+                onConfirm={sendResumeInvites}
+              >
+                <Button
+                  type="primary"
+                  icon={<MailOutlined />}
+                  loading={resumeSending}
+                  disabled={!resumePreview?.count}
+                >
+                  Send to {resumePreview?.count || 0}
+                </Button>
+              </Popconfirm>
+            </Space>
+          </>
+        )}
+      </Modal>
     </Page>
   );
 };
