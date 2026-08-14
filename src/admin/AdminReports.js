@@ -260,14 +260,30 @@ const AdminReports = () => {
     );
   }
 
-  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager } = data;
+  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, packs: packsRaw } = data;
+  const packs = packsRaw || {
+    price_cents: 900,
+    packs_per_purchase: 3,
+    all_time: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0, repeat_buyers: 0 },
+    period: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0 },
+    prev_period: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0 },
+    today: { purchases: 0, revenue_cents: 0, packs: 0 },
+    this_month: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0 },
+    daily: [],
+    recent: [],
+    buyers_with_credits: 0,
+  };
+  const packDollars = (cents) => `$${Math.round((cents || 0) / 100)}`;
+  const packPeriodChange = (packs.period?.purchases || 0) - (packs.prev_period?.purchases || 0);
 
   // Calculate funnel percentages
   const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
   const unlockedPct = calcPct(funnel.unlocked_brand, funnel.signed_up);
   const multiPct = calcPct(funnel.pitched_multiple, funnel.unlocked_brand);
   const subscribedPro = funnel.subscribed_pro ?? mrr.total_paid ?? 0;
+  const boughtPack = funnel.bought_pack ?? packs.all_time?.buyers ?? 0;
   const proFromMultiPct = calcPct(subscribedPro, funnel.pitched_multiple);
+  const packFromMultiPct = calcPct(boughtPack, funnel.pitched_multiple);
   const neverUnlocked = Math.max(0, (funnel.signed_up || 0) - (funnel.unlocked_brand || 0));
   const unlockedOnceOnly = Math.max(0, (funnel.unlocked_brand || 0) - (funnel.pitched_multiple || 0));
   const multiNoPro = Math.max(0, (funnel.pitched_multiple || 0) - subscribedPro);
@@ -338,10 +354,124 @@ const AdminReports = () => {
             <Milestone>
               <MilestoneLabel>At-limit users</MilestoneLabel>
               <MilestoneVal style={{ color: '#F59E0B' }}>{at_limit_count}</MilestoneVal>
-              <MilestoneSub>Hot leads this month</MilestoneSub>
+              <MilestoneSub>Out of free + paid packs</MilestoneSub>
+            </Milestone>
+            <Milestone>
+              <MilestoneLabel>Extra packs</MilestoneLabel>
+              <MilestoneVal>{packDollars(packs.all_time?.revenue_cents)}</MilestoneVal>
+              <MilestoneSub>One-time · not in MRR</MilestoneSub>
             </Milestone>
           </MilestoneRow>
         </GoalCard>
+
+        {/* 1.5 EXTRA PACKS ($9) */}
+        <SectionLabel>Extra packs · $9 one-time</SectionLabel>
+        <WeekGrid>
+          <WeekCard>
+            <WcTop>
+              <WcLabel>Pack revenue this period</WcLabel>
+              <WcDelta $up={packPeriodChange >= 0}>one-time</WcDelta>
+            </WcTop>
+            <WcValue style={{ color: 'var(--rose)' }}>{packDollars(packs.period?.revenue_cents)}</WcValue>
+            <WcSub>
+              {packs.period?.purchases || 0} purchase{(packs.period?.purchases || 0) === 1 ? '' : 's'} · {packDollars(packs.all_time?.revenue_cents)} all time
+            </WcSub>
+          </WeekCard>
+          <WeekCard>
+            <WcTop>
+              <WcLabel>Buyers</WcLabel>
+              <WcDelta>{packs.all_time?.repeat_buyers || 0} repeat</WcDelta>
+            </WcTop>
+            <WcValue>{packs.all_time?.buyers || 0}</WcValue>
+            <WcSub>
+              {packs.period?.buyers || 0} this period · {packs.buyers_with_credits || 0} still have credits
+            </WcSub>
+          </WeekCard>
+          <WeekCard>
+            <WcTop>
+              <WcLabel>Purchases today</WcLabel>
+              <WcDelta $up>live</WcDelta>
+            </WcTop>
+            <WcValue>{packs.today?.purchases || 0}</WcValue>
+            <WcSub>
+              {packDollars(packs.today?.revenue_cents)} today · 3 packs per purchase
+            </WcSub>
+          </WeekCard>
+          <WeekCard>
+            <WcTop>
+              <WcLabel>3/3 → $9 conversion</WcLabel>
+              <WcDelta $up={packFromMultiPct >= 5}>{packFromMultiPct}%</WcDelta>
+            </WcTop>
+            <WcValue>{packFromMultiPct}%</WcValue>
+            <WcSub>
+              {boughtPack} of {funnel.pitched_multiple || 0} who burned the free 3
+            </WcSub>
+          </WeekCard>
+        </WeekGrid>
+
+        {(packs.daily || []).length > 0 && (
+          <HealthGrid style={{ marginBottom: 12 }}>
+            <HealthCard>
+              <HcLabel>Pack purchases · {data.period?.label || 'this period'}</HcLabel>
+              <HcValue $color="rose">{packs.period?.purchases || 0}</HcValue>
+              <HcDelta $up={packPeriodChange >= 0}>
+                {packPeriodChange >= 0 ? '↑' : '↓'} {packPeriodChange >= 0 ? '+' : ''}{packPeriodChange} vs prev period
+              </HcDelta>
+              <Sparkline data={packs.daily} color="rose" />
+            </HealthCard>
+          </HealthGrid>
+        )}
+
+        <TodayCard>
+          <TodayHeader>
+            <TodayTitle>
+              Recent $9 pack purchases
+              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
+                {packs.recent?.length || 0}
+              </span>
+            </TodayTitle>
+            <TodaySubtitle>Source of truth: pack_purchases · does not count toward MRR</TodaySubtitle>
+          </TodayHeader>
+          {(packs.recent || []).length === 0 ? (
+            <EmptyState>
+              <strong>No pack purchases yet</strong>
+              <p>When a creator buys 3 extra packs for $9, they show up here</p>
+            </EmptyState>
+          ) : (
+            <BrandTable>
+              <BrandTableHead>
+                <tr>
+                  <th>Creator</th>
+                  <th>Email</th>
+                  <th>Packs</th>
+                  <th>Amount</th>
+                  <th>When</th>
+                </tr>
+              </BrandTableHead>
+              <tbody>
+                {packs.recent.map((row) => (
+                  <BrandTableRow key={`${row.creator_id}-${row.created_at_iso || row.created_at}`}>
+                    <td>
+                      <BrandName>{row.username || `Creator ${row.creator_id}`}</BrandName>
+                    </td>
+                    <td>
+                      <StatValue>{row.email}</StatValue>
+                    </td>
+                    <td>
+                      <StatValue>{row.packs}</StatValue>
+                    </td>
+                    <td>
+                      <StatValue $color={colors.rose}>{packDollars(row.amount_cents)}</StatValue>
+                    </td>
+                    <td>
+                      <StatValue>{row.created_at || '-'}</StatValue>
+                    </td>
+                  </BrandTableRow>
+                ))}
+              </tbody>
+            </BrandTable>
+          )}
+        </TodayCard>
 
         {/* 2. TOP BRANDS BY PITCHES */}
         <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -725,6 +855,18 @@ const AdminReports = () => {
               <FCount>{funnel.pitched_multiple}</FCount>
             </FStep>
 
+            <FDrop $good={packFromMultiPct >= 5}>↓ {packFromMultiPct}% bought extra packs ($9). {packFromMultiPct >= 5 ? 'Paywall converting' : 'New $9 path'}</FDrop>
+
+            <FStep>
+              <FLabel>Bought extra pack</FLabel>
+              <FBarTrack>
+                <FBarFill style={{ width: `${Math.max(calcPct(boughtPack, funnel.signed_up), 1)}%`, background: colors.amber }}>
+                  {boughtPack}
+                </FBarFill>
+              </FBarTrack>
+              <FCount>{boughtPack}</FCount>
+            </FStep>
+
             <FDrop $good={proFromMultiPct >= 5}>↓ {proFromMultiPct}% of those subscribed Pro — {proFromMultiPct >= 5 ? 'converting' : 'this is the conversion problem'}</FDrop>
 
             <FStep>
@@ -745,7 +887,7 @@ const AdminReports = () => {
               : unlockedOnceOnly >= multiNoPro
                 ? `${unlockedOnceOnly} unlocked once and never went over 2 brands.`
                 : `${multiNoPro} unlocked over 2 brands and did not subscribe Pro.`}
-            {' '}Funnel is signup → unlock → over 2 unlocks → Pro.
+            {' '}Funnel is signup → unlock → over 2 unlocks → $9 pack or Pro.
           </InsightBox>
         </FunnelCard>
 
@@ -759,7 +901,7 @@ const AdminReports = () => {
               <WcDelta $up>nudge them</WcDelta>
             </WcTop>
             <WcValue style={{ color: 'var(--amber)' }}>{at_limit_count}</WcValue>
-            <WcSub>Free users who maxed 3 unlocks — prime upgrade moment</WcSub>
+            <WcSub>Free users with 0 unlocks and 0 paid packs. $9 or Pro</WcSub>
           </WeekCard>
 
           <WeekCard>
@@ -787,6 +929,17 @@ const AdminReports = () => {
             </WcTop>
             <WcValue>{this_month.signups}</WcValue>
             <WcSub>This month · {this_month.total_signups} total since launch</WcSub>
+          </WeekCard>
+
+          <WeekCard>
+            <WcTop>
+              <WcLabel>Extra packs this month</WcLabel>
+              <WcDelta $up>one-time $9</WcDelta>
+            </WcTop>
+            <WcValue style={{ color: 'var(--rose)' }}>{this_month.pack_purchases ?? packs.this_month?.purchases ?? 0}</WcValue>
+            <WcSub>
+              {packDollars(this_month.pack_revenue_cents ?? packs.this_month?.revenue_cents)} · {this_month.pack_buyers ?? packs.this_month?.buyers ?? 0} buyers
+            </WcSub>
           </WeekCard>
         </WeekGrid>
 
@@ -1012,6 +1165,7 @@ const MilestoneRow = styled.div`
   display: flex;
   gap: 10px;
   margin-top: 16px;
+  flex-wrap: wrap;
 `;
 
 const Milestone = styled.div`
