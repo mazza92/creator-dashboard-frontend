@@ -12,7 +12,7 @@ import {
   DesktopOutlined, MobileOutlined, CopyOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
-import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement } from '../email-templates';
+import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement, resolveAnnouncementPreheader } from '../email-templates';
 
 const { TextArea } = Input;
 
@@ -183,6 +183,12 @@ const AdminEmail = () => {
     if (subject) return subject;
     return 'An update from Newcollab';
   };
+
+  const announcementPreheader = (config = announcementConfig) =>
+    resolveAnnouncementPreheader({
+      preheader: config.preheader,
+      subject: announcementSubject(config),
+    });
 
   const buildAnnouncementHTML = (config = announcementConfig, forCampaign = false) => {
     const blocks = [];
@@ -1156,7 +1162,37 @@ const AdminEmail = () => {
                       placeholder="Inbox subject, e.g. Brand Content Hub is live"
                     />
                     <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
-                      Shown in the inbox. Keep this different from the header title so it does not repeat.
+                      Bold line in the inbox. Do not reuse this as the preview text.
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Inbox Preview Text</label>
+                    <Input
+                      value={announcementConfig.preheader}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, preheader: e.target.value }))}
+                      placeholder="Grey text after the subject, e.g. Submit a tagged post and we send it to the brand"
+                    />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      If this is blank or matches the subject, we use a different default so Gmail does not repeat the line.
+                    </div>
+                    <div style={{
+                      marginTop: 10,
+                      padding: '10px 12px',
+                      background: '#0f172a',
+                      border: '1px solid #1e293b',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      lineHeight: 1.4,
+                    }}>
+                      <div style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748b', marginBottom: 4 }}>
+                        Inbox preview
+                      </div>
+                      <span style={{ color: '#e2e8f0', fontWeight: 600 }}>
+                        {announcementSubject(announcementConfig)}
+                      </span>
+                      <span style={{ color: '#94a3b8' }}>
+                        {' - '}{announcementPreheader(announcementConfig)}
+                      </span>
                     </div>
                   </div>
                   <div className="form-group">
@@ -1230,14 +1266,6 @@ const AdminEmail = () => {
                       value={announcementConfig.ctaUrl}
                       onChange={(e) => setAnnouncementConfig(c => ({ ...c, ctaUrl: e.target.value }))}
                       placeholder="https://app.newcollab.co"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Inbox Preview Text (preheader)</label>
-                    <Input
-                      value={announcementConfig.preheader}
-                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, preheader: e.target.value }))}
-                      placeholder="Short text shown in inbox preview..."
                     />
                   </div>
                   <div style={{ fontSize: 12, color: '#94a3b8', padding: '8px 0' }}>

@@ -24,6 +24,25 @@
  */
 
 const LOGO_URL = 'https://app.newcollab.co/newcollab-logo-dark.png';
+const DEFAULT_PREHEADER = 'Something new is live. Here is what changed and why it matters.';
+
+const normalizeInboxSnippet = (text = '') =>
+  String(text)
+    .replace(/^\[TEST\]\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+export const resolveAnnouncementPreheader = ({ preheader = '', subject = '' } = {}) => {
+  const subjectNorm = normalizeInboxSnippet(subject);
+  const candidates = [(preheader || '').trim(), DEFAULT_PREHEADER];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    if (subjectNorm && normalizeInboxSnippet(candidate) === subjectNorm) continue;
+    return candidate;
+  }
+  return DEFAULT_PREHEADER;
+};
 
 // Render a stat bar block (2-4 items)
 const renderStatBlock = (items = []) => {
@@ -140,10 +159,7 @@ export const generateGeneralAnnouncement = ({
 } = {}) => {
 
   const inboxSubject = (subject || '').trim();
-  const header = (headerTitle || '').trim();
-  const preheaderText = (preheader || '').trim()
-    || (inboxSubject && inboxSubject !== header ? inboxSubject : '')
-    || 'An update from Newcollab.';
+  const preheaderText = resolveAnnouncementPreheader({ preheader, subject: inboxSubject });
   const documentTitle = inboxSubject || 'An update from Newcollab';
   const preheaderPadding = '\u200C\u00A0'.repeat(90);
   const renderedBlocks = blocks.map(renderBlock).join('');

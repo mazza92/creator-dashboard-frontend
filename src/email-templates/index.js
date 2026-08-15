@@ -16,6 +16,7 @@ export {
 export {
   default as generateGeneralAnnouncement,
   generateGeneralAnnouncement as GeneralAnnouncement,
+  resolveAnnouncementPreheader,
   sampleAnnouncementInsights,
   sampleAnnouncementGeneral,
   getAnnouncementInsightsPreview,
