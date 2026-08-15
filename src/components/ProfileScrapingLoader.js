@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { apiClient } from '../utils/api';
+import { scrapeHelpFromError } from '../utils/scrapeHelp';
 
 /**
  * ProfileScrapingLoader - AI Depth profile scraping with progressive loading UX
@@ -170,6 +171,15 @@ const FRAMES = [
   { id: 4, text: 'You\'re verified', icon: '✓', done: true },
 ];
 
+function framesFor(platform) {
+  if (platform !== 'tiktok' && platform !== 'youtube') return FRAMES;
+  return FRAMES.map((frame) => (
+    frame.id === 2
+      ? { ...frame, text: 'Analyzing your last 12 videos...', icon: '🎬' }
+      : frame
+  ));
+}
+
 const FRAME_DURATION = 1500; // 1.5s per frame
 
 export default function ProfileScrapingLoader({
@@ -178,7 +188,7 @@ export default function ProfileScrapingLoader({
   onComplete,
   onError,
   endpoint = '/api/pr-crm/creator/scrape', // Default endpoint, can be overridden for onboarding
-  frames = FRAMES,
+  frames,
   doneLabel = 'Profile verified',
 }) {
   const [currentFrame, setCurrentFrame] = useState(0);
@@ -186,7 +196,7 @@ export default function ProfileScrapingLoader({
   const [scrapeResult, setScrapeResult] = useState(null);
   const [error, setError] = useState(null);
   const [scrapeStarted, setScrapeStarted] = useState(false);
-  const stepFrames = frames?.length ? frames : FRAMES;
+  const stepFrames = frames?.length ? frames : framesFor(platform);
 
   // Start frame animation and scrape simultaneously
   useEffect(() => {
@@ -244,17 +254,8 @@ export default function ProfileScrapingLoader({
         }
       } catch (err) {
         console.error('Scrape error:', err);
-
-        // Check for private profile error
-        const isPrivate = err.response?.data?.is_private;
-        const errorMsg = err.response?.data?.error || err.message || 'Failed to analyze profile';
-
-        if (isPrivate) {
-          setError('Your profile is private. Please make it public and try again.');
-        } else {
-          setError(errorMsg);
-        }
-
+        const help = scrapeHelpFromError(err, { handle, platform });
+        setError(help.title);
         if (onError) {
           onError(err);
         }

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../utils/api';
@@ -8,18 +8,20 @@ import { FaInstagram, FaTiktok, FaYoutube, FaPinterest, FaXTwitter } from 'react
 import { HiOutlinePencilSquare } from 'react-icons/hi2';
 import { SocialVerificationStep } from '../SocialVerification';
 import ProfileScrapingLoader from '../ProfileScrapingLoader';
+import { scrapeHelpFromError } from '../../utils/scrapeHelp';
 
 // ============================================================================
 // USERNAME VALIDATION HELPERS
 // Only allow: letters, numbers, underscores, periods (like Instagram/Twitter)
 // Block: URLs, spaces, special characters
 // ============================================================================
-const sanitizeUsername = (value) => {
+const sanitizeUsername = (value, platform) => {
   // Remove any URL-like patterns first (http://, https://, www.)
   let cleaned = value.replace(/https?:\/\//gi, '').replace(/www\./gi, '');
-  // Only keep alphanumeric, underscore, and period
-  cleaned = cleaned.replace(/[^a-zA-Z0-9_.]/g, '');
-  // Limit to 30 characters (Instagram standard)
+  // YouTube handles allow hyphens; IG/TikTok do not
+  const extra = platform === 'youtube' ? '-' : '';
+  cleaned = cleaned.replace(new RegExp(`[^a-zA-Z0-9_.${extra}]`, 'g'), '');
+  // Limit to 30 characters (Instagram / YouTube standard)
   return cleaned.slice(0, 30).toLowerCase();
 };
 
@@ -196,19 +198,21 @@ const FormInput = styled.input`
   width: 100%;
   padding: 12px 14px;
   padding-left: ${props => props.$hasPrefix ? '38px' : '14px'};
-  border: 1.5px solid ${colors.border};
+  border: 1.5px solid ${props => props.$invalid ? '#FECDD3' : colors.border};
   border-radius: 11px;
   font-size: 14px;
   font-family: 'Inter', sans-serif;
   color: ${colors.text};
-  background: #fff;
+  background: ${props => props.$invalid ? '#FFF8F8' : '#fff'};
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   box-sizing: border-box;
 
   &:focus {
-    border-color: ${colors.black};
-    box-shadow: 0 0 0 3px rgba(15,15,15,.06);
+    border-color: ${props => props.$invalid ? colors.rose : colors.black};
+    box-shadow: ${props => props.$invalid
+      ? '0 0 0 3px rgba(225,29,72,.08)'
+      : '0 0 0 3px rgba(15,15,15,.06)'};
   }
   &::placeholder { color: ${colors.text3}; }
 `;
@@ -475,6 +479,76 @@ const ErrorMsg = styled.div`
   text-align: center;
 `;
 
+const ScrapeHelpCard = styled.div`
+  margin-top: 14px;
+  padding: 14px 16px 16px;
+  background: ${props => props.$tone === 'wait' ? '#FFFBEB' : '#FFF8F8'};
+  border: 1px solid ${props => props.$tone === 'wait' ? '#FDE68A' : '#FECDD3'};
+  border-radius: 12px;
+  text-align: left;
+`;
+
+const ScrapeHelpTitle = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${colors.text};
+  margin-bottom: 4px;
+`;
+
+const ScrapeHelpMessage = styled.div`
+  font-size: 13px;
+  color: ${colors.text2};
+  line-height: 1.45;
+  margin-bottom: 10px;
+`;
+
+const ScrapeHelpList = styled.ul`
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const ScrapeHelpItem = styled.li`
+  font-size: 13px;
+  color: ${colors.text};
+  line-height: 1.4;
+`;
+
+const ScrapeHelpLink = styled.a`
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${colors.black};
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover { color: ${colors.rose}; }
+`;
+
+const RequirementsHint = styled.div`
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #F7F7F8;
+  border: 1px solid ${colors.border};
+  border-radius: 10px;
+  font-size: 12px;
+  color: ${colors.text2};
+  line-height: 1.45;
+
+  strong {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: ${colors.text3};
+    margin-bottom: 4px;
+  }
+`;
+
 // Region blocked UI
 const RegionBlockedCard = styled.div`
   background: #fff;
@@ -648,8 +722,8 @@ const REGIONS = [
   { id: 'Global', label: '🌐 Global' },
 ];
 
-// Platforms that support AI scraping (Instagram, TikTok)
-const SCRAPABLE_PLATFORMS = ['instagram', 'tiktok'];
+// Platforms that support AI scraping + the brand-ready quality bar
+const SCRAPABLE_PLATFORMS = ['instagram', 'tiktok', 'youtube'];
 
 export default function CreatorOnboarding() {
   const [searchParams] = useSearchParams();
@@ -663,7 +737,8 @@ export default function CreatorOnboarding() {
   const [verifiedProfile, setVerifiedProfile] = useState(null);
   // Scraping state
   const [showScraping, setShowScraping] = useState(false);
-  const [scrapeError, setScrapeError] = useState(null);
+  const [scrapeHelp, setScrapeHelp] = useState(null);
+  const handleInputRef = useRef(null);
   // Test mode: allow country override via ?_test_country=IN
   const testCountry = searchParams.get('_test_country');
   // Step 2
@@ -779,7 +854,7 @@ export default function CreatorOnboarding() {
   const handleStep1 = async () => {
     setError('');
     setVerificationError(null);
-    setScrapeError(null);
+    setScrapeHelp(null);
 
     if (!platform) { setError('Please select your main platform'); return; }
 
@@ -805,7 +880,7 @@ export default function CreatorOnboarding() {
       return;
     }
 
-    // For scrapable platforms (Instagram/TikTok), show verification UI and save
+    // For scrapable platforms (Instagram/TikTok/YouTube), show verification UI and save
     if (SCRAPABLE_PLATFORMS.includes(platform)) {
       // Check handle uniqueness first
       try {
@@ -828,7 +903,7 @@ export default function CreatorOnboarding() {
       return;
     }
 
-    // For non-scrapable platforms (YouTube, Pinterest, Twitter, Blog), use manual entry
+    // For non-scrapable platforms (Pinterest, Twitter, Blog), use manual entry
     if (!followers || parseInt(followers) <= 0) {
       setError('Please enter your follower count');
       return;
@@ -896,21 +971,10 @@ export default function CreatorOnboarding() {
   // Handle scrape error - block on private profiles, show error to user
   const handleScrapeError = async (err) => {
     console.error('Scrape error during onboarding:', err);
-
-    // Check if it's a private profile error - DO NOT proceed
-    const isPrivate = err.response?.data?.is_private;
-    const errorMsg = err.response?.data?.error || err.message || 'Failed to analyze profile';
-
-    if (isPrivate) {
-      // Private profile - show error and let user fix it
-      setScrapeError('Your profile is private. Please make it public and try again.');
-      setShowScraping(false);
-      return;
-    }
-
-    // For other errors, show the error message and let user retry
-    setScrapeError(errorMsg);
+    const help = scrapeHelpFromError(err, { handle: username, platform });
+    setScrapeHelp(help);
     setShowScraping(false);
+    setTimeout(() => handleInputRef.current?.focus(), 50);
   };
 
   const toggleRegion = (id) => {
@@ -1160,7 +1224,7 @@ export default function CreatorOnboarding() {
                           setPlatform(p.id);
                           setVerificationStatus(null);
                           setVerificationError(null);
-                          setScrapeError(null);
+                          setScrapeHelp(null);
                           setError('');
                         }}
                       >
@@ -1172,7 +1236,7 @@ export default function CreatorOnboarding() {
                     ))}
                   </PlatformGrid>
 
-                  {/* For scrapable platforms (Instagram/TikTok), show username only - followers will be scraped */}
+                  {/* For scrapable platforms, show username only - stats will be scraped */}
                   {platform && SCRAPABLE_PLATFORMS.includes(platform) && !VERIFIABLE_PLATFORMS.includes(platform) && (
                     <div style={{ marginTop: '16px' }}>
                       <FormLabel>Your creator handle</FormLabel>
@@ -1180,21 +1244,32 @@ export default function CreatorOnboarding() {
                         <InputPre>@</InputPre>
                         <FormInput
                           $hasPrefix
+                          $invalid={!!scrapeHelp && scrapeHelp.tone !== 'wait'}
+                          ref={handleInputRef}
                           type="text"
                           placeholder="yourcreatorname"
                           value={username}
-                          onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); setScrapeError(null); }}
+                          onChange={(e) => { setUsername(sanitizeUsername(e.target.value, platform)); setError(''); setScrapeHelp(null); }}
                           disabled={loading}
                           maxLength={30}
+                          aria-invalid={!!scrapeHelp}
                         />
                       </InputWrap>
                       <VerificationNote style={{ marginTop: '12px' }}>
                         We'll verify your profile and fetch your stats automatically
                       </VerificationNote>
+                      <RequirementsHint>
+                        <strong>What brands need</strong>
+                        {platform === 'youtube'
+                          ? 'Public channel · 500+ subscribers · 12+ videos · Posted in the last 30 days'
+                          : platform === 'tiktok'
+                            ? 'Public account · 500+ followers · 12+ videos · Posted in the last 30 days'
+                            : 'Public account · 500+ followers · 12+ posts · Posted in the last 30 days'}
+                      </RequirementsHint>
                     </div>
                   )}
 
-                  {/* For non-scrapable platforms (YouTube, Pinterest, Twitter, Blog), show username + follower input */}
+                  {/* For non-scrapable platforms (Pinterest, Twitter, Blog), show username + follower input */}
                   {platform && !SCRAPABLE_PLATFORMS.includes(platform) && !VERIFIABLE_PLATFORMS.includes(platform) && (
                     <>
                       <div style={{ marginTop: '16px' }}>
@@ -1206,7 +1281,7 @@ export default function CreatorOnboarding() {
                             type="text"
                             placeholder="yourcreatorname"
                             value={username}
-                            onChange={(e) => { setUsername(sanitizeUsername(e.target.value)); setError(''); }}
+                            onChange={(e) => { setUsername(sanitizeUsername(e.target.value, platform)); setError(''); }}
                             disabled={loading}
                             maxLength={30}
                           />
@@ -1245,7 +1320,29 @@ export default function CreatorOnboarding() {
                   )}
                 </FormGroup>
 
-                {(error || scrapeError) && <ErrorMsg>{error || scrapeError}</ErrorMsg>}
+                {error && <ErrorMsg>{error}</ErrorMsg>}
+                {scrapeHelp && (
+                  <ScrapeHelpCard role="alert" $tone={scrapeHelp.tone || 'error'}>
+                    <ScrapeHelpTitle>{scrapeHelp.title}</ScrapeHelpTitle>
+                    {scrapeHelp.message && (
+                      <ScrapeHelpMessage>{scrapeHelp.message}</ScrapeHelpMessage>
+                    )}
+                    <ScrapeHelpList>
+                      {(scrapeHelp.tips || []).map((tip) => (
+                        <ScrapeHelpItem key={tip}>{tip}</ScrapeHelpItem>
+                      ))}
+                    </ScrapeHelpList>
+                    {scrapeHelp.profileUrl && (
+                      <ScrapeHelpLink
+                        href={scrapeHelp.profileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {scrapeHelp.profileLabel || 'Open profile'} ↗
+                      </ScrapeHelpLink>
+                    )}
+                  </ScrapeHelpCard>
+                )}
 
                 <BtnRow>
                   <ContinueBtn
