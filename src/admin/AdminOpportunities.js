@@ -4,6 +4,7 @@ import { Button, Input, message, Modal, Tag, Space, Card, Statistic, Row, Col, P
 import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
+import AdminContentSubmissions from './AdminContentSubmissions';
 
 const ADMIN_EMAIL = 'team@newcollab.co';
 const ADMIN_PASSWORD = 'Ilovela1992!';
@@ -31,6 +32,11 @@ const AdminOpportunities = () => {
   const [logoUrls, setLogoUrls] = useState({});
   const [editingOpp, setEditingOpp] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [pageTab, setPageTab] = useState(() => (
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'submissions'
+      ? 'submissions'
+      : 'opportunities'
+  ));
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('oppAdminAuth');
@@ -276,6 +282,21 @@ const AdminOpportunities = () => {
     total: opportunities.length
   };
 
+  if (pageTab === 'submissions') {
+    return (
+      <PageWrap>
+        <Header>
+          <h1>Content Submissions</h1>
+        </Header>
+        <FilterRow style={{ marginBottom: 20 }}>
+          <FilterBtn $active={false} onClick={() => setPageTab('opportunities')}>Opportunities</FilterBtn>
+          <FilterBtn $active={true}>Content Submissions</FilterBtn>
+        </FilterRow>
+        <AdminContentSubmissions />
+      </PageWrap>
+    );
+  }
+
   return (
     <PageWrap>
       <Header>
@@ -284,6 +305,11 @@ const AdminOpportunities = () => {
           Refresh
         </Button>
       </Header>
+
+      <FilterRow style={{ marginBottom: 20 }}>
+        <FilterBtn $active={true}>Opportunities</FilterBtn>
+        <FilterBtn $active={false} onClick={() => setPageTab('submissions')}>Content Submissions</FilterBtn>
+      </FilterRow>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={8}>

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Inbox, Sparkles, FileText, Bell, Users, BadgeCheck } from 'lucide-react';
+import { Search, Inbox, Sparkles, FileText, Bell, Users, BadgeCheck, Video } from 'lucide-react';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
@@ -56,6 +56,10 @@ const NavTabs = styled.div`
   background: #F4F4F4;
   padding: 4px;
   border-radius: 100px;
+  overflow-x: auto;
+  max-width: min(820px, calc(100vw - 280px));
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 
   @media (max-width: 640px) { display: none; }
 `;
@@ -64,9 +68,10 @@ const NavTab = styled(Link)`
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 100px;
-  font-size: 13.5px;
+  font-size: 13px;
+  white-space: nowrap;
   font-weight: ${p => (p.$active ? 600 : 500)};
   color: ${p => (p.$active ? '#FFFFFF' : '#4B4B4B')};
   background: ${p => (p.$active ? '#0F0F0F' : 'transparent')};
@@ -393,7 +398,8 @@ const EmptyNotifications = styled.div`
 // ============================================================
 
 const navItems = [
-  { label: 'AI Manager', icon: BadgeCheck, path: '/creator/dashboard/pr-ready', isNew: true },
+  { label: 'Assistant', icon: BadgeCheck, path: '/creator/dashboard/pr-ready' },
+  { label: 'Content Hub', icon: Video, path: '/creator/dashboard/content-hub', isNew: true, mobileLabel: 'Content' },
   { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
   { label: 'Inbox',    icon: Inbox,    path: '/creator/dashboard/pr-pipeline' },
@@ -705,7 +711,7 @@ const CreatorDashboardLayout = () => {
       </Content>
 
       <MobileTabBar>
-        {navItems.map(({ label, icon: Icon, path, isNew }) => (
+        {navItems.map(({ label, icon: Icon, path, isNew, mobileLabel }) => (
           <MobileTab
             key={path}
             to={path}
@@ -717,7 +723,7 @@ const CreatorDashboardLayout = () => {
             }}
           >
             <Icon />
-            {label}
+            {mobileLabel || label}
             {isNew && <MobileNewBadge>New</MobileNewBadge>}
             {label === 'For You' && matchedRemaining > 0 && (
               <ForYouMobileBadge>{matchedRemaining}</ForYouMobileBadge>

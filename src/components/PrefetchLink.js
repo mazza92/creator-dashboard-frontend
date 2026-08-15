@@ -83,6 +83,19 @@ const PREFETCH_CONFIG = {
     });
   },
 
+  '/creator/dashboard/content-hub': async (queryClient) => {
+    await queryClient.prefetchQuery({
+      queryKey: ['contentHub', 'submissions'],
+      queryFn: async () => {
+        const response = await axios.get(`${API_BASE}/api/creator/content-submissions`, {
+          withCredentials: true,
+        });
+        return response.data;
+      },
+      staleTime: 60 * 1000,
+    });
+  },
+
   '/creator/dashboard/pr-brands': async (queryClient) => {
     await queryClient.prefetchQuery({
       queryKey: ['directory', 'brands'],
