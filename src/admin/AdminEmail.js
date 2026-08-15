@@ -60,6 +60,7 @@ const AdminEmail = () => {
   const [showAnnouncementPreview, setShowAnnouncementPreview] = useState(false);
   const [announcementViewMode, setAnnouncementViewMode] = useState('desktop');
   const [announcementConfig, setAnnouncementConfig] = useState({
+    emailSubject: '',
     headerTitle: 'An update from Newcollab',
     headerSubtitle: '',
     gradient: 'teal',
@@ -175,6 +176,14 @@ const AdminEmail = () => {
     }
   };
 
+  const announcementSubject = (config = announcementConfig) => {
+    const subject = (config.emailSubject || '').trim();
+    const header = (config.headerTitle || '').trim();
+    if (subject && subject !== header) return subject;
+    if (subject) return subject;
+    return 'An update from Newcollab';
+  };
+
   const buildAnnouncementHTML = (config = announcementConfig, forCampaign = false) => {
     const blocks = [];
     if (config.calloutText) {
@@ -186,15 +195,17 @@ const AdminEmail = () => {
         bg: '#f0faf9',
       });
     }
+    const subject = announcementSubject(config);
     return generateGeneralAnnouncement({
       firstName: forCampaign ? '{{first_name}}' : 'Sarah',
-      headerTitle: config.headerTitle || 'An update from Newcollab',
+      headerTitle: config.headerTitle || '',
       headerSubtitle: config.headerSubtitle || '',
       gradient: config.gradient || 'teal',
       bodyText: config.bodyText || '',
       blocks,
       primaryCta: config.ctaLabel ? { label: config.ctaLabel, url: config.ctaUrl || 'https://app.newcollab.co' } : null,
-      preheader: config.preheader || config.headerTitle || '',
+      preheader: (config.preheader || '').trim(),
+      subject,
       utmCampaign: 'general_announcement',
     });
   };
@@ -975,7 +986,7 @@ const AdminEmail = () => {
               </div>
 
               {/* Step 3: Customize Subject & Content */}
-              {selectedTemplate && (
+              {(selectedTemplate || emailContent) && (
                 <div className="step">
                   <h4>3. Edit Subject</h4>
                   <Input
@@ -1138,12 +1149,26 @@ const AdminEmail = () => {
                 {/* Left: Form Fields */}
                 <div className="composer-form">
                   <div className="form-group">
-                    <label>Header Title *</label>
+                    <label>Email Subject *</label>
+                    <Input
+                      value={announcementConfig.emailSubject}
+                      onChange={(e) => setAnnouncementConfig(c => ({ ...c, emailSubject: e.target.value }))}
+                      placeholder="Inbox subject, e.g. Brand Content Hub is live"
+                    />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      Shown in the inbox. Keep this different from the header title so it does not repeat.
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Header Title</label>
                     <Input
                       value={announcementConfig.headerTitle}
                       onChange={(e) => setAnnouncementConfig(c => ({ ...c, headerTitle: e.target.value }))}
                       placeholder="e.g. Your weekly insights are here"
                     />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      Large heading inside the email body. Leave blank if the body already has a title.
+                    </div>
                   </div>
                   <div className="form-group">
                     <label>Header Subtitle</label>
@@ -1248,7 +1273,7 @@ const AdminEmail = () => {
                   icon={<CopyOutlined />}
                   onClick={() => {
                     const html = buildAnnouncementHTML(announcementConfig, true);
-                    const subject = announcementConfig.headerTitle || 'An update from Newcollab';
+                    const subject = announcementSubject(announcementConfig);
                     navigator.clipboard.writeText(`Subject: ${subject}\n\n${html}`);
                     message.success('HTML + subject copied to clipboard!');
                   }}
@@ -1261,7 +1286,7 @@ const AdminEmail = () => {
                   onClick={() => {
                     const html = buildAnnouncementHTML(announcementConfig, true);
                     setEmailContent(html);
-                    setSubjectOverride(announcementConfig.headerTitle || 'An update from Newcollab');
+                    setSubjectOverride(announcementSubject(announcementConfig));
                     setCampaignName(`General Announcement - ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
                     setSelectedTemplate(null); // Clear any previously selected template - using custom HTML
                     setShowAnnouncementPreview(false);

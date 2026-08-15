@@ -135,10 +135,16 @@ export const generateGeneralAnnouncement = ({
   primaryCta = null,
   secondaryCta = null,
   preheader = '',
+  subject = '',
   utmCampaign = 'general_announcement',
 } = {}) => {
 
-  const preheaderText = preheader || headerTitle || 'An update from Newcollab.';
+  const inboxSubject = (subject || '').trim();
+  const header = (headerTitle || '').trim();
+  const preheaderText = (preheader || '').trim()
+    || (inboxSubject && inboxSubject !== header ? inboxSubject : '')
+    || 'An update from Newcollab.';
+  const documentTitle = inboxSubject || 'An update from Newcollab';
   const preheaderPadding = '\u200C\u00A0'.repeat(90);
   const renderedBlocks = blocks.map(renderBlock).join('');
 
@@ -198,7 +204,7 @@ export const generateGeneralAnnouncement = ({
     td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
   </style>
   <![endif]-->
-  <title>${headerTitle || 'An update from Newcollab'}</title>
+  <title>${documentTitle}</title>
   <style>
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
     table { border-collapse: collapse !important; }
@@ -219,7 +225,7 @@ export const generateGeneralAnnouncement = ({
 
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${preheaderText}${preheaderPadding}</div>
 
-  <div role="article" aria-roledescription="email" aria-label="${headerTitle || 'Newcollab'}" lang="en"
+  <div role="article" aria-roledescription="email" aria-label="${documentTitle}" lang="en"
        style="font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
 
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto;">
