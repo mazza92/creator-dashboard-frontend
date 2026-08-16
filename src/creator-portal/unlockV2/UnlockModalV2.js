@@ -11,6 +11,7 @@ import { LOADING, TOKENS, MENTOR_VERDICTS, MENTOR_SECTIONS, SEND_BUTTON, NEXT_AC
 import { apiClient, getProxiedMediaUrl } from '../../config/api';
 import UpgradeModal from '../UpgradeModal';
 import { trackProBeginCheckout } from '../../utils/subscriptionAnalytics';
+import { beginBrandOutreach, getDuplicateOutreachMessage } from '../../utils/outreachSendGuard';
 
 // Brand logo with error handling - shows initials on broken images
 const BrandLogoImg = ({ src, alt, fallback }) => {
@@ -1782,6 +1783,12 @@ const PrimaryActionBtn = styled.button`
     &:active {
       transform: scale(0.98);
     }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      pointer-events: none;
+    }
   ` : `
     background: ${PITCH_TOKENS.lineSoft};
     color: ${PITCH_TOKENS.muted};
@@ -1795,6 +1802,14 @@ const SecondaryLinks = styled.div`
   justify-content: center;
   margin-top: 10px;
   font-size: 12.5px;
+`;
+
+const SendOnceHint = styled.p`
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  color: ${PITCH_TOKENS.muted};
 `;
 
 const SecondaryLink = styled.button`
@@ -2650,6 +2665,28 @@ function resolvePackEmail(packageData) {
   return { raw, formUrl, generic, email: raw || null };
 }
 
+function isCachedOrReopen(data) {
+  if (!data) return true;
+  if (data.cached) return true;
+  if (data.unlock_status === 'already_unlocked' || data.already_unlocked) return true;
+  return false;
+}
+
+async function lastUnlockJustSpent(data) {
+  if (isCachedOrReopen(data)) return false;
+  if (data.quota_hit) return true;
+  const remaining = data.remaining ?? data.credits_remaining;
+  if (remaining != null) return Number(remaining) === 0;
+  try {
+    const bal = await apiClient.get('/api/pr-crm/unlocks/balance');
+    if (bal.data?.is_unlimited) return false;
+    const left = bal.data?.remaining;
+    return left != null && Number(left) === 0;
+  } catch (_) {
+    return false;
+  }
+}
+
 const UnlockModalV2 = ({
   isOpen,
   onClose,
@@ -2698,6 +2735,13 @@ const UnlockModalV2 = ({
   const [originalBody, setOriginalBody] = useState('');
   const [showFrictionModal, setShowFrictionModal] = useState(false);
   const [pitchSent, setPitchSent] = useState(false);
+  const [sendingPitch, setSendingPitch] = useState(false);
+  const [alreadyContacted, setAlreadyContacted] = useState(false);
+  const sendLockRef = useRef(false);
+  const quotaUpgradeTimerRef = useRef(null);
+  const startGenerationRef = useRef(null);
+  const genIdRef = useRef(0);
+  const [showQuotaUpgrade, setShowQuotaUpgrade] = useState(false);
 
   // AI Boost state (new UX)
   const [boostOpen, setBoostOpen] = useState(true); // Start expanded
@@ -2943,6 +2987,21 @@ const UnlockModalV2 = ({
           }
 
           setPhase(PHASE_MODAL);
+
+          // Last free pack just landed. Confirm remaining is 0, then ask for Pro.
+          const genId = genIdRef.current;
+          if (!isFollowup && !isPro) {
+            lastUnlockJustSpent(response.data).then((hit) => {
+              if (!hit || genIdRef.current !== genId) return;
+              if (quotaUpgradeTimerRef.current) {
+                clearTimeout(quotaUpgradeTimerRef.current);
+              }
+              quotaUpgradeTimerRef.current = setTimeout(() => {
+                if (genIdRef.current !== genId) return;
+                setShowQuotaUpgrade(true);
+              }, 300);
+            });
+          }
         }, readyDelay);
       } else {
         setError(response.data.error || 'Failed to generate package');
@@ -2963,11 +3022,15 @@ const UnlockModalV2 = ({
       }
       setPhase(PHASE_MODAL);
     }
-  }, [brand, revealCard]);
+  }, [brand, revealCard, isFollowup, isPro]);
+
+  startGenerationRef.current = startGeneration;
 
   // Reset state when modal opens
+  const brandKey = brand?.id || brand?.brand_id || brand?.slug;
   useEffect(() => {
-    if (isOpen && brand) {
+    if (isOpen && brandKey) {
+      genIdRef.current += 1;
       setPhase(PHASE_LOADING);
       setCardStates({ inbox: false, pitch: false, strategy: false, ready: false });
       setAnimatingCard(null);
@@ -2984,13 +3047,21 @@ const UnlockModalV2 = ({
       setOriginalBody('');
       setShowFrictionModal(false);
       setPitchSent(false);
+      setSendingPitch(false);
+      setAlreadyContacted(false);
+      sendLockRef.current = false;
+      setShowQuotaUpgrade(false);
+      if (quotaUpgradeTimerRef.current) {
+        clearTimeout(quotaUpgradeTimerRef.current);
+        quotaUpgradeTimerRef.current = null;
+      }
 
       // Clear any existing timers
       cardTimersRef.current.forEach(timer => clearTimeout(timer));
       cardTimersRef.current = [];
 
       // Start generation
-      startGeneration();
+      startGenerationRef.current?.();
 
       // Fallback timer for "Almost done..."
       fallbackTimerRef.current = setTimeout(() => {
@@ -3004,8 +3075,12 @@ const UnlockModalV2 = ({
       if (fallbackTimerRef.current) {
         clearTimeout(fallbackTimerRef.current);
       }
+      if (quotaUpgradeTimerRef.current) {
+        clearTimeout(quotaUpgradeTimerRef.current);
+        quotaUpgradeTimerRef.current = null;
+      }
     };
-  }, [isOpen, brand, startGeneration]);
+  }, [isOpen, brandKey]);
 
   // Initialize editable pitch when packageData loads
   useEffect(() => {
@@ -3140,6 +3215,8 @@ const UnlockModalV2 = ({
   };
 
   const handleSend = async (skipNudge = false) => {
+    if (sendLockRef.current || sendingPitch || pitchSent || alreadyContacted) return;
+
     const { email: brandEmail, formUrl } = resolvePackEmail(packageData);
 
     // Form-only brands: open signup in a new tab (user submits — we don't)
@@ -3155,24 +3232,46 @@ const UnlockModalV2 = ({
       return;
     }
 
-    // Use edited values (V2 single-pitch flow)
-    const subject = editedSubject || '';
-    const body = editedBody || '';
+    sendLockRef.current = true;
+    setSendingPitch(true);
+
+    const isFollowupSend = Boolean(packageData?.is_followup || isFollowup);
+    const brandId = brand?.brand_id || brand?.id;
 
     try {
-      await copyToClipboard(body, 'pitch');
+      const gate = await beginBrandOutreach(apiClient, {
+        brandId,
+        slug: brand?.slug,
+        isFollowup: isFollowupSend,
+      });
+      if (!gate.allowed) {
+        setAlreadyContacted(true);
+        message.warning(getDuplicateOutreachMessage(gate));
+        return;
+      }
+
+      const subject = editedSubject || '';
+      const body = editedBody || '';
+      try {
+        await copyToClipboard(body, 'pitch');
+      } catch (err) {
+        console.warn('Copy pitch:', err);
+      }
       const mailtoUrl = `mailto:${brandEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&bcc=creators@newcollab.co`;
       window.location.href = mailtoUrl;
+
+      setPitchSent(true);
+      onPitchSent?.(brand, {
+        method: isFollowupSend ? 'followup' : 'email',
+        stayOpen: true,
+      });
     } catch (err) {
       console.warn('Send pitch:', err);
+      sendLockRef.current = false;
+      message.error('Could not open your email app. Please try again.');
+    } finally {
+      setSendingPitch(false);
     }
-
-    // Show compact sent state instead of PHASE_NEXT
-    setPitchSent(true);
-    onPitchSent?.(brand, {
-      method: packageData?.is_followup ? 'followup' : 'email',
-      stayOpen: true,
-    });
   };
 
   // Handle nudge modal actions
@@ -3203,6 +3302,30 @@ const UnlockModalV2 = ({
 
   if (!isOpen) return null;
 
+  if (error === 'paywall') {
+    return (
+      <UpgradeModal
+        isOpen
+        onClose={onClose}
+        feature="unlock_paywall"
+        currentCount={3}
+        limit={3}
+        unlockRemaining={0}
+      />
+    );
+  }
+
+  const packOverlay = (
+    <UpgradeModal
+      isOpen={showQuotaUpgrade}
+      onClose={() => setShowQuotaUpgrade(false)}
+      feature="last_unlock"
+      currentCount={3}
+      limit={3}
+      unlockRemaining={0}
+    />
+  );
+
   const brandName = brand?.brand_name || brand?.name || 'Brand';
   const brandCategory = brand?.category || '';
   const brandLogo = brand?.logo || brand?.logo_url;
@@ -3222,6 +3345,8 @@ const UnlockModalV2 = ({
   const microOk = minFollowers == null || minFollowers === '' || Number(minFollowers) === 0 || Number(minFollowers) <= 10000;
 
   return (
+    <>
+    {packOverlay}
     <AnimatePresence>
       <Overlay
         initial={{ opacity: 0 }}
@@ -3286,16 +3411,7 @@ const UnlockModalV2 = ({
 
             {phase === PHASE_MODAL && (
               <>
-                {error === 'paywall' ? (
-                  <UpgradeModal
-                    isOpen={true}
-                    onClose={onClose}
-                    feature="unlock_paywall"
-                    currentCount={3}
-                    limit={3}
-                    unlockRemaining={0}
-                  />
-                ) : error ? (
+                {error ? (
                   <div style={{ padding: '40px 20px', textAlign: 'center' }}>
                     <div style={{ fontSize: '48px', marginBottom: '16px' }}>😕</div>
                     <div style={{ fontWeight: 700, marginBottom: '8px' }}>Something went wrong</div>
@@ -3552,7 +3668,26 @@ const UnlockModalV2 = ({
             {phase === PHASE_OUTREACH && packageData && (
               <>
                 {/* COMPACT SENT STATE */}
-                {pitchSent ? (
+                {alreadyContacted ? (
+                  <SentStateContainer
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SentCheckmark>
+                      <FiCheck />
+                    </SentCheckmark>
+                    <SentTitle>Already emailed {brandName}</SentTitle>
+                    <SentSubtitle>
+                      {packageData?.is_followup
+                        ? 'You already sent a follow-up recently. Wait before sending another so it does not look like spam.'
+                        : 'Sending the same pitch twice can look like spam and hurt replies. Follow up from your pipeline after a week if they have not replied.'}
+                    </SentSubtitle>
+                    <SentSecondaryBtn onClick={() => navigate('/creator/dashboard/pr-pipeline')}>
+                      Open pipeline
+                    </SentSecondaryBtn>
+                  </SentStateContainer>
+                ) : pitchSent ? (
                   <SentStateContainer
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -3716,9 +3851,20 @@ const UnlockModalV2 = ({
 
                         {/* STICKY ACTION BAR */}
                         <StickyActionBar>
-                          <PrimaryActionBtn $ready onClick={() => handleSend(true)}>
-                            ✉ {packageData?.is_followup ? 'Send follow-up' : 'Send pitch'} to {brandName}
+                          <PrimaryActionBtn
+                            $ready
+                            disabled={sendingPitch}
+                            onClick={() => handleSend(true)}
+                          >
+                            ✉ {sendingPitch
+                              ? 'Opening email…'
+                              : packageData?.is_followup
+                                ? `Send follow-up to ${brandName}`
+                                : `Send pitch to ${brandName}`}
                           </PrimaryActionBtn>
+                          <SendOnceHint>
+                            Send once. Brands see every copy, and repeats can hurt your reply rate.
+                          </SendOnceHint>
 
                           <SecondaryLinks>
                             {formUrl && (
@@ -3874,6 +4020,7 @@ const UnlockModalV2 = ({
         </FrictionModalOverlay>
       )}
     </AnimatePresence>
+    </>
   );
 };
 

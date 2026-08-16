@@ -1090,7 +1090,7 @@ const PRPipeline = () => {
       return `${savedUnlockCount} saved brand${savedUnlockCount === 1 ? '' : 's'}. Unlock a pack to get the email and a pitch.`;
     }
     if (atCap) {
-      return 'Free packs used this month. Three more for $9, or go unlimited.';
+      return 'Free packs used this month. Keep sending with Pro, or grab three more for $9.';
     }
     return 'Unlock a brand on For You. Packs you open land here.';
   })();
@@ -1138,7 +1138,7 @@ const PRPipeline = () => {
             <QuotaTitle>
               {packsRemaining > 0 && packsRemaining !== Infinity
                 ? `${packsRemaining} pack${packsRemaining === 1 ? '' : 's'} left this month`
-                : 'Monthly packs used. Unlock 3 more or go unlimited'}
+                : 'Monthly packs used. Go Pro or grab 3 more'}
             </QuotaTitle>
             <QuotaSub>{pitchLimits.used} used · resets {getNextResetDate()}</QuotaSub>
           </QuotaText>
@@ -1290,9 +1290,9 @@ const PRPipeline = () => {
             <LockIconWrap>🔒</LockIconWrap>
             <LockedTextWrap>
               <LockedTitle>Keep sending this month</LockedTitle>
-              <LockedSub>Three more packs for $9, or unlimited this month.</LockedSub>
+              <LockedSub>Unlimited packs with Pro, or three more for $9.</LockedSub>
             </LockedTextWrap>
-            <LockedCta>$9</LockedCta>
+            <LockedCta>$19</LockedCta>
           </LockedCard>
         )}
       </BrandList>

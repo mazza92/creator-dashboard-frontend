@@ -560,7 +560,15 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         status: err.response?.status,
         data: err.response?.data,
       });
-      setError(err.response?.data?.error || 'An error occurred. Please try again.');
+      const errorMessage = err.response?.data?.error || 'An error occurred. Please try again.';
+      if (
+        err.response?.status === 403 &&
+        (errorMessage.toLowerCase().includes('region') || errorMessage.toLowerCase().includes('restricted'))
+      ) {
+        setRegionBlocked(true);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

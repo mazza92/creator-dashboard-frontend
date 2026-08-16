@@ -1084,13 +1084,13 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   </QuotaTitle>
                   <QuotaSub>
                     {remaining <= 0
-                      ? '3 more for $9, or unlimited this month'
+                      ? 'Keep sending with Pro, or grab three more for $9'
                       : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
                   </QuotaSub>
                 </QuotaText>
                 {remaining <= 0 && (
                   <QuotaUpgrade onClick={() => setUpgradeModalVisible(true)}>
-                    Unlock 3 more · $9
+                    Go Pro · $19/mo
                   </QuotaUpgrade>
                 )}
               </QuotaBanner>

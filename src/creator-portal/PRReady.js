@@ -3076,6 +3076,7 @@ export default function PRReady() {
         currentCount={primaryMeter?.used ?? 0}
         limit={primaryMeter?.limit || 3}
         pitchLimits={primaryMeter}
+        unlockRemaining={unlocksLeft}
       />
     </Wrap>
   );

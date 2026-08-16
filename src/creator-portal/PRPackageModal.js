@@ -7,6 +7,7 @@ import { apiClient } from '../config/api';
 import { message, Tooltip, Modal as AntModal } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
+import { beginBrandOutreach, getDuplicateOutreachMessage } from '../utils/outreachSendGuard';
 
 /**
  * PR Package Modal - V2 Single Pitch with Mandatory Edit
@@ -56,6 +57,8 @@ const PRPackageModal = ({
   const [animationStep, setAnimationStep] = useState(0);
   const [showAnimation, setShowAnimation] = useState(true);
   const [showFrictionModal, setShowFrictionModal] = useState(false);
+  const [sendingPitch, setSendingPitch] = useState(false);
+  const sendLockRef = useRef(false);
 
   const bodyTextareaRef = useRef(null);
   const navigate = useNavigate();
@@ -242,22 +245,41 @@ const PRPackageModal = ({
   };
 
   // Open email client with pitch
-  const handleSendPitch = () => {
-    if (!brandEmail) return;
+  const handleSendPitch = async () => {
+    if (!brandEmail || sendLockRef.current || sendingPitch) return;
+    sendLockRef.current = true;
+    setSendingPitch(true);
 
-    const subject = encodeURIComponent(editedSubject);
-    const body = encodeURIComponent(editedBody);
-    const mailtoUrl = `mailto:${brandEmail}?subject=${subject}&body=${body}`;
-
-    window.open(mailtoUrl, '_blank');
-
-    if (onPitchSent) {
-      onPitchSent({
-        brand,
-        subject: editedSubject,
-        edited: charDelta > 0,
-        editedChars: charDelta,
+    try {
+      const gate = await beginBrandOutreach(apiClient, {
+        brandId: brand?.brand_id || brand?.id,
+        slug: brand?.slug,
+        isFollowup: Boolean(brand?.isFollowup),
       });
+      if (!gate.allowed) {
+        sendLockRef.current = false;
+        message.warning(getDuplicateOutreachMessage(gate));
+        return;
+      }
+
+      const subject = encodeURIComponent(editedSubject);
+      const body = encodeURIComponent(editedBody);
+      const mailtoUrl = `mailto:${brandEmail}?subject=${subject}&body=${body}`;
+      window.location.href = mailtoUrl;
+
+      if (onPitchSent) {
+        onPitchSent({
+          brand,
+          subject: editedSubject,
+          edited: charDelta > 0,
+          editedChars: charDelta,
+        });
+      }
+    } catch (err) {
+      sendLockRef.current = false;
+      message.error('Could not open your email app. Please try again.');
+    } finally {
+      setSendingPitch(false);
     }
   };
 
@@ -479,8 +501,9 @@ const PRPackageModal = ({
                 <SendButton
                   onClick={handleSendClick}
                   $ready={canSend}
+                  disabled={!canSend || sendingPitch}
                 >
-                  Send pitch <FiArrowRight />
+                  {sendingPitch ? 'Opening email…' : <>Send pitch <FiArrowRight /></>}
                 </SendButton>
 
                 {/* Secondary Actions */}
@@ -1051,6 +1074,12 @@ const SendButton = styled.button`
 
   &:hover {
     background: ${props => props.$ready ? '#2563eb' : '#6b7280'};
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.75;
+    pointer-events: none;
   }
 `;
 

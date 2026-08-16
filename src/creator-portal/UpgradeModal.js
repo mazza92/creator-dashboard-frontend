@@ -116,10 +116,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             </ModalIcon>
 
             <Headline>
-              {atCap ? (
+              {feature === 'last_unlock' ? (
+                <>
+                  Your last free pack is ready.<br />
+                  Keep going. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
+                </>
+              ) : atCap ? (
                 <>
                   {used} of {total} free packs used.<br />
-                  Keep sending. That's how <PinkSpan>first PR</PinkSpan> happens.
+                  Keep going. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
                 </>
               ) : (
                 <>
@@ -129,8 +134,10 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               )}
             </Headline>
             <Subtext>
-              {atCap
-                ? 'Three more brand emails and pitches, ready to send. Or go unlimited this month.'
+              {feature === 'last_unlock'
+                ? 'Close this to send the pitch you just unlocked. Pro keeps you sending this month, drafts the 7-day follow-up, and shows kit opens. Or grab three more packs for $9.'
+                : atCap
+                ? 'Pro keeps you sending this month, drafts the 7-day follow-up, and shows which brands opened your kit. Or grab three more packs for $9.'
                 : 'Every extra brand you reach raises the odds of your first yes. You get the contact and a pitch that\'s ready to send. Pro is how you keep doing that all month, like a professional.'}
             </Subtext>
 
@@ -146,14 +153,24 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             </ProgressSection>
 
             {atCap ? (
+              <>
               <PriceCard>
-                <ProBadge>3 packs</ProBadge>
+                <ProBadge>Pro</ProBadge>
                 <PriceRow>
-                  <PriceAmount>$9</PriceAmount>
-                  <PricePer>one-time</PricePer>
+                  <PriceAmount>$19</PriceAmount>
+                  <PricePer>/ month</PricePer>
                 </PriceRow>
-                <PriceSubline>Email plus a pitch for three more brands</PriceSubline>
+                <PriceSubline>Unlimited packs · follow-ups · kit views · cancel anytime</PriceSubline>
               </PriceCard>
+              <FeatureList>
+                {features.map((f, i) => (
+                  <FeatureItem key={i}>
+                    <FeatureIcon style={{ background: f.bg }}>{f.emoji}</FeatureIcon>
+                    <FeatureText>{f.text}</FeatureText>
+                  </FeatureItem>
+                ))}
+              </FeatureList>
+              </>
             ) : (
               <>
             {/* Stat Chips */}
@@ -225,7 +242,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             <ProofBox>
               <ProofIcon>✓</ProofIcon>
               <ProofText>
-                <strong>Treat outreach like a professional.</strong> Find the contact, send the pitch, follow up. We make that the easy part.
+                {atCap ? (
+                  <>
+                    <strong>Your 3 pitches are out.</strong> Pro is how you follow up and see who opened the kit, instead of going quiet.
+                  </>
+                ) : (
+                  <>
+                    <strong>Treat outreach like a professional.</strong> Find the contact, send the pitch, follow up. We make that the easy part.
+                  </>
+                )}
               </ProofText>
             </ProofBox>
           </ModalScroll>
@@ -235,18 +260,18 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             {atCap ? (
               <>
                 <CtaButton
-                  onClick={handlePackCheckout}
+                  onClick={() => handleUpgrade('pro')}
                   disabled={busy}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {packLoading ? 'Processing...' : 'Unlock 3 more packs · $9'}
+                  {loading ? 'Processing...' : 'Unlimited this month · $19/mo Pro'}
                 </CtaButton>
                 <SecondaryCta
                   type="button"
-                  onClick={() => handleUpgrade('pro')}
+                  onClick={handlePackCheckout}
                   disabled={busy}
                 >
-                  {loading ? 'Processing...' : 'Unlimited this month · $19/mo Pro'}
+                  {packLoading ? 'Processing...' : 'Just 3 more packs · $9'}
                 </SecondaryCta>
               </>
             ) : (

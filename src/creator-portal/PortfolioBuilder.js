@@ -120,8 +120,20 @@ const PortfolioBuilder = ({ currentUser }) => {
 
   const fetchKitViews = async () => {
     try {
-      const res = await apiClient.get('/api/portfolio/views');
-      setKitViews(res.data);
+      const [portfolioRes, crmRes] = await Promise.all([
+        apiClient.get('/api/portfolio/views').catch(() => null),
+        apiClient.get('/api/pr-crm/kit-views').catch(() => null),
+      ]);
+      const portfolio = portfolioRes?.data || {};
+      const crm = crmRes?.data || {};
+      setKitViews({
+        ...portfolio,
+        views_this_week: crm.views_this_week ?? portfolio.views_this_week ?? 0,
+        brands_this_week: crm.brands_this_week || 0,
+        teaser_brand_name: crm.teaser_brand_name || null,
+        views: crm.views || [],
+        is_pro: crm.is_pro,
+      });
     } catch (e) { /* silent */ }
   };
 
@@ -440,8 +452,18 @@ const PortfolioBuilder = ({ currentUser }) => {
           <ViewsTeaserLeft>
             <FaEye size={18} style={{ color: '#9CA3AF' }} />
             <ViewsTeaserText>
-              <ViewsTeaserTitle>Track your kit views</ViewsTeaserTitle>
-              <ViewsTeaserSub>See when brands are checking out your portfolio</ViewsTeaserSub>
+              <ViewsTeaserTitle>
+                {kitViews.teaser_brand_name
+                  ? `${kitViews.teaser_brand_name} viewed your kit`
+                  : 'Track your kit views'}
+              </ViewsTeaserTitle>
+              <ViewsTeaserSub>
+                {kitViews.teaser_brand_name
+                  ? (kitViews.brands_this_week > 1
+                    ? `${kitViews.brands_this_week - 1} more brand${kitViews.brands_this_week - 1 === 1 ? '' : 's'} this week. Pro shows every view.`
+                    : 'Pro shows every brand that opens your kit.')
+                  : 'See when brands are checking out your portfolio'}
+              </ViewsTeaserSub>
             </ViewsTeaserText>
           </ViewsTeaserLeft>
           <ProBadge><FaLock size={10} /> Pro</ProBadge>

@@ -826,12 +826,12 @@ const ForYou = () => {
               {packsExhausted && (
                 <CreditUpgradeBar>
                   <CreditUpgradeHint>
-                    Free packs used. Three more for $9, or unlimited this month.
+                    Free packs used. Keep sending with Pro, or grab three more for $9.
                   </CreditUpgradeHint>
                   <QuotaUpgrade onClick={() => {
                     setUpgradeReason('unlock_paywall');
                     setShowUpgrade(true);
-                  }}>Unlock 3 more · $9</QuotaUpgrade>
+                  }}>Go Pro · $19/mo</QuotaUpgrade>
                 </CreditUpgradeBar>
               )}
             </>
@@ -955,9 +955,21 @@ const ForYou = () => {
                     {showKitViewsList ? 'Hide details ↑' : 'See all views →'}
                   </KitViewsUpgrade>
                 </>
+              ) : kitViews.teaser_brand_name ? (
+                <>
+                  <KitViewsSub>
+                    {kitViews.teaser_brand_name} viewed your kit
+                    {kitViews.brands_this_week > 1
+                      ? ` · ${kitViews.brands_this_week - 1} more behind Pro`
+                      : ''}
+                  </KitViewsSub>
+                  <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
+                    See who else is checking you out →
+                  </KitViewsUpgrade>
+                </>
               ) : (
                 <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
-                  Upgrade to see who's checking you out →
+                  Upgrade to see who&apos;s checking you out →
                 </KitViewsUpgrade>
               )}
             </KitViewsContent>

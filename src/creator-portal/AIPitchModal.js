@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
+import { beginBrandOutreach, getDuplicateOutreachMessage } from '../utils/outreachSendGuard';
 // Media kit enforcement removed - let users try the feature immediately
 
 /**
@@ -465,6 +466,8 @@ ${creatorName}`;
   };
 
   const handleSendEmail = async () => {
+    if (sending || pitchSent) return;
+
     // Follow-ups don't consume pitch credits (Pro only feature)
     // Show upgrade overlay instead of blocking with a warning
     if (!isFollowup && !pitchLimits.canPitch) {
@@ -475,6 +478,16 @@ ${creatorName}`;
     setSending(true);
 
     try {
+      const gate = await beginBrandOutreach(api, {
+        brandId: brand?.brand_id || brand?.id,
+        slug: brand?.slug,
+        isFollowup,
+      });
+      if (!gate.allowed) {
+        message.warning(getDuplicateOutreachMessage(gate));
+        return;
+      }
+
       // Only track pitch usage for initial outreach, not follow-ups
       // Use pitchTracked flag (not contactRevealed) since contact is revealed during generatePitch
       if (!isFollowup && !pitchTracked) {
