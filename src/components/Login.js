@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { UserContext } from '../contexts/UserContext';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import { auth, firebaseConfigured } from './firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { apiClient } from '../config/api';
 import { FaTiktok } from 'react-icons/fa6';
+import { safeInternalPath } from '../utils/upgradeDeeplink';
 
 // V5 design tokens — kept consistent with About / Landing pages
 const colors = {
@@ -499,10 +500,22 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const [error, setError] = useState('');
   const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setUser } = useContext(UserContext);
   const [form] = Form.useForm();
 
   const googleLoginEnabled = Boolean(firebaseConfigured && auth);
+
+  const postLoginPath = (data) => {
+    if (data?.profile_incomplete) return '/onboarding';
+    return (
+      safeInternalPath(searchParams.get('redirect')) ||
+      safeInternalPath(data?.redirect_url) ||
+      (data?.user_role === 'creator'
+        ? '/creator/dashboard/for-you'
+        : '/brand/dashboard/overview')
+    );
+  };
 
   const handleLogin = async (values) => {
     const { email, password } = values;
@@ -534,22 +547,14 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
           message.info("Welcome back! Let's complete your profile setup.");
         }
 
-        console.log('✅ Login successful, redirecting to:', data.redirect_url);
-
         if (onSuccess) {
           onSuccess();
           return;
         }
 
-        try {
-          const urlObj = new URL(data.redirect_url, window.location.origin);
-          const redirectUrl = urlObj.pathname + urlObj.search + urlObj.hash;
-          console.log('🔄 Extracted pathname:', redirectUrl);
-          navigate(redirectUrl);
-        } catch (e) {
-          console.log('🔄 Using redirect URL as-is:', data.redirect_url);
-          navigate(data.redirect_url);
-        }
+        const redirectUrl = postLoginPath(data);
+        console.log('✅ Login successful, redirecting to:', redirectUrl);
+        navigate(redirectUrl);
       } else {
         console.warn('🚖 Unexpected login response:', data);
         setError('Login failed. Please try again.');
@@ -618,11 +623,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         brand_id: data.brand_id,
       });
 
-      const redirectUrl =
-        data.redirect_url ||
-        (data.user_role === 'creator'
-          ? '/creator/dashboard/for-you'
-          : '/brand/dashboard/overview');
+      const redirectUrl = postLoginPath(data);
       console.log('🔄 Navigating to:', redirectUrl);
       navigate(redirectUrl, { replace: true });
     } catch (err) {

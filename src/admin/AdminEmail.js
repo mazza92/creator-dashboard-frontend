@@ -20,6 +20,31 @@ const { TextArea } = Input;
 const ADMIN_EMAIL = 'team@newcollab.co';
 const ADMIN_PASSWORD = 'Ilovela1992!';
 
+const FOUNDER_SPRINT_ANNOUNCEMENT = {
+  emailSubject: '{{first_name}}, I will send your next 8 pitches this week',
+  headerTitle: 'Your 3 are out. I will send the next 8.',
+  headerSubtitle: '',
+  gradient: 'dark',
+  bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
+<p style="margin: 0 0 16px 0;">You already used your 3 free packs. Most people stop there and wait for next month. That is how first PR does not happen.</p>
+<p style="margin: 0 0 16px 0;">If you go Pro today ($19/mo), I will personally pick 8 more brands that fit you and send from your kit this week. You approve the list first. I will not blast the directory.</p>
+<p style="margin: 0;">Your original 3 stay in the pipeline. Pro also drafts the 7-day follow-up and shows who opened your kit. Cancel anytime after this week if it is not useful.</p>
+<p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
+  calloutText: 'Cap of 8 extra this month. You approve. We send. Not unlimited blasting.',
+  calloutIcon: '',
+  listItems: [
+    { icon: '1', title: 'You approve the 8 brands', text: 'I pick ones that fit your niche. Nothing goes out without your yes.' },
+    { icon: '2', title: 'I send from your kit this week', text: 'Same pitch flow you already used. I do the sending so you do not stall.' },
+    { icon: '3', title: 'We follow up on the first 3', text: 'Pro drafts the 7-day follow-up and shows kit opens, instead of going quiet.' },
+  ],
+  ctaLabel: 'Go Pro · I will send the next 8',
+  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=founder_sprint&utm_source=email&utm_medium=campaign&utm_campaign=founder_sprint_3of3',
+  preheader: 'You already used your 3. Approve a list and I send them.',
+  utmCampaign: 'founder_sprint_3of3',
+  campaignName: 'Founder sprint — 3/3 unlocks',
+  segmentId: 'at_quota_limit',
+};
+
 const AdminEmail = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -71,6 +96,10 @@ const AdminEmail = () => {
     ctaLabel: 'Go to Dashboard',
     ctaUrl: 'https://app.newcollab.co',
     preheader: '',
+    listItems: [],
+    utmCampaign: 'general_announcement',
+    campaignName: '',
+    segmentId: '',
   });
 
   // Check auth on mount
@@ -94,22 +123,24 @@ const AdminEmail = () => {
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const runSendPump = async (campaignId) => {
-    if (sendPumpsRef.current[campaignId]) return;
+  const runSendPump = async (campaignId, { force = false, resetAttempts = false } = {}) => {
+    if (!force && sendPumpsRef.current[campaignId]) return;
     sendPumpsRef.current[campaignId] = true;
     setSending(true);
     const key = `send-progress-${campaignId}`;
     message.loading({ content: 'Sending emails...', key, duration: 0 });
 
     let consecutiveErrors = 0;
+    let stopReason = 'idle';
     try {
-      while (sendPumpsRef.current[campaignId]) {
+      while (sendPumpsRef.current[campaignId] === true) {
         try {
           const { data } = await api.post(
             `/api/admin/email/campaigns/${campaignId}/continue`,
-            {},
+            resetAttempts ? { reset_attempts: true } : {},
             { ...getApiConfig(), timeout: 90000 }
           );
+          resetAttempts = false;
           consecutiveErrors = 0;
           const remaining = (data.remaining || 0) + (data.sending || 0);
           message.loading({
@@ -119,7 +150,8 @@ const AdminEmail = () => {
           });
           fetchCampaigns();
 
-          if (data.is_complete || data.status === 'sent') {
+          if (data.is_complete || data.status === 'sent' || data.status === 'failed') {
+            stopReason = 'done';
             message.success({
               content: `Campaign complete: ${data.total_sent}/${data.total_recipients} sent`,
               key,
@@ -133,12 +165,25 @@ const AdminEmail = () => {
             await sleep(400);
             continue;
           }
+          stopReason = 'done';
           break;
         } catch (error) {
+          const status = error.response?.status;
+          const errText = error.response?.data?.error || '';
+          if (status === 503 || /RESEND_API_KEY/i.test(errText)) {
+            stopReason = 'stopped';
+            message.error({
+              content: 'Send stopped: Resend is not configured on this server. Close this tab if you already sent from production.',
+              key,
+              duration: 8
+            });
+            break;
+          }
           consecutiveErrors += 1;
           if (consecutiveErrors >= 5) {
+            stopReason = 'stopped';
             message.warning({
-              content: 'Send paused. Keep this tab open or click Continue to resume.',
+              content: 'Send paused. Click Continue only if this campaign still has unsent recipients.',
               key,
               duration: 6
             });
@@ -148,7 +193,7 @@ const AdminEmail = () => {
         }
       }
     } finally {
-      delete sendPumpsRef.current[campaignId];
+      sendPumpsRef.current[campaignId] = stopReason === 'idle' ? 'stopped' : stopReason;
       setSending(false);
     }
   };
@@ -266,9 +311,12 @@ const AdminEmail = () => {
         type: 'callout',
         text: config.calloutText,
         icon: config.calloutIcon || '💡',
-        color: '#26A69A',
-        bg: '#f0faf9',
+        color: '#111827',
+        bg: '#f9fafb',
       });
+    }
+    if (config.listItems && config.listItems.length) {
+      blocks.push({ type: 'list', items: config.listItems });
     }
     const subject = announcementSubject(config);
     return generateGeneralAnnouncement({
@@ -281,7 +329,7 @@ const AdminEmail = () => {
       primaryCta: config.ctaLabel ? { label: config.ctaLabel, url: config.ctaUrl || 'https://app.newcollab.co' } : null,
       preheader: (config.preheader || '').trim(),
       subject,
-      utmCampaign: 'general_announcement',
+      utmCampaign: config.utmCampaign || 'general_announcement',
     });
   };
 
@@ -444,8 +492,9 @@ const AdminEmail = () => {
   };
 
   const handleContinueSending = async (campaignId) => {
+    delete sendPumpsRef.current[campaignId];
     message.loading({ content: 'Resuming send...', key: `send-progress-${campaignId}`, duration: 0 });
-    runSendPump(campaignId);
+    runSendPump(campaignId, { force: true, resetAttempts: true });
   };
 
   const handleSendTest = async (campaignId) => {
@@ -890,6 +939,30 @@ const AdminEmail = () => {
                   </ModernTemplateCard>
                 </Col>
                 <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setAnnouncementConfig({
+                        ...FOUNDER_SPRINT_ANNOUNCEMENT,
+                      });
+                      setShowAnnouncementPreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
+                    <div className="template-icon-large">8</div>
+                    <h4>Founder sprint (3/3)</h4>
+                    <p>Maher offers to pick and send the next 8 pitches this week. Targets free users who used all 3 packs.</p>
+                    <div className="template-features">
+                      <span>At 3/3</span>
+                      <span>Live Composer</span>
+                      <span>$19 Pro</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
+                      <EyeOutlined /> Compose &amp; Preview
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
                   <ModernTemplateCard disabled>
                     <div className="template-badge coming-soon">COMING SOON</div>
                     <div className="template-icon-large">⚡</div>
@@ -1308,13 +1381,21 @@ const AdminEmail = () => {
                   style={{ background: 'linear-gradient(135deg, #26A69A 0%, #00897B 100%)', border: 'none' }}
                   onClick={() => {
                     const html = buildAnnouncementHTML(announcementConfig, true);
+                    const dateLabel = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     setEmailContent(html);
                     setSubjectOverride(announcementSubject(announcementConfig));
-                    setCampaignName(`General Announcement - ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
-                    setSelectedTemplate(null); // Clear any previously selected template - using custom HTML
+                    setCampaignName(announcementConfig.campaignName || `General Announcement - ${dateLabel}`);
+                    setSelectedTemplate(null);
+                    if (announcementConfig.segmentId) {
+                      handleSegmentSelect(announcementConfig.segmentId);
+                    }
                     setShowAnnouncementPreview(false);
                     setShowCampaignModal(true);
-                    message.success('Template loaded! Finish setting up your campaign.');
+                    message.success(
+                      announcementConfig.segmentId === 'at_quota_limit'
+                        ? 'Loaded. Segment is already set to At 3/3 unlocks. Send a test first.'
+                        : 'Template loaded! Finish setting up your campaign.'
+                    );
                   }}
                 >
                   Use This Template

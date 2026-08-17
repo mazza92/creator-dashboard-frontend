@@ -8,6 +8,7 @@ import IndexNowInitializer from './components/IndexNowInitializer';
 import IndexNowTest from './components/IndexNowTest';
 import QueryParamRedirect from './components/QueryParamRedirect';
 import CreatorHomeRedirect from './components/CreatorHomeRedirect';
+import { loginUrlWithReturn } from './utils/upgradeDeeplink';
 import BrandOnboardingForm from './components/forms/BrandOnboardingForm';
 // eslint-disable-next-line no-unused-vars
 import CreatorOnboardingForm from './components/forms/CreatorOnboardingForm';
@@ -287,7 +288,7 @@ function AppContent() {
                     localStorage.setItem('sessionExpired', 'true');
                 }
                 console.log('🟢 Redirecting unauthenticated user to /login');
-                navigate('/login', { replace: true });
+                navigate(loginUrlWithReturn(location), { replace: true });
             } else if (user) {
                 const correctBasePath = user.role === 'creator' ? '/creator/dashboard/for-you' : '/brand/dashboard/overview';
                 
@@ -470,7 +471,7 @@ function AppContent() {
                         ? <LoadingSpinner fullScreen />
                         : user
                             ? <Navigate to={user.role === 'brand' ? '/brand/dashboard/overview' : '/creator/dashboard/for-you'} replace />
-                            : <Navigate to='/login?redirect=/creator/dashboard/for-you' replace />
+                            : <Navigate to={loginUrlWithReturn(location)} replace />
                 }
             />
 
@@ -480,7 +481,7 @@ function AppContent() {
             {/* Brand dashboard routes with layout */}
             <Route
                 path='/brand'
-                element={user ? <DashboardLayout /> : <Navigate to='/login' replace />}
+                element={user ? <DashboardLayout /> : <Navigate to={loginUrlWithReturn(location)} replace />}
             >
             <Route index element={<Navigate to='/brand/dashboard/overview' replace />} />
             <Route path='dashboard' element={<Navigate to='/brand/dashboard/overview' replace />} />
@@ -496,7 +497,7 @@ function AppContent() {
             {/* Creator dashboard routes with layout */}
             <Route
                 path='/creator'
-                element={user ? <CreatorDashboardLayout /> : <Navigate to='/login' replace />}
+                element={user ? <CreatorDashboardLayout /> : <Navigate to={loginUrlWithReturn(location)} replace />}
             >
                 <Route index element={<CreatorHomeRedirect />} />
                 <Route path='dashboard' element={<CreatorHomeRedirect />} />

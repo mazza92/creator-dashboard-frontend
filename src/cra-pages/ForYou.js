@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { consumeUpgradeDeeplink, stripUpgradeQuery, dismissUpgradeDeeplink } from '../utils/upgradeDeeplink';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { Mail, Heart, Check, Users, Sparkles, Lock, ChevronRight, Eye, FileText, ArrowRight } from 'lucide-react';
@@ -72,6 +73,7 @@ const writeCachedForYou = (payload) => {
 const ForYou = () => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [data, setData] = useState(() => readCachedForYou());
   const [loading, setLoading] = useState(() => !readCachedForYou());
@@ -260,29 +262,15 @@ const ForYou = () => {
     }
   }, [loading, data, unlockBalance, showWelcomeTour]);
 
-  // Check for upgrade query param (from email CTAs)
+  // Email / campaign CTAs: /creator/dashboard/for-you?upgrade=pro
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const upgradeParam = urlParams.get('upgrade');
-
-    if (upgradeParam) {
-      // Map upgrade param to reason text
-      const reasonMap = {
-        'kit_views': 'See which brands viewed your kit and send follow-up pitches',
-        'pitch_limit': 'Send unlimited pitches to any brand',
-        'default': 'Unlock Pro features'
-      };
-      setUpgradeReason(reasonMap[upgradeParam] || reasonMap.default);
-      setShowUpgrade(true);
-
-      // Clean up URL
-      urlParams.delete('upgrade');
-      urlParams.delete('utm_source');
-      urlParams.delete('utm_medium');
-      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, []);
+    const feature = consumeUpgradeDeeplink(searchParams);
+    if (!feature) return;
+    setUpgradeReason(feature);
+    setShowUpgrade(true);
+    const { next, changed } = stripUpgradeQuery(searchParams);
+    if (changed) setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // ── Social proof notification feed: creator pool and brands ──
   const SOCIAL_CREATORS = useMemo(() => [
@@ -1177,7 +1165,10 @@ const ForYou = () => {
       {showUpgrade && (
         <UpgradeModal
           isOpen={showUpgrade}
-          onClose={() => setShowUpgrade(false)}
+          onClose={() => {
+            setShowUpgrade(false);
+            dismissUpgradeDeeplink();
+          }}
           currentCount={unlockBalance.used ?? Math.max(0, FREE_PITCH_LIMIT - (unlockBalance.remaining ?? FREE_PITCH_LIMIT))}
           limit={FREE_PITCH_LIMIT}
           unlockRemaining={unlockBalance.is_unlimited ? null : (unlockBalance.remaining ?? 0)}

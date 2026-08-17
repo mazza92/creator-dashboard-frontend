@@ -7,6 +7,7 @@ import api from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { consumeUpgradeDeeplink, stripUpgradeQuery, dismissUpgradeDeeplink } from '../utils/upgradeDeeplink';
 
 // Niche options - must match onboarding for consistency
 const NICHE_OPTIONS = [
@@ -32,11 +33,12 @@ const NICHE_OPTIONS = [
 ];
 
 const AccountSettings = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState('brand contacts');
 
   // Niche editing state
   const [selectedNiches, setSelectedNiches] = useState([]);
@@ -57,10 +59,13 @@ const AccountSettings = () => {
 
   // Email nudge CTA: /creator/dashboard/settings?upgrade=pro
   useEffect(() => {
-    if (searchParams.get('upgrade') === 'pro') {
-      setShowUpgradeModal(true);
-    }
-  }, [searchParams]);
+    const feature = consumeUpgradeDeeplink(searchParams);
+    if (!feature) return;
+    setUpgradeFeature(feature);
+    setShowUpgradeModal(true);
+    const { next, changed } = stripUpgradeQuery(searchParams);
+    if (changed) setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const fetchSubscriptionStatus = async () => {
     try {
@@ -448,11 +453,13 @@ const AccountSettings = () => {
       {showUpgradeModal && (
         <UpgradeModal
           isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          feature={searchParams.get('upgrade') === 'pro' ? 'limit_reached' : undefined}
+          onClose={() => {
+            setShowUpgradeModal(false);
+            dismissUpgradeDeeplink();
+          }}
+          feature={upgradeFeature}
           currentCount={subscriptionInfo?.contacts_used_this_week || 0}
           limit={subscriptionInfo?.contacts_limit || 3}
-          feature="brand contacts"
         />
       )}
 
