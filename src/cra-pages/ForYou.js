@@ -826,7 +826,7 @@ const ForYou = () => {
               {packsExhausted && (
                 <CreditUpgradeBar>
                   <CreditUpgradeHint>
-                    Free packs used. Keep sending with Pro, or grab three more for $9.
+                    Free packs used. Keep sending with Pro at $19/mo.
                   </CreditUpgradeHint>
                   <QuotaUpgrade onClick={() => {
                     setUpgradeReason('unlock_paywall');

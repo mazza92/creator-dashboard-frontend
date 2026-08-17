@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiLock, FiShield, FiClock } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
-import { trackPackBeginCheckout, trackProBeginCheckout } from '../utils/subscriptionAnalytics';
+import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 
 const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining }) => {
   const [loading, setLoading] = useState(false);
-  const [packLoading, setPackLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState('monthly'); // Default to monthly
 
   const remainingKnown = unlockRemaining != null && Number.isFinite(Number(unlockRemaining));
@@ -40,27 +39,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     }
   };
 
-  const handlePackCheckout = async () => {
-    try {
-      setPackLoading(true);
-      trackPackBeginCheckout({ source: feature || 'upgrade_modal' });
-      const response = await api.post('/api/subscription/create-pack-checkout', {});
-      window.location.href = response.data.checkout_url;
-    } catch (error) {
-      console.error('Pack checkout error:', error);
-      const errorData = error.response?.data;
-      if (errorData?.code === 'stripe_account_pending') {
-        message.warning('Payment processing is temporarily unavailable. Please try again later or contact support@newcollab.co');
-      } else {
-        message.error('Failed to start checkout. Please try again.');
-      }
-      setPackLoading(false);
-    }
-  };
-
   if (!isOpen) return null;
 
-  const busy = loading || packLoading;
+  const busy = loading;
 
   const features = [
     {
@@ -135,9 +116,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             </Headline>
             <Subtext>
               {feature === 'last_unlock'
-                ? 'Close this to send the pitch you just unlocked. Pro keeps you sending this month, drafts the 7-day follow-up, and shows kit opens. Or grab three more packs for $9.'
+                ? 'Close this to send the pitch you just unlocked. Pro keeps you sending this month, drafts the 7-day follow-up, and shows kit opens.'
                 : atCap
-                ? 'Pro keeps you sending this month, drafts the 7-day follow-up, and shows which brands opened your kit. Or grab three more packs for $9.'
+                ? 'Pro keeps you sending this month, drafts the 7-day follow-up, and shows which brands opened your kit. Wait for next month, or go Pro now.'
                 : 'Every extra brand you reach raises the odds of your first yes. You get the contact and a pitch that\'s ready to send. Pro is how you keep doing that all month, like a professional.'}
             </Subtext>
 
@@ -266,13 +247,6 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 >
                   {loading ? 'Processing...' : 'Unlimited this month · $19/mo Pro'}
                 </CtaButton>
-                <SecondaryCta
-                  type="button"
-                  onClick={handlePackCheckout}
-                  disabled={busy}
-                >
-                  {packLoading ? 'Processing...' : 'Just 3 more packs · $9'}
-                </SecondaryCta>
               </>
             ) : (
               <CtaButton

@@ -4,8 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../utils/api';
 import { UserContext } from '../../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
-import { FaInstagram, FaTiktok, FaYoutube, FaPinterest, FaXTwitter } from 'react-icons/fa6';
-import { HiOutlinePencilSquare } from 'react-icons/hi2';
+import { FaInstagram, FaTiktok, FaYoutube } from 'react-icons/fa6';
 import { SocialVerificationStep } from '../SocialVerification';
 import ProfileScrapingLoader from '../ProfileScrapingLoader';
 import { scrapeHelpFromError } from '../../utils/scrapeHelp';
@@ -260,33 +259,6 @@ const PlatformName = styled.div`
   color: ${colors.text2};
 `;
 
-const FollowerReveal = styled.div`
-  display: ${props => props.$show ? 'flex' : 'none'};
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  background: #F9F9F9;
-  border: 1.5px solid ${colors.border};
-  border-radius: 10px;
-  margin-bottom: 14px;
-`;
-
-const FollowerLabel = styled.span`
-  font-size: 13px;
-  font-weight: 700;
-  flex-shrink: 0;
-`;
-
-const FollowerInput = styled.input`
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  color: ${colors.text};
-  outline: none;
-  &::placeholder { color: ${colors.text3}; }
-`;
 
 const VerificationNote = styled.div`
   font-size: 13px;
@@ -674,9 +646,6 @@ const PLATFORMS = [
   { id: 'instagram', icon: <FaInstagram color="#E4405F" />, name: 'Instagram', label: 'Followers' },
   { id: 'tiktok', icon: <FaTiktok color="#000000" />, name: 'TikTok', label: 'Followers' },
   { id: 'youtube', icon: <FaYoutube color="#FF0000" />, name: 'YouTube', label: 'Subscribers' },
-  { id: 'pinterest', icon: <FaPinterest color="#E60023" />, name: 'Pinterest', label: 'Monthly views' },
-  { id: 'twitter', icon: <FaXTwitter color="#000000" />, name: 'X / Twitter', label: 'Followers' },
-  { id: 'blog', icon: <HiOutlinePencilSquare color="#6B7280" />, name: 'Blog', label: 'Readers/mo' },
 ];
 
 // Keep in sync with CANONICAL_CATEGORIES in constants/brandCategories.js
@@ -731,7 +700,6 @@ export default function CreatorOnboarding() {
   // Step 1
   const [username, setUsername] = useState('');
   const [platform, setPlatform] = useState('');
-  const [followers, setFollowers] = useState('');
   const [verificationStatus, setVerificationStatus] = useState(null); // null | 'verifying' | 'verified' | 'failed'
   const [verificationError, setVerificationError] = useState(null);
   const [verifiedProfile, setVerifiedProfile] = useState(null);
@@ -756,8 +724,6 @@ export default function CreatorOnboarding() {
   const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
   const { refreshUser } = useContext(UserContext);
-
-  const selectedPlatform = PLATFORMS.find(p => p.id === platform);
 
   // Platforms that support auto-verification via OAuth
   // Instagram and TikTok OAuth disabled - reverting to manual input for now
@@ -858,6 +824,11 @@ export default function CreatorOnboarding() {
 
     if (!platform) { setError('Please select your main platform'); return; }
 
+    if (!SCRAPABLE_PLATFORMS.includes(platform) && !VERIFIABLE_PLATFORMS.includes(platform)) {
+      setError('Join with a public Instagram, TikTok, or YouTube account.');
+      return;
+    }
+
     // Validate username for all platforms
     const usernameValidation = validateUsername(username);
     if (!usernameValidation.valid) { setError(usernameValidation.error); return; }
@@ -903,45 +874,7 @@ export default function CreatorOnboarding() {
       return;
     }
 
-    // For non-scrapable platforms (Pinterest, Twitter, Blog), use manual entry
-    if (!followers || parseInt(followers) <= 0) {
-      setError('Please enter your follower count');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Check if this social handle is already registered (prevent multi-account abuse)
-      const handleCheck = await apiClient.post('/api/check-social-handle', {
-        handle: username.trim().toLowerCase(),
-        platform,
-      });
-      if (handleCheck.data?.exists) {
-        setError('This social handle is already registered with another account. Each social profile can only be linked to one account.');
-        setLoading(false);
-        return;
-      }
-    } catch (err) {
-      // If check endpoint doesn't exist, continue
-      if (err.response?.status !== 404) {
-        console.error('Handle check error:', err);
-      }
-    }
-
-    // Non-scrapable platform - use manual follower count
-    try {
-      await apiClient.post('/api/user/onboarding/step1', {
-        username: username.trim().toLowerCase(),
-        platform,
-        followers: parseInt(followers),
-      });
-      setStep(2);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
+    setError('Join with a public Instagram, TikTok, or YouTube account.');
   };
 
   // Handle scrape completion - extract data and save to DB
@@ -949,8 +882,12 @@ export default function CreatorOnboarding() {
     try {
       // Extract follower count from scrape result (use 1000 as fallback for pending scrapes)
       const followerCount = scrapeData?.summary?.follower_count ||
-                           scrapeData?.profile?.followers_count ||
-                           1000; // Default for pending scrapes - will be updated post-onboarding
+                           scrapeData?.profile?.followers_count;
+      if (!followerCount) {
+        setError('We could not verify your profile stats. Please try again.');
+        setShowScraping(false);
+        return;
+      }
 
       // Save to backend
       await apiClient.post('/api/user/onboarding/step1', {
@@ -1211,7 +1148,7 @@ export default function CreatorOnboarding() {
             ) : (
               <>
                 <Headline>Quick, where do you create?</Headline>
-                <Subline>We'll match you with brands actively looking for creators on your platform.</Subline>
+                <Subline>Instagram, TikTok, or YouTube. We'll verify your public profile so brands get real creators.</Subline>
 
                 <FormGroup>
                   <FormLabel>Main platform</FormLabel>
@@ -1228,7 +1165,7 @@ export default function CreatorOnboarding() {
                           setError('');
                         }}
                       >
-                        <PlatformIcon style={p.id === 'twitter' ? { fontSize: 17, fontWeight: 900 } : {}}>
+                        <PlatformIcon>
                           {p.icon}
                         </PlatformIcon>
                         <PlatformName>{p.name}</PlatformName>
@@ -1267,41 +1204,6 @@ export default function CreatorOnboarding() {
                             : 'Public account · 500+ followers · 12+ posts · Posted in the last 30 days'}
                       </RequirementsHint>
                     </div>
-                  )}
-
-                  {/* For non-scrapable platforms (Pinterest, Twitter, Blog), show username + follower input */}
-                  {platform && !SCRAPABLE_PLATFORMS.includes(platform) && !VERIFIABLE_PLATFORMS.includes(platform) && (
-                    <>
-                      <div style={{ marginTop: '16px' }}>
-                        <FormLabel>Your creator handle</FormLabel>
-                        <InputWrap>
-                          <InputPre>@</InputPre>
-                          <FormInput
-                            $hasPrefix
-                            type="text"
-                            placeholder="yourcreatorname"
-                            value={username}
-                            onChange={(e) => { setUsername(sanitizeUsername(e.target.value, platform)); setError(''); }}
-                            disabled={loading}
-                            maxLength={30}
-                          />
-                        </InputWrap>
-                      </div>
-                      <FollowerReveal $show={true}>
-                        <FollowerLabel>{selectedPlatform?.label}</FollowerLabel>
-                        <FollowerInput
-                          type="text"
-                          inputMode="numeric"
-                          placeholder="e.g. 120000"
-                          value={followers}
-                          onChange={(e) => {
-                            const rawValue = e.target.value.replace(/[^\d]/g, '');
-                            setFollowers(rawValue);
-                          }}
-                          disabled={loading}
-                        />
-                      </FollowerReveal>
-                    </>
                   )}
 
                   {/* For Instagram/TikTok OAuth flow (if VERIFIABLE_PLATFORMS is enabled), show OAuth connect info */}
@@ -1350,12 +1252,7 @@ export default function CreatorOnboarding() {
                     disabled={
                       loading ||
                       !platform ||
-                      // For OAuth platforms, no username needed
-                      (VERIFIABLE_PLATFORMS.includes(platform) ? false :
-                        // For scrapable platforms, require username only
-                        SCRAPABLE_PLATFORMS.includes(platform) ? !username.trim() :
-                        // For non-scrapable platforms, require username and followers
-                        (!username.trim() || !followers || parseInt(followers) <= 0))
+                      (VERIFIABLE_PLATFORMS.includes(platform) ? false : !username.trim())
                     }
                   >
                     {loading ? (

@@ -356,7 +356,7 @@ function Signup({ defaultRole, redirectTo, onSuccess, isModal = false, onLoginCl
               </button>
 
               <button
-                onClick={() => handleRoleChange('creator')}
+                onClick={() => navigate('/register/creator')}
                 style={{
                   width: '100%',
                   padding: '20px 24px',

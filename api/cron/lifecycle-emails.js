@@ -1305,6 +1305,16 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // Same vercel.json is deployed on both Vercel projects. Only the CRA app
+  // (newcollab-app) should send mail. The Next.js marketing site (appfrontend)
+  // would 500 on missing CRA env vars and double-send if it succeeded.
+  const CRON_OWNER_PROJECT_ID = 'prj_3hHiValCI1iukctHkpAJmMxG2aLG';
+  const projectId = process.env.VERCEL_PROJECT_ID;
+  if (projectId && projectId !== CRON_OWNER_PROJECT_ID) {
+    console.log(`Skipping lifecycle cron on project ${projectId} (owner is newcollab-app)`);
+    return res.status(200).json({ skipped: true, reason: 'duplicate_project' });
+  }
+
   console.log('Starting lifecycle email cron...');
 
   try {

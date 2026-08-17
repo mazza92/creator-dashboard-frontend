@@ -122,6 +122,27 @@ const nextConfig = {
         destination: '/blog/pr-emails-for-brands-2026',
         permanent: true,
       },
+      // Crawler / mistyped slugs seen in production 404 logs
+      {
+        source: '/blog/skincare-brands-that-send-pr-to-single-influencers-2026',
+        destination: '/blog/skincare-brands-that-send-pr-to-small-influencers-2026',
+        permanent: true,
+      },
+      {
+        source: '/blog/creator-brand-partnerships-2026',
+        destination: '/blog/creator-brand-partnerships-2025',
+        permanent: true,
+      },
+      {
+        source: '/blog/companies-with-open-pr-application-forms-influencers-2026',
+        destination: '/blog/ultimate-2026-directory-brands-with-open-pr-application-forms',
+        permanent: true,
+      },
+      {
+        source: '/blog/how-to-get-pr-packages-australia',
+        destination: '/blog/how-i-got-on-pr-lists-australia-2026',
+        permanent: true,
+      },
       // Redirect /for-brands to CRA app (Brand Opportunities submission form)
       {
         source: '/for-brands',

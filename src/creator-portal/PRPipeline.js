@@ -1090,7 +1090,7 @@ const PRPipeline = () => {
       return `${savedUnlockCount} saved brand${savedUnlockCount === 1 ? '' : 's'}. Unlock a pack to get the email and a pitch.`;
     }
     if (atCap) {
-      return 'Free packs used this month. Keep sending with Pro, or grab three more for $9.';
+      return 'Free packs used this month. Keep sending with Pro at $19/mo.';
     }
     return 'Unlock a brand on For You. Packs you open land here.';
   })();
@@ -1290,7 +1290,7 @@ const PRPipeline = () => {
             <LockIconWrap>🔒</LockIconWrap>
             <LockedTextWrap>
               <LockedTitle>Keep sending this month</LockedTitle>
-              <LockedSub>Unlimited packs with Pro, or three more for $9.</LockedSub>
+              <LockedSub>Unlimited packs with Pro at $19/mo.</LockedSub>
             </LockedTextWrap>
             <LockedCta>$19</LockedCta>
           </LockedCard>

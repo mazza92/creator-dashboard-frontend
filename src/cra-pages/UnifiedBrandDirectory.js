@@ -1084,7 +1084,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   </QuotaTitle>
                   <QuotaSub>
                     {remaining <= 0
-                      ? 'Keep sending with Pro, or grab three more for $9'
+                      ? 'Keep sending with Pro at $19/mo'
                       : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
                   </QuotaSub>
                 </QuotaText>

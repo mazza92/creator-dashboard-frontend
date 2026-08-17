@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import {
   Card, Statistic, Row, Col, Button, Form, Input, message, Tabs, Table, Tag,
@@ -41,6 +41,7 @@ const AdminEmail = () => {
   const [subjectOverride, setSubjectOverride] = useState('');
   const [emailContent, setEmailContent] = useState('');
   const [sending, setSending] = useState(false);
+  const sendPumpsRef = useRef({});
 
   // Template preview states
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
@@ -90,6 +91,67 @@ const AdminEmail = () => {
   const getApiConfig = () => ({
     headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' }
   });
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const runSendPump = async (campaignId) => {
+    if (sendPumpsRef.current[campaignId]) return;
+    sendPumpsRef.current[campaignId] = true;
+    setSending(true);
+    const key = `send-progress-${campaignId}`;
+    message.loading({ content: 'Sending emails...', key, duration: 0 });
+
+    let consecutiveErrors = 0;
+    try {
+      while (sendPumpsRef.current[campaignId]) {
+        try {
+          const { data } = await api.post(
+            `/api/admin/email/campaigns/${campaignId}/continue`,
+            {},
+            { ...getApiConfig(), timeout: 90000 }
+          );
+          consecutiveErrors = 0;
+          const remaining = (data.remaining || 0) + (data.sending || 0);
+          message.loading({
+            content: `Sending... ${data.total_sent}/${data.total_recipients} (${data.sent_this_batch || 0} this batch, ${data.remaining || 0} remaining)`,
+            key,
+            duration: 0
+          });
+          fetchCampaigns();
+
+          if (data.is_complete || data.status === 'sent') {
+            message.success({
+              content: `Campaign complete: ${data.total_sent}/${data.total_recipients} sent`,
+              key,
+              duration: 5
+            });
+            fetchStats();
+            break;
+          }
+
+          if (remaining > 0) {
+            await sleep(400);
+            continue;
+          }
+          break;
+        } catch (error) {
+          consecutiveErrors += 1;
+          if (consecutiveErrors >= 5) {
+            message.warning({
+              content: 'Send paused. Keep this tab open or click Continue to resume.',
+              key,
+              duration: 6
+            });
+            break;
+          }
+          await sleep(2000);
+        }
+      }
+    } finally {
+      delete sendPumpsRef.current[campaignId];
+      setSending(false);
+    }
+  };
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -143,6 +205,13 @@ const AdminEmail = () => {
       console.error('Failed to fetch campaigns:', error);
     }
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    campaigns
+      .filter((campaign) => campaign.status === 'sending')
+      .forEach((campaign) => runSendPump(campaign.id));
+  }, [campaigns, isAuthenticated]);
 
   const fetchRoundupBrands = async () => {
     setRoundupBrandsLoading(true);
@@ -341,47 +410,15 @@ const AdminEmail = () => {
               getApiConfig()
             );
 
-            message.info(`Sending started for ${data.sending} recipients — tracking progress...`);
+            message.info(`Sending started — tracking progress...`);
             fetchCampaigns();
-
-            // Poll until the campaign finishes
-            const key = `send-progress-${campaignId}`;
-            message.loading({ content: 'Sending emails...', key, duration: 0 });
-
-            const poll = setInterval(async () => {
-              try {
-                const { data: statusData } = await api.get(
-                  `/api/admin/email/campaigns/${campaignId}/send-status`,
-                  getApiConfig()
-                );
-
-                if (statusData.status === 'sent') {
-                  clearInterval(poll);
-                  message.success({
-                    content: `Campaign sent: ${statusData.sent} delivered, ${statusData.failed} failed`,
-                    key,
-                    duration: 5
-                  });
-                  fetchCampaigns();
-                  fetchStats();
-                  setSending(false);
-                } else if (statusData.status === 'failed') {
-                  clearInterval(poll);
-                  message.error({ content: 'Campaign sending failed', key, duration: 5 });
-                  fetchCampaigns();
-                  setSending(false);
-                } else {
-                  message.loading({
-                    content: `Sending... ${statusData.sent}/${statusData.total_recipients} (${statusData.progress}%)`,
-                    key,
-                    duration: 0
-                  });
-                }
-              } catch {
-                clearInterval(poll);
-                setSending(false);
-              }
-            }, 4000);
+            if (data.is_complete) {
+              message.success(`Campaign sent: ${data.already_sent || data.sent_this_batch || 0} delivered`);
+              fetchStats();
+              setSending(false);
+            } else {
+              runSendPump(campaignId);
+            }
 
           } catch (error) {
             message.error('Failed to start campaign send');
@@ -396,6 +433,7 @@ const AdminEmail = () => {
   };
 
   const handleResetCampaign = async (campaignId) => {
+    sendPumpsRef.current[campaignId] = false;
     try {
       await api.post(`/api/admin/email/campaigns/${campaignId}/reset`, {}, getApiConfig());
       message.success('Campaign reset to draft — you can now re-send it');
@@ -406,51 +444,8 @@ const AdminEmail = () => {
   };
 
   const handleContinueSending = async (campaignId) => {
-    const key = `continue-${campaignId}`;
-    setSending(true);
-
-    const processBatch = async () => {
-      try {
-        const { data } = await api.post(
-          `/api/admin/email/campaigns/${campaignId}/continue`,
-          {},
-          getApiConfig()
-        );
-
-        message.loading({
-          content: `Sending... ${data.total_sent}/${data.total_recipients} (${data.sent_this_batch} this batch, ${data.remaining} remaining)`,
-          key,
-          duration: 0
-        });
-
-        fetchCampaigns();
-
-        if (data.is_complete) {
-          message.success({
-            content: `Campaign complete: ${data.total_sent}/${data.total_recipients} sent`,
-            key,
-            duration: 5
-          });
-          fetchStats();
-          setSending(false);
-          return;
-        }
-
-        if (data.remaining > 0) {
-          // Continue with next batch after a short delay
-          setTimeout(processBatch, 1000);
-        } else {
-          setSending(false);
-        }
-
-      } catch (error) {
-        message.error({ content: 'Failed to continue sending', key, duration: 3 });
-        setSending(false);
-      }
-    };
-
-    message.loading({ content: 'Starting batch processing...', key, duration: 0 });
-    processBatch();
+    message.loading({ content: 'Resuming send...', key: `send-progress-${campaignId}`, duration: 0 });
+    runSendPump(campaignId);
   };
 
   const handleSendTest = async (campaignId) => {

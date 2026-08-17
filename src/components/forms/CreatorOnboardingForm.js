@@ -17,12 +17,6 @@ import {
   FaInstagram,
   FaTiktok,
   FaYoutube,
-  FaFacebook,
-  FaTwitter,
-  FaLinkedin,
-  FaSnapchat,
-  FaPinterest,
-  FaTwitch,
 } from 'react-icons/fa';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -282,12 +276,6 @@ const socialPlatforms = [
   { value: 'Instagram', label: <><FaInstagram style={{ color: '#E1306C', marginRight: '8px' }} /> Instagram</> },
   { value: 'TikTok', label: <><FaTiktok style={{ color: '#000000', marginRight: '8px' }} /> TikTok</> },
   { value: 'YouTube', label: <><FaYoutube style={{ color: '#FF0000', marginRight: '8px' }} /> YouTube</> },
-  { value: 'Facebook', label: <><FaFacebook style={{ color: '#1877F2', marginRight: '8px' }} /> Facebook</> },
-  { value: 'Twitter', label: <><FaTwitter style={{ color: '#1DA1F2', marginRight: '8px' }} /> Twitter</> },
-  { value: 'LinkedIn', label: <><FaLinkedin style={{ color: '#0077B5', marginRight: '8px' }} /> LinkedIn</> },
-  { value: 'Snapchat', label: <><FaSnapchat style={{ color: '#FFFC00', marginRight: '8px' }} /> Snapchat</> },
-  { value: 'Pinterest', label: <><FaPinterest style={{ color: '#E60023', marginRight: '8px' }} /> Pinterest</> },
-  { value: 'Twitch', label: <><FaTwitch style={{ color: '#9146FF', marginRight: '8px' }} /> Twitch</> },
 ];
 
 const ageRangeOptions = [
