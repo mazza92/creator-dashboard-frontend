@@ -318,7 +318,7 @@ const ErrorText = styled.div`
 const FAILURE_MESSAGES = {
   restricted_region: {
     title: 'newcollab isn\'t available in your region yet',
-    message: 'We\'re currently focused on serving creators in the US, UK, Canada, and Australia. Follow us on TikTok to be the first to know when we expand to your region!',
+    message: 'We\'re currently focused on serving creators in the US, UK, Canada, Australia, New Zealand, and Europe. Follow us on TikTok to be the first to know when we expand to your region!',
     blocked: true,
     actions: ['tiktok', 'home']
   },

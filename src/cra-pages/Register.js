@@ -545,7 +545,7 @@ export default function Register() {
             <RegionIcon>🌍</RegionIcon>
             <RegionTitle>newcollab isn't available in your region yet</RegionTitle>
             <RegionMessage>
-              We're currently focused on serving creators in the US, UK, Canada, and Australia.
+              We're currently focused on serving creators in the US, UK, Canada, Australia, New Zealand, and Europe.
               Follow us on TikTok to be the first to know when we expand to your region!
             </RegionMessage>
             <TikTokFollowBtn
