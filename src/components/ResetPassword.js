@@ -144,6 +144,10 @@ function ResetPassword() {
   }, [searchParams, navigate]);
 
   const handleResetPassword = async values => {
+    if (!token) {
+      message.error("Invalid or missing reset token. Request a new link.");
+      return;
+    }
     setLoading(true);
     try {
       const response = await api.post("/reset-password", {
