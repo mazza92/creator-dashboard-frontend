@@ -4,6 +4,7 @@ import { MailOutlined } from "@ant-design/icons";
 import { useNavigate, Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { motion } from "framer-motion";
+import api from "../config/api";
 
 const { Title, Text } = Typography;
 
@@ -130,27 +131,18 @@ function ForgotPassword() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-
   const handleForgotPassword = async (values) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send reset email.');
-      }
-
-      const data = await response.json();
-      message.success(data.message);
-      setTimeout(() => navigate('/login'), 3000); // Redirect to login after 3 seconds
+      const response = await api.post("/forgot-password", values);
+      message.success(response.data.message);
+      setTimeout(() => navigate("/login"), 3000);
     } catch (error) {
-      message.error(error.message || 'Failed to send reset email. Please try again.');
+      const errMsg =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to send reset email. Please try again.";
+      message.error(errMsg);
     } finally {
       setLoading(false);
     }
