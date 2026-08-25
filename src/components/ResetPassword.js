@@ -134,7 +134,7 @@ function ResetPassword() {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    const tokenParam = searchParams.get('token');
+    const tokenParam = (searchParams.get('token') || '').replace(/\s+/g, '');
     if (tokenParam) {
       setToken(tokenParam);
     } else {
