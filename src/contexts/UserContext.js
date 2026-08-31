@@ -5,6 +5,19 @@ import { useNotification } from './NotificationContext'; // Import useNotificati
 
 export const UserContext = createContext(null);
 
+export const persistLoggedInUser = (setUser, data) => {
+    if (!data?.user_id) return;
+    localStorage.setItem('userId', data.user_id);
+    localStorage.setItem('userRole', data.user_role);
+    localStorage.setItem('authToken', 'logged-in');
+    setUser({
+        id: data.user_id,
+        role: data.user_role,
+        creator_id: data.creator_id,
+        brand_id: data.brand_id,
+    });
+};
+
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(undefined);
     const [loading, setLoading] = useState(true);
@@ -56,12 +69,14 @@ export const UserProvider = ({ children }) => {
                         localStorage.removeItem('authToken');
                     }
                 } catch (error) {
-                    // If verification fails, clear cache
-                    setUser(null);
-                    cleanupSocket();
-                    localStorage.removeItem('userRole');
-                    localStorage.removeItem('userId');
-                    localStorage.removeItem('authToken');
+                    setUser((prev) => {
+                        if (prev?.id) return prev;
+                        cleanupSocket();
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userId');
+                        localStorage.removeItem('authToken');
+                        return null;
+                    });
                 }
                 setLoading(false);
                 return;
@@ -95,11 +110,16 @@ export const UserProvider = ({ children }) => {
                     localStorage.removeItem('authToken');
                 }
             } catch (error) {
-                setUser(null);
-                cleanupSocket();
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userId');
-                localStorage.removeItem('authToken');
+                // A slow 401 from page-load /profile must not wipe a Google signup
+                // that completed while this request was in flight.
+                setUser((prev) => {
+                    if (prev?.id) return prev;
+                    cleanupSocket();
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('authToken');
+                    return null;
+                });
             } finally {
                 setLoading(false);
             }

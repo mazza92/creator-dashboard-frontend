@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../../utils/api';
+import { UserContext, persistLoggedInUser } from '../../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { auth, firebaseConfigured } from '../firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -421,6 +422,7 @@ export default function CreatorSignup() {
   const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { setUser } = useContext(UserContext);
 
   // Extract signup context params from URL (blog widget, landing pages, etc.)
   const signupContext = useMemo(() => {
@@ -526,6 +528,8 @@ export default function CreatorSignup() {
         });
         window.ttq.track('Complete Registration');
       }
+
+      persistLoggedInUser(setUser, response.data);
 
       const redirectUrl = response.data?.redirect_url ||
         (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../utils/api';
+import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { auth, firebaseConfigured } from '../components/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -432,6 +433,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useContext(UserContext);
 
   const isValid = firstName.trim().length > 0 && email.includes('@') && password.length >= 8;
 
@@ -501,6 +503,7 @@ export default function Register() {
       });
 
       const data = response.data;
+      persistLoggedInUser(setUser, data);
       const redirectUrl = data.redirect_url || (data.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
       try {
         const urlObj = new URL(redirectUrl, window.location.origin);

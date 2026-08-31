@@ -231,6 +231,7 @@ function AppContent() {
                 '/payment',
                 '/register/brand',
                 '/register/creator',
+                '/onboarding',
                 '/verify-email-pending',
                 '/verify-email',
                 '/resend-verification',

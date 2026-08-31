@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { UserContext } from '../contexts/UserContext';
+import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { auth, firebaseConfigured } from './firebase';
@@ -507,7 +507,9 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const googleLoginEnabled = Boolean(firebaseConfigured && auth);
 
   const postLoginPath = (data) => {
-    if (data?.profile_incomplete) return '/onboarding';
+    if (data?.profile_incomplete || data?.needs_onboarding || data?.onboarding_complete === false) {
+      return '/onboarding';
+    }
     return (
       safeInternalPath(searchParams.get('redirect')) ||
       safeInternalPath(data?.redirect_url) ||
@@ -533,14 +535,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         data.message &&
         (data.message.includes('Login successful') || data.profile_incomplete)
       ) {
-        localStorage.setItem('userId', data.user_id);
-        localStorage.setItem('userRole', data.user_role);
-        setUser({
-          id: data.user_id,
-          role: data.user_role,
-          creator_id: data.creator_id,
-          brand_id: data.brand_id,
-        });
+        persistLoggedInUser(setUser, data);
 
         if (data.profile_incomplete) {
           console.log('🔄 User has incomplete profile, redirecting to onboarding');
@@ -614,14 +609,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         },
       });
 
-      localStorage.setItem('userId', data.user_id);
-      localStorage.setItem('userRole', data.user_role);
-      setUser({
-        id: data.user_id,
-        role: data.user_role,
-        creator_id: data.creator_id,
-        brand_id: data.brand_id,
-      });
+      persistLoggedInUser(setUser, data);
 
       const redirectUrl = postLoginPath(data);
       console.log('🔄 Navigating to:', redirectUrl);
