@@ -340,7 +340,9 @@ const PRPipeline = () => {
       const isUnlimited = response.data.is_unlimited || response.data.tier === 'pro';
       setPitchLimits({
         used: response.data.used || 0,
-        limit: response.data.limit || 3
+        limit: response.data.limit || 3,
+        remaining: isUnlimited ? null : (response.data.remaining ?? 0),
+        is_unlimited: isUnlimited,
       });
       setIsPro(isUnlimited);
     } catch (error) {

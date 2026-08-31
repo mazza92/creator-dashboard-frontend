@@ -164,8 +164,8 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       // Convert to expected format - canPitch is true if unlimited or has remaining unlocks
       const canPitch = data.is_unlimited || (data.remaining > 0);
       const limits = {
-        used: data.is_unlimited ? 0 : (5 - (data.remaining || 0)),
-        limit: 5,
+        used: data.is_unlimited ? 0 : (data.used || 0),
+        limit: data.is_unlimited ? 0 : (data.limit || 3),
         remaining: data.remaining,
         canPitch: canPitch,
         tier: data.tier,
