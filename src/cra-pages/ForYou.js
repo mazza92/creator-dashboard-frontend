@@ -179,13 +179,39 @@ const ForYou = () => {
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
 
+  const parseNicheList = (raw) => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw.map((n) => (typeof n === 'string' ? n.toLowerCase().trim() : '')).filter(Boolean);
+    }
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parseNicheList(parsed);
+      } catch {
+        /* comma-separated */
+      }
+      return raw.split(',').map((n) => n.toLowerCase().trim()).filter(Boolean);
+    }
+    return [];
+  };
+
+  const knownNiches = [
+    ...parseNicheList(selectedNiches),
+    ...parseNicheList(data?.profile?.niches),
+    ...parseNicheList(creatorProfile?.creator_niches),
+    ...parseNicheList(creatorProfile?.niche),
+  ];
+  const hasFollowers = Number(data?.profile?.followers || creatorProfile?.followers_count || 0) > 0;
+  const showNichePrompt = !loading && data != null && knownNiches.length === 0 && !data.has_profile && !hasFollowers;
+
   useEffect(() => {
+    fetchCreatorProfile();
     fetchData();
     const deferred = window.setTimeout(() => {
       fetchSubscriptionStatus();
       fetchSavedBrands();
       fetchUnlockedBrands();
-      fetchCreatorProfile();
       fetchKitViews();
       fetchOpportunityCount();
       fetchRecentReplies();
@@ -856,8 +882,8 @@ const ForYou = () => {
           </KitBuilderCard>
         )}
 
-        {/* Profile Prompt - niches live on Discover now */}
-        {!data?.has_profile && (
+        {/* Only after For You + profile resolve. Onboarding niches must not flash this card. */}
+        {showNichePrompt && (
           <ProfilePromptCard>
             <PromptIcon>🎯</PromptIcon>
             <PromptTitle>Complete your profile niches</PromptTitle>

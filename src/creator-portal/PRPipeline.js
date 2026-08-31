@@ -271,15 +271,6 @@ const PRPipeline = () => {
 
     if (!item) return;
 
-    if (!isPro) {
-      setActiveFilter('followup');
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete('followup');
-      nextParams.delete('brand');
-      setSearchParams(nextParams, { replace: true });
-      return;
-    }
-
     const trackFollowupClick = async () => {
       try {
         const apiBase = getApiBase();

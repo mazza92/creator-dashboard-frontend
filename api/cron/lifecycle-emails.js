@@ -1134,15 +1134,13 @@ async function processDoubterSeries() {
 }
 
 // ============================================
-// FOLLOW-UP REMINDERS (Pro only)
-// Sends reminder emails at Day 6, 10, 14 after pitch
+// FOLLOW-UP REMINDERS
+// Confirm-send arms pitched_at. Emails fire at day 6-7, 10, and 14.
 // ============================================
 
 async function processFollowupReminders() {
   const now = new Date();
 
-  // Query pipeline items needing reminders (Pro users only, not already sent)
-  // Uses raw SQL through Supabase RPC or direct query
   const { data: items, error } = await getSupabase()
     .from('creator_pipeline')
     .select(`
@@ -1150,28 +1148,33 @@ async function processFollowupReminders() {
       creator_id,
       brand_id,
       pitched_at,
+      followup_sent_at,
       day_6_reminder_sent,
       day_10_reminder_sent,
       day_14_reminder_sent,
-      pr_brands!inner(brand_name, hero_product, category),
-      creators!inner(id, user_id, username, subscription_tier, lifecycle_emails_sent_today, followup_notifications_enabled)
+      pr_brands(brand_name, hero_product, category),
+      creators(id, user_id, username, subscription_tier, lifecycle_emails_sent_today, followup_notifications_enabled)
     `)
     .in('stage', ['waiting', 'pitched'])
     .eq('send_confirmed', true)
     .not('pitched_at', 'is', null)
-    .eq('creators.subscription_tier', 'pro')
-    .eq('creators.followup_notifications_enabled', true)
+    .is('followup_sent_at', null)
     .limit(BATCH_SIZE);
 
   console.log(`[FOLLOWUP] Query returned ${items?.length || 0} items, error: ${error?.message || 'none'}`);
   if (!items?.length) return 0;
 
   let sent = 0;
-  const skipped = { daily_limit: 0, already_sent: 0, not_ready: 0, no_email: 0 };
+  const skipped = { daily_limit: 0, already_sent: 0, not_ready: 0, no_email: 0, opt_out: 0 };
 
   for (const item of items) {
     const creator = item.creators;
-    const brand = item.pr_brands;
+    const brand = item.pr_brands || {};
+
+    if (!creator || creator.followup_notifications_enabled === false) {
+      skipped.opt_out++;
+      continue;
+    }
 
     // Daily limit check
     if ((creator.lifecycle_emails_sent_today || 0) >= MAX_EMAILS_PER_DAY) {
@@ -1205,8 +1208,12 @@ async function processFollowupReminders() {
       continue;
     }
 
-    // Get user email
-    const email = await getUserEmail(creator.user_id);
+    const { data: userRow } = await getSupabase()
+      .from('users')
+      .select('email, first_name')
+      .eq('id', creator.user_id)
+      .single();
+    const email = userRow?.email || await getUserEmail(creator.user_id);
     if (!email) {
       skipped.no_email++;
       continue;
@@ -1220,7 +1227,7 @@ async function processFollowupReminders() {
       `&utm_source=email&utm_medium=followup_reminder&utm_campaign=${reminderType}`;
 
     // Generate email
-    const firstName = creator.username || 'there';
+    const firstName = userRow?.first_name || creator.username || 'there';
     const subject = template.subject(brandName);
     const html = template.getHtml(firstName, brandName, deepLink, heroProduct);
 
