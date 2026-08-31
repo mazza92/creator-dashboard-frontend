@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getPostBySlug, getAllPostSlugs, getRelatedPosts, getPostCanonicalUrl } from '../../../../lib/blog';
-import { buildBlogPostingSchema, buildBlogBreadcrumbSchema } from '../../../lib/blogStructuredData';
+import { buildBlogPostingSchema, buildBlogBreadcrumbSchema, buildHowToSchema, buildItemListSchema } from '../../../lib/blogStructuredData';
 import BlogFaqSchemaScript from './BlogFaqSchemaScript';
 import BlogPostClient from './BlogPostClient';
 
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }) {
       url: `https://newcollab.co/blog/${post.slug}`,
       siteName: 'Newcollab',
       publishedTime: post.date,
-      modifiedTime: post.date,
+      modifiedTime: post.dateModified || post.date,
       authors: [post.author.name],
       section: post.category,
       tags: post.tags,
@@ -78,6 +78,8 @@ export default async function BlogPostPage({ params }) {
 
   const blogPostingSchema = buildBlogPostingSchema(post);
   const breadcrumbData = buildBlogBreadcrumbSchema(post);
+  const howToSchema = buildHowToSchema(post);
+  const itemListSchema = buildItemListSchema(post);
 
   // Strip fields that are unused by the client but bloat the RSC payload and
   // contain nested JSON-LD fragments (post.schema has mainEntity: FAQPage which
@@ -91,6 +93,18 @@ export default async function BlogPostPage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
       />
       <BlogFaqSchemaScript faq={post.faq} />
+      {howToSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+        />
+      )}
+      {itemListSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}

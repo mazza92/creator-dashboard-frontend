@@ -9,7 +9,9 @@ const BLOG_WIDGET_ALLOWED_SLUGS = [
   'pr-list-for-clothing-brands-micro-influencers-2025',
   'companies-with-open-pr-application-forms-influencers-2025',
   'ultimate-2026-directory-brands-with-open-pr-application-forms',
-  'list-of-companies-that-send-pr-packages-2026'
+  'list-of-companies-that-send-pr-packages-2026',
+  '50-ugc-product-ideas-for-beginners-2026',
+  'how-to-build-a-ugc-portfolio-brands-want-2026',
 ];
 
 /**

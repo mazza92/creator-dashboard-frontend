@@ -72,6 +72,47 @@ export function buildFaqPageSchema(post) {
   };
 }
 
+export function buildHowToSchema(post) {
+  const howTo = post.howTo;
+  if (!howTo?.name || !howTo?.steps?.length) return null;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: howTo.name,
+    description: howTo.description || post.metaDescription || post.excerpt,
+    image: post.image,
+    totalTime: howTo.totalTime || undefined,
+    supply: (howTo.supply || []).map((name) => ({ '@type': 'HowToSupply', name })),
+    tool: (howTo.tool || []).map((name) => ({ '@type': 'HowToTool', name })),
+    step: howTo.steps.map((step, index) => ({
+      '@type': 'HowToStep',
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  };
+}
+
+export function buildItemListSchema(post) {
+  const items = post.itemList;
+  if (!items?.length) return null;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: post.title,
+    description: post.metaDescription || post.excerpt,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      description: item.description,
+    })),
+  };
+}
+
 export function buildBlogBreadcrumbSchema(post) {
   return {
     '@context': 'https://schema.org',

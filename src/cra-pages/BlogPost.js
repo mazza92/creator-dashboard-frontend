@@ -8,7 +8,8 @@ import { Link, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getPostContentHtml } from '../lib/blogContent';
+import { getPostContentHtml, isBlogWidgetEnabled } from '../lib/blogContent';
+import BlogBrandSearchWidget from '../components/BlogBrandSearchWidget';
 import {
   buildBlogPostingSchema,
   buildFaqPageSchema,
@@ -548,6 +549,12 @@ const BlogPost = () => {
                 </Space>
               </Space>
             </BlogHeader>
+
+            {isBlogWidgetEnabled(post.slug) && (
+              <div style={{ maxWidth: 800, margin: '0 auto' }}>
+                <BlogBrandSearchWidget postSlug={post.slug} />
+              </div>
+            )}
 
             <BlogContent dangerouslySetInnerHTML={{ __html: getPostContentHtml(post) }} />
 
