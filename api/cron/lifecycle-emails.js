@@ -791,47 +791,11 @@ async function processMaximizerSeries() {
 }
 
 async function resetMonthlyUnlocks() {
-  const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const firstOfMonthISO = firstOfMonth.toISOString();
-
-  // Reset unlocks for free users whose last reset was before this month (or never)
-  // Pro/premium users have unlimited unlocks, so we skip them
-  const { data: usersToReset, error: fetchError } = await getSupabase()
-    .from('creators')
-    .select('id, unlocks_remaining, unlocks_reset_at, subscription_tier')
-    .or('subscription_tier.is.null,subscription_tier.eq.free')
-    .or(`unlocks_reset_at.is.null,unlocks_reset_at.lt.${firstOfMonthISO}`)
-    .lt('unlocks_remaining', 3)
-    .limit(500);
-
-  if (fetchError) {
-    console.log(`[UNLOCK_RESET] Error fetching users: ${fetchError.message}`);
-    return 0;
-  }
-
-  if (!usersToReset?.length) {
-    console.log('[UNLOCK_RESET] No users need unlock reset');
-    return 0;
-  }
-
-  // Batch update all users who need reset
-  const userIds = usersToReset.map(u => u.id);
-  const { error: updateError } = await getSupabase()
-    .from('creators')
-    .update({
-      unlocks_remaining: 3,
-      unlocks_reset_at: now.toISOString()
-    })
-    .in('id', userIds);
-
-  if (updateError) {
-    console.log(`[UNLOCK_RESET] Error updating users: ${updateError.message}`);
-    return 0;
-  }
-
-  console.log(`[UNLOCK_RESET] Reset unlocks for ${userIds.length} users`);
-  return userIds.length;
+  // Free quota is packs delivered this calendar month. Refilling
+  // unlocks_remaining to 3 here (and stamping unlocks_reset_at = now)
+  // made the next unlock look expired and refund the credit.
+  console.log('[UNLOCK_RESET] skipped; remaining is derived from delivered packs');
+  return 0;
 }
 
 async function processReengagement() {
