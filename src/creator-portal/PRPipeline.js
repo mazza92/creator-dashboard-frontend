@@ -343,6 +343,7 @@ const PRPipeline = () => {
         limit: response.data.limit || 3,
         remaining: isUnlimited ? null : (response.data.remaining ?? 0),
         is_unlimited: isUnlimited,
+        reset_at: response.data.reset_at || null,
       });
       setIsPro(isUnlimited);
     } catch (error) {
@@ -1099,9 +1100,15 @@ const PRPipeline = () => {
 
   // Calculate next reset date
   const getNextResetDate = () => {
+    if (pitchLimits.reset_at) {
+      const d = new Date(pitchLimits.reset_at);
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      }
+    }
     const now = new Date();
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    return nextMonth.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+    return nextMonth.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   };
 
   return (

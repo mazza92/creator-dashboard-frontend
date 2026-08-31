@@ -101,14 +101,19 @@ async function buildFallbackDigestContext(user) {
     const firstName = userData?.first_name || creator.username || 'there';
     const isPro = creator.subscription_tier === 'pro';
 
-    // Calculate unlocks used
     let unlocksUsed = 0;
     let unlocksQuota = 3;
     if (isPro) {
       unlocksUsed = 0;
       unlocksQuota = '∞';
-    } else if (creator.unlocks_remaining !== null) {
-      unlocksUsed = Math.max(0, 3 - creator.unlocks_remaining);
+    } else {
+      const monthStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString();
+      const { count: packCount } = await getSupabase()
+        .from('pr_packages')
+        .select('id', { count: 'exact', head: true })
+        .eq('creator_id', creator.id)
+        .gte('generated_at', monthStart);
+      unlocksUsed = Math.min(3, packCount || 0);
     }
 
     // Calculate a basic reply chance based on profile completeness
