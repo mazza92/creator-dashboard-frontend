@@ -32,6 +32,15 @@ export {
   getBrandViewProPreview,
 } from './BrandViewNotification';
 
+export {
+  generatePROpportunity,
+  generatePROpportunitySubject,
+  productFromBrand,
+  websiteFromBrand,
+  samplePROpportunity,
+  DEFAULT_PR_EXCHANGE,
+} from './PROpportunity';
+
 // Components
 export { default as EmailTemplatePreview } from './EmailTemplatePreview';
 
@@ -57,6 +66,13 @@ export const emailTemplates = {
     description: 'Triggered when a brand views creator kit via tracked link',
     icon: '👀',
     generator: 'generateBrandViewNotification',
+  },
+  pr_opportunity: {
+    id: 'pr_opportunity',
+    name: 'PR Opportunity',
+    description: 'Gifted PR invite for selected creators — brand and product fill from the brand record',
+    icon: '🎁',
+    generator: 'generatePROpportunity',
   },
 };
 

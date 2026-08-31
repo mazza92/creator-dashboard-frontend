@@ -12,7 +12,7 @@ import {
   DesktopOutlined, MobileOutlined, CopyOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
-import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement, resolveAnnouncementPreheader } from '../email-templates';
+import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement, resolveAnnouncementPreheader, generatePROpportunity, generatePROpportunitySubject, productFromBrand, websiteFromBrand, samplePROpportunity, DEFAULT_PR_EXCHANGE } from '../email-templates';
 
 const { TextArea } = Input;
 
@@ -81,6 +81,20 @@ const AdminEmail = () => {
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [userSearchOptions, setUserSearchOptions] = useState([]);
   const [userSearchLoading, setUserSearchLoading] = useState(false);
+
+  const [showPROpportunityPreview, setShowPROpportunityPreview] = useState(false);
+  const [prViewMode, setPrViewMode] = useState('desktop');
+  const [prBrandOptions, setPrBrandOptions] = useState([]);
+  const [prBrandLoading, setPrBrandLoading] = useState(false);
+  const [prPasteEmails, setPrPasteEmails] = useState('');
+  const [prConfig, setPrConfig] = useState({
+    brandId: null,
+    brandName: '',
+    website: '',
+    product: '',
+    exchange: DEFAULT_PR_EXCHANGE,
+    creatorIds: [],
+  });
 
   // General announcement composer state
   const [showAnnouncementPreview, setShowAnnouncementPreview] = useState(false);
@@ -271,9 +285,94 @@ const AdminEmail = () => {
     }
   };
 
+  const searchBrands = async (query) => {
+    if (!query || query.length < 2) {
+      setPrBrandOptions([]);
+      return;
+    }
+    setPrBrandLoading(true);
+    try {
+      const { data } = await api.get(
+        `/api/admin/brands?search=${encodeURIComponent(query)}&limit=20`,
+        getApiConfig()
+      );
+      setPrBrandOptions(data.brands || []);
+    } catch (error) {
+      console.error('Brand search failed:', error);
+    } finally {
+      setPrBrandLoading(false);
+    }
+  };
+
+  const handlePRBrandSelect = (brandId) => {
+    const brand = prBrandOptions.find((b) => b.id === brandId);
+    if (!brand) return;
+    setPrConfig((c) => ({
+      ...c,
+      brandId: brand.id,
+      brandName: brand.name || brand.brand_name || '',
+      website: websiteFromBrand(brand),
+      product: productFromBrand(brand) || c.product,
+    }));
+  };
+
+  const lookupCreatorEmails = async (raw) => {
+    const emails = String(raw || '')
+      .split(/[,;\s]+/)
+      .map((e) => e.trim().toLowerCase())
+      .filter((e) => e.includes('@'));
+    if (!emails.length) {
+      message.warning('Paste at least one creator email');
+      return;
+    }
+    setUserSearchLoading(true);
+    try {
+      const { data } = await api.get(
+        `/api/admin/email/users/search?emails=${encodeURIComponent(emails.join(','))}`,
+        getApiConfig()
+      );
+      const found = data.users || [];
+      setUserSearchOptions((prev) => {
+        const byId = new Map(prev.map((u) => [u.user_id, u]));
+        found.forEach((u) => byId.set(u.user_id, u));
+        return Array.from(byId.values());
+      });
+      setPrConfig((c) => {
+        const next = new Set(c.creatorIds);
+        found.forEach((u) => next.add(u.user_id));
+        return { ...c, creatorIds: Array.from(next) };
+      });
+      setSelectedUserIds((prev) => {
+        const next = new Set(prev);
+        found.forEach((u) => next.add(u.user_id));
+        return Array.from(next);
+      });
+      const missing = data.missing || [];
+      if (found.length) {
+        message.success(`Added ${found.length} creator${found.length === 1 ? '' : 's'} from your list`);
+      }
+      if (missing.length) {
+        message.warning(`Not on Newcollab: ${missing.join(', ')}`);
+      }
+      setPrPasteEmails('');
+    } catch (error) {
+      message.error('Could not look up those emails');
+    } finally {
+      setUserSearchLoading(false);
+    }
+  };
+
+  const buildPROpportunityHTML = (config = prConfig, forCampaign = false) =>
+    generatePROpportunity({
+      firstName: forCampaign ? '{{first_name}}' : 'Sarah',
+      brandName: config.brandName || samplePROpportunity.brandName,
+      product: config.product || samplePROpportunity.product,
+      exchange: config.exchange || DEFAULT_PR_EXCHANGE,
+      website: config.website || (!config.brandName && !forCampaign ? samplePROpportunity.website : ''),
+    });
+
   const searchUsers = async (query) => {
     if (!query || query.length < 2) {
-      setUserSearchOptions([]);
       return;
     }
     setUserSearchLoading(true);
@@ -282,7 +381,11 @@ const AdminEmail = () => {
         `/api/admin/email/users/search?q=${encodeURIComponent(query)}`,
         getApiConfig()
       );
-      setUserSearchOptions(data.users || []);
+      setUserSearchOptions((prev) => {
+        const byId = new Map(prev.map((u) => [u.user_id, u]));
+        (data.users || []).forEach((u) => byId.set(u.user_id, u));
+        return Array.from(byId.values());
+      });
     } catch (error) {
       console.error('User search failed:', error);
     } finally {
@@ -506,7 +609,7 @@ const AdminEmail = () => {
       );
       message.success(data.message);
     } catch (error) {
-      message.error('Failed to send test email');
+      message.error(error.response?.data?.error || 'Failed to send test email');
     }
   };
 
@@ -529,6 +632,7 @@ const AdminEmail = () => {
       case 'insights': return '💡';
       case 'quota_alert': return '⚡';
       case 'winback': return '👋';
+      case 'pr_opportunity': return '🎁';
       default: return '📧';
     }
   };
@@ -959,6 +1063,30 @@ const AdminEmail = () => {
                     </div>
                     <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
                       <EyeOutlined /> Compose &amp; Preview
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setPrConfig({ brandId: null, brandName: '', website: '', product: '', exchange: DEFAULT_PR_EXCHANGE, creatorIds: [] });
+                      setPrPasteEmails('');
+                      setPrBrandOptions([]);
+                      setShowPROpportunityPreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #E11D48 0%, #FB7185 100%)' }}>NEW</div>
+                    <div className="template-icon-large">🎁</div>
+                    <h4>PR Opportunity</h4>
+                    <p>Pick a brand, auto-fill the product, add creator emails, and send a gifted PR invite to all of them</p>
+                    <div className="template-features">
+                      <span>Brand autofill</span>
+                      <span>Selected creators</span>
+                      <span>Reply-to-confirm</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#E11D48', color: '#E11D48' }}>
+                      <EyeOutlined /> Compose &amp; Send
                     </Button>
                   </ModernTemplateCard>
                 </Col>
@@ -1396,6 +1524,206 @@ const AdminEmail = () => {
                         ? 'Loaded. Segment is already set to At 3/3 unlocks. Send a test first.'
                         : 'Template loaded! Finish setting up your campaign.'
                     );
+                  }}
+                >
+                  Use This Template
+                </Button>
+              </div>
+            </TemplatePreviewContainer>
+          </Modal>
+
+          {/* PR Opportunity Compose Modal */}
+          <Modal
+            title={null}
+            open={showPROpportunityPreview}
+            onCancel={() => setShowPROpportunityPreview(false)}
+            footer={null}
+            width={1100}
+            style={{ top: 20 }}
+            bodyStyle={{ padding: 0, background: '#1a1a2e' }}
+          >
+            <TemplatePreviewContainer>
+              <div className="preview-header">
+                <div>
+                  <h3>🎁 PR Opportunity — Live Composer</h3>
+                  <p>Brand and product fill from the database. First name fills per creator when you send.</p>
+                </div>
+                <Space>
+                  <Button
+                    type={prViewMode === 'desktop' ? 'primary' : 'default'}
+                    icon={<DesktopOutlined />}
+                    onClick={() => setPrViewMode('desktop')}
+                  >
+                    Desktop
+                  </Button>
+                  <Button
+                    type={prViewMode === 'mobile' ? 'primary' : 'default'}
+                    icon={<MobileOutlined />}
+                    onClick={() => setPrViewMode('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </Space>
+              </div>
+
+              <AnnouncementComposer>
+                <div className="composer-form">
+                  <div className="form-group">
+                    <label>Brand *</label>
+                    <Select
+                      showSearch
+                      value={prConfig.brandId}
+                      placeholder="Search brand name..."
+                      filterOption={false}
+                      onSearch={searchBrands}
+                      onChange={handlePRBrandSelect}
+                      loading={prBrandLoading}
+                      style={{ width: '100%' }}
+                      size="large"
+                      notFoundContent={prBrandLoading ? <Spin size="small" /> : 'Type to search brands...'}
+                    >
+                      {prBrandOptions.map((brand) => (
+                        <Select.Option key={brand.id} value={brand.id}>
+                          {brand.name || brand.brand_name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="form-group">
+                    <label>Brand website</label>
+                    <Input
+                      value={prConfig.website}
+                      onChange={(e) => setPrConfig((c) => ({ ...c, website: e.target.value }))}
+                      placeholder="https://brand.com"
+                    />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      Auto-fills from the brand record. Brand name in the email links here so creators can check them.
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Product they'll send</label>
+                    <Input
+                      value={prConfig.product}
+                      onChange={(e) => setPrConfig((c) => ({ ...c, product: e.target.value }))}
+                      placeholder="Auto-fills from the brand record — edit if needed"
+                    />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      Uses hero product from the brand record. Override for this send if you want.
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>In exchange</label>
+                    <TextArea
+                      value={prConfig.exchange}
+                      onChange={(e) => setPrConfig((c) => ({ ...c, exchange: e.target.value }))}
+                      rows={3}
+                      placeholder="What the creator needs to post"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Creators *</label>
+                    <Select
+                      mode="multiple"
+                      showSearch
+                      value={prConfig.creatorIds}
+                      placeholder="Search by email, name or username..."
+                      filterOption={false}
+                      onSearch={searchUsers}
+                      onChange={(values) => {
+                        setPrConfig((c) => ({ ...c, creatorIds: values }));
+                        setSelectedUserIds(values);
+                      }}
+                      loading={userSearchLoading}
+                      style={{ width: '100%' }}
+                      size="large"
+                      notFoundContent={userSearchLoading ? <Spin size="small" /> : 'Type to search creators...'}
+                    >
+                      {userSearchOptions.map((user) => (
+                        <Select.Option key={user.user_id} value={user.user_id}>
+                          <strong>{user.email}</strong>
+                          {user.first_name ? ` · ${user.first_name}` : ''}
+                          {user.username ? ` @${user.username}` : ''}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                    {prConfig.creatorIds.length > 0 && (
+                      <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 8 }}>
+                        {prConfig.creatorIds.length} creator{prConfig.creatorIds.length === 1 ? '' : 's'} selected — first name fills from their account
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label>Or paste emails</label>
+                    <TextArea
+                      value={prPasteEmails}
+                      onChange={(e) => setPrPasteEmails(e.target.value)}
+                      rows={3}
+                      placeholder="one@email.com, two@email.com"
+                    />
+                    <Button
+                      size="small"
+                      style={{ marginTop: 8 }}
+                      loading={userSearchLoading}
+                      onClick={() => lookupCreatorEmails(prPasteEmails)}
+                    >
+                      Add emails
+                    </Button>
+                  </div>
+                  <div className="form-group">
+                    <label>Subject</label>
+                    <Input value={generatePROpportunitySubject(prConfig.brandName || 'brand')} disabled />
+                  </div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', padding: '8px 0' }}>
+                    <strong style={{ color: '#cbd5e1' }}>Dynamic fields:</strong>{' '}
+                    first name from the creator record, brand + product from the brand you picked.
+                  </div>
+                </div>
+
+                <div className="composer-preview">
+                  <div
+                    className={`device-frame ${prViewMode}`}
+                    style={{ width: prViewMode === 'mobile' ? 375 : 560, maxWidth: '100%' }}
+                  >
+                    {prViewMode === 'mobile' && <div className="device-notch" />}
+                    <iframe
+                      srcDoc={buildPROpportunityHTML(prConfig, false)}
+                      title="PR Opportunity Preview"
+                      style={{
+                        width: '100%',
+                        height: prViewMode === 'mobile' ? 580 : 660,
+                        border: 'none',
+                        background: '#f3f4f6',
+                        borderRadius: prViewMode === 'mobile' ? '0 0 24px 24px' : 8
+                      }}
+                    />
+                  </div>
+                </div>
+              </AnnouncementComposer>
+
+              <div className="preview-actions">
+                <Button
+                  onClick={() => setShowPROpportunityPreview(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  style={{ background: 'linear-gradient(135deg, #E11D48 0%, #FB7185 100%)', border: 'none' }}
+                  disabled={!prConfig.brandName || !prConfig.product || !prConfig.creatorIds.length}
+                  onClick={() => {
+                    const html = buildPROpportunityHTML(prConfig, true);
+                    const subject = generatePROpportunitySubject(prConfig.brandName);
+                    setEmailContent(html);
+                    setSubjectOverride(subject);
+                    setCampaignName(`PR Opportunity — ${prConfig.brandName}`);
+                    setSelectedTemplate(null);
+                    setSelectedSegment('specific_users');
+                    setSelectedUserIds(prConfig.creatorIds);
+                    setPreviewUsers([]);
+                    setPreviewCount(prConfig.creatorIds.length);
+                    setShowPROpportunityPreview(false);
+                    setShowCampaignModal(true);
+                    message.success('Loaded. Recipients are the creators you selected — send a test first.');
                   }}
                 >
                   Use This Template
@@ -1915,6 +2243,18 @@ const AnnouncementComposer = styled.div`
       &::placeholder {
         color: #475569;
       }
+    }
+
+    .ant-select .ant-select-selector {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      color: #e2e8f0 !important;
+      border-radius: 6px;
+    }
+
+    .ant-select-selection-placeholder,
+    .ant-select-selection-item {
+      color: #e2e8f0 !important;
     }
 
     textarea.ant-input {
