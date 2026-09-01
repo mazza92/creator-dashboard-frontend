@@ -8,6 +8,12 @@ import { FaInstagram, FaTiktok, FaYoutube } from 'react-icons/fa6';
 import { SocialVerificationStep } from '../SocialVerification';
 import ProfileScrapingLoader from '../ProfileScrapingLoader';
 import { scrapeHelpFromError } from '../../utils/scrapeHelp';
+import {
+  OnboardingSurveyStep1,
+  OnboardingSurveyStep2,
+  OnboardingSurveyStep3,
+  OnboardingCelebration,
+} from './OnboardingSurveyPhase';
 
 // ============================================================================
 // USERNAME VALIDATION HELPERS
@@ -696,8 +702,18 @@ const SCRAPABLE_PLATFORMS = ['instagram', 'tiktok', 'youtube'];
 
 export default function CreatorOnboarding() {
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState(1);
-  // Step 1
+  const [phase, setPhase] = useState('profile'); // profile | survey | celebration
+  const [surveyStep, setSurveyStep] = useState(1);
+  const [profileStep, setProfileStep] = useState(1);
+  const [surveyDone, setSurveyDone] = useState(false);
+  // Survey answers
+  const [segment, setSegment] = useState('');
+  const [intent, setIntent] = useState([]);
+  const [intentOther, setIntentOther] = useState('');
+  const [pain, setPain] = useState([]);
+  const [painOther, setPainOther] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [onboardingCompleteRes, setOnboardingCompleteRes] = useState(null);
   const [username, setUsername] = useState('');
   const [platform, setPlatform] = useState('');
   const [verificationStatus, setVerificationStatus] = useState(null); // null | 'verifying' | 'verified' | 'failed'
@@ -724,6 +740,131 @@ export default function CreatorOnboarding() {
   const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
   const { refreshUser } = useContext(UserContext);
+
+  const applySurveyPayload = (survey = {}) => {
+    if (survey.segment) setSegment(survey.segment);
+    if (Array.isArray(survey.intent)) setIntent(survey.intent);
+    if (survey.intent_other) setIntentOther(survey.intent_other);
+    if (Array.isArray(survey.pain)) setPain(survey.pain);
+    if (survey.pain_other) setPainOther(survey.pain_other);
+  };
+
+  const saveSurvey = async (payload) => {
+    const res = await apiClient.post('/api/user/onboarding/survey', payload);
+    if (res.data?.first_name) setFirstName(res.data.first_name);
+    if (res.data?.survey) applySurveyPayload(res.data.survey);
+    return res.data;
+  };
+
+  // Load survey status — skip the survey later if already completed or skipped
+  useEffect(() => {
+    const loadSurvey = async () => {
+      try {
+        const res = await apiClient.get('/api/user/onboarding/survey');
+        if (res.data?.first_name) setFirstName(res.data.first_name);
+        if (res.data?.survey) applySurveyPayload(res.data.survey);
+        if (res.data?.done) setSurveyDone(true);
+      } catch (err) {
+        console.error('Survey status check failed:', err);
+      }
+    };
+    loadSurvey();
+  }, []);
+
+  const toggleIntent = (id) => {
+    setIntent((prev) => {
+      if (prev.includes(id)) return prev.filter((v) => v !== id);
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+    setError('');
+  };
+
+  const togglePain = (id) => {
+    setPain((prev) => {
+      if (prev.includes(id)) return prev.filter((v) => v !== id);
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+    setError('');
+  };
+
+  const finishSurveyAndCelebrate = () => {
+    setSurveyDone(true);
+    setPhase('celebration');
+  };
+
+  const skipSurvey = async (atStep) => {
+    setLoading(true);
+    setError('');
+    try {
+      await saveSurvey({ skipped: true, skipped_at_step: atStep });
+      finishSurveyAndCelebrate();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSurveyStep1 = async () => {
+    setError('');
+    if (!segment) {
+      setError('Please select an option');
+      return;
+    }
+    if (segment === 'is_brand') {
+      navigate('/register/brand');
+      return;
+    }
+    setLoading(true);
+    try {
+      await saveSurvey({ segment });
+      setSurveyStep(2);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSurveyStep2 = async () => {
+    setError('');
+    if (intent.length === 0) {
+      setError('Pick at least one goal');
+      return;
+    }
+    setLoading(true);
+    try {
+      await saveSurvey({ intent, intent_other: intentOther });
+      setSurveyStep(3);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSurveyStep3 = async () => {
+    setError('');
+    if (pain.length === 0) {
+      setError('Pick at least one challenge');
+      return;
+    }
+    setLoading(true);
+    try {
+      await saveSurvey({
+        pain,
+        pain_other: painOther,
+        complete: true,
+      });
+      finishSurveyAndCelebrate();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Platforms that support auto-verification via OAuth
   // Instagram and TikTok OAuth disabled - reverting to manual input for now
@@ -779,7 +920,7 @@ export default function CreatorOnboarding() {
             platform: oauthPlatform,
             followers: followerCount,
           });
-          setStep(2);
+          setProfileStep(2);
         } catch (err) {
           console.error('Error saving profile after OAuth:', err);
           setError('Failed to complete verification. Please try again.');
@@ -896,9 +1037,9 @@ export default function CreatorOnboarding() {
         followers: followerCount,
       });
 
-      // Proceed to step 2
+      // Proceed to profile step 2
       setShowScraping(false);
-      setStep(2);
+      setProfileStep(2);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong saving your profile');
       setShowScraping(false);
@@ -986,7 +1127,7 @@ export default function CreatorOnboarding() {
         primary_age_range: ageRange,
         regions,
       });
-      setStep(3);
+      setProfileStep(3);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {
@@ -1016,8 +1157,14 @@ export default function CreatorOnboarding() {
         console.log('Social verification check failed, continuing:', verifyErr);
       }
 
-      // Complete onboarding
-      await completeOnboarding(res);
+      // Profile data is saved. Survey is skippable, so it comes after.
+      setOnboardingCompleteRes(res);
+      if (surveyDone) {
+        setPhase('celebration');
+      } else {
+        setSurveyStep(1);
+        setPhase('survey');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {
@@ -1121,7 +1268,63 @@ export default function CreatorOnboarding() {
           </Logo>
         </TopBar>
 
-        {step === 1 && (
+        {phase === 'survey' && surveyStep === 1 && (
+          <Card>
+            <OnboardingSurveyStep1
+              segment={segment}
+              setSegment={(v) => { setSegment(v); setError(''); }}
+              error={error}
+              loading={loading}
+              onBack={() => { setError(''); setPhase('profile'); setProfileStep(3); }}
+              onContinue={handleSurveyStep1}
+              onSkip={() => skipSurvey(1)}
+            />
+          </Card>
+        )}
+
+        {phase === 'survey' && surveyStep === 2 && (
+          <Card>
+            <OnboardingSurveyStep2
+              intent={intent}
+              toggleIntent={toggleIntent}
+              intentOther={intentOther}
+              setIntentOther={setIntentOther}
+              error={error}
+              loading={loading}
+              onBack={() => setSurveyStep(1)}
+              onContinue={handleSurveyStep2}
+              onSkip={() => skipSurvey(2)}
+            />
+          </Card>
+        )}
+
+        {phase === 'survey' && surveyStep === 3 && (
+          <Card>
+            <OnboardingSurveyStep3
+              pain={pain}
+              togglePain={togglePain}
+              painOther={painOther}
+              setPainOther={setPainOther}
+              error={error}
+              loading={loading}
+              onBack={() => setSurveyStep(2)}
+              onContinue={handleSurveyStep3}
+              onSkip={() => skipSurvey(3)}
+            />
+          </Card>
+        )}
+
+        {phase === 'celebration' && (
+          <Card>
+            <OnboardingCelebration
+              firstName={firstName}
+              loading={loading}
+              onContinue={() => completeOnboarding(onboardingCompleteRes)}
+            />
+          </Card>
+        )}
+
+        {phase === 'profile' && profileStep === 1 && (
           <Card>
             <ProgressWrap>
               <ProgressTop>
@@ -1269,7 +1472,7 @@ export default function CreatorOnboarding() {
           </Card>
         )}
 
-        {step === 2 && (
+        {phase === 'profile' && profileStep === 2 && (
           <Card>
             <ProgressWrap>
               <ProgressTop>
@@ -1328,7 +1531,7 @@ export default function CreatorOnboarding() {
             {error && <ErrorMsg>{error}</ErrorMsg>}
 
             <BtnRow>
-              <BackBtn onClick={() => setStep(1)} disabled={loading}>← Back</BackBtn>
+              <BackBtn onClick={() => setProfileStep(1)} disabled={loading}>← Back</BackBtn>
               <ContinueBtn onClick={handleStep2} disabled={loading || !bio.trim() || !ageRange || regions.length === 0}>
                 {loading ? 'Saving...' : 'Continue →'}
               </ContinueBtn>
@@ -1336,7 +1539,7 @@ export default function CreatorOnboarding() {
           </Card>
         )}
 
-        {step === 3 && (
+        {phase === 'profile' && profileStep === 3 && (
           <Card>
             <ProgressWrap>
               <ProgressTop>
@@ -1370,7 +1573,7 @@ export default function CreatorOnboarding() {
             {error && <ErrorMsg>{error}</ErrorMsg>}
 
             <BtnRow>
-              <BackBtn onClick={() => setStep(2)} disabled={loading}>← Back</BackBtn>
+              <BackBtn onClick={() => setProfileStep(2)} disabled={loading}>← Back</BackBtn>
               <ContinueBtn onClick={handleStep3} disabled={loading || niches.length === 0}>
                 {loading ? 'Finishing...' : 'Show my brand matches →'}
               </ContinueBtn>
