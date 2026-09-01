@@ -471,14 +471,15 @@ export default function CreatorSignup() {
       }, { headers: { 'Content-Type': 'application/json' } });
 
       // Track signup completion in TikTok pixel with user data for better EMQ
-      // TikTok standard event requires exact format: 'Complete Registration' (with space)
+      // Standard event code is CompleteRegistration (no space). A spaced name
+      // registers as custom and cannot be used as an ads optimization goal.
       if (window.ttq) {
         // Identify user with email and external_id for better event matching
         window.ttq.identify({
           email: email.trim().toLowerCase(),
           external_id: res.data?.user_id || email.trim().toLowerCase()
         });
-        window.ttq.track('Complete Registration');
+        window.ttq.track('CompleteRegistration');
       }
 
       doRedirect(res.data?.redirect_url || '/verify-email-pending');
@@ -526,7 +527,7 @@ export default function CreatorSignup() {
           email: result.user.email,
           external_id: response.data?.user_id || result.user.email
         });
-        window.ttq.track('Complete Registration');
+        window.ttq.track('CompleteRegistration');
       }
 
       persistLoggedInUser(setUser, response.data);
