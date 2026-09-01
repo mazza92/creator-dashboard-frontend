@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiChevronDown, FiChevronUp, FiCopy, FiCheck, FiFlag } from 'react-icons/fi';
@@ -15,7 +15,7 @@ import { beginBrandOutreach, getDuplicateOutreachMessage } from '../../utils/out
 import { CountryDropdown } from 'react-country-region-selector';
 import { ALLOWED_REGION_CODES, PRIORITY_REGION_CODES } from '../../constants/allowedRegions';
 import PitchBodyEditor from '../PitchBodyEditor';
-import { copyPitchRich } from '../../utils/pitchBodyFormat';
+import { copyPitchRich, pitchPlainForEmail } from '../../utils/pitchBodyFormat';
 
 const LOCATION_PLACEHOLDER = '[CITY, COUNTRY]';
 
@@ -45,6 +45,71 @@ function swapShippingLocation(body, previousDisplay, nextDisplay) {
     return body.split(from).join(to);
   }
   return body.replace(/shipping to [^\n.]+/, `shipping to ${to}`);
+}
+
+const BEST_WORK_MAX = 3;
+
+function coerceWorkPostUrl(post, source) {
+  if (!post) return '';
+  if (post.post_url) return post.post_url;
+  const handle = String(source?.handle || '').replace(/^@/, '').trim();
+  const platform = String(source?.platform || source?.primary_platform || '').toLowerCase();
+  const code = String(post.shortCode || post.shortcode || post.videoId || '').trim();
+  if (!code) return '';
+  if (platform === 'youtube' || platform === 'yt') return `https://www.youtube.com/watch?v=${code}`;
+  if (platform === 'tiktok' || platform === 'tt') {
+    return handle ? `https://www.tiktok.com/@${handle}/video/${code}` : '';
+  }
+  if (platform === 'instagram' || platform === 'ig') {
+    return code.match(/^\d+$/) ? '' : `https://www.instagram.com/p/${code}/`;
+  }
+  if (/^\d+$/.test(code) && handle) return `https://www.tiktok.com/@${handle}/video/${code}`;
+  if (code) return `https://www.instagram.com/p/${code}/`;
+  return '';
+}
+
+function normalizeWorkPosts(source) {
+  if (!source) return [];
+  const posts = Array.isArray(source.recent_posts) ? source.recent_posts : [];
+  if (posts.length) {
+    return posts
+      .map((p, i) => {
+        const post_url = coerceWorkPostUrl(p, source);
+        return {
+          id: String(post_url || p.thumbnail_url || i),
+          thumbnail_url: p.thumbnail_url || '',
+          post_url,
+          likes: Number(p.likes || 0) || 0,
+          views: Number(p.views || 0) || 0,
+        };
+      })
+      .filter((p) => p.thumbnail_url && p.post_url);
+  }
+  return [];
+}
+
+const BEST_WORK_HEADING = 'Some content examples I posted recently:';
+const BEST_WORK_BLOCK_RE = /(?:Closest examples:|Some content examples I posted recently:)[ \t]*\n+(?:(?:• |Example \d+ \()?https?:\/\/[^\s)\n]+\)?[ \t]*\n*)*/;
+
+function formatBestWorkBlock(posts) {
+  const urls = (posts || []).map((p) => p.post_url).filter(Boolean).slice(0, BEST_WORK_MAX);
+  if (!urls.length) return '';
+  return `${BEST_WORK_HEADING}\n\n${urls.join('\n')}\n`;
+}
+
+function applyBestWorkToBody(body, posts) {
+  if (!body) return body;
+  const next = formatBestWorkBlock(posts);
+  const recentRe = /Recent work: [^\n]+/;
+  let out = body;
+  if (!next) {
+    return out.replace(BEST_WORK_BLOCK_RE, '').replace(recentRe, '').replace(/\n{3,}/g, '\n\n').trimEnd();
+  }
+  if (BEST_WORK_BLOCK_RE.test(out)) out = out.replace(BEST_WORK_BLOCK_RE, next);
+  else if (recentRe.test(out)) out = out.replace(recentRe, next);
+  else if (out.includes('Worth a look?')) out = out.replace('Worth a look?', `${next}\n\nWorth a look?`);
+  else out = `${out.trim()}\n\n${next}`;
+  return out.replace(/\n{3,}/g, '\n\n');
 }
 
 // Brand logo with error handling - shows initials on broken images
@@ -1509,6 +1574,178 @@ const LocationCountrySelect = styled(CountryDropdown)`
   }
 `;
 
+const BestWorkTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1.5px solid ${PITCH_TOKENS.lineDefault};
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  &:hover {
+    border-color: ${PITCH_TOKENS.pinkPrimary};
+  }
+`;
+
+const BestWorkThumbs = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+`;
+
+const BestWorkThumb = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #e5e7eb;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const BestWorkCopy = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const BestWorkTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: ${PITCH_TOKENS.inkPrimary};
+`;
+
+const BestWorkMeta = styled.div`
+  font-size: 11px;
+  color: ${PITCH_TOKENS.muted};
+  margin-top: 1px;
+`;
+
+const WorkPickerOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 20, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+`;
+
+const WorkPickerSheet = styled(motion.div)`
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  max-height: min(88vh, 640px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(15, 17, 20, 0.24);
+`;
+
+const WorkPickerHead = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid ${PITCH_TOKENS.lineSoft};
+`;
+
+const WorkPickerHeadCopy = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const WorkPickerClose = styled.button`
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: ${PITCH_TOKENS.muted};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover {
+    background: ${PITCH_TOKENS.lineSoft};
+    color: ${PITCH_TOKENS.inkPrimary};
+  }
+`;
+
+const WorkPickerTitle = styled.div`
+  font-size: 16px;
+  font-weight: 800;
+  color: ${PITCH_TOKENS.inkPrimary};
+`;
+
+const WorkPickerHint = styled.div`
+  font-size: 12px;
+  color: ${PITCH_TOKENS.muted};
+  margin-top: 4px;
+  line-height: 1.4;
+`;
+
+const WorkGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px 16px;
+  overflow-y: auto;
+`;
+
+const WorkTile = styled.button`
+  position: relative;
+  aspect-ratio: 1;
+  border: 2px solid ${props => props.$on ? PITCH_TOKENS.pinkPrimary : 'transparent'};
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+  background: #e5e7eb;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.$disabled ? 0.45 : 1};
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+`;
+
+const WorkCheck = styled.span`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: ${props => props.$on ? PITCH_TOKENS.pinkPrimary : 'rgba(255,255,255,0.92)'};
+  border: ${props => props.$on ? 'none' : `1.5px solid ${PITCH_TOKENS.lineDefault}`};
+  color: ${props => props.$on ? '#fff' : PITCH_TOKENS.muted};
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+`;
+
+const WorkPickerFoot = styled.div`
+  padding: 12px 16px 16px;
+  border-top: 1px solid ${PITCH_TOKENS.lineSoft};
+`;
+
 const FieldWrapper = styled.div`
   margin-bottom: 12px;
 `;
@@ -2878,6 +3115,9 @@ const UnlockModalV2 = ({
   const locationBlockRef = useRef(null);
   const cityInputRef = useRef(null);
   const locationDisplayRef = useRef(LOCATION_PLACEHOLDER);
+  const [scrapedPosts, setScrapedPosts] = useState([]);
+  const [selectedWork, setSelectedWork] = useState([]);
+  const [showWorkPicker, setShowWorkPicker] = useState(false);
   const locationSaveTimer = useRef(null);
 
   // AI Boost state (new UX)
@@ -3201,6 +3441,9 @@ const UnlockModalV2 = ({
       setShowQuotaUpgrade(false);
       setLocationAttempted(false);
       setLocationShake(false);
+      setScrapedPosts([]);
+      setSelectedWork([]);
+      setShowWorkPicker(false);
       if (quotaUpgradeTimerRef.current) {
         clearTimeout(quotaUpgradeTimerRef.current);
         quotaUpgradeTimerRef.current = null;
@@ -3261,9 +3504,9 @@ const UnlockModalV2 = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await apiClient.get('/api/pr-ready');
+        const res = await apiClient.get('/api/pr-crm/pitch-posts');
         if (cancelled || !res.data?.success) return;
-        setManagerBar(res.data.manager_bar || null);
+        setScrapedPosts(normalizeWorkPosts(res.data || {}));
       } catch {
         if (!cancelled) setManagerBar(null);
       }
@@ -3289,6 +3532,34 @@ const UnlockModalV2 = ({
     locationDisplayRef.current = nextDisplay;
     setNeedsLocation(!nextCity.trim() || !country);
     persistPitchLocation(nextCity.trim(), country);
+  };
+
+  const workPosts = useMemo(() => {
+    const fromScrape = scrapedPosts;
+    const fromSnap = normalizeWorkPosts(packageData?.profile_snapshot || {});
+    if (fromScrape.length >= fromSnap.length) return fromScrape;
+    return fromSnap;
+  }, [scrapedPosts, packageData]);
+
+  const pickablePosts = useMemo(
+    () => workPosts.filter((p) => p.post_url).slice(0, 9),
+    [workPosts],
+  );
+
+  const toggleWorkPost = (post) => {
+    setSelectedWork((prev) => {
+      const exists = prev.some((p) => p.id === post.id);
+      if (exists) return prev.filter((p) => p.id !== post.id);
+      if (prev.length >= BEST_WORK_MAX) return prev;
+      return [...prev, post];
+    });
+  };
+
+  const confirmWorkSelection = () => {
+    const chosen = selectedWork.filter((p) => p.post_url);
+    if (!chosen.length) return;
+    setEditedBody((prev) => applyBestWorkToBody(prev, chosen));
+    setShowWorkPicker(false);
   };
 
   const handleFlashComplete = useCallback(() => {
@@ -3451,7 +3722,7 @@ const UnlockModalV2 = ({
       }
 
       const subject = editedSubject || '';
-      const body = editedBody || '';
+      const body = pitchPlainForEmail(editedBody || '');
       try {
         await copyToClipboard(body, 'pitch');
       } catch (err) {
@@ -4034,6 +4305,7 @@ const UnlockModalV2 = ({
                           <PitchWorkspaceLabel>{packageData?.is_followup ? 'Your follow-up' : 'Your pitch'}</PitchWorkspaceLabel>
 
                           {!packageData?.is_followup && (
+                            <React.Fragment>
                             <LocationBlock
                               ref={locationBlockRef}
                               $missing={needsLocation || locationAttempted}
@@ -4081,6 +4353,36 @@ const UnlockModalV2 = ({
                                 </LocationError>
                               )}
                             </LocationBlock>
+                            {pickablePosts.length > 0 && (
+                              <LocationBlock>
+                                <FieldLabel>Select your best work</FieldLabel>
+                                <LocationHint>
+                                  {selectedWork.length
+                                    ? 'Brands will always review your posts, show them your best content'
+                                    : 'Used in the pitch as 3 tappable examples. Edit anytime.'}
+                                </LocationHint>
+                                <BestWorkTrigger type="button" onClick={() => setShowWorkPicker(true)}>
+                                  <BestWorkThumbs>
+                                    {(selectedWork.length ? selectedWork : pickablePosts.slice(0, 3)).map((post) => (
+                                      <BestWorkThumb key={post.id}>
+                                        <RecentPostThumb src={post.thumbnail_url} alt="" />
+                                      </BestWorkThumb>
+                                    ))}
+                                  </BestWorkThumbs>
+                                  <BestWorkCopy>
+                                    <BestWorkTitle>
+                                      {selectedWork.length
+                                        ? `${selectedWork.length} post${selectedWork.length === 1 ? '' : 's'} in the pitch`
+                                        : 'Choose your best work'}
+                                    </BestWorkTitle>
+                                    <BestWorkMeta>
+                                      {selectedWork.length ? 'Tap to change' : `${Math.min(pickablePosts.length, 9)} recent posts`}
+                                    </BestWorkMeta>
+                                  </BestWorkCopy>
+                                </BestWorkTrigger>
+                              </LocationBlock>
+                            )}
+                            </React.Fragment>
                           )}
 
                           <FieldLabel>Subject</FieldLabel>
@@ -4286,6 +4588,62 @@ const UnlockModalV2 = ({
             </FrictionModalButtons>
           </FrictionModalContent>
         </FrictionModalOverlay>
+      )}
+
+      {showWorkPicker && (
+        <WorkPickerOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowWorkPicker(false)}
+        >
+          <WorkPickerSheet
+            initial={{ scale: 0.96, opacity: 0, y: 12 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <WorkPickerHead>
+              <WorkPickerHeadCopy>
+                <WorkPickerTitle>Pick posts for this brand</WorkPickerTitle>
+                <WorkPickerHint>
+                  Tick up to 3 that feel closest to {brand?.brand_name || brand?.name || 'them'}. They become tappable links in the pitch instead of a repeated handle.
+                </WorkPickerHint>
+              </WorkPickerHeadCopy>
+              <WorkPickerClose type="button" onClick={() => setShowWorkPicker(false)} aria-label="Close">
+                <FiX size={16} />
+              </WorkPickerClose>
+            </WorkPickerHead>
+            <WorkGrid>
+              {pickablePosts.map((post) => {
+                const on = selectedWork.some((p) => p.id === post.id);
+                const locked = !on && selectedWork.length >= BEST_WORK_MAX;
+                return (
+                  <WorkTile
+                    key={post.id}
+                    type="button"
+                    $on={on}
+                    $disabled={locked}
+                    onClick={() => !locked && toggleWorkPost(post)}
+                  >
+                    <RecentPostThumb src={post.thumbnail_url} alt="" />
+                    <WorkCheck $on={on}>{on ? '✓' : ''}</WorkCheck>
+                  </WorkTile>
+                );
+              })}
+            </WorkGrid>
+            <WorkPickerFoot>
+              <PrimaryActionBtn
+                $ready={selectedWork.length > 0}
+                disabled={selectedWork.length === 0}
+                onClick={confirmWorkSelection}
+              >
+                {selectedWork.length
+                  ? `Add ${selectedWork.length} to pitch`
+                  : 'Select at least 1 post'}
+              </PrimaryActionBtn>
+            </WorkPickerFoot>
+          </WorkPickerSheet>
+        </WorkPickerOverlay>
       )}
     </AnimatePresence>
     </>

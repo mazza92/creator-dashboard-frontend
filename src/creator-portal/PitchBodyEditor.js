@@ -40,6 +40,20 @@ const Editor = styled.div`
     text-underline-offset: 2px;
     cursor: pointer;
   }
+
+  a.pitch-example-link {
+    display: block;
+    width: fit-content;
+    margin: 6px 0 0;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: #fdf2f8;
+    color: #be185d;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    line-height: 1.2;
+  }
 `;
 
 export default function PitchBodyEditor({
