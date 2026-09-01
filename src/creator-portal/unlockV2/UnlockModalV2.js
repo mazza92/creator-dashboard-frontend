@@ -12,6 +12,40 @@ import { apiClient, getProxiedMediaUrl } from '../../config/api';
 import UpgradeModal from '../UpgradeModal';
 import { trackProBeginCheckout } from '../../utils/subscriptionAnalytics';
 import { beginBrandOutreach, getDuplicateOutreachMessage } from '../../utils/outreachSendGuard';
+import { CountryDropdown } from 'react-country-region-selector';
+import { ALLOWED_REGION_CODES, PRIORITY_REGION_CODES } from '../../constants/allowedRegions';
+import PitchBodyEditor from '../PitchBodyEditor';
+import { copyPitchRich } from '../../utils/pitchBodyFormat';
+
+const LOCATION_PLACEHOLDER = '[CITY, COUNTRY]';
+
+function toCountryName(value) {
+  const raw = (value || '').trim();
+  if (!raw) return '';
+  if (/^[A-Za-z]{2}$/.test(raw)) {
+    try {
+      const name = new Intl.DisplayNames(['en'], { type: 'region' }).of(raw.toUpperCase());
+      if (name && name !== raw.toUpperCase()) return name;
+    } catch (_) { /* ignore */ }
+  }
+  const aliases = { USA: 'United States', UK: 'United Kingdom', UAE: 'United Arab Emirates' };
+  return aliases[raw.toUpperCase()] || raw;
+}
+
+function formatPitchLocation(city, country) {
+  const parts = [city, toCountryName(country)].map((s) => (s || '').trim()).filter(Boolean);
+  return parts.length ? parts.join(', ') : LOCATION_PLACEHOLDER;
+}
+
+function swapShippingLocation(body, previousDisplay, nextDisplay) {
+  if (!body) return body;
+  const from = previousDisplay || LOCATION_PLACEHOLDER;
+  const to = nextDisplay || LOCATION_PLACEHOLDER;
+  if (from && body.includes(from)) {
+    return body.split(from).join(to);
+  }
+  return body.replace(/shipping to [^\n.]+/, `shipping to ${to}`);
+}
 
 // Brand logo with error handling - shows initials on broken images
 const BrandLogoImg = ({ src, alt, fallback }) => {
@@ -1054,6 +1088,8 @@ const OutreachContent = styled.div`
   background: #fff;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
 
   @media (max-width: 480px) {
     padding: 10px 16px 4px;
@@ -1336,6 +1372,8 @@ const CompactCopyBtn = styled.button`
 const PitchWorkspace = styled.div`
   padding: 14px 20px 0;
   flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
 `;
 
 const PitchWorkspaceLabel = styled.div`
@@ -1366,12 +1404,119 @@ const FieldLabel = styled.div`
   letter-spacing: -0.005em;
 `;
 
+const LocationBlock = styled.div`
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid ${props => props.$missing ? '#FECACA' : PITCH_TOKENS.lineDefault};
+  background: ${props => props.$missing ? '#FFF7F7' : '#FAFAFA'};
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  scroll-margin-top: 16px;
+  ${props => props.$shake ? `
+    animation: locationShake 0.45s ease;
+  ` : ''}
+
+  @keyframes locationShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+`;
+
+const LocationHint = styled.div`
+  font-size: 12px;
+  color: ${PITCH_TOKENS.muted};
+  line-height: 1.45;
+  margin-bottom: 8px;
+`;
+
+const LocationRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+
+  select {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 9px 11px;
+    border: 1.5px solid ${props => props.$countryInvalid ? '#ef4444' : PITCH_TOKENS.lineDefault};
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: ${PITCH_TOKENS.inkPrimary};
+    background: ${props => props.$countryInvalid ? '#fff8f8' : '#fff'};
+    outline: none;
+    font-family: inherit;
+  }
+`;
+
+const LocationInput = styled.input`
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1.5px solid ${props => props.$invalid ? '#ef4444' : PITCH_TOKENS.lineDefault};
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkPrimary};
+  background: ${props => props.$invalid ? '#fff8f8' : '#fff'};
+  outline: none;
+  font-family: inherit;
+  &:focus {
+    border-color: ${PITCH_TOKENS.pinkPrimary};
+    box-shadow: 0 0 0 3px ${PITCH_TOKENS.pinkSoft};
+  }
+`;
+
+const LocationError = styled.div`
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b42318;
+  line-height: 1.4;
+`;
+
+const LocationCountrySelect = styled(CountryDropdown)`
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1.5px solid ${PITCH_TOKENS.lineDefault};
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${PITCH_TOKENS.inkPrimary};
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  appearance: auto;
+  &:focus {
+    border-color: ${PITCH_TOKENS.pinkPrimary};
+    box-shadow: 0 0 0 3px ${PITCH_TOKENS.pinkSoft};
+  }
+`;
+
 const FieldWrapper = styled.div`
   margin-bottom: 12px;
 `;
 
 const PitchSubjectInput = styled.input`
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px;
   border: 1.5px solid ${PITCH_TOKENS.lineDefault};
   border-radius: 10px;
@@ -1392,34 +1537,6 @@ const PitchSubjectInput = styled.input`
   &::placeholder {
     color: ${PITCH_TOKENS.muted};
     font-weight: 400;
-  }
-`;
-
-const PitchBodyTextarea = styled.textarea`
-  width: 100%;
-  min-height: 180px;
-  max-height: 280px;
-  padding: 14px;
-  border: 1.5px solid ${PITCH_TOKENS.lineDefault};
-  border-radius: 10px;
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: ${PITCH_TOKENS.inkPrimary};
-  background: #fff;
-  resize: vertical;
-  font-family: inherit;
-  transition: all 0.15s;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-
-  &:focus {
-    outline: none;
-    border-color: ${PITCH_TOKENS.pinkPrimary};
-    box-shadow: 0 0 0 3px ${PITCH_TOKENS.pinkSoft};
-  }
-
-  &::placeholder {
-    color: ${PITCH_TOKENS.muted};
   }
 `;
 
@@ -1775,9 +1892,11 @@ const PrimaryActionBtn = styled.button`
   ${props => props.$ready ? `
     background: ${PITCH_TOKENS.pinkPrimary};
     color: #fff;
+    border: 1.5px solid ${PITCH_TOKENS.pinkPrimary};
 
     &:hover {
       background: ${PITCH_TOKENS.pinkHover};
+      border-color: ${PITCH_TOKENS.pinkHover};
     }
 
     &:active {
@@ -1790,9 +1909,18 @@ const PrimaryActionBtn = styled.button`
       pointer-events: none;
     }
   ` : `
-    background: ${PITCH_TOKENS.lineSoft};
-    color: ${PITCH_TOKENS.muted};
-    cursor: not-allowed;
+    background: #fff;
+    color: ${PITCH_TOKENS.pinkPrimary};
+    border: 1.5px solid ${PITCH_TOKENS.pinkPrimary};
+    cursor: pointer;
+
+    &:hover {
+      background: ${PITCH_TOKENS.pinkSoft};
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
   `}
 `;
 
@@ -2742,6 +2870,15 @@ const UnlockModalV2 = ({
   const startGenerationRef = useRef(null);
   const genIdRef = useRef(0);
   const [showQuotaUpgrade, setShowQuotaUpgrade] = useState(false);
+  const [pitchCity, setPitchCity] = useState('');
+  const [pitchCountry, setPitchCountry] = useState('');
+  const [needsLocation, setNeedsLocation] = useState(false);
+  const [locationAttempted, setLocationAttempted] = useState(false);
+  const [locationShake, setLocationShake] = useState(false);
+  const locationBlockRef = useRef(null);
+  const cityInputRef = useRef(null);
+  const locationDisplayRef = useRef(LOCATION_PLACEHOLDER);
+  const locationSaveTimer = useRef(null);
 
   // AI Boost state (new UX)
   const [boostOpen, setBoostOpen] = useState(true); // Start expanded
@@ -2807,6 +2944,8 @@ const UnlockModalV2 = ({
           brand_id: brand.brand_id || brand.id,
           slug: brand.slug,
           is_for_you_match: brand.is_for_you_match || false,
+          city: pitchCity,
+          country: pitchCountry,
         });
       }
 
@@ -2975,8 +3114,17 @@ const UnlockModalV2 = ({
             better_matches: response.data.better_matches || null,
             show_alternatives: response.data.show_alternatives || false,
             // Profile snapshot for UI transparency
-            profile_snapshot: response.data.profile_snapshot || null
+            profile_snapshot: response.data.profile_snapshot || null,
+            shipping_city: response.data.shipping_city || '',
+            shipping_country: response.data.shipping_country || '',
+            location_display: response.data.location_display,
+            needs_location: response.data.needs_location,
           });
+
+          setPitchCity(response.data.shipping_city || '');
+          setPitchCountry(toCountryName(response.data.shipping_country || ''));
+          locationDisplayRef.current = response.data.location_display || LOCATION_PLACEHOLDER;
+          setNeedsLocation(Boolean(response.data.needs_location));
 
           setTotalUnlocks(response.data.total_unlocks || 1);
           setFastMode(response.data.fast_mode || false);
@@ -3051,6 +3199,8 @@ const UnlockModalV2 = ({
       setAlreadyContacted(false);
       sendLockRef.current = false;
       setShowQuotaUpgrade(false);
+      setLocationAttempted(false);
+      setLocationShake(false);
       if (quotaUpgradeTimerRef.current) {
         clearTimeout(quotaUpgradeTimerRef.current);
         quotaUpgradeTimerRef.current = null;
@@ -3093,6 +3243,12 @@ const UnlockModalV2 = ({
       setOriginalBody(body);
       setEditedSubject(subject);
       setEditedBody(body);
+      if (packageData.location_display) {
+        locationDisplayRef.current = packageData.location_display;
+      }
+      if (packageData.shipping_city != null) setPitchCity(packageData.shipping_city || '');
+      if (packageData.shipping_country != null) setPitchCountry(toCountryName(packageData.shipping_country || ''));
+      if (packageData.needs_location != null) setNeedsLocation(Boolean(packageData.needs_location));
     }
   }, [packageData]);
 
@@ -3116,6 +3272,24 @@ const UnlockModalV2 = ({
       cancelled = true;
     };
   }, [isOpen]);
+
+  const persistPitchLocation = (city, country) => {
+    if (locationSaveTimer.current) clearTimeout(locationSaveTimer.current);
+    locationSaveTimer.current = setTimeout(() => {
+      apiClient.post('/api/pr-crm/pitch-location', { city, country }).catch(() => {});
+    }, 700);
+  };
+
+  const handleLocationChange = (nextCity, nextCountry) => {
+    const country = toCountryName(nextCountry);
+    setPitchCity(nextCity);
+    setPitchCountry(country);
+    const nextDisplay = formatPitchLocation(nextCity, country);
+    setEditedBody((prev) => swapShippingLocation(prev, locationDisplayRef.current, nextDisplay));
+    locationDisplayRef.current = nextDisplay;
+    setNeedsLocation(!nextCity.trim() || !country);
+    persistPitchLocation(nextCity.trim(), country);
+  };
 
   const handleFlashComplete = useCallback(() => {
     setPhase(PHASE_MODAL);
@@ -3165,7 +3339,11 @@ const UnlockModalV2 = ({
   // Copy to clipboard
   const copyToClipboard = async (text, field) => {
     try {
-      await navigator.clipboard.writeText(text);
+      if (field === 'pitch') {
+        await copyPitchRich(text);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
       setCopiedField(field);
       message.success('Copied to clipboard');
       setTimeout(() => setCopiedField(null), 2000);
@@ -3214,6 +3392,23 @@ const UnlockModalV2 = ({
     setAddedSuggestions(prev => [...prev, index]);
   };
 
+  const requireLocation = !isFollowup && !packageData?.is_followup;
+  const locationReady = Boolean((pitchCity || '').trim() && (pitchCountry || '').trim());
+  const cityMissing = locationAttempted && requireLocation && !(pitchCity || '').trim();
+  const countryMissing = locationAttempted && requireLocation && !(pitchCountry || '').trim();
+
+  const focusMissingLocation = () => {
+    setLocationAttempted(true);
+    setLocationShake(false);
+    requestAnimationFrame(() => setLocationShake(true));
+    locationBlockRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => {
+      if (!(pitchCity || '').trim()) cityInputRef.current?.focus();
+      else locationBlockRef.current?.querySelector('select')?.focus();
+    }, 280);
+    window.setTimeout(() => setLocationShake(false), 650);
+  };
+
   const handleSend = async (skipNudge = false) => {
     if (sendLockRef.current || sendingPitch || pitchSent || alreadyContacted) return;
 
@@ -3222,6 +3417,11 @@ const UnlockModalV2 = ({
     // Form-only brands: open signup in a new tab (user submits — we don't)
     if (formUrl && !brandEmail) {
       handleOpenForm();
+      return;
+    }
+
+    if (requireLocation && !locationReady) {
+      focusMissingLocation();
       return;
     }
 
@@ -3833,6 +4033,56 @@ const UnlockModalV2 = ({
                         <PitchWorkspace>
                           <PitchWorkspaceLabel>{packageData?.is_followup ? 'Your follow-up' : 'Your pitch'}</PitchWorkspaceLabel>
 
+                          {!packageData?.is_followup && (
+                            <LocationBlock
+                              ref={locationBlockRef}
+                              $missing={needsLocation || locationAttempted}
+                              $shake={locationShake}
+                            >
+                              <FieldLabel>Where should they ship?</FieldLabel>
+                              <LocationHint>
+                                {needsLocation || locationAttempted
+                                  ? 'Add city, then pick a country. Brands need this before you send.'
+                                  : 'Used in the pitch as your shipping destination. Edit anytime.'}
+                              </LocationHint>
+                              <LocationRow
+                                as="form"
+                                autoComplete="shipping"
+                                onSubmit={(e) => e.preventDefault()}
+                                $countryInvalid={countryMissing}
+                              >
+                                <LocationInput
+                                  ref={cityInputRef}
+                                  name="city"
+                                  value={pitchCity}
+                                  onChange={(e) => handleLocationChange(e.target.value, pitchCountry)}
+                                  placeholder="City"
+                                  autoComplete="address-level2"
+                                  $invalid={cityMissing}
+                                  aria-invalid={cityMissing}
+                                />
+                                <LocationCountrySelect
+                                  name="country"
+                                  value={pitchCountry}
+                                  onChange={(val) => handleLocationChange(pitchCity, val)}
+                                  defaultOptionLabel="Country"
+                                  valueType="full"
+                                  whitelist={ALLOWED_REGION_CODES}
+                                  priorityOptions={PRIORITY_REGION_CODES}
+                                />
+                              </LocationRow>
+                              {locationAttempted && !locationReady && (
+                                <LocationError>
+                                  {cityMissing && countryMissing
+                                    ? 'Add a city and country so they know where to ship.'
+                                    : cityMissing
+                                      ? 'Add a city.'
+                                      : 'Pick a country.'}
+                                </LocationError>
+                              )}
+                            </LocationBlock>
+                          )}
+
                           <FieldLabel>Subject</FieldLabel>
                           <PitchSubjectInput
                             type="text"
@@ -3842,25 +4092,37 @@ const UnlockModalV2 = ({
                           />
 
                           <FieldLabel>Message</FieldLabel>
-                          <PitchBodyTextarea
+                          <PitchBodyEditor
                             value={editedBody}
-                            onChange={(e) => setEditedBody(e.target.value)}
+                            onChange={setEditedBody}
                             placeholder="Your pitch..."
+                            border={PITCH_TOKENS.lineDefault}
+                            focusBorder={PITCH_TOKENS.pinkPrimary}
+                            focusRing={PITCH_TOKENS.pinkSoft}
+                            color={PITCH_TOKENS.inkPrimary}
                           />
                         </PitchWorkspace>
 
                         {/* STICKY ACTION BAR */}
                         <StickyActionBar>
                           <PrimaryActionBtn
-                            $ready
+                            $ready={!(requireLocation && !locationReady)}
                             disabled={sendingPitch}
-                            onClick={() => handleSend(true)}
+                            onClick={() => {
+                              if (requireLocation && !locationReady) {
+                                focusMissingLocation();
+                                return;
+                              }
+                              handleSend(true);
+                            }}
                           >
                             ✉ {sendingPitch
                               ? 'Opening email…'
-                              : packageData?.is_followup
-                                ? `Send follow-up to ${brandName}`
-                                : `Send pitch to ${brandName}`}
+                              : requireLocation && !locationReady
+                                ? 'Add city & country to send'
+                                : packageData?.is_followup
+                                  ? `Send follow-up to ${brandName}`
+                                  : `Send pitch to ${brandName}`}
                           </PrimaryActionBtn>
                           <SendOnceHint>
                             Send once. Brands see every copy, and repeats can hurt your reply rate.
@@ -3872,7 +4134,13 @@ const UnlockModalV2 = ({
                                 Apply via form
                               </SecondaryLink>
                             )}
-                            <SecondaryLink onClick={() => copyToClipboard(editedBody, 'pitch')}>
+                            <SecondaryLink onClick={() => {
+                              if (requireLocation && !locationReady) {
+                                focusMissingLocation();
+                                return;
+                              }
+                              copyToClipboard(editedBody, 'pitch');
+                            }}>
                               {copiedField === 'pitch' ? 'Copied!' : 'Copy to send from your email'}
                             </SecondaryLink>
                           </SecondaryLinks>

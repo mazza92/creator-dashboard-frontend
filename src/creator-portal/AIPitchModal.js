@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { message, Spin, Tooltip } from 'antd';
@@ -8,13 +8,57 @@ import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { beginBrandOutreach, getDuplicateOutreachMessage } from '../utils/outreachSendGuard';
+import { CountryDropdown } from 'react-country-region-selector';
+import { ALLOWED_REGION_CODES, PRIORITY_REGION_CODES } from '../constants/allowedRegions';
+import PitchBodyEditor from './PitchBodyEditor';
+import { copyPitchRich } from '../utils/pitchBodyFormat';
 // Media kit enforcement removed - let users try the feature immediately
 
+const LOCATION_PLACEHOLDER = '[CITY, COUNTRY]';
+
+function toCountryName(value) {
+  const raw = (value || '').trim();
+  if (!raw) return '';
+  if (/^[A-Za-z]{2}$/.test(raw)) {
+    try {
+      const name = new Intl.DisplayNames(['en'], { type: 'region' }).of(raw.toUpperCase());
+      if (name && name !== raw.toUpperCase()) return name;
+    } catch (_) { /* ignore */ }
+  }
+  const aliases = { USA: 'United States', UK: 'United Kingdom', UAE: 'United Arab Emirates' };
+  return aliases[raw.toUpperCase()] || raw;
+}
+
+function formatPitchLocation(city, country) {
+  const parts = [city, toCountryName(country)].map((s) => (s || '').trim()).filter(Boolean);
+  return parts.length ? parts.join(', ') : LOCATION_PLACEHOLDER;
+}
+
+function parseShippingFromProfile(profile) {
+  const addr = profile?.shipping_address;
+  let city = '';
+  let country = '';
+  if (addr && typeof addr === 'object' && !Array.isArray(addr)) {
+    city = addr.city || '';
+    country = addr.country || '';
+  }
+  country = toCountryName(country || profile?.country || '');
+  return { city: city.trim(), country };
+}
+
+function swapShippingLocation(body, previousDisplay, nextDisplay) {
+  if (!body) return body;
+  const from = previousDisplay || LOCATION_PLACEHOLDER;
+  const to = nextDisplay || LOCATION_PLACEHOLDER;
+  if (from && body.includes(from)) {
+    return body.split(from).join(to);
+  }
+  return body.replace(/shipping to [^\n.]+/, `shipping to ${to}`);
+}
+
 /**
- * AI Pitch Modal - Generates personalized outreach emails using the "Golden Template"
- *
- * Uses real creator data + brand data to create hyper-personalized pitches
- * that follow the proven structure brands expect in 2026.
+ * AI Pitch Modal — irresistible gifted-PR template
+ * Data upfront, concrete deliverable, direct ask, portfolio link.
  */
 
 const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => {
@@ -43,6 +87,15 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
   const [trackingPixelUrl, setTrackingPixelUrl] = useState(null); // For email open tracking
   const [showUnlockCelebration, setShowUnlockCelebration] = useState(false); // Tinder-style unlock celebration
   const [wasAlreadyUnlocked, setWasAlreadyUnlocked] = useState(false); // Track if brand was previously unlocked
+  const [pitchCity, setPitchCity] = useState('');
+  const [pitchCountry, setPitchCountry] = useState('');
+  const [needsLocation, setNeedsLocation] = useState(false);
+  const [locationAttempted, setLocationAttempted] = useState(false);
+  const [locationShake, setLocationShake] = useState(false);
+  const locationBlockRef = useRef(null);
+  const cityInputRef = useRef(null);
+  const locationDisplayRef = useRef(LOCATION_PLACEHOLDER);
+  const locationSaveTimer = useRef(null);
 
   // Check if this is a follow-up pitch
   const isFollowup = brand?.isFollowup || false;
@@ -97,7 +150,11 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
     setCreatorProfile(profile);
 
     setLoadingStep(2); // Personalizing
-    await generatePitch(profile);
+    const loc = parseShippingFromProfile(profile);
+    setPitchCity(loc.city);
+    setPitchCountry(loc.country);
+    locationDisplayRef.current = formatPitchLocation(loc.city, loc.country);
+    await generatePitch(profile, loc);
 
     setLoading(false);
   };
@@ -182,13 +239,17 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
     }
   };
 
-  const generatePitch = async (profile) => {
+  const generatePitch = async (profile, loc = {}) => {
     try {
+      const city = loc.city || pitchCity;
+      const country = loc.country || pitchCountry;
       // Try AI endpoint first - send both brand_id and slug as fallback
       const response = await api.post('/api/pr-crm/generate-pitch', {
         brand_id: brand.brand_id || brand.id,
         slug: brand.slug,
-        is_followup: isFollowup
+        is_followup: isFollowup,
+        city,
+        country,
       });
       console.log('[AIPitchModal] Generate pitch response:', {
         brand_email: response.data.brand_email,
@@ -202,6 +263,16 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
       setPitch(pitchWithMediaKit);
       setEditedSubject(pitchWithMediaKit.subject || '');
       setEditedBody(pitchWithMediaKit.body || '');
+      if (pitchWithMediaKit.shipping_city != null) {
+        setPitchCity(pitchWithMediaKit.shipping_city || '');
+      }
+      if (pitchWithMediaKit.shipping_country != null) {
+        setPitchCountry(pitchWithMediaKit.shipping_country || '');
+      }
+      if (pitchWithMediaKit.location_display) {
+        locationDisplayRef.current = pitchWithMediaKit.location_display;
+      }
+      setNeedsLocation(Boolean(pitchWithMediaKit.needs_location));
       // Store the email from API if available
       if (response.data.brand_email) {
         setFetchedBrandEmail(response.data.brand_email);
@@ -252,71 +323,87 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
         message.info('Using personalized template (AI temporarily unavailable)');
       }
 
-      // AI endpoint not ready - use the Golden Template with real data
+      // Fallback: same irresistible template filled from profile
+      const loc = parseShippingFromProfile(profile);
       const fallbackPitch = isFollowup
         ? generateFollowupTemplate(brand, profile)
-        : generateGoldenTemplate(brand, profile);
+        : generateGoldenTemplate(brand, profile, loc);
       setPitch(fallbackPitch);
       setEditedSubject(fallbackPitch.subject || '');
       setEditedBody(fallbackPitch.body || '');
+      locationDisplayRef.current = formatPitchLocation(loc.city, loc.country);
+      setNeedsLocation(!loc.city || !loc.country);
       return fallbackPitch;
     }
   };
 
+  const persistPitchLocation = (city, country) => {
+    if (locationSaveTimer.current) clearTimeout(locationSaveTimer.current);
+    locationSaveTimer.current = setTimeout(() => {
+      api.post('/api/pr-crm/pitch-location', { city, country }).catch(() => {});
+    }, 700);
+  };
+
+  const handleLocationChange = (nextCity, nextCountry) => {
+    const country = toCountryName(nextCountry);
+    setPitchCity(nextCity);
+    setPitchCountry(country);
+    const nextDisplay = formatPitchLocation(nextCity, country);
+    setEditedBody((prev) => swapShippingLocation(prev, locationDisplayRef.current, nextDisplay));
+    locationDisplayRef.current = nextDisplay;
+    setNeedsLocation(!nextCity.trim() || !country);
+    persistPitchLocation(nextCity.trim(), country);
+  };
+
   /**
-   * The "Golden Template" - Proven structure for brand outreach
-   * Written to sound human, NOT like AI - avoids corporate buzzwords,
-   * perfect formatting, and phrases like "genuine", "authentic", "thrilled"
+   * Irresistible gifted-PR template — used as a local fallback if the API is down.
    */
-  const generateGoldenTemplate = (brand, profile) => {
-    // Extract creator data with smart defaults
+  const generateGoldenTemplate = (brand, profile, loc = {}) => {
     const creatorName = (profile?.username || profile?.social_handle || '').replace(/^@/, '') || profile?.name || '';
     const followers = formatFollowers(profile?.followers_count);
-    const niche = getNiche(profile);
+    const niche = getNiche(profile) || brand.category || 'lifestyle';
     const platform = getPrimaryPlatform(profile);
-    const creatorId = profile?.id || profile?.creator_id;
+    const product = (brand.hero_product && !/products$/i.test(brand.hero_product))
+      ? brand.hero_product
+      : 'PR sample';
+    const engagement = [profile?.engagement_rate, profile?.avg_engagement_rate]
+      .map((v) => Number(v))
+      .find((n) => Number.isFinite(n) && n > 0);
+    const engagementText = engagement
+      ? `${engagement.toFixed(1).replace(/\.0$/, '')}%`
+      : '';
+    const age = profile?.primary_age_range || profile?.age_range;
+    const demographic = age ? `${age} ${niche} fans` : `${niche} fans`;
+    const location = formatPitchLocation(loc.city, loc.country);
     const socialUrl = getSocialUrl(profile, platform);
+    const platformMention = socialUrl ? `${platform} (${socialUrl})` : platform;
+    const kitUrl = profile?.has_media_kit && (profile?.username || profile?.id)
+      ? `https://newcollab.co/kit/${profile?.username || profile?.id}`
+      : (socialUrl || (creatorName ? `@${creatorName}` : ''));
 
-    // Get current month for timely content series
-    const nextMonth = new Date(Date.now() + 30*24*60*60*1000).toLocaleString('default', { month: 'long' });
+    let intro = `I create ${niche} content on ${platformMention}`;
+    if (followers) intro += ` for ${followers} followers`;
+    if (engagementText) intro += ` with ${engagementText} engagement`;
+    intro += `. My audience is ${demographic}.`;
 
-    // Generate content series name based on niche
-    const seriesName = generateSeriesName(niche, brand.category);
+    const body = `Hi ${brand.brand_name || 'there'},
 
-    // Specific subject — uses creator niche and followers for a cleaner signal
-    const nicheDisplay = niche || brand.category || 'content';
-    const followersShort = followers || null;
-    const subjectNiche = niche
-      ? niche.charAt(0).toUpperCase() + niche.slice(1)
-      : (brand.category || 'Content');
-    const subject = followersShort
-      ? `${subjectNiche} content idea for ${followersShort} ${platform} audience`
-      : `Content collab idea for ${brand.brand_name}`;
+${intro}
 
-    // Pass creator niche — not brand category — so the opener reflects the creator's identity
-    const openers = getHumanOpeners(brand.brand_name, niche);
-    const opener = openers[Math.floor(Math.random() * openers.length)];
+Trade offer for a ${product} PR box:
 
-    // Build the human-sounding body - no buzzwords, natural flow
-    const body = `Hi there,
+• 3 organic posts to my ${platform} within 21 days
+• 1 raw UGC video file (yours to run as paid ads, 6-month rights)
+• 30-day performance report (views, saves, CTR, DMs)
 
-${opener}
+No fee. Just product + shipping to ${location}.
+${kitUrl ? `\nRecent work: ${kitUrl}\n` : '\n'}
+Worth a look?
 
-I'm putting together a ${seriesName.toLowerCase()} series for ${nextMonth} and thought ${brand.brand_name} would be a good fit. I have ${followers || 'a growing audience'} on ${platform} who are always asking about ${getNicheInterest(niche, brand.category)}.
-
-Here's what I had in mind:
-- A ${platform === 'TikTok' ? 'TikTok' : 'Reel'} showing how I actually use the product (not a basic unboxing)
-- I can also send over the raw clips if your team wants to use them
-
-${socialUrl ? `My ${platform}: ${socialUrl}` : ''}${profile?.has_media_kit && creatorId ? `\nPlease find my portfolio here: https://newcollab.co/kit/${profile?.username || creatorId}` : ''}
-
-If you're open to it, I'd love to try some products and see if we can make something work. No pressure either way!
-
-Thanks,
-${creatorName}`;
+${creatorName}`.trim();
 
     return {
-      subject,
+      subject: '3 posts + 1 UGC file for a PR/gifting sample · gifted trial',
       body,
       creator_stats: {
         followers: followers,
@@ -382,14 +469,23 @@ ${creatorName}`;
 
     if (platform === 'TikTok' && profile.tiktok) {
       const handle = profile.tiktok.replace('@', '');
-      return `https://tiktok.com/@${handle}`;
+      return `https://www.tiktok.com/@${handle}`;
     }
-    if (platform === 'Instagram' && (profile.instagram || profile.username)) {
-      const handle = (profile.instagram || profile.username).replace('@', '');
-      return `https://instagram.com/${handle}`;
+    if (platform === 'Instagram' && (profile.instagram || profile.username || profile.social_handle)) {
+      const handle = (profile.instagram || profile.social_handle || profile.username).replace('@', '');
+      return `https://www.instagram.com/${handle}/`;
     }
     if (platform === 'YouTube' && profile.youtube) {
-      return profile.youtube.startsWith('http') ? profile.youtube : `https://youtube.com/@${profile.youtube}`;
+      return profile.youtube.startsWith('http') ? profile.youtube : `https://www.youtube.com/@${profile.youtube}`;
+    }
+    const links = Array.isArray(profile.social_links) ? profile.social_links : [];
+    const match = links.find((l) => (l?.platform || '').toLowerCase() === platform.toLowerCase());
+    if (match?.url) return match.url;
+    if (match?.handle) {
+      const handle = String(match.handle).replace('@', '');
+      if (platform === 'TikTok') return `https://www.tiktok.com/@${handle}`;
+      if (platform === 'YouTube') return `https://www.youtube.com/@${handle}`;
+      return `https://www.instagram.com/${handle}/`;
     }
     return null;
   };
@@ -467,6 +563,13 @@ ${creatorName}`;
 
   const handleSendEmail = async () => {
     if (sending || pitchSent) return;
+
+    const requireLocation = !isFollowup;
+    const locationReady = Boolean((pitchCity || '').trim() && (pitchCountry || '').trim());
+    if (requireLocation && !locationReady) {
+      focusMissingLocation();
+      return;
+    }
 
     // Follow-ups don't consume pitch credits (Pro only feature)
     // Show upgrade overlay instead of blocking with a warning
@@ -568,9 +671,13 @@ ${creatorName}`;
   };
 
   const handleCopyPitch = async () => {
+    if (requireLocation && !locationReady) {
+      focusMissingLocation();
+      return;
+    }
     try {
       const fullPitch = `Subject: ${editedSubject || pitch?.subject}\n\n${editedBody || pitch?.body}`;
-      await navigator.clipboard.writeText(fullPitch);
+      await copyPitchRich(fullPitch);
       setCopied(true);
       message.success('Email copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
@@ -600,6 +707,23 @@ ${creatorName}`;
       ? local.charAt(0) + '••••' + local.charAt(local.length - 1)
       : '••••';
     return `${maskedLocal}@${domain}`;
+  };
+
+  const requireLocation = !isFollowup;
+  const locationReady = Boolean((pitchCity || '').trim() && (pitchCountry || '').trim());
+  const cityMissing = locationAttempted && requireLocation && !(pitchCity || '').trim();
+  const countryMissing = locationAttempted && requireLocation && !(pitchCountry || '').trim();
+
+  const focusMissingLocation = () => {
+    setLocationAttempted(true);
+    setLocationShake(false);
+    requestAnimationFrame(() => setLocationShake(true));
+    locationBlockRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => {
+      if (!(pitchCity || '').trim()) cityInputRef.current?.focus();
+      else locationBlockRef.current?.querySelector('select')?.focus();
+    }, 280);
+    window.setTimeout(() => setLocationShake(false), 650);
   };
 
   const displayEmail = contactRevealed ? brandEmail : getMaskedEmail(brandEmail);
@@ -917,6 +1041,54 @@ ${creatorName}`;
                   </InfoBlock>
                 )}
 
+                {!isFollowup && (
+                  <LocationBlock
+                    ref={locationBlockRef}
+                    $missing={needsLocation || locationAttempted}
+                    $shake={locationShake}
+                  >
+                    <InfoLabel>Where should they ship?</InfoLabel>
+                    <LocationHint>
+                      {needsLocation || locationAttempted
+                        ? 'Add city, then pick a country. Brands need this before you send.'
+                        : 'Used in the pitch as your shipping destination. Edit anytime.'}
+                    </LocationHint>
+                    <LocationRow
+                      autoComplete="shipping"
+                      onSubmit={(e) => e.preventDefault()}
+                      $countryInvalid={countryMissing}
+                    >
+                      <LocationInput
+                        ref={cityInputRef}
+                        name="city"
+                        value={pitchCity}
+                        onChange={(e) => handleLocationChange(e.target.value, pitchCountry)}
+                        placeholder="City"
+                        autoComplete="address-level2"
+                        $invalid={cityMissing}
+                      />
+                      <LocationCountrySelect
+                        name="country"
+                        value={pitchCountry}
+                        onChange={(val) => handleLocationChange(pitchCity, val)}
+                        defaultOptionLabel="Country"
+                        valueType="full"
+                        whitelist={ALLOWED_REGION_CODES}
+                        priorityOptions={PRIORITY_REGION_CODES}
+                      />
+                    </LocationRow>
+                    {locationAttempted && !locationReady && (
+                      <LocationError>
+                        {cityMissing && countryMissing
+                          ? 'Add a city and country so they know where to ship.'
+                          : cityMissing
+                            ? 'Add a city.'
+                            : 'Pick a country.'}
+                      </LocationError>
+                    )}
+                  </LocationBlock>
+                )}
+
                 <InfoBlock>
                   <InfoLabel>What they often gift</InfoLabel>
                   <InfoValue>~${brand?.price_point || 45} avg gift</InfoValue>
@@ -952,16 +1124,14 @@ ${creatorName}`;
                       fontWeight: 600,
                     }}
                   />
-                  <PitchTextarea
+                  <PitchBodyEditor
                     value={editedBody}
-                    onChange={e => setEditedBody(e.target.value)}
-                    rows={6}
-                    style={{
-                      background: '#fff',
-                      border: '1px solid #ebebeb',
-                      borderRadius: 10,
-                      minHeight: 120,
-                    }}
+                    onChange={setEditedBody}
+                    placeholder="Your pitch..."
+                    minHeight="240px"
+                    border="#ebebeb"
+                    focusBorder="#ec4899"
+                    color="#374151"
                   />
                   <EditHint style={{ marginTop: 6, display: 'block' }}>Tap to edit</EditHint>
                 </InfoBlock>
@@ -985,11 +1155,21 @@ ${creatorName}`;
                   <>
                     <PrimaryBtn
                       as={motion.button}
-                      onClick={() => handleSendEmail()}
+                      onClick={() => {
+                        if (requireLocation && !locationReady) {
+                          focusMissingLocation();
+                          return;
+                        }
+                        handleSendEmail();
+                      }}
                       disabled={sending}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {sending ? 'Opening…' : 'Contact Brand'}
+                      {sending
+                        ? 'Opening…'
+                        : requireLocation && !locationReady
+                          ? 'Add city & country to send'
+                          : 'Contact Brand'}
                     </PrimaryBtn>
                     <SecondaryRow>
                       <SecondaryBtn onClick={handleCopyPitch}>
@@ -2171,8 +2351,8 @@ const PitchTextarea = styled.textarea`
   resize: none;
   font-family: inherit;
   background: #fff;
-  min-height: 160px;
-  max-height: 220px;
+  min-height: 240px;
+  max-height: 380px;
 
   @media (max-width: 768px) {
     padding: 10px 12px;
@@ -2394,6 +2574,87 @@ const InfoMeta = styled.div`
   font-size: 0.75rem;
   color: ${tokens.muted};
   margin-top: 0.25rem;
+`;
+
+const LocationBlock = styled(InfoBlock)`
+  border: 1px solid ${props => props.$missing ? '#FECACA' : tokens.border || '#EBEBEB'};
+  background: ${props => props.$missing ? '#FFF7F7' : tokens.paper};
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  scroll-margin-top: 16px;
+  ${props => props.$shake ? 'animation: locationShake 0.45s ease;' : ''}
+
+  @keyframes locationShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+`;
+
+const LocationHint = styled.div`
+  font-size: 12px;
+  color: ${tokens.muted};
+  line-height: 1.45;
+  margin-bottom: 8px;
+`;
+
+const LocationRow = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+
+  select {
+    border-color: ${props => props.$countryInvalid ? '#ef4444' : '#ebebeb'};
+    background: ${props => props.$countryInvalid ? '#fff8f8' : '#fff'};
+  }
+`;
+
+const LocationInput = styled.input`
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid ${props => props.$invalid ? '#ef4444' : '#ebebeb'};
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${tokens.ink};
+  background: ${props => props.$invalid ? '#fff8f8' : '#fff'};
+  outline: none;
+  font-family: inherit;
+  &:focus {
+    border-color: #111;
+  }
+`;
+
+const LocationError = styled.div`
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b42318;
+`;
+
+const LocationCountrySelect = styled(CountryDropdown)`
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid #ebebeb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${tokens.ink};
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  appearance: auto;
 `;
 
 // Timing guidance for follow-ups (Pro feature)

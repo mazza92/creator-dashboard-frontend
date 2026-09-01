@@ -260,7 +260,7 @@ const AdminReports = () => {
     );
   }
 
-  const { mrr, at_limit_users, at_limit_count, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, packs: packsRaw } = data;
+  const { mrr, at_limit_users, at_limit_count, at_limit_last_month = 0, at_limit_change = 0, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, packs: packsRaw, onboarding_survey: survey } = data;
   const packs = packsRaw || {
     price_cents: 900,
     packs_per_purchase: 3,
@@ -274,7 +274,6 @@ const AdminReports = () => {
     buyers_with_credits: 0,
   };
   const packDollars = (cents) => `$${Math.round((cents || 0) / 100)}`;
-  const packPeriodChange = (packs.period?.purchases || 0) - (packs.prev_period?.purchases || 0);
 
   // Calculate funnel percentages
   const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
@@ -354,124 +353,19 @@ const AdminReports = () => {
             <Milestone>
               <MilestoneLabel>At-limit users</MilestoneLabel>
               <MilestoneVal style={{ color: '#F59E0B' }}>{at_limit_count}</MilestoneVal>
-              <MilestoneSub>Out of free + paid packs</MilestoneSub>
+              <MilestoneSub>
+                {at_limit_change > 0 ? '+' : ''}{at_limit_change} vs last month ({at_limit_last_month})
+              </MilestoneSub>
             </Milestone>
             <Milestone>
-              <MilestoneLabel>Extra packs</MilestoneLabel>
-              <MilestoneVal>{packDollars(packs.all_time?.revenue_cents)}</MilestoneVal>
-              <MilestoneSub>One-time · not in MRR</MilestoneSub>
+              <MilestoneLabel>New signups</MilestoneLabel>
+              <MilestoneVal>{this_month.signups}</MilestoneVal>
+              <MilestoneSub>
+                {(this_month.signups_change || 0) > 0 ? '+' : ''}{this_month.signups_change || 0} vs last month ({this_month.signups_last_month || 0})
+              </MilestoneSub>
             </Milestone>
           </MilestoneRow>
         </GoalCard>
-
-        {/* 1.5 EXTRA PACKS ($9) */}
-        <SectionLabel>Extra packs · $9 one-time</SectionLabel>
-        <WeekGrid>
-          <WeekCard>
-            <WcTop>
-              <WcLabel>Pack revenue this period</WcLabel>
-              <WcDelta $up={packPeriodChange >= 0}>one-time</WcDelta>
-            </WcTop>
-            <WcValue style={{ color: 'var(--rose)' }}>{packDollars(packs.period?.revenue_cents)}</WcValue>
-            <WcSub>
-              {packs.period?.purchases || 0} purchase{(packs.period?.purchases || 0) === 1 ? '' : 's'} · {packDollars(packs.all_time?.revenue_cents)} all time
-            </WcSub>
-          </WeekCard>
-          <WeekCard>
-            <WcTop>
-              <WcLabel>Buyers</WcLabel>
-              <WcDelta>{packs.all_time?.repeat_buyers || 0} repeat</WcDelta>
-            </WcTop>
-            <WcValue>{packs.all_time?.buyers || 0}</WcValue>
-            <WcSub>
-              {packs.period?.buyers || 0} this period · {packs.buyers_with_credits || 0} still have credits
-            </WcSub>
-          </WeekCard>
-          <WeekCard>
-            <WcTop>
-              <WcLabel>Purchases today</WcLabel>
-              <WcDelta $up>live</WcDelta>
-            </WcTop>
-            <WcValue>{packs.today?.purchases || 0}</WcValue>
-            <WcSub>
-              {packDollars(packs.today?.revenue_cents)} today · 3 packs per purchase
-            </WcSub>
-          </WeekCard>
-          <WeekCard>
-            <WcTop>
-              <WcLabel>3/3 → $9 conversion</WcLabel>
-              <WcDelta $up={packFromMultiPct >= 5}>{packFromMultiPct}%</WcDelta>
-            </WcTop>
-            <WcValue>{packFromMultiPct}%</WcValue>
-            <WcSub>
-              {boughtPack} of {funnel.pitched_multiple || 0} who burned the free 3
-            </WcSub>
-          </WeekCard>
-        </WeekGrid>
-
-        {(packs.daily || []).length > 0 && (
-          <HealthGrid style={{ marginBottom: 12 }}>
-            <HealthCard>
-              <HcLabel>Pack purchases · {data.period?.label || 'this period'}</HcLabel>
-              <HcValue $color="rose">{packs.period?.purchases || 0}</HcValue>
-              <HcDelta $up={packPeriodChange >= 0}>
-                {packPeriodChange >= 0 ? '↑' : '↓'} {packPeriodChange >= 0 ? '+' : ''}{packPeriodChange} vs prev period
-              </HcDelta>
-              <Sparkline data={packs.daily} color="rose" />
-            </HealthCard>
-          </HealthGrid>
-        )}
-
-        <TodayCard>
-          <TodayHeader>
-            <TodayTitle>
-              Recent $9 pack purchases
-              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
-                {packs.recent?.length || 0}
-              </span>
-            </TodayTitle>
-            <TodaySubtitle>Source of truth: pack_purchases · does not count toward MRR</TodaySubtitle>
-          </TodayHeader>
-          {(packs.recent || []).length === 0 ? (
-            <EmptyState>
-              <strong>No pack purchases yet</strong>
-              <p>When a creator buys 3 extra packs for $9, they show up here</p>
-            </EmptyState>
-          ) : (
-            <BrandTable>
-              <BrandTableHead>
-                <tr>
-                  <th>Creator</th>
-                  <th>Email</th>
-                  <th>Packs</th>
-                  <th>Amount</th>
-                  <th>When</th>
-                </tr>
-              </BrandTableHead>
-              <tbody>
-                {packs.recent.map((row) => (
-                  <BrandTableRow key={`${row.creator_id}-${row.created_at_iso || row.created_at}`}>
-                    <td>
-                      <BrandName>{row.username || `Creator ${row.creator_id}`}</BrandName>
-                    </td>
-                    <td>
-                      <StatValue>{row.email}</StatValue>
-                    </td>
-                    <td>
-                      <StatValue>{row.packs}</StatValue>
-                    </td>
-                    <td>
-                      <StatValue $color={colors.rose}>{packDollars(row.amount_cents)}</StatValue>
-                    </td>
-                    <td>
-                      <StatValue>{row.created_at || '-'}</StatValue>
-                    </td>
-                  </BrandTableRow>
-                ))}
-              </tbody>
-            </BrandTable>
-          )}
-        </TodayCard>
 
         {/* 2. TOP BRANDS BY PITCHES */}
         <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -687,7 +581,7 @@ const AdminReports = () => {
         {/* 3.5. TRAFFIC */}
         <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>
-            Traffic — last 7 days
+            Traffic — last 30 days
             {traffic?.connected && <GA4Badge>● GA4 live</GA4Badge>}
             {traffic?.connected && traffic.cache_age_minutes !== undefined && (
               <span style={{ fontSize: 11, color: colors.text3, fontWeight: 400, marginLeft: 8 }}>
@@ -716,26 +610,31 @@ const AdminReports = () => {
         ) : (
           <>
             <TrafficGrid>
-              {/* Unique visitors */}
+              {/* New users — the only volume KPI that can become new MRR */}
               <HealthCard>
-                <HcLabel>Unique visitors</HcLabel>
-                <HcValue $color="black">{traffic.visitors_this_week?.toLocaleString()}</HcValue>
-                <HcDelta $up={traffic.visitors_this_week >= traffic.visitors_last_week}>
-                  {traffic.visitors_this_week >= traffic.visitors_last_week ? '↑' : '↓'}{' '}
-                  {Math.abs(traffic.visitors_this_week - traffic.visitors_last_week)} vs last week
+                <HcLabel>New users</HcLabel>
+                <HcValue $color="black">{traffic.new_users_this_week?.toLocaleString()}</HcValue>
+                <HcDelta $flat style={{ color: colors.text3 }}>
+                  last 30 days
                 </HcDelta>
-                <TrafficSparkline data={traffic.daily_visitors_7d || []} />
+                <TrafficSparkline data={traffic.daily_new_users || []} />
               </HealthCard>
 
-              {/* Pageviews */}
+              {/* Engagement rate — traffic quality vs bounce */}
               <HealthCard>
-                <HcLabel>Pageviews</HcLabel>
-                <HcValue $color="black">{traffic.pageviews_this_week?.toLocaleString()}</HcValue>
-                <HcDelta $up={traffic.pageviews_this_week >= traffic.pageviews_last_week}>
-                  {traffic.pageviews_this_week >= traffic.pageviews_last_week ? '↑' : '↓'}{' '}
-                  {Math.abs(traffic.pageviews_this_week - traffic.pageviews_last_week)} vs last week
+                <HcLabel>Engagement rate</HcLabel>
+                <HcValue $color={traffic.engagement_rate >= 50 ? 'green' : 'rose'}>
+                  {traffic.engagement_rate}%
+                </HcValue>
+                <HcDelta $up={traffic.engagement_rate >= 50}>
+                  {traffic.engagement_rate >= 50 ? '↑ traffic is real' : 'Too many bounces'}
                 </HcDelta>
-                <TrafficSparkline data={traffic.daily_visitors_7d || []} color="#2563EB" />
+                <TrafficTip>
+                  {traffic.engaged_sessions?.toLocaleString()} engaged sessions
+                  {traffic.engagement_rate < 50 && (
+                    <span style={{ color: colors.rose, fontWeight: 700 }}> — Wrong audience or weak landing</span>
+                  )}
+                </TrafficTip>
               </HealthCard>
 
               {/* Visitor → signup rate */}
@@ -745,7 +644,7 @@ const AdminReports = () => {
                   {traffic.visitor_signup_rate}%
                 </HcValue>
                 <HcDelta $flat style={{ color: colors.text3 }}>
-                  {traffic.signups_this_week} signups / {traffic.visitors_this_week?.toLocaleString()} visitors
+                  {traffic.signups_this_week} signups / {traffic.new_users_this_week?.toLocaleString()} new users
                 </HcDelta>
                 <TrafficTip>
                   Target: 2–3%
@@ -898,10 +797,12 @@ const AdminReports = () => {
           <WeekCard>
             <WcTop>
               <WcLabel>Hot leads (at limit)</WcLabel>
-              <WcDelta $up>nudge them</WcDelta>
+              <WcDelta $up={at_limit_change >= 0}>
+                {at_limit_change > 0 ? '+' : ''}{at_limit_change} vs last month
+              </WcDelta>
             </WcTop>
             <WcValue style={{ color: 'var(--amber)' }}>{at_limit_count}</WcValue>
-            <WcSub>Free users with 0 unlocks and 0 paid packs. $9 or Pro</WcSub>
+            <WcSub>Used all 3 free unlocks this month · {at_limit_last_month} last month</WcSub>
           </WeekCard>
 
           <WeekCard>
@@ -910,7 +811,7 @@ const AdminReports = () => {
               <WcDelta>watch them</WcDelta>
             </WcTop>
             <WcValue style={{ color: 'var(--black)' }}>{near_limit_count}</WcValue>
-            <WcSub>One more unlock and they hit the wall — will convert next</WcSub>
+            <WcSub>2 of 3 unlocks used this month — will convert next</WcSub>
           </WeekCard>
 
           <WeekCard>
@@ -925,10 +826,12 @@ const AdminReports = () => {
           <WeekCard>
             <WcTop>
               <WcLabel>New signups</WcLabel>
-              <WcDelta $up>↑ growing</WcDelta>
+              <WcDelta $up={(this_month.signups_change || 0) >= 0}>
+                {(this_month.signups_change || 0) > 0 ? '+' : ''}{this_month.signups_change || 0} vs last month
+              </WcDelta>
             </WcTop>
             <WcValue>{this_month.signups}</WcValue>
-            <WcSub>This month · {this_month.total_signups} total since launch</WcSub>
+            <WcSub>This month · {this_month.signups_last_month || 0} last month · {this_month.total_signups} total</WcSub>
           </WeekCard>
 
           <WeekCard>
@@ -942,6 +845,134 @@ const AdminReports = () => {
             </WcSub>
           </WeekCard>
         </WeekGrid>
+
+        {/* 6. ONBOARDING SURVEY */}
+        <SectionLabel>What new creators told us</SectionLabel>
+        <FunnelCard>
+          <FunnelTitle>
+            Onboarding survey
+            {survey?.completed ? (
+              <span style={{ fontWeight: 500, color: colors.text3, fontSize: 12 }}>
+                {survey.completed} completed · {survey.skipped} skipped
+                {survey.signups_30d ? ` · ${survey.completion_rate_30d}% of last-30-day signups` : ''}
+              </span>
+            ) : null}
+          </FunnelTitle>
+
+          {!survey || survey.completed < 1 ? (
+            <div style={{ fontSize: 13, color: colors.text2, lineHeight: 1.6 }}>
+              No completed surveys yet. Answers show up here after new creators finish
+              (or skip) the 3-question onboarding survey.
+            </div>
+          ) : (
+            <>
+              <TrafficGrid>
+                <HealthCard>
+                  <HcLabel>Completed</HcLabel>
+                  <HcValue $color="black">{survey.completed}</HcValue>
+                  <HcDelta $flat style={{ color: colors.text3 }}>
+                    {survey.completed_30d} in last 30 days
+                  </HcDelta>
+                </HealthCard>
+                <HealthCard>
+                  <HcLabel>Skipped</HcLabel>
+                  <HcValue $color={survey.skip_rate_30d >= 40 ? 'rose' : 'black'}>
+                    {survey.skipped}
+                  </HcValue>
+                  <HcDelta $flat style={{ color: colors.text3 }}>
+                    {survey.skip_rate_30d}% of last-30-day signups
+                  </HcDelta>
+                </HealthCard>
+                <HealthCard>
+                  <HcLabel>Who they are</HcLabel>
+                  <HcValue $color="black" style={{ fontSize: 18, letterSpacing: '-0.4px', lineHeight: 1.25 }}>
+                    {survey.segments[0]?.label?.split('—')[0]?.trim() || '—'}
+                  </HcValue>
+                  <HcDelta $flat style={{ color: colors.text3 }}>
+                    {survey.segments[0]?.pct ?? 0}% of completed surveys
+                  </HcDelta>
+                </HealthCard>
+                <HealthCard>
+                  <HcLabel>Biggest pain</HcLabel>
+                  <HcValue $color="rose" style={{ fontSize: 18, letterSpacing: '-0.4px', lineHeight: 1.25 }}>
+                    {survey.pains[0]?.label || '—'}
+                  </HcValue>
+                  <HcDelta $flat style={{ color: colors.text3 }}>
+                    {survey.pains[0]?.pct ?? 0}% named this
+                  </HcDelta>
+                </HealthCard>
+              </TrafficGrid>
+
+              <InsightBox>
+                <strong>{survey.insights?.headline}</strong>
+                <div style={{ marginTop: 8 }}>
+                  <div><strong>Who:</strong> {survey.insights?.who}</div>
+                  <div><strong>Want:</strong> {survey.insights?.want}</div>
+                  <div><strong>Pain:</strong> {survey.insights?.pain}</div>
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <strong>Do this next:</strong> {survey.insights?.action}
+                </div>
+                {survey.insights?.caution && (
+                  <div style={{ marginTop: 8, opacity: 0.85 }}>
+                    {survey.insights.caution}
+                  </div>
+                )}
+              </InsightBox>
+
+              <SurveyCols>
+                <div>
+                  <PanelTitle>Who they are</PanelTitle>
+                  {(survey.segments || []).map((s) => (
+                    <SourceRow key={s.value}>
+                      <SurveyBarLabel>{s.label}</SurveyBarLabel>
+                      <SourceTrack>
+                        <SourceFill $pct={s.pct} $color={colors.black} />
+                      </SourceTrack>
+                      <SourcePct $color={colors.black}>{s.pct}%</SourcePct>
+                    </SourceRow>
+                  ))}
+                </div>
+                <div>
+                  <PanelTitle>What they want</PanelTitle>
+                  {(survey.intents || []).map((s) => (
+                    <SourceRow key={s.value}>
+                      <SurveyBarLabel>{s.label}</SurveyBarLabel>
+                      <SourceTrack>
+                        <SourceFill $pct={s.pct} $color={colors.violet} />
+                      </SourceTrack>
+                      <SourcePct $color={colors.violet}>{s.pct}%</SourcePct>
+                    </SourceRow>
+                  ))}
+                </div>
+                <div>
+                  <PanelTitle>What’s painful</PanelTitle>
+                  {(survey.pains || []).map((s) => (
+                    <SourceRow key={s.value}>
+                      <SurveyBarLabel>{s.label}</SurveyBarLabel>
+                      <SourceTrack>
+                        <SourceFill $pct={s.pct} $color={colors.rose} />
+                      </SourceTrack>
+                      <SourcePct $color={colors.rose}>{s.pct}%</SourcePct>
+                    </SourceRow>
+                  ))}
+                </div>
+              </SurveyCols>
+
+              {survey.others?.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <PanelTitle>They wrote this themselves</PanelTitle>
+                  {survey.others.map((o, i) => (
+                    <OtherRow key={`${o.created_at}-${i}`}>
+                      {o.intent_other ? <div><strong>Want:</strong> {o.intent_other}</div> : null}
+                      {o.pain_other ? <div><strong>Pain:</strong> {o.pain_other}</div> : null}
+                    </OtherRow>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </FunnelCard>
 
       </Main>
     </>
@@ -1801,6 +1832,36 @@ const SourcePct = styled.div`
   width: 34px;
   text-align: right;
   flex-shrink: 0;
+`;
+
+const SurveyCols = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 22px;
+  margin-top: 18px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SurveyBarLabel = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${colors.text2};
+  width: 148px;
+  flex-shrink: 0;
+  line-height: 1.3;
+`;
+
+const OtherRow = styled.div`
+  font-size: 13px;
+  color: ${colors.text2};
+  padding: 8px 0;
+  border-bottom: 1px solid #F5F5F5;
+  line-height: 1.5;
+  &:last-child { border-bottom: none; }
+  strong { color: ${colors.text}; font-weight: 700; }
 `;
 
 const PageRow = styled.div`
