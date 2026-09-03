@@ -87,7 +87,7 @@ import NotFound from './cra-pages/NotFound';
 
 // Lazy-loaded heavy components for code splitting (reduces initial bundle ~40%)
 // These load on-demand when the route is accessed
-const ForYou = lazy(() => import('./cra-pages/ForYou'));
+const BrandPRHome = lazy(() => import('./cra-pages/BrandPRHome'));
 const Pool = lazy(() => import('./cra-pages/Pool'));
 const CreatorOverview = lazy(() => import('./creator-portal/CreatorOverview'));
 const BrandOverview = lazy(() => import('./components/BrandOverview'));
@@ -508,10 +508,10 @@ function AppContent() {
                 <Route path='dashboard/branded-content' element={<SponsorOffers />} />
                 <Route path='dashboard/my-offers' element={<ManagePackages />} />
                 <Route path='dashboard/profile' element={<Profile />} />
-                <Route path='dashboard/pr-brands' element={<LazyRoute><UnifiedBrandDirectory /></LazyRoute>} />
+                <Route path='dashboard/pr-brands' element={<LazyRoute skeleton={<ForYouSkeleton />}><BrandPRHome /></LazyRoute>} />
                 <Route path='dashboard/pr-pipeline' element={<LazyRoute><PRPipeline /></LazyRoute>} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
-                <Route path='dashboard/for-you' element={<LazyRoute skeleton={<ForYouSkeleton />}><ForYou /></LazyRoute>} />
+                <Route path='dashboard/for-you' element={<LazyRoute skeleton={<ForYouSkeleton />}><BrandPRHome /></LazyRoute>} />
                 <Route path='dashboard/pr-ready' element={<PRReady />} />
                 <Route path='dashboard/pool' element={<LazyRoute><Pool /></LazyRoute>} />
                 <Route path='dashboard/media-kit' element={<LazyRoute><MediaKit /></LazyRoute>} />

@@ -7,6 +7,7 @@ const UPGRADE_FEATURE_MAP = {
   kit_views: 'kit_views',
   unlock_paywall: 'unlock_paywall',
   last_unlock: 'last_unlock',
+  credits: 'credits',
 };
 
 let rememberedUpgrade = null;

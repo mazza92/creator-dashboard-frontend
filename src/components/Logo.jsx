@@ -9,7 +9,15 @@ const LogoWrap = styled.a`
 const LogoImg = styled.img`
   height: 28px;
   width: auto;
+  max-width: 168px;
   display: block;
+  object-fit: contain;
+  object-position: left center;
+
+  @media (max-width: 840px) {
+    height: 22px;
+    max-width: 132px;
+  }
 `;
 
 export default function Logo() {

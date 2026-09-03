@@ -1,7 +1,8 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Inbox, Sparkles, FileText, Bell, Users, BadgeCheck, Video } from 'lucide-react';
+import { Search, Sparkles, Bell, Users, BadgeCheck, Video } from 'lucide-react';
+import UpgradeModal from '../creator-portal/UpgradeModal';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
@@ -22,53 +23,78 @@ const LayoutContainer = styled.div`
   background: ${creatorTokens.paper};
   font-family: ${creatorTokens.fontSans};
   color: ${creatorTokens.ink};
+  overflow-x: clip;
 `;
 
 const TopNav = styled.nav`
-  background: #FFFFFF;
-  border-bottom: 1px solid #ebebeb;
+  background: ${creatorTokens.cream};
+  border-bottom: 1px solid ${creatorTokens.line};
   box-shadow: none;
-  padding: 0 32px;
-  display: flex;
+  padding: 0 clamp(16px, 3vw, 32px);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  column-gap: 20px;
   position: sticky;
   top: 0;
   z-index: 50;
-  height: 68px;
+  height: 64px;
+  min-width: 0;
 
-  @media (max-width: 640px) {
-    height: 60px;
-    padding: 0 16px;
+  @media (max-width: 840px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 56px 44px;
+    height: auto;
+    column-gap: 8px;
+    padding: 0 12px 8px;
   }
 `;
 
-const NavLeft = styled.div`
+const LogoSlot = styled.div`
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 36px;
+
+  a { min-width: 0; }
+  img {
+    height: 28px;
+    width: auto;
+    max-width: 168px;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  @media (max-width: 840px) {
+    grid-column: 1;
+    grid-row: 1;
+    img { height: 22px; max-width: 132px; }
+  }
 `;
 
 const NavTabs = styled.div`
   display: flex;
   align-items: center;
+  justify-self: start;
   gap: 2px;
-  background: #F4F4F4;
+  background: ${creatorTokens.subtle};
   padding: 4px;
   border-radius: 100px;
-  overflow-x: auto;
-  max-width: min(820px, calc(100vw - 280px));
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  min-width: 0;
 
-  @media (max-width: 640px) { display: none; }
+  @media (max-width: 840px) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    width: 100%;
+  }
 `;
 
 const NavTab = styled(Link)`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: 100px;
   font-size: 13px;
   white-space: nowrap;
@@ -83,6 +109,13 @@ const NavTab = styled(Link)`
   &:hover { color: ${p => (p.$active ? '#FFFFFF' : '#0F0F0F')}; }
 
   svg { width: 16px; height: 16px; }
+
+  @media (max-width: 840px) {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+    svg { display: none; }
+  }
 `;
 
 const NewBadge = styled.span`
@@ -100,12 +133,78 @@ const NewBadge = styled.span`
 const NavRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+  justify-self: end;
+
+  @media (max-width: 840px) {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 6px;
+  }
+`;
+
+const CreditsChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 100px;
+  border: 1px solid ${p => (p.$out ? '#E11D48' : p.$low ? '#FDBA74' : creatorTokens.accentBorder)};
+  background: ${p => (p.$out ? '#FFF1F2' : p.$low ? '#FFF7ED' : creatorTokens.accentSoft)};
+  color: ${p => (p.$out ? '#E11D48' : creatorTokens.accentDeep)};
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: ${p => (p.$pro ? 'default' : 'pointer')};
+  white-space: nowrap;
+
+  &:hover { background: ${p => (p.$pro ? creatorTokens.accentSoft : p.$out ? '#FFE4E6' : '#e3f0ea')}; }
+
+  @media (max-width: 840px) {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+`;
+
+const CreditDots = styled.span`
+  display: inline-flex;
+  gap: 3px;
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #D4D4D4;
+    display: block;
+  }
+  i.on { background: ${creatorTokens.accent}; }
+
+  @media (max-width: 840px) { display: none; }
+`;
+
+const CreditsCopy = styled.span`
+  .mini { display: none; }
+
+  @media (max-width: 840px) {
+    .full { display: none; }
+    .mini { display: inline; }
+  }
+`;
+
+const MenuLabel = styled.div`
+  padding: 10px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9CA3AF;
 `;
 
 const IconBtn = styled.button`
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #F4F4F4;
   border: none;
@@ -119,6 +218,11 @@ const IconBtn = styled.button`
   &:hover { background: #EBEBEB; color: #0F0F0F; }
 
   svg { width: 17px; height: 17px; }
+
+  @media (max-width: 840px) {
+    width: 32px;
+    height: 32px;
+  }
 `;
 
 const NotificationBadge = styled.span`
@@ -154,6 +258,11 @@ const AvatarPill = styled.button`
   .ant-avatar {
     background: #E11D48;
   }
+
+  @media (max-width: 840px) {
+    padding: 0;
+    background: transparent;
+  }
 `;
 
 const AvatarName = styled.span`
@@ -161,7 +270,7 @@ const AvatarName = styled.span`
   font-weight: 600;
   color: #0F0F0F;
 
-  @media (max-width: 640px) { display: none; }
+  @media (max-width: 900px) { display: none; }
 `;
 
 const MobileTabBar = styled.nav`
@@ -270,22 +379,20 @@ const PoolMobileBadge = styled(CountBadge)`
 `;
 
 const Content = styled.main`
-  min-height: calc(100vh - 68px);
-  /* Breathing room between sticky nav and page title (desktop) */
-  padding-top: 12px;
+  min-height: calc(100vh - 64px);
+  padding-top: 8px;
 
-  @media (max-width: 640px) {
-    min-height: calc(100vh - 60px);
-    padding-top: 8px;
-    padding-bottom: 72px;
+  @media (max-width: 840px) {
+    min-height: calc(100vh - 108px);
+    padding-top: 4px;
   }
 `;
 
 // Dropdown Menu
 const DropdownMenu = styled(motion.div)`
   position: absolute;
-  top: 50px;
-  right: 20px;
+  top: calc(100% + 6px);
+  right: 12px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -336,20 +443,15 @@ const MenuDivider = styled.div`
 // Notification Dropdown
 const NotificationDropdown = styled(motion.div)`
   position: absolute;
-  top: 50px;
-  right: 60px;
+  top: calc(100% + 6px);
+  right: 12px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: 320px;
+  width: min(320px, calc(100vw - 24px));
   max-height: 400px;
   overflow-y: auto;
   z-index: 1000;
-
-  @media (max-width: 768px) {
-    right: 20px;
-    width: calc(100vw - 40px);
-  }
 `;
 
 const NotificationItem = styled.div`
@@ -398,14 +500,24 @@ const EmptyNotifications = styled.div`
 // ============================================================
 
 const navItems = [
-  { label: 'Assistant', icon: BadgeCheck, path: '/creator/dashboard/pr-ready' },
-  { label: 'Content Hub', icon: Video, path: '/creator/dashboard/content-hub', isNew: true, mobileLabel: 'Content' },
-  { label: 'For You',  icon: Sparkles, path: '/creator/dashboard/for-you' },
-  { label: 'Discover', icon: Search,   path: '/creator/dashboard/pr-brands' },
-  { label: 'Inbox',    icon: Inbox,    path: '/creator/dashboard/pr-pipeline' },
-  { label: 'Pool',     icon: Users,    path: '/creator/dashboard/pool' },
-  { label: 'My Kit',   icon: FileText, path: '/creator/dashboard/my-kit' },
+  { label: 'For You', icon: Sparkles, path: '/creator/dashboard/for-you' },
+  { label: 'Directory', icon: Search, path: '/creator/dashboard/pr-brands' },
 ];
+
+const moreNavItems = [
+  { label: 'Assistant', icon: BadgeCheck, path: '/creator/dashboard/pr-ready' },
+  { label: 'Content Hub', icon: Video, path: '/creator/dashboard/content-hub', isNew: true },
+  { label: 'Pool', icon: Users, path: '/creator/dashboard/pool' },
+];
+
+function creditChipCopy(balance) {
+  if (!balance) return 'Credits';
+  if (balance.is_unlimited) return 'Pro · unlimited';
+  const n = Number(balance.remaining);
+  if (!Number.isFinite(n)) return 'Credits';
+  if (n <= 0) return 'No credits left';
+  return n === 1 ? '1 credit left' : `${n} credits left`;
+}
 
 const CreatorDashboardLayout = () => {
   const { handleLogout } = useContext(UserContext);
@@ -414,9 +526,10 @@ const CreatorDashboardLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [savedCount, setSavedCount] = useState(0);
   const [matchedRemaining, setMatchedRemaining] = useState(0);
   const [poolBadge, setPoolBadge] = useState(0);
+  const [credits, setCredits] = useState(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const isFetching = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -469,40 +582,6 @@ const CreatorDashboardLayout = () => {
     fetchUserData();
   }, [navigate]);
 
-  // Fetch saved brands count for badge
-  useEffect(() => {
-    const fetchSavedCount = async () => {
-      try {
-        const response = await api.get('/api/pr-crm/pipeline/full');
-        if (response.data?.items) {
-          const actionCount = response.data.items.filter((item) => {
-            const contacted = Boolean(item.send_confirmed) || Boolean(item.pitched_at);
-            const packReady = Boolean(item.has_pr_package) && !contacted;
-            const stage = item.pipeline_stage;
-            const followupDue =
-              stage === 'replied' ||
-              (stage === 'followup' && (item.days_since_followup || 0) >= 7) ||
-              ((stage === 'waiting' || stage === 'pitched') &&
-                (item.days_since_pitched || 0) >= 7 &&
-                contacted);
-            return packReady || followupDue;
-          }).length;
-          setSavedCount(actionCount);
-        }
-      } catch (error) {
-        console.error('Error fetching saved count:', error);
-      }
-    };
-
-    if (!isLoading) {
-      fetchSavedCount();
-    }
-
-    // Re-fetch whenever a brand is saved/unsaved anywhere in the app
-    window.addEventListener('savedBrandCountChanged', fetchSavedCount);
-    return () => window.removeEventListener('savedBrandCountChanged', fetchSavedCount);
-  }, [isLoading, location.pathname]);
-
   // Fetch the number of matched brands the creator still needs to contact.
   // Drives the For You badge: it starts at their match count (e.g. 8) and
   // ticks down as they pitch (8 → 6 after contacting 2), creating the
@@ -526,6 +605,26 @@ const CreatorDashboardLayout = () => {
     // Refresh after the user contacts/saves a brand so the count stays live
     window.addEventListener('savedBrandCountChanged', fetchMatchedCount);
     return () => window.removeEventListener('savedBrandCountChanged', fetchMatchedCount);
+  }, [isLoading, location.pathname]);
+
+  useEffect(() => {
+    const loadCredits = async () => {
+      try {
+        const response = await api.get('/api/pr-crm/dashboard-init');
+        setCredits(response.data?.unlock_balance || null);
+      } catch (error) {
+        // Silent — chip is a non-critical enhancement
+      }
+    };
+
+    if (!isLoading) loadCredits();
+
+    const onCredits = (event) => {
+      if (event.detail) setCredits(event.detail);
+      else loadCredits();
+    };
+    window.addEventListener('nc-credits-changed', onCredits);
+    return () => window.removeEventListener('nc-credits-changed', onCredits);
   }, [isLoading, location.pathname]);
 
   // Fetch pool badge count (new followers since last visit)
@@ -594,37 +693,58 @@ const CreatorDashboardLayout = () => {
   return (
     <LayoutContainer>
       <TopNav>
-        <NavLeft>
+        <LogoSlot>
           <Logo />
-          <NavTabs>
-            {navItems.map(({ label, icon: Icon, path, isNew }) => (
-              <NavTab
-                key={path}
-                to={path}
-                $active={location.pathname === path}
-                onMouseEnter={() => handleNavHover(path)}
-                onClick={() => {
-                  if (path.includes('pr-ready')) {
-                    sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
-                  } else if (location.pathname.includes('pr-ready')) {
-                    // Left Manager to browse — hide score bar briefly
-                    sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
-                  }
-                }}
-              >
-                <Icon />
-                {label}
-                {isNew && <NewBadge>New</NewBadge>}
-                {label === 'For You' && matchedRemaining > 0 && (
-                  <ForYouDesktopBadge>{matchedRemaining}</ForYouDesktopBadge>
-                )}
-                {label === 'Inbox' && savedCount > 0 && <DesktopCountBadge>{savedCount}</DesktopCountBadge>}
-                {label === 'Pool' && poolBadge > 0 && <PoolDesktopBadge>{poolBadge}</PoolDesktopBadge>}
-              </NavTab>
-            ))}
-          </NavTabs>
-        </NavLeft>
+        </LogoSlot>
+        <NavTabs>
+          {navItems.map(({ label, icon: Icon, path }) => (
+            <NavTab
+              key={path}
+              to={path}
+              $active={location.pathname === path}
+              onMouseEnter={() => handleNavHover(path)}
+            >
+              <Icon />
+              {label}
+              {label === 'For You' && matchedRemaining > 0 && (
+                <ForYouDesktopBadge>{matchedRemaining}</ForYouDesktopBadge>
+              )}
+            </NavTab>
+          ))}
+        </NavTabs>
         <NavRight>
+          <CreditsChip
+            type="button"
+            $out={Number(credits?.remaining) <= 0 && !credits?.is_unlimited}
+            $low={Number(credits?.remaining) === 1 && !credits?.is_unlimited}
+            $pro={!!credits?.is_unlimited}
+            onClick={() => {
+              if (credits?.is_unlimited) return;
+              setShowUserMenu(false);
+              setShowNotifications(false);
+              setShowUpgrade(true);
+            }}
+          >
+            {!credits?.is_unlimited && Number.isFinite(Number(credits?.remaining)) && (
+              <CreditDots aria-hidden="true">
+                {Array.from({ length: Math.min(Number(credits?.limit) || 3, 6) }).map((_, i) => (
+                  <i key={i} className={i < Number(credits.remaining) ? 'on' : ''} />
+                ))}
+              </CreditDots>
+            )}
+            <CreditsCopy>
+              <span className="full">{creditChipCopy(credits)}</span>
+              <span className="mini">
+                {credits?.is_unlimited
+                  ? 'Pro'
+                  : Number.isFinite(Number(credits?.remaining))
+                    ? Number(credits.remaining) <= 0
+                      ? '0 left'
+                      : `${credits.remaining} left`
+                    : 'Credits'}
+              </span>
+            </CreditsCopy>
+          </CreditsChip>
           <IconBtn onClick={() => setShowNotifications(!showNotifications)}>
             <Bell />
             {unreadCount > 0 && <NotificationBadge>{unreadCount}</NotificationBadge>}
@@ -646,6 +766,25 @@ const CreatorDashboardLayout = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
+            <MenuLabel>More</MenuLabel>
+            {moreNavItems.map(({ label, icon: Icon, path, isNew }) => (
+              <MenuItem
+                key={path}
+                onClick={() => {
+                  if (path.includes('pr-ready') || location.pathname.includes('pr-ready')) {
+                    sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
+                  }
+                  navigate(path);
+                  setShowUserMenu(false);
+                }}
+              >
+                <Icon size={16} />
+                {label}
+                {isNew && <NewBadge>New</NewBadge>}
+                {label === 'Pool' && poolBadge > 0 && <PoolDesktopBadge>{poolBadge}</PoolDesktopBadge>}
+              </MenuItem>
+            ))}
+            <MenuDivider />
             <MenuItem onClick={() => {
               window.open(`/kit/${userData?.username}`, '_blank');
               setShowUserMenu(false);
@@ -710,29 +849,14 @@ const CreatorDashboardLayout = () => {
         <Outlet />
       </Content>
 
-      <MobileTabBar>
-        {navItems.map(({ label, icon: Icon, path, isNew, mobileLabel }) => (
-          <MobileTab
-            key={path}
-            to={path}
-            $active={location.pathname === path}
-            onClick={() => {
-              if (path.includes('pr-ready') || location.pathname.includes('pr-ready')) {
-                sessionStorage.setItem('nc_manager_tab_clicked_at', String(Date.now()));
-              }
-            }}
-          >
-            <Icon />
-            {mobileLabel || label}
-            {isNew && <MobileNewBadge>New</MobileNewBadge>}
-            {label === 'For You' && matchedRemaining > 0 && (
-              <ForYouMobileBadge>{matchedRemaining}</ForYouMobileBadge>
-            )}
-            {label === 'Inbox' && savedCount > 0 && <CountBadge>{savedCount}</CountBadge>}
-            {label === 'Pool' && poolBadge > 0 && <PoolMobileBadge>{poolBadge}</PoolMobileBadge>}
-          </MobileTab>
-        ))}
-      </MobileTabBar>
+      <UpgradeModal
+        isOpen={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        currentCount={credits?.used || 0}
+        limit={credits?.limit || 3}
+        unlockRemaining={credits?.remaining ?? 0}
+        feature={Number(credits?.remaining) <= 0 ? 'limit_reached' : Number(credits?.remaining) === 1 ? 'last_unlock' : 'credits'}
+      />
     </LayoutContainer>
   );
 };

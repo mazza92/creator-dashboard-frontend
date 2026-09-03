@@ -45,24 +45,24 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   const features = [
     {
-      emoji: '📬',
+      emoji: '🎁',
       bg: '#dbeafe',
-      text: <><strong>Unlimited brand emails and pitches</strong> this month. Keep sending to every brand that fits.</>,
+      text: <><strong>Unlimited Brand PR credits</strong> this month. Stay in the running for every gift that fits.</>,
     },
     {
-      emoji: '🔍',
+      emoji: '🚫',
       bg: '#fef2f4',
-      text: <><strong>Search 2,000+ brands</strong> for a contact or signup form, including micro-friendly filters</>,
+      text: <><strong>You never send a pitch.</strong> We vet you. The brand picks from a roster.</>,
     },
     {
       emoji: '⭐',
       bg: '#fef3c7',
-      text: <><strong>Matches for your niche</strong> with a ready-to-send pitch on every unlock</>,
+      text: <><strong>2,000+ gifting brands</strong> matched to your size, including micro-friendly filters</>,
     },
     {
       emoji: '🔁',
       bg: '#ede9fe',
-      text: <><strong>Follow-ups drafted for you</strong> so you can stay consistent without rewriting</>,
+      text: <><strong>We follow up for you</strong> so your request stays warm after you tap send</>,
     },
     {
       emoji: '👀',
@@ -99,33 +99,33 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             <Headline>
               {feature === 'last_unlock' ? (
                 <>
-                  Your last free pack is ready.<br />
-                  Keep going. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
+                  Your last free credit is ready.<br />
+                  Use it. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
                 </>
               ) : atCap ? (
                 <>
-                  {used} of {total} free packs used.<br />
-                  Keep going. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
+                  {used} of {total} free credits used.<br />
+                  Pro gives unlimited credits. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
                 </>
               ) : (
                 <>
-                  {used} of {total} free packs used.<br />
-                  Go Pro and pitch every brand that <PinkSpan>fits</PinkSpan>.
+                  {used} of {total} free credits used.<br />
+                  Go Pro for unlimited credits on every brand that <PinkSpan>gifts</PinkSpan>.
                 </>
               )}
             </Headline>
             <Subtext>
               {feature === 'last_unlock'
-                ? 'Close this to send the pitch you just unlocked. Pro keeps you sending this month, drafts the 7-day follow-up, and shows kit opens.'
+                ? 'Use this credit now. Pro gives unlimited credits this month — we vet, the brand picks, you never pitch.'
                 : atCap
-                ? 'Pro keeps you sending this month, drafts the 7-day follow-up, and shows which brands opened your kit. Wait for next month, or go Pro now.'
-                : 'Every extra brand you reach raises the odds of your first yes. You get the contact and a pitch that\'s ready to send. Pro is how you keep doing that all month, like a professional.'}
+                ? 'Free credits reset next month. Pro gives unlimited credits for every brand that gifts your size. No pitch. No brand email.'
+                : 'Each credit puts you on a brand roster. More credits, more chances the box shows up. Pro is how you keep going all month.'}
             </Subtext>
 
             {/* Progress Bar */}
             <ProgressSection>
               <ProgressHeader>
-                <span>Free unlocks this month</span>
+                <span>Free credits this month</span>
                 <strong>{used} / {total} used</strong>
               </ProgressHeader>
               <ProgressTrack>
@@ -141,7 +141,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   <PriceAmount>$19</PriceAmount>
                   <PricePer>/ month</PricePer>
                 </PriceRow>
-                <PriceSubline>Unlimited packs · follow-ups · kit views · cancel anytime</PriceSubline>
+                <PriceSubline>Unlimited credits · no pitch · kit views · cancel anytime</PriceSubline>
               </PriceCard>
               <FeatureList>
                 {features.map((f, i) => (
@@ -162,11 +162,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               </StatChip>
               <StatChip>
                 <StatValue>Unlimited</StatValue>
-                <StatLabel>Packs / month</StatLabel>
+                <StatLabel>Credits / month</StatLabel>
               </StatChip>
               <StatChip>
-                <StatValue>Ready</StatValue>
-                <StatLabel>Pitches</StatLabel>
+                <StatValue>No pitch</StatValue>
+                <StatLabel>We submit</StatLabel>
               </StatChip>
             </StatsGrid>
 
@@ -225,11 +225,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               <ProofText>
                 {atCap ? (
                   <>
-                    <strong>Your 3 pitches are out.</strong> Pro is how you follow up and see who opened the kit, instead of going quiet.
+                    <strong>Your 3 free credits are in.</strong> Pro is how you stay on more rosters this month, instead of waiting.
                   </>
                 ) : (
                   <>
-                    <strong>Treat outreach like a professional.</strong> Find the contact, send the pitch, follow up. We make that the easy part.
+                    <strong>First PR is a numbers game.</strong> Use a credit, we vet, the brand picks. Pro is how you keep using credits.
                   </>
                 )}
               </ProofText>
@@ -245,7 +245,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   disabled={busy}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {loading ? 'Processing...' : 'Unlimited this month · $19/mo Pro'}
+                  {loading ? 'Processing...' : 'Unlimited credits · $19/mo Pro'}
                 </CtaButton>
               </>
             ) : (
@@ -257,8 +257,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 {loading
                   ? 'Processing...'
                   : billingInterval === 'yearly'
-                    ? 'Unlock unlimited packs · $152/year (save 33%)'
-                    : 'Unlock unlimited packs · $19/month'}
+                    ? 'Unlimited credits · $152/year (save 33%)'
+                    : 'Unlimited credits · $19/month'}
               </CtaButton>
             )}
 

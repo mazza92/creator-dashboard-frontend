@@ -90,11 +90,22 @@ api.interceptors.request.use(
         
         // Only send CSRF token for endpoints that require JWT authentication
         // These are typically /api/* endpoints that use @jwt_required()
-        const requiresCSRF = config.url?.startsWith('/api/') && 
-                             !config.url?.includes('/login') && 
-                             !config.url?.includes('/register') &&
-                             !config.url?.includes('/forgot-password') &&
-                             !config.url?.includes('/reset-password');
+        const reqUrl = config.url || '';
+        const requiresCSRF = (reqUrl.startsWith('/api/') || reqUrl.includes('/api/')) &&
+                             !reqUrl.includes('/login') &&
+                             !reqUrl.includes('/register') &&
+                             !reqUrl.includes('/forgot-password') &&
+                             !reqUrl.includes('/reset-password') &&
+                             !reqUrl.includes('/api/public/');
+
+        if (!requiresCSRF && config.headers) {
+            delete config.headers['X-CSRF-Token'];
+            delete config.headers['x-csrf-token'];
+            if (typeof config.headers.delete === 'function') {
+                config.headers.delete('X-CSRF-Token');
+                config.headers.delete('x-csrf-token');
+            }
+        }
         
         if (requiresCSRF) {
             // Try multiple methods to get CSRF token

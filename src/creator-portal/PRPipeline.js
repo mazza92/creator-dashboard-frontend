@@ -1081,12 +1081,12 @@ const PRPipeline = () => {
       return `${packCount} pack${packCount === 1 ? '' : 's'} ready. Open the email and send.`;
     }
     if (savedUnlockCount > 0 && !atCap) {
-      return `${savedUnlockCount} saved brand${savedUnlockCount === 1 ? '' : 's'}. Unlock a pack to get the email and a pitch.`;
+      return `${savedUnlockCount} saved brand${savedUnlockCount === 1 ? '' : 's'}. Apply from For You to get in the running.`;
     }
     if (atCap) {
-      return 'Free packs used this month. Keep sending with Pro at $19/mo.';
+      return 'Free credits used this month. Keep applying with Pro at $19/mo.';
     }
-    return 'Unlock a brand on For You. Packs you open land here.';
+    return 'Applies you send land here after we vet them.';
   })();
 
   // Calculate next reset date
@@ -1107,7 +1107,7 @@ const PRPipeline = () => {
       {/* Journey Header */}
       <JourneyHeader>
         <JourneyEyebrow>Inbox</JourneyEyebrow>
-        <JourneyGreeting>Your packs</JourneyGreeting>
+        <JourneyGreeting>Your applies</JourneyGreeting>
         <JourneySub>{inboxSub}</JourneySub>
         {stats.total_contacted > 0 && (
           <JourneyStats $cols={outreachStat ? 2 : 1}>
@@ -1223,13 +1223,13 @@ const PRPipeline = () => {
           <EmptyState>
             <EmptyEmoji>📬</EmptyEmoji>
             <EmptyTitle>
-              {activeFilter === 'followup' ? 'No follow-ups yet' : 'No packs here yet'}
+              {activeFilter === 'followup' ? 'No follow-ups yet' : 'No applies here yet'}
             </EmptyTitle>
             <EmptyText>
-              {activeFilter === 'packs' && 'Unlock a brand on For You. The email and pitch will show up here.'}
-              {activeFilter === 'followup' && 'Follow-ups show here 7 days after you send. Keep using your packs.'}
-              {activeFilter === 'sent' && 'Pitches you send will land here so you can follow up.'}
-              {activeFilter === 'all' && 'Unlock a brand on For You. Packs you open land here.'}
+              {activeFilter === 'packs' && 'Apply from For You. Brands reviewing you show up here.'}
+              {activeFilter === 'followup' && 'Follow-ups show here after a brand has your apply.'}
+              {activeFilter === 'sent' && 'Applies in motion land here so you can track the box.'}
+              {activeFilter === 'all' && 'Apply from For You. We vet you, then the brand picks from a roster.'}
             </EmptyText>
             {(activeFilter === 'all' || activeFilter === 'packs') && (
               <PrimaryBtn $contact onClick={() => navigate('/creator/dashboard/for-you')} style={{ marginTop: 12 }}>

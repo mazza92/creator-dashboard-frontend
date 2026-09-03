@@ -116,6 +116,16 @@ export function categoryLabel(slug) {
   return CATEGORY_LABELS[canon] || canon.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+export const CATEGORY_EMOJIS = Object.fromEntries(
+  NICHE_OPTIONS.map((n) => [n.id, n.label.split(' ')[0]])
+);
+CATEGORY_EMOJIS.other = '📦';
+
+export function categoryEmoji(slug) {
+  const canon = normalizeCategory(slug);
+  return (canon && CATEGORY_EMOJIS[canon]) || '✨';
+}
+
 export const CATEGORY_OPTIONS = CANONICAL_CATEGORIES.map((value) => ({
   value,
   label: categoryLabel(value),
