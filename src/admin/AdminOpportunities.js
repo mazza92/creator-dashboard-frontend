@@ -5,6 +5,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, ReloadOutlined, 
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
 import AdminContentSubmissions from './AdminContentSubmissions';
+import AdminBrandPRRosters from './AdminBrandPRRosters';
 
 const ADMIN_EMAIL = 'team@newcollab.co';
 const ADMIN_PASSWORD = 'Ilovela1992!';
@@ -32,11 +33,13 @@ const AdminOpportunities = () => {
   const [logoUrls, setLogoUrls] = useState({});
   const [editingOpp, setEditingOpp] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [pageTab, setPageTab] = useState(() => (
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'submissions'
-      ? 'submissions'
-      : 'opportunities'
-  ));
+  const [pageTab, setPageTab] = useState(() => {
+    if (typeof window === 'undefined') return 'opportunities';
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab === 'submissions') return 'submissions';
+    if (tab === 'rosters') return 'rosters';
+    return 'opportunities';
+  });
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('oppAdminAuth');
@@ -282,17 +285,44 @@ const AdminOpportunities = () => {
     total: opportunities.length
   };
 
+  const setTab = (tab) => {
+    setPageTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (tab === 'opportunities') url.searchParams.delete('tab');
+      else url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url);
+    }
+  };
+
+  const tabNav = (
+    <FilterRow style={{ marginBottom: 20 }}>
+      <FilterBtn $active={pageTab === 'opportunities'} onClick={() => setTab('opportunities')}>Opportunities</FilterBtn>
+      <FilterBtn $active={pageTab === 'rosters'} onClick={() => setTab('rosters')}>Brand PR Rosters</FilterBtn>
+      <FilterBtn $active={pageTab === 'submissions'} onClick={() => setTab('submissions')}>Content Submissions</FilterBtn>
+    </FilterRow>
+  );
+
   if (pageTab === 'submissions') {
     return (
       <PageWrap>
         <Header>
           <h1>Content Submissions</h1>
         </Header>
-        <FilterRow style={{ marginBottom: 20 }}>
-          <FilterBtn $active={false} onClick={() => setPageTab('opportunities')}>Opportunities</FilterBtn>
-          <FilterBtn $active={true}>Content Submissions</FilterBtn>
-        </FilterRow>
+        {tabNav}
         <AdminContentSubmissions />
+      </PageWrap>
+    );
+  }
+
+  if (pageTab === 'rosters') {
+    return (
+      <PageWrap>
+        <Header>
+          <h1>Opportunities Admin</h1>
+        </Header>
+        {tabNav}
+        <AdminBrandPRRosters />
       </PageWrap>
     );
   }
@@ -307,8 +337,9 @@ const AdminOpportunities = () => {
       </Header>
 
       <FilterRow style={{ marginBottom: 20 }}>
-        <FilterBtn $active={true}>Opportunities</FilterBtn>
-        <FilterBtn $active={false} onClick={() => setPageTab('submissions')}>Content Submissions</FilterBtn>
+        <FilterBtn $active={true} onClick={() => setTab('opportunities')}>Opportunities</FilterBtn>
+        <FilterBtn $active={false} onClick={() => setTab('rosters')}>Brand PR Rosters</FilterBtn>
+        <FilterBtn $active={false} onClick={() => setTab('submissions')}>Content Submissions</FilterBtn>
       </FilterRow>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>

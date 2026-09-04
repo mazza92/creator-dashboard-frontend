@@ -88,6 +88,7 @@ import NotFound from './cra-pages/NotFound';
 // Lazy-loaded heavy components for code splitting (reduces initial bundle ~40%)
 // These load on-demand when the route is accessed
 const BrandPRHome = lazy(() => import('./cra-pages/BrandPRHome'));
+const BrandPRRoster = lazy(() => import('./cra-pages/BrandPRRoster'));
 const Pool = lazy(() => import('./cra-pages/Pool'));
 const CreatorOverview = lazy(() => import('./creator-portal/CreatorOverview'));
 const BrandOverview = lazy(() => import('./components/BrandOverview'));
@@ -243,6 +244,7 @@ function AppContent() {
                 '/marketplace',
                 '/c/',
                 '/kit/',
+                '/r/',
                 '/for-brands',
                 '/land-your-first-pr-package',
                 '/creator/dashboard/subscription/success',
@@ -444,6 +446,7 @@ function AppContent() {
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             {/* Public media kit page */}
             <Route path='/kit/:username' element={<PublicMediaKitWrapper />} />
+            <Route path='/r/:token' element={<LazyRoute><BrandPRRoster /></LazyRoute>} />
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<OnboardingRouter />} />
             <Route path='/test-indexnow' element={<IndexNowTest />} />

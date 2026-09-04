@@ -121,6 +121,11 @@ const BrandAdmin = () => {
   const [bulkValue, setBulkValue] = useState(undefined);
   const [bulkApplying, setBulkApplying] = useState(false);
   const [bulkEnriching, setBulkEnriching] = useState(false);
+  const [mintVisible, setMintVisible] = useState(false);
+  const [mintSlotLimit, setMintSlotLimit] = useState(5);
+  const [mintTitle, setMintTitle] = useState('');
+  const [mintLink, setMintLink] = useState('');
+  const [minting, setMinting] = useState(false);
 
   // Check auth on mount
   useEffect(() => {
@@ -140,6 +145,69 @@ const BrandAdmin = () => {
   const getApiConfig = () => ({
     headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' }
   });
+
+  const openMintModal = () => {
+    if (selectedRows.length !== 1) {
+      message.warning('Select exactly one brand to mint a roster link');
+      return;
+    }
+    const brand = selectedRows[0];
+    setMintTitle(`${brand.name} · PR roster`);
+    setMintSlotLimit(5);
+    setMintLink('');
+    setMintVisible(true);
+  };
+
+  const mintCampaignLink = async () => {
+    const brand = selectedRows[0];
+    if (!brand?.id) {
+      message.warning('Select a brand first');
+      return;
+    }
+    setMinting(true);
+    try {
+      const { data } = await api.post(
+        '/api/admin/brand-pr/campaigns',
+        {
+          brand_id: brand.id,
+          slot_limit: mintSlotLimit || 5,
+          title: mintTitle || `${brand.name} · PR roster`,
+        },
+        getApiConfig()
+      );
+      const camp = data.campaign || data;
+      const url =
+        camp.portal_url ||
+        data.portal_url ||
+        (camp.token ? `${window.location.origin}/r/${camp.token}` : '');
+      setMintLink(url);
+      if (url) {
+        try {
+          await navigator.clipboard.writeText(url);
+          message.success('Roster link minted and copied');
+        } catch {
+          message.success('Roster link minted');
+        }
+      } else {
+        message.success('Campaign created');
+      }
+    } catch (error) {
+      console.error('Mint campaign failed:', error);
+      message.error(error.response?.data?.error || 'Failed to mint campaign link');
+    } finally {
+      setMinting(false);
+    }
+  };
+
+  const copyMintLink = async () => {
+    if (!mintLink) return;
+    try {
+      await navigator.clipboard.writeText(mintLink);
+      message.success('Link copied');
+    } catch {
+      message.info(mintLink);
+    }
+  };
 
   const fetchBrands = async () => {
     setLoading(true);
@@ -1475,6 +1543,14 @@ const BrandAdmin = () => {
           <Button icon={<ExportOutlined />} onClick={exportToCSV}>
             Export CSV
           </Button>
+          <Button
+            type="primary"
+            icon={<CopyOutlined />}
+            disabled={selectedRows.length !== 1}
+            onClick={openMintModal}
+          >
+            Mint roster link
+          </Button>
         </Space>
       </Toolbar>
 
@@ -1506,6 +1582,57 @@ const BrandAdmin = () => {
           overlayNoRowsTemplate='<span class="ag-overlay-no-rows-center">No brands found. Click "Add Brand" to get started!</span>'
         />
       </GridContainer>
+
+      {/* Mint Brand PR roster magic link */}
+      <Modal
+        title="Mint brand roster link"
+        open={mintVisible}
+        onCancel={() => setMintVisible(false)}
+        footer={null}
+        width={520}
+        destroyOnClose
+      >
+        <p style={{ marginBottom: 16, color: '#666' }}>
+          Creates a magic link for <strong>{selectedRows[0]?.name || 'this brand'}</strong>.
+          Email it to the brand — no login required.
+        </p>
+        <Form layout="vertical">
+          <Form.Item label="Campaign title">
+            <Input
+              value={mintTitle}
+              onChange={(e) => setMintTitle(e.target.value)}
+              placeholder="Glow Recipe · PR test"
+            />
+          </Form.Item>
+          <Form.Item label="Slot limit (exact picks to lock)">
+            <InputNumber
+              min={1}
+              max={50}
+              value={mintSlotLimit}
+              onChange={(v) => setMintSlotLimit(v || 5)}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+          <Space style={{ width: '100%', marginBottom: 12 }}>
+            <Button type="primary" loading={minting} onClick={mintCampaignLink}>
+              Mint link
+            </Button>
+            {mintLink ? (
+              <Button icon={<CopyOutlined />} onClick={copyMintLink}>
+                Copy again
+              </Button>
+            ) : null}
+          </Space>
+          {mintLink ? (
+            <Input.TextArea
+              value={mintLink}
+              readOnly
+              autoSize={{ minRows: 2, maxRows: 4 }}
+              style={{ fontFamily: 'monospace', fontSize: 12 }}
+            />
+          ) : null}
+        </Form>
+      </Modal>
 
       {/* Bulk Edit — set one field to one value across every selected brand */}
       <Modal

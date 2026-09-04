@@ -153,6 +153,14 @@ function productLine(brand) {
   return 'PR box: gifted product if they pick you';
 }
 
+function brandMatchesCreatorNiches(brand, niches) {
+  const set = new Set((niches || []).map((n) => String(n || '').toLowerCase()).filter(Boolean));
+  if (!set.size) return false;
+  const cat = String(brand?.category || '').toLowerCase();
+  if (cat && set.has(cat)) return true;
+  return asList(brand?.niches).some((n) => set.has(String(n || '').toLowerCase()));
+}
+
 function normalizeBrand(raw, appliedMap) {
   if (!raw) return null;
   const id = raw.id;
@@ -186,6 +194,7 @@ function normalizeBrand(raw, appliedMap) {
     applyStatus: applied?.apply_status || raw.apply_status || null,
     applied: Boolean(applied || raw.apply_status),
     social: parseSocial(raw.social || raw.pr_social_profile),
+    rosterOpen: !!(raw.roster_open || raw.rosterOpen || Number(raw.roster_hunger || raw.rosterHunger) > 0),
   };
 }
 
@@ -361,16 +370,19 @@ export default function BrandPRHome() {
       const nextQuota = initRes.data?.unlock_balance || null;
       setQuota(nextQuota);
       emitCredits(nextQuota);
-      setUserNiches(initRes.data?.user_niches || []);
+      const niches = initRes.data?.user_niches || [];
+      setUserNiches(niches);
 
       const apps = appsRes.data?.applications || [];
       const map = new Map(apps.map((a) => [a.id, a]));
       setAppliedMap(map);
 
-      const liveMatched = mergeApplied(forYouRes.data?.matched || [], map);
+      const liveMatched = mergeApplied(forYouRes.data?.matched || [], map)
+        .filter((b) => b.applied || Number(b.matchScore) > 0);
       const dropped = apps
         .filter((a) => !liveMatched.some((b) => b.id === a.id))
-        .map((a) => normalizeBrand(a, map));
+        .map((a) => normalizeBrand(a, map))
+        .filter((a) => brandMatchesCreatorNiches(a, niches));
       setMatched([...dropped, ...liveMatched]);
     } catch (err) {
       console.error('Brand PR home load failed', err);
@@ -792,6 +804,9 @@ export default function BrandPRHome() {
                   <span aria-hidden="true">🌱</span> Micro
                 </CatChip>
               )}
+              {brand.rosterOpen && !brand.applied && (
+                <CatChip $tone="ok">Open gift list</CatChip>
+              )}
             </CoverChips>
           </CardMedia>
         )}
@@ -816,11 +831,14 @@ export default function BrandPRHome() {
                       <span aria-hidden="true">🌱</span> Micro
                     </CatChip>
                   )}
+                  {brand.rosterOpen && !brand.applied && (
+                    <CatChip $tone="ok">Open gift list</CatChip>
+                  )}
                 </ChipRow>
               )}
             </Meta>
             <Badges>
-              {brand.matchScore != null && (
+              {brand.matchScore != null && Number(brand.matchScore) > 0 && (
                 <Score><b>{Math.round(brand.matchScore)}%</b> fit</Score>
               )}
               {brand.applied && <AppliedBadge>Applied</AppliedBadge>}

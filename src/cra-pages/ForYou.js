@@ -116,7 +116,29 @@ const ForYou = () => {
       sessionStorage.setItem('foryouTabPicked', '1');
       sessionStorage.removeItem('foryouForceOpportunities');
       setActiveTab('opportunities');
+      return;
     }
+    if (sessionStorage.getItem('foryouTabPicked')) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/api/user/onboarding/survey`, {
+          withCredentials: true,
+        });
+        const intents = res.data?.survey?.intent;
+        if (
+          !cancelled &&
+          Array.isArray(intents) &&
+          intents.includes('paid_ugc')
+        ) {
+          sessionStorage.setItem('foryouTabPicked', '1');
+          setActiveTab('opportunities');
+        }
+      } catch (_) {
+        /* survey is optional for tab default */
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // Recent replies for social proof strip (notification feed)
@@ -1096,7 +1118,7 @@ const ForYou = () => {
           <CardGrid $cols={2}>
             {showFeedSkeleton
               ? [0, 1, 2, 3, 4, 5].map((i) => <CardSkeleton key={i} />)
-              : (data?.matched || []).map(brand => (
+              : (data?.matched || []).filter((brand) => Number(brand.match_score) !== 0).map(brand => (
               <BrandCard
                 key={brand.id}
                 brand={brand}
@@ -1488,6 +1510,9 @@ const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore }) => {
 
       <CardTags>
         {microFriendly && <Pill $tone="ok">Works with micro-creators</Pill>}
+        {Number(brand.roster_hunger || brand.rosterHunger) > 0 && (
+          <Pill $tone="ok">Open gift list</Pill>
+        )}
         {hasEmail && <Pill $tone="email">PR email</Pill>}
         {hasForm && <Pill $tone="form">Program form</Pill>}
         {isAffiliate && <Pill $tone="aff">Affiliate signup</Pill>}
