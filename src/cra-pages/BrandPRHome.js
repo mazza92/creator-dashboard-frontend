@@ -13,6 +13,7 @@ import {
   PrFeedSkeleton,
 } from '../components/creator/PrSkeletons';
 import { categoryEmoji, categoryLabel } from '../constants/brandCategories';
+import { SERVED_COUNTRY_GROUPS, normalizeServedCountry } from '../constants/servedCountries';
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
@@ -200,6 +201,22 @@ function upgradeFeature(quota) {
 function emitCredits(quota) {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent('nc-credits-changed', { detail: quota || null }));
+}
+
+function phoneDigits(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function shipReady(ship) {
+  return Boolean(
+    String(ship?.full_name || '').trim().length >= 2
+    && String(ship?.address_line1 || '').trim()
+    && String(ship?.city || '').trim()
+    && String(ship?.state || '').trim()
+    && String(ship?.zip || '').trim()
+    && String(ship?.country || '').trim()
+    && phoneDigits(ship?.phone).length >= 8
+  );
 }
 
 function Paywall({ quota, isOpen, onClose }) {
@@ -499,7 +516,7 @@ export default function BrandPRHome() {
         city: saved.city || prev.city,
         state: saved.state || saved.region || prev.state,
         zip: saved.zip || saved.postal_code || prev.zip,
-        country: saved.country || prev.country,
+        country: normalizeServedCountry(saved.country || prev.country),
         phone: saved.phone || prev.phone,
       }));
       if (data.media_pending) {
@@ -553,10 +570,6 @@ export default function BrandPRHome() {
     });
   }
 
-  function shipReady() {
-    return Boolean(ship.address_line1.trim() && ship.city.trim() && ship.zip.trim());
-  }
-
   async function submitApply() {
     if (!current) return;
     if (picked.length !== 3) {
@@ -564,8 +577,8 @@ export default function BrandPRHome() {
       setStep(2);
       return;
     }
-    if (!shipReady()) {
-      setSubmitError('Add a full shipping address.');
+    if (!shipReady(ship)) {
+      setSubmitError('Add a complete shipping address and phone number.');
       return;
     }
     if (!agreed) {
@@ -971,58 +984,135 @@ export default function BrandPRHome() {
             <Block>
               <h2>Where should the box go?</h2>
               <Sub>Only used if they pick you. Saved after the first apply.</Sub>
-              <Lab>Full name</Lab>
-              <Input value={ship.full_name} onChange={(e) => setShip({ ...ship, full_name: e.target.value })} placeholder="Maya Chen" />
-              <Lab>Address line 1</Lab>
-              <Input value={ship.address_line1} onChange={(e) => setShip({ ...ship, address_line1: e.target.value })} placeholder="1847 Barton Springs Rd" />
-              <Lab>Address line 2</Lab>
-              <Input value={ship.address_line2} onChange={(e) => setShip({ ...ship, address_line2: e.target.value })} placeholder="Apt, suite (optional)" />
+              <Lab htmlFor="ship-name">Full name <Req>*</Req></Lab>
+              <Input
+                id="ship-name"
+                name="name"
+                autoComplete="name"
+                required
+                aria-required="true"
+                value={ship.full_name}
+                onChange={(e) => setShip({ ...ship, full_name: e.target.value })}
+                placeholder="Maya Chen"
+              />
+              <Lab htmlFor="ship-line1">Address line 1 <Req>*</Req></Lab>
+              <Input
+                id="ship-line1"
+                name="address-line1"
+                autoComplete="address-line1"
+                required
+                aria-required="true"
+                value={ship.address_line1}
+                onChange={(e) => setShip({ ...ship, address_line1: e.target.value })}
+                placeholder="1847 Barton Springs Rd"
+              />
+              <Lab htmlFor="ship-line2">Address line 2 <HintLabel>optional</HintLabel></Lab>
+              <Input
+                id="ship-line2"
+                name="address-line2"
+                autoComplete="address-line2"
+                value={ship.address_line2}
+                onChange={(e) => setShip({ ...ship, address_line2: e.target.value })}
+                placeholder="Apt, suite, unit"
+              />
               <Grid2>
                 <div>
-                  <Lab>City</Lab>
-                  <Input value={ship.city} onChange={(e) => setShip({ ...ship, city: e.target.value })} placeholder="Austin" />
+                  <Lab htmlFor="ship-city">City <Req>*</Req></Lab>
+                  <Input
+                    id="ship-city"
+                    name="address-level2"
+                    autoComplete="address-level2"
+                    required
+                    aria-required="true"
+                    value={ship.city}
+                    onChange={(e) => setShip({ ...ship, city: e.target.value })}
+                    placeholder="Austin"
+                  />
                 </div>
                 <div>
-                  <Lab>Region / state</Lab>
-                  <Input value={ship.state} onChange={(e) => setShip({ ...ship, state: e.target.value })} placeholder="TX" />
+                  <Lab htmlFor="ship-state">State / region <Req>*</Req></Lab>
+                  <Input
+                    id="ship-state"
+                    name="address-level1"
+                    autoComplete="address-level1"
+                    required
+                    aria-required="true"
+                    value={ship.state}
+                    onChange={(e) => setShip({ ...ship, state: e.target.value })}
+                    placeholder="TX"
+                  />
                 </div>
               </Grid2>
               <Grid2>
                 <div>
-                  <Lab>Postal code</Lab>
-                  <Input value={ship.zip} onChange={(e) => setShip({ ...ship, zip: e.target.value })} placeholder="78704" />
+                  <Lab htmlFor="ship-zip">Postal code <Req>*</Req></Lab>
+                  <Input
+                    id="ship-zip"
+                    name="postal-code"
+                    autoComplete="postal-code"
+                    required
+                    aria-required="true"
+                    value={ship.zip}
+                    onChange={(e) => setShip({ ...ship, zip: e.target.value })}
+                    placeholder="78704"
+                  />
                 </div>
                 <div>
-                  <Lab>Country</Lab>
-                  <Select value={ship.country} onChange={(e) => setShip({ ...ship, country: e.target.value })}>
-                    <option>United States</option>
-                    <option>Canada</option>
-                    <option>United Kingdom</option>
-                    <option>Australia</option>
+                  <Lab htmlFor="ship-country">Country <Req>*</Req></Lab>
+                  <Select
+                    id="ship-country"
+                    name="country"
+                    autoComplete="country-name"
+                    required
+                    aria-required="true"
+                    value={normalizeServedCountry(ship.country)}
+                    onChange={(e) => setShip({ ...ship, country: e.target.value })}
+                  >
+                    {SERVED_COUNTRY_GROUPS.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.countries.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </optgroup>
+                    ))}
                   </Select>
                 </div>
               </Grid2>
-              <Lab>Phone (carrier)</Lab>
-              <Input value={ship.phone} onChange={(e) => setShip({ ...ship, phone: e.target.value })} placeholder="+1 512 555 0199" />
+              <Lab htmlFor="ship-phone">Phone number <Req>*</Req></Lab>
+              <Input
+                id="ship-phone"
+                name="tel"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                required
+                aria-required="true"
+                aria-describedby="ship-phone-hint"
+                value={ship.phone}
+                onChange={(e) => setShip({ ...ship, phone: e.target.value })}
+                placeholder="+1 512 555 0199"
+              />
+              <FieldHint id="ship-phone-hint">For delivery updates, or if the courier can’t find you.</FieldHint>
               <SaveRow>
                 <input type="checkbox" checked={saveShip} onChange={(e) => setSaveShip(e.target.checked)} />
                 Save for the next apply
               </SaveRow>
             </Block>
             <Block>
-              <h2>If they ship</h2>
+              <h2>What you’re agreeing to</h2>
               <Agree>
-                <li><strong>Product only.</strong> No payment.</li>
-                <li>If they send a box: <strong>one post</strong> on your account + <strong>one photo or video</strong> they can reuse as ads.</li>
-                <li>Post within 14 days of delivery.</li>
+                <li><strong>Gifted product only.</strong> No cash fee — the box is the collab.</li>
+                <li>If they ship: <strong>one organic post</strong> on your account, plus <strong>one UGC file</strong> (photo or video) they can download. That’s the full ask.</li>
+                <li>Post and send the file within <strong>14 days of delivery</strong>.</li>
+                <li><strong>6-month usage.</strong> They can reuse that UGC in ads and on their channels for 6 months. You keep ownership. No exclusivity.</li>
               </Agree>
               <Chk>
                 <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-                I agree with content requests
+                I agree to the gifted terms and 6-month UGC usage
               </Chk>
             </Block>
             <Foot>
-              <Cta type="button" disabled={submitting || !agreed || !shipReady()} onClick={submitApply}>
+              <Cta type="button" disabled={submitting || !agreed || !shipReady(ship)} onClick={submitApply}>
                 {submitting ? 'Applying…' : 'Apply for Brand PR'}
               </Cta>
               {submitError && <Note style={{ color: ROSE }}>{submitError}</Note>}
@@ -2021,6 +2111,21 @@ const Lab = styled.label`
   font-weight: 700;
   color: ${MUTED};
   margin: 10px 0 4px;
+`;
+const Req = styled.span`
+  color: ${ROSE};
+  font-weight: 700;
+`;
+const HintLabel = styled.span`
+  font-weight: 600;
+  color: #9aa0a6;
+  text-transform: lowercase;
+`;
+const FieldHint = styled.p`
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: ${MUTED};
+  line-height: 1.35;
 `;
 const Input = styled.input`
   width: 100%;
