@@ -12,7 +12,7 @@ import {
   DirMoreSkeleton,
   PrFeedSkeleton,
 } from '../components/creator/PrSkeletons';
-import { categoryEmoji, categoryLabel } from '../constants/brandCategories';
+import { CANONICAL_CATEGORIES, categoryEmoji, categoryLabel } from '../constants/brandCategories';
 import { SERVED_COUNTRY_GROUPS, normalizeServedCountry } from '../constants/servedCountries';
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
@@ -31,14 +31,27 @@ const CREAM = tokens.cream;
 const FONT = tokens.fontSans;
 const DISPLAY = tokens.fontDisplay;
 
-const DIR_CHIPS = [
-  { id: 'all', label: 'All', emoji: '✨' },
-  { id: 'skincare', label: 'Skincare', emoji: categoryEmoji('skincare') },
-  { id: 'beauty', label: 'Makeup', emoji: categoryEmoji('beauty') },
-  { id: 'haircare', label: 'Hair', emoji: categoryEmoji('haircare') },
-  { id: 'fashion', label: 'Fashion', emoji: categoryEmoji('fashion') },
-  { id: 'wellness', label: 'Wellness', emoji: categoryEmoji('wellness') },
-];
+function fallbackDirCategories() {
+  return CANONICAL_CATEGORIES
+    .filter((id) => id !== 'other')
+    .map((value) => ({ value, label: categoryLabel(value), count: 0 }));
+}
+
+function sortDirCategories(list) {
+  return [...list].sort((a, b) => {
+    if (a.value === 'other') return 1;
+    if (b.value === 'other') return -1;
+    return (Number(b.count) || 0) - (Number(a.count) || 0)
+      || String(a.label).localeCompare(String(b.label));
+  });
+}
+
+function scrollPageTop() {
+  if (typeof window === 'undefined') return;
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
 
 const TRACK_STEPS = [
   { label: 'Review', emoji: '👀' },
@@ -251,6 +264,9 @@ export default function BrandPRHome() {
   const [loadingDir, setLoadingDir] = useState(false);
   const [dirQuery, setDirQuery] = useState('');
   const [dirCat, setDirCat] = useState('all');
+  const [dirCategories, setDirCategories] = useState(fallbackDirCategories);
+  const [catOpen, setCatOpen] = useState(false);
+  const [catQuery, setCatQuery] = useState('');
   const [dirMicro, setDirMicro] = useState(false);
   const [dirUS, setDirUS] = useState(false);
   const [dirPage, setDirPage] = useState(1);
@@ -258,9 +274,11 @@ export default function BrandPRHome() {
   const [showAc, setShowAc] = useState(false);
   const [acIndex, setAcIndex] = useState(-1);
   const acRef = useRef(null);
+  const catPickerRef = useRef(null);
   const debounceRef = useRef(null);
   const sentinelRef = useRef(null);
   const fetchingDirRef = useRef(false);
+  const dirReqRef = useRef(0);
 
   const [view, setView] = useState('list');
   const [step, setStep] = useState(1);
@@ -363,8 +381,9 @@ export default function BrandPRHome() {
 
   const loadDirectory = useCallback(async (page = 1, append = false, queryOverride) => {
     if (append && fetchingDirRef.current) return;
+    const req = ++dirReqRef.current;
     fetchingDirRef.current = true;
-    setLoadingDir(true);
+    if (!append) setLoadingDir(true);
     try {
       const params = {
         page,
@@ -377,16 +396,20 @@ export default function BrandPRHome() {
       if (dirMicro) params.micro_friendly = '1';
       if (userNiches.length) params.prefer_niches = userNiches.join(',');
       const { data } = await api.get('/api/public/brands', { params });
+      if (dirReqRef.current !== req) return;
       const mapped = mergeApplied(data.brands || [], new Map());
       setDirBrands((prev) => (append ? [...prev, ...mapped.filter((b) => !prev.some((p) => p.id === b.id))] : mapped));
       setDirTotal(Number(data.pagination?.total) || mapped.length);
       setDirPage(page);
     } catch (err) {
+      if (dirReqRef.current !== req) return;
       console.error('Directory load failed', err);
       if (!append) setDirBrands([]);
     } finally {
-      fetchingDirRef.current = false;
-      setLoadingDir(false);
+      if (dirReqRef.current === req) {
+        fetchingDirRef.current = false;
+        setLoadingDir(false);
+      }
     }
   }, [dirCat, dirMicro, dirQuery, dirUS, mergeApplied, userNiches]);
 
@@ -418,11 +441,66 @@ export default function BrandPRHome() {
   }, [view, doneBrand, appliedMap]);
 
   useEffect(() => {
-    if (tab !== 'dir') return;
-    loadDirectory(1, false);
-    // Search is submitted explicitly; do not refetch while typing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, dirCat, dirMicro, dirUS, userNiches]);
+    if (view !== 'apply' && view !== 'done') return undefined;
+    let inner = 0;
+    scrollPageTop();
+    const outer = requestAnimationFrame(() => {
+      scrollPageTop();
+      inner = requestAnimationFrame(scrollPageTop);
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [view, step, current?.id, doneBrand?.id]);
+
+  useEffect(() => {
+    if (tab !== 'dir' || view !== 'list') return;
+    const delay = dirQuery.trim() ? 280 : 0;
+    const t = setTimeout(() => loadDirectory(1, false), delay);
+    return () => clearTimeout(t);
+  }, [tab, view, dirCat, dirMicro, dirUS, userNiches, dirQuery, loadDirectory]);
+
+  useEffect(() => {
+    if (tab !== 'dir') {
+      setCatOpen(false);
+      setCatQuery('');
+      return undefined;
+    }
+    let cancelled = false;
+    api.get('/api/public/categories')
+      .then(({ data }) => {
+        if (cancelled) return;
+        const list = Array.isArray(data?.categories) ? data.categories : [];
+        setDirCategories(list.length ? sortDirCategories(list) : fallbackDirCategories());
+      })
+      .catch(() => {
+        if (!cancelled) setDirCategories(fallbackDirCategories());
+      });
+    return () => { cancelled = true; };
+  }, [tab]);
+
+  useEffect(() => {
+    if (!catOpen) return undefined;
+    const onPointerDown = (event) => {
+      if (!catPickerRef.current?.contains(event.target)) {
+        setCatOpen(false);
+        setCatQuery('');
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setCatOpen(false);
+        setCatQuery('');
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [catOpen]);
 
   useEffect(() => {
     const feature = consumeUpgradeDeeplink(searchParams);
@@ -483,6 +561,7 @@ export default function BrandPRHome() {
     setPack(null);
     setPackLoading(true);
     setMediaLoading(true);
+    scrollPageTop();
     try {
       const { data } = await api.get(`/api/pr-crm/apply-pack/${brand.id}`);
       if (applyReqRef.current !== req) return;
@@ -669,6 +748,15 @@ export default function BrandPRHome() {
   const forYouCards = useMemo(() => mergeApplied(matched, appliedMap), [matched, appliedMap, mergeApplied]);
   const dirCards = useMemo(() => mergeApplied(dirBrands, appliedMap), [dirBrands, appliedMap, mergeApplied]);
   const hasMoreDir = dirCards.length > 0 && dirCards.length < dirTotal;
+  const dirFiltersOn = dirCat !== 'all' || dirMicro || dirUS || Boolean(dirQuery.trim());
+  const filteredDirCategories = useMemo(() => {
+    const q = catQuery.trim().toLowerCase();
+    if (!q) return dirCategories;
+    return dirCategories.filter((c) => `${c.label} ${c.value}`.toLowerCase().includes(q));
+  }, [dirCategories, catQuery]);
+  const dirCatLabel = dirCat !== 'all'
+    ? (dirCategories.find((c) => c.value === dirCat)?.label || categoryLabel(dirCat))
+    : '';
 
   useEffect(() => {
     if (tab !== 'dir' || !hasMoreDir) return;
@@ -798,6 +886,44 @@ export default function BrandPRHome() {
     setSuggestions([]);
     setDirQuery(suggestion.name);
     loadDirectory(1, false, suggestion.name);
+  }
+
+  function clearDirSearch() {
+    setDirQuery('');
+    setSuggestions([]);
+    setShowAc(false);
+    setAcIndex(-1);
+    loadDirectory(1, false, '');
+  }
+
+  function clearDirFilters() {
+    setDirCat('all');
+    setDirMicro(false);
+    setDirUS(false);
+    setDirQuery('');
+    setSuggestions([]);
+    setShowAc(false);
+    setAcIndex(-1);
+    setCatOpen(false);
+    setCatQuery('');
+    loadDirectory(1, false, '');
+  }
+
+  function pickDirCategory(value) {
+    setDirCat(value || 'all');
+    setCatOpen(false);
+    setCatQuery('');
+  }
+
+  function toggleCatOpen() {
+    setCatOpen((open) => {
+      const next = !open;
+      if (next) {
+        setShowAc(false);
+        setCatQuery('');
+      }
+      return next;
+    });
   }
 
   function onSearchKeyDown(e) {
@@ -1185,7 +1311,7 @@ export default function BrandPRHome() {
   return (
     <Page>
       <ListHead>
-        <Hero>
+        <Hero $compact={tab === 'dir'}>
           <div>
             <Eyebrow>
               {tab === 'foryou'
@@ -1199,25 +1325,23 @@ export default function BrandPRHome() {
                   : <>Brands waiting to <em>gift you</em></>)
                 : <>Find a box you <em>want</em></>}
             </h1>
+            {tab === 'foryou' && (
             <p>
-              {tab === 'foryou'
-                ? (forYouLane === 'jobs'
-                  ? 'Paid briefs from brands hiring creators. Same monthly credits as Brand PR.'
-                  : (noCredits
-                    ? 'No free credits left. Go Pro to keep requesting boxes this month.'
-                    : remaining === 1
-                      ? 'Last free credit this month. Pick a brand you’d actually post.'
-                      : 'Apply in 3 steps. We take it to the brand. You never write a pitch.'))
+              {forYouLane === 'jobs'
+                ? 'Paid briefs from brands hiring creators. Same monthly credits as Brand PR.'
                 : (noCredits
-                  ? 'No free credits left. Go Pro to apply from Directory too.'
-                  : 'Same 3-step apply. We submit. They pick.')}
+                  ? 'No free credits left. Go Pro to keep requesting boxes this month.'
+                  : remaining === 1
+                    ? 'Last free credit this month. Pick a brand you’d actually post.'
+                    : 'Apply in 3 steps. We take it to the brand. You never write a pitch.')}
             </p>
+            )}
           </div>
-          {quota ? (
+          {tab === 'foryou' && (quota ? (
             <CreditMeter quota={quota} onClick={() => { if (!quota?.is_unlimited) showPaywall('meter'); }} />
           ) : (
             <CreditChipSkeleton />
-          )}
+          ))}
         </Hero>
       </ListHead>
 
@@ -1269,68 +1393,204 @@ export default function BrandPRHome() {
 
       {tab === 'dir' && (
         <>
-          <SearchRow onSubmit={runDirSearch} ref={acRef}>
-            <SearchField
-              type="search"
-              value={dirQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              onKeyDown={onSearchKeyDown}
-              onFocus={() => dirQuery.trim().length >= 2 && suggestions.length > 0 && setShowAc(true)}
-              placeholder={dirTotal > 0 ? `Search ${dirTotal.toLocaleString()} brands…` : 'Search a brand you want a box from'}
-              autoComplete="off"
-              aria-label="Search brands"
-              aria-autocomplete="list"
-            />
-            <SearchBtn type="submit">Search</SearchBtn>
-            <AcDropdown $open={showAc && dirQuery.trim().length >= 2}>
-              {suggestions.length > 0 ? (
-                suggestions.map((s, idx) => (
-                  <AcItem
-                    key={s.id}
-                    type="button"
-                    className={acIndex === idx ? 'active' : ''}
-                    onMouseDown={() => pickSuggestion(s)}
-                    onMouseEnter={() => setAcIndex(idx)}
-                  >
-                    <AcLogo $hasImage={!!s.logo}>
-                      {s.logo ? (
-                        <img src={s.logo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                      ) : initials(s.name)[0]}
-                    </AcLogo>
-                    <span>
-                      <b>{s.name}</b>
-                      <em>{s.category ? `${categoryEmoji(s.category)} ${categoryLabel(s.category)}` : 'Brand'}</em>
-                    </span>
-                  </AcItem>
-                ))
-              ) : (
-                <AcEmpty>Press Search to find “{dirQuery}”</AcEmpty>
+          <StickyDock>
+            <SearchTools>
+            <SearchRow role="search" onSubmit={runDirSearch} ref={acRef}>
+              <SearchIconWrap aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M20 20l-3.2-3.2" />
+                </svg>
+              </SearchIconWrap>
+              <SearchField
+                type="search"
+                value={dirQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                onKeyDown={onSearchKeyDown}
+                onFocus={() => dirQuery.trim().length >= 2 && suggestions.length > 0 && setShowAc(true)}
+                placeholder={dirTotal > 0 ? `Search ${dirTotal.toLocaleString()} brands` : 'Search brands'}
+                autoComplete="off"
+                enterKeyHint="search"
+                aria-label="Search brands"
+                aria-autocomplete="list"
+                aria-expanded={showAc && dirQuery.trim().length >= 2}
+                aria-controls="dir-search-results"
+              />
+              {dirQuery && (
+                <ClearSearch type="button" onClick={clearDirSearch} aria-label="Clear search">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                </ClearSearch>
               )}
-            </AcDropdown>
-          </SearchRow>
-          <Chips>
-            {DIR_CHIPS.map((c) => (
-              <Chip key={c.id} type="button" $on={dirCat === c.id} onClick={() => setDirCat(c.id)}>
-                <span aria-hidden="true">{c.emoji}</span> {c.label}
-              </Chip>
-            ))}
-            <Chip type="button" $on={dirMicro} onClick={() => setDirMicro((v) => !v)}>
-              <span aria-hidden="true">🌱</span> Micro-friendly
-            </Chip>
-            <Chip type="button" $on={dirUS} onClick={() => setDirUS((v) => !v)}>
-              <span aria-hidden="true">🇺🇸</span> Ships US
-            </Chip>
-          </Chips>
-          <DirCount>
-            {dirCards.length > 0
-              ? `Showing ${dirCards.length.toLocaleString()} of ${dirTotal.toLocaleString()} ${dirTotal === 1 ? 'brand' : 'brands'}`
-              : `${dirTotal.toLocaleString()} ${dirTotal === 1 ? 'brand' : 'brands'}`}
-          </DirCount>
+              <AcDropdown
+                id="dir-search-results"
+                role="listbox"
+                $open={showAc && dirQuery.trim().length >= 2}
+              >
+                {suggestions.length > 0 ? (
+                  suggestions.map((s, idx) => (
+                    <AcItem
+                      key={s.id}
+                      type="button"
+                      role="option"
+                      aria-selected={acIndex === idx}
+                      className={acIndex === idx ? 'active' : ''}
+                      onMouseDown={() => pickSuggestion(s)}
+                      onMouseEnter={() => setAcIndex(idx)}
+                    >
+                      <AcLogo $hasImage={!!s.logo}>
+                        {s.logo ? (
+                          <img src={s.logo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        ) : initials(s.name)[0]}
+                      </AcLogo>
+                      <span>
+                        <b>{s.name}</b>
+                        <em>{s.category ? `${categoryEmoji(s.category)} ${categoryLabel(s.category)}` : 'Brand'}</em>
+                      </span>
+                    </AcItem>
+                  ))
+                ) : (
+                  <AcEmpty>Searching “{dirQuery}”…</AcEmpty>
+                )}
+              </AcDropdown>
+            </SearchRow>
+              <CatPicker ref={catPickerRef} $open={catOpen}>
+                <CatTrigger
+                  type="button"
+                  $active={dirCat !== 'all'}
+                  $open={catOpen}
+                  aria-haspopup="listbox"
+                  aria-expanded={catOpen}
+                  aria-controls="dir-category-list"
+                  aria-label={dirCatLabel ? `Category, ${dirCatLabel}` : 'Category'}
+                  onClick={toggleCatOpen}
+                >
+                  <CatTriggerText $active={dirCat !== 'all'}>
+                    {dirCat !== 'all' && (
+                      <CatEmoji aria-hidden="true">{categoryEmoji(dirCat)}</CatEmoji>
+                    )}
+                    {dirCatLabel || 'Category'}
+                  </CatTriggerText>
+                  <CatChevron $open={catOpen} aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </CatChevron>
+                </CatTrigger>
+                {catOpen && (
+                  <CatMenu>
+                    <CatSearchWrap>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M20 20l-3.2-3.2" />
+                      </svg>
+                      <CatSearchInput
+                        autoFocus
+                        type="search"
+                        placeholder="Find a category"
+                        value={catQuery}
+                        onChange={(e) => setCatQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key !== 'Enter') return;
+                          e.preventDefault();
+                          const first = filteredDirCategories[0];
+                          if (first) pickDirCategory(first.value);
+                        }}
+                        aria-label="Find a category"
+                      />
+                    </CatSearchWrap>
+                    <CatList id="dir-category-list" role="listbox">
+                      <CatOption
+                        type="button"
+                        role="option"
+                        aria-selected={dirCat === 'all'}
+                        $active={dirCat === 'all'}
+                        onClick={() => pickDirCategory('all')}
+                      >
+                        <CatOptionMain>
+                          <CatEmoji aria-hidden="true">✨</CatEmoji>
+                          <span>All categories</span>
+                        </CatOptionMain>
+                        {dirCat === 'all' && <CatCheck aria-hidden="true">✓</CatCheck>}
+                      </CatOption>
+                      {filteredDirCategories.map((c) => (
+                        <CatOption
+                          key={c.value}
+                          type="button"
+                          role="option"
+                          aria-selected={dirCat === c.value}
+                          $active={dirCat === c.value}
+                          onClick={() => pickDirCategory(c.value)}
+                        >
+                          <CatOptionMain>
+                            <CatEmoji aria-hidden="true">{categoryEmoji(c.value)}</CatEmoji>
+                            <span>
+                              {c.label}
+                              {c.count > 0 && <CatCount>{c.count.toLocaleString()}</CatCount>}
+                            </span>
+                          </CatOptionMain>
+                          {dirCat === c.value && <CatCheck aria-hidden="true">✓</CatCheck>}
+                        </CatOption>
+                      ))}
+                      {filteredDirCategories.length === 0 && (
+                        <CatEmpty>No categories match</CatEmpty>
+                      )}
+                    </CatList>
+                  </CatMenu>
+                )}
+              </CatPicker>
+            </SearchTools>
+            <FilterRow>
+              <FilterToggles role="group" aria-label="Directory filters">
+                <FilterToggle
+                  type="button"
+                  $on={dirMicro}
+                  aria-pressed={dirMicro}
+                  onClick={() => setDirMicro((v) => !v)}
+                >
+                  Micro-friendly
+                </FilterToggle>
+                <FilterToggle
+                  type="button"
+                  $on={dirUS}
+                  aria-pressed={dirUS}
+                  onClick={() => setDirUS((v) => !v)}
+                >
+                  Ships US
+                </FilterToggle>
+              </FilterToggles>
+              <DirMeta>
+                <DirCount>
+                  {loadingDir && !dirCards.length
+                    ? 'Searching…'
+                    : dirCards.length > 0
+                      ? `${dirTotal.toLocaleString()} ${dirTotal === 1 ? 'brand' : 'brands'}`
+                      : 'No brands match'}
+                </DirCount>
+                {dirFiltersOn && (
+                  <ClearFilters type="button" onClick={clearDirFilters}>
+                    Clear
+                  </ClearFilters>
+                )}
+              </DirMeta>
+            </FilterRow>
+          </StickyDock>
           <List aria-busy={loadingDir} aria-label="Brand directory">
             {loadingDir && !dirCards.length && (
               <PrFeedSkeleton count={6} label="Searching brands" />
             )}
-            {!loadingDir && !dirCards.length && <EmptyNote>No brands match. Try another search or clear a filter.</EmptyNote>}
+            {!loadingDir && !dirCards.length && (
+              <EmptyNote as="div">
+                No brands match.
+                {dirFiltersOn && (
+                  <>
+                    {' '}
+                    <EmptyAction type="button" onClick={clearDirFilters}>Clear filters</EmptyAction>
+                  </>
+                )}
+              </EmptyNote>
+            )}
             {dirCards.map((b) => renderCard(b, 'dir'))}
             {hasMoreDir && (
               <MoreSentinel ref={sentinelRef}>
@@ -1398,10 +1658,11 @@ function Tracker({ stage = 0, compact = false }) {
 }
 
 const Page = styled.div`
+  --page-pad-x: ${(p) => (p.$narrow ? '16px' : 'clamp(16px, 4vw, 32px)')};
   width: 100%;
   max-width: ${(p) => (p.$narrow ? '560px' : '1120px')};
   margin: 0 auto;
-  padding: ${(p) => (p.$narrow ? '8px 16px 48px' : '16px clamp(16px, 4vw, 32px) 72px')};
+  padding: ${(p) => (p.$narrow ? '8px var(--page-pad-x) 48px' : '16px var(--page-pad-x) 72px')};
   background: transparent;
   min-height: calc(100vh - 80px);
   font-family: ${FONT};
@@ -1413,14 +1674,14 @@ const ListHead = styled.div`
 `;
 const Hero = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: ${(p) => (p.$compact ? '1fr' : 'minmax(0, 1fr) auto')};
   align-items: start;
   gap: 20px 28px;
-  padding: 12px 0 22px;
+  padding: ${(p) => (p.$compact ? '4px 0 10px' : '12px 0 22px')};
 
   h1 {
     font-family: ${DISPLAY};
-    font-size: clamp(26px, 4.2vw, 42px);
+    font-size: ${(p) => (p.$compact ? 'clamp(22px, 3.6vw, 34px)' : 'clamp(26px, 4.2vw, 42px)')};
     font-weight: 400;
     letter-spacing: -.03em;
     line-height: 1.1;
@@ -1440,7 +1701,7 @@ const Hero = styled.div`
 
   @media (max-width: 800px) {
     grid-template-columns: 1fr;
-    padding: 8px 0 16px;
+    padding: ${(p) => (p.$compact ? '2px 0 8px' : '8px 0 16px')};
   }
 `;
 const Eyebrow = styled.div`
@@ -1813,19 +2074,61 @@ const Stats = styled.div`
   b { display: block; font-size: 13px; }
   em { font-style: normal; font-size: 10px; color: ${MUTED}; font-weight: 600; }
 `;
+const StickyDock = styled.div`
+  position: sticky;
+  top: 64px;
+  z-index: 40;
+  margin: 0 calc(-1 * var(--page-pad-x));
+  padding: 8px var(--page-pad-x) 10px;
+  background: rgba(247, 245, 240, 0.92);
+  -webkit-backdrop-filter: saturate(1.4) blur(16px);
+  backdrop-filter: saturate(1.4) blur(16px);
+  border-bottom: 1px solid ${LINE};
+  box-shadow: 0 8px 24px rgba(18, 20, 26, 0.04);
+  overflow: visible;
+
+  @media (max-width: 840px) {
+    top: 108px;
+    padding-top: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: ${BG};
+  }
+`;
+const SearchTools = styled.div`
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin: 0 0 8px;
+`;
 const SearchRow = styled.form`
   position: relative;
   display: flex;
-  gap: 8px;
-  padding: 4px;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 14px;
+  margin: 0;
   background: ${CREAM};
   border: 1px solid ${LINE};
-  border-radius: 14px;
+  border-radius: 999px;
   box-shadow: ${tokens.shadowCard};
-  max-width: 640px;
-  width: 100%;
+  flex: 1;
   min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus-within {
+    border-color: ${tokens.accentBorder};
+    box-shadow: 0 0 0 4px ${GREEN_BG};
+  }
+`;
+const SearchIconWrap = styled.span`
+  display: grid;
+  place-items: center;
+  color: ${MUTED};
+  flex-shrink: 0;
 `;
 const SearchField = styled.input`
   flex: 1;
@@ -1833,23 +2136,40 @@ const SearchField = styled.input`
   background: transparent;
   box-shadow: none;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 11px 8px;
   font-size: 16px;
   font-family: inherit;
   outline: none;
+
+  &::-webkit-search-cancel-button { display: none; }
+`;
+const ClearSearch = styled.button`
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: ${tokens.subtle};
+  color: ${INK};
+  cursor: pointer;
+  flex-shrink: 0;
+  &:hover { background: #e8e2d6; }
+  &:focus-visible { outline: 2px solid ${GREEN}; outline-offset: 2px; }
 `;
 const AcDropdown = styled.div`
   display: ${(p) => (p.$open ? 'block' : 'none')};
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 0;
   right: 0;
   background: ${CREAM};
   border: 1px solid ${LINE};
-  border-radius: 14px;
+  border-radius: 16px;
   box-shadow: ${tokens.shadowHover};
-  z-index: 20;
-  max-height: 320px;
+  z-index: 45;
+  max-height: min(360px, 60vh);
   overflow-y: auto;
 `;
 const AcItem = styled.button`
@@ -1891,52 +2211,211 @@ const AcEmpty = styled.div`
   font-size: 13px;
   color: ${MUTED};
 `;
-const SearchBtn = styled.button`
-  border: 0;
-  background: ${INK};
-  color: #fff;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-weight: 650;
-  font-size: 13px;
-  white-space: nowrap;
-  cursor: pointer;
-  flex-shrink: 0;
+const CatPicker = styled.div`
+  position: relative;
+  flex: 0 0 158px;
+  min-width: 0;
+  z-index: ${(p) => (p.$open ? 6 : 1)};
 
-  @media (max-width: 480px) {
-    padding: 10px 12px;
+  @media (max-width: 520px) {
+    flex-basis: 132px;
   }
 `;
-const Chips = styled.div`
+const CatTrigger = styled.button`
+  width: 100%;
+  height: 100%;
+  min-height: 48px;
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px;
-  overflow-x: auto;
-  padding: 0 0 14px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(17,17,17,0.28) transparent;
-  &::-webkit-scrollbar { height: 6px; }
-  &::-webkit-scrollbar-thumb { background: rgba(17,17,17,0.18); border-radius: 999px; }
+  padding: 0 12px 0 14px;
+  background: ${(p) => (p.$active ? GREEN_BG : CREAM)};
+  border: 1px solid ${(p) => (p.$open || p.$active ? tokens.accentBorder : LINE)};
+  border-radius: 999px;
+  box-shadow: ${tokens.shadowCard};
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  &:hover { border-color: ${tokens.accentBorder}; }
+  &:focus-visible { outline: 2px solid ${GREEN}; outline-offset: 2px; }
 `;
-const Chip = styled.button`
-  display: inline-flex;
+const CatTriggerText = styled.span`
+  display: flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid ${(p) => (p.$on ? GREEN_DEEP : LINE)};
-  background: ${(p) => (p.$on ? GREEN_DEEP : CREAM)};
-  color: ${(p) => (p.$on ? '#fff' : MUTED)};
-  border-radius: 999px;
-  padding: 7px 12px;
   font-size: 13px;
+  font-weight: ${(p) => (p.$active ? 650 : 550)};
+  color: ${(p) => (p.$active ? GREEN_DEEP : MUTED)};
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+`;
+const CatChevron = styled.span`
+  display: grid;
+  place-items: center;
+  color: ${MUTED};
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  transform: rotate(${(p) => (p.$open ? '180deg' : '0deg')});
+`;
+const CatMenu = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  width: min(280px, calc(100vw - 32px));
+  background: ${CREAM};
+  border: 1px solid ${LINE};
+  border-radius: 16px;
+  box-shadow: ${tokens.shadowHover};
+  overflow: hidden;
+`;
+const CatSearchWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid ${LINE};
+  color: ${MUTED};
+`;
+const CatSearchInput = styled.input`
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: ${INK};
+  font-family: inherit;
+  min-width: 0;
+  &::placeholder { color: ${MUTED}; }
+  &::-webkit-search-cancel-button { display: none; }
+`;
+const CatList = styled.div`
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
+  padding: 6px;
+`;
+const CatOption = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  background: ${(p) => (p.$active ? GREEN_BG : 'transparent')};
+  color: ${(p) => (p.$active ? GREEN_DEEP : INK)};
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-weight: ${(p) => (p.$active ? 650 : 500)};
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  &:hover { background: ${(p) => (p.$active ? GREEN_BG : tokens.subtle)}; }
+`;
+const CatOptionMain = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  text-align: left;
+`;
+const CatEmoji = styled.span`
+  display: grid;
+  place-items: center;
+  width: 1.35em;
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+`;
+const CatCount = styled.span`
+  margin-left: 8px;
+  color: ${MUTED};
+  font-weight: 500;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+`;
+const CatCheck = styled.span`
+  flex-shrink: 0;
+  color: ${GREEN};
+  font-size: 12px;
+  font-weight: 700;
+`;
+const CatEmpty = styled.div`
+  padding: 14px 10px;
+  font-size: 13px;
+  color: ${MUTED};
+  text-align: center;
+`;
+const FilterRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 28px;
+  padding: 2px 2px 0;
+  flex-wrap: wrap;
+`;
+const FilterToggles = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+`;
+const FilterToggle = styled.button`
+  border: 1px solid ${(p) => (p.$on ? tokens.accentBorder : 'transparent')};
+  background: ${(p) => (p.$on ? GREEN_BG : 'transparent')};
+  color: ${(p) => (p.$on ? GREEN_DEEP : MUTED)};
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   font-family: inherit;
+  &:hover { color: ${(p) => (p.$on ? GREEN_DEEP : INK)}; background: ${(p) => (p.$on ? GREEN_BG : tokens.subtle)}; }
+  &:focus-visible { outline: 2px solid ${GREEN}; outline-offset: 2px; }
+`;
+const DirMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 0;
 `;
 const DirCount = styled.p`
-  padding: 0 2px 12px;
-  font-size: 13px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
   color: ${MUTED};
+`;
+const ClearFilters = styled.button`
+  border: 0;
+  background: none;
+  color: ${GREEN_DEEP};
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+  &:hover { text-decoration: underline; }
+  &:focus-visible { outline: 2px solid ${GREEN}; outline-offset: 2px; }
+`;
+const EmptyAction = styled.button`
+  border: 0;
+  background: none;
+  color: ${GREEN_DEEP};
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  text-decoration: underline;
 `;
 const MoreSentinel = styled.div`
   grid-column: 1 / -1;
