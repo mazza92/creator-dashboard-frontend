@@ -4,7 +4,9 @@ back2
 *.py
 *.md
 .env
-.env.*
+.env.development
+.env.local
+.env.*.local
 scripts/
 test-*.js
 public/Pages.csv
