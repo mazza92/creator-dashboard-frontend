@@ -352,45 +352,114 @@ const BrandAdmin = () => {
     }
   };
 
-  // Bulk AI enrich selected brands
-  const bulkAiEnrich = async () => {
-    const ids = selectedRows.map(r => r.id);
-    const brandsWithoutWebsite = selectedRows.filter(r => !r.website);
-
-    if (brandsWithoutWebsite.length > 0) {
-      message.warning(`${brandsWithoutWebsite.length} brand(s) have no website and will be skipped`);
+  // Bulk AI enrich selected brands (batched — proxy kills long sync requests)
+  const runBatchedEnrich = async (ids, { mode = 'full', label = 'brands' } = {}) => {
+    if (!ids.length) {
+      message.warning('No brands to enrich');
+      return;
     }
 
     setBulkEnriching(true);
     const key = 'bulk-enrich';
-    message.loading({ content: `AI enriching ${ids.length} brands...`, key, duration: 0 });
+    let remaining = [...ids];
+    let enrichedTotal = 0;
+    let processedTotal = 0;
+    const grandTotal = remaining.length;
+    const batchHint = mode === 'social' ? 5 : 1;
+
+    message.loading({
+      content: `${mode === 'social' ? 'Filling social handles' : 'AI enriching'} 0/${grandTotal} ${label}…`,
+      key,
+      duration: 0,
+    });
 
     try {
-      const { data } = await api.post(
-        '/api/admin/brands/bulk-enrich',
-        { ids, only_missing_fields: true },
-        getApiConfig()
-      );
+      while (remaining.length > 0) {
+        const { data } = await api.post(
+          '/api/admin/brands/bulk-enrich',
+          {
+            ids: remaining,
+            only_missing_fields: true,
+            only_missing_social: mode === 'social',
+            mode,
+            batch_size: batchHint,
+          },
+          {
+            ...getApiConfig(),
+            timeout: mode === 'social' ? 120000 : 90000,
+          }
+        );
 
-      if (data.success) {
-        // Refresh the grid to show enriched data
-        await fetchBrands();
-        message.success({
-          content: `Successfully enriched ${data.enriched} of ${data.total} brands`,
-          key
+        if (!data?.success) {
+          throw new Error(data?.error || 'Bulk enrichment failed');
+        }
+
+        enrichedTotal += Number(data.enriched) || 0;
+        processedTotal += Number(data.processed) || 0;
+        remaining = Array.isArray(data.remaining_ids) ? data.remaining_ids : [];
+
+        const done = grandTotal - remaining.length;
+        message.loading({
+          content: `${mode === 'social' ? 'Filling social handles' : 'AI enriching'} ${done}/${grandTotal} ${label}… (${enrichedTotal} updated)`,
+          key,
+          duration: 0,
         });
-        setSelectedRows([]);
-        gridRef.current?.api?.deselectAll();
-      } else {
-        message.error({ content: data.error || 'Bulk enrichment failed', key });
       }
+
+      await fetchBrands();
+      message.success({
+        content: `Updated ${enrichedTotal} of ${grandTotal} ${label}${processedTotal ? ` (${processedTotal} checked)` : ''}`,
+        key,
+      });
+      setSelectedRows([]);
+      gridRef.current?.api?.deselectAll();
     } catch (error) {
       console.error('Bulk enrichment failed:', error);
+      const networkHint = error?.code === 'ERR_NETWORK' || error?.message === 'Network Error'
+        ? ' (request timed out — try fewer brands or Fill Missing Social)'
+        : '';
       message.error({
-        content: error.response?.data?.error || 'Bulk enrichment failed',
-        key
+        content: `${error.response?.data?.error || error.message || 'Bulk enrichment failed'}${networkHint}. Progress: ${enrichedTotal} updated, ${remaining.length} left.`,
+        key,
+        duration: 8,
       });
     } finally {
+      setBulkEnriching(false);
+    }
+  };
+
+  const bulkAiEnrich = async () => {
+    const ids = selectedRows.map((r) => r.id);
+    const brandsWithoutWebsite = selectedRows.filter((r) => !r.website);
+    if (brandsWithoutWebsite.length > 0) {
+      message.warning(`${brandsWithoutWebsite.length} brand(s) have no website and will be skipped`);
+    }
+    await runBatchedEnrich(ids, { mode: 'full', label: 'selected brands' });
+  };
+
+  const fillMissingSocial = async () => {
+    setBulkEnriching(true);
+    const key = 'bulk-enrich';
+    message.loading({ content: 'Finding brands without Instagram & TikTok…', key, duration: 0 });
+    try {
+      const { data } = await api.get('/api/admin/brands/missing-social?limit=5000', getApiConfig());
+      if (!data?.success) {
+        throw new Error(data?.error || 'Could not load brands missing social');
+      }
+      const ids = data.ids || [];
+      if (!ids.length) {
+        message.success({ content: 'All brands with a website already have Instagram or TikTok', key });
+        setBulkEnriching(false);
+        return;
+      }
+      setBulkEnriching(false);
+      await runBatchedEnrich(ids, { mode: 'social', label: 'brands missing social' });
+    } catch (error) {
+      console.error('Fill missing social failed:', error);
+      message.error({
+        content: error.response?.data?.error || error.message || 'Failed to start social fill',
+        key,
+      });
       setBulkEnriching(false);
     }
   };
@@ -1390,6 +1459,15 @@ const BrandAdmin = () => {
           />
           <Button onClick={fillMissingLogos}>
             Fill Missing Logos
+          </Button>
+          <Button
+            type="primary"
+            ghost
+            loading={bulkEnriching}
+            disabled={bulkEnriching}
+            onClick={fillMissingSocial}
+          >
+            Fill Missing Social
           </Button>
           <Button icon={<ReloadOutlined />} onClick={fetchBrands}>
             Refresh
