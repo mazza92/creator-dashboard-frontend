@@ -652,7 +652,7 @@ export default function BrandPRHome() {
   async function submitApply() {
     if (!current) return;
     if (picked.length !== 3) {
-      setSubmitError('Pick 3 posts.');
+      setSubmitError('Select 3 posts to continue.');
       setStep(2);
       return;
     }
@@ -1073,8 +1073,8 @@ export default function BrandPRHome() {
         {step === 2 && (
           <>
             <Block>
-              <h2>Show them your best 3</h2>
-              <Sub>Pick 3 posts. Required. This is what they see on your fit card. Fresh each apply.</Sub>
+              <h2>Choose your best 3</h2>
+              <Sub>This is what the brand sees when they review your request. Lead with posts that show your style — you can pick different ones next time.</Sub>
               {packLoading ? (
                 <EmptyNote>Loading your posts…</EmptyNote>
               ) : posts.length ? (
@@ -1100,7 +1100,7 @@ export default function BrandPRHome() {
             </Block>
             <Foot>
               <Cta type="button" disabled={picked.length !== 3} onClick={() => setStep(3)}>Continue</Cta>
-              <Note>Pick 3 posts. Required. {picked.length} of 3 selected</Note>
+              <Note>{picked.length === 3 ? 'Ready — 3 of 3 selected' : `${picked.length} of 3 selected`}</Note>
             </Foot>
           </>
         )}
