@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
 import { Users, MapPin, Check } from 'lucide-react';
+import { JobFeedSkeleton } from '../components/creator/PrSkeletons';
 
 // Social platform icons
 const TikTokIcon = () => (
@@ -246,7 +247,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
   };
 
   if (loading) {
-    return <LoadingText>Finding opportunities for you...</LoadingText>;
+    return <JobFeedSkeleton count={3} />;
   }
 
   const allOpps = [...(opportunities.matched || []), ...(opportunities.others || [])];
@@ -255,7 +256,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
     return (
       <EmptyState>
         <EmptyIcon>📣</EmptyIcon>
-        <EmptyTitle>No open opportunities right now</EmptyTitle>
+        <EmptyTitle>No UGC jobs right now</EmptyTitle>
         <EmptyText>Check back soon. New campaigns are added weekly.</EmptyText>
       </EmptyState>
     );
@@ -267,7 +268,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
       <IntroCard>
         <IntroIcon>📣</IntroIcon>
         <IntroText>
-          <IntroTitle>Brand open PR & paid collaborations opportunities</IntroTitle>
+          <IntroTitle>UGC jobs from brands hiring creators</IntroTitle>
         </IntroText>
       </IntroCard>
 
@@ -301,7 +302,7 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
 
       {/* Open opportunities */}
       {opportunities.others?.length > 0 && (
-        <SectionLabel style={{ marginTop: 8 }}>Other open opportunities</SectionLabel>
+        <SectionLabel style={{ marginTop: 8 }}>Other UGC jobs</SectionLabel>
       )}
 
       {(opportunities.others || []).map(opp => (
@@ -445,13 +446,6 @@ const OppCard = ({ opp, isPro, applying, applied, onApply, showLowFitHint }) => 
 
 // Styled Components
 const Wrap = styled.div``;
-
-const LoadingText = styled.p`
-  font-size: 13px;
-  color: ${tokens.textMuted};
-  padding: 40px 0;
-  text-align: center;
-`;
 
 const IntroCard = styled.div`
   background: #fff;

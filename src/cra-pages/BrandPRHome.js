@@ -3,6 +3,15 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import api from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
+import SegmentTabs from '../components/creator/SegmentTabs';
+import BrandSocialHeader, { parseSocial } from '../components/creator/BrandSocialHeader';
+import {
+  ApplyExamplesSkeleton,
+  CreditChipSkeleton,
+  DirMoreSkeleton,
+  PrFeedSkeleton,
+} from '../components/creator/PrSkeletons';
 import { categoryEmoji, categoryLabel } from '../constants/brandCategories';
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
@@ -162,28 +171,8 @@ function normalizeBrand(raw, appliedMap) {
     responseRate: raw.response_rate ?? raw.responseRate,
     applyStatus: applied?.apply_status || raw.apply_status || null,
     applied: Boolean(applied || raw.apply_status),
+    social: parseSocial(raw.social || raw.pr_social_profile),
   };
-}
-
-function websiteHost(url) {
-  if (!url) return '';
-  try {
-    const href = url.startsWith('http') ? url : `https://${url}`;
-    return new URL(href).hostname.replace(/^www\./, '');
-  } catch {
-    return String(url).replace(/^https?:\/\//, '').replace(/^www\./, '');
-  }
-}
-
-function websiteHref(url) {
-  if (!url) return '';
-  return url.startsWith('http') ? url : `https://${url}`;
-}
-
-function handleDisplay(handle) {
-  if (!handle) return '';
-  const h = String(handle).replace(/^https?:\/\/(www\.)?(instagram|tiktok)\.com\/@?/i, '').replace(/\/$/, '');
-  return h.startsWith('@') ? h : `@${h}`;
 }
 
 function creditCopy(quota) {
@@ -261,6 +250,7 @@ export default function BrandPRHome() {
   const [current, setCurrent] = useState(null);
   const [pack, setPack] = useState(null);
   const [packLoading, setPackLoading] = useState(false);
+  const [mediaLoading, setMediaLoading] = useState(false);
   const [picked, setPicked] = useState([]);
   const [ship, setShip] = useState({
     full_name: '',
@@ -279,11 +269,47 @@ export default function BrandPRHome() {
   const [doneBrand, setDoneBrand] = useState(null);
   const [relatedRemote, setRelatedRemote] = useState([]);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [forYouLane, setForYouLane] = useState(() => {
+    try {
+      if (sessionStorage.getItem('foryouForceOpportunities')) {
+        sessionStorage.removeItem('foryouForceOpportunities');
+        return 'jobs';
+      }
+    } catch {
+      /* ignore */
+    }
+    return 'gifts';
+  });
+  const [jobCount, setJobCount] = useState(0);
   const applySourceRef = useRef('foryou');
+  const applyReqRef = useRef(0);
 
   const setTab = (name) => {
     navigate(name === 'dir' ? '/creator/dashboard/pr-brands' : '/creator/dashboard/for-you');
   };
+
+  function selectForYouLane(id) {
+    setForYouLane(id);
+    try {
+      sessionStorage.setItem('foryouTabPicked', id === 'jobs' ? 'opportunities' : 'matches');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function onJobLimitsChange(used) {
+    setQuota((q) => {
+      if (!q || typeof used !== 'number') return q;
+      const limit = Number(q.limit) || 3;
+      const next = {
+        ...q,
+        used,
+        remaining: q.is_unlimited ? q.remaining : Math.max(0, limit - used),
+      };
+      emitCredits(next);
+      return next;
+    });
+  }
 
   const mergeApplied = useCallback((list, map) => (
     (list || []).map((b) => normalizeBrand(b, map)).filter(Boolean)
@@ -418,6 +444,7 @@ export default function BrandPRHome() {
   async function openApply(brand, source) {
     if (!brand) return;
     if (brand.applied) return;
+    const req = ++applyReqRef.current;
     applySourceRef.current = source || (tab === 'dir' ? 'directory' : 'foryou');
     const remaining = quota?.is_unlimited ? 99 : Number(quota?.remaining);
     if (Number.isFinite(remaining) && remaining <= 0) {
@@ -438,12 +465,15 @@ export default function BrandPRHome() {
     setSubmitError('');
     setPack(null);
     setPackLoading(true);
+    setMediaLoading(true);
     try {
       const { data } = await api.get(`/api/pr-crm/apply-pack/${brand.id}`);
+      if (applyReqRef.current !== req) return;
       setPack(data);
       if (data.brand) {
         setCurrent((prev) => normalizeBrand({
           ...data.brand,
+          social: data.social || data.brand.social,
           match_score: prev?.matchScore ?? data.brand.match_score,
           apply_status: prev?.applyStatus,
         }, appliedMap) || prev);
@@ -457,6 +487,7 @@ export default function BrandPRHome() {
         setMatched((prev) => prev.map((b) => (b.id === brand.id ? { ...b, applied: true, applyStatus: data.apply_status || 'review' } : b)));
         setDirBrands((prev) => prev.map((b) => (b.id === brand.id ? { ...b, applied: true, applyStatus: data.apply_status || 'review' } : b)));
         setView('list');
+        setMediaLoading(false);
         return;
       }
       const saved = data.shipping || {};
@@ -471,11 +502,45 @@ export default function BrandPRHome() {
         country: saved.country || prev.country,
         phone: saved.phone || prev.phone,
       }));
+      if (data.media_pending) {
+        api.get(`/api/pr-crm/apply-pack/${brand.id}/media`)
+          .then(({ data: media }) => {
+            if (applyReqRef.current !== req) return;
+            setPack((prev) => (
+              prev
+                ? {
+                  ...prev,
+                  examples: media.examples || prev.examples,
+                  social: media.social || prev.social,
+                  media_pending: false,
+                }
+                : prev
+            ));
+            if (media.social) {
+              setCurrent((prev) => (
+                prev && prev.id === brand.id
+                  ? { ...prev, social: parseSocial(media.social) || prev.social }
+                  : prev
+              ));
+            }
+          })
+          .catch((err) => {
+            console.error('Apply media failed', err);
+          })
+          .finally(() => {
+            if (applyReqRef.current === req) setMediaLoading(false);
+          });
+      } else {
+        setMediaLoading(false);
+      }
     } catch (err) {
       console.error('Apply pack failed', err);
-      setSubmitError('Could not load this apply. Try again.');
+      if (applyReqRef.current === req) {
+        setSubmitError('Could not load this apply. Try again.');
+        setMediaLoading(false);
+      }
     } finally {
-      setPackLoading(false);
+      if (applyReqRef.current === req) setPackLoading(false);
     }
   }
 
@@ -761,13 +826,19 @@ export default function BrandPRHome() {
     return (
       <Page $narrow>
         <ApplyTop>
-          <Back type="button" onClick={() => (step === 1 ? setView('list') : setStep(step - 1))}>←</Back>
-          <Stepper>
-            <Dot $on={step === 1} />
-            <StepLine />
-            <Dot $on={step === 2} />
-            <StepLine />
-            <Dot $on={step === 3} />
+          <Back
+            type="button"
+            aria-label={step === 1 ? 'Back to brand list' : 'Previous step'}
+            onClick={() => (step === 1 ? setView('list') : setStep(step - 1))}
+          >
+            ←
+          </Back>
+          <Stepper role="list" aria-label={`Step ${step} of 3`}>
+            <Dot $on={step === 1} role="listitem" aria-current={step === 1 ? 'step' : undefined} aria-label="Step 1" />
+            <StepLine aria-hidden="true" />
+            <Dot $on={step === 2} role="listitem" aria-current={step === 2 ? 'step' : undefined} aria-label="Step 2" />
+            <StepLine aria-hidden="true" />
+            <Dot $on={step === 3} role="listitem" aria-current={step === 3 ? 'step' : undefined} aria-label="Step 3" />
           </Stepper>
           <span style={{ width: 28 }} />
         </ApplyTop>
@@ -776,25 +847,24 @@ export default function BrandPRHome() {
           {step === 1 && current.cover && (
             <Cover src={current.cover} alt="" />
           )}
-          <BrandHead>
-            {current.logo ? <LogoImg src={current.logo} alt="" /> : <LogoFallback style={{ background: logoHue(current.name) }}>{initials(current.name)}</LogoFallback>}
-            <div>
-              <h3>{current.name}</h3>
-              <p>{categoryEmoji(current.category || '')} {categoryLabel(current.category || '')} · {productLine(current)}</p>
-              {current.website && (
-                <WebLink href={websiteHref(current.website)} target="_blank" rel="noopener noreferrer">
-                  {websiteHost(current.website)}
-                </WebLink>
-              )}
-            </div>
-          </BrandHead>
+          <BrandSocialHeader
+            name={current.name}
+            logo={current.logo}
+            initials={initials(current.name)}
+            logoHue={logoHue(current.name)}
+            tiktok={current.tiktok}
+            instagram={current.instagram}
+            website={current.website}
+            bio={current.description}
+            kicker={`${categoryEmoji(current.category || '')} ${categoryLabel(current.category || '')} · ${productLine(current)}`}
+            social={current.social}
+            loading={mediaLoading && !(current.social?.followers)}
+          />
         </Block>
-
-        {packLoading && <Hint>Loading apply details…</Hint>}
 
         {step === 1 && (
           <>
-            {current.description && (
+            {current.description && current.description.trim() !== String(current.social?.bio || '').trim() && current.description.trim().length > 220 && (
               <Block>
                 <h2>About</h2>
                 <AboutText>{current.description}</AboutText>
@@ -820,21 +890,10 @@ export default function BrandPRHome() {
                 {(current.platforms || []).map((p) => <Pill key={p}>{p}</Pill>)}
                 {(current.niches || []).slice(0, 4).map((n) => <Pill key={n}>{categoryEmoji(n)} {categoryLabel(n)}</Pill>)}
               </Pills>
-              {(current.instagram || current.tiktok) && (
-                <SocialRow>
-                  {current.instagram && (
-                    <SocialA href={`https://instagram.com/${String(current.instagram).replace('@', '')}`} target="_blank" rel="noopener noreferrer">
-                      IG {handleDisplay(current.instagram)}
-                    </SocialA>
-                  )}
-                  {current.tiktok && (
-                    <SocialA href={`https://www.tiktok.com/@${String(current.tiktok).replace('@', '')}`} target="_blank" rel="noopener noreferrer">
-                      TikTok {handleDisplay(current.tiktok)}
-                    </SocialA>
-                  )}
-                </SocialRow>
-              )}
             </Block>
+            {(packLoading || mediaLoading) && !examples.length ? (
+              <ApplyExamplesSkeleton />
+            ) : (
             <Block>
               <h2>What their last PR looked like</h2>
               {examples.length ? (
@@ -865,6 +924,7 @@ export default function BrandPRHome() {
                 <EmptyNote>No recent PR campaigns yet</EmptyNote>
               )}
             </Block>
+            )}
             <Foot>
               <Cta type="button" onClick={() => setStep(2)}>Apply for Brand PR</Cta>
             </Foot>
@@ -876,7 +936,9 @@ export default function BrandPRHome() {
             <Block>
               <h2>Show them your best 3</h2>
               <Sub>Pick 3 posts. Required. This is what they see on your fit card. Fresh each apply.</Sub>
-              {posts.length ? (
+              {packLoading ? (
+                <EmptyNote>Loading your posts…</EmptyNote>
+              ) : posts.length ? (
                 <Picker>
                   {posts.map((post) => {
                     const on = picked.some((p) => p.post_url === post.post_url);
@@ -1035,33 +1097,83 @@ export default function BrandPRHome() {
       <ListHead>
         <Hero>
           <div>
-            <Eyebrow>{tab === 'foryou' ? 'For your following' : 'Search the roster'}</Eyebrow>
+            <Eyebrow>
+              {tab === 'foryou'
+                ? (forYouLane === 'jobs' ? 'Paid collaborations' : 'For your following')
+                : 'Search the roster'}
+            </Eyebrow>
             <h1>
-              {tab === 'foryou' ? <>Brands waiting to <em>gift you</em></> : <>Find a box you <em>want</em></>}
+              {tab === 'foryou'
+                ? (forYouLane === 'jobs'
+                  ? <>UGC jobs for your <em>niche</em></>
+                  : <>Brands waiting to <em>gift you</em></>)
+                : <>Find a box you <em>want</em></>}
             </h1>
             <p>
               {tab === 'foryou'
-                ? (noCredits
-                  ? 'No free credits left. Go Pro to keep requesting boxes this month.'
-                  : remaining === 1
-                    ? 'Last free credit this month. Pick a brand you’d actually post.'
-                    : 'Apply in 3 steps. We take it to the brand. You never write a pitch.')
+                ? (forYouLane === 'jobs'
+                  ? 'Paid briefs from brands hiring creators. Same monthly credits as Brand PR.'
+                  : (noCredits
+                    ? 'No free credits left. Go Pro to keep requesting boxes this month.'
+                    : remaining === 1
+                      ? 'Last free credit this month. Pick a brand you’d actually post.'
+                      : 'Apply in 3 steps. We take it to the brand. You never write a pitch.'))
                 : (noCredits
                   ? 'No free credits left. Go Pro to apply from Directory too.'
                   : 'Same 3-step apply. We submit. They pick.')}
             </p>
           </div>
-          <CreditMeter quota={quota} onClick={() => { if (!quota?.is_unlimited) showPaywall('meter'); }} />
+          {quota ? (
+            <CreditMeter quota={quota} onClick={() => { if (!quota?.is_unlimited) showPaywall('meter'); }} />
+          ) : (
+            <CreditChipSkeleton />
+          )}
         </Hero>
       </ListHead>
 
       {tab === 'foryou' && (
         <>
-          <List>
-            {loadingList && !forYouCards.length && <EmptyNote>Finding brands that gift your following…</EmptyNote>}
-            {!loadingList && !forYouCards.length && <EmptyNote>No matches yet. Open Directory and request a box from a brand you like.</EmptyNote>}
-            {forYouCards.map((b) => renderCard(b, 'foryou'))}
-          </List>
+          <SegmentTabs
+            aria-label="For You sections"
+            value={forYouLane}
+            onChange={selectForYouLane}
+            tabs={[
+              { id: 'gifts', label: 'Gifted PR', panelId: 'foryou-gifts' },
+              { id: 'jobs', label: 'UGC jobs', count: jobCount, panelId: 'foryou-jobs' },
+            ]}
+          />
+          <div
+            role="tabpanel"
+            id="foryou-gifts"
+            aria-labelledby="seg-tab-gifts"
+            hidden={forYouLane !== 'gifts'}
+          >
+            <List aria-busy={loadingList} aria-label="Brands that gift your following">
+              {loadingList && !forYouCards.length && (
+                <PrFeedSkeleton count={4} label="Finding brands that gift your following" />
+              )}
+              {!loadingList && !forYouCards.length && (
+                <EmptyNote>No matches yet. Open Directory and request a box from a brand you like.</EmptyNote>
+              )}
+              {forYouCards.map((b) => renderCard(b, 'foryou'))}
+            </List>
+          </div>
+          <div
+            role="tabpanel"
+            id="foryou-jobs"
+            aria-labelledby="seg-tab-jobs"
+            hidden={forYouLane !== 'jobs'}
+          >
+            {tab === 'foryou' && (
+              <OpportunitiesTab
+                pitchLimits={{ used: quota?.used || 0 }}
+                isPro={!!quota?.is_unlimited}
+                onShowUpgrade={() => showPaywall('ugc_jobs', 'ugc_jobs')}
+                onCountChange={setJobCount}
+                onLimitsChange={onJobLimitsChange}
+              />
+            )}
+          </div>
         </>
       )}
 
@@ -1124,13 +1236,15 @@ export default function BrandPRHome() {
               ? `Showing ${dirCards.length.toLocaleString()} of ${dirTotal.toLocaleString()} ${dirTotal === 1 ? 'brand' : 'brands'}`
               : `${dirTotal.toLocaleString()} ${dirTotal === 1 ? 'brand' : 'brands'}`}
           </DirCount>
-          <List>
-            {loadingDir && !dirCards.length && <EmptyNote>Searching brands…</EmptyNote>}
+          <List aria-busy={loadingDir} aria-label="Brand directory">
+            {loadingDir && !dirCards.length && (
+              <PrFeedSkeleton count={6} label="Searching brands" />
+            )}
             {!loadingDir && !dirCards.length && <EmptyNote>No brands match. Try another search or clear a filter.</EmptyNote>}
             {dirCards.map((b) => renderCard(b, 'dir'))}
             {hasMoreDir && (
               <MoreSentinel ref={sentinelRef}>
-                {loadingDir ? 'Loading more brands…' : 'Scroll for more'}
+                {loadingDir ? <DirMoreSkeleton /> : 'Scroll for more'}
               </MoreSentinel>
             )}
             {!hasMoreDir && dirCards.length > 0 && (
@@ -1151,7 +1265,14 @@ function CreditMeter({ quota, onClick }) {
   const out = remaining != null && Number.isFinite(remaining) && remaining <= 0;
   const low = remaining != null && Number.isFinite(remaining) && remaining <= 1;
   return (
-    <QuotaBtn type="button" onClick={onClick} $out={out} $low={low} $pro={!!quota?.is_unlimited}>
+    <QuotaBtn
+      type="button"
+      onClick={onClick}
+      $out={out}
+      $low={low}
+      $pro={!!quota?.is_unlimited}
+      aria-label={creditCopy(quota)}
+    >
       {!quota?.is_unlimited && Number.isFinite(remaining) && (
         <Dots aria-hidden="true">
           {Array.from({ length: limit }).map((_, i) => (
@@ -1300,13 +1421,6 @@ const OutBanner = styled.button`
   cursor: pointer;
   b { display: block; font-size: 13px; color: ${INK}; }
   span { display: block; margin-top: 3px; font-size: 12px; color: ${MUTED}; line-height: 1.35; }
-`;
-const Hint = styled.p`
-  padding: 0 4px 12px;
-  font-size: 14px;
-  color: ${MUTED};
-  line-height: 1.45;
-  strong { color: ${INK}; }
 `;
 const List = styled.div`
   display: grid;
@@ -1753,9 +1867,17 @@ const Back = styled.button`
   border: 0;
   background: none;
   color: ${MUTED};
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+  &:hover { background: ${tokens.subtle}; color: ${INK}; }
+  &:focus-visible { outline: 2px solid ${GREEN}; outline-offset: 2px; }
 `;
 const Stepper = styled.div`
   display: flex;
@@ -1799,13 +1921,6 @@ const Sub = styled.p`
   margin: 0 0 10px;
   line-height: 1.4;
 `;
-const BrandHead = styled.div`
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  h3 { margin: 0; font-size: 15px; }
-  p { margin: 2px 0 0; font-size: 12px; color: ${MUTED}; }
-`;
 const Cover = styled.img`
   width: 100%;
   height: 110px;
@@ -1813,15 +1928,6 @@ const Cover = styled.img`
   border-radius: 12px;
   margin-bottom: 12px;
   background: #f4f4f4;
-`;
-const WebLink = styled.a`
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: ${INK};
-  text-decoration: none;
-  &:hover { text-decoration: underline; }
 `;
 const AboutText = styled.p`
   margin: 0;
@@ -1834,6 +1940,10 @@ const FactGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin: 4px 0 14px;
+
+  @media (max-width: 400px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const Fact = styled.div`
   background: ${tokens.subtle};
@@ -1841,22 +1951,6 @@ const Fact = styled.div`
   padding: 10px 12px;
   b { display: block; font-size: 14px; }
   em { font-style: normal; font-size: 11px; color: ${MUTED}; font-weight: 600; margin-top: 2px; display: block; }
-`;
-const SocialRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-`;
-const SocialA = styled.a`
-  font-size: 12px;
-  font-weight: 600;
-  color: ${INK};
-  text-decoration: none;
-  background: #F4F4F4;
-  border-radius: 999px;
-  padding: 5px 10px;
-  &:hover { background: #ececec; }
 `;
 const ThumbCard = styled.a`
   flex: 0 0 168px;
@@ -1992,7 +2086,7 @@ const Note = styled.p`
   margin-top: 8px;
   line-height: 1.4;
 `;
-const EmptyNote = styled.p`
+const EmptyNote = styled.p.attrs({ role: 'status' })`
   padding: 28px 8px;
   text-align: center;
   font-size: 14px;

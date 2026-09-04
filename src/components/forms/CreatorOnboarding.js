@@ -1177,6 +1177,10 @@ export default function CreatorOnboarding() {
     // This prevents the incomplete-profile guard from redirecting back to /onboarding
     await refreshUser();
     sessionStorage.setItem('justCompletedOnboarding', 'true');
+    // Paid UGC is the #1 onboarding intent — land them on open gigs, not gifted Matches.
+    if (Array.isArray(intent) && intent.includes('paid_ugc')) {
+      sessionStorage.setItem('foryouForceOpportunities', '1');
+    }
     const defaultPath = '/creator/dashboard/for-you';
     const baseRedirect = res?.data?.redirect || defaultPath;
     try {

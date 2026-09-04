@@ -715,6 +715,8 @@ const CreatorDashboardLayout = () => {
         <NavRight>
           <CreditsChip
             type="button"
+            aria-busy={!credits}
+            aria-label={credits ? creditChipCopy(credits) : 'Loading credits'}
             $out={Number(credits?.remaining) <= 0 && !credits?.is_unlimited}
             $low={Number(credits?.remaining) === 1 && !credits?.is_unlimited}
             $pro={!!credits?.is_unlimited}
