@@ -27,6 +27,15 @@ const STATUS_COLOR = {
   closed: 'default',
 };
 
+function rosterPortalUrl(camp) {
+  if (!camp?.token) return camp?.portal_url || '';
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const origin = (host === 'newcollab.co' || host === 'www.newcollab.co')
+    ? 'https://app.newcollab.co'
+    : (typeof window !== 'undefined' ? window.location.origin : '');
+  return origin ? `${origin}/r/${camp.token}` : (camp.portal_url || '');
+}
+
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -85,7 +94,7 @@ export default function AdminBrandPRRosters() {
     const all = campaigns;
     return {
       queue: queue.length,
-      filling: all.filter((c) => c.status === 'active' && Number(c.hunger) > 0).length,
+      filling: all.filter((c) => c.in_focus).length,
       ready: all.filter((c) => c.fill_ready).length,
       active: all.filter((c) => c.status === 'active').length,
       locked: all.filter((c) => c.status === 'locked').length,
@@ -127,7 +136,7 @@ export default function AdminBrandPRRosters() {
         { headers, withCredentials: true }
       );
       const camp = data.campaign || {};
-      const url = camp.portal_url || (camp.token ? `${window.location.origin}/r/${camp.token}` : '');
+      const url = rosterPortalUrl(camp);
       if (url) await copyText(url);
       else message.success('Roster created');
       setMintOpen(false);
@@ -214,7 +223,7 @@ export default function AdminBrandPRRosters() {
       <Top>
         <div>
           <h2>Brand PR rosters</h2>
-          <p>The first applicant mints the private link. For You then fills the roster. Send it when the list looks right.</p>
+          <p>Applicants pile up first. We mint a private link at 8 people, and For You only finishes the closest lists — not every 1-person roster.</p>
         </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>Refresh</Button>
@@ -231,7 +240,7 @@ export default function AdminBrandPRRosters() {
         </Stat>
         <Stat>
           <b>{stats.filling}</b>
-          Filling
+          For You filling
         </Stat>
         <Stat>
           <b>{stats.ready}</b>
@@ -253,7 +262,7 @@ export default function AdminBrandPRRosters() {
 
       {queue.length > 0 && (
         <Queue>
-          <QueueHead>Auto-mint missed these — tap to create the link</QueueHead>
+          <QueueHead>Waiting to mint — we create the link at 8 applicants, or mint now if you want to send earlier</QueueHead>
           {queue.map((item) => (
             <QueueRow key={item.brand_id}>
               <div>
@@ -319,7 +328,13 @@ export default function AdminBrandPRRosters() {
                 <div>{row.fill_count ?? row.review_count}/{row.fill_target || '—'}</div>
                 <em style={{ color: '#6b7280', fontSize: 12, fontStyle: 'normal' }}>
                   {row.status === 'active'
-                    ? (row.hunger > 0 ? `${row.hunger} more to fill` : 'Ready to send')
+                    ? (row.fill_ready
+                      ? 'Ready to send'
+                      : row.in_focus
+                        ? `${row.hunger} more · For You filling now`
+                        : (row.fill_count || 0) < 3
+                          ? `Waiting for ${3 - (row.fill_count || 0)} more before we push it`
+                          : 'Queued — finishing fuller lists first')
                     : `${row.review_count} review`}
                 </em>
               </td>
@@ -328,13 +343,13 @@ export default function AdminBrandPRRosters() {
               <td>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}</td>
               <td>
                 <Space wrap>
-                  <Button size="small" icon={<CopyOutlined />} onClick={() => copyText(row.portal_url)}>
+                  <Button size="small" icon={<CopyOutlined />} onClick={() => copyText(rosterPortalUrl(row))}>
                     Copy link
                   </Button>
                   <Button size="small" icon={<EyeOutlined />} onClick={() => openDrawer(row)}>
                     Creators
                   </Button>
-                  <Button size="small" href={row.portal_url} target="_blank" rel="noreferrer">
+                  <Button size="small" href={rosterPortalUrl(row)} target="_blank" rel="noreferrer">
                     Open
                   </Button>
                 </Space>
@@ -414,10 +429,10 @@ export default function AdminBrandPRRosters() {
                 {selectedIds.length}/{campaign.slot_limit} on gift list
               </div>
               <Space>
-                <Button size="small" icon={<CopyOutlined />} onClick={() => copyText(campaign.portal_url)}>
+                <Button size="small" icon={<CopyOutlined />} onClick={() => copyText(rosterPortalUrl(campaign))}>
                   Copy link
                 </Button>
-                <Button size="small" href={campaign.portal_url} target="_blank" rel="noreferrer">
+                <Button size="small" href={rosterPortalUrl(campaign)} target="_blank" rel="noreferrer">
                   Open as brand
                 </Button>
               </Space>

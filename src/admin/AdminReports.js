@@ -369,7 +369,7 @@ const AdminReports = () => {
 
         {/* 2. TOP BRANDS BY PITCHES */}
         <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>Top brands by pitches</span>
+          <span>Top brands by credits</span>
           <button
             onClick={() => setShowBrandsTable(!showBrandsTable)}
             style={{
@@ -391,25 +391,25 @@ const AdminReports = () => {
             <TodayHeader>
               <TodayTitle>
                 <span style={{ fontSize: 16 }}>🎯</span>
-                Most pitched brands
+                Most credited brands
                 <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', padding: '2px 8px', borderRadius: 12 }}>
                   {top_brands.length} brands
                 </span>
               </TodayTitle>
-              <TodaySubtitle>All-time pitch volume by creators</TodaySubtitle>
+              <TodaySubtitle>All-time credits used by creators</TodaySubtitle>
             </TodayHeader>
 
           {top_brands.length === 0 ? (
             <EmptyState>
-              <strong>No pitches yet</strong>
-              <p>When creators start pitching brands, the top ones will appear here</p>
+              <strong>No credits used yet</strong>
+              <p>When creators start using credits on brands, the top ones will appear here</p>
             </EmptyState>
           ) : (
             <BrandTable>
               <BrandTableHead>
                 <tr>
                   <th style={{ width: '40%' }}>Brand</th>
-                  <th>Unlocks</th>
+                  <th>Credits</th>
                   <th>Saves</th>
                   <th>Pitches</th>
                 </tr>
@@ -481,20 +481,20 @@ const AdminReports = () => {
                   {brands_by_category.length} categories
                 </span>
               </TodayTitle>
-              <TodaySubtitle>All-time unlocks and pitches by brand category</TodaySubtitle>
+              <TodaySubtitle>All-time credits and pitches by brand category</TodaySubtitle>
             </TodayHeader>
 
             {brands_by_category.length === 0 ? (
               <EmptyState>
                 <strong>No category data yet</strong>
-                <p>When creators start unlocking brands, category data will appear here</p>
+                <p>When creators start using credits on brands, category data will appear here</p>
               </EmptyState>
             ) : (
               <BrandTable>
                 <BrandTableHead>
                   <tr>
                     <th style={{ width: '30%' }}>Category</th>
-                    <th>Unlocks</th>
+                    <th>Credits</th>
                     <th>Unique users</th>
                     <th>Pitches</th>
                     <th>Pitch rate</th>
@@ -560,7 +560,7 @@ const AdminReports = () => {
           </HealthCard>
 
           <HealthCard>
-            <HcLabel>Brand unlocks</HcLabel>
+            <HcLabel>Credits used</HcLabel>
             <HcValue $color="rose">{health.pitches.this_week}</HcValue>
             <HcDelta $up={health.pitches.change >= 0}>
               {health.pitches.change >= 0 ? '↑' : '↓'} {health.pitches.change >= 0 ? '+' : ''}{health.pitches.change} vs prev period
@@ -730,10 +730,10 @@ const AdminReports = () => {
               <FCount>{funnel.signed_up}</FCount>
             </FStep>
 
-            <FDrop $good={unlockedPct >= 40}>↓ {unlockedPct}% unlocked a brand — {unlockedPct >= 40 ? 'good' : 'needs work'}</FDrop>
+            <FDrop $good={unlockedPct >= 40}>↓ {unlockedPct}% used a credit — {unlockedPct >= 40 ? 'good' : 'needs work'}</FDrop>
 
             <FStep>
-              <FLabel>Unlocked brand</FLabel>
+              <FLabel>Used a credit</FLabel>
               <FBarTrack>
                 <FBarFill style={{ width: `${unlockedPct}%`, background: '#2563EB' }}>
                   {funnel.unlocked_brand}
@@ -742,10 +742,10 @@ const AdminReports = () => {
               <FCount>{funnel.unlocked_brand}</FCount>
             </FStep>
 
-            <FDrop $good={multiPct >= 50}>↓ {multiPct}% unlocked over 2 brands — {multiPct >= 50 ? 'sticky once started' : 'needs improvement'}</FDrop>
+            <FDrop $good={multiPct >= 50}>↓ {multiPct}% used 3+ credits — {multiPct >= 50 ? 'sticky once started' : 'needs improvement'}</FDrop>
 
             <FStep>
-              <FLabel>Over 2 brands unlocked</FLabel>
+              <FLabel>Used 3+ credits</FLabel>
               <FBarTrack>
                 <FBarFill style={{ width: `${calcPct(funnel.pitched_multiple, funnel.signed_up)}%`, background: 'var(--rose)' }}>
                   {funnel.pitched_multiple}
@@ -782,11 +782,11 @@ const AdminReports = () => {
           <InsightBox>
             <strong>The one thing to fix:</strong>{' '}
             {neverUnlocked >= unlockedOnceOnly && neverUnlocked >= multiNoPro
-              ? `${neverUnlocked} signed up and never unlocked a brand.`
+              ? `${neverUnlocked} signed up and never used a credit.`
               : unlockedOnceOnly >= multiNoPro
-                ? `${unlockedOnceOnly} unlocked once and never went over 2 brands.`
-                : `${multiNoPro} unlocked over 2 brands and did not subscribe Pro.`}
-            {' '}Funnel is signup → unlock → over 2 unlocks → $9 pack or Pro.
+                ? `${unlockedOnceOnly} used 1 credit and never reached 3.`
+                : `${multiNoPro} used 3+ credits and did not subscribe Pro.`}
+            {' '}Funnel is signup → credit → 3 credits → $9 pack or Pro.
           </InsightBox>
         </FunnelCard>
 
@@ -802,7 +802,7 @@ const AdminReports = () => {
               </WcDelta>
             </WcTop>
             <WcValue style={{ color: 'var(--amber)' }}>{at_limit_count}</WcValue>
-            <WcSub>Used all 3 free unlocks this month · {at_limit_last_month} last month</WcSub>
+            <WcSub>Used all 3 free credits this month · {at_limit_last_month} last month</WcSub>
           </WeekCard>
 
           <WeekCard>
@@ -811,16 +811,16 @@ const AdminReports = () => {
               <WcDelta>watch them</WcDelta>
             </WcTop>
             <WcValue style={{ color: 'var(--black)' }}>{near_limit_count}</WcValue>
-            <WcSub>2 of 3 unlocks used this month — will convert next</WcSub>
+            <WcSub>2 of 3 credits used this month — will convert next</WcSub>
           </WeekCard>
 
           <WeekCard>
             <WcTop>
-              <WcLabel>Brand unlocks this month</WcLabel>
+              <WcLabel>Credits used this month</WcLabel>
               <WcDelta $up>↑ vs last month</WcDelta>
             </WcTop>
             <WcValue>{this_month.pitches}</WcValue>
-            <WcSub>This month · {this_month.unique_pitch_users} unique creators unlocked a brand (all time)</WcSub>
+            <WcSub>This month · {this_month.unique_pitch_users} unique creators used a credit (all time)</WcSub>
           </WeekCard>
 
           <WeekCard>

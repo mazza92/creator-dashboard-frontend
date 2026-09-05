@@ -21,6 +21,7 @@ const CRA_ROUTES = [
   '/onboarding',
   '/supply',
   '/admin',
+  '/r',
 ];
 
 function matchesCraRoute(pathname) {
@@ -35,8 +36,10 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  // Redirect to CRA deployment
-  const craOrigin = process.env.CRA_ORIGIN;
+  // Redirect to CRA deployment. Production marketing host has no /r/:token page.
+  const craOrigin =
+    process.env.CRA_ORIGIN ||
+    (process.env.VERCEL_ENV ? 'https://app.newcollab.co' : '');
   if (craOrigin) {
     return NextResponse.redirect(`${craOrigin}${pathname}${search}`);
   }

@@ -476,7 +476,7 @@ const CreatorsAdmin = () => {
       },
     },
     {
-      title: 'Unlocks',
+      title: 'Credits',
       key: 'unlocks_count',
       dataIndex: 'unlocks_count',
       width: 80,
@@ -615,7 +615,7 @@ const CreatorsAdmin = () => {
         </Col>
         <Col xs={12} sm={6}>
           <StatCard>
-            <Statistic title="Has unlocked" value={stats.unlocked ?? 0} />
+            <Statistic title="Used a credit" value={stats.unlocked ?? 0} />
           </StatCard>
         </Col>
       </StatsRow>
@@ -758,9 +758,9 @@ const CreatorsAdmin = () => {
               <DetailItem label="Total posts" value={formatNumber(selectedCreator.total_posts)} />
               <DetailItem label="Total views" value={formatNumber(selectedCreator.total_views)} />
               <DetailItem label="Brands saved" value={formatNumber(selectedCreator.brands_saved ?? selectedCreator.pipeline_saves)} />
-              <DetailItem label="Brands unlocked" value={formatNumber(selectedCreator.unlocks_count)} highlight />
-              <DetailItem label="Unlocks this week" value={formatNumber(selectedCreator.unlocks_this_week)} />
-              <DetailItem label="Last unlocked" value={formatDate(selectedCreator.last_unlocked_at || selectedCreator.last_unlock_date, true)} />
+              <DetailItem label="Credits used" value={formatNumber(selectedCreator.unlocks_count)} highlight />
+              <DetailItem label="Credits this week" value={formatNumber(selectedCreator.unlocks_this_week)} />
+              <DetailItem label="Last credit used" value={formatDate(selectedCreator.last_unlocked_at || selectedCreator.last_unlock_date, true)} />
             </DetailGrid>
 
             <Divider style={{ margin: '16px 0' }} />

@@ -176,10 +176,12 @@ const BrandAdmin = () => {
         getApiConfig()
       );
       const camp = data.campaign || data;
-      const url =
-        camp.portal_url ||
-        data.portal_url ||
-        (camp.token ? `${window.location.origin}/r/${camp.token}` : '');
+      const token = camp.token;
+      const host = window.location.hostname;
+      const origin = (host === 'newcollab.co' || host === 'www.newcollab.co')
+        ? 'https://app.newcollab.co'
+        : window.location.origin;
+      const url = token ? `${origin}/r/${token}` : (camp.portal_url || data.portal_url || '');
       setMintLink(url);
       if (url) {
         try {
