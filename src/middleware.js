@@ -36,11 +36,21 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  // Redirect to CRA deployment. Production marketing host has no /r/:token page.
+  // Marketing host → CRA app. Never redirect when already on the CRA host
+  // or /r/TOKEN bounces: app → newcollab.co → app → crash.
   const craOrigin =
     process.env.CRA_ORIGIN ||
     (process.env.VERCEL_ENV ? 'https://app.newcollab.co' : '');
   if (craOrigin) {
+    try {
+      const dest = new URL(craOrigin);
+      const here = request.nextUrl;
+      if (here.hostname === dest.hostname) {
+        return NextResponse.next();
+      }
+    } catch {
+      // fall through to redirect
+    }
     return NextResponse.redirect(`${craOrigin}${pathname}${search}`);
   }
 

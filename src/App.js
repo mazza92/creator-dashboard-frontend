@@ -174,6 +174,8 @@ function AppContent() {
             '/creator',
             '/brand',
             '/c/',
+            '/kit',
+            '/r',
             '/dashboard',
             '/for-brands',
             // Note: /directory removed - served by Next.js on newcollab.co for SEO
