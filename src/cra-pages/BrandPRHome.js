@@ -198,7 +198,11 @@ function normalizeBrand(raw, appliedMap) {
     rosterFillCount: Number(raw.roster_fill_count || raw.rosterFillCount) || 0,
     rosterFillTarget: Number(raw.roster_fill_target || raw.rosterFillTarget) || 0,
     rosterSlotLimit: Number(raw.roster_slot_limit || raw.rosterSlotLimit) || 0,
-    rosterOpen: !!(raw.roster_open || raw.rosterOpen || Number(raw.roster_hunger || raw.rosterHunger) > 0),
+    rosterOpen: !!(
+      raw.roster_open
+      || raw.rosterOpen
+      || Number(raw.roster_fill_count || raw.rosterFillCount || raw.roster_hunger || raw.rosterHunger) > 0
+    ),
   };
 }
 
@@ -283,6 +287,7 @@ export default function BrandPRHome() {
   const [quota, setQuota] = useState(null);
   const [appliedMap, setAppliedMap] = useState(() => new Map());
   const [matched, setMatched] = useState([]);
+  const [openLists, setOpenLists] = useState([]);
   const [dirBrands, setDirBrands] = useState([]);
   const [dirTotal, setDirTotal] = useState(0);
   const [userNiches, setUserNiches] = useState([]);
@@ -401,6 +406,9 @@ export default function BrandPRHome() {
         .map((a) => normalizeBrand(a, map))
         .filter((a) => brandMatchesCreatorNiches(a, niches));
       setMatched([...dropped, ...liveMatched]);
+      setOpenLists(
+        mergeApplied(forYouRes.data?.open_lists || [], map).filter((b) => !b.applied)
+      );
     } catch (err) {
       console.error('Brand PR home load failed', err);
     } finally {
@@ -775,12 +783,15 @@ export default function BrandPRHome() {
   const remaining = quota?.is_unlimited ? 99 : Number(quota?.remaining);
   const noCredits = Number.isFinite(remaining) && remaining <= 0 && !quota?.is_unlimited;
   const forYouCards = useMemo(() => mergeApplied(matched, appliedMap), [matched, appliedMap, mergeApplied]);
-  const openCampaigns = useMemo(() => (
-    forYouCards
-      .filter((b) => b.rosterOpen && !b.applied)
-      .sort((a, b) => (b.rosterHunger || 0) - (a.rosterHunger || 0))
-      .slice(0, 4)
-  ), [forYouCards]);
+  const openCampaigns = useMemo(() => {
+    if (openLists.length) {
+      return openLists.filter((b) => !b.applied).slice(0, 4);
+    }
+    return forYouCards
+      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.applied)
+      .sort((a, b) => (b.rosterFillCount || b.rosterHunger || 0) - (a.rosterFillCount || a.rosterHunger || 0))
+      .slice(0, 4);
+  }, [openLists, forYouCards]);
   const campaignIds = useMemo(() => new Set(openCampaigns.map((b) => b.id)), [openCampaigns]);
   const restForYou = useMemo(
     () => forYouCards.filter((b) => !campaignIds.has(b.id)),
