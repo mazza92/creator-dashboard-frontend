@@ -194,8 +194,25 @@ function normalizeBrand(raw, appliedMap) {
     applyStatus: applied?.apply_status || raw.apply_status || null,
     applied: Boolean(applied || raw.apply_status),
     social: parseSocial(raw.social || raw.pr_social_profile),
+    rosterHunger: Number(raw.roster_hunger || raw.rosterHunger) || 0,
+    rosterFillCount: Number(raw.roster_fill_count || raw.rosterFillCount) || 0,
+    rosterFillTarget: Number(raw.roster_fill_target || raw.rosterFillTarget) || 0,
+    rosterSlotLimit: Number(raw.roster_slot_limit || raw.rosterSlotLimit) || 0,
     rosterOpen: !!(raw.roster_open || raw.rosterOpen || Number(raw.roster_hunger || raw.rosterHunger) > 0),
   };
+}
+
+function campaignHeat(brand) {
+  const fill = Number(brand?.rosterFillCount || brand?.rosterHunger) || 0;
+  const target = Number(brand?.rosterFillTarget) || 15;
+  const ratio = target > 0 ? fill / target : 0;
+  if (ratio >= 0.7 || fill >= 10) {
+    return { id: 'late', label: 'Filling fast', line: 'More people are applying — still open.' };
+  }
+  if (ratio >= 0.4 || fill >= 6) {
+    return { id: 'mid', label: 'Heating up', line: 'Creators are already in.' };
+  }
+  return { id: 'open', label: 'Just opened', line: 'A short gift list in your niche.' };
 }
 
 function creditCopy(quota) {
@@ -758,6 +775,17 @@ export default function BrandPRHome() {
   const remaining = quota?.is_unlimited ? 99 : Number(quota?.remaining);
   const noCredits = Number.isFinite(remaining) && remaining <= 0 && !quota?.is_unlimited;
   const forYouCards = useMemo(() => mergeApplied(matched, appliedMap), [matched, appliedMap, mergeApplied]);
+  const openCampaigns = useMemo(() => (
+    forYouCards
+      .filter((b) => b.rosterOpen && !b.applied)
+      .sort((a, b) => (b.rosterHunger || 0) - (a.rosterHunger || 0))
+      .slice(0, 4)
+  ), [forYouCards]);
+  const campaignIds = useMemo(() => new Set(openCampaigns.map((b) => b.id)), [openCampaigns]);
+  const restForYou = useMemo(
+    () => forYouCards.filter((b) => !campaignIds.has(b.id)),
+    [forYouCards, campaignIds],
+  );
   const dirCards = useMemo(() => mergeApplied(dirBrands, appliedMap), [dirBrands, appliedMap, mergeApplied]);
   const hasMoreDir = dirCards.length > 0 && dirCards.length < dirTotal;
   const dirFiltersOn = dirCat !== 'all' || dirMicro || dirUS || Boolean(dirQuery.trim());
@@ -1380,6 +1408,58 @@ export default function BrandPRHome() {
             aria-labelledby="seg-tab-gifts"
             hidden={forYouLane !== 'gifts'}
           >
+            {openCampaigns.length > 0 && (
+              <CampaignDesk aria-label="Open gift lists">
+                <CampaignHead>
+                  <CampaignLive>
+                    <i /> Live now
+                  </CampaignLive>
+                  <h2>They’re picking this week</h2>
+                  <p>Open gift lists in your niche. One credit. We send you in. They pick who gets the box.</p>
+                </CampaignHead>
+                <CampaignRail $count={openCampaigns.length}>
+                  {openCampaigns.map((brand) => {
+                    const heat = campaignHeat(brand);
+                    const catName = categoryLabel(brand.category || '');
+                    return (
+                      <CampaignCard key={brand.id} $heat={heat.id}>
+                        <CampaignTop>
+                          <CampaignPulse $heat={heat.id}>{heat.label}</CampaignPulse>
+                          {brand.matchScore != null && Number(brand.matchScore) > 0 && (
+                            <CampaignFit><b>{Math.round(brand.matchScore)}%</b> fit</CampaignFit>
+                          )}
+                        </CampaignTop>
+                        <CampaignBrand>
+                          {brand.logo ? (
+                            <LogoImg src={brand.logo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          ) : (
+                            <LogoFallback style={{ background: logoHue(brand.name) }}>{initials(brand.name)}</LogoFallback>
+                          )}
+                          <div>
+                            <h3>{brand.name}</h3>
+                            <em>{[catName, heat.line].filter(Boolean).join(' · ')}</em>
+                          </div>
+                        </CampaignBrand>
+                        <CampaignOffer>
+                          <span>Could be in the box</span>
+                          <strong>{brand.heroProduct || 'A gifted product they choose'}</strong>
+                        </CampaignOffer>
+                        <HeatBar $late={heat.id === 'late'} aria-hidden="true">
+                          <i className="on" />
+                          <i className={heat.id === 'mid' || heat.id === 'late' ? 'on' : ''} />
+                          <i className={heat.id === 'late' ? 'on' : ''} />
+                        </HeatBar>
+                        {noCredits ? (
+                          <Cta type="button" onClick={() => showPaywall('campaign_credits')}>Get more credits</Cta>
+                        ) : (
+                          <Cta type="button" onClick={() => openApply(brand, 'open_list')}>Apply for Brand PR</Cta>
+                        )}
+                      </CampaignCard>
+                    );
+                  })}
+                </CampaignRail>
+              </CampaignDesk>
+            )}
             <List aria-busy={loadingList} aria-label="Brands that gift your following">
               {loadingList && !forYouCards.length && (
                 <PrFeedSkeleton count={4} label="Finding brands that gift your following" />
@@ -1387,7 +1467,7 @@ export default function BrandPRHome() {
               {!loadingList && !forYouCards.length && (
                 <EmptyNote>No matches yet. Open Directory and request a box from a brand you like.</EmptyNote>
               )}
-              {forYouCards.map((b) => renderCard(b, 'foryou'))}
+              {restForYou.map((b) => renderCard(b, 'foryou'))}
             </List>
           </div>
           <div
@@ -1790,6 +1870,173 @@ const OutBanner = styled.button`
   cursor: pointer;
   b { display: block; font-size: 13px; color: ${INK}; }
   span { display: block; margin-top: 3px; font-size: 12px; color: ${MUTED}; line-height: 1.35; }
+`;
+const pulseLive = keyframes`
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.72); }
+`;
+const CampaignDesk = styled.section`
+  margin: 8px 0 8px;
+  padding: 18px 16px 16px;
+  border-radius: 22px;
+  background:
+    radial-gradient(90% 80% at 100% 0%, rgba(232, 93, 59, 0.16), transparent 42%),
+    radial-gradient(80% 70% at 0% 100%, rgba(13, 122, 95, 0.12), transparent 46%),
+    linear-gradient(180deg, #fff7ef 0%, #f3f8f5 100%);
+  border: 1px solid rgba(232, 93, 59, 0.12);
+  color: ${INK};
+
+  @media (max-width: 640px) {
+    padding: 14px 12px 12px;
+    margin: 4px -2px 4px;
+  }
+`;
+const CampaignHead = styled.div`
+  padding: 0 6px 14px;
+  max-width: 36rem;
+
+  h2 {
+    font-family: ${DISPLAY};
+    font-size: clamp(24px, 3.6vw, 34px);
+    font-weight: 400;
+    letter-spacing: -.03em;
+    line-height: 1.12;
+    margin: 8px 0 0;
+    color: ${INK};
+  }
+  p {
+    margin: 8px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: ${MUTED};
+  }
+`;
+const CampaignLive = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: ${HOT};
+
+  i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: ${HOT};
+    box-shadow: 0 0 0 4px rgba(232, 93, 59, 0.16);
+    animation: ${pulseLive} 1.6s ease-in-out infinite;
+  }
+`;
+const CampaignRail = styled.div`
+  display: grid;
+  gap: 12px;
+  grid-template-columns: ${(p) => (p.$count === 1 ? '1fr' : 'repeat(2, minmax(0, 1fr))')};
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(78%, 1fr);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 4px;
+    margin: 0 -4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar { display: none; }
+  }
+`;
+const CampaignCard = styled.article`
+  scroll-snap-align: start;
+  background: ${CREAM};
+  border: 1px solid ${(p) => (p.$heat === 'late' ? 'rgba(232, 93, 59, 0.22)' : LINE)};
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  color: ${INK};
+  box-shadow: 0 8px 24px rgba(232, 93, 59, 0.08);
+`;
+const CampaignTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+`;
+const CampaignPulse = styled.span`
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: ${(p) => (p.$heat === 'late' ? HOT : p.$heat === 'mid' ? '#c2410c' : GREEN_DEEP)};
+  background: ${(p) => (p.$heat === 'late' ? 'rgba(232, 93, 59, 0.1)' : p.$heat === 'mid' ? '#fff4e8' : GREEN_BG)};
+  border-radius: 999px;
+  padding: 4px 9px;
+`;
+const CampaignFit = styled.span`
+  font-size: 12px;
+  font-weight: 650;
+  color: ${MUTED};
+  b { color: ${INK}; font-weight: 800; }
+`;
+const CampaignBrand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+  }
+  em {
+    display: block;
+    margin-top: 3px;
+    font-style: normal;
+    font-size: 13px;
+    color: ${MUTED};
+    line-height: 1.35;
+  }
+`;
+const CampaignOffer = styled.div`
+  span {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: ${MUTED};
+  }
+  strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
+    letter-spacing: -.02em;
+    line-height: 1.3;
+  }
+`;
+const HeatBar = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 5px;
+
+  i {
+    height: 4px;
+    border-radius: 99px;
+    background: #e8e2d6;
+    display: block;
+  }
+  i.on { background: ${(p) => (p.$late ? HOT : GREEN)}; }
 `;
 const List = styled.div`
   display: grid;
