@@ -1433,7 +1433,7 @@ export default function BrandPRHome() {
                     const heat = campaignHeat(brand);
                     const catName = categoryLabel(brand.category || '');
                     return (
-                      <CampaignCard key={brand.id} $heat={heat.id}>
+                      <CampaignCard key={brand.id} $heat={heat.id} $solo={openCampaigns.length === 1}>
                         <CampaignTop>
                           <CampaignPulse $heat={heat.id}>{heat.label}</CampaignPulse>
                           {brand.matchScore != null && Number(brand.matchScore) > 0 && (
@@ -1944,35 +1944,47 @@ const CampaignLive = styled.div`
 const CampaignRail = styled.div`
   display: grid;
   gap: 12px;
+  align-items: start;
   grid-template-columns: ${(p) => (p.$count === 1 ? '1fr' : 'repeat(2, minmax(0, 1fr))')};
 
   @media (max-width: 800px) {
-    grid-template-columns: 1fr;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(78%, 1fr);
+    display: flex;
+    gap: 10px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    padding-bottom: 4px;
-    margin: 0 -4px;
-    padding-left: 4px;
-    padding-right: 4px;
+    scroll-padding-inline: 2px;
+    padding: 0 2px 2px;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 
     &::-webkit-scrollbar { display: none; }
   }
 `;
 const CampaignCard = styled.article`
-  scroll-snap-align: start;
   background: ${CREAM};
   border: 1px solid ${(p) => (p.$heat === 'late' ? 'rgba(232, 93, 59, 0.22)' : LINE)};
   border-radius: 18px;
-  padding: 16px 16px 14px;
+  padding: 14px 14px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
+  height: auto;
+  align-self: start;
   color: ${INK};
   box-shadow: 0 8px 24px rgba(232, 93, 59, 0.08);
+
+  > button {
+    margin-top: 2px;
+  }
+
+  @media (max-width: 800px) {
+    flex: ${(p) => (p.$solo ? '1 0 100%' : '0 0 min(82vw, 300px)')};
+    width: ${(p) => (p.$solo ? '100%' : 'min(82vw, 300px)')};
+    max-width: ${(p) => (p.$solo ? '100%' : 'min(82vw, 300px)')};
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
 `;
 const CampaignTop = styled.div`
   display: flex;
@@ -2006,12 +2018,19 @@ const CampaignBrand = styled.div`
 
   h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 17px;
     letter-spacing: -.02em;
     line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   em {
-    display: block;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     margin-top: 3px;
     font-style: normal;
     font-size: 13px;
@@ -2029,7 +2048,10 @@ const CampaignOffer = styled.div`
     color: ${MUTED};
   }
   strong {
-    display: block;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     margin-top: 4px;
     font-size: 15px;
     letter-spacing: -.02em;
