@@ -50,6 +50,7 @@ export default function AdminBrandPRRosters() {
   const [campaigns, setCampaigns] = useState([]);
   const [queue, setQueue] = useState([]);
   const [status, setStatus] = useState('all');
+  const [view, setView] = useState('all');
   const [search, setSearch] = useState('');
   const [mintOpen, setMintOpen] = useState(false);
   const [mintBrand, setMintBrand] = useState(null);
@@ -95,12 +96,27 @@ export default function AdminBrandPRRosters() {
     return {
       queue: queue.length,
       filling: all.filter((c) => c.in_focus).length,
+      warming: all.filter((c) => c.status === 'active' && (c.fill_count || 0) > 0 && !c.in_focus && !c.fill_ready).length,
       ready: all.filter((c) => c.fill_ready).length,
       active: all.filter((c) => c.status === 'active').length,
       locked: all.filter((c) => c.status === 'locked').length,
       shipped: all.filter((c) => c.status === 'shipped').length,
     };
   }, [campaigns, queue]);
+
+  const visibleCampaigns = useMemo(() => {
+    const rows = [...campaigns];
+    rows.sort((a, b) => {
+      const rank = (c) => (c.fill_ready ? 0 : c.in_focus ? 1 : (c.fill_count || 0) > 0 ? 2 : 3);
+      const d = rank(a) - rank(b);
+      if (d) return d;
+      return (b.fill_count || 0) - (a.fill_count || 0);
+    });
+    if (view === 'foryou') return rows.filter((c) => c.in_focus);
+    if (view === 'ready') return rows.filter((c) => c.fill_ready);
+    if (view === 'warming') return rows.filter((c) => c.status === 'active' && (c.fill_count || 0) > 0 && !c.in_focus && !c.fill_ready);
+    return rows;
+  }, [campaigns, view]);
 
   async function searchBrands(q) {
     if (!q || q.length < 2) {
@@ -223,7 +239,7 @@ export default function AdminBrandPRRosters() {
       <Top>
         <div>
           <h2>Brand PR rosters</h2>
-          <p>Applicants pile up first. We mint a private link at 8 people, and For You only finishes the closest lists — not every 1-person roster.</p>
+          <p>Ready and For You lists sit at the top. Click a stat to filter. We mint a private link at 8 people; For You only finishes the closest lists.</p>
         </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>Refresh</Button>
@@ -234,27 +250,27 @@ export default function AdminBrandPRRosters() {
       </Top>
 
       <Stats>
-        <Stat>
-          <b>{stats.queue}</b>
-          Need a roster
-        </Stat>
-        <Stat>
+        <Stat type="button" $on={view === 'foryou'} onClick={() => setView(view === 'foryou' ? 'all' : 'foryou')}>
           <b>{stats.filling}</b>
-          For You filling
+          On For You
         </Stat>
-        <Stat>
+        <Stat type="button" $on={view === 'ready'} onClick={() => setView(view === 'ready' ? 'all' : 'ready')}>
           <b>{stats.ready}</b>
           Ready to send
         </Stat>
-        <Stat>
+        <Stat type="button" $on={view === 'warming'} onClick={() => setView(view === 'warming' ? 'all' : 'warming')}>
+          <b>{stats.warming}</b>
+          Warming
+        </Stat>
+        <Stat type="button" as="div">
+          <b>{stats.queue}</b>
+          Need a roster
+        </Stat>
+        <Stat type="button" as="div">
           <b>{stats.active}</b>
           Active
         </Stat>
-        <Stat>
-          <b>{stats.locked}</b>
-          Locked
-        </Stat>
-        <Stat>
+        <Stat type="button" as="div">
           <b>{stats.shipped}</b>
           Shipped
         </Stat>
@@ -313,8 +329,8 @@ export default function AdminBrandPRRosters() {
           </tr>
         </thead>
         <tbody>
-          {campaigns.map((row) => (
-            <tr key={row.id}>
+          {visibleCampaigns.map((row) => (
+            <tr key={row.id} className={row.in_focus ? 'hot' : row.fill_ready ? 'ready' : ''}>
               <td>
                 <BrandCell>
                   {row.logo_url ? <img src={row.logo_url} alt="" /> : <Fallback>{(row.brand_name || '?').slice(0, 2)}</Fallback>}
@@ -331,15 +347,21 @@ export default function AdminBrandPRRosters() {
                     ? (row.fill_ready
                       ? 'Ready to send'
                       : row.in_focus
-                        ? `${row.hunger} more · For You filling now`
+                        ? `${row.hunger} more · live on For You`
                         : (row.fill_count || 0) < 3
-                          ? `Waiting for ${3 - (row.fill_count || 0)} more before we push it`
+                          ? `Waiting for ${3 - (row.fill_count || 0)} more before For You`
                           : 'Queued — finishing fuller lists first')
                     : `${row.review_count} review`}
                 </em>
               </td>
               <td>{row.selected_count}/{row.slot_limit}</td>
-              <td><Tag color={STATUS_COLOR[row.status] || 'default'}>{row.status}</Tag></td>
+              <td>
+                <Space size={4} wrap>
+                  <Tag color={STATUS_COLOR[row.status] || 'default'}>{row.status}</Tag>
+                  {row.in_focus && <Tag color="orange">On For You</Tag>}
+                  {row.fill_ready && <Tag color="gold">Send now</Tag>}
+                </Space>
+              </td>
               <td>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}</td>
               <td>
                 <Space wrap>
@@ -356,9 +378,19 @@ export default function AdminBrandPRRosters() {
               </td>
             </tr>
           ))}
-          {!campaigns.length && !loading && (
+          {!visibleCampaigns.length && !loading && (
             <tr>
-              <td colSpan={6}><Empty>No rosters yet. Mint from the queue or New roster.</Empty></td>
+              <td colSpan={6}>
+                <Empty>
+                  {view === 'foryou'
+                    ? 'No lists are on For You right now. Lists need 3 applicants to go live.'
+                    : view === 'ready'
+                      ? 'Nothing ready to send yet.'
+                      : view === 'warming'
+                        ? 'No warming lists (1–2 applicants).'
+                        : 'No rosters yet. Mint from the queue or New roster.'}
+                </Empty>
+              </td>
             </tr>
           )}
         </tbody>
@@ -501,19 +533,23 @@ const Top = styled.div`
 
 const Stats = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 10px;
   margin-bottom: 16px;
-  @media (max-width: 720px) { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 900px) { grid-template-columns: 1fr 1fr 1fr; }
 `;
 
-const Stat = styled.div`
-  background: #fff;
-  border: 1px solid ${tokens.border};
+const Stat = styled.button`
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: ${(p) => (p.$on ? '#fff7ed' : '#fff')};
+  border: 1px solid ${(p) => (p.$on ? '#fdba74' : tokens.border)};
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 12px;
   color: ${tokens.textMuted};
+  cursor: pointer;
   b { display: block; font-size: 22px; color: ${tokens.textPrimary}; }
 `;
 
@@ -593,6 +629,8 @@ const Table = styled.table`
     background: #fafafa;
   }
   tr:last-child td { border-bottom: 0; }
+  tr.hot td { background: #fff7ed; }
+  tr.ready td { background: #fffbeb; }
 `;
 
 const BrandCell = styled.div`
