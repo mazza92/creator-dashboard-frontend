@@ -15,14 +15,13 @@ import {
   Avatar,
   Tooltip,
   Popover,
-  Row,
-  Col,
-  Statistic,
   Divider,
   Typography,
   Modal,
   Alert,
   Popconfirm,
+  Tabs,
+  Badge,
 } from 'antd';
 import {
   MailOutlined,
@@ -37,6 +36,7 @@ import {
 } from '@ant-design/icons';
 import { categoryLabel, normalizeCategory } from '../constants/brandCategories';
 import { getCategoryColors } from '../utils/categoryColors';
+import CreatorApprovalQueue from './CreatorApprovalQueue';
 
 const { Option } = Select;
 const { Text, Paragraph } = Typography;
@@ -44,6 +44,10 @@ const { Text, Paragraph } = Typography;
 // Admin credentials (matches other admin CRM pages)
 const ADMIN_EMAIL = 'team@newcollab.co';
 const ADMIN_PASSWORD = 'Ilovela1992!';
+
+function getApiConfig() {
+  return { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } };
+}
 
 const CTA_KIT_URL = 'https://app.newcollab.co/creator/dashboard/my-kit';
 const PUBLIC_KIT_URL_PREFIX = 'https://newcollab.co/kit/';
@@ -165,6 +169,11 @@ const CreatorsAdmin = () => {
   const [verified, setVerified] = useState('');
   const [kit, setKit] = useState('');
   const [unsubscribed, setUnsubscribed] = useState('');
+  const [approvalStatus, setApprovalStatus] = useState('');
+  const [tab, setTab] = useState('review');
+  const [approvalSnapshot, setApprovalSnapshot] = useState({
+    pending: 0, approved_today: 0, rejected_today: 0,
+  });
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -183,10 +192,6 @@ const CreatorsAdmin = () => {
   const [resumeUntil, setResumeUntil] = useState('2026-08-13');
   const [resumePreview, setResumePreview] = useState(null);
   const [resumeResult, setResumeResult] = useState(null);
-
-  const getApiConfig = () => ({
-    headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' },
-  });
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('creatorAdminAuth');
@@ -213,18 +218,20 @@ const CreatorsAdmin = () => {
       if (verified) params.set('verified', verified);
       if (kit) params.set('kit', kit);
       if (unsubscribed) params.set('unsubscribed', unsubscribed);
+      if (approvalStatus) params.set('approval_status', approvalStatus);
 
       const { data } = await api.get(`/api/admin/creators?${params.toString()}`, getApiConfig());
       setCreators(data.creators || []);
       setTotal(data.pagination?.total || 0);
       setStats(data.stats || { total: data.pagination?.total || 0, verified: 0, with_kit: 0, pitched: 0 });
+      if (data.approval) setApprovalSnapshot(data.approval);
     } catch (e) {
       console.error(e);
       message.error('Failed to load creators');
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, page, pageSize, searchQ, niche, region, tier, verified, kit, unsubscribed, sortField, sortOrder]);
+  }, [isAuthenticated, page, pageSize, searchQ, niche, region, tier, verified, kit, unsubscribed, approvalStatus, sortField, sortOrder]);
 
   useEffect(() => {
     fetchCreators();
@@ -445,6 +452,28 @@ const CreatorsAdmin = () => {
       render: (val) => <DateCell>{formatDate(val)}</DateCell>,
     },
     {
+      title: 'Status',
+      key: 'approval_status',
+      dataIndex: 'approval_status',
+      width: 110,
+      render: (val) => {
+        const status = val || 'approved';
+        const color = {
+          pending: 'gold',
+          approved: 'green',
+          pro_approved: 'purple',
+          rejected: 'red',
+        }[status] || 'default';
+        const label = {
+          pending: 'Pending',
+          approved: 'Approved',
+          pro_approved: 'Pro',
+          rejected: 'Rejected',
+        }[status] || status;
+        return <Tag color={color} style={{ margin: 0 }}>{label}</Tag>;
+      },
+    },
+    {
       title: 'Tier',
       key: 'tier',
       dataIndex: 'tier',
@@ -549,6 +578,7 @@ const CreatorsAdmin = () => {
     setVerified('');
     setKit('');
     setUnsubscribed('');
+    setApprovalStatus('');
     setPage(1);
   };
 
@@ -586,7 +616,12 @@ const CreatorsAdmin = () => {
       <Header>
         <div>
           <h1>Creator Base</h1>
-          <p>Search, scan, and inspect your creator community.</p>
+          <StatsStrip>
+            <span><b>{approvalSnapshot.pending ?? 0}</b> pending</span>
+            <span><b>{approvalSnapshot.approved_today ?? 0}</b> approved today</span>
+            <span><b>{approvalSnapshot.rejected_today ?? 0}</b> rejected today</span>
+            {tab === 'directory' && <span><b>{(stats.total ?? total).toLocaleString()}</b> creators</span>}
+          </StatsStrip>
         </div>
         <Space>
           <Button icon={<MailOutlined />} onClick={openResumeModal}>
@@ -597,29 +632,34 @@ const CreatorsAdmin = () => {
         </Space>
       </Header>
 
-      <StatsRow gutter={[16, 16]}>
-        <Col xs={12} sm={6}>
-          <StatCard>
-            <Statistic title="Total creators" value={stats.total ?? total} />
-          </StatCard>
-        </Col>
-        <Col xs={12} sm={6}>
-          <StatCard>
-            <Statistic title="Verified" value={stats.verified ?? 0} valueStyle={{ color: '#16a34a' }} />
-          </StatCard>
-        </Col>
-        <Col xs={12} sm={6}>
-          <StatCard>
-            <Statistic title="With kit" value={stats.with_kit ?? 0} valueStyle={{ color: '#2563eb' }} />
-          </StatCard>
-        </Col>
-        <Col xs={12} sm={6}>
-          <StatCard>
-            <Statistic title="Used a credit" value={stats.unlocked ?? 0} />
-          </StatCard>
-        </Col>
-      </StatsRow>
-
+      <Tabs
+        activeKey={tab}
+        onChange={setTab}
+        items={[
+          {
+            key: 'review',
+            label: (
+              <span>
+                Review queue{' '}
+                <Badge
+                  count={approvalSnapshot.pending || 0}
+                  overflowCount={999}
+                  style={{ backgroundColor: '#d97706' }}
+                />
+              </span>
+            ),
+            children: (
+              <CreatorApprovalQueue
+                getApiConfig={getApiConfig}
+                onSnapshot={setApprovalSnapshot}
+              />
+            ),
+          },
+          {
+            key: 'directory',
+            label: 'Directory',
+            children: (
+              <>
       <FiltersCard>
         <FilterRow>
           <Input
@@ -658,6 +698,12 @@ const CreatorsAdmin = () => {
             <Option value="false">Active only</Option>
             <Option value="true">Unsubscribed</Option>
           </Select>
+          <Select value={approvalStatus || undefined} onChange={(v) => { setApprovalStatus(v || ''); setPage(1); }} allowClear placeholder="Approval" style={{ width: '100%' }}>
+            <Option value="pending">Pending</Option>
+            <Option value="approved">Approved</Option>
+            <Option value="pro_approved">Pro approved</Option>
+            <Option value="rejected">Rejected</Option>
+          </Select>
         </FilterRow>
         <FilterMeta>
           <Text type="secondary">
@@ -674,7 +720,7 @@ const CreatorsAdmin = () => {
           dataSource={creators}
           loading={loading}
           size="small"
-          scroll={{ x: 1145 }}
+          scroll={{ x: 1250 }}
           pagination={{
             current: page,
             pageSize,
@@ -687,6 +733,11 @@ const CreatorsAdmin = () => {
           onChange={handleTableChange}
         />
       </TableCard>
+              </>
+            ),
+          },
+        ]}
+      />
 
       <Drawer
         title={null}
@@ -712,6 +763,12 @@ const CreatorsAdmin = () => {
                 ) : null}
                 <DrawerBadges>
                   <Tag color={tierTagColor(selectedCreator.tier)}>{selectedCreator.tier || 'free'}</Tag>
+                  {(() => {
+                    const status = selectedCreator.approval_status || 'approved';
+                    const color = { pending: 'gold', approved: 'green', pro_approved: 'purple', rejected: 'red' }[status] || 'default';
+                    const label = { pending: 'Pending', approved: 'Approved', pro_approved: 'Pro approved', rejected: 'Rejected' }[status] || status;
+                    return <Tag color={color}>{label}</Tag>;
+                  })()}
                   <Tag color={selectedCreator.is_verified ? 'success' : 'default'}>
                     {selectedCreator.is_verified ? 'Verified' : 'Unverified'}
                   </Tag>
@@ -973,7 +1030,7 @@ const DetailItem = ({ label, value, full, highlight }) => (
 );
 
 const Page = styled.div`
-  padding: 24px;
+  padding: 16px 20px 0;
   max-width: 1600px;
   margin: 0 auto;
 `;
@@ -982,33 +1039,30 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   gap: 16px;
   flex-wrap: wrap;
 
   h1 {
     margin: 0;
-    font-size: 26px;
-    font-weight: 900;
+    font-size: 22px;
+    font-weight: 800;
     color: #0f172a;
   }
+`;
 
-  p {
-    margin: 6px 0 0;
-    color: #6b7280;
+const StatsStrip = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6b7280;
+
+  b {
+    color: #111827;
+    font-weight: 700;
   }
-`;
-
-const StatsRow = styled(Row)`
-  margin-bottom: 16px;
-`;
-
-const StatCard = styled.div`
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px 20px;
-  height: 100%;
 `;
 
 const FiltersCard = styled.div`
@@ -1021,7 +1075,7 @@ const FiltersCard = styled.div`
 
 const FilterRow = styled.div`
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr 0.8fr 0.6fr 0.7fr 0.6fr 0.7fr;
+  grid-template-columns: 1.4fr 0.7fr 0.7fr 0.55fr 0.65fr 0.55fr 0.7fr 0.75fr;
   gap: 10px;
   align-items: center;
 

@@ -482,6 +482,12 @@ export default function CreatorSignup() {
         window.ttq.track('CompleteRegistration');
       }
 
+      persistLoggedInUser(setUser, {
+        user_id: res.data?.user_id,
+        user_role: 'creator',
+        creator_id: res.data?.creator_id ?? null,
+        approval_status: res.data?.approval_status ?? null,
+      });
       doRedirect(res.data?.redirect_url || '/verify-email-pending');
     } catch (err) {
       const msg = err.response?.data?.error || 'Something went wrong';

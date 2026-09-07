@@ -8,6 +8,7 @@ import { FaInstagram, FaTiktok, FaYoutube } from 'react-icons/fa6';
 import { SocialVerificationStep } from '../SocialVerification';
 import ProfileScrapingLoader from '../ProfileScrapingLoader';
 import { scrapeHelpFromError } from '../../utils/scrapeHelp';
+import { needsWaitlistGate, WAITLIST_PATH } from '../../utils/creatorApproval';
 import {
   OnboardingSurveyStep1,
   OnboardingSurveyStep2,
@@ -970,10 +971,6 @@ export default function CreatorOnboarding() {
       return;
     }
 
-    // Validate username for all platforms
-    const usernameValidation = validateUsername(username);
-    if (!usernameValidation.valid) { setError(usernameValidation.error); return; }
-
     // For Instagram/TikTok, redirect to OAuth (no username input needed)
     if (VERIFIABLE_PLATFORMS.includes(platform)) {
       setLoading(true);
@@ -991,6 +988,9 @@ export default function CreatorOnboarding() {
       }
       return;
     }
+
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.valid) { setError(usernameValidation.error); return; }
 
     // For scrapable platforms (Instagram/TikTok/YouTube), show verification UI and save
     if (SCRAPABLE_PLATFORMS.includes(platform)) {
@@ -1173,7 +1173,7 @@ export default function CreatorOnboarding() {
   };
 
   const completeOnboarding = async (res) => {
-    // Refresh user context so creator_id is set before navigating to dashboard
+    // Refresh user context so creator_id + approval_status are set before navigating
     // This prevents the incomplete-profile guard from redirecting back to /onboarding
     await refreshUser();
     sessionStorage.setItem('justCompletedOnboarding', 'true');
@@ -1181,6 +1181,21 @@ export default function CreatorOnboarding() {
     if (Array.isArray(intent) && intent.includes('paid_ugc')) {
       sessionStorage.setItem('foryouForceOpportunities', '1');
     }
+
+    // New creators land on waitlist until admin/Pro approval
+    let approvalStatus = null;
+    try {
+      const profile = await apiClient.get('/profile', { withCredentials: true });
+      approvalStatus = profile.data?.approval_status ?? null;
+    } catch (e) {
+      // fall through — App.js gate still catches pending
+    }
+
+    if (needsWaitlistGate(approvalStatus)) {
+      navigate(WAITLIST_PATH, { replace: true });
+      return;
+    }
+
     const defaultPath = '/creator/dashboard/for-you';
     const baseRedirect = res?.data?.redirect || defaultPath;
     try {

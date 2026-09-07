@@ -3,6 +3,7 @@ import { Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
+import { creatorPostAuthPath, WAITLIST_PATH } from '../utils/creatorApproval';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { auth, firebaseConfigured } from './firebase';
@@ -507,15 +508,21 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const googleLoginEnabled = Boolean(firebaseConfigured && auth);
 
   const postLoginPath = (data) => {
-    if (data?.profile_incomplete || data?.needs_onboarding || data?.onboarding_complete === false) {
-      return '/onboarding';
+    if (data?.user_role === 'creator') {
+      const gated = creatorPostAuthPath(data);
+      if (gated === '/onboarding' || gated === WAITLIST_PATH) {
+        return gated;
+      }
+      return (
+        safeInternalPath(searchParams.get('redirect')) ||
+        safeInternalPath(data?.redirect_url) ||
+        gated
+      );
     }
     return (
       safeInternalPath(searchParams.get('redirect')) ||
       safeInternalPath(data?.redirect_url) ||
-      (data?.user_role === 'creator'
-        ? '/creator/dashboard/for-you'
-        : '/brand/dashboard/overview')
+      '/brand/dashboard/overview'
     );
   };
 

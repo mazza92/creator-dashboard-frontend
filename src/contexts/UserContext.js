@@ -15,8 +15,17 @@ export const persistLoggedInUser = (setUser, data) => {
         role: data.user_role,
         creator_id: data.creator_id,
         brand_id: data.brand_id,
+        approval_status: data.approval_status ?? null,
     });
 };
+
+const userFromProfile = (profileData, sessionData = {}) => ({
+    id: profileData.user_id,
+    role: profileData.user_role,
+    creator_id: profileData.creator_id,
+    brand_id: profileData.brand_id || sessionData.brand_id,
+    approval_status: profileData.approval_status ?? null,
+});
 
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(undefined);
@@ -53,13 +62,7 @@ export const UserProvider = ({ children }) => {
                     ]);
                     const profileData = profileResponse.data;
                     if (profileData.user_id) {
-                        // Merge brand_id from session if not in profile (fixes brand user issue)
-                        const userData = {
-                            id: profileData.user_id,
-                            role: profileData.user_role,
-                            creator_id: profileData.creator_id,
-                            brand_id: profileData.brand_id || sessionData.brand_id,
-                        };
+                        const userData = userFromProfile(profileData, sessionData);
                         setUser(userData);
                         initializeSocket(profileData.user_id, profileData.user_role);
                     } else {
@@ -91,13 +94,7 @@ export const UserProvider = ({ children }) => {
                 const profileData = profileResponse.data;
 
                 if (profileData.user_id) {
-                    // Merge brand_id from session if not in profile (fixes brand user issue)
-                    const userData = {
-                        id: profileData.user_id,
-                        role: profileData.user_role,
-                        creator_id: profileData.creator_id,
-                        brand_id: profileData.brand_id || sessionData.brand_id,
-                    };
+                    const userData = userFromProfile(profileData, sessionData);
                     setUser(userData);
                     initializeSocket(profileData.user_id, profileData.user_role);
                     localStorage.setItem('userRole', profileData.user_role);
@@ -162,12 +159,7 @@ export const UserProvider = ({ children }) => {
             const sessionData = sessionResponse.data.session_contents || sessionResponse.data || {};
 
             if (profileData.user_id) {
-                const userData = {
-                    id: profileData.user_id,
-                    role: profileData.user_role,
-                    creator_id: profileData.creator_id,
-                    brand_id: profileData.brand_id || sessionData.brand_id,
-                };
+                const userData = userFromProfile(profileData, sessionData);
                 setUser(userData);
                 console.log('✅ User context refreshed:', userData);
             }

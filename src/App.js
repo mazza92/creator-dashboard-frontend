@@ -9,6 +9,8 @@ import IndexNowTest from './components/IndexNowTest';
 import QueryParamRedirect from './components/QueryParamRedirect';
 import CreatorHomeRedirect from './components/CreatorHomeRedirect';
 import { loginUrlWithReturn } from './utils/upgradeDeeplink';
+import { needsWaitlistGate, WAITLIST_PATH } from './utils/creatorApproval';
+import Waitlist from './creator-portal/Waitlist';
 import BrandOnboardingForm from './components/forms/BrandOnboardingForm';
 // eslint-disable-next-line no-unused-vars
 import CreatorOnboardingForm from './components/forms/CreatorOnboardingForm';
@@ -295,10 +297,17 @@ function AppContent() {
                 console.log('🟢 Redirecting unauthenticated user to /login');
                 navigate(loginUrlWithReturn(location), { replace: true });
             } else if (user) {
-                const correctBasePath = user.role === 'creator' ? '/creator/dashboard/for-you' : '/brand/dashboard/overview';
+                const onWaitlist = user.role === 'creator' && needsWaitlistGate(user.approval_status);
+                const correctBasePath = onWaitlist
+                    ? WAITLIST_PATH
+                    : (user.role === 'creator' ? '/creator/dashboard/for-you' : '/brand/dashboard/overview');
                 
                 // A brand user is allowed to visit a creator's profile page.
                 const isViewingCreatorProfileAsBrand = user.role === 'brand' && location.pathname.startsWith('/creator/profile/');
+                const isWaitlistPath = location.pathname.startsWith(WAITLIST_PATH);
+                const isSubscriptionReturn =
+                    location.pathname.startsWith('/creator/dashboard/subscription/success') ||
+                    location.pathname.startsWith('/creator/dashboard/subscription/cancel');
 
                 // Check if we just completed onboarding - if so, skip incomplete profile check
                 // This prevents redirect loop when user context hasn't updated yet
@@ -328,6 +337,14 @@ function AppContent() {
                     navigate('/onboarding', { replace: true });
                     return;
                 }
+
+                // Pending/rejected creators can only use waitlist (+ Stripe return URLs)
+                if (onWaitlist && !hasIncompleteProfile && !isWaitlistPath && !isSubscriptionReturn &&
+                    location.pathname.startsWith('/creator')) {
+                    console.log('⏳ Creator pending approval — redirecting to waitlist');
+                    navigate(WAITLIST_PATH, { replace: true });
+                    return;
+                }
                 
                 // If we just completed onboarding and user now has creator_id/brand_id, clear the flag
                 if (justCompletedOnboarding && !hasIncompleteProfile) {
@@ -348,7 +365,7 @@ function AppContent() {
                 const isPublicRouteForUser = location.pathname.startsWith('/blog') || 
                                              publicRoutes.some(route => location.pathname.startsWith(route));
 
-                if (isInvalidPath && !isPublicRouteForUser && location.pathname !== '/payment-success') {
+                if (isInvalidPath && !isPublicRouteForUser && location.pathname !== '/payment-success' && !isWaitlistPath) {
                     console.log(`🟢 Redirecting ${user.role} user to ${correctBasePath}`);
                     navigate(correctBasePath, { replace: true });
                 }
@@ -436,7 +453,9 @@ function AppContent() {
             <Route
                 path='/directory'
                 element={
-                    user ? <Navigate to='/creator/dashboard/for-you' replace /> : <LazyRoute><UnifiedBrandDirectory /></LazyRoute>
+                    user
+                      ? <Navigate to={needsWaitlistGate(user.approval_status) ? WAITLIST_PATH : '/creator/dashboard/for-you'} replace />
+                      : <LazyRoute><UnifiedBrandDirectory /></LazyRoute>
                 }
             />
             <Route path='/directory/skincare' element={<SkincareDirectory />} />
@@ -451,6 +470,10 @@ function AppContent() {
             <Route path='/r/:token' element={<LazyRoute><BrandPRRoster /></LazyRoute>} />
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<OnboardingRouter />} />
+            <Route
+                path='/creator/waitlist'
+                element={user ? <Waitlist /> : <Navigate to={loginUrlWithReturn(location)} replace />}
+            />
             <Route path='/test-indexnow' element={<IndexNowTest />} />
             <Route path='/creator/dashboard/subscription/success' element={<SubscriptionSuccess />} />
             <Route path='/creator/dashboard/subscription/cancel' element={<SubscriptionCancel />} />
@@ -476,7 +499,11 @@ function AppContent() {
                     loading
                         ? <LoadingSpinner fullScreen />
                         : user
-                            ? <Navigate to={user.role === 'brand' ? '/brand/dashboard/overview' : '/creator/dashboard/for-you'} replace />
+                            ? <Navigate to={
+                                user.role === 'brand'
+                                  ? '/brand/dashboard/overview'
+                                  : (needsWaitlistGate(user.approval_status) ? WAITLIST_PATH : '/creator/dashboard/for-you')
+                              } replace />
                             : <Navigate to={loginUrlWithReturn(location)} replace />
                 }
             />
