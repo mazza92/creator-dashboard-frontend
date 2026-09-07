@@ -102,14 +102,32 @@ const AdminOpportunities = () => {
 
     setPublishing(oppId);
     try {
-      await axios.patch(`${API_BASE}/api/opportunities/admin/${oppId}/publish`, { days_open: daysOpen }, {
+      const { data } = await axios.patch(`${API_BASE}/api/opportunities/admin/${oppId}/publish`, { days_open: daysOpen }, {
         withCredentials: true,
         headers: { 'X-Admin-Token': ADMIN_TOKEN }
       });
-      message.success('Opportunity published');
+      const rosterUrl = data?.gifted_pr?.roster_url;
+      message.success(rosterUrl ? `Live on Gifted PR. Roster: ${rosterUrl}` : 'Opportunity published');
       fetchOpportunities();
     } catch (error) {
       message.error('Failed to publish');
+    } finally {
+      setPublishing(null);
+    }
+  };
+
+  const handlePushGiftedPR = async (oppId) => {
+    setPublishing(oppId);
+    try {
+      const { data } = await axios.post(`${API_BASE}/api/opportunities/admin/${oppId}/push-gifted-pr`, {}, {
+        withCredentials: true,
+        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+      });
+      const rosterUrl = data?.gifted_pr?.roster_url;
+      message.success(rosterUrl ? `Pushed to Gifted PR. Roster: ${rosterUrl}` : 'Pushed to Gifted PR');
+      fetchOpportunities();
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Failed to push to Gifted PR');
     } finally {
       setPublishing(null);
     }
@@ -391,9 +409,17 @@ const AdminOpportunities = () => {
                 </div>
               </OppBrand>
               <Space>
-                <Tag color={opp.apply_mode === 'email' ? 'blue' : opp.apply_mode === 'url' ? 'purple' : 'default'}>
-                  {opp.apply_mode === 'email' ? 'Apply: Email' : opp.apply_mode === 'url' ? 'Apply: URL' : 'Apply: Kit'}
-                </Tag>
+                {opp.gifted_pr && (
+                  <Tag color="magenta">Gifted PR live</Tag>
+                )}
+                {opp.is_brand_submission && !opp.gifted_pr && (
+                  <Tag color="gold">Brand submission</Tag>
+                )}
+                {!opp.is_brand_submission && (
+                  <Tag color={opp.apply_mode === 'email' ? 'blue' : opp.apply_mode === 'url' ? 'purple' : 'default'}>
+                    {opp.apply_mode === 'email' ? 'Apply: Email' : opp.apply_mode === 'url' ? 'Apply: URL' : 'Apply: Kit'}
+                  </Tag>
+                )}
                 {opp.brand_category && !['other', 'unknown'].includes(String(opp.brand_category).toLowerCase()) && (
                   <Tag>{String(opp.brand_category).replace(/_/g, ' ')}</Tag>
                 )}
@@ -480,7 +506,7 @@ const AdminOpportunities = () => {
                     onClick={() => handlePublish(opp.id)}
                     loading={publishing === opp.id}
                   >
-                    Publish
+                    {opp.is_brand_submission ? 'Publish to Gifted PR' : 'Publish'}
                   </Button>
                   <Button
                     danger
@@ -493,6 +519,25 @@ const AdminOpportunities = () => {
               )}
               {opp.status === 'live' && (
                 <>
+                  {opp.gifted_pr && opp.roster_url && (
+                    <Button type="link" href={opp.roster_url} target="_blank" rel="noopener noreferrer">
+                      Open roster
+                    </Button>
+                  )}
+                  {opp.gifted_pr && opp.apply_url && (
+                    <Button type="link" href={opp.apply_url} target="_blank" rel="noopener noreferrer">
+                      Creator apply
+                    </Button>
+                  )}
+                  {opp.is_brand_submission && !opp.gifted_pr && (
+                    <Button
+                      type="primary"
+                      onClick={() => handlePushGiftedPR(opp.id)}
+                      loading={publishing === opp.id}
+                    >
+                      Push to Gifted PR
+                    </Button>
+                  )}
                   <Button icon={<EyeOutlined />} onClick={() => viewApplications(opp)}>
                     View Applications ({opp.spots_filled})
                   </Button>

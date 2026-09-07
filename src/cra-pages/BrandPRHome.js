@@ -201,6 +201,7 @@ function normalizeBrand(raw, appliedMap) {
     rosterOpen: !!(
       raw.roster_open
       || raw.rosterOpen
+      || Number(raw.roster_is_open || raw.rosterIsOpen || 0) > 0
       || Number(raw.roster_fill_count || raw.rosterFillCount || raw.roster_hunger || raw.rosterHunger) > 0
     ),
   };
@@ -785,12 +786,12 @@ export default function BrandPRHome() {
   const forYouCards = useMemo(() => mergeApplied(matched, appliedMap), [matched, appliedMap, mergeApplied]);
   const openCampaigns = useMemo(() => {
     if (openLists.length) {
-      return openLists.filter((b) => !b.applied).slice(0, 4);
+      return openLists.filter((b) => !b.applied).slice(0, 8);
     }
     return forYouCards
       .filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.applied)
       .sort((a, b) => (b.rosterFillCount || b.rosterHunger || 0) - (a.rosterFillCount || a.rosterHunger || 0))
-      .slice(0, 4);
+      .slice(0, 8);
   }, [openLists, forYouCards]);
   const campaignIds = useMemo(() => new Set(openCampaigns.map((b) => b.id)), [openCampaigns]);
   const restForYou = useMemo(
@@ -798,6 +799,13 @@ export default function BrandPRHome() {
     [forYouCards, campaignIds],
   );
   const dirCards = useMemo(() => mergeApplied(dirBrands, appliedMap), [dirBrands, appliedMap, mergeApplied]);
+  const dirOpenCampaigns = useMemo(
+    () => dirCards
+      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.applied)
+      .sort((a, b) => (b.rosterFillCount || b.rosterHunger || 0) - (a.rosterFillCount || a.rosterHunger || 0))
+      .slice(0, 8),
+    [dirCards]
+  );
   const hasMoreDir = dirCards.length > 0 && dirCards.length < dirTotal;
   const dirFiltersOn = dirCat !== 'all' || dirMicro || dirUS || Boolean(dirQuery.trim());
   const filteredDirCategories = useMemo(() => {
@@ -827,8 +835,9 @@ export default function BrandPRHome() {
     const cat = brand.category || '';
     const catEmoji = categoryEmoji(cat);
     const catName = categoryLabel(cat);
+    const live = brand.rosterOpen && !brand.applied;
     return (
-      <Card key={brand.id}>
+      <Card key={brand.id} $live={live}>
         {brand.cover && (
           <CardMedia>
             <CardCover src={brand.cover} alt="" />
@@ -843,8 +852,8 @@ export default function BrandPRHome() {
                   <span aria-hidden="true">🌱</span> Micro
                 </CatChip>
               )}
-              {brand.rosterOpen && !brand.applied && (
-                <CatChip $tone="ok">Open gift list</CatChip>
+              {live && (
+                <CatChip $tone="hot">Live gift list</CatChip>
               )}
             </CoverChips>
           </CardMedia>
@@ -870,8 +879,8 @@ export default function BrandPRHome() {
                       <span aria-hidden="true">🌱</span> Micro
                     </CatChip>
                   )}
-                  {brand.rosterOpen && !brand.applied && (
-                    <CatChip $tone="ok">Open gift list</CatChip>
+                  {live && (
+                    <CatChip $tone="hot">Live gift list</CatChip>
                   )}
                 </ChipRow>
               )}
@@ -908,10 +917,68 @@ export default function BrandPRHome() {
           ) : noCredits ? (
             <Cta type="button" onClick={() => showPaywall('card_credits')}>Get more credits</Cta>
           ) : (
-            <Cta type="button" onClick={() => openApply(brand)}>Apply for Brand PR</Cta>
+            <Cta type="button" onClick={() => openApply(brand)}>
+              {live ? 'Apply before spots fill' : 'Apply for Brand PR'}
+            </Cta>
           )}
         </CardBody>
       </Card>
+    );
+  }
+
+  function renderOpenDesk(brands, source) {
+    if (!brands.length) return null;
+    return (
+      <CampaignDesk aria-label="Open gift lists">
+        <CampaignHead>
+          <CampaignLive>
+            <i /> Live now
+          </CampaignLive>
+          <h2>They’re picking this week</h2>
+          <p>Active gift lists. One credit. We send you in. They pick who gets the box.</p>
+        </CampaignHead>
+        <CampaignRail $count={brands.length}>
+          {brands.map((brand) => {
+            const heat = campaignHeat(brand);
+            const catName = categoryLabel(brand.category || '');
+            return (
+              <CampaignCard key={brand.id} $heat={heat.id} $solo={brands.length === 1}>
+                <CampaignTop>
+                  <CampaignPulse $heat={heat.id}>{heat.label}</CampaignPulse>
+                  {brand.matchScore != null && Number(brand.matchScore) > 0 && (
+                    <CampaignFit><b>{Math.round(brand.matchScore)}%</b> fit</CampaignFit>
+                  )}
+                </CampaignTop>
+                <CampaignBrand>
+                  {brand.logo ? (
+                    <LogoImg src={brand.logo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  ) : (
+                    <LogoFallback style={{ background: logoHue(brand.name) }}>{initials(brand.name)}</LogoFallback>
+                  )}
+                  <div>
+                    <h3>{brand.name}</h3>
+                    <em>{[catName, heat.line].filter(Boolean).join(' · ')}</em>
+                  </div>
+                </CampaignBrand>
+                <CampaignOffer>
+                  <span>Could be in the box</span>
+                  <strong>{brand.heroProduct || 'A gifted product they choose'}</strong>
+                </CampaignOffer>
+                <HeatBar $late={heat.id === 'late'} aria-hidden="true">
+                  <i className="on" />
+                  <i className={heat.id === 'mid' || heat.id === 'late' ? 'on' : ''} />
+                  <i className={heat.id === 'late' ? 'on' : ''} />
+                </HeatBar>
+                {noCredits ? (
+                  <Cta type="button" onClick={() => showPaywall('campaign_credits')}>Get more credits</Cta>
+                ) : (
+                  <Cta type="button" onClick={() => openApply(brand, source)}>Apply before spots fill</Cta>
+                )}
+              </CampaignCard>
+            );
+          })}
+        </CampaignRail>
+      </CampaignDesk>
     );
   }
 
@@ -1419,58 +1486,7 @@ export default function BrandPRHome() {
             aria-labelledby="seg-tab-gifts"
             hidden={forYouLane !== 'gifts'}
           >
-            {openCampaigns.length > 0 && (
-              <CampaignDesk aria-label="Open gift lists">
-                <CampaignHead>
-                  <CampaignLive>
-                    <i /> Live now
-                  </CampaignLive>
-                  <h2>They’re picking this week</h2>
-                  <p>Open gift lists in your niche. One credit. We send you in. They pick who gets the box.</p>
-                </CampaignHead>
-                <CampaignRail $count={openCampaigns.length}>
-                  {openCampaigns.map((brand) => {
-                    const heat = campaignHeat(brand);
-                    const catName = categoryLabel(brand.category || '');
-                    return (
-                      <CampaignCard key={brand.id} $heat={heat.id} $solo={openCampaigns.length === 1}>
-                        <CampaignTop>
-                          <CampaignPulse $heat={heat.id}>{heat.label}</CampaignPulse>
-                          {brand.matchScore != null && Number(brand.matchScore) > 0 && (
-                            <CampaignFit><b>{Math.round(brand.matchScore)}%</b> fit</CampaignFit>
-                          )}
-                        </CampaignTop>
-                        <CampaignBrand>
-                          {brand.logo ? (
-                            <LogoImg src={brand.logo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                          ) : (
-                            <LogoFallback style={{ background: logoHue(brand.name) }}>{initials(brand.name)}</LogoFallback>
-                          )}
-                          <div>
-                            <h3>{brand.name}</h3>
-                            <em>{[catName, heat.line].filter(Boolean).join(' · ')}</em>
-                          </div>
-                        </CampaignBrand>
-                        <CampaignOffer>
-                          <span>Could be in the box</span>
-                          <strong>{brand.heroProduct || 'A gifted product they choose'}</strong>
-                        </CampaignOffer>
-                        <HeatBar $late={heat.id === 'late'} aria-hidden="true">
-                          <i className="on" />
-                          <i className={heat.id === 'mid' || heat.id === 'late' ? 'on' : ''} />
-                          <i className={heat.id === 'late' ? 'on' : ''} />
-                        </HeatBar>
-                        {noCredits ? (
-                          <Cta type="button" onClick={() => showPaywall('campaign_credits')}>Get more credits</Cta>
-                        ) : (
-                          <Cta type="button" onClick={() => openApply(brand, 'open_list')}>Apply for Brand PR</Cta>
-                        )}
-                      </CampaignCard>
-                    );
-                  })}
-                </CampaignRail>
-              </CampaignDesk>
-            )}
+            {renderOpenDesk(openCampaigns, 'open_list')}
             <List aria-busy={loadingList} aria-label="Brands that gift your following">
               {loadingList && !forYouCards.length && (
                 <PrFeedSkeleton count={4} label="Finding brands that gift your following" />
@@ -1685,6 +1701,7 @@ export default function BrandPRHome() {
               </DirMeta>
             </FilterRow>
           </StickyDock>
+          {renderOpenDesk(dirOpenCampaigns, 'directory_open_list')}
           <List aria-busy={loadingDir} aria-label="Brand directory">
             {loadingDir && !dirCards.length && (
               <PrFeedSkeleton count={6} label="Searching brands" />
@@ -2084,10 +2101,10 @@ const List = styled.div`
 `;
 const Card = styled.article`
   background: ${CREAM};
-  border: 1px solid ${LINE};
+  border: 1px solid ${(p) => (p.$live ? 'rgba(232, 93, 59, 0.28)' : LINE)};
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: ${tokens.shadowCard};
+  box-shadow: ${(p) => (p.$live ? '0 10px 28px rgba(232, 93, 59, 0.12)' : tokens.shadowCard)};
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -2096,8 +2113,8 @@ const Card = styled.article`
   @media (hover: hover) {
     &:hover {
       transform: translateY(-2px);
-      border-color: ${tokens.accentBorder};
-      box-shadow: ${tokens.shadowHover};
+      border-color: ${(p) => (p.$live ? 'rgba(232, 93, 59, 0.4)' : tokens.accentBorder)};
+      box-shadow: ${(p) => (p.$live ? '0 14px 32px rgba(232, 93, 59, 0.16)' : tokens.shadowHover)};
     }
   }
 `;
@@ -2147,13 +2164,13 @@ const CatChip = styled.span`
   white-space: nowrap;
   border-radius: 999px;
   padding: 5px 10px 5px 8px;
-  background: ${(p) => (p.$tone === 'ok' ? GREEN_BG : CREAM)};
-  color: ${(p) => (p.$tone === 'ok' ? GREEN_DEEP : INK)};
-  border: 1px solid ${(p) => (p.$tone === 'ok' ? tokens.accentBorder : 'rgba(17,17,17,0.08)')};
+  background: ${(p) => (p.$tone === 'hot' ? '#FDE8E2' : p.$tone === 'ok' ? GREEN_BG : CREAM)};
+  color: ${(p) => (p.$tone === 'hot' ? '#9A3412' : p.$tone === 'ok' ? GREEN_DEEP : INK)};
+  border: 1px solid ${(p) => (p.$tone === 'hot' ? 'rgba(232, 93, 59, 0.22)' : p.$tone === 'ok' ? tokens.accentBorder : 'rgba(17,17,17,0.08)')};
   box-shadow: 0 1px 2px rgba(17, 17, 17, 0.06);
 
   ${CoverChips} & {
-    background: ${(p) => (p.$tone === 'ok' ? GREEN_BG : 'rgba(255,252,247,0.94)')};
+    background: ${(p) => (p.$tone === 'hot' ? '#FDE8E2' : p.$tone === 'ok' ? GREEN_BG : 'rgba(255,252,247,0.94)')};
     backdrop-filter: blur(8px);
   }
 `;

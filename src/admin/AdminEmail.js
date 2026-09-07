@@ -12,7 +12,7 @@ import {
   DesktopOutlined, MobileOutlined, CopyOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
-import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement, resolveAnnouncementPreheader, generatePROpportunity, generatePROpportunitySubject, productFromBrand, websiteFromBrand, samplePROpportunity, DEFAULT_PR_EXCHANGE } from '../email-templates';
+import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement, resolveAnnouncementPreheader, generatePROpportunity, generatePROpportunitySubject, productFromBrand, websiteFromBrand, samplePROpportunity, DEFAULT_PR_EXCHANGE, generatePRRosterLive, generatePRRosterLiveSubject, applyUrlFromBrand, normalizeRosterBrands, samplePRRosterLive } from '../email-templates';
 
 const { TextArea } = Input;
 
@@ -93,6 +93,14 @@ const AdminEmail = () => {
     website: '',
     product: '',
     exchange: DEFAULT_PR_EXCHANGE,
+    creatorIds: [],
+  });
+
+  const [showRosterLivePreview, setShowRosterLivePreview] = useState(false);
+  const [rosterViewMode, setRosterViewMode] = useState('desktop');
+  const [rosterConfig, setRosterConfig] = useState({
+    brands: [],
+    segmentId: 'all_active',
     creatorIds: [],
   });
 
@@ -316,6 +324,30 @@ const AdminEmail = () => {
     }));
   };
 
+  const handleRosterBrandSelect = (brandIds) => {
+    const ids = Array.isArray(brandIds) ? brandIds : [brandIds];
+    setRosterConfig((c) => {
+      const existing = new Map((c.brands || []).map((b) => [b.brandId, b]));
+      const next = ids.map((id) => {
+        const prev = existing.get(id);
+        if (prev) return prev;
+        const brand = prBrandOptions.find((b) => b.id === id);
+        if (!brand) return null;
+        return {
+          brandId: brand.id,
+          brandName: brand.name || brand.brand_name || '',
+          website: websiteFromBrand(brand),
+          product: productFromBrand(brand) || '',
+          slug: brand.slug || '',
+          applyUrl: applyUrlFromBrand(brand),
+          logo: brand.logo || brand.logo_url || '',
+          category: brand.category || '',
+        };
+      }).filter(Boolean);
+      return { ...c, brands: next };
+    });
+  };
+
   const lookupCreatorEmails = async (raw) => {
     const emails = String(raw || '')
       .split(/[,;\s]+/)
@@ -370,6 +402,15 @@ const AdminEmail = () => {
       exchange: config.exchange || DEFAULT_PR_EXCHANGE,
       website: config.website || (!config.brandName && !forCampaign ? samplePROpportunity.website : ''),
     });
+
+  const buildPRRosterLiveHTML = (config = rosterConfig, forCampaign = false) => {
+    const brands = normalizeRosterBrands(config);
+    const previewBrands = brands.length ? brands : (forCampaign ? [] : samplePRRosterLive.brands);
+    return generatePRRosterLive({
+      firstName: forCampaign ? '{{first_name}}' : 'Sarah',
+      brands: previewBrands,
+    });
+  };
 
   const searchUsers = async (query) => {
     if (!query || query.length < 2) {
@@ -633,6 +674,7 @@ const AdminEmail = () => {
       case 'quota_alert': return '⚡';
       case 'winback': return '👋';
       case 'pr_opportunity': return '🎁';
+      case 'pr_roster_live': return '⚡';
       default: return '📧';
     }
   };
@@ -1084,6 +1126,33 @@ const AdminEmail = () => {
                       <span>Brand autofill</span>
                       <span>Selected creators</span>
                       <span>Reply-to-confirm</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#E11D48', color: '#E11D48' }}>
+                      <EyeOutlined /> Compose &amp; Send
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setRosterConfig({
+                        brands: [],
+                        segmentId: 'all_active',
+                        creatorIds: [],
+                      });
+                      setPrBrandOptions([]);
+                      setShowRosterLivePreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #E11D48 100%)' }}>NEW</div>
+                    <div className="template-icon-large">⚡</div>
+                    <h4>Gift list live</h4>
+                    <p>Roundup-style cards for brands actively running PR. One brand or several. Apply in-app.</p>
+                    <div className="template-features">
+                      <span>1 or many brands</span>
+                      <span>For You apply</span>
+                      <span>Urgency</span>
                     </div>
                     <Button type="default" block style={{ marginTop: 16, borderColor: '#E11D48', color: '#E11D48' }}>
                       <EyeOutlined /> Compose &amp; Send
@@ -1724,6 +1793,187 @@ const AdminEmail = () => {
                     setShowPROpportunityPreview(false);
                     setShowCampaignModal(true);
                     message.success('Loaded. Recipients are the creators you selected — send a test first.');
+                  }}
+                >
+                  Use This Template
+                </Button>
+              </div>
+            </TemplatePreviewContainer>
+          </Modal>
+
+          <Modal
+            title={null}
+            open={showRosterLivePreview}
+            onCancel={() => setShowRosterLivePreview(false)}
+            footer={null}
+            width={1100}
+            style={{ top: 20 }}
+            bodyStyle={{ padding: 0, background: '#1a1a2e' }}
+          >
+            <TemplatePreviewContainer>
+              <div className="preview-header">
+                <div>
+                  <h3>⚡ Gift list live — Live Composer</h3>
+                  <p>Same scan as the weekly roundup: brand cards, applications open, apply in-app.</p>
+                </div>
+                <Space>
+                  <Button
+                    type={rosterViewMode === 'desktop' ? 'primary' : 'default'}
+                    icon={<DesktopOutlined />}
+                    onClick={() => setRosterViewMode('desktop')}
+                  >
+                    Desktop
+                  </Button>
+                  <Button
+                    type={rosterViewMode === 'mobile' ? 'primary' : 'default'}
+                    icon={<MobileOutlined />}
+                    onClick={() => setRosterViewMode('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </Space>
+              </div>
+
+              <AnnouncementComposer>
+                <div className="composer-form">
+                  <div className="form-group">
+                    <label>Brands *</label>
+                    <Select
+                      mode="multiple"
+                      showSearch
+                      value={(rosterConfig.brands || []).map((b) => b.brandId)}
+                      placeholder="Search WAU, Benji, GLO..."
+                      filterOption={false}
+                      onSearch={searchBrands}
+                      onChange={handleRosterBrandSelect}
+                      loading={prBrandLoading}
+                      style={{ width: '100%' }}
+                      size="large"
+                      notFoundContent={prBrandLoading ? <Spin size="small" /> : 'Type to search brands...'}
+                    >
+                      {[...prBrandOptions, ...(rosterConfig.brands || []).map((b) => ({
+                        id: b.brandId,
+                        name: b.brandName,
+                      }))].filter((brand, idx, arr) => arr.findIndex((b) => b.id === brand.id) === idx).map((brand) => (
+                        <Select.Option key={brand.id} value={brand.id}>
+                          {brand.name || brand.brand_name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      Pick one brand for a dedicated drop, or several for a weekly gift-list blast.
+                    </div>
+                  </div>
+                  {(rosterConfig.brands || []).map((brand, idx) => (
+                    <div className="form-group" key={brand.brandId || idx}>
+                      <label>{brand.brandName} product</label>
+                      <Input
+                        value={brand.product}
+                        onChange={(e) => setRosterConfig((c) => ({
+                          ...c,
+                          brands: c.brands.map((b) => (b.brandId === brand.brandId ? { ...b, product: e.target.value } : b)),
+                        }))}
+                        placeholder="What they'll send"
+                      />
+                    </div>
+                  ))}
+                  <div className="form-group">
+                    <label>Audience</label>
+                    <Select
+                      value={rosterConfig.segmentId}
+                      onChange={(value) => setRosterConfig((c) => ({ ...c, segmentId: value }))}
+                      style={{ width: '100%' }}
+                      size="large"
+                    >
+                      {segments.map((segment) => (
+                        <Select.Option key={segment.id} value={segment.id}>
+                          {segment.name} ({segment.count} users)
+                        </Select.Option>
+                      ))}
+                      <Select.Option value="specific_users">Individual creators</Select.Option>
+                    </Select>
+                  </div>
+                  {rosterConfig.segmentId === 'specific_users' && (
+                    <div className="form-group">
+                      <label>Creators *</label>
+                      <Select
+                        mode="multiple"
+                        showSearch
+                        value={rosterConfig.creatorIds}
+                        placeholder="Search by email, name or username..."
+                        filterOption={false}
+                        onSearch={searchUsers}
+                        onChange={(values) => setRosterConfig((c) => ({ ...c, creatorIds: values }))}
+                        loading={userSearchLoading}
+                        style={{ width: '100%' }}
+                        size="large"
+                        notFoundContent={userSearchLoading ? <Spin size="small" /> : 'Type to search creators...'}
+                      >
+                        {userSearchOptions.map((user) => (
+                          <Select.Option key={user.user_id} value={user.user_id}>
+                            <strong>{user.email}</strong>
+                            {user.first_name ? ` · ${user.first_name}` : ''}
+                            {user.username ? ` @${user.username}` : ''}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
+                  <div className="form-group">
+                    <label>Subject</label>
+                    <Input value={generatePRRosterLiveSubject(rosterConfig)} disabled />
+                  </div>
+                </div>
+
+                <div className="composer-preview">
+                  <div
+                    className={`device-frame ${rosterViewMode}`}
+                    style={{ width: rosterViewMode === 'mobile' ? 375 : 560, maxWidth: '100%' }}
+                  >
+                    {rosterViewMode === 'mobile' && <div className="device-notch" />}
+                    <iframe
+                      srcDoc={buildPRRosterLiveHTML(rosterConfig, false)}
+                      title="Gift list live preview"
+                      style={{
+                        width: '100%',
+                        height: rosterViewMode === 'mobile' ? 580 : 660,
+                        border: 'none',
+                        background: '#f3f4f6',
+                        borderRadius: rosterViewMode === 'mobile' ? '0 0 24px 24px' : 8
+                      }}
+                    />
+                  </div>
+                </div>
+              </AnnouncementComposer>
+
+              <div className="preview-actions">
+                <Button onClick={() => setShowRosterLivePreview(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #E11D48 100%)', border: 'none' }}
+                  disabled={
+                    !(rosterConfig.brands || []).length
+                    || (rosterConfig.segmentId === 'specific_users' && !rosterConfig.creatorIds.length)
+                  }
+                  onClick={() => {
+                    const html = buildPRRosterLiveHTML(rosterConfig, true);
+                    const subject = generatePRRosterLiveSubject(rosterConfig);
+                    const names = (rosterConfig.brands || []).map((b) => b.brandName).filter(Boolean);
+                    setEmailContent(html);
+                    setSubjectOverride(subject);
+                    setCampaignName(`Gift list live — ${names.join(', ')}`);
+                    setSelectedTemplate(null);
+                    handleSegmentSelect(rosterConfig.segmentId);
+                    if (rosterConfig.segmentId === 'specific_users') {
+                      setSelectedUserIds(rosterConfig.creatorIds);
+                      setPreviewUsers([]);
+                      setPreviewCount(rosterConfig.creatorIds.length);
+                    }
+                    setShowRosterLivePreview(false);
+                    setShowCampaignModal(true);
+                    message.success('Loaded. Send a test first, then blast the gift list.');
                   }}
                 >
                   Use This Template

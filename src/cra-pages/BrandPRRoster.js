@@ -71,7 +71,7 @@ export default function BrandPRRoster() {
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.get(`/api/brand-pr/r/${token}`);
+      const { data } = await api.get(`/api/brand-pr/r/${token}`, { timeout: 20000 });
       applyPayload(data);
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Could not load this roster');
@@ -520,10 +520,12 @@ export default function BrandPRRoster() {
                 <b>{drawer.followers_label || '—'}</b>
                 followers
               </div>
-              <div>
-                <b>{drawer.engagement_label || '—'}</b>
-                engagement
-              </div>
+              {drawer.engagement_label ? (
+                <div>
+                  <b>{drawer.engagement_label}</b>
+                  engagement
+                </div>
+              ) : null}
             </Stats>
             <BigThumbs>
               {(drawer.posts || []).map((p, i) => (
@@ -635,10 +637,12 @@ function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
           <b>{c.niche || 'Creator'}</b>
           niche
         </div>
-        <div>
-          <b>{c.engagement_label || '—'}</b>
-          engagement
-        </div>
+        {c.engagement_label ? (
+          <div>
+            <b>{c.engagement_label}</b>
+            engagement
+          </div>
+        ) : null}
       </Stats>
       <Thumbs>
         {(c.posts || []).slice(0, 3).map((p, i) => (

@@ -41,6 +41,14 @@ export {
   DEFAULT_PR_EXCHANGE,
 } from './PROpportunity';
 
+export {
+  generatePRRosterLive,
+  generatePRRosterLiveSubject,
+  applyUrlFromBrand,
+  normalizeRosterBrands,
+  samplePRRosterLive,
+} from './PRRosterLive';
+
 // Components
 export { default as EmailTemplatePreview } from './EmailTemplatePreview';
 
@@ -73,6 +81,13 @@ export const emailTemplates = {
     description: 'Gifted PR invite for selected creators — brand and product fill from the brand record',
     icon: '🎁',
     generator: 'generatePROpportunity',
+  },
+  pr_roster_live: {
+    id: 'pr_roster_live',
+    name: 'Gift list live',
+    description: 'Roundup-style cards for brands actively running PR — one or several',
+    icon: '⚡',
+    generator: 'generatePRRosterLive',
   },
 };
 

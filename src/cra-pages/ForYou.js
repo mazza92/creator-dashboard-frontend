@@ -1510,8 +1510,8 @@ const BrandCard = ({ brand, hasPitched, isUnlocked, onPitch, matchScore }) => {
 
       <CardTags>
         {microFriendly && <Pill $tone="ok">Works with micro-creators</Pill>}
-        {Number(brand.roster_hunger || brand.rosterHunger) > 0 && (
-          <Pill $tone="ok">Open gift list</Pill>
+        {(Number(brand.roster_hunger || brand.rosterHunger) > 0 || Number(brand.roster_is_open || brand.rosterIsOpen) > 0) && (
+          <Pill $tone="hot">Live gift list</Pill>
         )}
         {hasEmail && <Pill $tone="email">PR email</Pill>}
         {hasForm && <Pill $tone="form">Program form</Pill>}
