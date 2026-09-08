@@ -158,7 +158,7 @@ const BrandAdmin = () => {
     setMintVisible(true);
   };
 
-  const mintCampaignLink = async () => {
+  const mintCampaignLink = async (force = false) => {
     const brand = selectedRows[0];
     if (!brand?.id) {
       message.warning('Select a brand first');
@@ -172,6 +172,7 @@ const BrandAdmin = () => {
           brand_id: brand.id,
           slot_limit: mintSlotLimit || 5,
           title: mintTitle || `${brand.name} · PR roster`,
+          ...(force ? { force: true } : {}),
         },
         getApiConfig()
       );
@@ -186,16 +187,28 @@ const BrandAdmin = () => {
       if (url) {
         try {
           await navigator.clipboard.writeText(url);
-          message.success('Roster link minted and copied');
+          message.success(force ? 'Force-minted and copied' : 'Roster link minted and copied');
         } catch {
-          message.success('Roster link minted');
+          message.success(force ? 'Force-minted' : 'Roster link minted');
         }
       } else {
         message.success('Campaign created');
       }
     } catch (error) {
       console.error('Mint campaign failed:', error);
-      message.error(error.response?.data?.error || 'Failed to mint campaign link');
+      const errData = error.response?.data;
+      if (error.response?.status === 402 || errData?.code === 'billing_required') {
+        Modal.confirm({
+          title: 'Billing required for next campaign',
+          content: errData?.error
+            || 'This brand used their free campaign. Subscribe them via the roster, or force-mint anyway.',
+          okText: 'Force mint',
+          cancelText: 'Cancel',
+          onOk: () => mintCampaignLink(true),
+        });
+      } else {
+        message.error(errData?.error || 'Failed to mint campaign link');
+      }
     } finally {
       setMinting(false);
     }

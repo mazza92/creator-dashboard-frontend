@@ -2736,7 +2736,7 @@ const LandingPage = () => {
             <BrandsCTAInner>
               <BrandsCTACopy>
                 <h3>Are you a <span>brand?</span></h3>
-                <p>Get 5-10 UGC videos every month from vetted creators. Full copyright. $299/month, first campaign free.</p>
+                <p>Private branded roster. Auto-filled creators. Select, lock, ship. Reuse in ads for 6 months. $299/month, first campaign free.</p>
               </BrandsCTACopy>
               <BrandsCTAAction>
                 <BrandsCTABtn href="/brands/pr-packages">

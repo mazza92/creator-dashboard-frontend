@@ -51,6 +51,8 @@ export default function BrandPRRoster() {
   const [error, setError] = useState('');
   const [campaign, setCampaign] = useState(null);
   const [creators, setCreators] = useState([]);
+  const [billing, setBilling] = useState(null);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [step, setStep] = useState(1);
   const [drawerId, setDrawerId] = useState(null);
   const [toast, setToast] = useState('');
@@ -59,6 +61,7 @@ export default function BrandPRRoster() {
     if (!data?.success) throw new Error(data?.error || 'Request failed');
     setCampaign(data.campaign);
     setCreators(data.creators || []);
+    setBilling(data.billing || null);
     setError('');
     const status = data.campaign?.status;
     if (status === 'shipped') setStep(3);
@@ -85,6 +88,23 @@ export default function BrandPRRoster() {
   useEffect(() => {
     if (token) load();
   }, [token, load]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const billingFlag = params.get('billing');
+    if (billingFlag === 'success') {
+      setToast('Subscription started — you can mint the next campaign anytime.');
+      params.delete('billing');
+      params.delete('session_id');
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
+      window.history.replaceState({}, '', next);
+    } else if (billingFlag === 'cancel') {
+      setToast('Checkout canceled — you can subscribe anytime from this page.');
+      params.delete('billing');
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
+      window.history.replaceState({}, '', next);
+    }
+  }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -174,6 +194,38 @@ export default function BrandPRRoster() {
     }
   }
 
+  async function onSubscribe() {
+    setCheckoutBusy(true);
+    try {
+      const { data } = await api.post(`/api/brand-billing/r/${token}/checkout`, {}, { timeout: 30000 });
+      if (data?.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+      setToast(data?.error || 'Checkout unavailable');
+    } catch (err) {
+      setToast(err.response?.data?.error || err.message || 'Checkout failed');
+    } finally {
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function onManageBilling() {
+    setCheckoutBusy(true);
+    try {
+      const { data } = await api.post(`/api/brand-billing/r/${token}/portal`, {}, { timeout: 30000 });
+      if (data?.portal_url) {
+        window.location.href = data.portal_url;
+        return;
+      }
+      setToast(data?.error || 'Billing portal unavailable');
+    } catch (err) {
+      setToast(err.response?.data?.error || err.message || 'Portal failed');
+    } finally {
+      setCheckoutBusy(false);
+    }
+  }
+
   function downloadCsv() {
     window.open(`/api/brand-pr/r/${token}/shipping.csv`, '_blank', 'noopener,noreferrer');
   }
@@ -250,34 +302,46 @@ export default function BrandPRRoster() {
         <Inner>
           <h1>
             Gift {plural(slotLimit, 'one creator', `${slotLimit} creators`)}.
-            <em> Keep the content.</em>
+            <em>Reuse the UGC in ads.</em>
           </h1>
-          <HeroLead>
-            Gift product. They post one organic piece and send you a UGC file
-            you can reuse or run as ads. No contracts desk, no DMs, no new software.
-          </HeroLead>
-          <Exchange>
-            <ExCard>
-              <ExKicker>You send</ExKicker>
-              <strong>Product + shipping</strong>
-              <span>CSV drops into Shopify or ShipStation. That’s the cost.</span>
-            </ExCard>
-            <ExCard $accent>
-              <ExKicker>You get</ExKicker>
-              <strong>1 organic post + 1 UGC file</strong>
-              <span>Yours to reuse for 6 months. Custom to your product.</span>
-            </ExCard>
-            <ExCard>
-              <ExKicker>Your time today</ExKicker>
-              <strong>About 8 minutes</strong>
-              <span>Pick → lock addresses → export CSV. Content lands here.</span>
-            </ExCard>
-          </Exchange>
+          {!locked ? (
+            <>
+              <HeroLead>
+                Gift product. They post one organic piece and send you a UGC file
+                you can reuse in ads for 6 months. No contracts desk, no DMs, no new software.
+              </HeroLead>
+              <Exchange>
+                <ExCard>
+                  <ExKicker>You send</ExKicker>
+                  <strong>Product + shipping</strong>
+                  <span>CSV drops into Shopify or ShipStation. That’s the cost.</span>
+                </ExCard>
+                <ExCard $accent>
+                  <ExKicker>You get</ExKicker>
+                  <strong>1 organic post + 1 UGC file</strong>
+                  <span>Yours to reuse for 6 months. Custom to your product.</span>
+                </ExCard>
+                <ExCard>
+                  <ExKicker>Your time today</ExKicker>
+                  <strong>About 8 minutes</strong>
+                  <span>Pick → lock addresses → export CSV. Content lands here.</span>
+                </ExCard>
+              </Exchange>
+            </>
+          ) : (
+            <CompactDeal>
+              <span>Product + shipping</span>
+              <Dot aria-hidden>·</Dot>
+              <span>1 organic + 1 UGC</span>
+              <Dot aria-hidden>·</Dot>
+              <span>Reuse in ads 6 months</span>
+            </CompactDeal>
+          )}
         </Inner>
       </Hero>
 
       <Steps>
-        <Inner $row>
+        <Inner $row $steps>
           {stepMeta.map((s) => (
             <StepBtn
               key={s.n}
@@ -466,10 +530,35 @@ export default function BrandPRRoster() {
                 <TaskTitle>Your content inbox</TaskTitle>
                 <TaskSub>
                   When they post, the organic link and a downloadable UGC file land here.
-                  Reuse it, run it as ads. Come back to this same link — nothing else to log into.
+                  Reuse in ads for 6 months. Come back to this same link — nothing else to log into.
                 </TaskSub>
               </div>
             </TaskRow>
+            {billing?.needs_subscribe ? (
+              <Paywall>
+                <div>
+                  <PaywallTitle>Continue with Gifted UGC — $299/mo</PaywallTitle>
+                  <PaywallSub>
+                    First campaign done. Next month: 5 more creators, same 6-month ad reuse.
+                    Cancel anytime.
+                  </PaywallSub>
+                </div>
+                <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
+                  {checkoutBusy ? 'Opening checkout…' : 'Subscribe — $299/mo'}
+                </BtnPrimary>
+              </Paywall>
+            ) : null}
+            {billing?.subscribed ? (
+              <Paywall $quiet>
+                <div>
+                  <PaywallTitle>Gifted UGC plan active</PaywallTitle>
+                  <PaywallSub>Your next roster can mint anytime. Manage billing in Stripe.</PaywallSub>
+                </div>
+                <BtnGhost type="button" disabled={checkoutBusy} onClick={onManageBilling}>
+                  Manage billing
+                </BtnGhost>
+              </Paywall>
+            ) : null}
             <Inbox>
               {selectedCreators.map((c) => {
                 const ready = c.status === 'posted';
@@ -690,6 +779,7 @@ const Shell = styled.div`
   font-family: ${FONT};
   color: ${INK};
   overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 `;
 const Inner = styled.div`
   width: 100%;
@@ -699,9 +789,26 @@ const Inner = styled.div`
   display: ${(p) => (p.$split || p.$row ? 'flex' : 'block')};
   justify-content: ${(p) => (p.$split ? 'space-between' : 'flex-start')};
   align-items: ${(p) => (p.$middle ? 'center' : p.$split ? 'flex-start' : 'stretch')};
-  gap: ${(p) => (p.$split ? '24px' : '0')};
-  flex-wrap: ${(p) => (p.$split ? 'wrap' : 'nowrap')};
-  @media (max-width: 720px) { padding: 0 16px; }
+  gap: ${(p) => (p.$steps ? '0' : p.$split ? '24px' : '0')};
+  flex-wrap: ${(p) => (p.$steps ? 'nowrap' : p.$split ? 'wrap' : 'nowrap')};
+  @media (max-width: 720px) {
+    padding: 0 16px;
+    ${(p) =>
+      p.$split
+        ? `
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    `
+        : ''}
+    ${(p) =>
+      p.$steps
+        ? `
+      padding: 0;
+      width: 100%;
+    `
+        : ''}
+  }
 `;
 const LoadingNote = styled.p`
   padding: 80px 28px;
@@ -719,11 +826,13 @@ const TopBar = styled.div`
   background: ${CREAM};
   border-bottom: 1px solid ${LINE};
   padding: 14px 0;
+  @media (max-width: 720px) { padding: 12px 0; }
 `;
 const BrandLockup = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 `;
 const Logo = styled.img`
   width: 40px;
@@ -732,6 +841,7 @@ const Logo = styled.img`
   background: #fff;
   border: 1px solid ${LINE};
   border-radius: 10px;
+  flex-shrink: 0;
 `;
 const LogoFallback = styled.div`
   width: 40px;
@@ -743,6 +853,7 @@ const LogoFallback = styled.div`
   place-items: center;
   font-size: 12px;
   font-weight: 700;
+  flex-shrink: 0;
 `;
 const Eyebrow = styled.div`
   font-size: 11px;
@@ -754,12 +865,19 @@ const Eyebrow = styled.div`
 const BrandName = styled.div`
   font-size: 15px;
   font-weight: 650;
+  line-height: 1.25;
+  word-break: break-word;
 `;
 const QuietNote = styled.p`
   margin: 0;
   font-size: 12px;
   color: ${MUTED};
   font-weight: 500;
+  @media (max-width: 720px) {
+    font-size: 11px;
+    line-height: 1.35;
+    padding-left: 52px;
+  }
 `;
 const Hero = styled.section`
   background: ${CREAM};
@@ -771,8 +889,20 @@ const Hero = styled.section`
     letter-spacing: -.03em;
     line-height: 1.12;
     margin: 0 0 12px;
-    max-width: 18ch;
-    em { font-style: italic; color: ${GREEN_DEEP}; }
+    max-width: 22ch;
+    em {
+      font-style: italic;
+      color: ${GREEN_DEEP};
+      display: block;
+    }
+  }
+  @media (max-width: 720px) {
+    padding: 18px 0 4px;
+    h1 {
+      max-width: none;
+      font-size: clamp(26px, 8vw, 34px);
+      margin-bottom: 10px;
+    }
   }
 `;
 const HeroLead = styled.p`
@@ -781,13 +911,41 @@ const HeroLead = styled.p`
   font-size: 16px;
   line-height: 1.5;
   color: ${tokens.inkSoft};
+  @media (max-width: 720px) {
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+`;
+const CompactDeal = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 0;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: ${GREEN_BG};
+  border: 1px solid ${tokens.accentBorder};
+  font-size: 13px;
+  font-weight: 600;
+  color: ${INK};
+  line-height: 1.35;
+`;
+const Dot = styled.span`
+  margin: 0 8px;
+  color: ${MUTED};
+  font-weight: 500;
 `;
 const Exchange = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding-bottom: 22px;
-  @media (max-width: 800px) { grid-template-columns: 1fr; }
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-bottom: 16px;
+  }
 `;
 const ExCard = styled.div`
   background: ${(p) => (p.$accent ? GREEN_BG : tokens.subtle)};
@@ -796,6 +954,10 @@ const ExCard = styled.div`
   padding: 14px 16px;
   strong { display: block; font-size: 15px; margin: 2px 0 6px; }
   span { display: block; font-size: 13px; color: ${MUTED}; line-height: 1.4; }
+  @media (max-width: 720px) {
+    padding: 12px 14px;
+    strong { font-size: 14px; }
+  }
 `;
 const ExKicker = styled.div`
   font-size: 11px;
@@ -808,6 +970,9 @@ const Steps = styled.nav`
   background: ${CREAM};
   border-top: 1px solid ${LINE};
   border-bottom: 1px solid ${LINE};
+  position: sticky;
+  top: 0;
+  z-index: 30;
 `;
 const StepBtn = styled.button`
   border: 0;
@@ -824,7 +989,18 @@ const StepBtn = styled.button`
   font-family: inherit;
   cursor: pointer;
   text-align: left;
+  min-height: 52px;
   &:disabled { opacity: .38; cursor: not-allowed; }
+  @media (max-width: 720px) {
+    flex: 1 1 0;
+    margin-right: 0;
+    padding: 12px 8px 10px;
+    gap: 8px;
+    font-size: 13px;
+    justify-content: center;
+    min-width: 0;
+    > span { min-width: 0; }
+  }
 `;
 const StepNum = styled.span`
   width: 22px;
@@ -843,9 +1019,19 @@ const StepHint = styled.span`
   font-weight: 500;
   color: ${MUTED};
   margin-top: 1px;
+  @media (max-width: 720px) {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
 `;
 const View = styled.section`
   padding: 22px 0 56px;
+  @media (max-width: 720px) {
+    padding: 16px 0 calc(40px + env(safe-area-inset-bottom, 0px));
+  }
 `;
 const TaskRow = styled.div`
   display: flex;
@@ -854,12 +1040,17 @@ const TaskRow = styled.div`
   align-items: flex-start;
   margin-bottom: 18px;
   flex-wrap: wrap;
+  @media (max-width: 720px) {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
 `;
 const TaskTitle = styled.h2`
   font-size: 18px;
   font-weight: 650;
   margin: 0 0 6px;
   letter-spacing: -.02em;
+  @media (max-width: 720px) { font-size: 17px; }
 `;
 const TaskSub = styled.p`
   margin: 0;
@@ -882,7 +1073,13 @@ const Layout = styled.div`
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 22px;
   align-items: start;
-  @media (max-width: 980px) { grid-template-columns: 1fr; }
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr;
+    > aside {
+      order: -1;
+      position: static;
+    }
+  }
 `;
 const Grid = styled.div`
   display: grid;
@@ -1010,6 +1207,7 @@ const BtnYes = styled.button`
   color: #fff;
   font-family: inherit;
   cursor: pointer;
+  min-height: 44px;
   &:disabled { background: ${GREEN}; cursor: default; }
 `;
 const BtnNo = styled.button`
@@ -1024,6 +1222,7 @@ const BtnNo = styled.button`
   color: ${INK};
   font-family: inherit;
   cursor: pointer;
+  min-height: 44px;
   &:disabled { opacity: 0.5; cursor: default; }
 `;
 const More = styled.button`
@@ -1035,7 +1234,8 @@ const More = styled.button`
   margin-top: 10px;
   font-family: inherit;
   cursor: pointer;
-  padding: 0;
+  padding: 8px 0;
+  min-height: 44px;
   &:hover { color: ${INK}; }
 `;
 const SkippedWrap = styled.div`
@@ -1155,6 +1355,7 @@ const Go = styled.button`
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
+  min-height: 48px;
   &:disabled { background: #ddd; color: #888; cursor: default; }
 `;
 const TrayHelp = styled.p`
@@ -1168,6 +1369,47 @@ const ShipBar = styled.div`
   gap: 8px;
   margin-bottom: 16px;
   flex-wrap: wrap;
+  @media (max-width: 720px) {
+    flex-direction: column;
+    > button { width: 100%; }
+  }
+`;
+const Paywall = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid ${(p) => (p.$quiet ? LINE : GREEN)};
+  background: ${(p) => (p.$quiet ? CREAM : GREEN_BG)};
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+    > button {
+      width: 100%;
+      min-height: 48px;
+    }
+  }
+`;
+const PaywallTitle = styled.div`
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+  @media (max-width: 720px) {
+    font-size: 16px;
+    letter-spacing: -.01em;
+  }
+`;
+const PaywallSub = styled.div`
+  color: ${MUTED};
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 36rem;
 `;
 const BtnPrimary = styled.button`
   border: 0;
@@ -1179,6 +1421,8 @@ const BtnPrimary = styled.button`
   color: #fff;
   font-family: inherit;
   cursor: pointer;
+  min-height: 44px;
+  &:disabled { opacity: 0.5; cursor: default; }
 `;
 const BtnGhost = styled.button`
   border: 1px solid ${LINE};
@@ -1190,6 +1434,7 @@ const BtnGhost = styled.button`
   color: ${INK};
   font-family: inherit;
   cursor: pointer;
+  min-height: 44px;
   &:disabled { opacity: 0.5; cursor: default; }
 `;
 const TableWrap = styled.div`
@@ -1213,6 +1458,12 @@ const TableWrap = styled.div`
     background: ${tokens.subtle};
   }
   tr:last-child td { border-bottom: 0; }
+  @media (max-width: 720px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    table { min-width: 520px; }
+    th, td { padding: 12px; }
+  }
 `;
 const Muted = styled.span`color: ${MUTED};`;
 const Inbox = styled.div`
@@ -1263,9 +1514,32 @@ const Panel = styled.div`
   max-width: 100%;
   background: ${CREAM};
   height: 100%;
+  height: 100dvh;
   overflow: auto;
   padding: 22px;
+  padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px));
   h2 { font-family: ${DISPLAY}; font-weight: 400; font-size: 24px; margin: 8px 0; }
+  @media (max-width: 720px) {
+    width: 100%;
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+`;
+const Toast = styled.div`
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top, 16px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: ${INK};
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 650;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  box-shadow: ${tokens.shadowHover};
 `;
 const Bio = styled.p`
   font-size: 14px;
@@ -1283,18 +1557,4 @@ const BigThumb = styled.div`
   height: 120px;
   border-radius: 10px;
   background: ${(p) => (p.$img ? `center/cover url("${p.$img}")` : p.$color)};
-`;
-const Toast = styled.div`
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  background: ${INK};
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: ${tokens.shadowHover};
 `;

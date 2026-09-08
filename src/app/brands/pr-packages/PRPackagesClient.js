@@ -940,9 +940,9 @@ export default function PRPackagesClient() {
             <span className="pulse"></span>
             <span><strong>22+ brands</strong> running Newcollab campaigns this quarter</span>
           </HeroTag>
-          <H1>The UGC content library <span>you own.</span></H1>
+          <H1>Gifted UGC you can <span>run as ads.</span></H1>
           <HeroSub>
-            Ship gifted product to 5 vetted creators every month. Get 5-10 UGC videos with <strong>full copyright transferred</strong>. Run them as paid ads, repost anywhere, or add to your content library.
+            Your brand gets a private roster page that fills with vetted UGC creators. You select, lock, and export shipping details. Gift the product. Get ad-ready videos back with <strong>6-month commercial usage</strong>.
           </HeroSub>
           <CTARow>
             <BtnPrimary href={signupUrl}>
@@ -953,9 +953,9 @@ export default function PRPackagesClient() {
           </CTARow>
           <HeroTrust>
             <span><CheckIcon /> First campaign free</span>
-            <span><CheckIcon /> Cancel anytime</span>
-            <span><CheckIcon /> No affiliate, no revshare</span>
-            <span><CheckIcon /> Full copyright</span>
+            <span><CheckIcon /> Branded roster, auto-filled</span>
+            <span><CheckIcon /> Select → lock → ship</span>
+            <span><CheckIcon /> Reuse in ads for 6 months</span>
           </HeroTrust>
         </Wrap>
       </HeroSection>
@@ -981,29 +981,33 @@ export default function PRPackagesClient() {
       <Section>
         <Wrap>
           <SecLabel>What you actually get</SecLabel>
-          <SecTitle>Content, <span>not influencer marketing.</span></SecTitle>
-          <SecSub>Every month, you receive real UGC videos from vetted small creators. Own them outright. Run them as paid ads, repost on your channels, or reuse in campaigns anywhere.</SecSub>
+          <SecTitle>Gifting on rails. <span>From pick to ship.</span></SecTitle>
+          <SecSub>
+            No scrolling Instagram for hours. No cold DMs. No chasing addresses or contracts.
+            Your branded Newcollab roster fills with fit creators. Terms are already agreed when they apply.
+            You pick who to gift, lock the list, and ship.
+          </SecSub>
 
           <ValueGrid>
             <ValueCard>
-              <ValueIcon>🎯</ValueIcon>
-              <ValueTitle>5 hand-matched creators / month</ValueTitle>
-              <ValueDesc>We source and vet creators to fit your brand. You approve every profile before contact.</ValueDesc>
+              <ValueIcon>🔗</ValueIcon>
+              <ValueTitle>Your branded roster page</ValueTitle>
+              <ValueDesc>A private link under your brand name. Creators land there as they qualify. One place to pick, ship, and collect content. No login maze.</ValueDesc>
             </ValueCard>
             <ValueCard>
-              <ValueIcon>🎬</ValueIcon>
-              <ValueTitle>5-10 UGC videos / month</ValueTitle>
-              <ValueDesc>Vertical 30-60 sec videos, ready for TikTok, Reels, and paid ad rotation.</ValueDesc>
+              <ValueIcon>🎯</ValueIcon>
+              <ValueTitle>Auto-filled with vetted creators</ValueTitle>
+              <ValueDesc>We source UGC creators for your niche and place them on your roster. You skip discovery. Skip anyone who is not a fit.</ValueDesc>
+            </ValueCard>
+            <ValueCard>
+              <ValueIcon>📦</ValueIcon>
+              <ValueTitle>Select, lock, shipping ready</ValueTitle>
+              <ValueDesc>Lock your picks and full shipping details unlock as a CSV for Shopify or ShipStation. Gift product the way you already ship orders.</ValueDesc>
             </ValueCard>
             <ValueCard>
               <ValueIcon>📜</ValueIcon>
-              <ValueTitle>Full copyright transferred</ValueTitle>
-              <ValueDesc>You own the content. Run as ads, repost, or reuse anywhere. No usage fees, no expiry.</ValueDesc>
-            </ValueCard>
-            <ValueCard>
-              <ValueIcon>⚡</ValueIcon>
-              <ValueTitle>Cancel anytime</ValueTitle>
-              <ValueDesc>No annual contracts, no auto-renewal traps. Pay for what you use, when you use it.</ValueDesc>
+              <ValueTitle>Reuse in ads for 6 months</ValueTitle>
+              <ValueDesc>Commercial usage for 6 months after delivery. Run as paid ads or on your channels. Creators keep ownership. Terms agreed upfront.</ValueDesc>
             </ValueCard>
           </ValueGrid>
         </Wrap>
@@ -1035,10 +1039,10 @@ export default function PRPackagesClient() {
               <ComparePrice>$299</ComparePrice>
               <ComparePer>per month · first campaign free</ComparePer>
               <CompareList>
-                <li>5-10 UGC videos per month</li>
-                <li>You approve every creator</li>
-                <li>Full copyright transferred, forever</li>
-                <li>Only cost: gifted product + shipping</li>
+                <li>Branded roster that fills itself</li>
+                <li>Select, lock, shipping CSV ready</li>
+                <li>Creator terms already agreed</li>
+                <li>Commercial reuse for 6 months</li>
                 <li>Cancel anytime</li>
               </CompareList>
             </CompareCard>
@@ -1063,24 +1067,24 @@ export default function PRPackagesClient() {
       <HowSection id="how">
         <Wrap>
           <SecLabel>How it works</SecLabel>
-          <SecTitle>Three steps. <span>No sales calls, no gatekeepers.</span></SecTitle>
-          <SecSub>Self-serve intake, hand-vetted creators, real content delivered every month.</SecSub>
+          <SecTitle>Three steps. <span>No discovery. No DMs.</span></SecTitle>
+          <SecSub>Your branded roster does the busywork. You decide who gets a gift and when it ships.</SecSub>
 
           <HowSteps>
             <HowStep>
               <HowNum>1</HowNum>
-              <HowTitle>Fill in your campaign brief</HowTitle>
-              <HowDesc>Product, retail value, content angle, deadline, creator preferences. Under 10 minutes to submit at <a href={signupUrl}>app.newcollab.co/for-brands</a>.</HowDesc>
+              <HowTitle>Open your branded roster</HowTitle>
+              <HowDesc>Private page under your brand name. Vetted UGC creators fill in automatically as they qualify. No searching profiles, no new software.</HowDesc>
             </HowStep>
             <HowStep>
               <HowNum>2</HowNum>
-              <HowTitle>Approve 5 fit profiles</HowTitle>
-              <HowDesc>We hand-match 5 creators to your brand within a week. You approve each one, or ask for alternatives at no cost.</HowDesc>
+              <HowTitle>Select who to gift</HowTitle>
+              <HowDesc>Skip anyone who is not a fit. On a paid plan, we refill the roster when someone is wrong for you. Creator terms are already agreed when they apply.</HowDesc>
             </HowStep>
             <HowStep>
               <HowNum>3</HowNum>
-              <HowTitle>Ship. Receive UGC content.</HowTitle>
-              <HowDesc>Ship gifted product directly to approved creators. Get 5-10 UGC videos delivered within 4-5 weeks. Full copyright transferred to you.</HowDesc>
+              <HowTitle>Lock and ship</HowTitle>
+              <HowDesc>Lock the list and shipping details unlock as a CSV. Gift product. Organic posts and UGC files land in the same inbox, ready to run as ads for 6 months.</HowDesc>
             </HowStep>
           </HowSteps>
         </Wrap>
@@ -1121,10 +1125,11 @@ export default function PRPackagesClient() {
               <PricingNote><strong>First campaign free.</strong> No card required to start.</PricingNote>
 
               <PricingFeatures>
-                <li><PFCheck>✓</PFCheck><span>5 new vetted creators every month, hand-matched to your brand</span></li>
-                <li><PFCheck>✓</PFCheck><span>5-10 new UGC videos every month with full copyright</span></li>
-                <li><PFCheck>✓</PFCheck><span>Approve every creator before contact</span></li>
-                <li><PFCheck>✓</PFCheck><span>Content ready for paid ads, reposts, or reuse anywhere</span></li>
+                <li><PFCheck>✓</PFCheck><span>Dedicated branded roster (private link)</span></li>
+                <li><PFCheck>✓</PFCheck><span>Auto-filled with vetted UGC creators</span></li>
+                <li><PFCheck>✓</PFCheck><span>Select, lock, shipping CSV ready for Shopify</span></li>
+                <li><PFCheck>✓</PFCheck><span>Refill unfit creators once you are subscribed</span></li>
+                <li><PFCheck>✓</PFCheck><span>5-10 UGC videos / month, reuse in ads for 6 months</span></li>
                 <li><PFCheck>✓</PFCheck><span>Cancel anytime, no auto-billing</span></li>
               </PricingFeatures>
 
@@ -1186,19 +1191,27 @@ export default function PRPackagesClient() {
           <FAQList>
             <FAQItem>
               <FAQQ>Is this an affiliate or referral program?</FAQQ>
-              <FAQA>No. Newcollab runs on gifted UGC content swaps only. <strong>No commission tracking, no revshare, no attribution.</strong> Brand ships gifted product to creator, creator delivers UGC content with copyright transferred. That's it.</FAQA>
+              <FAQA>No. Newcollab runs on gifted UGC content swaps only. <strong>No commission tracking, no revshare, no attribution.</strong> Brand ships gifted product to creator, creator delivers organic + UGC with 6-month commercial usage. That's it.</FAQA>
             </FAQItem>
             <FAQItem>
-              <FAQQ>Do I actually own the content?</FAQQ>
-              <FAQA>Yes. Full copyright is transferred to your brand on delivery. Run the videos as <strong>paid ads on Meta or TikTok, repost on your own channels, reuse in email campaigns</strong>, or archive for future use. No expiry, no usage caps, no royalties.</FAQA>
+              <FAQQ>Can I reuse the content in ads?</FAQQ>
+              <FAQA>Yes. You get <strong>6-month commercial usage</strong> from delivery. Run the videos as paid ads on Meta or TikTok, and on your own channels. Creators keep ownership. No exclusivity, no royalties during the term.</FAQA>
+            </FAQItem>
+            <FAQItem>
+              <FAQQ>What is the branded roster?</FAQQ>
+              <FAQA>A private page under your brand name. Vetted UGC creators fill it automatically. You select who to gift, lock the list, export a shipping CSV, and collect content in the same link. No login for your team. No hunting profiles yourself.</FAQA>
             </FAQItem>
             <FAQItem>
               <FAQQ>What if the creators aren't the right fit?</FAQQ>
-              <FAQA>You approve every profile before we contact any creator. Swap any who don't fit at no cost. We'll source alternatives until you approve all 5.</FAQA>
+              <FAQA>Skip anyone before you lock. After you subscribe, we refill the roster when someone is not a fit so you are not stuck searching Instagram or negotiating replacements by email.</FAQA>
+            </FAQItem>
+            <FAQItem>
+              <FAQQ>Are terms already agreed?</FAQQ>
+              <FAQA>Yes. Creators accept gifted PR terms and 6-month UGC usage when they apply. You are not chasing contracts or usage paperwork after you pick them.</FAQA>
             </FAQItem>
             <FAQItem>
               <FAQQ>How does the free first campaign work?</FAQQ>
-              <FAQA>You get 5 vetted creators + 5-10 UGC videos delivered with no platform fee. Your only cost is your PR package and shipping. If the content lands, you opt in to $299/mo from month 2. <strong>No auto-billing.</strong> If it doesn't work, no obligation, and the content is yours to keep regardless.</FAQA>
+              <FAQA>You get 5 vetted creators + 5-10 UGC videos delivered with no platform fee. Your only cost is your PR package and shipping. If the content lands, you opt in to $299/mo from month 2. <strong>No auto-billing.</strong> If it doesn't work, no obligation. You still keep 6-month commercial reuse on what was delivered.</FAQA>
             </FAQItem>
             <FAQItem>
               <FAQQ>What kind of brands work with Newcollab?</FAQQ>
@@ -1214,7 +1227,7 @@ export default function PRPackagesClient() {
             </FAQItem>
             <FAQItem>
               <FAQQ>How do I cancel?</FAQQ>
-              <FAQA>Reply to any Newcollab email or email team@newcollab.co with "cancel." Your subscription stops immediately, no last month charge, no questions. Any content already delivered stays yours.</FAQA>
+              <FAQA>Reply to any Newcollab email or email team@newcollab.co with "cancel." Your subscription stops immediately, no last month charge, no questions. Commercial reuse already granted on delivered content continues for its 6-month term.</FAQA>
             </FAQItem>
           </FAQList>
         </Wrap>
@@ -1225,7 +1238,7 @@ export default function PRPackagesClient() {
         <Wrap>
           <FinalInner>
             <h2>Start your <span>free campaign</span> today.</h2>
-            <p>Fill in your brief, approve 5 creators, ship gifted product. Get UGC content in 4-5 weeks. Pay $299/mo only if it works.</p>
+            <p>Open your branded roster, pick who to gift, lock, and ship. Ad-ready UGC with 6-month commercial usage. Pay $299/mo only if it works.</p>
             <BtnPrimary href={signupUrl}>
               Start free campaign
               <ArrowIcon />
@@ -1233,7 +1246,7 @@ export default function PRPackagesClient() {
             <FinalTrust>
               <span><CheckIcon /> No card required</span>
               <span><CheckIcon /> Cancel anytime</span>
-              <span><CheckIcon /> Full copyright transferred</span>
+              <span><CheckIcon /> Reuse in ads for 6 months</span>
             </FinalTrust>
           </FinalInner>
         </Wrap>
