@@ -315,6 +315,17 @@ export const getProxiedMediaUrl = (url) => {
   return `${base}/api/media-proxy?url=${encodeURIComponent(trimmed)}`;
 };
 
+export function getOAuthApiOrigin() {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    const explicit = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE;
+    if (explicit && /localhost:5000/.test(explicit)) {
+      return 'http://localhost:5000';
+    }
+    return window.location.origin;
+  }
+  return process.env.REACT_APP_API_BASE || process.env.REACT_APP_API_URL || 'https://api.newcollab.co';
+}
+
 // Export both the constant (for build-time) and the runtime function
 export { API_URL, getRuntimeApiUrl };
 export default api;

@@ -18,6 +18,11 @@ const { TextArea } = Input;
 
 // Admin credentials
 const ADMIN_EMAIL = 'team@newcollab.co';
+const LOCALHOST_BULK_SEND_MSG =
+  'Bulk campaigns must be sent from app.newcollab.co so they go through Resend. Localhost falls back to Gmail and disconnects after a few hundred emails.';
+
+const isLocalAdminHost = () =>
+  typeof window !== 'undefined' && window.location.hostname === 'localhost';
 const ADMIN_PASSWORD = 'Ilovela1992!';
 
 const FOUNDER_SPRINT_ANNOUNCEMENT = {
@@ -172,7 +177,7 @@ const AdminEmail = () => {
           });
           fetchCampaigns();
 
-          if (data.is_complete || data.status === 'sent' || data.status === 'failed') {
+          if (data.is_complete || data.status === 'sent') {
             stopReason = 'done';
             message.success({
               content: `Campaign complete: ${data.total_sent}/${data.total_recipients} sent`,
@@ -180,6 +185,15 @@ const AdminEmail = () => {
               duration: 5
             });
             fetchStats();
+            break;
+          }
+          if (data.status === 'failed' && remaining > 0) {
+            stopReason = 'stopped';
+            message.warning({
+              content: 'Send paused with unsent recipients. Click Continue from app.newcollab.co (not localhost).',
+              key,
+              duration: 8
+            });
             break;
           }
 
@@ -195,7 +209,9 @@ const AdminEmail = () => {
           if (status === 503 || /RESEND_API_KEY/i.test(errText)) {
             stopReason = 'stopped';
             message.error({
-              content: 'Send stopped: Resend is not configured on this server. Close this tab if you already sent from production.',
+              content: isLocalAdminHost()
+                ? LOCALHOST_BULK_SEND_MSG
+                : 'Send stopped: Resend is not configured on this server.',
               key,
               duration: 8
             });
@@ -587,6 +603,11 @@ const AdminEmail = () => {
       const recipientCount = segmentData.total_count || 0;
       setSending(false);
 
+      if (isLocalAdminHost() && recipientCount > 25) {
+        message.error(LOCALHOST_BULK_SEND_MSG);
+        return;
+      }
+
       Modal.confirm({
         title: 'Send Campaign?',
         content: `This will send emails to ${recipientCount} recipients. Are you sure?`,
@@ -636,6 +657,10 @@ const AdminEmail = () => {
   };
 
   const handleContinueSending = async (campaignId) => {
+    if (isLocalAdminHost()) {
+      message.error(LOCALHOST_BULK_SEND_MSG);
+      return;
+    }
     delete sendPumpsRef.current[campaignId];
     message.loading({ content: 'Resuming send...', key: `send-progress-${campaignId}`, duration: 0 });
     runSendPump(campaignId, { force: true, resetAttempts: true });

@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../utils/api';
+import { getOAuthApiOrigin } from '../../config/api';
 import { UserContext } from '../../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { FaInstagram, FaTiktok, FaYoutube } from 'react-icons/fa6';
@@ -867,9 +868,12 @@ export default function CreatorOnboarding() {
     }
   };
 
-  // Platforms that support auto-verification via OAuth
-  // Instagram and TikTok OAuth disabled - reverting to manual input for now
-  const VERIFIABLE_PLATFORMS = [];
+  // TikTok Login Kit is sandbox-only until TikTok approves the production app.
+  // Production onboarding must keep using the social scrapers.
+  const VERIFIABLE_PLATFORMS = (
+    typeof window !== 'undefined'
+    && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ) ? ['tiktok'] : [];
 
   // Check region on mount - block users from restricted regions
   useEffect(() => {
@@ -971,15 +975,12 @@ export default function CreatorOnboarding() {
       return;
     }
 
-    // For Instagram/TikTok, redirect to OAuth (no username input needed)
+    // For TikTok, redirect to OAuth (handle comes back from TikTok)
     if (VERIFIABLE_PLATFORMS.includes(platform)) {
       setLoading(true);
       setVerificationStatus('verifying');
 
-      // Get the API base URL for OAuth redirect
-      const apiBase = process.env.REACT_APP_API_BASE || 'https://api.newcollab.co';
-
-      // Redirect to OAuth endpoint with return_url for flexible redirect back
+      const apiBase = getOAuthApiOrigin();
       const returnUrl = encodeURIComponent(window.location.origin + '/onboarding');
       if (platform === 'instagram') {
         window.location.href = `${apiBase}/api/social/connect/instagram?return_url=${returnUrl}`;
