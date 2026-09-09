@@ -5,7 +5,7 @@ import {
   Table, Tag, Tooltip, message,
 } from 'antd';
 import {
-  LinkOutlined, LockOutlined, MailOutlined, ReloadOutlined, UserOutlined,
+  ExportOutlined, LinkOutlined, LockOutlined, MailOutlined, ReloadOutlined, UserOutlined,
 } from '@ant-design/icons';
 import api from '../config/api';
 
@@ -24,9 +24,14 @@ function formatFollowers(n) {
 }
 
 function tiktokUrl(row) {
-  if (row.profile_url) return row.profile_url;
-  if (row.handle) return `https://www.tiktok.com/@${String(row.handle).replace('@', '')}`;
-  return null;
+  const stored = (row.profile_url || '').trim();
+  if (stored) return stored;
+  const handle = String(row.handle || '').replace(/^@/, '').trim();
+  return handle ? `https://www.tiktok.com/@${handle}` : null;
+}
+
+function tiktokUrlLabel(url) {
+  return (url || '').replace(/^https?:\/\/(www\.)?/, '');
 }
 
 const STATUS_COLOR = {
@@ -175,14 +180,30 @@ const UgcSupplyAdmin = () => {
     {
       title: 'Creator',
       dataIndex: 'handle',
-      render: (_, row) => (
-        <div>
-          <div style={{ fontWeight: 600 }}>{row.display_name || `@${row.handle}`}</div>
-          <a href={tiktokUrl(row)} target="_blank" rel="noreferrer">
-            @{row.handle} <LinkOutlined />
-          </a>
-        </div>
-      ),
+      render: (_, row) => {
+        const url = tiktokUrl(row);
+        const name = row.display_name || `@${row.handle}`;
+        return (
+          <div>
+            {url ? (
+              <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: 'inherit' }}>
+                {name}
+              </a>
+            ) : (
+              <div style={{ fontWeight: 600 }}>{name}</div>
+            )}
+            {url ? (
+              <div>
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  {tiktokUrlLabel(url)} <LinkOutlined />
+                </a>
+              </div>
+            ) : (
+              <span>@{row.handle}</span>
+            )}
+          </div>
+        );
+      },
     },
     { title: 'Niche', dataIndex: 'niche', width: 140, render: (v) => v || '—' },
     {
@@ -200,33 +221,41 @@ const UgcSupplyAdmin = () => {
     {
       title: 'Status',
       dataIndex: 'status',
-      width: 120,
+      width: 110,
       render: (v) => <Tag color={STATUS_COLOR[v] || 'default'}>{v || 'draft'}</Tag>,
     },
     {
       title: '',
       key: 'actions',
-      width: 210,
-      render: (_, row) => (
-        <Space>
-          <Tooltip title={row.contact_email ? 'Send onboarding email' : 'No email'}>
-            <Button
-              size="small"
-              type="primary"
-              icon={<MailOutlined />}
-              disabled={!row.contact_email || row.status === 'contacted'}
-              onClick={() => sendOne(row)}
-            >
-              Email
-            </Button>
-          </Tooltip>
-          {row.status !== 'skipped' && (
-            <Button size="small" onClick={() => patchRow(row, { status: 'skipped' })}>
-              Skip
-            </Button>
-          )}
-        </Space>
-      ),
+      width: 250,
+      render: (_, row) => {
+        const url = tiktokUrl(row);
+        return (
+          <Space>
+            {url && (
+              <Button size="small" href={url} target="_blank" rel="noopener noreferrer" icon={<ExportOutlined />}>
+                TikTok
+              </Button>
+            )}
+            <Tooltip title={row.contact_email ? 'Send onboarding email' : 'No email'}>
+              <Button
+                size="small"
+                type="primary"
+                icon={<MailOutlined />}
+                disabled={!row.contact_email || row.status === 'contacted'}
+                onClick={() => sendOne(row)}
+              >
+                Email
+              </Button>
+            </Tooltip>
+            {row.status !== 'skipped' && (
+              <Button size="small" onClick={() => patchRow(row, { status: 'skipped' })}>
+                Skip
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
