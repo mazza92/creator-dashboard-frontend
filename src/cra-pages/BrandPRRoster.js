@@ -5,20 +5,23 @@ import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 
 const INK = tokens.ink;
-const MUTED = tokens.muted;
+const MUTE = tokens.muted;
 const LINE = tokens.line;
-const BG = tokens.paper;
+const PAPER = tokens.paper;
 const CREAM = tokens.cream;
+const WHITE = tokens.white;
+const SUBTLE = tokens.subtle;
+const FONT = tokens.fontSans;
 const GREEN = tokens.accent;
 const GREEN_BG = tokens.accentSoft;
 const GREEN_DEEP = tokens.accentDeep;
-const FONT = tokens.fontSans;
-const DISPLAY = tokens.fontDisplay;
+const RADIUS = tokens.radiusCard;
+const RADIUS_BTN = tokens.radiusBtn;
 
 function hueFromName(name) {
   let h = 0;
   for (const ch of String(name || '')) h = (h * 31 + ch.charCodeAt(0)) % 360;
-  return `hsl(${h} 42% 38%)`;
+  return `hsl(${h} 32% 40%)`;
 }
 
 function initials(name) {
@@ -44,6 +47,57 @@ function plural(n, one, many) {
   return n === 1 ? one : many;
 }
 
+function websiteHref(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  const href = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  return href.replace(/^http:\/\//i, 'https://');
+}
+
+function websiteLabel(raw) {
+  const href = websiteHref(raw);
+  if (!href) return '';
+  try {
+    return new URL(href).hostname.replace(/^www\./i, '');
+  } catch {
+    return String(raw)
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .split('/')[0];
+  }
+}
+
+function socialHandle(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  let text = value.replace(/^@/, '');
+  const ig = text.match(/instagram\.com\/([^/?#]+)/i);
+  const tt = text.match(/tiktok\.com\/@?([^/?#]+)/i);
+  if (ig) text = ig[1];
+  if (tt) text = tt[1];
+  return text.replace(/^@/, '').split('/')[0];
+}
+
+function mediaUrl(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  return value.replace(/^http:\/\//i, 'https://');
+}
+
+function formatRegions(regions) {
+  if (Array.isArray(regions)) return regions.filter(Boolean).join(' / ');
+  if (typeof regions === 'string' && regions.trim()) {
+    try {
+      const parsed = JSON.parse(regions);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).join(' / ');
+    } catch {
+      /* plain string */
+    }
+    return regions.trim();
+  }
+  return '';
+}
+
 export default function BrandPRRoster() {
   const { token } = useParams();
   const [loading, setLoading] = useState(true);
@@ -56,6 +110,7 @@ export default function BrandPRRoster() {
   const [step, setStep] = useState(1);
   const [drawerId, setDrawerId] = useState(null);
   const [toast, setToast] = useState('');
+  const [logoBroken, setLogoBroken] = useState(false);
 
   const applyPayload = useCallback((data) => {
     if (!data?.success) throw new Error(data?.error || 'Request failed');
@@ -129,6 +184,20 @@ export default function BrandPRRoster() {
   const drawer = creators.find((c) => c.application_id === drawerId) || null;
   const openCreators = creators.filter((c) => !c.skipped);
   const skippedCreators = creators.filter((c) => c.skipped);
+
+  const brand = campaign?.brand || {};
+  const brandName = brand.name || 'Brand';
+
+  useEffect(() => {
+    if (!campaign) return undefined;
+    const prev = document.title;
+    document.title = `${brandName} · Gifted PR`;
+    return () => { document.title = prev; };
+  }, [campaign, brandName]);
+
+  useEffect(() => {
+    setLogoBroken(false);
+  }, [brand.logo]);
 
   async function mutate(path, body) {
     setBusy(true);
@@ -247,24 +316,41 @@ export default function BrandPRRoster() {
   if (error && !campaign) {
     return (
       <Shell>
-        <EmptyState>
-          <h1>This roster link isn’t available</h1>
-          <p>{error}</p>
-        </EmptyState>
+        <Inner>
+          <EmptyState>
+            <h1>This roster link isn’t available</h1>
+            <p>{error}</p>
+          </EmptyState>
+        </Inner>
       </Shell>
     );
   }
 
-  const brandName = campaign?.brand?.name || 'Brand';
-  const brandLogo = campaign?.brand?.logo;
-  const sku = campaign?.sku_note || 'One PR package · gifted';
+  const sku = campaign?.sku_note || '';
+  const heroProduct = brand.hero_product || sku || 'Gifted PR package';
+  const coverImage = mediaUrl(brand.cover_image || '');
+  const logoUrl = mediaUrl(brand.logo || '');
+  const productStill = coverImage && coverImage !== logoUrl ? coverImage : '';
   const canLock = !locked && selectedIds.length === slotLimit;
+  const regionLabel = formatRegions(brand.regions);
+  const siteHref = websiteHref(brand.website);
+  const siteLabel = websiteLabel(brand.website);
+  const ig = socialHandle(brand.instagram);
+  const tt = socialHandle(brand.tiktok);
+  const showLogo = brand.logo && !logoBroken;
+  const dealLine = [
+    `Gift ${plural(slotLimit, '1 creator', `${slotLimit} creators`)}`,
+    'product + shipping',
+    '1 organic',
+    '1 UGC · 6 months',
+    regionLabel,
+  ].filter(Boolean).join(' · ');
 
   const stepMeta = [
     {
       n: 1,
       label: `Pick ${slotLimit}`,
-      hint: locked ? 'Done' : remaining ? `${remaining} left` : 'Ready to lock',
+      hint: locked ? 'Done' : remaining ? `${remaining} left` : 'Ready',
       done: locked,
     },
     {
@@ -276,7 +362,7 @@ export default function BrandPRRoster() {
     {
       n: 3,
       label: 'Content',
-      hint: shipped ? 'Inbox open' : 'After ship',
+      hint: shipped ? 'Inbox' : 'After ship',
       done: false,
     },
   ];
@@ -285,314 +371,261 @@ export default function BrandPRRoster() {
     <Shell>
       {toast && <Toast role="status">{toast}</Toast>}
 
-      <TopBar>
-        <Inner $split $middle>
-          <BrandLockup>
-            {brandLogo ? <Logo src={brandLogo} alt="" /> : <LogoFallback>{initials(brandName)}</LogoFallback>}
-            <div>
-              <Eyebrow>Newcollab · Gifted PR</Eyebrow>
-              <BrandName>{brandName}</BrandName>
-            </div>
-          </BrandLockup>
-          <QuietNote>Private link · no login · no platform fee</QuietNote>
-        </Inner>
-      </TopBar>
-
-      <Hero>
+      <Chrome>
         <Inner>
-          <h1>
-            Gift {plural(slotLimit, 'one creator', `${slotLimit} creators`)}.
-            <em>Reuse the UGC in ads.</em>
-          </h1>
-          {!locked ? (
+          <ChromeTop>
+            <Brand>
+              {showLogo ? (
+                <Logo src={brand.logo} alt="" onError={() => setLogoBroken(true)} />
+              ) : (
+                <LogoFallback>{initials(brandName)}</LogoFallback>
+              )}
+              <div>
+                <BrandName>{brandName}</BrandName>
+                <BrandMeta>Gifted PR · product only</BrandMeta>
+              </div>
+            </Brand>
+            <LinkRow>
+              {siteHref && (
+                <LinkChip href={siteHref} target="_blank" rel="noopener noreferrer">
+                  <span className="wide">{siteLabel}</span>
+                  <span className="short">Site</span>
+                </LinkChip>
+              )}
+              {ig && (
+                <LinkChip href={`https://www.instagram.com/${ig}`} target="_blank" rel="noopener noreferrer">
+                  <span className="wide">Instagram @{ig}</span>
+                  <span className="short">IG</span>
+                </LinkChip>
+              )}
+              {tt && (
+                <LinkChip href={`https://www.tiktok.com/@${tt}`} target="_blank" rel="noopener noreferrer">
+                  <span className="wide">TikTok @{tt}</span>
+                  <span className="short">TikTok</span>
+                </LinkChip>
+              )}
+            </LinkRow>
+            <StepRow>
+              {stepMeta.map((s) => (
+                <StepBtn
+                  key={s.n}
+                  type="button"
+                  $on={step === s.n}
+                  disabled={(s.n === 2 && !locked) || (s.n === 3 && !shipped)}
+                  onClick={() => goStep(s.n)}
+                >
+                  <StepNum $on={step === s.n}>{s.done ? '✓' : s.n}</StepNum>
+                  {s.label}
+                  <em className="hint">{s.hint}</em>
+                </StepBtn>
+              ))}
+            </StepRow>
+            <Pill>{locked ? (shipped ? 'Shipped' : 'Locked') : 'Open'}</Pill>
+          </ChromeTop>
+          <ChromeBot>
+            <DealMini>
+              {productStill ? <Still src={productStill} alt="" /> : null}
+              <DealCopy>
+                <strong>{heroProduct}</strong>
+                <span>{dealLine}</span>
+              </DealCopy>
+            </DealMini>
+          </ChromeBot>
+        </Inner>
+      </Chrome>
+
+      <Main>
+        <Inner>
+          {step === 1 && (
+            <Layout>
+              <div>
+                <Head>
+                  <h1>
+                    {locked
+                      ? 'Gift list locked'
+                      : remaining
+                        ? `Choose ${remaining} more`
+                        : `Lock ${slotLimit} to reveal addresses`}
+                  </h1>
+                  <p>Skip anyone who isn’t a fit. Addresses stay hidden until you lock.</p>
+                </Head>
+
+                {!creators.length ? (
+                  <EmptyState>
+                    <h2>No applications yet</h2>
+                    <p>When creators apply for {brandName}, they show up here.</p>
+                  </EmptyState>
+                ) : (
+                  <>
+                    <Grid>
+                      {openCreators.map((c) => (
+                        <CreatorCard
+                          key={c.application_id}
+                          c={c}
+                          selected={selectedIds.includes(c.application_id)}
+                          locked={locked}
+                          busy={busy}
+                          onApprove={onApprove}
+                          onSkip={onSkip}
+                          onOpen={setDrawerId}
+                        />
+                      ))}
+                    </Grid>
+                    {skippedCreators.length > 0 && !locked && (
+                      <SkippedWrap>
+                        <SkippedLabel>Skipped</SkippedLabel>
+                        {skippedCreators.map((c) => (
+                          <SkippedRow key={c.application_id}>
+                            <span>{c.name} {c.handle}</span>
+                            <button type="button" onClick={() => onSkip(c.application_id)}>Undo</button>
+                          </SkippedRow>
+                        ))}
+                      </SkippedWrap>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <Tray>
+                <TrayTop>
+                  <span>Gift list</span>
+                  <b>{selectedIds.length}<i>/{slotLimit}</i></b>
+                </TrayTop>
+                <Meter>
+                  <MeterFill $pct={(selectedIds.length / slotLimit) * 100} />
+                </Meter>
+                <TraySub>{sku || heroProduct}</TraySub>
+                <TraySeats>
+                {Array.from({ length: slotLimit }).map((_, i) => {
+                  const c = selectedCreators[i];
+                  return c ? (
+                    <Slot key={c.application_id} $full>
+                      <MiniAv $color={hueFromName(c.name)} $img={mediaUrl(c.avatar_url)}>
+                        {initials(c.name)}
+                      </MiniAv>
+                      <SlotCopy>
+                        <b>{c.name}</b>
+                        <em>Seat {i + 1}</em>
+                      </SlotCopy>
+                      {!locked && (
+                        <button type="button" onClick={() => onDeselect(c.application_id)}>Remove</button>
+                      )}
+                    </Slot>
+                  ) : (
+                    <Slot key={`empty-${i}`} $empty>Seat {i + 1} empty</Slot>
+                  );
+                })}
+                </TraySeats>
+                <Go type="button" disabled={busy || !canLock} onClick={onLock}>
+                  {locked
+                    ? 'List locked'
+                    : canLock
+                      ? 'Lock list & export'
+                      : `Add ${remaining} more`}
+                </Go>
+              </Tray>
+            </Layout>
+          )}
+
+          {step === 2 && (
             <>
-              <HeroLead>
-                Gift product. They post one organic piece and send you a UGC file
-                you can reuse in ads for 6 months. No contracts desk, no DMs, no new software.
-              </HeroLead>
-              <Exchange>
-                <ExCard>
-                  <ExKicker>You send</ExKicker>
-                  <strong>Product + shipping</strong>
-                  <span>CSV drops into Shopify or ShipStation. That’s the cost.</span>
-                </ExCard>
-                <ExCard $accent>
-                  <ExKicker>You get</ExKicker>
-                  <strong>1 organic post + 1 UGC file</strong>
-                  <span>Yours to reuse for 6 months. Custom to your product.</span>
-                </ExCard>
-                <ExCard>
-                  <ExKicker>Your time today</ExKicker>
-                  <strong>About 8 minutes</strong>
-                  <span>Pick → lock addresses → export CSV. Content lands here.</span>
-                </ExCard>
-              </Exchange>
+              <Head>
+                <h1>Ship from Shopify or ShipStation</h1>
+                <p>Download the CSV, import it the way you already ship, then mark this roster shipped.</p>
+              </Head>
+              <ShipBar>
+                <BtnPrimary type="button" onClick={downloadCsv}>Download shipping CSV</BtnPrimary>
+                <BtnGhost type="button" disabled={busy || shipped} onClick={onMarkShipped}>
+                  {shipped ? 'Marked shipped' : 'I’ve shipped everyone'}
+                </BtnGhost>
+              </ShipBar>
+              <TableWrap>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Creator</th>
+                      <th>Ship to</th>
+                      <th>What to send</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedCreators.map((c) => (
+                      <tr key={c.application_id}>
+                        <td>
+                          <b>{c.name}</b>
+                          <br />
+                          <Muted>{c.handle}</Muted>
+                        </td>
+                        <td style={{ whiteSpace: 'pre-line' }}>{formatShipBlock(c.shipping_address)}</td>
+                        <td>{sku || heroProduct}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </TableWrap>
             </>
-          ) : (
-            <CompactDeal>
-              <span>Product + shipping</span>
-              <Dot aria-hidden>·</Dot>
-              <span>1 organic + 1 UGC</span>
-              <Dot aria-hidden>·</Dot>
-              <span>Reuse in ads 6 months</span>
-            </CompactDeal>
+          )}
+
+          {step === 3 && (
+            <>
+              <Head>
+                <h1>Content inbox</h1>
+                <p>Organic links and UGC files land here. Reuse in ads for 6 months.</p>
+              </Head>
+              {billing?.needs_subscribe ? (
+                <Paywall>
+                  <div>
+                    <PaywallTitle>Continue with Gifted UGC — $299/mo</PaywallTitle>
+                    <PaywallSub>Next month: {slotLimit} more creators, same 6-month ad reuse.</PaywallSub>
+                  </div>
+                  <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
+                    {checkoutBusy ? 'Opening checkout…' : 'Subscribe — $299/mo'}
+                  </BtnPrimary>
+                </Paywall>
+              ) : null}
+              {billing?.subscribed ? (
+                <Paywall $quiet>
+                  <div>
+                    <PaywallTitle>Gifted UGC plan active</PaywallTitle>
+                    <PaywallSub>Next roster can mint anytime.</PaywallSub>
+                  </div>
+                  <BtnGhost type="button" disabled={checkoutBusy} onClick={onManageBilling}>Manage billing</BtnGhost>
+                </Paywall>
+              ) : null}
+              <Inbox>
+                {selectedCreators.map((c) => {
+                  const ready = c.status === 'posted';
+                  const cover = mediaUrl(c.posts?.[0]?.thumbnail_url);
+                  return (
+                    <Piece key={c.application_id}>
+                      <Ph $ready={ready} $color={hueFromName(c.name)} $img={cover}>
+                        {ready ? 'UGC ready' : 'Waiting on their post'}
+                      </Ph>
+                      <Meta>
+                        <b>{c.name}</b>
+                        {ready ? <Ok>Organic + UGC file ready</Ok> : 'Usually 5–10 days after delivery'}
+                      </Meta>
+                    </Piece>
+                  );
+                })}
+              </Inbox>
+            </>
           )}
         </Inner>
-      </Hero>
+      </Main>
 
-      <Steps>
-        <Inner $row $steps>
-          {stepMeta.map((s) => (
-            <StepBtn
-              key={s.n}
-              type="button"
-              $on={step === s.n}
-              $done={s.done}
-              disabled={(s.n === 2 && !locked) || (s.n === 3 && !shipped)}
-              onClick={() => goStep(s.n)}
-            >
-              <StepNum>{s.done ? '✓' : s.n}</StepNum>
-              <span>
-                {s.label}
-                <StepHint>{s.hint}</StepHint>
-              </span>
-            </StepBtn>
-          ))}
+      <Foot>
+        <Inner $bar>
+          <span>Newcollab · hosted roster · no login</span>
+          <span>Creators apply at app.newcollab.co/register/creator</span>
         </Inner>
-      </Steps>
-
-      <Inner>
-        {step === 1 && (
-          <View>
-            <TaskRow>
-              <div>
-                <TaskTitle>
-                  {locked
-                    ? 'Your gift list is locked'
-                    : remaining
-                      ? `Choose ${remaining} more ${plural(remaining, 'creator', 'creators')} to gift`
-                      : `Lock ${slotLimit} ${plural(slotLimit, 'creator', 'creators')} to reveal addresses`}
-                </TaskTitle>
-                <TaskSub>
-                  Skip anyone who isn’t a fit. Addresses stay hidden until you lock —
-                  you only ship who you picked.
-                </TaskSub>
-              </div>
-              <Need>
-                {selectedIds.length}/{slotLimit} on your list
-              </Need>
-            </TaskRow>
-
-            {!creators.length ? (
-              <EmptyState>
-                <h2>No applications yet</h2>
-                <p>When creators apply for {brandName}, they show up here automatically.</p>
-              </EmptyState>
-            ) : (
-              <Layout>
-                <div>
-                  <Grid>
-                    {openCreators.map((c) => (
-                      <CreatorCard
-                        key={c.application_id}
-                        c={c}
-                        selected={selectedIds.includes(c.application_id)}
-                        locked={locked}
-                        busy={busy}
-                        onApprove={onApprove}
-                        onSkip={onSkip}
-                        onOpen={setDrawerId}
-                      />
-                    ))}
-                  </Grid>
-                  {skippedCreators.length > 0 && !locked && (
-                    <SkippedWrap>
-                      <SkippedLabel>Skipped · not a fit</SkippedLabel>
-                      {skippedCreators.map((c) => (
-                        <SkippedRow key={c.application_id}>
-                          <span>{c.name} {c.handle}</span>
-                          <button type="button" onClick={() => onSkip(c.application_id)}>
-                            Undo skip
-                          </button>
-                        </SkippedRow>
-                      ))}
-                    </SkippedWrap>
-                  )}
-                </div>
-
-                <Tray>
-                  <TrayHead>
-                    <h2>Gift list</h2>
-                    <Meter>
-                      <MeterFill $pct={(selectedIds.length / slotLimit) * 100} />
-                    </Meter>
-                    <TraySub>
-                      {selectedIds.length} of {slotLimit} · {sku}
-                    </TraySub>
-                  </TrayHead>
-
-                  {Array.from({ length: slotLimit }).map((_, i) => {
-                    const c = selectedCreators[i];
-                    return c ? (
-                      <Slot key={c.application_id} $full>
-                        <SlotWho>
-                          <MiniAv $color={hueFromName(c.name)} $src={c.avatar_url}>
-                            {c.avatar_url ? <img src={c.avatar_url} alt="" /> : initials(c.name)}
-                          </MiniAv>
-                          <div>
-                            <b>{c.name}</b>
-                            <em>{c.handle}</em>
-                          </div>
-                        </SlotWho>
-                        {!locked && (
-                          <button type="button" onClick={() => onDeselect(c.application_id)}>
-                            Remove
-                          </button>
-                        )}
-                      </Slot>
-                    ) : (
-                      <Slot key={`empty-${i}`}>Waiting for pick {i + 1}</Slot>
-                    );
-                  })}
-
-                  <Go type="button" disabled={busy || !canLock} onClick={onLock}>
-                    {locked
-                      ? 'List locked'
-                      : canLock
-                        ? 'Lock list & reveal addresses'
-                        : `Add ${remaining} more to unlock shipping`}
-                  </Go>
-                  <TrayHelp>
-                    {locked
-                      ? 'Shipping list is in step 2 — export CSV for Shopify.'
-                      : 'Locking is the commit. Then you get a shipping CSV. No extra tools.'}
-                  </TrayHelp>
-                </Tray>
-              </Layout>
-            )}
-          </View>
-        )}
-
-        {step === 2 && (
-          <View>
-            <TaskRow>
-              <div>
-                <TaskTitle>Ship from Shopify or ShipStation</TaskTitle>
-                <TaskSub>
-                  Download the CSV, import it the way you already ship orders, then mark
-                  this roster shipped. We tell creators a box is coming — you don’t manage DMs.
-                </TaskSub>
-              </div>
-            </TaskRow>
-            <ShipBar>
-              <BtnPrimary type="button" onClick={downloadCsv}>
-                Download shipping CSV
-              </BtnPrimary>
-              <BtnGhost
-                type="button"
-                disabled={busy || shipped}
-                onClick={onMarkShipped}
-              >
-                {shipped ? 'Marked shipped' : 'I’ve shipped everyone'}
-              </BtnGhost>
-            </ShipBar>
-            <TableWrap>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Creator</th>
-                    <th>Ship to</th>
-                    <th>What to send</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedCreators.map((c) => (
-                    <tr key={c.application_id}>
-                      <td>
-                        <b>{c.name}</b>
-                        <br />
-                        <Muted>{c.handle}</Muted>
-                      </td>
-                      <td style={{ whiteSpace: 'pre-line' }}>{formatShipBlock(c.shipping_address)}</td>
-                      <td>{sku}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </TableWrap>
-          </View>
-        )}
-
-        {step === 3 && (
-          <View>
-            <TaskRow>
-              <div>
-                <TaskTitle>Your content inbox</TaskTitle>
-                <TaskSub>
-                  When they post, the organic link and a downloadable UGC file land here.
-                  Reuse in ads for 6 months. Come back to this same link — nothing else to log into.
-                </TaskSub>
-              </div>
-            </TaskRow>
-            {billing?.needs_subscribe ? (
-              <Paywall>
-                <div>
-                  <PaywallTitle>Continue with Gifted UGC — $299/mo</PaywallTitle>
-                  <PaywallSub>
-                    First campaign done. Next month: 5 more creators, same 6-month ad reuse.
-                    Cancel anytime.
-                  </PaywallSub>
-                </div>
-                <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
-                  {checkoutBusy ? 'Opening checkout…' : 'Subscribe — $299/mo'}
-                </BtnPrimary>
-              </Paywall>
-            ) : null}
-            {billing?.subscribed ? (
-              <Paywall $quiet>
-                <div>
-                  <PaywallTitle>Gifted UGC plan active</PaywallTitle>
-                  <PaywallSub>Your next roster can mint anytime. Manage billing in Stripe.</PaywallSub>
-                </div>
-                <BtnGhost type="button" disabled={checkoutBusy} onClick={onManageBilling}>
-                  Manage billing
-                </BtnGhost>
-              </Paywall>
-            ) : null}
-            <Inbox>
-              {selectedCreators.map((c) => {
-                const ready = c.status === 'posted';
-                const color = hueFromName(c.name);
-                const cover = c.posts?.[0]?.thumbnail_url;
-                return (
-                  <Piece key={c.application_id}>
-                    <Ph $ready={ready} $color={color} $img={cover}>
-                      {ready ? 'UGC ready' : 'Waiting on their post'}
-                    </Ph>
-                    <Meta>
-                      <b>{c.name}</b>
-                      {ready
-                        ? <Ok>Organic + UGC file ready to download</Ok>
-                        : 'Usually 5–10 days after delivery'}
-                    </Meta>
-                  </Piece>
-                );
-              })}
-            </Inbox>
-          </View>
-        )}
-      </Inner>
+      </Foot>
 
       <Drawer $open={!!drawer} onClick={(e) => e.target === e.currentTarget && setDrawerId(null)}>
         {drawer && (
           <Panel>
             <More type="button" onClick={() => setDrawerId(null)}>Close</More>
-            <Av
-              $color={hueFromName(drawer.name)}
-              $hasImg={!!drawer.avatar_url}
-              style={{ width: 56, height: 56, marginTop: 12 }}
-            >
-              {drawer.avatar_url ? <img src={drawer.avatar_url} alt="" /> : null}
+            <Av $color={hueFromName(drawer.name)} $img={mediaUrl(drawer.avatar_url)} style={{ width: 56, height: 56, marginTop: 8 }}>
               <span>{initials(drawer.name)}</span>
             </Av>
             <h2>{drawer.name}</h2>
@@ -600,10 +633,7 @@ export default function BrandPRRoster() {
               {[drawer.handle, drawer.city].filter(Boolean).join(' · ')}
             </LocationLine>
             <SocialRow socials={drawer.socials} />
-            <Bio>
-              Applied for a gifted PR package. You’re reviewing the posts they chose
-              as proof they can make content for {brandName}.
-            </Bio>
+            <Bio>Applied for a gifted PR package from {brandName}.</Bio>
             <Stats>
               <div>
                 <b>{drawer.followers_label || '—'}</b>
@@ -621,7 +651,7 @@ export default function BrandPRRoster() {
                 <BigThumb
                   key={i}
                   $color={hueFromName(drawer.name)}
-                  $img={p.thumbnail_url}
+                  $img={mediaUrl(p.thumbnail_url)}
                   href={p.post_url || undefined}
                   target={p.post_url ? '_blank' : undefined}
                   rel="noopener noreferrer"
@@ -651,9 +681,9 @@ export default function BrandPRRoster() {
 }
 
 const SOCIAL_ICONS = {
-  instagram: { src: 'https://cdn.simpleicons.org/instagram/E4405F', label: 'Instagram' },
-  tiktok: { src: 'https://cdn.simpleicons.org/tiktok/000000', label: 'TikTok' },
-  youtube: { src: 'https://cdn.simpleicons.org/youtube/FF0000', label: 'YouTube' },
+  instagram: { src: 'https://cdn.simpleicons.org/instagram/12141a', label: 'Instagram' },
+  tiktok: { src: 'https://cdn.simpleicons.org/tiktok/12141a', label: 'TikTok' },
+  youtube: { src: 'https://cdn.simpleicons.org/youtube/12141a', label: 'YouTube' },
 };
 
 function LocationLine({ countryCode, country, children }) {
@@ -664,7 +694,6 @@ function LocationLine({ countryCode, country, children }) {
           src={`https://flagcdn.com/w40/${countryCode}.png`}
           srcSet={`https://flagcdn.com/w80/${countryCode}.png 2x`}
           alt={country || countryCode.toUpperCase()}
-          title={country || countryCode.toUpperCase()}
         />
       ) : null}
       <span>{children}</span>
@@ -685,7 +714,6 @@ function SocialRow({ socials }) {
             href={s.url}
             target="_blank"
             rel="noopener noreferrer"
-            title={icon.label}
             aria-label={`Open ${icon.label}`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -697,77 +725,64 @@ function SocialRow({ socials }) {
   );
 }
 
+function Cover({ src, color }) {
+  const [broken, setBroken] = useState(false);
+  const url = mediaUrl(src);
+  if (url && !broken) {
+    return <img src={url} alt="" onError={() => setBroken(true)} />;
+  }
+  return <i style={{ background: color }} />;
+}
+
 function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
   const color = hueFromName(c.name);
+  const thumbs = (c.posts || []).map((p) => p.thumbnail_url).filter(Boolean);
+  if (c.avatar_url && !thumbs.includes(c.avatar_url) && thumbs.length < 3) {
+    thumbs.push(c.avatar_url);
+  }
+  const collage = thumbs.length >= 2;
+  const where = [c.handle, c.city].filter(Boolean).join(' · ') || 'Creator';
   return (
-    <Card $on={selected} $out={c.skipped}>
-      {selected && <OnList>On your list</OnList>}
-      <Who>
-        <Av $color={color} $hasImg={!!c.avatar_url}>
-          {c.avatar_url ? (
-            <img src={c.avatar_url} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-          ) : null}
-          <span>{initials(c.name)}</span>
-        </Av>
-        <div>
-          <h3>{c.name}</h3>
-          <LocationLine countryCode={c.country_code} country={c.country}>
-            {[c.handle, c.city].filter(Boolean).join(' · ') || 'Creator'}
-          </LocationLine>
-          <SocialRow socials={c.socials} />
-        </div>
-      </Who>
-      <Stats>
-        <div>
-          <b>{c.followers_label || '—'}</b>
-          followers
-        </div>
-        <div>
-          <b>{c.niche || 'Creator'}</b>
-          niche
-        </div>
-        {c.engagement_label ? (
-          <div>
-            <b>{c.engagement_label}</b>
-            engagement
-          </div>
-        ) : null}
-      </Stats>
-      <Thumbs>
-        {(c.posts || []).slice(0, 3).map((p, i) => (
-          <Thumb
-            key={`${c.application_id}-${i}`}
-            $color={color}
-            $img={p.thumbnail_url}
-            href={p.post_url || undefined}
-            target={p.post_url ? '_blank' : undefined}
-            rel="noopener noreferrer"
-            as={p.post_url ? 'a' : 'div'}
-          />
-        ))}
-        {!(c.posts || []).length && (
-          <>
-            <Thumb $color={color} />
-            <Thumb $color={color} />
-            <Thumb $color={color} />
-          </>
+    <Card $on={selected}>
+      <LookThumbs type="button" onClick={() => onOpen(c.application_id)} aria-label={`See posts from ${c.name}`} $solo={!collage}>
+        <LookBig><Cover src={thumbs[0]} color={color} /></LookBig>
+        {collage && (
+          <LookStack $one={!thumbs[2]}>
+            <LookSmall><Cover src={thumbs[1]} color={color} /></LookSmall>
+            {thumbs[2] ? <LookSmall><Cover src={thumbs[2]} color={color} /></LookSmall> : null}
+          </LookStack>
         )}
-      </Thumbs>
-      <Actions>
-        <BtnYes
-          type="button"
-          disabled={busy || selected || locked}
-          onClick={() => onApprove(c.application_id)}
-        >
-          {selected ? 'Added' : 'Add to gift list'}
-        </BtnYes>
-        <BtnNo type="button" disabled={busy || locked} onClick={() => onSkip(c.application_id)}>
-          Skip
-        </BtnNo>
-      </Actions>
-      <More type="button" onClick={() => onOpen(c.application_id)}>
-        See their posts
-      </More>
+        {selected ? <Picked>Added</Picked> : null}
+      </LookThumbs>
+      <CardBody>
+        <Who>
+          <Av $color={color} $sm $img={mediaUrl(c.avatar_url)}>
+            <span>{initials(c.name)}</span>
+          </Av>
+          <div>
+            <NameLine>
+              <h3>{c.name}</h3>
+              {c.followers_label ? <Followers>{c.followers_label}</Followers> : null}
+            </NameLine>
+            <LocationLine countryCode={c.country_code} country={c.country}>{where}</LocationLine>
+          </div>
+        </Who>
+        {(c.niche || c.country_code) && (
+          <Chips>
+            {c.niche ? <i>{c.niche}</i> : null}
+            {c.country_code ? <i>{c.country_code.toUpperCase()}</i> : null}
+          </Chips>
+        )}
+        {!locked && (
+          <Actions>
+            <BtnYes type="button" disabled={busy || selected} onClick={() => onApprove(c.application_id)}>
+              {selected ? 'Added' : 'Add'}
+            </BtnYes>
+            <BtnNo type="button" disabled={busy} onClick={() => onSkip(c.application_id)}>Skip</BtnNo>
+          </Actions>
+        )}
+        {locked && selected && <StatusLine>On your gift list</StatusLine>}
+      </CardBody>
     </Card>
   );
 }
@@ -775,354 +790,382 @@ function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
 const Shell = styled.div`
   min-height: 100vh;
   min-height: 100dvh;
-  background: ${BG};
+  background: ${PAPER};
   font-family: ${FONT};
   color: ${INK};
-  overflow-x: hidden;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  overflow-x: clip;
+  *, *::before, *::after { box-sizing: border-box; }
 `;
 const Inner = styled.div`
   width: 100%;
-  max-width: 1180px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 0 28px;
-  display: ${(p) => (p.$split || p.$row ? 'flex' : 'block')};
-  justify-content: ${(p) => (p.$split ? 'space-between' : 'flex-start')};
-  align-items: ${(p) => (p.$middle ? 'center' : p.$split ? 'flex-start' : 'stretch')};
-  gap: ${(p) => (p.$steps ? '0' : p.$split ? '24px' : '0')};
-  flex-wrap: ${(p) => (p.$steps ? 'nowrap' : p.$split ? 'wrap' : 'nowrap')};
+  box-sizing: border-box;
+  ${(p) => p.$bar ? `
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  ` : ''}
   @media (max-width: 720px) {
     padding: 0 16px;
-    ${(p) =>
-      p.$split
-        ? `
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    `
-        : ''}
-    ${(p) =>
-      p.$steps
-        ? `
-      padding: 0;
-      width: 100%;
-    `
-        : ''}
+    ${(p) => p.$bar ? 'align-items: flex-start; flex-wrap: wrap;' : ''}
   }
 `;
 const LoadingNote = styled.p`
-  padding: 80px 28px;
+  padding: 80px 24px;
   text-align: center;
-  color: ${MUTED};
+  color: ${MUTE};
   font-weight: 600;
 `;
 const EmptyState = styled.div`
-  padding: 64px 20px;
+  padding: 48px 16px;
   text-align: center;
-  h1, h2 { font-family: ${DISPLAY}; font-weight: 400; margin: 0 0 10px; }
-  p { color: ${MUTED}; margin: 0 auto; max-width: 28rem; line-height: 1.5; }
+  background: ${CREAM};
+  border: 1px solid ${LINE};
+  border-radius: ${RADIUS};
+  h1, h2 { font-size: 20px; margin: 0 0 8px; }
+  p { color: ${MUTE}; margin: 0 auto; max-width: 28rem; line-height: 1.5; }
 `;
-const TopBar = styled.div`
+const Chrome = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 20;
   background: ${CREAM};
   border-bottom: 1px solid ${LINE};
-  padding: 14px 0;
-  @media (max-width: 720px) { padding: 12px 0; }
+  padding: 12px 0 10px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  overflow-x: hidden;
+  @media (max-width: 720px) {
+    padding: 10px 0 8px;
+    padding-top: max(10px, env(safe-area-inset-top));
+  }
 `;
-const BrandLockup = styled.div`
+const ChromeTop = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px 12px;
   min-width: 0;
+  @media (max-width: 900px) { flex-wrap: wrap; }
+  @media (max-width: 720px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+`;
+const ChromeBot = styled.div`
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid ${LINE};
+`;
+const Brand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 0;
+  @media (max-width: 720px) { min-width: 0; }
 `;
 const Logo = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
-  background: #fff;
+  background: ${WHITE};
   border: 1px solid ${LINE};
-  border-radius: 10px;
+  border-radius: 9px;
   flex-shrink: 0;
 `;
 const LogoFallback = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   background: ${INK};
   color: #fff;
   display: grid;
   place-items: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
-`;
-const Eyebrow = styled.div`
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: ${GREEN_DEEP};
 `;
 const BrandName = styled.div`
   font-size: 15px;
-  font-weight: 650;
-  line-height: 1.25;
-  word-break: break-word;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
-const QuietNote = styled.p`
-  margin: 0;
+const BrandMeta = styled.div`
+  margin-top: 1px;
   font-size: 12px;
-  color: ${MUTED};
-  font-weight: 500;
-  @media (max-width: 720px) {
-    font-size: 11px;
-    line-height: 1.35;
-    padding-left: 52px;
-  }
+  color: ${MUTE};
 `;
-const Hero = styled.section`
-  background: ${CREAM};
-  padding: 28px 0 8px;
-  h1 {
-    font-family: ${DISPLAY};
-    font-size: clamp(28px, 4vw, 42px);
-    font-weight: 400;
-    letter-spacing: -.03em;
-    line-height: 1.12;
-    margin: 0 0 12px;
-    max-width: 22ch;
-    em {
-      font-style: italic;
-      color: ${GREEN_DEEP};
-      display: block;
-    }
-  }
-  @media (max-width: 720px) {
-    padding: 18px 0 4px;
-    h1 {
-      max-width: none;
-      font-size: clamp(26px, 8vw, 34px);
-      margin-bottom: 10px;
-    }
-  }
-`;
-const HeroLead = styled.p`
-  margin: 0 0 22px;
-  max-width: 40rem;
-  font-size: 16px;
-  line-height: 1.5;
-  color: ${tokens.inkSoft};
-  @media (max-width: 720px) {
-    font-size: 15px;
-    margin-bottom: 14px;
-  }
-`;
-const CompactDeal = styled.div`
+const LinkRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 0;
-  margin: 0 0 16px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: ${GREEN_BG};
-  border: 1px solid ${tokens.accentBorder};
-  font-size: 13px;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  @media (max-width: 720px) {
+    grid-column: 1 / -1;
+    flex: none;
+  }
+`;
+const LinkChip = styled.a`
+  font-size: 12px;
   font-weight: 600;
   color: ${INK};
-  line-height: 1.35;
-`;
-const Dot = styled.span`
-  margin: 0 8px;
-  color: ${MUTED};
-  font-weight: 500;
-`;
-const Exchange = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  padding-bottom: 22px;
-  @media (max-width: 800px) {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    padding-bottom: 16px;
-  }
-`;
-const ExCard = styled.div`
-  background: ${(p) => (p.$accent ? GREEN_BG : tokens.subtle)};
-  border: 1px solid ${(p) => (p.$accent ? tokens.accentBorder : 'transparent')};
-  border-radius: 14px;
-  padding: 14px 16px;
-  strong { display: block; font-size: 15px; margin: 2px 0 6px; }
-  span { display: block; font-size: 13px; color: ${MUTED}; line-height: 1.4; }
+  text-decoration: none;
+  background: ${WHITE};
+  border: 1px solid ${LINE};
+  border-radius: 999px;
+  padding: 4px 9px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  .short { display: none; }
+  &:hover { background: ${SUBTLE}; }
   @media (max-width: 720px) {
-    padding: 12px 14px;
-    strong { font-size: 14px; }
+    max-width: 100%;
+    .wide { display: none; }
+    .short { display: inline; }
   }
 `;
-const ExKicker = styled.div`
+const Pill = styled.div`
+  flex-shrink: 0;
+  margin-left: auto;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: .06em;
+  letter-spacing: .04em;
   text-transform: uppercase;
   color: ${GREEN_DEEP};
+  background: ${GREEN_BG};
+  border: 1px solid ${tokens.accentBorder};
+  border-radius: 999px;
+  padding: 6px 10px;
+  @media (max-width: 720px) {
+    margin-left: 0;
+    grid-column: 2;
+    grid-row: 1;
+  }
 `;
-const Steps = styled.nav`
-  background: ${CREAM};
-  border-top: 1px solid ${LINE};
-  border-bottom: 1px solid ${LINE};
-  position: sticky;
-  top: 0;
-  z-index: 30;
-`;
-const StepBtn = styled.button`
-  border: 0;
-  background: none;
-  padding: 14px 18px 12px 0;
-  margin-right: 22px;
+const DealMini = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
-  font-weight: 650;
-  color: ${(p) => (p.$on ? INK : MUTED)};
-  border-bottom: 2px solid ${(p) => (p.$on ? INK : 'transparent')};
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-  min-height: 52px;
-  &:disabled { opacity: .38; cursor: not-allowed; }
-  @media (max-width: 720px) {
-    flex: 1 1 0;
-    margin-right: 0;
-    padding: 12px 8px 10px;
-    gap: 8px;
-    font-size: 13px;
-    justify-content: center;
-    min-width: 0;
-    > span { min-width: 0; }
-  }
+  min-width: 0;
+  flex: 1;
 `;
-const StepNum = styled.span`
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: ${INK};
-  color: #fff;
-  font-size: 11px;
-  display: grid;
-  place-items: center;
+const Still = styled.img`
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid ${LINE};
   flex-shrink: 0;
+  background: ${SUBTLE};
 `;
-const StepHint = styled.span`
-  display: block;
-  font-size: 11px;
-  font-weight: 500;
-  color: ${MUTED};
-  margin-top: 1px;
-  @media (max-width: 720px) {
-    font-size: 10px;
+const DealCopy = styled.div`
+  min-width: 0;
+  strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
   }
-`;
-const View = styled.section`
-  padding: 22px 0 56px;
+  span {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: ${MUTE};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   @media (max-width: 720px) {
-    padding: 16px 0 calc(40px + env(safe-area-inset-bottom, 0px));
+    span {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
   }
 `;
-const TaskRow = styled.div`
+const StepRow = styled.nav`
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  @media (max-width: 900px) {
+    width: 100%;
+    margin-left: 0;
+    order: 3;
+  }
   @media (max-width: 720px) {
-    gap: 10px;
-    margin-bottom: 14px;
+    grid-column: 1 / -1;
+    order: 0;
   }
 `;
-const TaskTitle = styled.h2`
-  font-size: 18px;
-  font-weight: 650;
-  margin: 0 0 6px;
-  letter-spacing: -.02em;
-  @media (max-width: 720px) { font-size: 17px; }
-`;
-const TaskSub = styled.p`
-  margin: 0;
-  font-size: 14px;
-  color: ${MUTED};
-  line-height: 1.45;
-  max-width: 40rem;
-`;
-const Need = styled.div`
-  font-size: 13px;
-  font-weight: 650;
-  background: ${GREEN_BG};
-  color: ${GREEN_DEEP};
+const StepBtn = styled.button`
+  border: 0;
+  background: ${(p) => (p.$on ? INK : SUBTLE)};
+  color: ${(p) => (p.$on ? '#fff' : MUTE)};
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 650;
+  font-family: inherit;
+  cursor: pointer;
+  min-height: 34px;
   white-space: nowrap;
+  em { font-style: normal; font-weight: 500; opacity: .75; }
+  &:disabled { opacity: .45; cursor: not-allowed; }
+  @media (max-width: 1200px) {
+    em.hint { display: none; }
+  }
+  @media (max-width: 900px) { flex: 1; justify-content: center; }
+`;
+const StepNum = styled.span`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: ${(p) => (p.$on ? 'rgba(255,255,255,.18)' : LINE)};
+  color: inherit;
+  font-size: 10px;
+  display: grid;
+  place-items: center;
+`;
+const Main = styled.main`
+  padding: 18px 0 48px;
+  @media (max-width: 720px) {
+    padding: 14px 0 132px;
+  }
+`;
+const Head = styled.div`
+  margin-bottom: 14px;
+  h1 { font-size: 18px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 3px; }
+  p { margin: 0; font-size: 13px; color: ${MUTE}; }
 `;
 const Layout = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
   align-items: start;
-  @media (max-width: 980px) {
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    > aside {
-      order: -1;
-      position: static;
-    }
   }
 `;
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  @media (max-width: 720px) { grid-template-columns: 1fr; }
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const Card = styled.article`
-  background: ${CREAM};
+  background: ${WHITE};
   border: 1px solid ${(p) => (p.$on ? GREEN : LINE)};
   box-shadow: ${(p) => (p.$on ? `0 0 0 1px ${GREEN}` : 'none')};
-  border-radius: 16px;
-  padding: 16px;
-  position: relative;
-  opacity: ${(p) => (p.$out ? 0.45 : 1)};
+  border-radius: ${RADIUS};
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
-const OnList = styled.div`
+const LookThumbs = styled.button`
+  display: grid;
+  grid-template-columns: ${(p) => (p.$solo ? '1fr' : '1.45fr 1fr')};
+  gap: 2px;
+  aspect-ratio: 4 / 3;
+  background: ${SUBTLE};
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  img, i {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  i { font-style: normal; }
+`;
+const LookBig = styled.div` min-width: 0; min-height: 0; overflow: hidden; `;
+const LookStack = styled.div`
+  display: grid;
+  grid-template-rows: ${(p) => (p.$one ? '1fr' : '1fr 1fr')};
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+`;
+const LookSmall = styled.div` min-width: 0; min-height: 0; overflow: hidden; `;
+const Picked = styled.span`
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  left: 8px;
+  background: ${GREEN};
+  color: #fff;
   font-size: 11px;
   font-weight: 700;
-  color: ${GREEN_DEEP};
-  background: ${GREEN_BG};
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 3px 8px;
+`;
+const CardBody = styled.div`
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
 `;
 const Who = styled.div`
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding-right: 84px;
-  h3 { font-size: 16px; margin: 0; }
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  > div { min-width: 0; flex: 1; }
+`;
+const NameLine = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+`;
+const Followers = styled.b`
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${INK};
 `;
 const Loc = styled.p`
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: ${MUTED};
-  margin: 3px 0 0;
+  color: ${MUTE};
+  margin: 2px 0 0;
   min-width: 0;
-  span { overflow: hidden; text-overflow: ellipsis; }
+  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `;
 const Flag = styled.img`
   width: 16px;
@@ -1130,76 +1173,73 @@ const Flag = styled.img`
   object-fit: cover;
   border-radius: 2px;
   flex-shrink: 0;
-  box-shadow: 0 0 0 1px rgba(18,20,26,.08);
 `;
-const Socials = styled.div`
+const Chips = styled.div`
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+  i {
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 600;
+    color: ${MUTE};
+    background: ${SUBTLE};
+    border-radius: 999px;
+    padding: 3px 8px;
+  }
 `;
+const StatusLine = styled.p`
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${GREEN_DEEP};
+`;
+const Socials = styled.div` display: flex; gap: 8px; margin-top: 8px; `;
 const SocialLink = styled.a`
   width: 28px;
   height: 28px;
   border-radius: 8px;
   border: 1px solid ${LINE};
-  background: #fff;
+  background: ${WHITE};
   display: grid;
   place-items: center;
-  img { width: 16px; height: 16px; display: block; }
-  &:hover { border-color: ${INK}; }
+  img { width: 14px; height: 14px; }
 `;
 const Av = styled.div`
-  width: 48px;
-  height: 48px;
+  flex: 0 0 ${(p) => (p.$sm ? '32px' : '48px')};
+  width: ${(p) => (p.$sm ? '32px' : '48px')};
+  height: ${(p) => (p.$sm ? '32px' : '48px')};
+  min-width: ${(p) => (p.$sm ? '32px' : '48px')};
+  min-height: ${(p) => (p.$sm ? '32px' : '48px')};
+  max-width: ${(p) => (p.$sm ? '32px' : '48px')};
+  max-height: ${(p) => (p.$sm ? '32px' : '48px')};
+  align-self: center;
   border-radius: 50%;
-  background: ${(p) => p.$color};
+  background-color: ${(p) => p.$color};
+  background-image: ${(p) => (p.$img ? `url("${p.$img}")` : 'none')};
+  background-size: cover;
+  background-position: center;
   color: #fff;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 14px;
-  flex-shrink: 0;
+  font-size: ${(p) => (p.$sm ? '10px' : '14px')};
   overflow: hidden;
-  position: relative;
-  img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 1;
-  }
-  span { position: relative; z-index: 0; }
+  span { display: ${(p) => (p.$img ? 'none' : 'grid')}; }
 `;
 const Stats = styled.div`
   display: flex;
   gap: 16px;
-  margin: 14px 0 12px;
+  margin: 12px 0;
   font-size: 12px;
-  color: ${MUTED};
+  color: ${MUTE};
   b { color: ${INK}; display: block; font-size: 14px; }
 `;
-const Thumbs = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
-`;
-const Thumb = styled.div`
-  display: block;
-  height: 88px;
-  border-radius: 8px;
-  background: ${(p) => (p.$img ? `center/cover url("${p.$img}")` : p.$color)};
-  opacity: ${(p) => (p.$img ? 1 : 0.72)};
-`;
-const Actions = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-`;
+const Actions = styled.div` display: flex; gap: 8px; margin-top: auto; `;
 const BtnYes = styled.button`
   flex: 1;
   border: 0;
-  border-radius: 10px;
+  border-radius: ${RADIUS_BTN};
   padding: 10px;
   font-weight: 650;
   font-size: 13px;
@@ -1207,56 +1247,54 @@ const BtnYes = styled.button`
   color: #fff;
   font-family: inherit;
   cursor: pointer;
-  min-height: 44px;
+  min-height: 40px;
   &:disabled { background: ${GREEN}; cursor: default; }
 `;
 const BtnNo = styled.button`
-  flex: 0 0 auto;
-  min-width: 72px;
+  flex: 0 0 88px;
+  @media (max-width: 720px) { flex: 0 0 96px; }
   border: 1px solid ${LINE};
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: ${RADIUS_BTN};
+  padding: 10px;
   font-weight: 650;
   font-size: 13px;
   background: ${CREAM};
   color: ${INK};
   font-family: inherit;
   cursor: pointer;
-  min-height: 44px;
-  &:disabled { opacity: 0.5; cursor: default; }
+  min-height: 40px;
+  &:disabled { opacity: .5; }
 `;
 const More = styled.button`
   border: 0;
   background: none;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: ${MUTED};
-  margin-top: 10px;
+  color: ${MUTE};
   font-family: inherit;
   cursor: pointer;
   padding: 8px 0;
-  min-height: 44px;
   &:hover { color: ${INK}; }
 `;
 const SkippedWrap = styled.div`
-  margin-top: 18px;
+  margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px dashed ${LINE};
+  border-top: 1px solid ${LINE};
 `;
 const SkippedLabel = styled.div`
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: .06em;
   text-transform: uppercase;
-  color: ${MUTED};
-  margin-bottom: 8px;
+  letter-spacing: .04em;
+  color: ${MUTE};
+  margin-bottom: 6px;
 `;
 const SkippedRow = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 12px;
   font-size: 13px;
-  color: ${MUTED};
+  color: ${MUTE};
   padding: 6px 0;
   button {
     border: 0;
@@ -1269,100 +1307,134 @@ const SkippedRow = styled.div`
   }
 `;
 const Tray = styled.aside`
-  background: ${CREAM};
+  background: ${WHITE};
   border: 1px solid ${LINE};
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: ${RADIUS};
+  padding: 14px;
   position: sticky;
-  top: 16px;
+  top: 118px;
+  min-width: 0;
+  @media (max-width: 720px) {
+    position: fixed;
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 25;
+    padding: 10px 12px;
+    box-shadow: 0 10px 28px rgba(18, 20, 26, 0.14);
+  }
 `;
-const TrayHead = styled.div`
-  margin-bottom: 12px;
-  h2 { font-size: 15px; margin: 0 0 10px; }
+const TrayTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: ${MUTE}; }
+  b {
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    line-height: 1;
+    flex-shrink: 0;
+    i { font-style: normal; color: ${MUTE}; font-weight: 650; }
+  }
 `;
 const Meter = styled.div`
   height: 6px;
-  background: ${tokens.subtle};
+  background: ${SUBTLE};
   border-radius: 99px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin: 10px 0 8px;
+  @media (max-width: 720px) { margin: 8px 0 0; }
 `;
 const MeterFill = styled.div`
   height: 100%;
   width: ${(p) => Math.min(100, p.$pct || 0)}%;
   background: ${GREEN};
-  transition: width .2s ease;
 `;
 const TraySub = styled.p`
   font-size: 12px;
-  color: ${MUTED};
-  margin: 0;
+  color: ${MUTE};
+  margin: 0 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @media (max-width: 720px) { display: none; }
+`;
+const TraySeats = styled.div`
+  @media (max-width: 720px) {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-top: 8px;
+    padding-bottom: 2px;
+    > * { flex: 0 0 160px; margin-bottom: 0; }
+  }
 `;
 const Slot = styled.div`
   border: 1px ${(p) => (p.$full ? 'solid' : 'dashed')} ${LINE};
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 8px 10px;
   font-size: 13px;
-  color: ${(p) => (p.$full ? INK : MUTED)};
+  color: ${(p) => (p.$full ? INK : MUTE)};
   background: ${(p) => (p.$full ? GREEN_BG : 'transparent')};
-  margin-bottom: 8px;
-  min-height: 52px;
+  margin-bottom: 6px;
+  min-height: 44px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
+  ${(p) => p.$empty ? `
+    @media (max-width: 720px) { display: none; }
+  ` : ''}
   button {
     border: 0;
     background: none;
-    color: ${MUTED};
+    color: ${MUTE};
     font-size: 12px;
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
+    flex-shrink: 0;
   }
 `;
-const SlotWho = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+const SlotCopy = styled.div`
   min-width: 0;
+  flex: 1;
   b { display: block; font-size: 13px; }
-  em { display: block; font-style: normal; font-size: 11px; color: ${MUTED}; }
+  em { display: block; font-style: normal; font-size: 11px; color: ${MUTE}; }
 `;
 const MiniAv = styled.div`
+  flex: 0 0 28px;
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: ${(p) => p.$color};
-  color: #fff;
+  background-color: ${(p) => p.$color};
+  background-image: ${(p) => (p.$img ? `url("${p.$img}")` : 'none')};
+  background-size: cover;
+  background-position: center;
   font-size: 10px;
   font-weight: 700;
   overflow: hidden;
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  img { width: 100%; height: 100%; object-fit: cover; }
+  color: ${(p) => (p.$img ? 'transparent' : '#fff')};
 `;
 const Go = styled.button`
   width: 100%;
   margin-top: 8px;
+  @media (max-width: 720px) { min-height: 42px; padding: 10px; }
   border: 0;
   background: ${INK};
   color: #fff;
-  border-radius: 12px;
-  padding: 13px 12px;
+  border-radius: ${RADIUS_BTN};
+  padding: 12px;
   font-weight: 700;
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  min-height: 48px;
-  &:disabled { background: #ddd; color: #888; cursor: default; }
-`;
-const TrayHelp = styled.p`
-  margin: 10px 0 0;
-  font-size: 12px;
-  color: ${MUTED};
-  line-height: 1.4;
+  min-height: 44px;
+  &:disabled { background: #d8d4cc; color: #8a8478; cursor: default; }
 `;
 const ShipBar = styled.div`
   display: flex;
@@ -1380,40 +1452,17 @@ const Paywall = styled.div`
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
-  padding: 16px 18px;
-  border-radius: 14px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: ${RADIUS};
   border: 1px solid ${(p) => (p.$quiet ? LINE : GREEN)};
   background: ${(p) => (p.$quiet ? CREAM : GREEN_BG)};
-  @media (max-width: 720px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 14px;
-    > button {
-      width: 100%;
-      min-height: 48px;
-    }
-  }
 `;
-const PaywallTitle = styled.div`
-  font-weight: 700;
-  font-size: 15px;
-  margin-bottom: 4px;
-  @media (max-width: 720px) {
-    font-size: 16px;
-    letter-spacing: -.01em;
-  }
-`;
-const PaywallSub = styled.div`
-  color: ${MUTED};
-  font-size: 13px;
-  line-height: 1.45;
-  max-width: 36rem;
-`;
+const PaywallTitle = styled.div` font-weight: 700; font-size: 15px; margin-bottom: 4px; `;
+const PaywallSub = styled.div` color: ${MUTE}; font-size: 13px; `;
 const BtnPrimary = styled.button`
   border: 0;
-  border-radius: 12px;
+  border-radius: ${RADIUS_BTN};
   padding: 12px 16px;
   font-weight: 700;
   font-size: 14px;
@@ -1422,11 +1471,11 @@ const BtnPrimary = styled.button`
   font-family: inherit;
   cursor: pointer;
   min-height: 44px;
-  &:disabled { opacity: 0.5; cursor: default; }
+  &:disabled { opacity: .5; }
 `;
 const BtnGhost = styled.button`
   border: 1px solid ${LINE};
-  border-radius: 12px;
+  border-radius: ${RADIUS_BTN};
   padding: 12px 16px;
   font-weight: 650;
   font-size: 14px;
@@ -1435,37 +1484,19 @@ const BtnGhost = styled.button`
   font-family: inherit;
   cursor: pointer;
   min-height: 44px;
-  &:disabled { opacity: 0.5; cursor: default; }
+  &:disabled { opacity: .5; }
 `;
 const TableWrap = styled.div`
   background: ${CREAM};
-  border-radius: 14px;
-  overflow: hidden;
+  border-radius: ${RADIUS};
+  overflow: auto;
   border: 1px solid ${LINE};
-  table { width: 100%; border-collapse: collapse; }
-  th, td {
-    text-align: left;
-    padding: 14px 16px;
-    font-size: 13px;
-    border-bottom: 1px solid ${LINE};
-    vertical-align: top;
-  }
-  th {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    color: ${MUTED};
-    background: ${tokens.subtle};
-  }
+  table { width: 100%; border-collapse: collapse; min-width: 520px; }
+  th, td { text-align: left; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid ${LINE}; vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${MUTE}; background: ${SUBTLE}; }
   tr:last-child td { border-bottom: 0; }
-  @media (max-width: 720px) {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    table { min-width: 520px; }
-    th, td { padding: 12px; }
-  }
 `;
-const Muted = styled.span`color: ${MUTED};`;
+const Muted = styled.span` color: ${MUTE}; `;
 const Inbox = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1473,34 +1504,31 @@ const Inbox = styled.div`
 `;
 const Piece = styled.div`
   background: ${CREAM};
-  border-radius: 14px;
+  border-radius: ${RADIUS};
   overflow: hidden;
   border: 1px solid ${LINE};
 `;
 const Ph = styled.div`
-  height: 160px;
+  height: 150px;
   font-size: 12px;
   font-weight: 700;
-  color: ${(p) => (p.$ready ? '#fff' : MUTED)};
+  color: ${(p) => (p.$ready ? '#fff' : MUTE)};
   padding: 12px;
   display: flex;
   align-items: flex-end;
   background: ${(p) => (
     p.$img
       ? `linear-gradient(180deg, transparent 40%, rgba(18,20,26,.55)), center/cover url("${p.$img}")`
-      : (p.$ready ? p.$color : tokens.subtle)
+      : (p.$ready ? p.$color : SUBTLE)
   )};
 `;
 const Meta = styled.div`
-  padding: 12px 14px 14px;
+  padding: 12px;
   font-size: 13px;
-  color: ${MUTED};
+  color: ${MUTE};
   b { display: block; font-size: 14px; color: ${INK}; margin-bottom: 4px; }
 `;
-const Ok = styled.span`
-  color: ${GREEN_DEEP};
-  font-weight: 700;
-`;
+const Ok = styled.span` color: ${GREEN_DEEP}; font-weight: 700; `;
 const Drawer = styled.div`
   display: ${(p) => (p.$open ? 'flex' : 'none')};
   position: fixed;
@@ -1510,19 +1538,18 @@ const Drawer = styled.div`
   justify-content: flex-end;
 `;
 const Panel = styled.div`
-  width: 420px;
+  width: 400px;
   max-width: 100%;
   background: ${CREAM};
   height: 100%;
   height: 100dvh;
   overflow: auto;
-  padding: 22px;
-  padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px));
-  h2 { font-family: ${DISPLAY}; font-weight: 400; font-size: 24px; margin: 8px 0; }
+  padding: 20px;
+  h2 { font-size: 22px; margin: 8px 0; }
   @media (max-width: 720px) {
     width: 100%;
     padding: 16px;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 `;
 const Toast = styled.div`
@@ -1537,15 +1564,12 @@ const Toast = styled.div`
   padding: 10px 16px;
   font-size: 13px;
   font-weight: 650;
-  max-width: calc(100vw - 32px);
-  text-align: center;
-  box-shadow: ${tokens.shadowHover};
 `;
 const Bio = styled.p`
   font-size: 14px;
-  color: ${MUTED};
+  color: ${MUTE};
   line-height: 1.5;
-  margin: 10px 0 16px;
+  margin: 10px 0 0;
 `;
 const BigThumbs = styled.div`
   display: grid;
@@ -1557,4 +1581,18 @@ const BigThumb = styled.div`
   height: 120px;
   border-radius: 10px;
   background: ${(p) => (p.$img ? `center/cover url("${p.$img}")` : p.$color)};
+`;
+const Foot = styled.footer`
+  border-top: 1px solid ${LINE};
+  padding: 16px 0 24px;
+  font-size: 12px;
+  color: ${MUTE};
+  @media (max-width: 720px) {
+    padding-bottom: 24px;
+    ${Inner} {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+  }
 `;
