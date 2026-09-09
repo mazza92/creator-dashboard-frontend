@@ -106,6 +106,7 @@ const AdminReports = lazy(() => import('./admin/AdminReports'));
 const AdminEmail = lazy(() => import('./admin/AdminEmail'));
 const AdminOpportunities = lazy(() => import('./admin/AdminOpportunities'));
 const CreatorsAdmin = lazy(() => import('./admin/CreatorsAdmin'));
+const UgcSupplyAdmin = lazy(() => import('./admin/UgcSupplyAdmin'));
 
 // Skeleton components for Suspense fallbacks (non-lazy - needed immediately)
 import { ForYouSkeleton, DashboardOverviewSkeleton } from './components/Skeleton';
@@ -481,6 +482,7 @@ function AppContent() {
             {/* PR Hunter - Internal Tool (has its own login) */}
             <Route path='/supply' element={<PRHunter />} />
             <Route path='/admin/brands' element={<LazyRoute><BrandAdmin /></LazyRoute>} />
+            <Route path='/admin/ugc-supply' element={<LazyRoute><UgcSupplyAdmin /></LazyRoute>} />
             <Route path='/admin/creators' element={<LazyRoute><CreatorsAdmin /></LazyRoute>} />
             <Route path='/admin/reports' element={<LazyRoute><AdminReports /></LazyRoute>} />
             <Route path='/admin/email' element={<LazyRoute><AdminEmail /></LazyRoute>} />

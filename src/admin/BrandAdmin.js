@@ -1435,6 +1435,7 @@ const BrandAdmin = () => {
           <p>Manage PR directory brands - Click any cell to edit, changes auto-save</p>
         </div>
         <Space>
+          <Button href="/admin/ugc-supply">UGC Supply</Button>
           <Button onClick={handleLogout}>Logout</Button>
         </Space>
       </Header>
