@@ -7,6 +7,7 @@ import { Button, Spin, Tag, message } from 'antd';
 import { LinkOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { getCategoryColors } from '../../../utils/categoryColors';
+import AreYouThisBrand from '../../../components/AreYouThisBrand';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -343,6 +344,8 @@ export default function BrandPublicClient({ brand }) {
             </a>
           </div>
         </Box>
+
+        <AreYouThisBrand brandName={brand.name} />
       </Page>
     </LandingPageLayoutNext>
   );

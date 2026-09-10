@@ -13,6 +13,7 @@ import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import BrandLogo from '../components/BrandLogo';
 import { formatFollowers } from '../utils/format';
 import { resolveBrandStats } from '../utils/brandStats';
+import AreYouThisBrand from '../components/AreYouThisBrand';
 
 // Use shared API config with runtime detection
 const getApiBase = () => {
@@ -547,6 +548,8 @@ const PublicBrandPage = () => {
                   <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Open to Nano & Micro Creators</TrustRow>
                 </TrustList>
               </TrustCard>
+
+              <AreYouThisBrand brandName={brand.brand_name || brand.name} />
             </Sidebar>
           </PageGrid>
 

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BrandUnlockClient from './BrandUnlockClient';
 import BrandPageLayout from './BrandPageLayout';
+import AreYouThisBrand from '../../../components/AreYouThisBrand';
 import { resolveBrandStats } from '../../../utils/brandStats';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co';
@@ -1313,6 +1314,8 @@ export default async function BrandPage({ params }) {
                   </div>
                 </div>
               </div>
+
+              <AreYouThisBrand brandName={brand.name} />
             </aside>
           </div>
 
