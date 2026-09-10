@@ -6,6 +6,7 @@ import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings, F
 import api from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
+import CancelRetentionModal from './CancelRetentionModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { consumeUpgradeDeeplink, stripUpgradeQuery, dismissUpgradeDeeplink } from '../utils/upgradeDeeplink';
 
@@ -38,6 +39,7 @@ const AccountSettings = () => {
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('brand contacts');
 
   // Niche editing state
@@ -354,6 +356,18 @@ const AccountSettings = () => {
 
               <Divider />
 
+              {subscriptionInfo?.cancel_scheduled && subscriptionInfo?.ends_at && (
+                <HelpText>
+                  Cancellation scheduled for{' '}
+                  {new Date(subscriptionInfo.ends_at).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                  . You keep Pro until then.
+                </HelpText>
+              )}
+
               <ManageButton
                 onClick={handleManageSubscription}
                 disabled={portalLoading}
@@ -363,13 +377,22 @@ const AccountSettings = () => {
                 {portalLoading ? 'Opening...' : (
                   <>
                     <FiExternalLink />
-                    Manage Billing & Subscription
+                    Update payment method
                   </>
                 )}
               </ManageButton>
 
+              {!subscriptionInfo?.cancel_scheduled && (
+                <CancelLink
+                  type="button"
+                  onClick={() => setShowCancelModal(true)}
+                >
+                  Cancel subscription
+                </CancelLink>
+              )}
+
               <HelpText>
-                Update payment method, view invoices, or cancel subscription
+                Update your card or view invoices. Canceling asks why first — we can assign a talent manager or drop you to $12/month for 3 months.
               </HelpText>
             </>
           )}
@@ -460,6 +483,15 @@ const AccountSettings = () => {
           feature={upgradeFeature}
           currentCount={subscriptionInfo?.contacts_used_this_week || 0}
           limit={subscriptionInfo?.contacts_limit || 3}
+        />
+      )}
+
+      {showCancelModal && (
+        <CancelRetentionModal
+          isOpen={showCancelModal}
+          endsAt={subscriptionInfo?.ends_at}
+          onClose={() => setShowCancelModal(false)}
+          onChanged={fetchSubscriptionStatus}
         />
       )}
 
@@ -755,6 +787,25 @@ const UpgradeButton = styled(motion.button)`
   svg {
     width: 18px;
     height: 18px;
+  }
+`;
+
+const CancelLink = styled.button`
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:hover {
+    color: #dc2626;
   }
 `;
 

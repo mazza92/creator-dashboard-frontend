@@ -143,16 +143,17 @@ const SubscriptionSuccess = () => {
         <Title>Welcome to {subscriptionInfo?.tier === 'elite' ? 'Elite' : 'Pro'}! 🎉</Title>
 
         <Message>
-          Your subscription has been activated successfully. You now have access to unlimited brand saves, PR Packages, and premium features!
+          Pro is on. Brands usually take 2–4 weeks to reply — silence this week is normal.
+          Send 5 applications to brands that gift your size. We write the pitch and follow up.
         </Message>
 
         {!loading && subscriptionInfo && (
           <Features>
-            <Feature>✅ Unlimited brand saves</Feature>
-            <Feature>✅ Unlimited PR Packages per month</Feature>
-            <Feature>✅ Access to premium brands</Feature>
+            <Feature>✅ This week: send 5 applications (we write them)</Feature>
+            <Feature>✅ Unlimited brand credits while you wait</Feature>
+            <Feature>✅ We follow up so requests stay warm</Feature>
+            <Feature>✅ Kit-open tracking so you know who looked</Feature>
             <Feature>✅ Ready-to-send pitches in 3 tones</Feature>
-            <Feature>✅ Email tracking & analytics</Feature>
             {subscriptionInfo.tier === 'elite' && (
               <>
                 <Feature>✅ Professional PR tools</Feature>
@@ -182,7 +183,7 @@ const SubscriptionSuccess = () => {
         </ButtonGroup>
 
         <Footer>
-          You can manage your subscription anytime in your account settings.
+          Keep Pro through the first month. That is when most first replies land.
         </Footer>
       </SuccessCard>
     </Container>
