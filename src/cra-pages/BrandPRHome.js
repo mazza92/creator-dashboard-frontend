@@ -1353,7 +1353,7 @@ export default function BrandPRHome() {
               <Agree>
                 <li><strong>Gifted product only.</strong> No cash fee — the box is the collab.</li>
                 <li>If they ship: <strong>one organic post</strong> on your account, plus <strong>one UGC file</strong> (photo or video) they can download. That’s the full ask.</li>
-                <li>Post and send the file within <strong>14 days of delivery</strong>.</li>
+                <li>Post and send the file within <strong>4 days of package receipt</strong>.</li>
                 <li><strong>6-month usage.</strong> They can reuse that UGC in ads and on their channels for 6 months. You keep ownership. No exclusivity.</li>
               </Agree>
               <Chk>
