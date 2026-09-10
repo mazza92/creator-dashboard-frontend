@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import BeautyDirectoryClient from './BeautyDirectoryClient';
+import ForBrandsSeoLine from '../ForBrandsSeoLine';
 
 export const metadata = {
   title: 'Beauty Brand PR Application Forms - 100+ Beauty Brands (2026) | NewCollab',
@@ -211,6 +212,7 @@ export default async function BeautyDirectoryPage() {
           <p style={{ ...seoParagraphStyle, marginTop: '24px' }}>
             Browse more brand categories: <a href="/directory/skincare" style={seoLinkStyle}>Skincare</a> · <a href="/directory/fashion" style={seoLinkStyle}>Fashion</a> · <a href="/directory/wellness" style={seoLinkStyle}>Wellness</a> · <a href="/directory/lifestyle" style={seoLinkStyle}>Lifestyle</a> · <a href="/directory" style={seoLinkStyle}>All Brands</a>
           </p>
+          <ForBrandsSeoLine linkStyle={seoLinkStyle} paragraphStyle={{ ...seoParagraphStyle, marginTop: '16px', marginBottom: 0 }} />
         </section>
       </div>
     </>

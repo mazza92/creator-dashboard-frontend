@@ -8,6 +8,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { SearchOutlined, LinkOutlined, MailOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
+import ForBrandsCta from '../components/ForBrandsCta';
 import { getCategoryColors } from '../../utils/categoryColors';
 import { normalizeCategory, categoryLabel } from '../../constants/brandCategories';
 
@@ -1312,6 +1313,7 @@ export default function DirectoryClient({
               )}
             </>
           )}
+          <ForBrandsCta />
         </Container>
       </Page>
     </LandingPageLayoutNext>

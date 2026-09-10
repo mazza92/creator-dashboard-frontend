@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import FashionDirectoryClient from './FashionDirectoryClient';
+import ForBrandsSeoLine from '../ForBrandsSeoLine';
 
 export const metadata = {
   title: 'Fashion Brand PR Application Forms - Apply to Fashion Brand PR Lists (2026) | NewCollab',
@@ -189,6 +190,7 @@ export default async function FashionDirectoryPage() {
           <p style={{ ...seoParagraphStyle, marginTop: '24px' }}>
             Browse more categories: <a href="/directory/beauty" style={seoLinkStyle}>Beauty</a> · <a href="/directory/skincare" style={seoLinkStyle}>Skincare</a> · <a href="/directory/wellness" style={seoLinkStyle}>Wellness</a> · <a href="/directory/lifestyle" style={seoLinkStyle}>Lifestyle</a> · <a href="/directory" style={seoLinkStyle}>All Brands</a>
           </p>
+          <ForBrandsSeoLine linkStyle={seoLinkStyle} paragraphStyle={{ ...seoParagraphStyle, marginTop: '16px', marginBottom: 0 }} />
         </section>
       </div>
     </>

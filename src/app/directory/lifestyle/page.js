@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import LifestyleDirectoryClient from './LifestyleDirectoryClient';
+import ForBrandsSeoLine from '../ForBrandsSeoLine';
 
 export const metadata = {
   title: 'Lifestyle Brand PR Application Forms - Home & Travel Brands (2026) | NewCollab',
@@ -169,6 +170,7 @@ export default async function LifestyleDirectoryPage() {
           <p style={{ ...seoParagraphStyle, marginTop: '24px' }}>
             Browse more categories: <a href="/directory/beauty" style={seoLinkStyle}>Beauty</a> · <a href="/directory/fashion" style={seoLinkStyle}>Fashion</a> · <a href="/directory/wellness" style={seoLinkStyle}>Wellness</a> · <a href="/directory/skincare" style={seoLinkStyle}>Skincare</a> · <a href="/directory" style={seoLinkStyle}>All Brands</a>
           </p>
+          <ForBrandsSeoLine linkStyle={seoLinkStyle} paragraphStyle={{ ...seoParagraphStyle, marginTop: '16px', marginBottom: 0 }} />
         </section>
       </div>
     </>

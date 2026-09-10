@@ -928,7 +928,7 @@ const ArrowIcon = () => (
 // COMPONENT
 // ============================================================================
 const BrandPRPackagesPage = () => {
-  const signupUrl = 'https://app.newcollab.co/for-brands';
+  const signupUrl = '/register/brand?utm_source=seo&utm_medium=organic&utm_campaign=pr-packages';
 
   return (
     <LandingPageLayout>
@@ -947,7 +947,7 @@ const BrandPRPackagesPage = () => {
         <Wrap>
           <HeroTag>
             <span className="pulse"></span>
-            <span><strong>22+ brands</strong> running Newcollab campaigns this quarter</span>
+            <span><strong>DTC brands</strong> running gifted UGC campaigns this quarter</span>
           </HeroTag>
           <H1>Gifted UGC you can <span>run as ads.</span></H1>
           <HeroSub>

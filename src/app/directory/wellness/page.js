@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import WellnessDirectoryClient from './WellnessDirectoryClient';
+import ForBrandsSeoLine from '../ForBrandsSeoLine';
 
 export const metadata = {
   title: 'Wellness Brand PR Application Forms - Health & Fitness Brands (2026) | NewCollab',
@@ -167,6 +168,7 @@ export default async function WellnessDirectoryPage() {
           <p style={{ ...seoParagraphStyle, marginTop: '24px' }}>
             Browse more categories: <a href="/directory/beauty" style={seoLinkStyle}>Beauty</a> · <a href="/directory/fashion" style={seoLinkStyle}>Fashion</a> · <a href="/directory/skincare" style={seoLinkStyle}>Skincare</a> · <a href="/directory/lifestyle" style={seoLinkStyle}>Lifestyle</a> · <a href="/directory" style={seoLinkStyle}>All Brands</a>
           </p>
+          <ForBrandsSeoLine linkStyle={seoLinkStyle} paragraphStyle={{ ...seoParagraphStyle, marginTop: '16px', marginBottom: 0 }} />
         </section>
       </div>
     </>

@@ -18,8 +18,9 @@ const QueryParamRedirect = () => {
       return;
     }
 
-    // Remove query parameters that cause duplicate content issues
-    const paramsToRemove = ['ref', 'search', 'utm_source', 'utm_medium', 'utm_campaign'];
+    // Strip tracking params only. `search` is a real directory filter
+    // (blog brand links use /directory?search=ColourPop) and must persist.
+    const paramsToRemove = ['ref', 'utm_source', 'utm_medium', 'utm_campaign'];
     let shouldRedirect = false;
 
     // Check if any parameters need to be removed

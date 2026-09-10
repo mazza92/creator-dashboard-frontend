@@ -1,31 +1,55 @@
 import PRPackagesClient from './PRPackagesClient';
+import {
+  PAGE_URL,
+  buildBreadcrumbSchema,
+  buildFaqPageSchema,
+  buildHowToSchema,
+  buildServiceSchema,
+} from './content';
 
 export const metadata = {
-  title: 'Newcollab for Brands | Gifted UGC You Can Run as Ads',
+  title: 'Gifted UGC creators for DTC brands | $299, first campaign free',
   description:
-    'Your brand gets a private roster that fills with vetted UGC creators. Select, lock, ship. Ad-ready videos with 6-month commercial reuse. $299/month, first campaign free.',
+    'Find vetted UGC creators for your DTC brand. Gift product, lock shipping, get 5–10 ad-ready videos with 6-month commercial use. First campaign free, then $299/mo if you opt in.',
   keywords:
-    'ugc content, ugc videos, brand ugc, influencer gifting, pr packages for brands, ugc creators, content library, paid ads creative, tiktok ads, meta ads, creator content',
+    'find ugc creators, ugc creators for brands, gifted ugc, gifted ugc platform, pr packages for brands, product seeding, ugc for ads, ugc for meta ads, dtc ugc creators, brand ugc content',
   alternates: {
-    canonical: 'https://newcollab.co/brands/pr-packages',
+    canonical: PAGE_URL,
   },
   openGraph: {
-    title: 'Gifted UGC You Can Run as Ads | Newcollab for Brands',
+    title: 'Find UGC creators for your brand | Gifted PR packages',
     description:
-      'Branded roster. Auto-filled creators. Select, lock, ship. Reuse in ads for 6 months. $299/month, first campaign free.',
+      'Vetted UGC creators on a branded roster. Select, lock, ship. 5–10 videos with 6-month commercial reuse. First campaign free, then $299/month.',
     type: 'website',
-    url: 'https://newcollab.co/brands/pr-packages',
+    url: PAGE_URL,
     siteName: 'Newcollab',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gifted UGC You Can Run as Ads | Newcollab for Brands',
+    title: 'Find UGC creators for your brand | Gifted PR packages',
     description:
-      'Branded roster. Auto-filled creators. Select, lock, ship. Reuse in ads for 6 months. $299/month, first campaign free.',
+      'Vetted UGC creators on a branded roster. Select, lock, ship. 5–10 videos with 6-month commercial reuse. First campaign free, then $299/month.',
     creator: '@newcollab',
   },
 };
 
+function JsonLd({ data }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 export default function PRPackagesPage() {
-  return <PRPackagesClient />;
+  return (
+    <>
+      <JsonLd data={buildFaqPageSchema()} />
+      <JsonLd data={buildServiceSchema()} />
+      <JsonLd data={buildHowToSchema()} />
+      <JsonLd data={buildBreadcrumbSchema()} />
+      <PRPackagesClient />
+    </>
+  );
 }

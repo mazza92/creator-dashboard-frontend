@@ -1,10 +1,16 @@
 import { getAllPosts } from '../../lib/blog';
 
 const BASE = 'https://newcollab.co';
+const BRANDS_API = 'https://api.newcollab.co/api/public/brands';
+const PAGE_SIZE = 100;
+const MAX_PAGES = 50;
+const FETCH_CONCURRENCY = 6;
+const FETCH_BUDGET_MS = 12000;
 
 // Revalidate hourly — brand list changes weekly, blogs monthly, but we keep
 // the window short so new brands appear in GSC quickly.
 export const revalidate = 3600;
+export const maxDuration = 60;
 
 const STATIC_PAGES = [
   { url: '/',                          priority: 1.0, changeFrequency: 'daily'   },
@@ -20,7 +26,14 @@ const STATIC_PAGES = [
   { url: '/directory/us',              priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/directory/uk',              priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/directory/canada',          priority: 0.8, changeFrequency: 'weekly'  },
-  { url: '/brands/pr-packages',        priority: 0.8, changeFrequency: 'weekly'  },
+  { url: '/brands/pr-packages',        priority: 0.9, changeFrequency: 'weekly'  },
+  { url: '/brands/ugc-creators',       priority: 0.8, changeFrequency: 'weekly'  },
+  { url: '/brands/product-seeding',    priority: 0.8, changeFrequency: 'weekly'  },
+  { url: '/brands/ugc-for-ads',        priority: 0.8, changeFrequency: 'weekly'  },
+  { url: '/brands/vs-ugc-agency',      priority: 0.8, changeFrequency: 'monthly' },
+  { url: '/brands/vs-joinbrands',      priority: 0.8, changeFrequency: 'monthly' },
+  { url: '/brands/vs-billo',           priority: 0.8, changeFrequency: 'monthly' },
+  { url: '/brands/beauty-ugc',         priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/blog',                      priority: 0.9, changeFrequency: 'daily'   },
   { url: '/about',                     priority: 0.7, changeFrequency: 'monthly' },
   { url: '/contact',                   priority: 0.7, changeFrequency: 'monthly' },
@@ -40,7 +53,8 @@ const JUNK_PATTERNS = [
 ];
 
 function isGoodSlug(slug) {
-  if (!slug || slug.length > 50) return false;
+  if (!slug || typeof slug !== 'string') return false;
+  if (slug.length > 50 || /[/?#\s]/.test(slug)) return false;
   return !JUNK_PATTERNS.some(p => p.test(slug));
 }
 
@@ -65,73 +79,131 @@ function hasEnoughContent(brand) {
   return score >= 55;
 }
 
-export default async function sitemap() {
-  const now = new Date().toISOString();
+function safeDate(value, fallback) {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return fallback;
+  return d;
+}
 
-  // --- Static pages ---
-  const staticEntries = STATIC_PAGES.map(p => ({
-    url: `${BASE}${p.url}`,
-    lastModified: now,
-    changeFrequency: p.changeFrequency,
-    priority: p.priority,
-  }));
+function sitemapEntry(url, lastModified, changeFrequency, priority) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    return {
+      url: parsed.href,
+      lastModified: safeDate(lastModified, new Date()),
+      changeFrequency,
+      priority,
+    };
+  } catch {
+    return null;
+  }
+}
 
-  // --- Blog posts (read from filesystem) ---
-  // Always use the post's own /blog/<slug> URL — not canonicalUrl — so the
-  // sitemap has no duplicate entries. The canonical <link> tag on each page
-  // is the correct signal for Google to consolidate duplicate/redirected posts.
-  let blogEntries = [];
+function staticEntries(now) {
+  return STATIC_PAGES
+    .map(p => sitemapEntry(`${BASE}${p.url}`, now, p.changeFrequency, p.priority))
+    .filter(Boolean);
+}
+
+function blogEntries(now) {
   try {
     const posts = getAllPosts();
     const seen = new Set();
-    blogEntries = posts
-      .map(post => ({
-        url: `${BASE}/blog/${post.slug}`,
-        lastModified: post.date ? new Date(post.date).toISOString() : now,
-        changeFrequency: 'monthly',
-        priority: 0.8,
-      }))
-      .filter(entry => {
-        if (seen.has(entry.url)) return false;
-        seen.add(entry.url);
-        return true;
-      });
+    return posts
+      .map(post => {
+        if (!post?.slug) return null;
+        const url = `${BASE}/blog/${post.slug}`;
+        if (seen.has(url)) return null;
+        seen.add(url);
+        return sitemapEntry(
+          url,
+          post.date ? safeDate(post.date, now) : now,
+          'monthly',
+          0.8,
+        );
+      })
+      .filter(Boolean);
   } catch (err) {
     console.error('[sitemap] Failed to read blog posts:', err);
+    return [];
   }
+}
 
-  // --- Brand pages (paginate through API — hard cap is 100/page, 444 total) ---
-  let brandEntries = [];
+async function fetchBrandPage(page, signal) {
+  const res = await fetch(
+    `${BRANDS_API}?page=${page}&limit=${PAGE_SIZE}`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Origin: BASE,
+        'User-Agent': 'NewcollabSitemap/1.0 (+https://newcollab.co)',
+      },
+      next: { revalidate },
+      signal,
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`brands page ${page} HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const brands = Array.isArray(data.brands) ? data.brands : (Array.isArray(data) ? data : []);
+  const totalPages = Number(data.pagination?.totalPages) || 1;
+  return { brands, totalPages };
+}
+
+async function fetchAllBrands() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_BUDGET_MS);
   try {
-    const PAGE_SIZE = 100;
-    let page = 1;
-    let totalPages = 1;
-    const allBrands = [];
+    const first = await fetchBrandPage(1, controller.signal);
+    const totalPages = Math.min(Math.max(first.totalPages, 1), MAX_PAGES);
+    const remaining = [];
+    for (let page = 2; page <= totalPages; page++) remaining.push(page);
 
-    do {
-      const res = await fetch(
-        `https://api.newcollab.co/api/public/brands?page=${page}&limit=${PAGE_SIZE}`,
-        { next: { revalidate } },
+    const restBrands = [];
+    for (let i = 0; i < remaining.length; i += FETCH_CONCURRENCY) {
+      if (controller.signal.aborted) break;
+      const batch = remaining.slice(i, i + FETCH_CONCURRENCY);
+      const results = await Promise.allSettled(
+        batch.map(page => fetchBrandPage(page, controller.signal)),
       );
-      if (!res.ok) break;
-      const data = await res.json();
-      const brands = Array.isArray(data.brands) ? data.brands : (Array.isArray(data) ? data : []);
-      allBrands.push(...brands);
-      totalPages = data.pagination?.totalPages ?? 1;
-      page++;
-    } while (page <= totalPages);
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          restBrands.push(...result.value.brands);
+        } else {
+          console.error('[sitemap] Brand page failed:', result.reason);
+        }
+      }
+    }
+    return [...first.brands, ...restBrands];
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-    brandEntries = allBrands
-      .filter(b => isGoodSlug(b.slug) && hasEnoughContent(b))
-      .map(b => ({
-        url: `${BASE}/brand/${b.slug}`,
-        lastModified: now,
-        changeFrequency: 'weekly',
-        priority: 0.8,
-      }));
+function brandEntries(brands, now) {
+  const seen = new Set();
+  return brands
+    .filter(b => isGoodSlug(b.slug) && hasEnoughContent(b))
+    .map(b => sitemapEntry(`${BASE}/brand/${b.slug}`, now, 'weekly', 0.8))
+    .filter(entry => {
+      if (!entry || seen.has(entry.url)) return false;
+      seen.add(entry.url);
+      return true;
+    });
+}
+
+export default async function sitemap() {
+  const now = new Date();
+  const pages = staticEntries(now);
+  const posts = blogEntries(now);
+
+  try {
+    const brands = await fetchAllBrands();
+    return [...pages, ...posts, ...brandEntries(brands, now)];
   } catch (err) {
     console.error('[sitemap] Failed to fetch brands:', err);
+    return [...pages, ...posts];
   }
-
-  return [...staticEntries, ...blogEntries, ...brandEntries];
 }

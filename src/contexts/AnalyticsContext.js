@@ -264,11 +264,24 @@ export const AnalyticsProvider = ({ children }) => {
   };
 
   const trackFormSubmission = (formName, success = true) => {
-    if (window.gtag) {
-      window.gtag('event', 'form_submit', {
-        event_category: 'form_interaction',
-        event_label: formName,
-        success: success
+    if (!window.gtag) return;
+    window.gtag('event', 'form_submit', {
+      event_category: 'form_interaction',
+      event_label: formName,
+      success: success
+    });
+    if (formName === 'brand_signup' && success) {
+      window.gtag('event', 'brand_signup', {
+        method: 'register_form',
+        value: 299,
+        currency: 'USD',
+      });
+      window.gtag('event', 'generate_lead', {
+        currency: 'USD',
+        value: 299,
+      });
+      window.gtag('event', 'sign_up', {
+        method: 'brand',
       });
     }
   };

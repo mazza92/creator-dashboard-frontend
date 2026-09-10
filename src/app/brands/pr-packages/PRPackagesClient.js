@@ -3,6 +3,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
+import { FAQ_ITEMS, HOW_STEPS, PAGE_URL, SIGNUP_URL } from './content';
+import { relatedLinks, trackBrandCtaClick } from '../_cluster/catalog';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -827,11 +829,24 @@ const FAQA = styled.div`
   color: ${colors.inkSoft};
   line-height: 1.6;
   padding-left: 22px;
+`;
 
-  strong {
-    color: ${colors.ink};
-    font-weight: 700;
-  }
+const RelatedRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+`;
+
+const RelatedLink = styled.a`
+  border: 1px solid ${colors.line};
+  border-radius: 100px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${colors.ink};
+  text-decoration: none;
+  &:hover { border-color: ${colors.pink}; color: ${colors.pink}; }
 `;
 
 // Final CTA
@@ -929,23 +944,24 @@ const ArrowIcon = () => (
 // COMPONENT
 // ============================================================================
 export default function PRPackagesClient() {
-  const signupUrl = 'https://app.newcollab.co/for-brands';
+  const signupUrl = SIGNUP_URL;
+  const onCta = (location) => () => trackBrandCtaClick('pr-packages', location);
 
   return (
-    <LandingPageLayoutNext canonicalUrl="https://newcollab.co/brands/pr-packages">
+    <LandingPageLayoutNext canonicalUrl={PAGE_URL}>
       {/* HERO */}
       <HeroSection>
         <Wrap>
           <HeroTag>
             <span className="pulse"></span>
-            <span><strong>22+ brands</strong> running Newcollab campaigns this quarter</span>
+            <span><strong>DTC brands</strong> running gifted UGC campaigns this quarter</span>
           </HeroTag>
-          <H1>Gifted UGC you can <span>run as ads.</span></H1>
+          <H1>Find vetted UGC creators for <span>your brand.</span></H1>
           <HeroSub>
-            Your brand gets a private roster page that fills with vetted UGC creators. You select, lock, and export shipping details. Gift the product. Get ad-ready videos back with <strong>6-month commercial usage</strong>.
+            Gift a PR package, lock shipping, and get ad-ready videos back with <strong>6-month commercial usage</strong>. First campaign free — then $299/month only if you opt in.
           </HeroSub>
           <CTARow>
-            <BtnPrimary href={signupUrl}>
+            <BtnPrimary href={signupUrl} onClick={onCta('hero')}>
               Start free campaign
               <ArrowIcon />
             </BtnPrimary>
@@ -1071,21 +1087,13 @@ export default function PRPackagesClient() {
           <SecSub>Your branded roster does the busywork. You decide who gets a gift and when it ships.</SecSub>
 
           <HowSteps>
-            <HowStep>
-              <HowNum>1</HowNum>
-              <HowTitle>Open your branded roster</HowTitle>
-              <HowDesc>Private page under your brand name. Vetted UGC creators fill in automatically as they qualify. No searching profiles, no new software.</HowDesc>
-            </HowStep>
-            <HowStep>
-              <HowNum>2</HowNum>
-              <HowTitle>Select who to gift</HowTitle>
-              <HowDesc>Skip anyone who is not a fit. On a paid plan, we refill the roster when someone is wrong for you. Creator terms are already agreed when they apply.</HowDesc>
-            </HowStep>
-            <HowStep>
-              <HowNum>3</HowNum>
-              <HowTitle>Lock and ship</HowTitle>
-              <HowDesc>Lock the list and shipping details unlock as a CSV. Gift product. Organic posts and UGC files land in the same inbox, ready to run as ads for 6 months.</HowDesc>
-            </HowStep>
+            {HOW_STEPS.map((step, index) => (
+              <HowStep key={step.name}>
+                <HowNum>{index + 1}</HowNum>
+                <HowTitle>{step.name}</HowTitle>
+                <HowDesc>{step.text}</HowDesc>
+              </HowStep>
+            ))}
           </HowSteps>
         </Wrap>
       </HowSection>
@@ -1133,7 +1141,7 @@ export default function PRPackagesClient() {
                 <li><PFCheck>✓</PFCheck><span>Cancel anytime, no auto-billing</span></li>
               </PricingFeatures>
 
-              <PricingCTA href={signupUrl}>
+              <PricingCTA href={signupUrl} onClick={onCta('pricing')}>
                 Start free campaign
                 <ArrowIcon />
               </PricingCTA>
@@ -1182,6 +1190,19 @@ export default function PRPackagesClient() {
         </Wrap>
       </CreatorsSection>
 
+      {/* RELATED CLUSTER */}
+      <Section>
+        <Wrap>
+          <SecLabel>More for brands</SecLabel>
+          <SecTitle>Jobs, comparisons, <span>and beauty UGC.</span></SecTitle>
+          <RelatedRow>
+            {relatedLinks('pr-packages').map((item) => (
+              <RelatedLink key={item.href} href={item.href}>{item.label}</RelatedLink>
+            ))}
+          </RelatedRow>
+        </Wrap>
+      </Section>
+
       {/* FAQ */}
       <FAQSection id="faq">
         <Wrap>
@@ -1189,46 +1210,12 @@ export default function PRPackagesClient() {
           <SecTitle>What brands <span>ask us.</span></SecTitle>
 
           <FAQList>
-            <FAQItem>
-              <FAQQ>Is this an affiliate or referral program?</FAQQ>
-              <FAQA>No. Newcollab runs on gifted UGC content swaps only. <strong>No commission tracking, no revshare, no attribution.</strong> Brand ships gifted product to creator, creator delivers organic + UGC with 6-month commercial usage. That's it.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>Can I reuse the content in ads?</FAQQ>
-              <FAQA>Yes. You get <strong>6-month commercial usage</strong> from delivery. Run the videos as paid ads on Meta or TikTok, and on your own channels. Creators keep ownership. No exclusivity, no royalties during the term.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>What is the branded roster?</FAQQ>
-              <FAQA>A private page under your brand name. Vetted UGC creators fill it automatically. You select who to gift, lock the list, export a shipping CSV, and collect content in the same link. No login for your team. No hunting profiles yourself.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>What if the creators aren't the right fit?</FAQQ>
-              <FAQA>Skip anyone before you lock. After you subscribe, we refill the roster when someone is not a fit so you are not stuck searching Instagram or negotiating replacements by email.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>Are terms already agreed?</FAQQ>
-              <FAQA>Yes. Creators accept gifted PR terms and 6-month UGC usage when they apply. You are not chasing contracts or usage paperwork after you pick them.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>How does the free first campaign work?</FAQQ>
-              <FAQA>You get 5 vetted creators + 5-10 UGC videos delivered with no platform fee. Your only cost is your PR package and shipping. If the content lands, you opt in to $299/mo from month 2. <strong>No auto-billing.</strong> If it doesn't work, no obligation. You still keep 6-month commercial reuse on what was delivered.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>What kind of brands work with Newcollab?</FAQQ>
-              <FAQA>DTC brands running paid social. Most of our brand partners are in beauty, skincare, wellness, fashion, fitness, and lifestyle. Sweet spot: <strong>brands with $500K-$10M revenue running Meta or TikTok ads</strong> and looking to fill their creative library with authentic UGC.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>Can creators post on their own accounts too?</FAQQ>
-              <FAQA>Some do when it fits their content plan. Organic posts are a bonus, not a guarantee at this tier. If you specifically need guaranteed distribution on creator accounts, we offer that as a paid supplement ($75/creator).</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>Do you have creators in [specific niche]?</FAQQ>
-              <FAQA>Our core pool skews beauty and skincare. For niches outside that (fitness, men's grooming, food, home), we hand-source creators from TikTok and Instagram to match your brief. Sourcing adds 3-5 days to campaign timeline.</FAQA>
-            </FAQItem>
-            <FAQItem>
-              <FAQQ>How do I cancel?</FAQQ>
-              <FAQA>Reply to any Newcollab email or email team@newcollab.co with "cancel." Your subscription stops immediately, no last month charge, no questions. Commercial reuse already granted on delivered content continues for its 6-month term.</FAQA>
-            </FAQItem>
+            {FAQ_ITEMS.map((item) => (
+              <FAQItem key={item.question}>
+                <FAQQ>{item.question}</FAQQ>
+                <FAQA>{item.answer}</FAQA>
+              </FAQItem>
+            ))}
           </FAQList>
         </Wrap>
       </FAQSection>
@@ -1239,7 +1226,7 @@ export default function PRPackagesClient() {
           <FinalInner>
             <h2>Start your <span>free campaign</span> today.</h2>
             <p>Open your branded roster, pick who to gift, lock, and ship. Ad-ready UGC with 6-month commercial usage. Pay $299/mo only if it works.</p>
-            <BtnPrimary href={signupUrl}>
+            <BtnPrimary href={signupUrl} onClick={onCta('footer')}>
               Start free campaign
               <ArrowIcon />
             </BtnPrimary>

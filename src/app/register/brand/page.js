@@ -7,7 +7,8 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function BrandRegisterPage() {
-  return <CraOnlyNotice title="Brand sign up" path="/register/brand" />;
+export default async function BrandRegisterPage({ searchParams }) {
+  const params = await searchParams;
+  const qs = new URLSearchParams(params).toString();
+  return <CraOnlyNotice title="Brand sign up" path={`/register/brand${qs ? `?${qs}` : ''}`} />;
 }
-

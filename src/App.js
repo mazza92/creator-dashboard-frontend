@@ -454,7 +454,7 @@ function AppContent() {
             <Route
                 path='/directory'
                 element={
-                    user
+                    user && !new URLSearchParams(location.search).get('search') && !new URLSearchParams(location.search).get('q')
                       ? <Navigate to={needsWaitlistGate(user.approval_status) ? WAITLIST_PATH : '/creator/dashboard/for-you'} replace />
                       : <LazyRoute><UnifiedBrandDirectory /></LazyRoute>
                 }
