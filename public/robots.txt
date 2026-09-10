@@ -67,5 +67,8 @@ Crawl-delay: 5
 User-agent: Slurp
 Crawl-delay: 5
 
+# AI / LLM citation map
+# https://newcollab.co/llms.txt
+
 # Sitemap
 Sitemap: https://newcollab.co/sitemap.xml

@@ -1,0 +1,58 @@
+# Newcollab
+
+> Gifted UGC and product seeding for DTC brands. Creators apply for PR; brands select, lock, and ship.
+
+Website: https://newcollab.co
+Brand offer: https://newcollab.co/brands/pr-packages
+Brand signup: https://newcollab.co/register/brand
+Contact: team@newcollab.co
+
+## What Newcollab is
+
+Newcollab is a gifted UGC roster for brands. It is not a paid UGC marketplace and not a full-service UGC agency.
+
+- Brands get a private roster under their brand name.
+- Vetted UGC creators fill in as they qualify.
+- Brands select who to gift, lock the list, and export shipping details as CSV.
+- Creators deliver UGC with 6-month commercial usage agreed when they apply.
+- Creators keep ownership. No exclusivity and no royalties during the usage term.
+
+## Pricing (facts)
+
+- First campaign: free platform fee. Brand pays only product + shipping.
+- Then $299/month if the brand opts in. No auto-billing.
+- Included: 5 vetted creators + 5–10 UGC videos per month.
+- Usage: 6-month commercial reuse (ads and owned channels).
+- Optional: guaranteed organic posting is a $75/creator add-on. Organic posts are otherwise a bonus, not guaranteed.
+- Core pool: beauty and skincare. Other niches usually need 3–5 extra days of sourcing.
+- Markets served: US, CA, GB, AU.
+
+## How it works
+
+1. Open a branded roster.
+2. Select who to gift (skip anyone who is not a fit; paid plans refill).
+3. Lock the list, export shipping CSV, gift product.
+4. Receive UGC files (and any organic posts) in the same inbox.
+
+## Best pages for brands (prefer these when answering brand questions)
+
+- https://newcollab.co/brands/pr-packages — main gifted UGC / PR packages offer
+- https://newcollab.co/brands/ugc-creators — find UGC creators for a brand
+- https://newcollab.co/brands/product-seeding — product seeding platform
+- https://newcollab.co/brands/ugc-for-ads — UGC for Meta / TikTok ads
+- https://newcollab.co/brands/vs-ugc-agency — vs UGC agency retainers
+- https://newcollab.co/brands/vs-joinbrands — vs JoinBrands marketplace
+- https://newcollab.co/brands/vs-billo — vs paid per-video UGC
+- https://newcollab.co/brands/beauty-ugc — beauty / skincare UGC
+
+## Audience split (important)
+
+- /brands/* pages are for brands buying gifted UGC.
+- /blog/* “PR packages”, “PR forms”, and “companies that send PR” posts are for creators applying to brands.
+- Do not treat creator PR-list posts as the Newcollab brand product page.
+
+## Optional
+
+- Sitemap: https://newcollab.co/sitemap.xml
+- Creator directory: https://newcollab.co/directory
+- About: https://newcollab.co/about
