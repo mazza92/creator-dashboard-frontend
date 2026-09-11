@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import axios from 'axios';
-import { FaInstagram, FaTiktok, FaYoutube, FaShare, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
+import PublicKitView from '../components/PublicKitView';
+import { kitApiOrigin, mergeKitWithPublicProfile } from '../lib/kitBrandCta';
 
 const API_BASE = process.env.REACT_APP_API_URL || (
   typeof window !== 'undefined' && window.location.hostname === 'localhost'
@@ -10,92 +11,70 @@ const API_BASE = process.env.REACT_APP_API_URL || (
     : 'https://api.newcollab.co'
 );
 
-const formatNumber = (n) => {
-  if (!n) return null;
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return n.toString();
-};
-
-// Parse niches - handle both array and JSON string formats
-const parseNiches = (niches) => {
-  if (!niches) return [];
-  if (Array.isArray(niches)) return niches;
-  if (typeof niches === 'string') {
-    try {
-      const parsed = JSON.parse(niches);
-      return Array.isArray(parsed) ? parsed : [niches];
-    } catch {
-      return [niches];
-    }
-  }
-  return [];
-};
-
-const PLATFORM_LABEL = { instagram: 'IG', tiktok: 'TikTok', youtube: 'YT' };
-const PLATFORM_DISPLAY = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
-const POST_TYPE_LABEL = {
-  reel: 'Reel', photo: 'Photo', story: 'Story',
-  tiktok: 'Video', youtube: 'Video', short: 'Short',
-};
-const COLLAB_COLOR = {
-  paid:    { bg: '#D1FAE5', color: '#065F46' },
-  gifted:  { bg: '#EFF6FF', color: '#1D4ED8' },
-  organic: { bg: '#F3F4F6', color: '#6B7280' },
-  own:     { bg: '#F3F4F6', color: '#6B7280' },
-};
-
-// Abbreviate long region names for compact display
-const abbreviateRegion = (region) => {
-  const abbrevs = {
-    'North America': 'NA',
-    'South America': 'SA',
-    'Europe': 'EU',
-    'Asia': 'Asia',
-    'Africa': 'Africa',
-    'Oceania': 'OCE',
-    'Middle East': 'ME',
-    'United States': 'US',
-    'United Kingdom': 'UK',
-  };
-  return abbrevs[region] || region;
-};
-
-const PlatformIcon = ({ platform, size = 28 }) => {
-  if (platform === 'tiktok') return <FaTiktok size={size} color="#000" />;
-  if (platform === 'youtube') return <FaYoutube size={size} color="#FF0000" />;
-  return <FaInstagram size={size} color="#E4405F" />;
-};
-
 const PublicMediaKit = ({ username }) => {
   const [searchParams] = useSearchParams();
   const refToken = searchParams.get('ref');
-  const [kit, setKit]       = useState(null);
+  const [kit, setKit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!username) return;
-    // Include ref token for view tracking (links brand view to pipeline)
-    const url = refToken
-      ? `${API_BASE}/api/portfolio/public/${username}?ref=${refToken}`
-      : `${API_BASE}/api/portfolio/public/${username}`;
-    console.log('[PublicMediaKit] Fetching:', url);
-    axios.get(url)
-      .then(r => setKit(r.data))
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+    const origin = kitApiOrigin(API_BASE);
+    const kitUrl = refToken
+      ? `${origin}/api/portfolio/public/${username}?ref=${encodeURIComponent(refToken)}`
+      : `${origin}/api/portfolio/public/${username}`;
+    const slug = encodeURIComponent(username);
+    let cancelled = false;
+
+    (async () => {
+      try {
+        let kitRes;
+        try {
+          kitRes = await axios.get(kitUrl);
+        } catch (err) {
+          if (origin.includes('api.newcollab.co')) throw err;
+          const prodUrl = refToken
+            ? `https://api.newcollab.co/api/portfolio/public/${username}?ref=${encodeURIComponent(refToken)}`
+            : `https://api.newcollab.co/api/portfolio/public/${username}`;
+          kitRes = await axios.get(prodUrl);
+        }
+        if (cancelled) return;
+        let profile = null;
+        const profileUrls = [`${origin}/c/${slug}`];
+        if (!origin.includes('api.newcollab.co')) {
+          profileUrls.push(`https://api.newcollab.co/c/${slug}`);
+        }
+        for (const profileUrl of profileUrls) {
+          try {
+            const profileRes = await axios.get(profileUrl);
+            if (profileRes.data && !profileRes.data.error) {
+              profile = profileRes.data;
+              if (Array.isArray(profile.social_links) && profile.social_links.length) break;
+            }
+          } catch {
+            // public profile may be unpublished; kit still renders
+          }
+        }
+        setKit(mergeKitWithPublicProfile(kitRes.data, profile));
+      } catch {
+        if (!cancelled) setNotFound(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [username, refToken]);
 
-  // Track interactions for analytics
   const trackInteraction = (type, target = '') => {
     if (!kit?.creator_id) return;
     axios.post(`${API_BASE}/api/portfolio/interaction`, {
       creator_id: kit.creator_id,
       interaction_type: type,
-      target_value: target
-    }).catch(() => {}); // Fire and forget
+      target_value: target,
+    }).catch(() => {});
   };
 
   const handleShare = async () => {
@@ -103,906 +82,43 @@ const PublicMediaKit = ({ username }) => {
     trackInteraction('share_click');
     try {
       if (navigator.share) {
-        await navigator.share({ title: `${kit.first_name || kit.username}'s Media Kit`, url });
+        await navigator.share({ title: `@${username} media kit`, url });
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
     } catch (e) {
-      // User cancelled or error
+      // User cancelled or share failed
     }
   };
 
-  const handleSocialClick = (platform) => {
-    trackInteraction('social_click', platform);
-  };
-
-  const handlePortfolioClick = (postId) => {
-    trackInteraction('portfolio_click', String(postId));
-  };
-
-  const handleContactClick = () => {
-    trackInteraction('contact_click');
-  };
-
-  if (loading) return <KitPage><KitLoading>Loading...</KitLoading></KitPage>;
-  if (notFound) return <KitPage><KitLoading>Kit not found</KitLoading></KitPage>;
+  if (loading) return <KitState>Loading kit…</KitState>;
+  if (notFound) return <KitState>Kit not found</KitState>;
   if (!kit) return null;
 
-  const { posts = [], rates_reel, rates_tiktok, rates_photo, rates_gifted } = kit;
-  const hasRates = !!(rates_reel || rates_tiktok || rates_photo);
-  const brands = [...new Set(posts.filter(p => p.brand_name && p.collab_type !== 'own').map(p => p.brand_name))];
-
-  // Parse niches properly
-  const niches = parseNiches(kit.niches);
-
-  // Detect platforms from posts
-  const platforms = [...new Set(posts.map(p => p.platform))].filter(Boolean);
-
-  // Calculate performance metrics from posts
-  const reelPosts = posts.filter(p => p.post_type === 'reel' || (p.platform === 'instagram' && p.post_type === 'reel'));
-  const tiktokPosts = posts.filter(p => p.platform === 'tiktok');
-  const youtubePosts = posts.filter(p => p.platform === 'youtube');
-  const photoPosts = posts.filter(p => p.post_type === 'photo');
-  const videoPosts = [...reelPosts, ...tiktokPosts, ...youtubePosts];
-
-  // Avg views on video content
-  const avgViews = videoPosts.length > 0
-    ? Math.round(videoPosts.reduce((sum, p) => sum + (p.views || 0), 0) / videoPosts.length)
-    : 0;
-
-  // Save rate = total saves / total views * 100
-  const totalViews = posts.reduce((sum, p) => sum + (p.views || 0), 0);
-  const totalSaves = posts.reduce((sum, p) => sum + (p.saves || 0), 0);
-  const saveRate = totalViews > 0 ? ((totalSaves / totalViews) * 100).toFixed(1) : 0;
-
-  // Content mix percentages
-  const totalPosts = posts.length || 1;
-  const reelPercent = Math.round((reelPosts.length / totalPosts) * 100);
-  const tiktokPercent = Math.round((tiktokPosts.length / totalPosts) * 100);
-  const youtubePercent = Math.round((youtubePosts.length / totalPosts) * 100);
-  const photoPercent = Math.round((photoPosts.length / totalPosts) * 100);
-  const hasContentMix = posts.length > 0;
-  // Clean niche display - strip JSON formatting
-  const rawNiche = niches[0] || 'creators';
-  const primaryNiche = String(rawNiche).replace(/[\[\]"]/g, '').trim();
-
   return (
-    <KitPage>
-      <KitWrap>
-
-        {/* Header */}
-        <KitHeader>
-          <KitHeaderTop>
-            <div />
-            <KitShareBtn onClick={handleShare}>
-              <FaShare size={12} />
-              <span>{copied ? 'Copied!' : 'Share kit'}</span>
-            </KitShareBtn>
-          </KitHeaderTop>
-
-          <KitHeaderInner>
-            <KitAvatarWrap>
-              <KitAvatar>
-                {kit.avatar_url
-                  ? <img src={kit.avatar_url} alt={kit.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span>{(kit.first_name || kit.username || '?').charAt(0).toUpperCase()}</span>
-                }
-              </KitAvatar>
-            </KitAvatarWrap>
-            <KitHeaderInfo>
-              <KitName>{kit.first_name || kit.username}</KitName>
-              {kit.tagline && <KitTagline>{kit.tagline}</KitTagline>}
-              <KitChipsRow>
-                {niches.slice(0, 3).map(n => (
-                  <KitNicheTag key={n}>{n.replace(/["[\]]/g, '')}</KitNicheTag>
-                ))}
-              </KitChipsRow>
-              {kit.socials && Object.keys(kit.socials).length > 0 && (
-                <KitSocialsRow>
-                  {kit.socials.instagram && (
-                    <KitSocialLink href={kit.socials.instagram} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('instagram')}>
-                      <FaInstagram size={18} />
-                    </KitSocialLink>
-                  )}
-                  {kit.socials.tiktok && (
-                    <KitSocialLink href={kit.socials.tiktok} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('tiktok')}>
-                      <FaTiktok size={16} />
-                    </KitSocialLink>
-                  )}
-                  {kit.socials.youtube && (
-                    <KitSocialLink href={kit.socials.youtube} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('youtube')}>
-                      <FaYoutube size={18} />
-                    </KitSocialLink>
-                  )}
-                  {kit.socials.linkedin && (
-                    <KitSocialLink href={kit.socials.linkedin} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('linkedin')}>
-                      <FaLinkedinIn size={16} />
-                    </KitSocialLink>
-                  )}
-                  {kit.socials.twitter && (
-                    <KitSocialLink href={kit.socials.twitter} target="_blank" rel="noopener noreferrer" onClick={() => handleSocialClick('twitter')}>
-                      <FaTwitter size={16} />
-                    </KitSocialLink>
-                  )}
-                </KitSocialsRow>
-              )}
-            </KitHeaderInfo>
-          </KitHeaderInner>
-        </KitHeader>
-
-        {/* Stats section */}
-        <KitStatsSection>
-          <KitStatsGrid>
-            {kit.follower_count > 0 && (
-              <KitStatCard>
-                <KitStatVal>{formatNumber(kit.follower_count)}</KitStatVal>
-                <KitStatSub>followers</KitStatSub>
-              </KitStatCard>
-            )}
-            {kit.engagement_rate > 0 && (
-              <KitStatCard>
-                <KitStatVal>{kit.engagement_rate.toFixed(1)}%</KitStatVal>
-                <KitStatSub>engagement</KitStatSub>
-              </KitStatCard>
-            )}
-            {posts.length > 0 && (
-              <KitStatCard>
-                <KitStatVal>{posts.length}</KitStatVal>
-                <KitStatSub>posts</KitStatSub>
-              </KitStatCard>
-            )}
-            {kit.primary_age_range && (
-              <KitStatCard>
-                <KitStatVal>{kit.primary_age_range}</KitStatVal>
-                <KitStatSub>audience age</KitStatSub>
-              </KitStatCard>
-            )}
-            {kit.regions?.length > 0 && (
-              <KitStatCard>
-                <KitStatVal>{kit.regions.slice(0, 2).map(abbreviateRegion).join(', ')}</KitStatVal>
-                <KitStatSub>regions</KitStatSub>
-              </KitStatCard>
-            )}
-          </KitStatsGrid>
-
-          {/* Platform breakdown */}
-          {platforms.length > 0 && (
-            <KitPlatformStats>
-              {platforms.map(platform => {
-                const platformPosts = posts.filter(p => p.platform === platform);
-                const totalViews = platformPosts.reduce((sum, p) => sum + (p.views || 0), 0);
-                return (
-                  <KitPlatformStatRow key={platform}>
-                    <KitPlatformStatIcon>
-                      <PlatformIcon platform={platform} size={16} />
-                    </KitPlatformStatIcon>
-                    <KitPlatformStatName>{PLATFORM_DISPLAY[platform]}</KitPlatformStatName>
-                    <KitPlatformStatValue>
-                      {platformPosts.length} posts
-                      {totalViews > 0 && ` · ${formatNumber(totalViews)} views`}
-                    </KitPlatformStatValue>
-                  </KitPlatformStatRow>
-                );
-              })}
-            </KitPlatformStats>
-          )}
-        </KitStatsSection>
-
-        {/* Portfolio grid */}
-        {posts.length > 0 && (
-          <>
-            <KitSectionLabel>Portfolio</KitSectionLabel>
-            <KitGrid>
-              {posts.map((post, i) => {
-                const collab = COLLAB_COLOR[post.collab_type] || COLLAB_COLOR.own;
-                const isFeatured = post.is_featured || i === 0;
-                return (
-                  <KitPostCard key={post.id} featured={isFeatured} href={post.post_url || undefined} target="_blank" rel="noopener noreferrer" as={post.post_url ? 'a' : 'div'} onClick={() => handlePortfolioClick(post.id)}>
-                    <KitPostImg featured={isFeatured} niche={kit.niches?.[0]?.toLowerCase()} hasThumbnail={!!post.thumbnail_url}>
-                      {post.thumbnail_url ? (
-                        <KitPostThumb src={post.thumbnail_url} alt={post.brand_name || 'Post'} />
-                      ) : (
-                        <KitPostEmoji><PlatformIcon platform={post.platform} size={28} /></KitPostEmoji>
-                      )}
-                      <KitPostPlatformBadge platform={post.platform}>
-                        {PLATFORM_LABEL[post.platform] || post.platform} · {POST_TYPE_LABEL[post.post_type] || post.post_type}
-                      </KitPostPlatformBadge>
-                    </KitPostImg>
-                    <KitPostBody>
-                      <KitPostBrandRow>
-                        <KitPostBrand>{post.brand_name || 'Original content'}</KitPostBrand>
-                        <KitPostCollabChip style={{ background: collab.bg, color: collab.color }}>
-                          {post.collab_type === 'own' ? 'Original' : post.collab_type}
-                        </KitPostCollabChip>
-                      </KitPostBrandRow>
-                      {(post.views || post.likes) > 0 && (
-                        <KitPostStats>
-                          {post.views > 0 && <span>{formatNumber(post.views)} views</span>}
-                          {post.likes > 0 && <span>{formatNumber(post.likes)} likes</span>}
-                          {post.comments > 0 && <span>{formatNumber(post.comments)} comments</span>}
-                        </KitPostStats>
-                      )}
-                    </KitPostBody>
-                  </KitPostCard>
-                );
-              })}
-            </KitGrid>
-          </>
-        )}
-
-        {/* Performance Metrics - after portfolio */}
-        {(avgViews > 0 || parseFloat(saveRate) > 0 || hasContentMix) && (
-          <KitMetricsSection>
-            {avgViews > 0 && (
-              <KitMetricCard>
-                <KitMetricValue>{formatNumber(avgViews)}</KitMetricValue>
-                <KitMetricLabel>Avg Reel views</KitMetricLabel>
-                <KitMetricBadge>Top 8% in {primaryNiche}</KitMetricBadge>
-              </KitMetricCard>
-            )}
-            {parseFloat(saveRate) > 0 && (
-              <KitMetricCard>
-                <KitMetricValue>{saveRate}%</KitMetricValue>
-                <KitMetricLabel>Save rate on Reels</KitMetricLabel>
-                <KitMetricBadge>High purchase intent</KitMetricBadge>
-              </KitMetricCard>
-            )}
-            {hasContentMix && (
-              <KitContentMixCard>
-                <KitContentMixTitle>CONTENT MIX</KitContentMixTitle>
-                {reelPercent > 0 && (
-                  <KitContentMixRow>
-                    <KitContentMixLabel>Reels</KitContentMixLabel>
-                    <KitContentMixBar>
-                      <KitContentMixFill style={{ width: `${reelPercent}%` }} />
-                    </KitContentMixBar>
-                    <KitContentMixPercent>{reelPercent}%</KitContentMixPercent>
-                  </KitContentMixRow>
-                )}
-                {tiktokPercent > 0 && (
-                  <KitContentMixRow>
-                    <KitContentMixLabel>TikTok</KitContentMixLabel>
-                    <KitContentMixBar>
-                      <KitContentMixFill style={{ width: `${tiktokPercent}%` }} />
-                    </KitContentMixBar>
-                    <KitContentMixPercent>{tiktokPercent}%</KitContentMixPercent>
-                  </KitContentMixRow>
-                )}
-                {youtubePercent > 0 && (
-                  <KitContentMixRow>
-                    <KitContentMixLabel>YouTube</KitContentMixLabel>
-                    <KitContentMixBar>
-                      <KitContentMixFill style={{ width: `${youtubePercent}%` }} />
-                    </KitContentMixBar>
-                    <KitContentMixPercent>{youtubePercent}%</KitContentMixPercent>
-                  </KitContentMixRow>
-                )}
-                {photoPercent > 0 && (
-                  <KitContentMixRow>
-                    <KitContentMixLabel>Photo</KitContentMixLabel>
-                    <KitContentMixBar>
-                      <KitContentMixFill style={{ width: `${photoPercent}%` }} />
-                    </KitContentMixBar>
-                    <KitContentMixPercent>{photoPercent}%</KitContentMixPercent>
-                  </KitContentMixRow>
-                )}
-              </KitContentMixCard>
-            )}
-          </KitMetricsSection>
-        )}
-
-        {/* Brands worked with */}
-        {brands.length > 0 && (
-          <>
-            <KitSectionLabel>Brands worked with</KitSectionLabel>
-            <BrandsRow>
-              {brands.map(b => <BrandPill key={b}>{b}</BrandPill>)}
-              {rates_gifted && <BrandPill open>Open to gifted</BrandPill>}
-            </BrandsRow>
-          </>
-        )}
-
-        {/* Rate card */}
-        {hasRates && (
-          <>
-            <KitSectionLabel>Packages</KitSectionLabel>
-            <RateCard>
-              {rates_reel && (
-                <RateCardRow>
-                  <RateCardLabel>Instagram Reel + Story</RateCardLabel>
-                  <RateCardPrice>from ${rates_reel.toLocaleString()}</RateCardPrice>
-                </RateCardRow>
-              )}
-              {rates_tiktok && (
-                <RateCardRow>
-                  <RateCardLabel>TikTok video</RateCardLabel>
-                  <RateCardPrice>from ${rates_tiktok.toLocaleString()}</RateCardPrice>
-                </RateCardRow>
-              )}
-              {rates_photo && (
-                <RateCardRow>
-                  <RateCardLabel>Photo post</RateCardLabel>
-                  <RateCardPrice>from ${rates_photo.toLocaleString()}</RateCardPrice>
-                </RateCardRow>
-              )}
-              {rates_gifted && (
-                <RateCardRow gifted>
-                  <RateCardLabel>Gifted collabs</RateCardLabel>
-                  <RateCardPrice style={{ color: '#059669' }}>Open</RateCardPrice>
-                </RateCardRow>
-              )}
-            </RateCard>
-          </>
-        )}
-
-        {/* CTA */}
-        <KitCTA>
-          <KitCTAText>
-            <KitCTATitle>Interested in working together?</KitCTATitle>
-            <KitCTASub>Sign up as a brand to connect with {kit.first_name || kit.username}</KitCTASub>
-          </KitCTAText>
-          <KitCTABtn href="/register/brand" onClick={handleContactClick}>
-            Get in touch
-          </KitCTABtn>
-        </KitCTA>
-
-        <KitFooter>
-          <KitFooterLeft>newcollab.co/kit/{kit.username}</KitFooterLeft>
-          <KitFooterRight>Media kit by <KitBrand>Newcollab</KitBrand></KitFooterRight>
-        </KitFooter>
-
-      </KitWrap>
-    </KitPage>
+    <PublicKitView
+      kit={kit}
+      username={username}
+      copied={copied}
+      onShare={handleShare}
+      onSocialClick={(platform) => trackInteraction('social_click', platform)}
+      onPortfolioClick={(postId) => trackInteraction('portfolio_click', String(postId))}
+      onContactClick={() => trackInteraction('contact_click')}
+    />
   );
 };
 
-// ── Public page styles ─────────────────────────────────────────
-
-const KitPage = styled.div`
+const KitState = styled.div`
   min-height: 100vh;
-  background: #F5F5F3;
-  padding: 24px 16px 60px;
-  @media (max-width: 480px) { padding: 0 0 60px; }
-`;
-
-const KitWrap = styled.div`
-  max-width: 720px;
-  margin: 0 auto;
-  background: #fff;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.08);
-  @media (max-width: 480px) { border-radius: 0; box-shadow: none; }
-`;
-
-const KitLoading = styled.div`
-  text-align: center;
-  padding: 80px 20px;
-  font-size: 14px;
-  color: #9CA3AF;
-`;
-
-const KitHeader = styled.div`
-  background: #0F0F0F;
-  padding: 16px 24px 24px;
-  @media (max-width: 480px) { padding: 12px 16px 20px; }
-`;
-
-const KitHeaderTop = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-`;
-
-const KitShareBtn = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    background: rgba(255,255,255,0.2);
-  }
-`;
-
-const KitHeaderInner = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-`;
-
-const KitAvatarWrap = styled.div`
-  flex-shrink: 0;
-  padding: 3px;
-  background: linear-gradient(135deg, #7C3AED, #E11D48, #F59E0B);
-  border-radius: 50%;
-`;
-
-const KitAvatar = styled.div`
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: #1F1F1F;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 900;
-  color: #fff;
-  overflow: hidden;
-  border: 3px solid #0F0F0F;
-  @media (max-width: 480px) { width: 60px; height: 60px; font-size: 24px; }
-`;
-
-const KitHeaderInfo = styled.div`
-  flex: 1;
-  padding-top: 4px;
-`;
-
-const KitName = styled.div`
-  font-size: 24px;
-  font-weight: 900;
-  color: #fff;
-  margin-bottom: 4px;
-  @media (max-width: 480px) { font-size: 20px; }
-`;
-
-const KitTagline = styled.div`
-  font-size: 14px;
-  color: rgba(255,255,255,0.7);
-  line-height: 1.4;
-  margin-bottom: 12px;
-  @media (max-width: 480px) { font-size: 13px; }
-`;
-
-const KitChipsRow = styled.div`
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-
-const KitNicheTag = styled.span`
-  background: rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.9);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 20px;
-  text-transform: capitalize;
-`;
-
-const KitSocialsRow = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
-`;
-
-const KitSocialLink = styled.a`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  transition: all 0.2s;
-  &:hover {
-    background: rgba(255,255,255,0.2);
-    transform: scale(1.1);
-  }
-`;
-
-const KitStatsSection = styled.div`
-  padding: 20px 20px 16px;
-  border-bottom: 1px solid #F3F4F6;
-`;
-
-const KitStatsGrid = styled.div`
-  display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
-
-  @media (max-width: 420px) {
-    flex-wrap: wrap;
-  }
-`;
-
-const KitStatCard = styled.div`
-  flex: 1;
-  min-width: 0;
-  background: #F9FAFB;
-  border-radius: 8px;
-  padding: 8px 4px;
-  text-align: center;
-
-  @media (max-width: 420px) {
-    flex: 1 1 calc(33.333% - 4px);
-    min-width: calc(33.333% - 4px);
-  }
-`;
-
-const KitStatVal = styled.div`
-  font-size: 13px;
-  font-weight: 800;
-  color: #0F0F0F;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const KitStatSub = styled.div`
-  font-size: 8px;
-  color: #9CA3AF;
-  margin-top: 1px;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-`;
-
-const KitPlatformStats = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const KitPlatformStatRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: #F9FAFB;
-  border-radius: 10px;
-`;
-
-const KitPlatformStatIcon = styled.div`
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-`;
-
-const KitPlatformStatName = styled.div`
-  font-size: 13px;
-  font-weight: 700;
-  color: #0F0F0F;
-  flex: 1;
-`;
-
-const KitPlatformStatValue = styled.div`
-  font-size: 12px;
-  color: #6B7280;
-  font-weight: 500;
-`;
-
-// Performance Metrics Section
-const KitMetricsSection = styled.div`
-  padding: 12px 16px 16px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-`;
-
-const KitMetricCard = styled.div`
-  background: #F9FAFB;
-  border-radius: 12px;
-  padding: 14px 16px;
-`;
-
-const KitMetricValue = styled.div`
-  font-size: 24px;
-  font-weight: 800;
-  color: #0F0F0F;
-  line-height: 1;
-  margin-bottom: 2px;
-`;
-
-const KitMetricLabel = styled.div`
-  font-size: 11px;
-  color: #6B7280;
-  margin-bottom: 6px;
-`;
-
-const KitMetricBadge = styled.div`
-  font-size: 10px;
-  font-weight: 700;
-  color: #10B981;
-`;
-
-const KitContentMixCard = styled.div`
-  background: #F9FAFB;
-  border-radius: 12px;
-  padding: 14px 16px;
-  grid-column: span 2;
-  @media (max-width: 480px) {
-    grid-column: span 2;
-  }
-`;
-
-const KitContentMixTitle = styled.div`
-  font-size: 9px;
-  font-weight: 800;
-  color: #9CA3AF;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-`;
-
-const KitContentMixRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-  &:last-child { margin-bottom: 0; }
-`;
-
-const KitContentMixLabel = styled.div`
-  font-size: 11px;
-  font-weight: 600;
-  color: #374151;
-  width: 50px;
-`;
-
-const KitContentMixBar = styled.div`
-  flex: 1;
-  height: 6px;
-  background: #E5E7EB;
-  border-radius: 3px;
-  overflow: hidden;
-`;
-
-const KitContentMixFill = styled.div`
-  height: 100%;
-  background: #0F0F0F;
-  border-radius: 3px;
-  transition: width 0.3s ease;
-`;
-
-const KitContentMixPercent = styled.div`
-  font-size: 11px;
-  font-weight: 700;
-  color: #6B7280;
-  width: 36px;
-  text-align: right;
-`;
-
-const KitSectionLabel = styled.div`
-  font-size: 10px;
-  font-weight: 800;
-  color: #9CA3AF;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 16px 20px 8px;
-`;
-
-const KitGrid = styled.div`
-  padding: 0 16px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  @media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 380px) { grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 12px; }
-`;
-
-const KitPostCard = styled.a`
-  background: #F9FAFB;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1.5px solid #F3F4F6;
-  text-decoration: none;
-  display: block;
-  transition: transform 0.15s;
-  &:hover { transform: translateY(-2px); }
-  ${p => p.featured ? `grid-column: span 1;` : ''}
-`;
-
-const KitPostImg = styled.div`
-  padding-top: 100%;
-  position: relative;
-  overflow: hidden;
-  background: ${p => p.hasThumbnail ? '#000' :
-    p.niche === 'beauty' || p.niche === 'skincare' ? 'linear-gradient(135deg,#FDF2F8,#F5F3FF)' :
-    p.niche === 'fitness' || p.niche === 'wellness' ? 'linear-gradient(135deg,#F0FDF4,#ECFDF5)' :
-    p.niche === 'food' ? 'linear-gradient(135deg,#FFFBEB,#FEF3C7)' :
-    'linear-gradient(135deg,#EFF6FF,#F5F3FF)'
-  };
-`;
-
-const KitPostThumb = styled.img`
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const KitPostEmoji = styled.div`
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-`;
-
-const KitPostPlatformBadge = styled.div`
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: ${p => p.platform === 'tiktok' ? '#0F0F0F' : p.platform === 'youtube' ? '#EF4444' : '#E11D48'};
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-`;
-
-const KitPostBody = styled.div`
-  padding: 8px 10px 10px;
-`;
-
-const KitPostBrandRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 4px;
-`;
-
-const KitPostBrand = styled.div`
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #0F0F0F;
-`;
-
-const KitPostCollabChip = styled.span`
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 6px;
-  text-transform: capitalize;
-`;
-
-const KitPostStats = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: 10px;
-  color: #9CA3AF;
-  font-weight: 500;
-`;
-
-const BrandsRow = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 0 20px 16px;
-`;
-
-const BrandPill = styled.div`
-  padding: 6px 14px;
-  background: ${p => p.open ? '#F0FDF4' : '#F9FAFB'};
-  border: 1px solid ${p => p.open ? '#A7F3D0' : '#E5E7EB'};
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: ${p => p.open ? '#059669' : '#374151'};
-`;
-
-const RateCard = styled.div`
-  margin: 0 16px 16px;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 16px;
-  overflow: hidden;
-`;
-
-const RateCardRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 16px;
-  border-bottom: 1px solid #F3F4F6;
-  background: ${p => p.gifted ? '#F0FDF4' : '#fff'};
-  &:last-child { border-bottom: none; }
-`;
-
-const RateCardLabel = styled.div`
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-`;
-
-const RateCardPrice = styled.div`
+  place-items: center;
+  background: #f7f5f0;
+  color: #5c6470;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 14px;
-  font-weight: 900;
-  color: #0F0F0F;
-`;
-
-const KitCTA = styled.div`
-  margin: 8px 16px 0;
-  background: #0F0F0F;
-  border-radius: 18px;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  @media (max-width: 480px) { flex-direction: column; text-align: center; gap: 14px; margin: 8px 12px 0; }
-`;
-
-const KitCTAText = styled.div``;
-
-const KitCTATitle = styled.div`
-  font-size: 16px;
-  font-weight: 900;
-  color: #fff;
-  margin-bottom: 3px;
-`;
-
-const KitCTASub = styled.div`
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
-`;
-
-const KitCTABtn = styled.a`
-  background: #fff;
-  color: #0F0F0F;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 12px 22px;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  display: inline-block;
-  @media (max-width: 480px) { width: 100%; text-align: center; }
-`;
-
-const KitFooter = styled.div`
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid #F3F4F6;
-  margin-top: 16px;
-  @media (max-width: 480px) { flex-direction: column; gap: 4px; text-align: center; padding: 12px; }
-`;
-
-const KitFooterLeft = styled.div`
-  font-size: 12px;
-  color: #9CA3AF;
-`;
-
-const KitFooterRight = styled.div`
-  font-size: 12px;
-  color: #9CA3AF;
-`;
-
-const KitBrand = styled.span`
-  color: #E11D48;
-  font-weight: 800;
+  font-weight: 600;
 `;
 
 export default PublicMediaKit;

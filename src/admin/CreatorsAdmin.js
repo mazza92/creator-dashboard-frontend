@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../config/api';
 import {
@@ -29,12 +30,11 @@ import {
   EyeOutlined,
   CopyOutlined,
   UserOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
   ReloadOutlined,
   LinkOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
-import { categoryLabel, normalizeCategory } from '../constants/brandCategories';
+import { categoryLabel, normalizeCategory, NICHE_OPTIONS } from '../constants/brandCategories';
 import { getCategoryColors } from '../utils/categoryColors';
 import CreatorApprovalQueue from './CreatorApprovalQueue';
 
@@ -51,6 +51,57 @@ function getApiConfig() {
 
 const CTA_KIT_URL = 'https://app.newcollab.co/creator/dashboard/my-kit';
 const PUBLIC_KIT_URL_PREFIX = 'https://newcollab.co/kit/';
+
+const NICHE_FILTER_OPTIONS = NICHE_OPTIONS.map((n) => ({
+  value: n.id,
+  label: n.label.replace(/^[^\w]+/, '').trim() || n.label,
+}));
+
+const REGION_FILTER_OPTIONS = [
+  { value: 'US', label: 'United States' },
+  { value: 'UK', label: 'United Kingdom' },
+  { value: 'Canada', label: 'Canada' },
+  { value: 'AU', label: 'Australia' },
+  { value: 'Europe', label: 'Europe' },
+  { value: 'LATAM', label: 'Latin America' },
+  { value: 'MENA', label: 'Middle East & Africa' },
+  { value: 'Asia', label: 'Asia Pacific' },
+  { value: 'Global', label: 'Global' },
+];
+
+const FOLLOWER_BUCKETS = [
+  { value: '', label: 'Any size' },
+  { value: '0-999', label: 'Under 1k' },
+  { value: '1000-4999', label: '1k–5k' },
+  { value: '5000-9999', label: '5k–10k' },
+  { value: '10000-', label: '10k+' },
+  { value: '50000-', label: '50k+' },
+];
+
+const PLATFORM_FILTER_OPTIONS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'youtube', label: 'YouTube' },
+];
+
+function csvList(value) {
+  if (!value) return [];
+  return String(value).split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+function parseFollowerBucket(value) {
+  if (!value) return {};
+  const [min, max] = String(value).split('-');
+  const out = {};
+  if (min) out.min = min;
+  if (max) out.max = max;
+  return out;
+}
+
+function displayHandle(record) {
+  const raw = record?.username || record?.social_handle || '';
+  return String(raw).trim().replace(/^@+/, '') || 'unknown';
+}
 
 function parseNiches(raw) {
   if (!raw) return [];
@@ -155,22 +206,27 @@ function formatNumber(val) {
 }
 
 const CreatorsAdmin = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [creators, setCreators] = useState([]);
   const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState({ total: 0, verified: 0, with_kit: 0, unlocked: 0 });
 
-  const [searchQ, setSearchQ] = useState('');
-  const [niche, setNiche] = useState('');
-  const [region, setRegion] = useState('');
-  const [tier, setTier] = useState('');
-  const [verified, setVerified] = useState('');
-  const [kit, setKit] = useState('');
-  const [unsubscribed, setUnsubscribed] = useState('');
-  const [approvalStatus, setApprovalStatus] = useState('');
-  const [tab, setTab] = useState('review');
+  const [searchInput, setSearchInput] = useState(() => searchParams.get('q') || '');
+  const [searchQ, setSearchQ] = useState(() => (searchParams.get('q') || '').trim());
+  const [niches, setNiches] = useState(() => csvList(searchParams.get('niche')));
+  const [regions, setRegions] = useState(() => csvList(searchParams.get('region')));
+  const [followers, setFollowers] = useState(() => searchParams.get('followers') || '');
+  const [platform, setPlatform] = useState(() => searchParams.get('platform') || '');
+  const [tier, setTier] = useState(() => searchParams.get('tier') || '');
+  const [verified, setVerified] = useState(() => searchParams.get('verified') || '');
+  const [kit, setKit] = useState(() => searchParams.get('kit') || '');
+  const [unsubscribed, setUnsubscribed] = useState(() => searchParams.get('unsubscribed') || '');
+  const [approvalStatus, setApprovalStatus] = useState(() => searchParams.get('approval_status') || '');
+  const [tab, setTab] = useState(() => (
+    searchParams.get('tab') === 'directory' || searchParams.get('q') ? 'directory' : 'review'
+  ));
   const [approvalSnapshot, setApprovalSnapshot] = useState({
     pending: 0, approved_today: 0, rejected_today: 0,
   });
@@ -212,18 +268,21 @@ const CreatorsAdmin = () => {
       params.set('order', order);
 
       if (searchQ) params.set('q', searchQ);
-      if (niche) params.set('niche', niche);
-      if (region) params.set('region', region);
+      if (niches.length) params.set('niche', niches.join(','));
+      if (regions.length) params.set('region', regions.join(','));
       if (tier) params.set('tier', tier);
+      if (platform) params.set('platform', platform);
       if (verified) params.set('verified', verified);
       if (kit) params.set('kit', kit);
       if (unsubscribed) params.set('unsubscribed', unsubscribed);
       if (approvalStatus) params.set('approval_status', approvalStatus);
+      const bucket = parseFollowerBucket(followers);
+      if (bucket.min) params.set('min_followers', bucket.min);
+      if (bucket.max) params.set('max_followers', bucket.max);
 
       const { data } = await api.get(`/api/admin/creators?${params.toString()}`, getApiConfig());
       setCreators(data.creators || []);
       setTotal(data.pagination?.total || 0);
-      setStats(data.stats || { total: data.pagination?.total || 0, verified: 0, with_kit: 0, pitched: 0 });
       if (data.approval) setApprovalSnapshot(data.approval);
     } catch (e) {
       console.error(e);
@@ -231,11 +290,46 @@ const CreatorsAdmin = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, page, pageSize, searchQ, niche, region, tier, verified, kit, unsubscribed, approvalStatus, sortField, sortOrder]);
+  }, [isAuthenticated, page, pageSize, searchQ, niches, regions, followers, platform, tier, verified, kit, unsubscribed, approvalStatus, sortField, sortOrder]);
 
   useEffect(() => {
-    fetchCreators();
-  }, [fetchCreators]);
+    const t = setTimeout(() => {
+      const next = searchInput.trim();
+      setSearchQ((prev) => {
+        if (prev === next) return prev;
+        setPage(1);
+        return next;
+      });
+    }, 280);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
+    const next = new URLSearchParams();
+    next.set('tab', tab);
+    if (tab === 'directory') {
+      if (searchQ) next.set('q', searchQ);
+      if (niches.length) next.set('niche', niches.join(','));
+      if (regions.length) next.set('region', regions.join(','));
+      if (followers) next.set('followers', followers);
+      if (platform) next.set('platform', platform);
+      if (tier) next.set('tier', tier);
+      if (verified) next.set('verified', verified);
+      if (kit) next.set('kit', kit);
+      if (unsubscribed) next.set('unsubscribed', unsubscribed);
+      if (approvalStatus) next.set('approval_status', approvalStatus);
+    }
+    const current = searchParams.toString();
+    const desired = next.toString();
+    if (current !== desired) setSearchParams(next, { replace: true });
+  }, [
+    tab, searchQ, niches, regions, followers, platform, tier, verified, kit,
+    unsubscribed, approvalStatus, searchParams, setSearchParams,
+  ]);
+
+  useEffect(() => {
+    if (tab === 'directory') fetchCreators();
+  }, [fetchCreators, tab]);
 
   const fetchCreatorDetails = async (creatorId) => {
     setDrawerLoading(true);
@@ -360,7 +454,7 @@ const CreatorsAdmin = () => {
       width: 200,
       fixed: 'left',
       render: (_, record) => {
-        const rawUsername = record.username || 'unknown';
+        const rawUsername = displayHandle(record);
         const username = rawUsername.length > 22
           ? rawUsername.slice(0, 22) + '…'
           : rawUsername;
@@ -378,6 +472,8 @@ const CreatorsAdmin = () => {
               </Tooltip>
               {record.first_name ? (
                 <CreatorName>{record.first_name}</CreatorName>
+              ) : record.email ? (
+                <CreatorName>{record.email}</CreatorName>
               ) : null}
             </CreatorMeta>
           </CreatorCell>
@@ -436,7 +532,12 @@ const CreatorsAdmin = () => {
               </SocialPopover>
             }
           >
-            <FollowersBtn>{formatNumber(val)}</FollowersBtn>
+            <FollowersBtn
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              {formatNumber(val)}
+            </FollowersBtn>
           </Popover>
         );
       },
@@ -527,7 +628,7 @@ const CreatorsAdmin = () => {
       width: 96,
       fixed: 'right',
       render: (_, record) => (
-        <ActionCell>
+        <ActionCell onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
           <Tooltip title="Inspect">
             <Button size="small" type="text" icon={<EyeOutlined />} onClick={() => openDrawer(record)} />
           </Tooltip>
@@ -571,9 +672,12 @@ const CreatorsAdmin = () => {
   };
 
   const resetFilters = () => {
+    setSearchInput('');
     setSearchQ('');
-    setNiche('');
-    setRegion('');
+    setNiches([]);
+    setRegions([]);
+    setFollowers('');
+    setPlatform('');
     setTier('');
     setVerified('');
     setKit('');
@@ -581,6 +685,43 @@ const CreatorsAdmin = () => {
     setApprovalStatus('');
     setPage(1);
   };
+
+  const applySearchNow = (value = searchInput) => {
+    const next = String(value || '').trim();
+    setSearchInput(value);
+    setSearchQ(next);
+    setPage(1);
+  };
+
+  const moreFilterCount = [tier, verified, kit, unsubscribed, platform].filter(Boolean).length;
+  const activeFilterChips = useMemo(() => {
+    const chips = [];
+    niches.forEach((id) => {
+      const opt = NICHE_FILTER_OPTIONS.find((n) => n.value === id);
+      chips.push({ key: `niche-${id}`, label: opt?.label || id, onClose: () => { setNiches((prev) => prev.filter((n) => n !== id)); setPage(1); } });
+    });
+    regions.forEach((id) => {
+      const opt = REGION_FILTER_OPTIONS.find((n) => n.value === id);
+      chips.push({ key: `region-${id}`, label: opt?.label || id, onClose: () => { setRegions((prev) => prev.filter((n) => n !== id)); setPage(1); } });
+    });
+    if (followers) {
+      const opt = FOLLOWER_BUCKETS.find((n) => n.value === followers);
+      chips.push({ key: 'followers', label: opt?.label || followers, onClose: () => { setFollowers(''); setPage(1); } });
+    }
+    if (approvalStatus) {
+      const labels = { pending: 'Pending', approved: 'Approved', pro_approved: 'Pro approved', rejected: 'Rejected' };
+      chips.push({ key: 'status', label: labels[approvalStatus] || approvalStatus, onClose: () => { setApprovalStatus(''); setPage(1); } });
+    }
+    if (platform) {
+      const opt = PLATFORM_FILTER_OPTIONS.find((n) => n.value === platform);
+      chips.push({ key: 'platform', label: opt?.label || platform, onClose: () => { setPlatform(''); setPage(1); } });
+    }
+    if (tier) chips.push({ key: 'tier', label: `Tier: ${tier}`, onClose: () => { setTier(''); setPage(1); } });
+    if (verified) chips.push({ key: 'verified', label: verified === 'true' ? 'Verified' : 'Unverified', onClose: () => { setVerified(''); setPage(1); } });
+    if (kit) chips.push({ key: 'kit', label: kit === 'true' ? 'Has kit' : 'No kit', onClose: () => { setKit(''); setPage(1); } });
+    if (unsubscribed) chips.push({ key: 'sub', label: unsubscribed === 'true' ? 'Unsubscribed' : 'Active only', onClose: () => { setUnsubscribed(''); setPage(1); } });
+    return chips;
+  }, [niches, regions, followers, approvalStatus, platform, tier, verified, kit, unsubscribed]);
 
   if (!isAuthenticated) {
     return (
@@ -620,7 +761,7 @@ const CreatorsAdmin = () => {
             <span><b>{approvalSnapshot.pending ?? 0}</b> pending</span>
             <span><b>{approvalSnapshot.approved_today ?? 0}</b> approved today</span>
             <span><b>{approvalSnapshot.rejected_today ?? 0}</b> rejected today</span>
-            {tab === 'directory' && <span><b>{(stats.total ?? total).toLocaleString()}</b> creators</span>}
+            {tab === 'directory' && <span><b>{total.toLocaleString()}</b> creators</span>}
           </StatsStrip>
         </div>
         <Space>
@@ -661,55 +802,116 @@ const CreatorsAdmin = () => {
             children: (
               <>
       <FiltersCard>
-        <FilterRow>
+        <SearchRow>
           <Input
-            value={searchQ}
-            onChange={(e) => { setSearchQ(e.target.value); setPage(1); }}
-            placeholder="Search email, name, username…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onPressEnter={() => applySearchNow()}
+            placeholder="Find by @handle, email, name, or kit slug"
             allowClear
+            size="large"
             prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
           />
-          <Input
-            value={niche}
-            onChange={(e) => { setNiche(e.target.value); setPage(1); }}
-            placeholder="Niche…"
+        </SearchRow>
+        <FilterRow>
+          <Select
+            mode="multiple"
+            value={niches}
+            onChange={(v) => { setNiches(v); setPage(1); }}
             allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Niche"
+            aria-label="Niche"
+            options={NICHE_FILTER_OPTIONS}
+            maxTagCount="responsive"
+            style={{ minWidth: 160, flex: '1 1 160px' }}
           />
-          <Input
-            value={region}
-            onChange={(e) => { setRegion(e.target.value); setPage(1); }}
-            placeholder="Region…"
+          <Select
+            mode="multiple"
+            value={regions}
+            onChange={(v) => { setRegions(v); setPage(1); }}
             allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Region"
+            aria-label="Region"
+            options={REGION_FILTER_OPTIONS}
+            maxTagCount="responsive"
+            style={{ minWidth: 150, flex: '1 1 150px' }}
           />
-          <Select value={tier || undefined} onChange={(v) => { setTier(v || ''); setPage(1); }} allowClear placeholder="Tier" style={{ width: '100%' }}>
-            <Option value="free">Free</Option>
-            <Option value="pro">Pro</Option>
-            <Option value="elite">Elite</Option>
-          </Select>
-          <Select value={verified || undefined} onChange={(v) => { setVerified(v || ''); setPage(1); }} allowClear placeholder="Verified" style={{ width: '100%' }}>
-            <Option value="true">Verified</Option>
-            <Option value="false">Unverified</Option>
-          </Select>
-          <Select value={kit || undefined} onChange={(v) => { setKit(v || ''); setPage(1); }} allowClear placeholder="Kit" style={{ width: '100%' }}>
-            <Option value="true">Has kit</Option>
-            <Option value="false">No kit</Option>
-          </Select>
-          <Select value={unsubscribed || undefined} onChange={(v) => { setUnsubscribed(v || ''); setPage(1); }} allowClear placeholder="Subscribed" style={{ width: '100%' }}>
-            <Option value="false">Active only</Option>
-            <Option value="true">Unsubscribed</Option>
-          </Select>
-          <Select value={approvalStatus || undefined} onChange={(v) => { setApprovalStatus(v || ''); setPage(1); }} allowClear placeholder="Approval" style={{ width: '100%' }}>
+          <Select
+            value={followers || undefined}
+            onChange={(v) => { setFollowers(v || ''); setPage(1); }}
+            allowClear
+            placeholder="Followers"
+            aria-label="Followers"
+            options={FOLLOWER_BUCKETS.filter((b) => b.value)}
+            style={{ minWidth: 120, flex: '0 1 140px' }}
+          />
+          <Select
+            value={approvalStatus || undefined}
+            onChange={(v) => { setApprovalStatus(v || ''); setPage(1); }}
+            allowClear
+            placeholder="Status"
+            aria-label="Status"
+            style={{ minWidth: 120, flex: '0 1 140px' }}
+          >
             <Option value="pending">Pending</Option>
             <Option value="approved">Approved</Option>
             <Option value="pro_approved">Pro approved</Option>
             <Option value="rejected">Rejected</Option>
           </Select>
+          <Popover
+            trigger="click"
+            placement="bottomRight"
+            content={
+              <MoreFilters>
+                <Select value={tier || undefined} onChange={(v) => { setTier(v || ''); setPage(1); }} allowClear placeholder="Tier" style={{ width: '100%' }}>
+                  <Option value="free">Free</Option>
+                  <Option value="pro">Pro</Option>
+                  <Option value="elite">Elite</Option>
+                </Select>
+                <Select value={platform || undefined} onChange={(v) => { setPlatform(v || ''); setPage(1); }} allowClear placeholder="Platform" options={PLATFORM_FILTER_OPTIONS} style={{ width: '100%' }} />
+                <Select value={verified || undefined} onChange={(v) => { setVerified(v || ''); setPage(1); }} allowClear placeholder="Verified" style={{ width: '100%' }}>
+                  <Option value="true">Verified</Option>
+                  <Option value="false">Unverified</Option>
+                </Select>
+                <Select value={kit || undefined} onChange={(v) => { setKit(v || ''); setPage(1); }} allowClear placeholder="Kit" style={{ width: '100%' }}>
+                  <Option value="true">Has kit</Option>
+                  <Option value="false">No kit</Option>
+                </Select>
+                <Select value={unsubscribed || undefined} onChange={(v) => { setUnsubscribed(v || ''); setPage(1); }} allowClear placeholder="Email" style={{ width: '100%' }}>
+                  <Option value="false">Active only</Option>
+                  <Option value="true">Unsubscribed</Option>
+                </Select>
+              </MoreFilters>
+            }
+          >
+            <Button icon={<FilterOutlined />}>
+              More{moreFilterCount ? ` (${moreFilterCount})` : ''}
+            </Button>
+          </Popover>
         </FilterRow>
+        {(activeFilterChips.length > 0 || searchQ) && (
+          <ChipRow>
+            {searchQ ? (
+              <Tag closable onClose={() => applySearchNow('')}>
+                “{searchQ}”
+              </Tag>
+            ) : null}
+            {activeFilterChips.map((chip) => (
+              <Tag key={chip.key} closable onClose={chip.onClose}>{chip.label}</Tag>
+            ))}
+            <Button type="link" size="small" onClick={resetFilters}>Clear all</Button>
+          </ChipRow>
+        )}
         <FilterMeta>
           <Text type="secondary">
-            Showing {creators.length ? (page - 1) * pageSize + 1 : 0}–{Math.min(page * pageSize, total)} of {total}
+            {loading
+              ? 'Searching…'
+              : `${total.toLocaleString()} ${(searchQ || activeFilterChips.length) ? (total === 1 ? 'match' : 'matches') : (total === 1 ? 'creator' : 'creators')}${total > 0 ? ` · showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)}` : ''}`}
           </Text>
-          <Button type="link" size="small" onClick={resetFilters}>Clear filters</Button>
         </FilterMeta>
       </FiltersCard>
 
@@ -731,6 +933,15 @@ const CreatorsAdmin = () => {
             size: 'default',
           }}
           onChange={handleTableChange}
+          onRow={(record) => ({
+            onClick: () => openDrawer(record),
+            style: { cursor: 'pointer' },
+          })}
+          locale={{
+            emptyText: searchQ || activeFilterChips.length
+              ? 'No creators match. Try an @handle or email.'
+              : 'No creators yet.',
+          }}
         />
       </TableCard>
               </>
@@ -757,7 +968,7 @@ const CreatorsAdmin = () => {
                 icon={!selectedCreator.image_profile ? <UserOutlined /> : undefined}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <DrawerName>@{selectedCreator.username || 'unknown'}</DrawerName>
+                <DrawerName>@{displayHandle(selectedCreator)}</DrawerName>
                 {selectedCreator.first_name ? (
                   <Text type="secondary">{selectedCreator.first_name}</Text>
                 ) : null}
@@ -1073,19 +1284,35 @@ const FiltersCard = styled.div`
   margin-bottom: 16px;
 `;
 
+const SearchRow = styled.div`
+  margin-bottom: 10px;
+
+  .ant-input-affix-wrapper-lg {
+    border-radius: 10px;
+  }
+`;
+
 const FilterRow = styled.div`
-  display: grid;
-  grid-template-columns: 1.4fr 0.7fr 0.7fr 0.55fr 0.65fr 0.55fr 0.7fr 0.75fr;
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
+`;
 
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
+const ChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+`;
 
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-  }
+const MoreFilters = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 220px;
+  padding: 4px 0;
 `;
 
 const FilterMeta = styled.div`

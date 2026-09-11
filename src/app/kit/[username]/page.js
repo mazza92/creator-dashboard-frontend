@@ -2,10 +2,11 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import MediaKitClient from './MediaKitClient';
 import KitViewTracker from './KitViewTracker';
+import { kitApiOrigin, mergeKitWithPublicProfile } from '../../../lib/kitBrandCta';
 
 function portfolioApiBase() {
-  // Prefer explicit env; in local Next.js always hit the local Flask API so
-  // contact_email / kit changes are visible without deploying api.newcollab.co.
+  // Prefer explicit env; in local Next.js hit the local Flask API so kit
+  // changes are visible without deploying api.newcollab.co.
   const fromEnv =
     process.env.NEXT_PUBLIC_API_BASE ||
     process.env.REACT_APP_BACKEND_URL ||
@@ -20,7 +21,7 @@ async function getMediaKit(username) {
   try {
     const apiBase = portfolioApiBase();
     const res = await fetch(`${apiBase}/api/portfolio/public/${username}`, {
-      // Dev: no cache so mailto/email updates show immediately
+      // Dev: no cache so kit changes are visible immediately
       next: { revalidate: process.env.NODE_ENV === 'production' ? 3600 : 0 },
       cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
     });
@@ -33,39 +34,67 @@ async function getMediaKit(username) {
     // Portfolio API returns data directly (not wrapped in success/media_kit)
     if (data.error) return null;
 
+    let profile = null;
+    const origin = kitApiOrigin(apiBase);
+    const profileUrls = [`${origin}/c/${encodeURIComponent(username)}`];
+    if (!origin.includes('api.newcollab.co')) {
+      profileUrls.push(`https://api.newcollab.co/c/${encodeURIComponent(username)}`);
+    }
+    for (const profileUrl of profileUrls) {
+      try {
+        const profileRes = await fetch(profileUrl, {
+          next: { revalidate: process.env.NODE_ENV === 'production' ? 3600 : 0 },
+          cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
+        });
+        if (profileRes.ok) {
+          const body = await profileRes.json();
+          if (body && !body.error) {
+            profile = body;
+            if (Array.isArray(body.social_links) && body.social_links.length) break;
+          }
+        }
+      } catch {
+        // public profile may be unpublished; kit still renders
+      }
+    }
+    const merged = mergeKitWithPublicProfile(data, profile);
+
     // Transform portfolio API response to match expected structure
     return {
       success: true,
       media_kit: {
-        display_name: data.first_name || data.username,
-        username: data.username,
-        tagline: data.tagline,
-        profile_photo_url: data.avatar_url,
+        display_name: merged.display_name || merged.first_name || merged.username,
+        username: merged.username,
+        tagline: merged.tagline,
+        profile_photo_url: merged.avatar_url,
         location: null,
-        niches: data.niches || [],
-        total_followers: data.follower_count,
-        engagement_rate: data.engagement_rate,
-        accepts_gifted: data.rates_gifted,
-        accepts_paid: !!(data.rates_reel || data.rates_tiktok || data.rates_photo),
+        niches: merged.niches || [],
+        total_followers: merged.follower_count,
+        engagement_rate: merged.engagement_rate,
+        accepts_gifted: merged.rates_gifted,
+        accepts_paid: !!(merged.rates_reel || merged.rates_tiktok || merged.rates_photo),
         platforms: [],  // Will be derived from posts
         content_types: [],
-        collaborations: (data.posts || []).filter(p => p.brand_name && p.collab_type !== 'own').map(p => ({
+        collaborations: (merged.posts || []).filter(p => p.brand_name && p.collab_type !== 'own').map(p => ({
           brand: p.brand_name,
           type: p.collab_type,
           url: p.post_url
         })),
         rates: [
-          ...(data.rates_reel ? [{ name: 'Instagram Reel', price: data.rates_reel }] : []),
-          ...(data.rates_tiktok ? [{ name: 'TikTok Video', price: data.rates_tiktok }] : []),
-          ...(data.rates_photo ? [{ name: 'Instagram Photo', price: data.rates_photo }] : []),
+          ...(merged.rates_reel ? [{ name: 'Instagram Reel', price: merged.rates_reel }] : []),
+          ...(merged.rates_tiktok ? [{ name: 'TikTok Video', price: merged.rates_tiktok }] : []),
+          ...(merged.rates_photo ? [{ name: 'Instagram Photo', price: merged.rates_photo }] : []),
         ],
-        posts: data.posts || [],
-        is_pro: data.is_pro,
-        kit_views: data.kit_views,
-        socials: data.socials || {},
-        regions: data.regions || [],
-        primary_age_range: data.primary_age_range,
-        contact_email: data.contact_email || null,
+        posts: merged.posts || [],
+        posts_source: merged.posts_source || (merged.posts?.length ? 'portfolio' : null),
+        is_pro: merged.is_pro,
+        kit_views: merged.kit_views,
+        socials: merged.socials || {},
+        social_profiles: merged.social_profiles || [],
+        social_links: merged.social_links || [],
+        regions: merged.regions || [],
+        primary_age_range: merged.primary_age_range,
+        bio: merged.bio || null,
       }
     };
   } catch (error) {
@@ -93,17 +122,17 @@ export async function generateMetadata({ params }) {
   }
 
   const mediaKit = data.media_kit;
-  const displayName = mediaKit.display_name || username;
-  const tagline = mediaKit.tagline || `${displayName}'s Media Kit`;
+  const handle = `@${String(username || '').replace(/^@/, '')}`;
+  const tagline = mediaKit.tagline || mediaKit.bio || `${handle} media kit`;
   const profileImage = mediaKit.profile_photo_url || '/default-avatar.png';
 
   return {
-    title: `${displayName} - Creator Media Kit | Newcollab`,
+    title: `${handle} - Creator Media Kit | Newcollab`,
     description: tagline,
     keywords: mediaKit.niches?.join(', '),
     openGraph: {
       type: 'profile',
-      title: `${displayName} - Creator Media Kit`,
+      title: `${handle} - Creator Media Kit`,
       description: tagline,
       images: [profileImage],
       url: `https://newcollab.co/kit/${username}`,
@@ -111,7 +140,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${displayName} - Creator Media Kit`,
+      title: `${handle} - Creator Media Kit`,
       description: tagline,
       images: [profileImage],
       creator: '@newcollab',
@@ -140,7 +169,7 @@ export default async function MediaKitPage({ params }) {
   }
 
   const mediaKit = data.media_kit;
-  const displayName = mediaKit.display_name || username;
+  const handle = `@${String(username || '').replace(/^@/, '')}`;
 
   // Create structured data for SEO
   const structuredData = {
@@ -148,14 +177,14 @@ export default async function MediaKitPage({ params }) {
     "@type": "ProfilePage",
     "mainEntity": {
       "@type": "Person",
-      "name": displayName,
+      "name": handle,
       "description": mediaKit.tagline,
       "image": mediaKit.profile_photo_url,
       "url": `https://newcollab.co/kit/${username}`,
       ...(mediaKit.location && { "address": { "@type": "PostalAddress", "addressLocality": mediaKit.location } }),
       ...(mediaKit.niches && mediaKit.niches.length > 0 && { "knowsAbout": mediaKit.niches }),
-      ...(mediaKit.platforms && mediaKit.platforms.length > 0 && {
-        "sameAs": mediaKit.platforms.map(p => p.url).filter(Boolean)
+      ...((mediaKit.socials && Object.keys(mediaKit.socials).length > 0) && {
+        "sameAs": Object.values(mediaKit.socials).filter(Boolean)
       }),
     }
   };
@@ -180,7 +209,7 @@ export default async function MediaKitPage({ params }) {
       {
         "@type": "ListItem",
         "position": 3,
-        "name": displayName,
+        "name": handle,
         "item": `https://newcollab.co/kit/${username}`
       }
     ]
@@ -197,7 +226,7 @@ export default async function MediaKitPage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
       />
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
-        {displayName} - Creator Media Kit
+        {handle} - Creator Media Kit
       </h1>
       <Suspense fallback={null}>
         <KitViewTracker username={username} />
