@@ -12,6 +12,9 @@ const BLOG_WIDGET_ALLOWED_SLUGS = [
   'list-of-companies-that-send-pr-packages-2026',
   '50-ugc-product-ideas-for-beginners-2026',
   'how-to-build-a-ugc-portfolio-brands-want-2026',
+  'k-beauty-korean-skincare-brands-pr-list-small-creators-2026',
+  'pr-emails-for-brands-2026',
+  'how-i-got-on-pr-lists-australia-2026',
 ];
 
 /**
@@ -212,6 +215,35 @@ function getBrandSearchWidgetHtml(postSlug) {
 </section>`;
 }
 
+const KIT_PITCH_CTA_SLUGS = [
+  'companies-with-open-pr-application-forms-influencers-2025',
+  'ultimate-2026-directory-brands-with-open-pr-application-forms',
+  'k-beauty-korean-skincare-brands-pr-list-small-creators-2026',
+  'pr-list-for-clothing-brands-micro-influencers-2025',
+  'list-of-companies-that-send-pr-packages-2026',
+  'how-i-got-on-pr-lists-australia-2026',
+  'aussie-brands-pr-package-list-2026',
+  'pr-emails-for-brands-2026',
+];
+
+function getKitPitchCtaHtml(postSlug) {
+  const campaign = encodeURIComponent(postSlug || 'blog');
+  return `
+<div class="cta-box kit-pitch-cta" style="background:#FFF0F3;border-left:4px solid #EC407A;padding:1.5rem;margin:2rem 0;border-radius:4px;">
+  <p style="margin:0 0 1rem;font-size:1rem;color:#333;">Most creators get ignored on application forms — brands receive hundreds per week. A personalised pitch with your media kit attached gets read first. Newcollab writes the email and attaches your kit automatically.</p>
+  <a href="/register/creator?utm_source=blog&amp;utm_medium=organic&amp;utm_campaign=kit_pitch&amp;utm_content=${campaign}" style="display:inline-block;background:#EC407A;color:#fff;padding:0.75rem 1.5rem;border-radius:4px;text-decoration:none;font-weight:600;">Start pitching brands free →</a>
+</div>`;
+}
+
+function injectKitPitchCta(html, postSlug) {
+  if (!html || !KIT_PITCH_CTA_SLUGS.includes(postSlug)) return html;
+  if (html.includes('kit-pitch-cta')) return html;
+  const pMatch = html.match(/<\/p>/i);
+  if (!pMatch) return html;
+  const insertPos = pMatch.index + 4;
+  return html.slice(0, insertPos) + getKitPitchCtaHtml(postSlug) + html.slice(insertPos);
+}
+
 /**
  * Inject the brand search widget after the intro paragraph, before the first H2.
  * Only injects for allowed post slugs (Phase 1 rollout).
@@ -269,11 +301,9 @@ export function getPostContentHtml(post, options = {}) {
     html = stripEmbeddedFaqFromContent(html);
   }
 
-  // NOTE: Widget is now rendered as React component in BlogPostClient.js
-  // Static HTML injection disabled - use BlogBrandSearchWidget instead
-  // if (options.injectBrandSearch === true && post?.slug) {
-  //   html = injectBrandSearchWidget(html, post.slug);
-  // }
+  if (post?.slug) {
+    html = injectKitPitchCta(html, post.slug);
+  }
 
   return html;
 }

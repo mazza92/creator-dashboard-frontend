@@ -1041,20 +1041,38 @@ export default function AboutClient() {
             <ForGrid>
               <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/companies-with-open-pr-application-forms-influencers-2025'}>
                 <ForCardTag $yes>Most Popular</ForCardTag>
-                <h3>385+ Brands with Open PR Application Forms</h3>
+                <h3>Brands with Open PR Application Forms</h3>
                 <ul>
                   <li>Direct application links to brand PR forms</li>
                   <li>Beauty, fashion, lifestyle & wellness brands</li>
-                  <li>Updated weekly with new opportunities</li>
+                  <li>Updated for 2026</li>
                 </ul>
               </ForCard>
-              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/list-of-companies-that-send-pr-packages-2025'}>
-                <ForCardTag $yes>2025 List</ForCardTag>
+              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/list-of-companies-that-send-pr-packages-2026'}>
+                <ForCardTag $yes>2026 List</ForCardTag>
                 <h3>Companies That Send PR Packages</h3>
                 <ul>
-                  <li>100+ verified PR-friendly brands</li>
+                  <li>Verified PR-friendly brands</li>
                   <li>Brands actively seeking small creators</li>
                   <li>Contact info and reply rate data</li>
+                </ul>
+              </ForCard>
+              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/pr-emails-for-brands-2026'}>
+                <ForCardTag $yes>Templates</ForCardTag>
+                <h3>PR Emails for Brands</h3>
+                <ul>
+                  <li>Copy-paste pitch emails with your kit attached</li>
+                  <li>Follow-up sequence that gets replies</li>
+                  <li>How to reach out without a cold DM</li>
+                </ul>
+              </ForCard>
+              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/ultimate-list-of-gaming-tech-companies-that-sponsor-small-streamers'}>
+                <ForCardTag $yes>Gaming</ForCardTag>
+                <h3>Gaming & Tech Sponsors</h3>
+                <ul>
+                  <li>Companies that sponsor small streamers</li>
+                  <li>How to get a gaming sponsorship in 2026</li>
+                  <li>Direct routes, not a wish list</li>
                 </ul>
               </ForCard>
             </ForGrid>

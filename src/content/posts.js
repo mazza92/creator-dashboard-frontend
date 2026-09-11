@@ -1,5 +1,6 @@
 // Auto-generated post index — do not edit manually
 export const posts = [
+  "planet-fitness-creator-influencer-partnership-2026",
   "how-to-build-a-ugc-portfolio-brands-want-2026",
   "50-ugc-product-ideas-for-beginners-2026",
   "pr-emails-for-brands-2026",

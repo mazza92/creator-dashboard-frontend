@@ -143,6 +143,11 @@ const nextConfig = {
         destination: '/blog/how-i-got-on-pr-lists-australia-2026',
         permanent: true,
       },
+      {
+        source: '/blog/planet-fitness-creator-influencer-partnership',
+        destination: '/blog/planet-fitness-creator-influencer-partnership-2026',
+        permanent: true,
+      },
       // Redirect /for-brands to CRA app (Brand Opportunities submission form)
       {
         source: '/for-brands',

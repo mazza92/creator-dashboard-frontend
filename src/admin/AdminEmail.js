@@ -50,6 +50,31 @@ const FOUNDER_SPRINT_ANNOUNCEMENT = {
   segmentId: 'at_quota_limit',
 };
 
+const FOUNDER_WINBACK_ANNOUNCEMENT = {
+  emailSubject: '{{first_name}}, come back at $12 for the next 3 months',
+  headerTitle: 'Pro is $12 for the next 3 invoices.',
+  headerSubtitle: '',
+  gradient: 'dark',
+  bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
+<p style="margin: 0 0 16px 0;">You already used Pro. The next three invoices are $12 instead of $19, then it returns to $19. Same unlimited credits and pipeline.</p>
+<p style="margin: 0 0 16px 0;">I will still help you land the first collab. If $19 felt high before a yes from a brand, use the cheaper window to send the next pitches.</p>
+<p style="margin: 0;">Cancel anytime. The $12 rate only applies if you restart this week.</p>
+<p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
+  calloutText: 'Same Pro. $12 for 3 months, then $19. No extra charge to restart.',
+  calloutIcon: '',
+  listItems: [
+    { icon: '1', title: 'Restart Pro at $12', text: 'Three invoices at $12, then back to $19. Unlimited credits while you wait on replies.' },
+    { icon: '2', title: 'I help close the first yes', text: 'Reply to this email with your niche and I will pick the next brands with you.' },
+    { icon: '3', title: 'Your pipeline is still there', text: 'The brands you already unlocked stay in the account.' },
+  ],
+  ctaLabel: 'Restart Pro at $12/mo',
+  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=winback&utm_source=email&utm_medium=campaign&utm_campaign=canceled_pro_winback',
+  preheader: 'Three months at $12, then $19. Same Pro.',
+  utmCampaign: 'canceled_pro_winback',
+  campaignName: 'Canceled Pro winback — $12/3mo',
+  segmentId: 'canceled_pro',
+};
+
 const AdminEmail = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -712,6 +737,7 @@ const AdminEmail = () => {
       case 'engaged': return <CheckCircleOutlined />;
       case 'power_users': return <TrophyOutlined />;
       case 'at_quota_limit': return <ThunderboltOutlined />;
+      case 'canceled_pro': return <ReloadOutlined />;
       case 'dormant': return <ClockCircleOutlined />;
       default: return <MailOutlined />;
     }
@@ -1127,6 +1153,30 @@ const AdminEmail = () => {
                       <span>At 3/3</span>
                       <span>Live Composer</span>
                       <span>$19 Pro</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
+                      <EyeOutlined /> Compose &amp; Preview
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setAnnouncementConfig({
+                        ...FOUNDER_WINBACK_ANNOUNCEMENT,
+                      });
+                      setShowAnnouncementPreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
+                    <div className="template-icon-large">$12</div>
+                    <h4>Canceled Pro winback</h4>
+                    <p>Maher offers $12 for the next 3 months. Targets people who paid Pro then canceled.</p>
+                    <div className="template-features">
+                      <span>Canceled Pro</span>
+                      <span>Live Composer</span>
+                      <span>$12 / 3 mo</span>
                     </div>
                     <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
                       <EyeOutlined /> Compose &amp; Preview
@@ -1616,6 +1666,8 @@ const AdminEmail = () => {
                     message.success(
                       announcementConfig.segmentId === 'at_quota_limit'
                         ? 'Loaded. Segment is already set to At 3/3 unlocks. Send a test first.'
+                        : announcementConfig.segmentId === 'canceled_pro'
+                        ? 'Loaded. Segment is already set to Canceled Pro. Send a test first.'
                         : 'Template loaded! Finish setting up your campaign.'
                     );
                   }}

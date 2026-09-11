@@ -862,12 +862,12 @@ const ForYou = () => {
               {packsExhausted && (
                 <CreditUpgradeBar>
                   <CreditUpgradeHint>
-                    Free packs used. Keep sending with Pro at $19/mo.
+                    Free packs used. Go Pro and I will send your next 8 this week.
                   </CreditUpgradeHint>
                   <QuotaUpgrade onClick={() => {
                     setUpgradeReason('unlock_paywall');
                     setShowUpgrade(true);
-                  }}>Go Pro · $19/mo</QuotaUpgrade>
+                  }}>Go Pro · I send the next 8</QuotaUpgrade>
                 </CreditUpgradeBar>
               )}
             </>
