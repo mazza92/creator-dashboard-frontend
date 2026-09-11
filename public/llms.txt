@@ -4,7 +4,7 @@
 
 Website: https://newcollab.co
 Brand offer: https://newcollab.co/brands/pr-packages
-Brand signup: https://newcollab.co/register/brand
+Brand signup: https://app.newcollab.co/for-brands
 Contact: team@newcollab.co
 
 ## What Newcollab is

@@ -1,4 +1,5 @@
 export const SITE = 'https://newcollab.co';
+export const BRAND_APP_URL = 'https://app.newcollab.co/for-brands';
 
 export function brandSignupUrl(campaign) {
   const q = new URLSearchParams({
@@ -6,7 +7,7 @@ export function brandSignupUrl(campaign) {
     utm_medium: 'organic',
     utm_campaign: campaign || 'brands',
   });
-  return `/register/brand?${q.toString()}`;
+  return `${BRAND_APP_URL}?${q.toString()}`;
 }
 
 export function trackBrandCtaClick(campaign, location) {

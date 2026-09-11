@@ -928,7 +928,7 @@ const ArrowIcon = () => (
 // COMPONENT
 // ============================================================================
 const BrandPRPackagesPage = () => {
-  const signupUrl = '/register/brand?utm_source=seo&utm_medium=organic&utm_campaign=pr-packages';
+  const signupUrl = 'https://app.newcollab.co/for-brands?utm_source=seo&utm_medium=organic&utm_campaign=pr-packages';
 
   return (
     <LandingPageLayout>
