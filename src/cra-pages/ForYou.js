@@ -862,12 +862,12 @@ const ForYou = () => {
               {packsExhausted && (
                 <CreditUpgradeBar>
                   <CreditUpgradeHint>
-                    Free packs used. Go Pro and I will send your next 8 this week.
+                    Free packs used. Pro guarantees 1 gifting campaign a month.
                   </CreditUpgradeHint>
                   <QuotaUpgrade onClick={() => {
                     setUpgradeReason('unlock_paywall');
                     setShowUpgrade(true);
-                  }}>Go Pro · I send the next 8</QuotaUpgrade>
+                  }}>Go Pro · 1 campaign / month</QuotaUpgrade>
                 </CreditUpgradeBar>
               )}
             </>

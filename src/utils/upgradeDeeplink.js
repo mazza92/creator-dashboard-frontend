@@ -3,6 +3,7 @@ const STORAGE_KEY = 'openUpgradeModal';
 const UPGRADE_FEATURE_MAP = {
   pro: 'limit_reached',
   founder_sprint: 'limit_reached',
+  gifting_guarantee: 'limit_reached',
   winback: 'limit_reached',
   pitch_limit: 'limit_reached',
   kit_views: 'kit_views',

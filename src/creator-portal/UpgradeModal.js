@@ -47,22 +47,22 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     {
       emoji: '1',
       bg: '#dbeafe',
-      text: <><strong>You approve the 8 brands.</strong> I pick ones that fit your niche. Nothing goes out without your yes.</>,
+      text: <><strong>1 gifting campaign guaranteed each month.</strong> We put you on a live gifted roster. The brand ships. You post.</>,
     },
     {
       emoji: '2',
       bg: '#fef3c7',
-      text: <><strong>I send from your kit this week.</strong> Same pitch flow you already used. I do the sending so you do not stall.</>,
+      text: <><strong>You never send a pitch.</strong> We vet you. The brand picks. No cold emails.</>,
     },
     {
       emoji: '3',
       bg: '#ede9fe',
-      text: <><strong>We follow up on the first 3.</strong> Pro drafts the 7-day follow-up and shows kit opens.</>,
+      text: <><strong>Unlimited credits on top.</strong> Keep applying to other brands while that campaign runs.</>,
     },
     {
       emoji: '👀',
       bg: '#fce7f3',
-      text: <><strong>Cap of 8 extra this month.</strong> Cancel anytime after this week if it is not useful.</>,
+      text: <><strong>If we miss, I make it right.</strong> Email me that month and I place you on the next campaign or refund it.</>,
     },
   ] : [
     {
@@ -125,8 +125,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </>
               ) : atCap ? (
                 <>
-                  Your 3 are out. I will send the next 8.<br />
-                  That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
+                  Your 3 are out. Pro guarantees<br />
+                  <PinkSpan>1 gifting campaign</PinkSpan> a month.
                 </>
               ) : (
                 <>
@@ -139,7 +139,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               {feature === 'last_unlock'
                 ? 'Use this credit now. Pro gives unlimited credits this month — we vet, the brand picks, you never pitch.'
                 : atCap
-                ? 'If you go Pro today ($19/mo), I pick 8 more brands that fit you and send from your kit this week. You approve the list first.'
+                ? 'Pro is $19/mo. We place you on one live gifted campaign each month — product + shipping, you post. No cold pitching.'
                 : 'Each credit puts you on a brand roster. More credits, more chances the box shows up. Pro is how you keep going all month.'}
             </Subtext>
 
@@ -162,7 +162,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   <PriceAmount>$19</PriceAmount>
                   <PricePer>/ month</PricePer>
                 </PriceRow>
-                <PriceSubline>I send the next 8 · you approve · cancel anytime</PriceSubline>
+                <PriceSubline>1 gifting campaign / month · cancel anytime</PriceSubline>
               </PriceCard>
               <FeatureList>
                 {features.map((f, i) => (
@@ -246,7 +246,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               <ProofText>
                 {atCap ? (
                   <>
-                    <strong>Your 3 free credits are in.</strong> Waiting until next month is how first PR does not happen.
+                    <strong>Your 3 free credits are in.</strong> Waiting until next month is how the box does not show up.
                   </>
                 ) : (
                   <>
@@ -266,7 +266,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   disabled={busy}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {loading ? 'Processing...' : 'Go Pro · I will send the next 8'}
+                  {loading ? 'Processing...' : 'Go Pro · 1 gifting campaign / month'}
                 </CtaButton>
               </>
             ) : (

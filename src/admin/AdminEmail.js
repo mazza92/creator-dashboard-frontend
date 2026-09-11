@@ -25,28 +25,28 @@ const isLocalAdminHost = () =>
   typeof window !== 'undefined' && window.location.hostname === 'localhost';
 const ADMIN_PASSWORD = 'Ilovela1992!';
 
-const FOUNDER_SPRINT_ANNOUNCEMENT = {
-  emailSubject: '{{first_name}}, I will send your next 8 pitches this week',
-  headerTitle: 'Your 3 are out. I will send the next 8.',
+const GIFTING_GUARANTEE_ANNOUNCEMENT = {
+  emailSubject: '{{first_name}}, Pro now guarantees 1 gifting campaign a month',
+  headerTitle: 'Your 3 are out. 1 gifting campaign a month.',
   headerSubtitle: '',
   gradient: 'dark',
   bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
-<p style="margin: 0 0 16px 0;">You already used your 3 free packs. Most people stop there and wait for next month. That is how first PR does not happen.</p>
-<p style="margin: 0 0 16px 0;">If you go Pro today ($19/mo), I will personally pick 8 more brands that fit you and send from your kit this week. You approve the list first. I will not blast the directory.</p>
-<p style="margin: 0;">Your original 3 stay in the pipeline. Pro also drafts the 7-day follow-up and shows who opened your kit. Cancel anytime after this week if it is not useful.</p>
+<p style="margin: 0 0 16px 0;">You already used your 3 free packs. Sending more cold pitches from here is how people stall. That is not what Pro is for anymore.</p>
+<p style="margin: 0 0 16px 0;">If you go Pro today ($19/mo), you get <strong>1 gifting campaign guaranteed each month</strong>. We put you on a live gifted roster. The brand ships product. You post. You do not send a pitch.</p>
+<p style="margin: 0;">Unlimited credits still sit on top of that, so you can apply to more brands while the campaign runs. If we miss a month, reply to this email and I place you on the next one or refund it.</p>
 <p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
-  calloutText: 'Cap of 8 extra this month. You approve. We send. Not unlimited blasting.',
+  calloutText: '1 gifted campaign / month. Product + shipping. No cold pitching.',
   calloutIcon: '',
   listItems: [
-    { icon: '1', title: 'You approve the 8 brands', text: 'I pick ones that fit your niche. Nothing goes out without your yes.' },
-    { icon: '2', title: 'I send from your kit this week', text: 'Same pitch flow you already used. I do the sending so you do not stall.' },
-    { icon: '3', title: 'We follow up on the first 3', text: 'Pro drafts the 7-day follow-up and shows kit opens, instead of going quiet.' },
+    { icon: '1', title: 'One campaign, guaranteed', text: 'Every paid month we place you on a live gifted roster that fits your niche.' },
+    { icon: '2', title: 'The brand ships. You post.', text: 'You never send a pitch. We vet you. The brand picks from the roster.' },
+    { icon: '3', title: 'If we miss, I make it right', text: 'Reply that month. I put you on the next campaign or refund the invoice.' },
   ],
-  ctaLabel: 'Go Pro · I will send the next 8',
-  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=founder_sprint&utm_source=email&utm_medium=campaign&utm_campaign=founder_sprint_3of3',
-  preheader: 'You already used your 3. Approve a list and I send them.',
-  utmCampaign: 'founder_sprint_3of3',
-  campaignName: 'Founder sprint — 3/3 unlocks',
+  ctaLabel: 'Go Pro · 1 gifting campaign / month',
+  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=gifting_guarantee&utm_source=email&utm_medium=campaign&utm_campaign=gifting_1_per_month',
+  preheader: 'Stop cold pitching. One gifted campaign a month, guaranteed.',
+  utmCampaign: 'gifting_1_per_month',
+  campaignName: 'Gifting guarantee — 3/3 unlocks',
   segmentId: 'at_quota_limit',
 };
 
@@ -1139,16 +1139,16 @@ const AdminEmail = () => {
                   <ModernTemplateCard
                     onClick={() => {
                       setAnnouncementConfig({
-                        ...FOUNDER_SPRINT_ANNOUNCEMENT,
+                        ...GIFTING_GUARANTEE_ANNOUNCEMENT,
                       });
                       setShowAnnouncementPreview(true);
                     }}
                     featured
                   >
                     <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
-                    <div className="template-icon-large">8</div>
-                    <h4>Founder sprint (3/3)</h4>
-                    <p>Maher offers to pick and send the next 8 pitches this week. Targets free users who used all 3 packs.</p>
+                    <div className="template-icon-large">1</div>
+                    <h4>1 gifting campaign / month</h4>
+                    <p>Pro places them on a live gifted roster. Targets free users who used all 3 packs.</p>
                     <div className="template-features">
                       <span>At 3/3</span>
                       <span>Live Composer</span>
