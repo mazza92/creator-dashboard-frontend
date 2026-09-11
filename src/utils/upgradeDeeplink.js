@@ -4,7 +4,7 @@ const UPGRADE_FEATURE_MAP = {
   pro: 'limit_reached',
   founder_sprint: 'limit_reached',
   gifting_guarantee: 'limit_reached',
-  winback: 'limit_reached',
+  winback: 'winback',
   pitch_limit: 'limit_reached',
   kit_views: 'kit_views',
   unlock_paywall: 'unlock_paywall',
@@ -20,8 +20,15 @@ function asParams(search) {
   return new URLSearchParams(typeof raw === 'string' && raw.startsWith('?') ? raw.slice(1) : raw || '');
 }
 
+function resolveUpgradeToken(params) {
+  const upgrade = params.get('upgrade');
+  const ref = params.get('ref');
+  if (upgrade === 'winback' || ref === 'winback') return 'winback';
+  return upgrade;
+}
+
 export function captureUpgradeDeeplink(search) {
-  const upgrade = asParams(search).get('upgrade');
+  const upgrade = resolveUpgradeToken(asParams(search));
   if (!upgrade) return null;
   rememberedUpgrade = upgrade;
   try {
@@ -33,7 +40,7 @@ export function captureUpgradeDeeplink(search) {
 }
 
 export function consumeUpgradeDeeplink(search) {
-  const fromUrl = asParams(search).get('upgrade');
+  const fromUrl = resolveUpgradeToken(asParams(search));
   let fromStore = null;
   try {
     fromStore = sessionStorage.getItem(STORAGE_KEY);
@@ -44,6 +51,15 @@ export function consumeUpgradeDeeplink(search) {
   if (!upgrade) return null;
   rememberedUpgrade = upgrade;
   return UPGRADE_FEATURE_MAP[upgrade] || 'limit_reached';
+}
+
+export function isWinbackUpgradePending() {
+  try {
+    if (rememberedUpgrade === 'winback') return true;
+    return sessionStorage.getItem(STORAGE_KEY) === 'winback';
+  } catch {
+    return rememberedUpgrade === 'winback';
+  }
 }
 
 export function dismissUpgradeDeeplink() {

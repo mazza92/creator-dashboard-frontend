@@ -68,7 +68,7 @@ const FOUNDER_WINBACK_ANNOUNCEMENT = {
     { icon: '3', title: 'Your pipeline is still there', text: 'The brands you already unlocked stay in the account.' },
   ],
   ctaLabel: 'Restart Pro at $12/mo',
-  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=winback&utm_source=email&utm_medium=campaign&utm_campaign=canceled_pro_winback',
+  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=winback&ref=winback&utm_source=email&utm_medium=campaign&utm_campaign=canceled_pro_winback',
   preheader: 'Three months at $12, then $19. Same Pro.',
   utmCampaign: 'canceled_pro_winback',
   campaignName: 'Canceled Pro winback — $12/3mo',

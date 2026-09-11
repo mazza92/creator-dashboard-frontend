@@ -5,6 +5,7 @@ import { FiX, FiLock, FiShield, FiClock } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
+import { dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 
 const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining }) => {
   const [loading, setLoading] = useState(false);
@@ -15,17 +16,25 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   const used = Number.isFinite(Number(rawUsed)) ? Number(rawUsed) : 0;
   const total = Number(limit || 3) || 3;
   const atCap = remainingKnown ? Number(unlockRemaining) <= 0 : used >= total;
+  const isWinback = feature === 'winback' || isWinbackUpgradePending();
 
   const handleUpgrade = async (tier) => {
-    const interval = atCap ? 'monthly' : billingInterval;
+    const interval = isWinback || atCap ? 'monthly' : billingInterval;
     try {
       setLoading(true);
-      trackProBeginCheckout({ tier, source: feature || 'upgrade_modal', interval });
+      trackProBeginCheckout({
+        tier,
+        source: isWinback ? 'winback' : (feature || 'upgrade_modal'),
+        interval,
+      });
+      const payload = { tier, interval };
+      if (isWinback) payload.offer = 'winback';
       const response = await api.post(
         '/api/subscription/create-checkout',
-        { tier, interval }
+        payload
       );
 
+      if (isWinback) dismissUpgradeDeeplink();
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);
@@ -43,7 +52,28 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   const busy = loading;
 
-  const features = atCap ? [
+  const features = isWinback ? [
+    {
+      emoji: '1',
+      bg: '#dbeafe',
+      text: <><strong>$12 for the next 3 invoices.</strong> Then Pro returns to $19 unless you change it in Settings.</>,
+    },
+    {
+      emoji: '2',
+      bg: '#fef3c7',
+      text: <><strong>1 gifting campaign guaranteed each month.</strong> We put you on a live gifted roster. The brand ships. You post.</>,
+    },
+    {
+      emoji: '3',
+      bg: '#ede9fe',
+      text: <><strong>Unlimited credits on top.</strong> Keep applying to other brands while that campaign runs.</>,
+    },
+    {
+      emoji: '👀',
+      bg: '#fce7f3',
+      text: <><strong>You never send a pitch.</strong> We vet you. The brand picks. No cold emails.</>,
+    },
+  ] : atCap ? [
     {
       emoji: '1',
       bg: '#dbeafe',
@@ -118,7 +148,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             </ModalIcon>
 
             <Headline>
-              {feature === 'last_unlock' ? (
+              {isWinback ? (
+                <>
+                  Come back at $12 for<br />
+                  the next <PinkSpan>3 months</PinkSpan>.
+                </>
+              ) : feature === 'last_unlock' ? (
                 <>
                   Your last free credit is ready.<br />
                   Use it. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
@@ -136,14 +171,16 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               )}
             </Headline>
             <Subtext>
-              {feature === 'last_unlock'
+              {isWinback
+                ? 'Then $19. Same Pro — 1 gifting campaign a month plus unlimited credits. Cancel anytime.'
+                : feature === 'last_unlock'
                 ? 'Use this credit now. Pro gives unlimited credits this month — we vet, the brand picks, you never pitch.'
                 : atCap
                 ? 'Pro is $19/mo. We place you on one live gifted campaign each month — product + shipping, you post. No cold pitching.'
                 : 'Each credit puts you on a brand roster. More credits, more chances the box shows up. Pro is how you keep going all month.'}
             </Subtext>
 
-            {/* Progress Bar */}
+            {!isWinback && (
             <ProgressSection>
               <ProgressHeader>
                 <span>Free credits this month</span>
@@ -153,8 +190,30 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 <ProgressFill $width={Math.min((used / total) * 100, 100)} />
               </ProgressTrack>
             </ProgressSection>
+            )}
 
-            {atCap ? (
+            {isWinback ? (
+              <>
+              <PriceCard>
+                <ProBadge>Pro</ProBadge>
+                <PriceRow>
+                  <PriceAmount>$12</PriceAmount>
+                  <PricePer>/ month</PricePer>
+                </PriceRow>
+                <PriceSubline>
+                  <s style={{ opacity: 0.65 }}>$19</s> <GreenText>3 invoices at $12, then $19</GreenText>
+                </PriceSubline>
+              </PriceCard>
+              <FeatureList>
+                {features.map((f, i) => (
+                  <FeatureItem key={i}>
+                    <FeatureIcon style={{ background: f.bg }}>{f.emoji}</FeatureIcon>
+                    <FeatureText>{f.text}</FeatureText>
+                  </FeatureItem>
+                ))}
+              </FeatureList>
+              </>
+            ) : atCap ? (
               <>
               <PriceCard>
                 <ProBadge>Pro</ProBadge>
@@ -244,7 +303,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             <ProofBox>
               <ProofIcon>✓</ProofIcon>
               <ProofText>
-                {atCap ? (
+                {isWinback ? (
+                  <>
+                    <strong>You already used Pro.</strong> This cheaper window is for landing the first yes before it returns to $19.
+                  </>
+                ) : atCap ? (
                   <>
                     <strong>Your 3 free credits are in.</strong> Waiting until next month is how the box does not show up.
                   </>
@@ -259,7 +322,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
           {/* Sticky CTA Area */}
           <CtaArea>
-            {atCap ? (
+            {isWinback ? (
+              <CtaButton
+                onClick={() => handleUpgrade('pro')}
+                disabled={busy}
+                whileTap={{ scale: 0.98 }}
+              >
+                {loading ? 'Processing...' : 'Restart Pro at $12/mo'}
+              </CtaButton>
+            ) : atCap ? (
               <>
                 <CtaButton
                   onClick={() => handleUpgrade('pro')}
