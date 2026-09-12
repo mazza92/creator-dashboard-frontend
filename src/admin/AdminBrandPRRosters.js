@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import {
-  AutoComplete, Button, Drawer, Input, InputNumber, Modal, Popconfirm,
+  AutoComplete, Button, Checkbox, Drawer, Input, InputNumber, Modal, Popconfirm,
   Space, Tag, message,
 } from 'antd';
 import {
-  CopyOutlined, EyeOutlined, PlusOutlined, ReloadOutlined,
+  CopyOutlined, EyeOutlined, MailOutlined, PlusOutlined, ReloadOutlined,
+  PushpinOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
@@ -63,6 +64,8 @@ export default function AdminBrandPRRosters() {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const [checkedIds, setCheckedIds] = useState(() => new Set());
+  const [spotlightBusy, setSpotlightBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,6 +101,7 @@ export default function AdminBrandPRRosters() {
       filling: all.filter((c) => c.in_focus).length,
       warming: all.filter((c) => c.status === 'active' && (c.fill_count || 0) > 0 && !c.in_focus && !c.fill_ready).length,
       ready: all.filter((c) => c.fill_ready).length,
+      spotlighted: all.filter((c) => c.spotlighted && c.status === 'active').length,
       active: all.filter((c) => c.status === 'active').length,
       locked: all.filter((c) => c.status === 'locked').length,
       shipped: all.filter((c) => c.status === 'shipped').length,
@@ -107,12 +111,13 @@ export default function AdminBrandPRRosters() {
   const visibleCampaigns = useMemo(() => {
     const rows = [...campaigns];
     rows.sort((a, b) => {
-      const rank = (c) => (c.fill_ready ? 0 : c.in_focus ? 1 : (c.fill_count || 0) > 0 ? 2 : 3);
+      const rank = (c) => (c.spotlighted ? 0 : c.fill_ready ? 1 : c.in_focus ? 2 : (c.fill_count || 0) > 0 ? 3 : 4);
       const d = rank(a) - rank(b);
       if (d) return d;
       return (b.fill_count || 0) - (a.fill_count || 0);
     });
-    if (view === 'foryou') return rows.filter((c) => c.in_focus);
+    if (view === 'foryou') return rows.filter((c) => c.in_focus || c.spotlighted);
+    if (view === 'spotlight') return rows.filter((c) => c.spotlighted);
     if (view === 'ready') return rows.filter((c) => c.fill_ready);
     if (view === 'warming') return rows.filter((c) => c.status === 'active' && (c.fill_count || 0) > 0 && !c.in_focus && !c.fill_ready);
     return rows;
@@ -229,6 +234,85 @@ export default function AdminBrandPRRosters() {
     }
   }
 
+  const activeVisible = visibleCampaigns.filter((row) => row.status === 'active');
+  const allVisibleChecked = activeVisible.length > 0
+    && activeVisible.every((row) => checkedIds.has(row.id));
+  const checkedRows = campaigns.filter((row) => checkedIds.has(row.id));
+
+  function toggleChecked(id, on) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleAllVisible(on) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      activeVisible.forEach((row) => {
+        if (on) next.add(row.id);
+        else next.delete(row.id);
+      });
+      return next;
+    });
+  }
+
+  async function pushSpotlight(on) {
+    const ids = checkedRows.filter((row) => row.status === 'active').map((row) => row.id);
+    if (!ids.length) {
+      message.warning('Select at least one active roster');
+      return;
+    }
+    setSpotlightBusy(true);
+    try {
+      const { data } = await axios.post(
+        `${API_BASE}/api/admin/brand-pr/campaigns/spotlight`,
+        { campaign_ids: ids, spotlight: on },
+        { headers, withCredentials: true }
+      );
+      message.success(
+        on
+          ? `Pushed ${data.updated || ids.length} roster${(data.updated || ids.length) === 1 ? '' : 's'} to Live now`
+          : `Removed ${data.updated || ids.length} from Live now`
+      );
+      setCheckedIds(new Set());
+      await load();
+    } catch (err) {
+      message.error(err.response?.data?.error || 'Could not update For You');
+    } finally {
+      setSpotlightBusy(false);
+    }
+  }
+
+  function composeFillEmail() {
+    const rows = checkedRows.length
+      ? checkedRows
+      : campaigns.filter((row) => row.spotlighted && row.status === 'active');
+    if (!rows.length) {
+      message.warning('Select rosters, or push some to For You first');
+      return;
+    }
+    const brands = rows.map((row) => ({
+      brandId: row.brand_id,
+      brandName: row.brand_name,
+      slug: row.brand_slug,
+      logo: row.logo_url,
+      product: row.sku_note || row.hero_product || '',
+      category: row.category || '',
+      applyUrl: row.brand_slug
+        ? `https://app.newcollab.co/creator/dashboard/for-you?brand=${encodeURIComponent(row.brand_slug)}`
+        : 'https://app.newcollab.co/creator/dashboard/for-you',
+    })).filter((b) => b.brandName);
+    try {
+      sessionStorage.setItem('nc_new_campaign_email_brands', JSON.stringify(brands));
+    } catch {
+      /* ignore quota */
+    }
+    window.location.href = '/admin/email?compose=new_campaigns';
+  }
+
   const campaign = detail?.campaign;
   const creators = detail?.creators || [];
   const selectedIds = (campaign?.selected_application_ids || []).map(Number);
@@ -239,9 +323,12 @@ export default function AdminBrandPRRosters() {
       <Top>
         <div>
           <h2>Brand PR rosters</h2>
-          <p>Ready and For You lists sit at the top. Click a stat to filter. We mint a private link at 8 people; For You only finishes the closest lists.</p>
+          <p>Select the rosters you cold-emailed, push them onto Live now, then email creators to apply.</p>
         </div>
         <Space>
+          <Button icon={<MailOutlined />} onClick={composeFillEmail}>
+            Email pushed campaigns
+          </Button>
           <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>Refresh</Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setMintOpen(true)}>
             New roster
@@ -253,6 +340,10 @@ export default function AdminBrandPRRosters() {
         <Stat type="button" $on={view === 'foryou'} onClick={() => setView(view === 'foryou' ? 'all' : 'foryou')}>
           <b>{stats.filling}</b>
           On For You
+        </Stat>
+        <Stat type="button" $on={view === 'spotlight'} onClick={() => setView(view === 'spotlight' ? 'all' : 'spotlight')}>
+          <b>{stats.spotlighted}</b>
+          Pushed to For You
         </Stat>
         <Stat type="button" $on={view === 'ready'} onClick={() => setView(view === 'ready' ? 'all' : 'ready')}>
           <b>{stats.ready}</b>
@@ -317,9 +408,39 @@ export default function AdminBrandPRRosters() {
         </Filters>
       </Toolbar>
 
+      {checkedIds.size > 0 && (
+        <ActionBar>
+          <strong>{checkedIds.size} selected</strong>
+          <Space wrap>
+            <Button
+              type="primary"
+              icon={<PushpinOutlined />}
+              loading={spotlightBusy}
+              onClick={() => pushSpotlight(true)}
+            >
+              Push to Live now
+            </Button>
+            <Button loading={spotlightBusy} onClick={() => pushSpotlight(false)}>
+              Remove from Live now
+            </Button>
+            <Button icon={<MailOutlined />} onClick={composeFillEmail}>
+              Email: apply now
+            </Button>
+            <Button onClick={() => setCheckedIds(new Set())}>Clear</Button>
+          </Space>
+        </ActionBar>
+      )}
+
       <Table>
         <thead>
           <tr>
+            <th style={{ width: 42 }}>
+              <Checkbox
+                checked={allVisibleChecked}
+                indeterminate={checkedIds.size > 0 && !allVisibleChecked}
+                onChange={(e) => toggleAllVisible(e.target.checked)}
+              />
+            </th>
             <th>Brand</th>
             <th>Fill</th>
             <th>Picked</th>
@@ -330,7 +451,14 @@ export default function AdminBrandPRRosters() {
         </thead>
         <tbody>
           {visibleCampaigns.map((row) => (
-            <tr key={row.id} className={row.in_focus ? 'hot' : row.fill_ready ? 'ready' : ''}>
+            <tr key={row.id} className={row.spotlighted ? 'spot' : row.in_focus ? 'hot' : row.fill_ready ? 'ready' : ''}>
+              <td>
+                <Checkbox
+                  disabled={row.status !== 'active'}
+                  checked={checkedIds.has(row.id)}
+                  onChange={(e) => toggleChecked(row.id, e.target.checked)}
+                />
+              </td>
               <td>
                 <BrandCell>
                   {row.logo_url ? <img src={row.logo_url} alt="" /> : <Fallback>{(row.brand_name || '?').slice(0, 2)}</Fallback>}
@@ -344,7 +472,9 @@ export default function AdminBrandPRRosters() {
                 <div>{row.fill_count ?? row.review_count}/{row.fill_target || '—'}</div>
                 <em style={{ color: '#6b7280', fontSize: 12, fontStyle: 'normal' }}>
                   {row.status === 'active'
-                    ? (row.fill_ready
+                    ? (row.spotlighted
+                      ? 'Pushed to Live now — filling from cold email'
+                      : row.fill_ready
                       ? 'Ready to send'
                       : row.in_focus
                         ? `${row.hunger} more · live on For You`
@@ -358,6 +488,7 @@ export default function AdminBrandPRRosters() {
               <td>
                 <Space size={4} wrap>
                   <Tag color={STATUS_COLOR[row.status] || 'default'}>{row.status}</Tag>
+                  {row.spotlighted && <Tag color="magenta">Pushed</Tag>}
                   {row.in_focus && <Tag color="orange">On For You</Tag>}
                   {row.fill_ready && <Tag color="gold">Send now</Tag>}
                 </Space>
@@ -380,9 +511,11 @@ export default function AdminBrandPRRosters() {
           ))}
           {!visibleCampaigns.length && !loading && (
             <tr>
-              <td colSpan={6}>
+              <td colSpan={7}>
                 <Empty>
-                  {view === 'foryou'
+                  {view === 'spotlight'
+                    ? 'No rosters pushed to For You yet. Select active lists and Push to Live now.'
+                    : view === 'foryou'
                     ? 'No lists are on For You right now. Lists need 3 applicants to go live.'
                     : view === 'ready'
                       ? 'Nothing ready to send yet.'
@@ -533,10 +666,10 @@ const Top = styled.div`
 
 const Stats = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 10px;
   margin-bottom: 16px;
-  @media (max-width: 900px) { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 1100px) { grid-template-columns: 1fr 1fr 1fr; }
 `;
 
 const Stat = styled.button`
@@ -631,6 +764,7 @@ const Table = styled.table`
   tr:last-child td { border-bottom: 0; }
   tr.hot td { background: #fff7ed; }
   tr.ready td { background: #fffbeb; }
+  tr.spot td { background: #fdf2f8; }
 `;
 
 const BrandCell = styled.div`
@@ -661,6 +795,20 @@ const Empty = styled.div`
   text-align: center;
   color: ${tokens.textMuted};
   padding: 24px;
+`;
+
+const ActionBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #111;
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  strong { font-size: 13px; }
 `;
 
 const Field = styled.div`

@@ -89,6 +89,13 @@ export const emailTemplates = {
     icon: '⚡',
     generator: 'generatePRRosterLive',
   },
+  new_gifting_campaigns: {
+    id: 'new_gifting_campaigns',
+    name: 'New gifting campaigns',
+    description: 'Apply-now list of new brand PR rosters waiting to be filled',
+    icon: '🎁',
+    generator: 'generatePRRosterLive',
+  },
 };
 
 // Helper to get all available templates

@@ -202,12 +202,21 @@ function normalizeBrand(raw, appliedMap) {
       raw.roster_open
       || raw.rosterOpen
       || Number(raw.roster_is_open || raw.rosterIsOpen || 0) > 0
+      || Number(raw.roster_spotlighted || raw.rosterSpotlighted || 0) > 0
       || Number(raw.roster_fill_count || raw.rosterFillCount || raw.roster_hunger || raw.rosterHunger) > 0
+    ),
+    rosterSpotlighted: !!(
+      raw.roster_spotlighted
+      || raw.rosterSpotlighted
+      || Number(raw.roster_spotlighted || raw.rosterSpotlighted || 0) > 0
     ),
   };
 }
 
 function campaignHeat(brand) {
+  if (brand?.rosterSpotlighted) {
+    return { id: 'late', label: 'Needs creators', line: 'New campaign — apply this week.' };
+  }
   const fill = Number(brand?.rosterFillCount || brand?.rosterHunger) || 0;
   const target = Number(brand?.rosterFillTarget) || 15;
   const ratio = target > 0 ? fill / target : 0;
@@ -785,12 +794,13 @@ export default function BrandPRHome() {
   const noCredits = Number.isFinite(remaining) && remaining <= 0 && !quota?.is_unlimited;
   const forYouCards = useMemo(() => mergeApplied(matched, appliedMap), [matched, appliedMap, mergeApplied]);
   const openCampaigns = useMemo(() => {
+    const rank = (b) => (b.rosterSpotlighted ? 1000 : 0) + (b.rosterFillCount || b.rosterHunger || 0);
     if (openLists.length) {
-      return openLists.filter((b) => !b.applied).slice(0, 8);
+      return openLists.filter((b) => !b.applied).sort((a, b) => rank(b) - rank(a)).slice(0, 8);
     }
     return forYouCards
-      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.applied)
-      .sort((a, b) => (b.rosterFillCount || b.rosterHunger || 0) - (a.rosterFillCount || a.rosterHunger || 0))
+      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0 || b.rosterSpotlighted) && !b.applied)
+      .sort((a, b) => rank(b) - rank(a))
       .slice(0, 8);
   }, [openLists, forYouCards]);
   const campaignIds = useMemo(() => new Set(openCampaigns.map((b) => b.id)), [openCampaigns]);

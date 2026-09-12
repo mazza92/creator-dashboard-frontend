@@ -132,6 +132,7 @@ const AdminEmail = () => {
     brands: [],
     segmentId: 'all_active',
     creatorIds: [],
+    variant: 'gift_list',
   });
 
   // General announcement composer state
@@ -167,6 +168,27 @@ const AdminEmail = () => {
     if (isAuthenticated) {
       fetchAllData();
     }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('compose') !== 'new_campaigns') return;
+    let brands = [];
+    try {
+      brands = JSON.parse(sessionStorage.getItem('nc_new_campaign_email_brands') || '[]');
+    } catch {
+      brands = [];
+    }
+    if (!Array.isArray(brands) || !brands.length) return;
+    setRosterConfig({
+      brands,
+      segmentId: 'all_active',
+      creatorIds: [],
+      variant: 'new_campaigns',
+    });
+    setShowRosterLivePreview(true);
+    setActiveTab('templates');
   }, [isAuthenticated]);
 
   const getApiConfig = () => ({
@@ -450,6 +472,7 @@ const AdminEmail = () => {
     return generatePRRosterLive({
       firstName: forCampaign ? '{{first_name}}' : 'Sarah',
       brands: previewBrands,
+      variant: config.variant || 'gift_list',
     });
   };
 
@@ -725,6 +748,7 @@ const AdminEmail = () => {
       case 'winback': return '👋';
       case 'pr_opportunity': return '🎁';
       case 'pr_roster_live': return '⚡';
+      case 'new_gifting_campaigns': return '🎁';
       default: return '📧';
     }
   };
@@ -1214,6 +1238,7 @@ const AdminEmail = () => {
                         brands: [],
                         segmentId: 'all_active',
                         creatorIds: [],
+                        variant: 'gift_list',
                       });
                       setPrBrandOptions([]);
                       setShowRosterLivePreview(true);
@@ -1230,6 +1255,34 @@ const AdminEmail = () => {
                       <span>Urgency</span>
                     </div>
                     <Button type="default" block style={{ marginTop: 16, borderColor: '#E11D48', color: '#E11D48' }}>
+                      <EyeOutlined /> Compose &amp; Send
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setRosterConfig({
+                        brands: [],
+                        segmentId: 'all_active',
+                        creatorIds: [],
+                        variant: 'new_campaigns',
+                      });
+                      setPrBrandOptions([]);
+                      setShowRosterLivePreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #111827 0%, #E11D48 100%)' }}>FILL</div>
+                    <div className="template-icon-large">🎁</div>
+                    <h4>New gifting campaigns</h4>
+                    <p>Cold-emailed rosters that need creators now. Scan-friendly cards: apply now.</p>
+                    <div className="template-features">
+                      <span>Needs creators</span>
+                      <span>From Opportunities</span>
+                      <span>Apply in-app</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
                       <EyeOutlined /> Compose &amp; Send
                     </Button>
                   </ModernTemplateCard>
@@ -1890,8 +1943,16 @@ const AdminEmail = () => {
             <TemplatePreviewContainer>
               <div className="preview-header">
                 <div>
-                  <h3>⚡ Gift list live — Live Composer</h3>
-                  <p>Same scan as the weekly roundup: brand cards, applications open, apply in-app.</p>
+                  <h3>
+                    {rosterConfig.variant === 'new_campaigns'
+                      ? '🎁 New gifting campaigns — Live Composer'
+                      : '⚡ Gift list live — Live Composer'}
+                  </h3>
+                  <p>
+                    {rosterConfig.variant === 'new_campaigns'
+                      ? 'Easy to scan list of new rosters waiting to be filled. Apply now.'
+                      : 'Same scan as the weekly roundup: brand cards, applications open, apply in-app.'}
+                  </p>
                 </div>
                 <Space>
                   <Button
@@ -2038,9 +2099,14 @@ const AdminEmail = () => {
                     const html = buildPRRosterLiveHTML(rosterConfig, true);
                     const subject = generatePRRosterLiveSubject(rosterConfig);
                     const names = (rosterConfig.brands || []).map((b) => b.brandName).filter(Boolean);
+                    const isFill = rosterConfig.variant === 'new_campaigns';
                     setEmailContent(html);
                     setSubjectOverride(subject);
-                    setCampaignName(`Gift list live — ${names.join(', ')}`);
+                    setCampaignName(
+                      isFill
+                        ? `New gifting campaigns — ${names.join(', ')}`
+                        : `Gift list live — ${names.join(', ')}`
+                    );
                     setSelectedTemplate(null);
                     handleSegmentSelect(rosterConfig.segmentId);
                     if (rosterConfig.segmentId === 'specific_users') {
@@ -2050,7 +2116,9 @@ const AdminEmail = () => {
                     }
                     setShowRosterLivePreview(false);
                     setShowCampaignModal(true);
-                    message.success('Loaded. Send a test first, then blast the gift list.');
+                    message.success(isFill
+                      ? 'Loaded. Send a test first, then blast the new campaigns.'
+                      : 'Loaded. Send a test first, then blast the gift list.');
                   }}
                 >
                   Use This Template

@@ -94,7 +94,12 @@ export const generatePRRosterLiveSubject = (input = '') => {
   const brands = typeof input === 'string'
     ? (input ? [{ brandName: input }] : [])
     : normalizeRosterBrands(input);
+  const variant = typeof input === 'object' && input ? input.variant : '';
   const names = brands.map((b) => b.brandName);
+  if (variant === 'new_campaigns') {
+    if (names.length === 1) return `New gifting campaign: ${names[0]} — apply now`;
+    return 'New brand PR/gifting campaigns running — apply now';
+  }
   if (names.length === 1) return `${names[0]} PR campaign is open`;
   if (names.length > 1) return `${nameList(names)} — PR campaigns are open`;
   return 'PR campaigns are open';
@@ -107,7 +112,6 @@ const avatarUrl = (brand) => {
 
 const renderBrandCard = (brand) => {
   const name = escapeHtml(brand.brandName);
-  const product = escapeHtml(brand.product || 'Gifted PR package');
   const href = escapeHtml(applyUrlFromBrand(brand, brand.applyUrl));
   const colors = categoryColor(brand.category);
   const category = escapeHtml(brand.category || 'PR');
@@ -129,7 +133,7 @@ const renderBrandCard = (brand) => {
                     ${name}
                   </p>
                   <span style="display: inline-block; background: #FEE2E2; color: #B91C1C; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px; letter-spacing: 0.04em; text-transform: uppercase;">
-                    Applications open
+                    ${escapeHtml(brand.badge || 'Applications open')}
                   </span>
                   ${brand.category ? `
                   <span style="display: inline-block; margin-left: 6px; background: ${colors.bg}; color: ${colors.text}; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; letter-spacing: 0.03em; text-transform: uppercase;">
@@ -140,7 +144,7 @@ const renderBrandCard = (brand) => {
               <tr>
                 <td colspan="2" style="padding: 12px 0 12px 0;">
                   <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.5;">
-                    Actively running a PR campaign. ${product}.
+                    ${escapeHtml(brand.blurb || `Actively running a PR campaign. ${brand.product || 'Gifted PR package'}.`)}
                   </p>
                 </td>
               </tr>
@@ -161,22 +165,46 @@ const renderBrandCard = (brand) => {
 };
 
 export const generatePRRosterLive = (config = {}) => {
-  const brands = normalizeRosterBrands(config);
+  const variant = config.variant === 'new_campaigns' ? 'new_campaigns' : 'gift_list';
+  const brands = normalizeRosterBrands(config).map((brand) => ({
+    ...brand,
+    badge: variant === 'new_campaigns' ? 'Needs creators' : 'Applications open',
+    blurb: variant === 'new_campaigns'
+      ? `New gifted roster waiting to be filled. ${brand.product || 'Gifted PR package'}.`
+      : `Actively running a PR campaign. ${brand.product || 'Gifted PR package'}.`,
+  }));
   const firstName = config.firstName || '{{first_name}}';
   const greeting = escapeHtml(firstName || '{{first_name}}');
-  const previewBrands = brands.length ? brands : SAMPLE_BRANDS;
+  const previewBrands = brands.length ? brands : SAMPLE_BRANDS.map((brand) => ({
+    ...brand,
+    badge: variant === 'new_campaigns' ? 'Needs creators' : 'Applications open',
+    blurb: variant === 'new_campaigns'
+      ? `New gifted roster waiting to be filled. ${brand.product}.`
+      : `Actively running a PR campaign. ${brand.product}.`,
+  }));
   const names = previewBrands.map((b) => b.brandName);
   const count = previewBrands.length;
-  const subject = generatePRRosterLiveSubject({ brands: previewBrands });
-  const preheader = count === 1
-    ? `${names[0]} is running a PR campaign. Applications are open.`
-    : `${nameList(names)} are running PR campaigns. Applications are open.`;
-  const intro = count === 1
-    ? `<strong>${escapeHtml(names[0])}</strong> is actively running a PR campaign. Applications are open — apply if you want in.`
-    : `<strong>${count} brands</strong> are actively running PR campaigns. Applications are open — scan the list and apply.`;
+  const subject = generatePRRosterLiveSubject({ brands: previewBrands, variant });
+  const preheader = variant === 'new_campaigns'
+    ? (count === 1
+      ? `${names[0]} just opened a gifting campaign. Apply now.`
+      : `${count} new gifting campaigns need creators this week. Apply now.`)
+    : (count === 1
+      ? `${names[0]} is running a PR campaign. Applications are open.`
+      : `${nameList(names)} are running PR campaigns. Applications are open.`);
+  const intro = variant === 'new_campaigns'
+    ? (count === 1
+      ? `<strong>${escapeHtml(names[0])}</strong> just opened a gifted PR campaign and needs creators on the roster. Scan it and apply if you want in.`
+      : `<strong>${count} new gifting campaigns</strong> are live. These rosters need creators this week — scan the list and apply.`)
+    : (count === 1
+      ? `<strong>${escapeHtml(names[0])}</strong> is actively running a PR campaign. Applications are open — apply if you want in.`
+      : `<strong>${count} brands</strong> are actively running PR campaigns. Applications are open — scan the list and apply.`);
   const browseUrl = count === 1
     ? applyUrlFromBrand(previewBrands[0])
     : 'https://app.newcollab.co/creator/dashboard/for-you';
+  const browseLabel = variant === 'new_campaigns'
+    ? (count === 1 ? 'Apply now' : 'See new campaigns')
+    : (count === 1 ? 'Open this campaign' : 'See all open campaigns');
   const cards = previewBrands.map(renderBrandCard).join('');
   const preheaderPadding = '\u200C\u00A0'.repeat(90);
 
@@ -236,7 +264,7 @@ export const generatePRRosterLive = (config = {}) => {
                     <td style="padding: 8px 40px 36px 40px; text-align: center;" class="padding-mobile">
                       <a href="${escapeHtml(browseUrl)}"
                          style="display: inline-block; background: #111827; color: #ffffff; font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: 8px; text-decoration: none;">
-                        ${count === 1 ? 'Open this campaign' : 'See all open campaigns'}
+                        ${browseLabel}
                       </a>
                     </td>
                   </tr>
