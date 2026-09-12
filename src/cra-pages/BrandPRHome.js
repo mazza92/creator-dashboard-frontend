@@ -213,9 +213,9 @@ function normalizeBrand(raw, appliedMap) {
   };
 }
 
-function campaignHeat(brand) {
-  if (brand?.rosterSpotlighted) {
-    return { id: 'late', label: 'Needs creators', line: 'New campaign — apply this week.' };
+function campaignHeat(brand, variant) {
+  if (variant === 'recruit' || brand?.rosterSpotlighted) {
+    return { id: 'recruit', label: 'Actively recruiting', line: 'Waiting on new applicants.' };
   }
   const fill = Number(brand?.rosterFillCount || brand?.rosterHunger) || 0;
   const target = Number(brand?.rosterFillTarget) || 15;
@@ -298,6 +298,7 @@ export default function BrandPRHome() {
   const [appliedMap, setAppliedMap] = useState(() => new Map());
   const [matched, setMatched] = useState([]);
   const [openLists, setOpenLists] = useState([]);
+  const [recruiting, setRecruiting] = useState([]);
   const [dirBrands, setDirBrands] = useState([]);
   const [dirTotal, setDirTotal] = useState(0);
   const [userNiches, setUserNiches] = useState([]);
@@ -310,6 +311,7 @@ export default function BrandPRHome() {
   const [catQuery, setCatQuery] = useState('');
   const [dirMicro, setDirMicro] = useState(false);
   const [dirUS, setDirUS] = useState(false);
+  const [dirRecruiting, setDirRecruiting] = useState(false);
   const [dirPage, setDirPage] = useState(1);
   const [suggestions, setSuggestions] = useState([]);
   const [showAc, setShowAc] = useState(false);
@@ -320,6 +322,22 @@ export default function BrandPRHome() {
   const sentinelRef = useRef(null);
   const fetchingDirRef = useRef(false);
   const dirReqRef = useRef(0);
+  const dirFiltersRef = useRef({
+    dirCat: 'all',
+    dirMicro: false,
+    dirUS: false,
+    dirRecruiting: false,
+    dirQuery: '',
+    userNiches: [],
+  });
+  dirFiltersRef.current = {
+    dirCat,
+    dirMicro,
+    dirUS,
+    dirRecruiting,
+    dirQuery,
+    userNiches,
+  };
 
   const [view, setView] = useState('list');
   const [step, setStep] = useState(1);
@@ -403,7 +421,9 @@ export default function BrandPRHome() {
       setQuota(nextQuota);
       emitCredits(nextQuota);
       const niches = initRes.data?.user_niches || [];
-      setUserNiches(niches);
+      setUserNiches((prev) => (
+        prev.length === niches.length && prev.every((n, i) => n === niches[i]) ? prev : niches
+      ));
 
       const apps = appsRes.data?.applications || [];
       const map = new Map(apps.map((a) => [a.id, a]));
@@ -419,6 +439,10 @@ export default function BrandPRHome() {
       setOpenLists(
         mergeApplied(forYouRes.data?.open_lists || [], map).filter((b) => !b.applied)
       );
+      const fromApi = mergeApplied(forYouRes.data?.recruiting || [], map).filter((b) => !b.applied);
+      const fromLists = mergeApplied(forYouRes.data?.open_lists || [], map)
+        .filter((b) => b.rosterSpotlighted && !b.applied);
+      setRecruiting(fromApi.length ? fromApi : fromLists);
     } catch (err) {
       console.error('Brand PR home load failed', err);
     } finally {
@@ -432,33 +456,35 @@ export default function BrandPRHome() {
     fetchingDirRef.current = true;
     if (!append) setLoadingDir(true);
     try {
+      const f = dirFiltersRef.current;
       const params = {
         page,
         limit: 24,
       };
-      const q = (queryOverride !== undefined ? queryOverride : dirQuery).trim();
+      const q = (queryOverride !== undefined ? queryOverride : f.dirQuery).trim();
       if (q) params.search = q;
-      if (dirCat !== 'all') params.category = dirCat;
-      if (dirUS) params.region = 'US';
-      if (dirMicro) params.micro_friendly = '1';
-      if (userNiches.length) params.prefer_niches = userNiches.join(',');
+      if (f.dirCat !== 'all') params.category = f.dirCat;
+      if (f.dirUS) params.region = 'US';
+      if (f.dirMicro) params.micro_friendly = '1';
+      if (f.dirRecruiting) params.recruiting = '1';
+      if (f.userNiches.length) params.prefer_niches = f.userNiches.join(',');
       const { data } = await api.get('/api/public/brands', { params });
       if (dirReqRef.current !== req) return;
       const mapped = mergeApplied(data.brands || [], new Map());
       setDirBrands((prev) => (append ? [...prev, ...mapped.filter((b) => !prev.some((p) => p.id === b.id))] : mapped));
-      setDirTotal(Number(data.pagination?.total) || mapped.length);
+      const total = Number(data.pagination?.total);
+      setDirTotal(Number.isFinite(total) ? total : mapped.length);
       setDirPage(page);
     } catch (err) {
       if (dirReqRef.current !== req) return;
       console.error('Directory load failed', err);
-      if (!append) setDirBrands([]);
     } finally {
       if (dirReqRef.current === req) {
         fetchingDirRef.current = false;
         setLoadingDir(false);
       }
     }
-  }, [dirCat, dirMicro, dirQuery, dirUS, mergeApplied, userNiches]);
+  }, [mergeApplied]);
 
   useEffect(() => {
     loadCore();
@@ -506,7 +532,7 @@ export default function BrandPRHome() {
     const delay = dirQuery.trim() ? 280 : 0;
     const t = setTimeout(() => loadDirectory(1, false), delay);
     return () => clearTimeout(t);
-  }, [tab, view, dirCat, dirMicro, dirUS, userNiches, dirQuery, loadDirectory]);
+  }, [tab, view, dirCat, dirMicro, dirUS, dirRecruiting, dirQuery, loadDirectory]);
 
   useEffect(() => {
     if (tab !== 'dir') {
@@ -793,31 +819,50 @@ export default function BrandPRHome() {
   const remaining = quota?.is_unlimited ? 99 : Number(quota?.remaining);
   const noCredits = Number.isFinite(remaining) && remaining <= 0 && !quota?.is_unlimited;
   const forYouCards = useMemo(() => mergeApplied(matched, appliedMap), [matched, appliedMap, mergeApplied]);
+  const recruitingCampaigns = useMemo(
+    () => (recruiting.length ? recruiting : openLists.filter((b) => b.rosterSpotlighted))
+      .filter((b) => !b.applied)
+      .slice(0, 8),
+    [recruiting, openLists],
+  );
+  const recruitingIds = useMemo(
+    () => new Set(recruitingCampaigns.map((b) => b.id)),
+    [recruitingCampaigns],
+  );
   const openCampaigns = useMemo(() => {
-    const rank = (b) => (b.rosterSpotlighted ? 1000 : 0) + (b.rosterFillCount || b.rosterHunger || 0);
-    if (openLists.length) {
-      return openLists.filter((b) => !b.applied).sort((a, b) => rank(b) - rank(a)).slice(0, 8);
-    }
-    return forYouCards
-      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0 || b.rosterSpotlighted) && !b.applied)
+    const rank = (b) => (b.rosterFillCount || b.rosterHunger || 0);
+    const source = openLists.length
+      ? openLists
+      : forYouCards.filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.rosterSpotlighted);
+    return source
+      .filter((b) => !b.applied && !recruitingIds.has(b.id) && !b.rosterSpotlighted)
       .sort((a, b) => rank(b) - rank(a))
       .slice(0, 8);
-  }, [openLists, forYouCards]);
-  const campaignIds = useMemo(() => new Set(openCampaigns.map((b) => b.id)), [openCampaigns]);
+  }, [openLists, forYouCards, recruitingIds]);
+  const campaignIds = useMemo(
+    () => new Set([...openCampaigns, ...recruitingCampaigns].map((b) => b.id)),
+    [openCampaigns, recruitingCampaigns],
+  );
   const restForYou = useMemo(
     () => forYouCards.filter((b) => !campaignIds.has(b.id)),
     [forYouCards, campaignIds],
   );
   const dirCards = useMemo(() => mergeApplied(dirBrands, appliedMap), [dirBrands, appliedMap, mergeApplied]);
+  const dirRecruitingCampaigns = useMemo(
+    () => dirCards
+      .filter((b) => b.rosterSpotlighted && !b.applied)
+      .slice(0, 8),
+    [dirCards]
+  );
   const dirOpenCampaigns = useMemo(
     () => dirCards
-      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.applied)
+      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.applied && !b.rosterSpotlighted)
       .sort((a, b) => (b.rosterFillCount || b.rosterHunger || 0) - (a.rosterFillCount || a.rosterHunger || 0))
       .slice(0, 8),
     [dirCards]
   );
   const hasMoreDir = dirCards.length > 0 && dirCards.length < dirTotal;
-  const dirFiltersOn = dirCat !== 'all' || dirMicro || dirUS || Boolean(dirQuery.trim());
+  const dirFiltersOn = dirCat !== 'all' || dirMicro || dirUS || dirRecruiting || Boolean(dirQuery.trim());
   const filteredDirCategories = useMemo(() => {
     const q = catQuery.trim().toLowerCase();
     if (!q) return dirCategories;
@@ -846,8 +891,9 @@ export default function BrandPRHome() {
     const catEmoji = categoryEmoji(cat);
     const catName = categoryLabel(cat);
     const live = brand.rosterOpen && !brand.applied;
+    const isRecruiting = brand.rosterSpotlighted && !brand.applied;
     return (
-      <Card key={brand.id} $live={live}>
+      <Card key={brand.id} $live={live} $recruit={isRecruiting}>
         {brand.cover && (
           <CardMedia>
             <CardCover src={brand.cover} alt="" />
@@ -862,9 +908,11 @@ export default function BrandPRHome() {
                   <span aria-hidden="true">🌱</span> Micro
                 </CatChip>
               )}
-              {live && (
-                <CatChip $tone="hot">Live gift list</CatChip>
-              )}
+              {isRecruiting ? (
+                <CatChip $tone="recruit">Actively recruiting</CatChip>
+              ) : live ? (
+                <CatChip $tone="hot">Recruiting</CatChip>
+              ) : null}
             </CoverChips>
           </CardMedia>
         )}
@@ -889,9 +937,11 @@ export default function BrandPRHome() {
                       <span aria-hidden="true">🌱</span> Micro
                     </CatChip>
                   )}
-                  {live && (
-                    <CatChip $tone="hot">Live gift list</CatChip>
-                  )}
+                  {isRecruiting ? (
+                    <CatChip $tone="recruit">Actively recruiting</CatChip>
+                  ) : live ? (
+                    <CatChip $tone="hot">Recruiting</CatChip>
+                  ) : null}
                 </ChipRow>
               )}
             </Meta>
@@ -928,7 +978,7 @@ export default function BrandPRHome() {
             <Cta type="button" onClick={() => showPaywall('card_credits')}>Get more credits</Cta>
           ) : (
             <Cta type="button" onClick={() => openApply(brand)}>
-              {live ? 'Apply before spots fill' : 'Apply for Brand PR'}
+              {isRecruiting ? 'Apply to this campaign' : live ? 'Apply before spots fill' : 'Apply for Brand PR'}
             </Cta>
           )}
         </CardBody>
@@ -936,23 +986,28 @@ export default function BrandPRHome() {
     );
   }
 
-  function renderOpenDesk(brands, source) {
+  function renderOpenDesk(brands, source, variant = 'live') {
     if (!brands.length) return null;
+    const recruit = variant === 'recruit';
     return (
-      <CampaignDesk aria-label="Open gift lists">
+      <CampaignDesk aria-label={recruit ? 'Live brand recruitment' : 'Open gift lists'} $recruit={recruit}>
         <CampaignHead>
-          <CampaignLive>
-            <i /> Live now
+          <CampaignLive $recruit={recruit}>
+            <i /> {recruit ? 'Actively recruiting' : 'Live now'}
           </CampaignLive>
-          <h2>They’re picking this week</h2>
-          <p>Active gift lists. One credit. We send you in. They pick who gets the box.</p>
+          <h2>{recruit ? 'Live gifting campaigns' : 'They’re picking this week'}</h2>
+          <p>
+            {recruit
+              ? 'These brands are filling gift lists now and waiting on new applicants. One credit. We submit you. They pick who gets the box.'
+              : 'Active gift lists. One credit. We send you in. They pick who gets the box.'}
+          </p>
         </CampaignHead>
         <CampaignRail $count={brands.length}>
           {brands.map((brand) => {
-            const heat = campaignHeat(brand);
+            const heat = campaignHeat(brand, variant);
             const catName = categoryLabel(brand.category || '');
             return (
-              <CampaignCard key={brand.id} $heat={heat.id} $solo={brands.length === 1}>
+              <CampaignCard key={brand.id} $heat={heat.id} $solo={brands.length === 1} $recruit={recruit}>
                 <CampaignTop>
                   <CampaignPulse $heat={heat.id}>{heat.label}</CampaignPulse>
                   {brand.matchScore != null && Number(brand.matchScore) > 0 && (
@@ -971,18 +1026,20 @@ export default function BrandPRHome() {
                   </div>
                 </CampaignBrand>
                 <CampaignOffer>
-                  <span>Could be in the box</span>
+                  <span>{recruit ? 'Gifted campaign' : 'Could be in the box'}</span>
                   <strong>{brand.heroProduct || 'A gifted product they choose'}</strong>
                 </CampaignOffer>
-                <HeatBar $late={heat.id === 'late'} aria-hidden="true">
+                <HeatBar $late={heat.id === 'late'} $recruit={recruit} aria-hidden="true">
                   <i className="on" />
-                  <i className={heat.id === 'mid' || heat.id === 'late' ? 'on' : ''} />
-                  <i className={heat.id === 'late' ? 'on' : ''} />
+                  <i className={heat.id === 'mid' || heat.id === 'late' || heat.id === 'recruit' ? 'on' : ''} />
+                  <i className={heat.id === 'late' || heat.id === 'recruit' ? 'on' : ''} />
                 </HeatBar>
                 {noCredits ? (
-                  <Cta type="button" onClick={() => showPaywall('campaign_credits')}>Get more credits</Cta>
+                  <Cta type="button" onClick={() => showPaywall(recruit ? 'recruit_credits' : 'campaign_credits')}>Get more credits</Cta>
                 ) : (
-                  <Cta type="button" onClick={() => openApply(brand, source)}>Apply before spots fill</Cta>
+                  <Cta type="button" onClick={() => openApply(brand, source)}>
+                    {recruit ? 'Apply to this campaign' : 'Apply before spots fill'}
+                  </Cta>
                 )}
               </CampaignCard>
             );
@@ -1034,6 +1091,7 @@ export default function BrandPRHome() {
     setDirCat('all');
     setDirMicro(false);
     setDirUS(false);
+    setDirRecruiting(false);
     setDirQuery('');
     setSuggestions([]);
     setShowAc(false);
@@ -1433,9 +1491,9 @@ export default function BrandPRHome() {
               <EmptyNote className="empty">Browse Directory for more brands that gift your size.</EmptyNote>
             )}
           </RelGrid>
-          <Note>
-            <Back type="button" onClick={() => { setView('list'); setTab('dir'); }}>Browse Directory</Back>
-          </Note>
+          <DirBrowse type="button" onClick={() => { setView('list'); setTab('dir'); }}>
+            Browse Directory
+          </DirBrowse>
         </Related>
         <Paywall quota={quota} isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
       </Page>
@@ -1496,6 +1554,7 @@ export default function BrandPRHome() {
             aria-labelledby="seg-tab-gifts"
             hidden={forYouLane !== 'gifts'}
           >
+            {renderOpenDesk(recruitingCampaigns, 'recruiting', 'recruit')}
             {renderOpenDesk(openCampaigns, 'open_list')}
             <List aria-busy={loadingList} aria-label="Brands that gift your following">
               {loadingList && !forYouCards.length && (
@@ -1680,6 +1739,15 @@ export default function BrandPRHome() {
               <FilterToggles role="group" aria-label="Directory filters">
                 <FilterToggle
                   type="button"
+                  $on={dirRecruiting}
+                  $accent
+                  aria-pressed={dirRecruiting}
+                  onClick={() => setDirRecruiting((v) => !v)}
+                >
+                  Actively recruiting
+                </FilterToggle>
+                <FilterToggle
+                  type="button"
                   $on={dirMicro}
                   aria-pressed={dirMicro}
                   onClick={() => setDirMicro((v) => !v)}
@@ -1711,6 +1779,7 @@ export default function BrandPRHome() {
               </DirMeta>
             </FilterRow>
           </StickyDock>
+          {renderOpenDesk(dirRecruitingCampaigns, 'directory_recruiting', 'recruit')}
           {renderOpenDesk(dirOpenCampaigns, 'directory_open_list')}
           <List aria-busy={loadingDir} aria-label="Brand directory">
             {loadingDir && !dirCards.length && (
@@ -1915,18 +1984,11 @@ const pulseLive = keyframes`
 `;
 const CampaignDesk = styled.section`
   margin: 8px 0 8px;
-  padding: 18px 16px 16px;
-  border-radius: 22px;
-  background:
-    radial-gradient(90% 80% at 100% 0%, rgba(232, 93, 59, 0.16), transparent 42%),
-    radial-gradient(80% 70% at 0% 100%, rgba(13, 122, 95, 0.12), transparent 46%),
-    linear-gradient(180deg, #fff7ef 0%, #f3f8f5 100%);
-  border: 1px solid rgba(232, 93, 59, 0.12);
+  padding: 8px 0 12px;
   color: ${INK};
 
   @media (max-width: 640px) {
-    padding: 14px 12px 12px;
-    margin: 4px -2px 4px;
+    padding: 4px 0 8px;
   }
 `;
 const CampaignHead = styled.div`
@@ -1957,14 +2019,14 @@ const CampaignLive = styled.div`
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: ${HOT};
+  color: ${(p) => (p.$recruit ? ROSE : HOT)};
 
   i {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: ${HOT};
-    box-shadow: 0 0 0 4px rgba(232, 93, 59, 0.16);
+    background: ${(p) => (p.$recruit ? ROSE : HOT)};
+    box-shadow: 0 0 0 4px ${(p) => (p.$recruit ? 'rgba(225, 29, 72, 0.16)' : 'rgba(232, 93, 59, 0.16)')};
     animation: ${pulseLive} 1.6s ease-in-out infinite;
   }
 `;
@@ -1989,7 +2051,7 @@ const CampaignRail = styled.div`
 `;
 const CampaignCard = styled.article`
   background: ${CREAM};
-  border: 1px solid ${(p) => (p.$heat === 'late' ? 'rgba(232, 93, 59, 0.22)' : LINE)};
+  border: 1.5px solid ${(p) => (p.$recruit || p.$heat === 'recruit' ? ROSE : HOT)};
   border-radius: 18px;
   padding: 14px 14px 12px;
   display: flex;
@@ -1999,7 +2061,7 @@ const CampaignCard = styled.article`
   height: auto;
   align-self: start;
   color: ${INK};
-  box-shadow: 0 8px 24px rgba(232, 93, 59, 0.08);
+  box-shadow: 0 10px 24px ${(p) => (p.$recruit ? 'rgba(225, 29, 72, 0.1)' : 'rgba(232, 93, 59, 0.1)')};
 
   > button {
     margin-top: 2px;
@@ -2026,8 +2088,8 @@ const CampaignPulse = styled.span`
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: ${(p) => (p.$heat === 'late' ? HOT : p.$heat === 'mid' ? '#c2410c' : GREEN_DEEP)};
-  background: ${(p) => (p.$heat === 'late' ? 'rgba(232, 93, 59, 0.1)' : p.$heat === 'mid' ? '#fff4e8' : GREEN_BG)};
+  color: ${(p) => (p.$heat === 'recruit' ? '#9F1239' : p.$heat === 'late' ? HOT : p.$heat === 'mid' ? '#c2410c' : GREEN_DEEP)};
+  background: ${(p) => (p.$heat === 'recruit' ? '#FFE4E6' : p.$heat === 'late' ? 'rgba(232, 93, 59, 0.1)' : p.$heat === 'mid' ? '#fff4e8' : GREEN_BG)};
   border-radius: 999px;
   padding: 4px 9px;
 `;
@@ -2096,7 +2158,7 @@ const HeatBar = styled.div`
     background: #e8e2d6;
     display: block;
   }
-  i.on { background: ${(p) => (p.$late ? HOT : GREEN)}; }
+  i.on { background: ${(p) => (p.$recruit ? ROSE : p.$late ? HOT : GREEN)}; }
 `;
 const List = styled.div`
   display: grid;
@@ -2111,10 +2173,12 @@ const List = styled.div`
 `;
 const Card = styled.article`
   background: ${CREAM};
-  border: 1px solid ${(p) => (p.$live ? 'rgba(232, 93, 59, 0.28)' : LINE)};
+  border: 1.5px solid ${(p) => (p.$recruit ? ROSE : p.$live ? HOT : LINE)};
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: ${(p) => (p.$live ? '0 10px 28px rgba(232, 93, 59, 0.12)' : tokens.shadowCard)};
+  box-shadow: ${(p) => (p.$recruit
+    ? '0 10px 28px rgba(225, 29, 72, 0.14)'
+    : p.$live ? '0 10px 28px rgba(232, 93, 59, 0.12)' : tokens.shadowCard)};
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -2123,8 +2187,10 @@ const Card = styled.article`
   @media (hover: hover) {
     &:hover {
       transform: translateY(-2px);
-      border-color: ${(p) => (p.$live ? 'rgba(232, 93, 59, 0.4)' : tokens.accentBorder)};
-      box-shadow: ${(p) => (p.$live ? '0 14px 32px rgba(232, 93, 59, 0.16)' : tokens.shadowHover)};
+      border-color: ${(p) => (p.$recruit ? ROSE : p.$live ? HOT : tokens.accentBorder)};
+      box-shadow: ${(p) => (p.$recruit
+    ? '0 14px 32px rgba(225, 29, 72, 0.18)'
+    : p.$live ? '0 14px 32px rgba(232, 93, 59, 0.16)' : tokens.shadowHover)};
     }
   }
 `;
@@ -2174,13 +2240,13 @@ const CatChip = styled.span`
   white-space: nowrap;
   border-radius: 999px;
   padding: 5px 10px 5px 8px;
-  background: ${(p) => (p.$tone === 'hot' ? '#FDE8E2' : p.$tone === 'ok' ? GREEN_BG : CREAM)};
-  color: ${(p) => (p.$tone === 'hot' ? '#9A3412' : p.$tone === 'ok' ? GREEN_DEEP : INK)};
-  border: 1px solid ${(p) => (p.$tone === 'hot' ? 'rgba(232, 93, 59, 0.22)' : p.$tone === 'ok' ? tokens.accentBorder : 'rgba(17,17,17,0.08)')};
+  background: ${(p) => (p.$tone === 'recruit' ? '#FFE4E6' : p.$tone === 'hot' ? '#FDE8E2' : p.$tone === 'ok' ? GREEN_BG : CREAM)};
+  color: ${(p) => (p.$tone === 'recruit' ? '#9F1239' : p.$tone === 'hot' ? '#9A3412' : p.$tone === 'ok' ? GREEN_DEEP : INK)};
+  border: 1px solid ${(p) => (p.$tone === 'recruit' ? 'rgba(225, 29, 72, 0.28)' : p.$tone === 'hot' ? 'rgba(232, 93, 59, 0.22)' : p.$tone === 'ok' ? tokens.accentBorder : 'rgba(17,17,17,0.08)')};
   box-shadow: 0 1px 2px rgba(17, 17, 17, 0.06);
 
   ${CoverChips} & {
-    background: ${(p) => (p.$tone === 'hot' ? '#FDE8E2' : p.$tone === 'ok' ? GREEN_BG : 'rgba(255,252,247,0.94)')};
+    background: ${(p) => (p.$tone === 'recruit' ? '#FFE4E6' : p.$tone === 'hot' ? '#FDE8E2' : p.$tone === 'ok' ? GREEN_BG : 'rgba(255,252,247,0.94)')};
     backdrop-filter: blur(8px);
   }
 `;
@@ -2692,9 +2758,9 @@ const FilterToggles = styled.div`
   min-width: 0;
 `;
 const FilterToggle = styled.button`
-  border: 1px solid ${(p) => (p.$on ? tokens.accentBorder : 'transparent')};
-  background: ${(p) => (p.$on ? GREEN_BG : 'transparent')};
-  color: ${(p) => (p.$on ? GREEN_DEEP : MUTED)};
+  border: 1px solid ${(p) => (p.$accent && p.$on ? 'rgba(225, 29, 72, 0.28)' : p.$on ? tokens.accentBorder : 'transparent')};
+  background: ${(p) => (p.$accent && p.$on ? '#FFE4E6' : p.$on ? GREEN_BG : 'transparent')};
+  color: ${(p) => (p.$accent && p.$on ? '#9F1239' : p.$on ? GREEN_DEEP : MUTED)};
   border-radius: 999px;
   padding: 5px 10px;
   font-size: 12px;
@@ -2702,7 +2768,7 @@ const FilterToggle = styled.button`
   white-space: nowrap;
   cursor: pointer;
   font-family: inherit;
-  &:hover { color: ${(p) => (p.$on ? GREEN_DEEP : INK)}; background: ${(p) => (p.$on ? GREEN_BG : tokens.subtle)}; }
+  &:hover { color: ${(p) => (p.$accent ? '#9F1239' : p.$on ? GREEN_DEEP : INK)}; background: ${(p) => (p.$accent ? '#FFE4E6' : p.$on ? GREEN_BG : tokens.subtle)}; }
   &:focus-visible { outline: 2px solid ${GREEN}; outline-offset: 2px; }
 `;
 const DirMeta = styled.div`
@@ -3036,6 +3102,29 @@ const RelGrid = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+`;
+const DirBrowse = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid ${LINE};
+  background: ${CREAM};
+  color: ${INK};
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 650;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: ${tokens.shadowCard};
+  &:hover {
+    border-color: ${tokens.accentBorder};
+    background: ${tokens.subtle};
+  }
+  &:focus-visible { outline: 2px solid ${GREEN}; outline-offset: 2px; }
 `;
 const Rel = styled.button`
   display: grid;

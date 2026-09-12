@@ -316,14 +316,16 @@ const TEMPLATES = {
     subject: (firstName, month) => `${firstName}, you're maxed out for ${month || 'this month'}`,
     getHtml: (firstName, resetDate, daysUntilReset) => generateEmailHtml({
       bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
-<p style="margin:0 0 20px 0;">You've used all 3 unlocks this month. Most creators never use all 3.</p>
-<p style="margin:0 0 20px 0;">Your quota resets on ${resetDate}. That's ${daysUntilReset} days from now.</p>
-<p style="margin:0 0 12px 0;"><strong>Follow up on the 3 pitches you sent.</strong></p>
-<p style="margin:0 0 12px 0;"><strong>Refresh your portfolio.</strong></p>
-<p style="margin:0 0 20px 0;"><strong>Post 1 piece of content in your niche this week.</strong></p>
-<p style="margin:0 0 0 0;">For now, the follow-up game is where you can move the needle.</p>`,
-      preheader: "Here's what to do until your quota resets.",
-      primaryCta: { label: "Check my follow-ups", url: "https://app.newcollab.co/creator/dashboard/pr-pipeline?filter=needs_followup&utm_source=email&utm_medium=lifecycle&utm_campaign=max_quota_hit" },
+<p style="margin:0 0 20px 0;"><strong>Your 3 are out.</strong> You used all 3 free credits this month. Most people never do.</p>
+<p style="margin:0 0 20px 0;">Waiting until ${resetDate} does not get you a box. Sending more cold pitches from here is how people stall. That is not what Pro is for anymore.</p>
+<p style="margin:0 0 12px 0;">If you go Pro today ($19/mo), you get <strong>1 gifting campaign guaranteed each month</strong>. We put you on a live gifted roster. The brand ships product. You post. You do not send a pitch.</p>
+<p style="margin:0 0 12px 0;"><strong>One campaign, guaranteed.</strong> Every paid month we place you on a live gifted roster that fits your niche.</p>
+<p style="margin:0 0 12px 0;"><strong>The brand ships. You post.</strong> You never send a pitch. We vet you. The brand picks from the roster.</p>
+<p style="margin:0 0 20px 0;"><strong>If we miss, I make it right.</strong> Reply that month. I put you on the next campaign or refund the invoice.</p>
+<p style="margin:0 0 20px 0;">Unlimited credits sit on top of that, so you can keep applying while the campaign runs.</p>
+<p style="margin:0 0 0 0;">Your 3 credits come back on ${resetDate} if you'd rather wait. That's ${daysUntilReset} days from now.</p>`,
+      preheader: "Your 3 are out. Pro guarantees 1 gifting campaign a month.",
+      primaryCta: { label: "Go Pro · 1 gifting campaign / month", url: "https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=gifting_guarantee&utm_source=email&utm_medium=lifecycle&utm_campaign=max_quota_hit" },
       utmCampaign: 'max_quota_hit'
     })
   },
