@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
+import RosterSplash, { readRosterPreview, writeRosterPreview } from './RosterSplash';
 
 const INK = tokens.ink;
 const MUTE = tokens.muted;
@@ -84,6 +85,14 @@ function mediaUrl(raw) {
   return value.replace(/^http:\/\//i, 'https://');
 }
 
+function stillUrl(raw) {
+  const value = mediaUrl(raw);
+  if (!value) return '';
+  if (/\/api\/media-proxy/i.test(value)) return '';
+  if (/tiktokcdn|cdninstagram|fbcdn\.net|fbsbx\.com/i.test(value)) return '';
+  return value;
+}
+
 function formatRegions(regions) {
   if (Array.isArray(regions)) return regions.filter(Boolean).join(' / ');
   if (typeof regions === 'string' && regions.trim()) {
@@ -111,19 +120,24 @@ export default function BrandPRRoster() {
   const [drawerId, setDrawerId] = useState(null);
   const [toast, setToast] = useState('');
   const [logoBroken, setLogoBroken] = useState(false);
+  const [preview, setPreview] = useState(() => readRosterPreview(token));
 
   const applyPayload = useCallback((data) => {
     if (!data?.success) throw new Error(data?.error || 'Request failed');
     setCampaign(data.campaign);
     setCreators(data.creators || []);
     setBilling(data.billing || null);
+    if (data.campaign?.brand) {
+      setPreview(data.campaign.brand);
+      writeRosterPreview(token, data.campaign.brand);
+    }
     setError('');
     const status = data.campaign?.status;
     if (status === 'shipped') setStep(3);
     else if (status === 'locked') setStep(2);
     else setStep(1);
     return data;
-  }, []);
+  }, [token]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,6 +153,26 @@ export default function BrandPRRoster() {
       setLoading(false);
     }
   }, [token, applyPayload]);
+
+  useEffect(() => {
+    setPreview(readRosterPreview(token));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await api.get(`/api/brand-pr/r/${token}/preview`, { timeout: 8000 });
+        if (cancelled || !data?.brand) return;
+        setPreview(data.brand);
+        writeRosterPreview(token, data.brand);
+      } catch {
+        /* Full roster load reports the real error. */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
 
   useEffect(() => {
     if (token) load();
@@ -306,11 +340,7 @@ export default function BrandPRRoster() {
   }
 
   if (loading) {
-    return (
-      <Shell>
-        <LoadingNote>Opening your private PR roster…</LoadingNote>
-      </Shell>
-    );
+    return <RosterSplash brand={preview} />;
   }
 
   if (error && !campaign) {
@@ -595,7 +625,7 @@ export default function BrandPRRoster() {
               <Inbox>
                 {selectedCreators.map((c) => {
                   const ready = c.status === 'posted';
-                  const cover = mediaUrl(c.posts?.[0]?.thumbnail_url);
+                  const cover = stillUrl(c.posts?.[0]?.thumbnail_url);
                   return (
                     <Piece key={c.application_id}>
                       <Ph $ready={ready} $color={hueFromName(c.name)} $img={cover}>
@@ -651,7 +681,7 @@ export default function BrandPRRoster() {
                 <BigThumb
                   key={i}
                   $color={hueFromName(drawer.name)}
-                  $img={mediaUrl(p.thumbnail_url)}
+                  $img={stillUrl(p.thumbnail_url)}
                   href={p.post_url || undefined}
                   target={p.post_url ? '_blank' : undefined}
                   rel="noopener noreferrer"
@@ -727,18 +757,31 @@ function SocialRow({ socials }) {
 
 function Cover({ src, color }) {
   const [broken, setBroken] = useState(false);
-  const url = mediaUrl(src);
+  const url = stillUrl(src);
   if (url && !broken) {
-    return <img src={url} alt="" onError={() => setBroken(true)} />;
+    return (
+      <img
+        src={url}
+        alt=""
+        onError={() => setBroken(true)}
+        onLoad={(e) => {
+          const img = e.currentTarget;
+          if ((img.src || '').includes('media-proxy') && img.naturalWidth <= 240) {
+            setBroken(true);
+          }
+        }}
+      />
+    );
   }
   return <i style={{ background: color }} />;
 }
 
 function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
   const color = hueFromName(c.name);
-  const thumbs = (c.posts || []).map((p) => p.thumbnail_url).filter(Boolean);
-  if (c.avatar_url && !thumbs.includes(c.avatar_url) && thumbs.length < 3) {
-    thumbs.push(c.avatar_url);
+  const thumbs = (c.posts || []).map((p) => stillUrl(p.thumbnail_url)).filter(Boolean);
+  const avatarStill = stillUrl(c.avatar_url) || mediaUrl(c.avatar_url);
+  if (avatarStill && !thumbs.includes(avatarStill) && thumbs.length < 3) {
+    thumbs.push(avatarStill);
   }
   const collage = thumbs.length >= 2;
   const where = [c.handle, c.city].filter(Boolean).join(' · ') || 'Creator';
@@ -812,12 +855,6 @@ const Inner = styled.div`
     padding: 0 16px;
     ${(p) => p.$bar ? 'align-items: flex-start; flex-wrap: wrap;' : ''}
   }
-`;
-const LoadingNote = styled.p`
-  padding: 80px 24px;
-  text-align: center;
-  color: ${MUTE};
-  font-weight: 600;
 `;
 const EmptyState = styled.div`
   padding: 48px 16px;

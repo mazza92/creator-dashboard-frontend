@@ -110,6 +110,7 @@ const UgcSupplyAdmin = lazy(() => import('./admin/UgcSupplyAdmin'));
 
 // Skeleton components for Suspense fallbacks (non-lazy - needed immediately)
 import { ForYouSkeleton, DashboardOverviewSkeleton } from './components/Skeleton';
+import RosterSplash from './cra-pages/RosterSplash';
 
 // Suspense wrapper with loading fallback for lazy routes
 const LazyRoute = ({ children, fallback, skeleton }) => (
@@ -468,7 +469,7 @@ function AppContent() {
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             {/* Public media kit page */}
             <Route path='/kit/:username' element={<PublicMediaKitWrapper />} />
-            <Route path='/r/:token' element={<LazyRoute><BrandPRRoster /></LazyRoute>} />
+            <Route path='/r/:token' element={<LazyRoute skeleton={<RosterSplash />}><BrandPRRoster /></LazyRoute>} />
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<OnboardingRouter />} />
             <Route
