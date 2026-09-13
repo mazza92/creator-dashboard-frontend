@@ -228,7 +228,7 @@ const CreatorsAdmin = () => {
     searchParams.get('tab') === 'directory' || searchParams.get('q') ? 'directory' : 'review'
   ));
   const [approvalSnapshot, setApprovalSnapshot] = useState({
-    pending: 0, approved_today: 0, rejected_today: 0,
+    pending: 0, pending_ready: 0, approved_today: 0, rejected_today: 0,
   });
 
   const [page, setPage] = useState(1);

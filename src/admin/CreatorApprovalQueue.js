@@ -101,7 +101,10 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
   const [total, setTotal] = useState(0);
   const [q, setQ] = useState('');
   const [qDebounced, setQDebounced] = useState('');
-  const [readyOnly, setReadyOnly] = useState(true);
+  const [readyOnly, setReadyOnly] = useState(false);
+  const [newestFirst, setNewestFirst] = useState(true);
+  const [pendingAll, setPendingAll] = useState(0);
+  const [pendingReady, setPendingReady] = useState(0);
   const [narrow, setNarrow] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 900 : false
   );
@@ -134,7 +137,8 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('limit', '80');
+      params.set('limit', '500');
+      params.set('sort', newestFirst ? 'newest' : 'oldest');
       if (readyOnly) params.set('ready_only', '1');
       if (qDebounced.trim()) params.set('q', qDebounced.trim());
       const { data } = await api.get(
@@ -144,7 +148,11 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
       const rows = data.creators || [];
       setCreators(rows);
       setTotal(data.total || 0);
-      if (onSnapshot && data.approval) onSnapshot(data.approval);
+      if (data.approval) {
+        setPendingAll(data.approval.pending || 0);
+        setPendingReady(data.approval.pending_ready || 0);
+        if (onSnapshot) onSnapshot(data.approval);
+      }
       setSelectedId((prev) => {
         const preferred = keepId || prev;
         if (preferred && rows.some((r) => r.creator_id === preferred)) return preferred;
@@ -155,7 +163,7 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
     } finally {
       setLoading(false);
     }
-  }, [getApiConfig, onSnapshot, qDebounced, readyOnly]);
+  }, [getApiConfig, onSnapshot, qDebounced, readyOnly, newestFirst]);
 
   useEffect(() => {
     fetchQueue();
@@ -340,10 +348,24 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
       <QueueList>
         <ListHead>
           <div>
-            <ListTitle>{total} waiting</ListTitle>
-            <Text type="secondary">Oldest first</Text>
+            <ListTitle>
+              {readyOnly ? `${total} ready` : `${total} waiting`}
+            </ListTitle>
+            <Text type="secondary">
+              {newestFirst ? 'Newest first' : 'Oldest first'}
+              {readyOnly && pendingAll > pendingReady
+                ? ` · ${pendingAll - pendingReady} incomplete hidden`
+                : !readyOnly && pendingReady
+                  ? ` · ${pendingReady} ready`
+                  : ''}
+            </Text>
           </div>
-          <Space size={4}>
+          <Space size={4} wrap>
+            <Tooltip title={newestFirst ? 'Show oldest signups first' : 'Show new signups first'}>
+              <Button size="small" onClick={() => setNewestFirst((v) => !v)}>
+                {newestFirst ? 'Newest' : 'Oldest'}
+              </Button>
+            </Tooltip>
             <Tooltip title={readyOnly ? 'Showing complete profiles only' : 'Including incomplete signups'}>
               <Button size="small" type={readyOnly ? 'default' : 'primary'} onClick={() => setReadyOnly((v) => !v)}>
                 {readyOnly ? 'Ready' : 'All'}
@@ -469,11 +491,15 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
                 <Meta $full>
                   <MetaLabel>Niches</MetaLabel>
                   <NicheWrap>
-                    {nichesOf(selected.niche).length
-                      ? nichesOf(selected.niche).map((n) => (
-                          <Tag key={n}>{categoryLabel(normalizeCategory(n) || n)}</Tag>
-                        ))
-                      : <Text type="secondary">—</Text>}
+                    {(nichesOf(selected.niche).length
+                      ? nichesOf(selected.niche)
+                      : nichesOf(selected.creator_niches)
+                    ).map((n) => (
+                      <Tag key={n}>{categoryLabel(normalizeCategory(n) || n)}</Tag>
+                    ))}
+                    {!nichesOf(selected.niche).length && !nichesOf(selected.creator_niches).length
+                      ? <Text type="secondary">—</Text>
+                      : null}
                   </NicheWrap>
                 </Meta>
               </MetaGrid>
