@@ -14,6 +14,7 @@ import BrandLogo from '../components/BrandLogo';
 import { formatFollowers } from '../utils/format';
 import { resolveBrandStats } from '../utils/brandStats';
 import AreYouThisBrand from '../components/AreYouThisBrand';
+import LandingPageLayout from '../Layouts/LandingPageLayout';
 
 // Use shared API config with runtime detection
 const getApiBase = () => {
@@ -256,26 +257,30 @@ const PublicBrandPage = () => {
 
   if (loading) {
     return (
-      <PageWrap>
-        <PageInner style={{ textAlign: 'center', paddingTop: 100 }}>
-          <Spin size="large" />
-        </PageInner>
-      </PageWrap>
+      <LandingPageLayout>
+        <PageWrap>
+          <PageInner style={{ textAlign: 'center' }}>
+            <Spin size="large" />
+          </PageInner>
+        </PageWrap>
+      </LandingPageLayout>
     );
   }
 
   if (!brand) {
     return (
-      <PageWrap>
-        <PageInner style={{ textAlign: 'center', paddingTop: 100 }}>
-          <div>Brand not found.</div>
-        </PageInner>
-      </PageWrap>
+      <LandingPageLayout>
+        <PageWrap>
+          <PageInner style={{ textAlign: 'center' }}>
+            <div>Brand not found.</div>
+          </PageInner>
+        </PageWrap>
+      </LandingPageLayout>
     );
   }
 
   return (
-    <>
+    <LandingPageLayout canonicalUrl={`https://newcollab.co/brand/${slug}`}>
       <Helmet>
         <title>{brand.brand_name} PR Collaboration | NewCollab</title>
         <meta name="description" content={`Apply for ${brand.brand_name} PR packages and collaborations. ${brand.description?.slice(0, 120)}`} />
@@ -598,7 +603,7 @@ const PublicBrandPage = () => {
           feature="brand contacts"
         />
       )}
-    </>
+    </LandingPageLayout>
   );
 };
 
@@ -614,9 +619,9 @@ const PageWrap = styled.div`
 const PageInner = styled.div`
   max-width: 1160px;
   margin: 0 auto;
-  padding: 28px 24px 80px;
+  padding: 164px 24px 80px;
 
-  @media (max-width: 640px) { padding: 20px 16px 80px; }
+  @media (max-width: 768px) { padding: 116px 20px 80px; }
 `;
 
 const BackLink = styled.a`

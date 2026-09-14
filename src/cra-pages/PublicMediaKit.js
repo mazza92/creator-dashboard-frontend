@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import styled from 'styled-components';
 import axios from 'axios';
 import PublicKitView from '../components/PublicKitView';
 import { kitApiOrigin, mergeKitWithPublicProfile } from '../lib/kitBrandCta';
+import KitLoading from '../kit-builder/KitLoading';
 
 const API_BASE = process.env.REACT_APP_API_URL || (
   typeof window !== 'undefined' && window.location.hostname === 'localhost'
@@ -82,7 +82,7 @@ const PublicMediaKit = ({ username }) => {
     trackInteraction('share_click');
     try {
       if (navigator.share) {
-        await navigator.share({ title: `@${username} media kit`, url });
+        await navigator.share({ title: `@${username} UGC portfolio`, text: `@${username} UGC portfolio`, url });
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
@@ -93,8 +93,8 @@ const PublicMediaKit = ({ username }) => {
     }
   };
 
-  if (loading) return <KitState>Loading kit…</KitState>;
-  if (notFound) return <KitState>Kit not found</KitState>;
+  if (loading) return <KitLoading label="Loading portfolio" />;
+  if (notFound) return <KitLoading error label="Portfolio not found" />;
   if (!kit) return null;
 
   return (
@@ -109,16 +109,5 @@ const PublicMediaKit = ({ username }) => {
     />
   );
 };
-
-const KitState = styled.div`
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: #f7f5f0;
-  color: #5c6470;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-`;
 
 export default PublicMediaKit;

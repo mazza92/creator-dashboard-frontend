@@ -1,52 +1,171 @@
 import React from 'react';
-import styled from 'styled-components';
-import { FaInstagram, FaShare, FaTiktok, FaYoutube } from 'react-icons/fa';
+import styled, { ThemeProvider } from 'styled-components';
+import { FaInstagram, FaShare, FaYoutube } from 'react-icons/fa';
+import { FaTiktok } from 'react-icons/fa6';
 import { categoryEmoji, categoryLabel } from '../constants/brandCategories';
 import { kitBrandCta } from '../lib/kitBrandCta';
 import { formatKitNumber, normalizePublicKit } from '../lib/publicKit';
+import { COVER_SAMPLES, EXAMPLE_SLOTS, resolveThemeTokens, servicesForNiche, useKitFonts } from '../kit-builder/themes';
+import { normalizeKitLayout } from '../kit-builder/templates';
+import KitPostEmbed, { parseSocialUrl } from '../kit-builder/KitPostEmbed';
 
-const FONT = "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif";
-const INK = '#0F172A';
-const MUTED = '#64748B';
-const LINE = '#E2E8F0';
-const BG = '#F8FAFC';
-const SURFACE = '#FFFFFF';
-const ACCENT = '#4F46E5';
-const ACCENT_HOVER = '#4338CA';
-const ACCENT_SOFT = '#EEF2FF';
-const GREEN = '#059669';
-const GREEN_SOFT = '#ECFDF5';
-
-const PLATFORM_DISPLAY = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
-const POST_TYPE_LABEL = {
-  reel: 'Reel', photo: 'Photo', story: 'Story',
-  tiktok: 'Video', youtube: 'Video', short: 'Short',
+const SOCIAL_META = {
+  instagram: { Icon: FaInstagram, label: 'Instagram', color: '#E4405F' },
+  tiktok: { Icon: FaTiktok, label: 'TikTok', color: '#111827' },
+  youtube: { Icon: FaYoutube, label: 'YouTube', color: '#FF0000' },
 };
 
-function PlatformIcon({ platform, size = 16 }) {
-  if (platform === 'tiktok') return <FaTiktok size={size} color="currentColor" />;
-  if (platform === 'youtube') return <FaYoutube size={size} color="#FF0000" />;
-  return <FaInstagram size={size} color="#E4405F" />;
+function socialMeta(platform) {
+  return SOCIAL_META[platform] || SOCIAL_META.instagram;
+}
+
+function mediaKey(url) {
+  const parsed = parseSocialUrl(url);
+  if (!parsed) return '';
+  if (parsed.platform === 'tiktok' && parsed.id) return `tiktok:${parsed.id}`;
+  const href = String(parsed.href || '');
+  if (parsed.platform === 'instagram') {
+    const code = (href.match(/\/(?:p|reel|reels|tv)\/([^/?]+)/i) || [])[1];
+    if (code) return `instagram:${code.toLowerCase()}`;
+  }
+  if (parsed.platform === 'youtube') {
+    try {
+      const parsedUrl = new URL(href);
+      const id = parsedUrl.searchParams.get('v')
+        || (parsedUrl.pathname.match(/\/(?:embed|shorts|live)\/([^/]+)/) || [])[1];
+      if (id) return `youtube:${id}`;
+    } catch {
+      /* use href fallback */
+    }
+  }
+  return href.replace(/\/+$/, '').replace(/^https?:\/\/(www\.)?/i, '').toLowerCase();
+}
+
+function exampleWorkItems(theme = {}, posts = []) {
+  const byKey = new Map();
+  const push = (item) => {
+    const raw = typeof item === 'string' ? { url: item } : (item || {});
+    const parsed = parseSocialUrl(raw.url || raw.post_url);
+    if (!parsed) return;
+    const key = mediaKey(parsed.href);
+    if (!key) return;
+    const title = String(raw.title || '').trim();
+    const description = String(raw.description || raw.body || '').trim();
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, { url: parsed.href, title, description });
+      return;
+    }
+    if (!existing.title && title) existing.title = title;
+    if (!existing.description && description) existing.description = description;
+  };
+  (Array.isArray(theme.example_posts) ? theme.example_posts : []).forEach(push);
+  (Array.isArray(theme.examples) ? theme.examples : []).forEach(push);
+  if (!byKey.size) {
+    posts.forEach((post) => push(post?.post_url));
+  }
+  return Array.from(byKey.values()).slice(0, EXAMPLE_SLOTS);
+}
+
+function SocialMeta({ profiles = [], location, className }) {
+  const filled = (profiles || []).filter((p) => p.url || p.handle);
+  if (!filled.length && !location) return null;
+  return (
+    <CoverMeta className={className}>
+      <SocialList>
+        {filled.map((profile) => {
+          const { Icon, label: platformLabel } = socialMeta(profile.platform);
+          const label = profile.handle || platformLabel;
+          const count = profile.followers ? formatKitNumber(profile.followers) : '';
+          const inner = (
+            <>
+              <Icon size={14} aria-hidden="true" />
+              <span>{label}{count ? ` · ${count}` : ''}</span>
+            </>
+          );
+          return profile.url ? (
+            <CoverSocial
+              key={`${profile.platform}-${label}`}
+              href={profile.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${platformLabel}${count ? ` ${count}` : ''}`}
+            >
+              {inner}
+            </CoverSocial>
+          ) : (
+            <CoverSocial as="span" key={`${profile.platform}-${label}`}>{inner}</CoverSocial>
+          );
+        })}
+      </SocialList>
+      {location ? <span>{filled.length ? ' · ' : ''}{location}</span> : null}
+    </CoverMeta>
+  );
+}
+
+function FollowerChip({ profile }) {
+  const { Icon, label, color } = socialMeta(profile.platform);
+  const count = formatKitNumber(profile.followers);
+  if (!count) return null;
+  const inner = (
+    <>
+      <Icon size={14} color={color} aria-hidden="true" />
+      <span>{count}</span>
+    </>
+  );
+  return profile.url ? (
+    <Chip
+      as="a"
+      href={profile.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${count} on ${label}`}
+    >
+      {inner}
+    </Chip>
+  ) : (
+    <Chip aria-label={`${count} on ${label}`}>{inner}</Chip>
+  );
 }
 
 function PublicKitView({
   kit: rawKit,
   username,
   copied,
+  preview = false,
   onShare,
-  onSocialClick,
-  onPortfolioClick,
+  onSocialClick: _onSocialClick,
   onContactClick,
 }) {
   const kit = normalizePublicKit(rawKit);
+  useKitFonts(kit?.theme?.font || 'playfair');
   if (!kit) return null;
-
+  const tokens = resolveThemeTokens(kit.theme);
+  const layout = normalizeKitLayout(kit.layout);
   const brandCta = kitBrandCta(username || kit.username);
   const handle = `@${String(username || kit.username || '').replace(/^@/, '')}`;
-  const intro = kit.tagline && kit.tagline !== kit.bio ? kit.tagline : (kit.bio || kit.tagline);
+  const socials = (kit.socialProfiles || []).filter((p) => p.url || p.handle);
+  const social = socials[0];
+  const socialLabel = social?.handle || handle;
+  const displayName = kit.displayName || handle;
+  const headline = kit.headline || kit.tagline || '';
+  const about = [kit.about, kit.bio].find((text) => text && text !== headline) || '';
   const posts = kit.posts || [];
-  const primarySocial = kit.socialProfiles[0];
   const hasRates = !!(kit.ratesReel || kit.ratesTiktok || kit.ratesPhoto);
+  const niche = kit.niches[0] || 'lifestyle';
+  const services = (kit.theme.services && kit.theme.services.length)
+    ? kit.theme.services
+    : servicesForNiche(niche);
+  const cover = kit.coverUrl || COVER_SAMPLES[0].url;
+  const perPlatformFollowers = socials.filter((p) => p.followers);
+
+  const posterByKey = {};
+  posts.forEach((post) => {
+    const key = mediaKey(post.post_url);
+    if (key && post.thumbnail_url) posterByKey[key] = post.thumbnail_url;
+  });
+  const workItems = exampleWorkItems(kit.theme, posts);
+  const logos = kit.theme.brand_logos || [];
 
   const videoPosts = posts.filter((p) => (
     p.post_type === 'reel' || p.platform === 'tiktok' || p.platform === 'youtube'
@@ -54,721 +173,552 @@ function PublicKitView({
   const avgViews = videoPosts.length
     ? Math.round(videoPosts.reduce((sum, p) => sum + (p.views || 0), 0) / videoPosts.length)
     : 0;
-  const showEngagement = kit.engagementRate > 0 && kit.engagementRate < 100;
 
-  const facts = [];
-  kit.socialProfiles.forEach((profile) => {
-    facts.push({
-      key: `p-${profile.platform}`,
-      eyebrow: PLATFORM_DISPLAY[profile.platform] || profile.platform,
-      value: formatKitNumber(profile.followers) || profile.handle || PLATFORM_DISPLAY[profile.platform],
-      sub: profile.followers && profile.handle ? profile.handle : 'Followers',
-      href: profile.url,
-      platform: profile.platform,
-      tone: 'accent',
-    });
-  });
-  if (!kit.socialProfiles.length && kit.followerCount) {
-    facts.push({ key: 'followers', eyebrow: 'Reach', value: formatKitNumber(kit.followerCount), sub: 'Followers', tone: 'accent' });
-  }
-  if (kit.primaryAgeRange) {
-    facts.push({ key: 'age', eyebrow: 'Audience', value: kit.primaryAgeRange.replace('-', '–'), sub: 'Primary age' });
-  }
-  if (kit.regions.length) {
-    facts.push({ key: 'geo', eyebrow: 'Market', value: kit.regions.slice(0, 2).join(', '), sub: kit.regions.length > 2 ? kit.regions.slice(2).join(', ') : 'Audience geo' });
-  }
-  if (showEngagement) {
-    facts.push({ key: 'eng', eyebrow: 'Engagement', value: `${kit.engagementRate.toFixed(1)}%`, sub: 'Reported rate' });
-  }
-  if (avgViews > 0) {
-    facts.push({ key: 'views', eyebrow: 'Typical views', value: formatKitNumber(avgViews), sub: 'Across posted videos' });
-  }
-  if (kit.gifted) {
-    facts.push({ key: 'gifted', eyebrow: 'Collab', value: 'Gifted PR', sub: 'Product + shipping', tone: 'green' });
-  }
+  const workSection = (
+    <Section $center>
+      <DisplayTitle>Example videos</DisplayTitle>
+      {workItems.length > 0 ? (
+        <VideoRow>
+          {workItems.map((item) => (
+            <WorkCard key={item.url}>
+              <KitPostEmbed url={item.url} poster={posterByKey[mediaKey(item.url)]} />
+              {item.title ? <b>{item.title}</b> : null}
+              {item.description ? <span>{item.description}</span> : null}
+            </WorkCard>
+          ))}
+        </VideoRow>
+      ) : (
+        <EmptyWork>
+          <strong>Your videos will live here</strong>
+          <span>Paste Instagram, TikTok, or YouTube links. They show as a clean grid — not the platform player chrome.</span>
+        </EmptyWork>
+      )}
+    </Section>
+  );
+
+  const packagesSection = (kit.gifted || hasRates) ? (
+    <Section>
+      <Kicker>Packages</Kicker>
+      <Title>How to work together</Title>
+      <PackageGrid>
+        {kit.gifted && (
+          <PackageCard>
+            <em>Start here</em>
+            <b>Gifted PR</b>
+            <span>Product + shipping. First collab for most brands.</span>
+          </PackageCard>
+        )}
+        {kit.ratesReel > 0 && (
+          <PackageCard>
+            <em>Video</em>
+            <b>from ${kit.ratesReel.toLocaleString()}</b>
+            <span>Instagram Reel or short-form video.</span>
+          </PackageCard>
+        )}
+        {kit.ratesTiktok > 0 && (
+          <PackageCard>
+            <em>TikTok</em>
+            <b>from ${kit.ratesTiktok.toLocaleString()}</b>
+            <span>Native TikTok with usage to agree after.</span>
+          </PackageCard>
+        )}
+        {kit.ratesPhoto > 0 && (
+          <PackageCard>
+            <em>Stills</em>
+            <b>from ${kit.ratesPhoto.toLocaleString()}</b>
+            <span>Photo post or product stills.</span>
+          </PackageCard>
+        )}
+      </PackageGrid>
+    </Section>
+  ) : null;
+
+  const aboutSection = (
+    <Section>
+      <AboutGrid $hasPortrait={!!kit.avatarUrl}>
+        {kit.avatarUrl ? (
+          <Portrait>
+            <img src={kit.avatarUrl} alt={displayName} />
+          </Portrait>
+        ) : null}
+        <div>
+          <Kicker>About me</Kicker>
+          <Title>{`Hi, I’m ${displayName}`}</Title>
+          {about ? <Copy>{about}</Copy> : null}
+          <MetaRow>
+            {kit.niches.slice(0, 4).map((n) => (
+              <Chip key={n}><span aria-hidden="true">{categoryEmoji(n)}</span>{categoryLabel(n)}</Chip>
+            ))}
+            {kit.location ? <Chip>{kit.location}</Chip> : null}
+            {perPlatformFollowers.length
+              ? perPlatformFollowers.map((p) => (
+                <FollowerChip key={`followers-${p.platform}`} profile={p} />
+              ))
+              : (kit.followerCount ? <Chip>{formatKitNumber(kit.followerCount)} followers</Chip> : null)}
+            {kit.likesCount ? <Chip>{formatKitNumber(kit.likesCount)} likes</Chip> : null}
+            {kit.videoCount ? <Chip>{formatKitNumber(kit.videoCount)} videos</Chip> : null}
+            {kit.email ? <Chip as="a" href={`mailto:${kit.email}`} $email>{kit.email}</Chip> : null}
+            {(kit.avgViews > 0 ? kit.avgViews : avgViews) > 0 ? (
+              <Chip>{formatKitNumber(kit.avgViews > 0 ? kit.avgViews : avgViews)} avg views</Chip>
+            ) : null}
+          </MetaRow>
+        </div>
+      </AboutGrid>
+    </Section>
+  );
+
+  const servicesSection = services.length ? (
+    <Section>
+      <Kicker>What I make</Kicker>
+      <DisplayTitle>Content brands can actually run</DisplayTitle>
+      <ServiceGrid>
+        {services.map((item) => (
+          <ServiceCard key={item.title}>
+            <b>{item.title}</b>
+            <span>{item.body}</span>
+          </ServiceCard>
+        ))}
+      </ServiceGrid>
+    </Section>
+  ) : null;
+
+  const brandsSection = (logos.length || kit.brands.length) ? (
+    <Section $center>
+      <DisplayTitle $accent>Previously worked with</DisplayTitle>
+      {logos.length ? (
+        <LogoWall>
+          {logos.map((item) => (
+            <LogoItem key={item.logo_url} title={item.name || undefined}>
+              <img src={item.logo_url} alt={item.name || 'Brand'} />
+            </LogoItem>
+          ))}
+        </LogoWall>
+      ) : (
+        <Wordmarks>
+          {kit.brands.map((b) => <span key={b}>{b}</span>)}
+        </Wordmarks>
+      )}
+    </Section>
+  ) : null;
 
   return (
-    <Page>
-      <Wrap>
-        <Hero>
-          <TopBar>
-            <Eyebrow>Creator media kit</Eyebrow>
-            <ShareBtn type="button" onClick={onShare}>
-              <FaShare size={12} />
-              {copied ? 'Copied' : 'Share'}
-            </ShareBtn>
-          </TopBar>
-
-          <HeroMain>
-            <AvatarRing>
-              <Avatar>
-                {kit.avatarUrl
-                  ? <img src={kit.avatarUrl} alt={handle} />
-                  : <span>@</span>}
-              </Avatar>
-            </AvatarRing>
-            <div>
-              <NameRow>
-                <Name>{handle}</Name>
-                {kit.isPro ? <ReadyBadge>PR-ready</ReadyBadge> : null}
-              </NameRow>
-              {intro ? <Bio>{intro}</Bio> : null}
-              {kit.niches.length > 0 && (
-                <Chips>
-                  {kit.niches.slice(0, 6).map((n) => (
-                    <Chip key={n}>
-                      <span aria-hidden="true">{categoryEmoji(n)}</span>
-                      {categoryLabel(n)}
-                    </Chip>
-                  ))}
-                </Chips>
+    <ThemeProvider theme={tokens}>
+      <Page data-kit-root $t={tokens} $preview={preview}>
+        {layout !== 'gallery' && (
+          <Cover $preview={preview} $src={cover}>
+            <CoverShade />
+            <CoverBar>
+              <Eyebrow>UGC portfolio</Eyebrow>
+              {onShare ? (
+                <ShareBtn type="button" onClick={onShare}>
+                  <FaShare size={12} />
+                  {copied ? 'Copied' : 'Share portfolio'}
+                </ShareBtn>
+              ) : <span />}
+            </CoverBar>
+            <CoverCopy>
+              <Name>{displayName}</Name>
+              {headline ? <Lead>{headline}</Lead> : null}
+              {socials.length ? (
+                <SocialMeta profiles={socials} location={kit.location} />
+              ) : (
+                <CoverMeta>
+                  {social?.url ? (
+                    <CoverSocial href={social.url} target="_blank" rel="noopener noreferrer">{socialLabel}</CoverSocial>
+                  ) : socialLabel}
+                  {kit.location ? ` · ${kit.location}` : ''}
+                  {!perPlatformFollowers.length && kit.followerCount ? ` · ${formatKitNumber(kit.followerCount)}` : ''}
+                </CoverMeta>
               )}
-            </div>
-          </HeroMain>
-        </Hero>
-
-        {facts.length > 0 && (
-          <Section>
-            <SectionKicker>Snapshot</SectionKicker>
-            <SectionTitle>Fit at a glance</SectionTitle>
-            <FactGrid>
-              {facts.slice(0, 6).map((fact) => {
-                const inner = (
-                  <>
-                    <FactEyebrow>{fact.eyebrow}</FactEyebrow>
-                    <FactValue>{fact.value}</FactValue>
-                    <FactSub>{fact.sub}</FactSub>
-                  </>
-                );
-                if (fact.href) {
-                  return (
-                    <FactCard
-                      key={fact.key}
-                      $tone={fact.tone}
-                      as="a"
-                      href={fact.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => fact.platform && onSocialClick && onSocialClick(fact.platform)}
-                    >
-                      {inner}
-                    </FactCard>
-                  );
-                }
-                return <FactCard key={fact.key} $tone={fact.tone}>{inner}</FactCard>;
-              })}
-            </FactGrid>
-          </Section>
+              <CoverCta href={brandCta} onClick={onContactClick}>Let’s work together</CoverCta>
+            </CoverCopy>
+          </Cover>
         )}
 
-        {kit.socialProfiles.length > 1 && (
-          <Section>
-            <SectionKicker>Channels</SectionKicker>
-            <SectionTitle>Open the profile</SectionTitle>
-            <ChannelList>
-              {kit.socialProfiles.map((profile) => (
-                <ChannelLink
-                  key={profile.platform}
-                  href={profile.url || undefined}
-                  as={profile.url ? 'a' : 'div'}
-                  target={profile.url ? '_blank' : undefined}
-                  rel={profile.url ? 'noopener noreferrer' : undefined}
-                  onClick={() => onSocialClick && onSocialClick(profile.platform)}
-                >
-                  <ChannelIcon $platform={profile.platform}>
-                    <PlatformIcon platform={profile.platform} size={18} />
-                  </ChannelIcon>
-                  <div>
-                    <ChannelName>{PLATFORM_DISPLAY[profile.platform] || profile.platform}</ChannelName>
-                    <ChannelMeta>
-                      {profile.handle || 'Profile'}
-                      {profile.followers ? ` · ${formatKitNumber(profile.followers)} followers` : ''}
-                    </ChannelMeta>
-                  </div>
-                  {profile.url ? <ChannelCta>Open</ChannelCta> : null}
-                </ChannelLink>
-              ))}
-            </ChannelList>
-          </Section>
-        )}
-
-        <Section>
-          <SectionKicker>{kit.postsSource === 'scrape' ? 'Recent work' : 'Content'}</SectionKicker>
-            <SectionTitle>{posts.length ? 'Does the look fit?' : 'See the content before you brief'}</SectionTitle>
-          {posts.length > 0 ? (
-            <PostGrid>
-              {posts.slice(0, 9).map((post, i) => (
-                <PostCard
-                  key={post.id || i}
-                  href={post.post_url || undefined}
-                  as={post.post_url ? 'a' : 'div'}
-                  target={post.post_url ? '_blank' : undefined}
-                  rel={post.post_url ? 'noopener noreferrer' : undefined}
-                  onClick={() => post.id && onPortfolioClick && onPortfolioClick(post.id)}
-                >
-                  {post.thumbnail_url
-                    ? <img src={post.thumbnail_url} alt={post.brand_name || 'Creator post'} />
-                    : (
-                      <PostFallback>
-                        <PlatformIcon platform={post.platform} size={28} />
-                      </PostFallback>
-                    )}
-                  <PostOverlay>
-                    <span>
-                      {(PLATFORM_DISPLAY[post.platform] || post.platform || 'Post')}
-                      {POST_TYPE_LABEL[post.post_type] ? ` · ${POST_TYPE_LABEL[post.post_type]}` : ''}
-                    </span>
-                    {post.views > 0 ? <b>{formatKitNumber(post.views)} views</b> : null}
-                  </PostOverlay>
-                </PostCard>
-              ))}
-            </PostGrid>
-          ) : (
-            <EmptyWork>
-              <EmptyWorkCopy>
-                <strong>No portfolio stills on this kit yet</strong>
-                <span>
-                  {primarySocial?.url
-                    ? `Open ${handle} on ${PLATFORM_DISPLAY[primarySocial.platform] || 'social'} to judge content quality, lighting, and brand fit.`
-                    : 'Content examples will show here once this creator adds recent work.'}
-                </span>
-                {primarySocial?.url ? (
-                  <EmptyWorkBtn
-                    href={primarySocial.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => onSocialClick && onSocialClick(primarySocial.platform)}
-                  >
-                    Review on {PLATFORM_DISPLAY[primarySocial.platform] || 'social'}
-                  </EmptyWorkBtn>
-                ) : null}
-              </EmptyWorkCopy>
-            </EmptyWork>
+        <Site>
+          {layout === 'gallery' && (
+            <GalleryHead>
+              <div>
+                <Name>{displayName}</Name>
+                {headline ? <Lead $ink>{headline}</Lead> : null}
+                <SocialMeta profiles={socials} location={kit.location} />
+              </div>
+              <CoverCta href={brandCta} onClick={onContactClick}>Let’s work together</CoverCta>
+            </GalleryHead>
           )}
-        </Section>
 
-        {(kit.brands.length > 0 || kit.gifted || hasRates) && (
-          <Section>
-            <SectionKicker>Partnership</SectionKicker>
-            <SectionTitle>How brands work with {handle}</SectionTitle>
-            {kit.brands.length > 0 && (
-              <BrandRow>
-                {kit.brands.map((b) => <BrandPill key={b}>{b}</BrandPill>)}
-              </BrandRow>
-            )}
-            {kit.gifted && (
-              <GiftedNote>
-                <b>Open to gifted PR</b>
-                First campaign is product + shipping only. Usage and paid terms are agreed on Newcollab after you get in touch.
-              </GiftedNote>
-            )}
-            {hasRates && (
-              <RateCard>
-                {kit.ratesReel > 0 && <RateRow><span>Instagram Reel</span><b>from ${kit.ratesReel.toLocaleString()}</b></RateRow>}
-                {kit.ratesTiktok > 0 && <RateRow><span>TikTok video</span><b>from ${kit.ratesTiktok.toLocaleString()}</b></RateRow>}
-                {kit.ratesPhoto > 0 && <RateRow><span>Photo post</span><b>from ${kit.ratesPhoto.toLocaleString()}</b></RateRow>}
-              </RateCard>
-            )}
-          </Section>
-        )}
+          {layout === 'ratecard' ? (
+            <>
+              {packagesSection}
+              {aboutSection}
+              {workSection}
+              {servicesSection}
+              {brandsSection}
+            </>
+          ) : layout === 'gallery' ? (
+            <>
+              {workSection}
+              {aboutSection}
+              {servicesSection}
+              {packagesSection}
+              {brandsSection}
+            </>
+          ) : (
+            <>
+              {aboutSection}
+              {servicesSection}
+              {workSection}
+              {brandsSection}
+              {packagesSection}
+            </>
+          )}
 
-        <CTA>
-          <div>
-            <CTATitle>Want to work with {handle}?</CTATitle>
-            <CTASub>
-              Create a free brand account to brief this creator on Newcollab.
-              First campaign is product + shipping only.
-            </CTASub>
-          </div>
-          <CTABtn href={brandCta} onClick={onContactClick}>Get in touch</CTABtn>
-        </CTA>
-
-        <Footer>
-          <span>newcollab.co/kit/{kit.username}</span>
-          <span>Media kit by <BrandMark>Newcollab</BrandMark></span>
-        </Footer>
-      </Wrap>
-
-      <StickyBar>
-        <StickyMeta>
-          <b>{handle}</b>
-          <span>
-            {primarySocial
-              ? `${PLATFORM_DISPLAY[primarySocial.platform] || primarySocial.platform}${primarySocial.followers ? ` · ${formatKitNumber(primarySocial.followers)}` : ''}`
-              : kit.niches[0] || 'Creator'}
-          </span>
-        </StickyMeta>
-        <StickyBtn href={brandCta} onClick={onContactClick}>Get in touch</StickyBtn>
-      </StickyBar>
-    </Page>
+          <CTA>
+            <div>
+              <CTATitle>Want to work with {displayName}?</CTATitle>
+              <CTASub>First campaign is product + shipping. Brief them on Newcollab.</CTASub>
+            </div>
+            <CoverCta href={brandCta} onClick={onContactClick}>Get in touch</CoverCta>
+          </CTA>
+          <Footer>
+            <span>newcollab.co/kit/{kit.username}</span>
+            <BrandLink href="https://newcollab.co">Portfolio by <b>Newcollab</b></BrandLink>
+          </Footer>
+        </Site>
+      </Page>
+    </ThemeProvider>
   );
 }
 
 export default PublicKitView;
 
 const Page = styled.div`
-  min-height: 100vh;
-  background: ${BG};
-  padding: 32px 16px 56px;
-  font-family: ${FONT};
-  color: ${INK};
+  --kit-bg: ${p => p.$t.bg};
+  --kit-surface: ${p => p.$t.surface};
+  --kit-ink: ${p => p.$t.ink};
+  --kit-muted: ${p => p.$t.muted};
+  --kit-line: ${p => p.$t.line};
+  --kit-accent: ${p => p.$t.accent};
+  --kit-overlay: ${p => p.$t.overlay};
+  --kit-radius: ${p => p.$t.radius}px;
+  min-height: ${p => p.$preview ? 'auto' : '100vh'};
+  background: var(--kit-bg);
+  color: var(--kit-ink);
+  font-family: ${p => p.$t.bodyFont} !important;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  @media (max-width: 720px) { padding: 0 0 96px; }
+  -webkit-text-size-adjust: 100%;
 `;
 
-const Wrap = styled.div`
-  max-width: 720px;
-  margin: 0 auto;
-  background: ${SURFACE};
-  border: 1px solid ${LINE};
-  border-top: 3px solid ${ACCENT};
-  border-radius: 16px;
+const Cover = styled.header`
+  position: relative;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  @media (max-width: 480px) { border-radius: 0; border-left: 0; border-right: 0; box-shadow: none; }
-`;
-
-const Hero = styled.header`
-  padding: 20px 24px 8px;
-  @media (max-width: 480px) { padding: 16px 16px 4px; }
-`;
-
-const TopBar = styled.div`
+  color: #fff;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-`;
-
-const Eyebrow = styled.div`
-  font-size: 12px;
-  font-weight: 600;
-  color: ${ACCENT};
-`;
-
-const ShareBtn = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: ${SURFACE};
-  border: 1px solid ${LINE};
-  color: ${INK};
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover { background: ${BG}; }
-`;
-
-const HeroMain = styled.div`
-  display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 16px;
-  align-items: start;
-  padding-bottom: 20px;
-  border-bottom: 1px solid ${LINE};
-  @media (max-width: 560px) {
-    grid-template-columns: 64px 1fr;
-    gap: 14px;
+  background-color: #1a1612;
+  background-image: ${p => (p.$src ? `url(${p.$src})` : 'none')};
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  flex-shrink: 0;
+  ${p => p.$preview ? `
+    min-height: 240px;
+  ` : `
+    min-height: 420px;
+    min-height: clamp(400px, 52vh, 560px);
+  `}
+  @media (max-width: 640px) {
+    ${p => p.$preview ? `
+      min-height: 200px;
+    ` : `
+      min-height: 360px;
+      min-height: clamp(340px, 46vh, 480px);
+    `}
   }
 `;
-
-const AvatarRing = styled.div`
-  width: 72px;
-  height: 72px;
+const CoverShade = styled.div`
+  position: absolute; inset: 0; background: var(--kit-overlay);
 `;
-
-const Avatar = styled.div`
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: ${BG};
-  border: 1px solid ${LINE};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 600;
-  color: ${MUTED};
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  @media (max-width: 560px) { width: 64px; height: 64px; }
+const CoverBar = styled.div`
+  position: relative; z-index: 1;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 22px 28px 0;
+  @media (max-width: 640px) { padding: 16px 20px 0; }
 `;
-
-const NameRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+const Eyebrow = styled.div`
+  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; opacity: .85;
+  font-family: ${p => p.theme.bodyFont} !important;
 `;
-
+const ShareBtn = styled.button`
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; min-width: 44px;
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  font: 500 13px/1 ${p => p.theme.bodyFont};
+  padding: 8px 14px; border-radius: 999px; cursor: pointer;
+`;
+const CoverCopy = styled.div`
+  position: relative; z-index: 1;
+  padding: 48px 28px 56px;
+  max-width: 760px;
+  @media (max-width: 640px) { padding: 32px 20px 44px; }
+`;
 const Name = styled.h1`
   margin: 0;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
+  font-family: ${p => p.theme.headlineFont} !important;
+  font-weight: ${p => p.theme.headlineWeight || 500} !important;
+  font-style: ${p => p.theme.headlineItalic ? 'italic' : 'normal'};
+  font-size: clamp(32px, 6vw, 64px); line-height: 1.02; letter-spacing: -.03em;
 `;
-
-const Bio = styled.p`
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: #334155;
-  max-width: 40rem;
+const Lead = styled.p`
+  margin: 14px 0 0; max-width: 36rem; font-size: 18px; line-height: 1.45;
+  font-family: ${p => p.theme.bodyFont} !important;
+  color: ${p => p.$ink ? 'var(--kit-ink)' : 'rgba(255,255,255,.92)'};
+  @media (max-width: 640px) { font-size: 16px; }
 `;
-
-const ReadyBadge = styled.span`
-  background: #EEF2FF;
-  color: ${ACCENT};
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
+const CoverMeta = styled.div`
+  margin-top: 12px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; opacity: .85;
+  font-family: ${p => p.theme.bodyFont} !important;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
 `;
-
-const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
+const SocialList = styled.span`
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
 `;
-
-const Chip = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: ${ACCENT_SOFT};
-  border: 1px solid #C7D2FE;
-  color: #3730A3;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 9px;
+const CoverSocial = styled.a`
+  color: inherit; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  letter-spacing: .04em;
+  svg { flex-shrink: 0; display: block; }
+  &:hover { text-decoration: underline; }
+`;
+const CoverCta = styled.a`
+  display: inline-flex; align-items: center; justify-content: center;
+  width: max-content; max-width: 100%;
+  margin-top: 24px; min-height: 44px;
+  background: ${p => p.theme.accent}; color: ${p => p.theme.accentInk};
+  text-decoration: none; font-weight: 600 !important; font-size: 13px; padding: 12px 20px;
   border-radius: 999px;
+  font-family: ${p => p.theme.bodyFont} !important;
 `;
 
-const Section = styled.section`
-  padding: 20px 24px;
-  border-bottom: 1px solid ${LINE};
-  &:last-of-type { border-bottom: 0; }
-  @media (max-width: 480px) { padding: 18px 16px; }
+const Site = styled.div`
+  max-width: 880px; margin: 0 auto; padding: 40px 0 56px;
+  @media (max-width: 640px) { padding: 28px 0 40px; }
 `;
-
-const SectionKicker = styled.div`
-  font-size: 12px;
-  font-weight: 600;
-  color: ${ACCENT};
-  margin-bottom: 4px;
-`;
-
-const SectionTitle = styled.h2`
-  margin: 0 0 14px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-`;
-
-const FactGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  @media (min-width: 640px) { grid-template-columns: repeat(4, 1fr); }
-`;
-
-const FactCard = styled.div`
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  border-radius: 10px;
-  padding: 12px;
-  min-height: 88px;
-  border: 1px solid ${(p) => (p.$tone === 'accent' ? '#C7D2FE' : p.$tone === 'green' ? '#A7F3D0' : LINE)};
-  background: ${(p) => (p.$tone === 'accent' ? ACCENT_SOFT : p.$tone === 'green' ? GREEN_SOFT : SURFACE)};
-  transition: border-color 0.15s ease;
-  &[href]:hover {
-    border-color: ${ACCENT};
+const GalleryHead = styled.div`
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
+  padding: 12px 28px 24px;
+  ${CoverCta} { margin-top: 0; }
+  @media (max-width: 640px) {
+    flex-direction: column; align-items: flex-start; padding: 8px 20px 20px;
   }
 `;
-
-const FactEyebrow = styled.div`
-  font-size: 11px;
-  font-weight: 500;
-  color: ${MUTED};
-  margin-bottom: 8px;
+const Section = styled.section`
+  padding: 36px 28px;
+  text-align: ${p => p.$center ? 'center' : 'left'};
+  @media (max-width: 640px) { padding: 28px 20px; }
 `;
-
-const FactValue = styled.div`
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
+const Kicker = styled.div`
+  font-size: 11px; font-weight: 700 !important; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--kit-accent); margin-bottom: 8px;
+  font-family: ${p => p.theme.bodyFont} !important;
 `;
-
-const FactSub = styled.div`
-  margin-top: 6px;
-  font-size: 12px;
-  color: ${MUTED};
+const Title = styled.h2`
+  margin: 0 0 14px;
+  font-family: ${p => p.theme.headlineFont} !important;
+  font-weight: ${p => p.theme.headlineWeight || 500} !important;
+  font-style: ${p => p.theme.headlineItalic ? 'italic' : 'normal'};
+  font-size: clamp(24px, 4vw, 34px); letter-spacing: -.03em; line-height: 1.15;
 `;
-
-const ChannelList = styled.div`
+const DisplayTitle = styled.h2`
+  margin: 0 0 20px;
+  font-family: ${p => p.theme.headlineFont} !important;
+  font-weight: ${p => p.theme.headlineWeight || 500} !important;
+  font-style: italic;
+  font-size: clamp(24px, 4vw, 34px);
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  color: ${p => p.$accent ? p.theme.accent : 'var(--kit-ink)'};
+`;
+const Copy = styled.p`
+  margin: 0 0 16px; font-size: 16px; line-height: 1.65; color: var(--kit-muted); max-width: 40rem;
+  font-family: ${p => p.theme.bodyFont} !important;
+`;
+const AboutGrid = styled.div`
   display: grid;
-  gap: 8px;
-`;
-
-const ChannelLink = styled.a`
-  display: grid;
-  grid-template-columns: 40px 1fr auto;
-  gap: 12px;
+  grid-template-columns: ${p => p.$hasPortrait ? '148px minmax(0, 1fr)' : '1fr'};
+  gap: 28px;
   align-items: center;
-  padding: 10px;
-  background: ${SURFACE};
-  border: 1px solid ${LINE};
-  border-radius: 10px;
-  text-decoration: none;
-  color: inherit;
-  &:hover { background: ${BG}; }
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    align-items: start;
+  }
 `;
-
-const ChannelIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: ${BG};
-  border: 1px solid ${LINE};
-  color: ${INK};
-`;
-
-const ChannelName = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-`;
-
-const ChannelMeta = styled.div`
-  font-size: 13px;
-  color: ${MUTED};
-`;
-
-const ChannelCta = styled.span`
-  font-size: 13px;
-  font-weight: 500;
-  color: ${ACCENT};
-`;
-
-const PostGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  @media (max-width: 520px) { grid-template-columns: repeat(2, 1fr); }
-`;
-
-const PostCard = styled.a`
-  position: relative;
-  display: block;
-  aspect-ratio: 4 / 5;
-  border-radius: 10px;
+const Portrait = styled.div`
+  width: 148px;
+  height: 148px;
   overflow: hidden;
-  background: ${BG};
-  border: 1px solid ${LINE};
+  background: var(--kit-surface);
+  border-radius: 22px;
+  border: 1px solid var(--kit-line);
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  span { display: grid; place-items: center; height: 100%; font-size: 32px; color: var(--kit-muted); }
 `;
-
-const PostFallback = styled.div`
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  background: ${BG};
+const MetaRow = styled.div` display: flex; flex-wrap: wrap; gap: 8px; `;
+const Chip = styled.span`
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid ${p => p.$email ? 'var(--kit-accent)' : 'var(--kit-line)'};
+  background: var(--kit-surface);
+  padding: 8px 12px; border-radius: 999px; font-size: 12px; font-weight: 600 !important;
+  font-family: ${p => p.theme.bodyFont} !important;
+  color: inherit; text-decoration: none;
+  svg { flex-shrink: 0; display: block; }
 `;
-
-const PostOverlay = styled.div`
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding: 24px 10px 10px;
-  background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.72));
-  color: #fff;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  b { font-weight: 600; }
+const ServiceGrid = styled.div`
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  @media (max-width: 720px) { grid-template-columns: 1fr; }
 `;
-
-const EmptyWork = styled.div`
-  border-radius: 10px;
-  background: ${SURFACE};
-  border: 1px solid ${LINE};
+const ServiceCard = styled.div`
+  background: var(--kit-surface); border: 1px solid var(--kit-line);
+  border-radius: var(--kit-radius); padding: 18px 16px;
+  b {
+    display: block;
+    font-family: ${p => p.theme.headlineFont} !important;
+    font-size: 22px;
+    font-weight: ${p => p.theme.headlineWeight || 500} !important;
+    margin-bottom: 8px;
+  }
+  span { display: block; font-size: 14px; line-height: 1.5; color: var(--kit-muted); font-family: ${p => p.theme.bodyFont} !important; }
 `;
-
-const EmptyWorkCopy = styled.div`
-  padding: 16px;
-  display: grid;
-  gap: 6px;
-  strong { font-size: 14px; font-weight: 600; }
-  span { font-size: 13px; line-height: 1.55; color: ${MUTED}; max-width: 36rem; }
-`;
-
-const EmptyWorkBtn = styled.a`
-  display: inline-flex;
-  width: fit-content;
-  margin-top: 8px;
-  background: ${ACCENT};
-  color: #fff;
-  font-weight: 600;
-  font-size: 13px;
-  text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  &:hover { background: ${ACCENT_HOVER}; }
-`;
-
-const BrandRow = styled.div`
+const VideoRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-`;
-
-const BrandPill = styled.span`
-  background: ${BG};
-  border: 1px solid ${LINE};
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 500;
-`;
-
-const GiftedNote = styled.div`
-  background: ${SURFACE};
-  border: 1px solid ${LINE};
-  border-radius: 10px;
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.55;
-  color: #334155;
-  b { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: ${INK}; }
-`;
-
-const RateCard = styled.div`
-  margin-top: 10px;
-  background: ${SURFACE};
-  border: 1px solid ${LINE};
-  border-radius: 10px;
-  overflow: hidden;
-`;
-
-const RateRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  font-size: 14px;
-  border-bottom: 1px solid ${LINE};
-  &:last-child { border-bottom: 0; }
-  b { font-weight: 600; }
-`;
-
-const CTA = styled.div`
-  margin: 20px 24px 12px;
-  padding: 16px;
-  border-radius: 12px;
-  background: ${ACCENT_SOFT};
-  border: 1px solid #C7D2FE;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  @media (max-width: 640px) {
-    margin: 16px;
-    flex-direction: column;
-    align-items: stretch;
-  }
-`;
-
-const CTATitle = styled.div`
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-`;
-
-const CTASub = styled.div`
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: ${MUTED};
-  max-width: 28rem;
-`;
-
-const CTABtn = styled.a`
-  display: inline-flex;
   justify-content: center;
-  background: ${ACCENT};
-  color: #fff;
-  font-weight: 600;
-  font-size: 13px;
-  text-decoration: none;
-  padding: 9px 14px;
-  border-radius: 8px;
-  white-space: nowrap;
-  &:hover { background: ${ACCENT_HOVER}; }
+  gap: 16px 20px;
+  align-items: flex-start;
 `;
-
-const Footer = styled.footer`
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 24px 20px;
-  font-size: 12px;
-  color: ${MUTED};
-  @media (max-width: 480px) { padding: 0 16px 20px; }
-`;
-
-const BrandMark = styled.b`
-  color: ${ACCENT};
-  font-weight: 600;
-`;
-
-const StickyBar = styled.div`
-  display: none;
-  @media (max-width: 720px) {
-    display: flex;
-    position: fixed;
-    left: 50%;
-    bottom: 16px;
-    transform: translateX(-50%);
-    width: calc(100% - 24px);
-    max-width: 720px;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    background: ${INK};
-    color: #fff;
-    border-radius: 12px;
-    padding: 10px 10px 10px 14px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
-    z-index: 20;
+const WorkCard = styled.div`
+  flex: 0 1 180px;
+  width: 180px;
+  max-width: 180px;
+  text-align: left;
+  color: var(--kit-ink);
+  b {
+    display: block;
+    margin-top: 10px;
+    color: var(--kit-ink);
+    font-family: ${p => p.theme.headlineFont} !important;
+    font-size: 15px;
+    font-weight: ${p => p.theme.headlineWeight || 500} !important;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+  span {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--kit-muted);
+    font-family: ${p => p.theme.bodyFont} !important;
+    word-break: break-word;
+  }
+  @media (max-width: 640px) {
+    flex: 0 1 calc(50% - 6px);
+    width: calc(50% - 6px);
+    max-width: none;
   }
 `;
-
-const StickyMeta = styled.div`
-  min-width: 0;
-  b { display: block; font-size: 13px; font-weight: 600; }
-  span { font-size: 12px; color: #94A3B8; }
+const LogoWall = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 28px 36px;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 8px 8px 4px;
+  @media (max-width: 640px) { gap: 22px 24px; }
 `;
-
-const StickyBtn = styled.a`
-  flex-shrink: 0;
-  background: ${ACCENT};
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 13px;
-  padding: 8px 12px;
-  border-radius: 8px;
+const LogoItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  max-width: 150px;
+  img {
+    display: block;
+    max-height: 42px;
+    max-width: 150px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: ${p => p.theme.id === 'ink' ? 'grayscale(1) invert(1)' : 'grayscale(1) contrast(1.15)'};
+  }
 `;
-
+const Wordmarks = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 28px;
+  max-width: 720px;
+  margin: 0 auto;
+  span {
+    font-family: ${p => p.theme.headlineFont} !important;
+    font-size: 22px;
+    font-weight: 500 !important;
+    letter-spacing: -.02em;
+  }
+`;
+const EmptyWork = styled.div`
+  border: 1px dashed var(--kit-line); border-radius: var(--kit-radius); padding: 22px;
+  strong { display: block; margin-bottom: 6px; }
+  span { color: var(--kit-muted); font-size: 14px; line-height: 1.5; }
+`;
+const PackageGrid = styled.div`
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+  @media (max-width: 640px) { grid-template-columns: 1fr; }
+`;
+const PackageCard = styled.div`
+  background: var(--kit-surface); border: 1px solid var(--kit-line);
+  border-radius: var(--kit-radius); padding: 18px 16px;
+  em { display: block; font-style: normal; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--kit-accent); }
+  b {
+    display: block;
+    font-family: ${p => p.theme.headlineFont} !important;
+    font-size: 28px;
+    font-weight: ${p => p.theme.headlineWeight || 500} !important;
+    margin: 6px 0;
+  }
+  span { color: var(--kit-muted); font-size: 14px; line-height: 1.45; }
+`;
+const CTA = styled.div`
+  margin: 12px 28px 0; padding: 24px; border-radius: var(--kit-radius);
+  background: var(--kit-surface); border: 1px solid var(--kit-line);
+  display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  ${CoverCta} { margin-top: 0; }
+  @media (max-width: 640px) {
+    margin: 8px 20px 0; flex-direction: column; align-items: flex-start;
+  }
+`;
+const CTATitle = styled.div`
+  font-family: ${p => p.theme.headlineFont} !important;
+  font-weight: ${p => p.theme.headlineWeight || 500} !important;
+  font-size: clamp(22px, 5vw, 28px); line-height: 1.1;
+`;
+const CTASub = styled.div`
+  margin-top: 6px; color: var(--kit-muted); font-size: 14px;
+`;
+const Footer = styled.footer`
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 28px 28px 0; font-size: 12px; color: var(--kit-muted);
+  b { color: var(--kit-accent); font-weight: 600 !important; }
+  @media (max-width: 640px) {
+    padding: 22px 20px 0; flex-wrap: wrap;
+  }
+`;
+const BrandLink = styled.a`
+  color: inherit; text-decoration: none;
+  &:hover b { text-decoration: underline; }
+`;

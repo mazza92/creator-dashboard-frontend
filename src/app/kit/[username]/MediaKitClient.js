@@ -10,7 +10,7 @@ const MediaKitClient = ({ mediaKit, username }) => {
     const url = `https://newcollab.co/kit/${username}`;
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: `@${username} media kit`, url });
+        await navigator.share({ title: `@${username} UGC portfolio`, text: `@${username} UGC portfolio`, url });
       } else if (typeof navigator !== 'undefined') {
         await navigator.clipboard.writeText(url);
         setCopied(true);

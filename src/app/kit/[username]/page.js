@@ -85,6 +85,12 @@ async function getMediaKit(username) {
           ...(merged.rates_tiktok ? [{ name: 'TikTok Video', price: merged.rates_tiktok }] : []),
           ...(merged.rates_photo ? [{ name: 'Instagram Photo', price: merged.rates_photo }] : []),
         ],
+        rates_reel: merged.rates_reel,
+        rates_tiktok: merged.rates_tiktok,
+        rates_photo: merged.rates_photo,
+        rates_gifted: merged.rates_gifted,
+        kit_layout: merged.kit_layout || 'maison',
+        kit_theme: merged.kit_theme || {},
         posts: merged.posts || [],
         posts_source: merged.posts_source || (merged.posts?.length ? 'portfolio' : null),
         is_pro: merged.is_pro,
@@ -117,22 +123,22 @@ export async function generateMetadata({ params }) {
 
   if (!data || !data.media_kit) {
     return {
-      title: 'Media Kit Not Found | Newcollab',
+      title: 'Portfolio not found | Newcollab',
     };
   }
 
   const mediaKit = data.media_kit;
   const handle = `@${String(username || '').replace(/^@/, '')}`;
-  const tagline = mediaKit.tagline || mediaKit.bio || `${handle} media kit`;
+  const tagline = mediaKit.tagline || mediaKit.bio || `${handle} UGC portfolio`;
   const profileImage = mediaKit.profile_photo_url || '/default-avatar.png';
 
   return {
-    title: `${handle} - Creator Media Kit | Newcollab`,
+    title: `${handle} UGC portfolio | Newcollab`,
     description: tagline,
     keywords: mediaKit.niches?.join(', '),
     openGraph: {
       type: 'profile',
-      title: `${handle} - Creator Media Kit`,
+      title: `${handle} UGC portfolio`,
       description: tagline,
       images: [profileImage],
       url: `https://newcollab.co/kit/${username}`,
@@ -140,7 +146,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${handle} - Creator Media Kit`,
+      title: `${handle} UGC portfolio`,
       description: tagline,
       images: [profileImage],
       creator: '@newcollab',
@@ -203,8 +209,8 @@ export default async function MediaKitPage({ params }) {
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "Media Kits",
-        "item": "https://newcollab.co/kit"
+        "name": "UGC portfolios",
+        "item": "https://newcollab.co/media-kit"
       },
       {
         "@type": "ListItem",
@@ -226,7 +232,7 @@ export default async function MediaKitPage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
       />
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
-        {handle} - Creator Media Kit
+        {handle} UGC portfolio
       </h1>
       <Suspense fallback={null}>
         <KitViewTracker username={username} />

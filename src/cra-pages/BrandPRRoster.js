@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../config/api';
@@ -121,6 +121,11 @@ export default function BrandPRRoster() {
   const [toast, setToast] = useState('');
   const [logoBroken, setLogoBroken] = useState(false);
   const [preview, setPreview] = useState(() => readRosterPreview(token));
+  const viewedIds = useRef(new Set());
+
+  useEffect(() => {
+    viewedIds.current = new Set();
+  }, [token]);
 
   const applyPayload = useCallback((data) => {
     if (!data?.success) throw new Error(data?.error || 'Request failed');
@@ -232,6 +237,15 @@ export default function BrandPRRoster() {
   useEffect(() => {
     setLogoBroken(false);
   }, [brand.logo]);
+
+  const openDrawer = useCallback((applicationId) => {
+    setDrawerId(applicationId);
+    if (!applicationId || !token || viewedIds.current.has(applicationId)) return;
+    viewedIds.current.add(applicationId);
+    api.post(`/api/brand-pr/r/${token}/view`, { application_id: applicationId }).catch(() => {
+      viewedIds.current.delete(applicationId);
+    });
+  }, [token]);
 
   async function mutate(path, body) {
     setBusy(true);
@@ -497,7 +511,7 @@ export default function BrandPRRoster() {
                           busy={busy}
                           onApprove={onApprove}
                           onSkip={onSkip}
-                          onOpen={setDrawerId}
+                          onOpen={openDrawer}
                         />
                       ))}
                     </Grid>
@@ -664,6 +678,11 @@ export default function BrandPRRoster() {
             </LocationLine>
             <SocialRow socials={drawer.socials} />
             <Bio>Applied for a gifted PR package from {brandName}.</Bio>
+            {drawer.kit_url ? (
+              <KitLink href={drawer.kit_url} target="_blank" rel="noopener noreferrer">
+                View media kit
+              </KitLink>
+            ) : null}
             <Stats>
               <div>
                 <b>{drawer.followers_label || '—'}</b>
@@ -816,6 +835,16 @@ function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
             {c.country_code ? <i>{c.country_code.toUpperCase()}</i> : null}
           </Chips>
         )}
+        {c.kit_url ? (
+          <KitLink
+            href={c.kit_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            View media kit
+          </KitLink>
+        ) : null}
         {!locked && (
           <Actions>
             <BtnYes type="button" disabled={busy || selected} onClick={() => onApprove(c.application_id)}>
@@ -1601,6 +1630,16 @@ const Toast = styled.div`
   padding: 10px 16px;
   font-size: 13px;
   font-weight: 650;
+`;
+const KitLink = styled.a`
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: ${INK};
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  &:hover { color: ${MUTE}; }
 `;
 const Bio = styled.p`
   font-size: 14px;

@@ -9,6 +9,8 @@ import styled, { createGlobalStyle } from 'styled-components';
 import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 import CookieSettings from '../../components/CookieSettings';
+import FreePortfolioBanner from '../../components/FreePortfolioBanner';
+import { shouldShowFreePortfolioBanner } from '../../lib/freePortfolioBanner';
 import { tokens } from '../../theme/tokens';
 
 const GlobalStyle = createGlobalStyle`
@@ -16,6 +18,9 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+  }
+
+  *:not([data-kit-root], [data-kit-root] *) {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif !important;
@@ -87,8 +92,8 @@ const HeaderWrapper = styled.header`
   background: transparent !important;
   padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   position: ${props => props.$isMobile ? 'fixed' : 'absolute'};
   top: 0;
   left: 0;
@@ -105,6 +110,15 @@ const HeaderWrapper = styled.header`
     background: ${props => props.$isScrolled ? 'rgba(255, 255, 255, 0.8)' : 'transparent'} !important;
     box-shadow: ${props => props.$isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.05)' : 'none'};
   }
+`;
+
+const HeaderBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
 `;
 
 const ContentContainer = styled.div`
@@ -513,6 +527,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
   const isSignupPage = pathname === '/register';
   const isLoginPage = pathname === '/login';
   const isTransparentHeader = isSignupPage || isLoginPage;
+  const showPortfolioBanner = !hideHeader && shouldShowFreePortfolioBanner(pathname);
 
   const canonicalUrl =
     customCanonicalUrl || `https://newcollab.co${pathname === '/' ? '' : pathname}`;
@@ -611,31 +626,35 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
       <GlobalStyle />
       {!hideHeader && (
         <HeaderWrapper $isMobile={isMobile} $isScrolled={isScrolled}>
-          <Link href="/" prefetch={false} style={{ textDecoration: 'none' }}>
-            <LogoContainer>
-              <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
-            </LogoContainer>
-          </Link>
-          <NavLinks>
-            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
-            <NavLink href="/directory" prefetch={false} $isSignupPage={isTransparentHeader}>Brands</NavLink>
-            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
-            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
-            <NavLink href="/brands/pr-packages" prefetch={false} $isSignupPage={isTransparentHeader}>For Brands</NavLink>
-            <NavLink href="/about" prefetch={false} $isSignupPage={isTransparentHeader}>About</NavLink>
-          </NavLinks>
-          <AuthButtons>
-            <LoginButton href="/login" prefetch={false} $isSignupPage={isTransparentHeader}>Log in</LoginButton>
-            <SignupButton href="/register/creator" prefetch={false}>Sign up</SignupButton>
-          </AuthButtons>
-          <MobileCTAButton href="/register/creator" prefetch={false}>
-            Sign up free
-          </MobileCTAButton>
-          <MobileMenuButton
-            type="text"
-            icon={mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          />
+          {showPortfolioBanner && <FreePortfolioBanner />}
+          <HeaderBar>
+            <Link href="/" prefetch={false} style={{ textDecoration: 'none' }}>
+              <LogoContainer>
+                <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
+              </LogoContainer>
+            </Link>
+            <NavLinks>
+              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
+              <NavLink href="/media-kit" prefetch={false} $isSignupPage={isTransparentHeader}>Free portfolio</NavLink>
+              <NavLink href="/directory" prefetch={false} $isSignupPage={isTransparentHeader}>Brands</NavLink>
+              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
+              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
+              <NavLink href="/brands/pr-packages" prefetch={false} $isSignupPage={isTransparentHeader}>For Brands</NavLink>
+              <NavLink href="/about" prefetch={false} $isSignupPage={isTransparentHeader}>About</NavLink>
+            </NavLinks>
+            <AuthButtons>
+              <LoginButton href="/login" prefetch={false} $isSignupPage={isTransparentHeader}>Log in</LoginButton>
+              <SignupButton href="/register/creator" prefetch={false}>Sign up</SignupButton>
+            </AuthButtons>
+            <MobileCTAButton href="/register/creator" prefetch={false}>
+              Sign up free
+            </MobileCTAButton>
+            <MobileMenuButton
+              type="text"
+              icon={mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            />
+          </HeaderBar>
         </HeaderWrapper>
       )}
       <ContentContainer $hideHeader={hideHeader}>
@@ -667,6 +686,9 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
           <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
             Features
           </MobileHashNavLink>
+          <MobileNavLink href="/media-kit" prefetch={false} onClick={closeMobileMenu}>
+            Free portfolio
+          </MobileNavLink>
           <MobileNavLink href="/directory" prefetch={false} onClick={closeMobileMenu}>
             Brands
           </MobileNavLink>

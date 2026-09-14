@@ -86,8 +86,14 @@ async function buildFallbackDigestContext(user) {
         score_delta: 0,
         unlocks_used: 0,
         unlocks_quota: user.subscription_tier === 'pro' ? '∞' : 3,
+        credits_used: 0,
+        credits_remaining: user.subscription_tier === 'pro' ? null : 3,
+        credits_quota: user.subscription_tier === 'pro' ? 'unlimited' : 3,
+        applications_this_week: 0,
+        is_pro: user.subscription_tier === 'pro',
         pending_plans: [],
-        new_brands: []
+        new_brands: [],
+        live_campaigns: [],
       };
     }
 
@@ -116,6 +122,8 @@ async function buildFallbackDigestContext(user) {
       unlocksUsed = Math.min(3, packCount || 0);
     }
 
+    const creditsRemaining = isPro ? null : Math.max(0, 3 - unlocksUsed);
+
     // Calculate a basic reply chance based on profile completeness
     let replyChance = 0;
     if (creator.kit_published) replyChance += 15;
@@ -137,7 +145,26 @@ async function buildFallbackDigestContext(user) {
       reason: `New in ${b.category || 'directory'}`
     }));
 
-    console.log(`[DIGEST FALLBACK] Built context for ${user.id}: score=${replyChance}, unlocks=${unlocksUsed}, brands=${newBrands.length}`);
+    let liveCampaigns = [];
+    try {
+      const { data: campaigns } = await getSupabase()
+        .from('brand_pr_campaigns')
+        .select('headline, title, slot_limit, status, created_at, pr_brands!inner(brand_name, category, status)')
+        .eq('status', 'active')
+        .eq('pr_brands.status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      liveCampaigns = (campaigns || []).map((c) => ({
+        name: c.pr_brands?.brand_name || 'Brand',
+        category: c.pr_brands?.category || '',
+        reason: `${c.headline || c.title || 'Gifted PR'} · open now`,
+        spots: c.slot_limit || 0,
+      }));
+    } catch (campaignErr) {
+      console.log(`[DIGEST FALLBACK] live campaigns skipped: ${campaignErr.message}`);
+    }
+
+    console.log(`[DIGEST FALLBACK] Built context for ${user.id}: score=${replyChance}, credits=${creditsRemaining}, brands=${newBrands.length}`);
 
     return {
       first_name: firstName,
@@ -145,12 +172,18 @@ async function buildFallbackDigestContext(user) {
       score_delta: creator.kit_published ? 0 : 15,
       unlocks_used: unlocksUsed,
       unlocks_quota: unlocksQuota,
+      credits_used: unlocksUsed,
+      credits_remaining: creditsRemaining,
+      credits_quota: isPro ? 'unlimited' : 3,
+      applications_this_week: 0,
+      is_pro: isPro,
       pending_plans: creator.kit_published ? [] : [
         { number: 1, title: 'Publish your Media Kit' }
       ],
       new_brands: newBrands.length > 0 ? newBrands : [
         { name: 'Explore brands', category: 'Various', reason: 'Browse the directory' }
-      ]
+      ],
+      live_campaigns: liveCampaigns,
     };
   } catch (err) {
     console.log(`[DIGEST FALLBACK] Error building context: ${err.message}`);
@@ -160,8 +193,14 @@ async function buildFallbackDigestContext(user) {
       score_delta: 0,
       unlocks_used: 0,
       unlocks_quota: 3,
+      credits_used: 0,
+      credits_remaining: 3,
+      credits_quota: 3,
+      applications_this_week: 0,
+      is_pro: false,
       pending_plans: [],
-      new_brands: []
+      new_brands: [],
+      live_campaigns: [],
     };
   }
 }
@@ -437,7 +476,13 @@ const TEMPLATES = {
   weekly_digest: {
     subject: "your monday brief from your manager",
     getHtml: (context) => {
-      // Build the progress section
+      const isPro = !!context.is_pro;
+      const creditsLine = isPro
+        ? 'Unlimited'
+        : (context.credits_remaining != null
+          ? `${context.credits_remaining} left (${context.credits_used || 0} used of ${context.credits_quota || 3} this month${context.pack_credits ? `, +${context.pack_credits} pack` : ''})`
+          : `${context.unlocks_used || 0} used of ${context.unlocks_quota || 3}`);
+
       const progressHtml = `
         <div style="background:#f8f9fa;border-radius:8px;padding:20px;margin:20px 0;">
           <p style="margin:0 0 12px 0;font-weight:600;color:#374151;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">YOUR PROGRESS</p>
@@ -447,13 +492,16 @@ const TEMPLATES = {
               <td style="padding:8px 0;text-align:right;font-weight:600;">${context.current_score || 0}% ${context.score_delta > 0 ? `<span style="color:#22c55e;">(+${context.score_delta} potential)</span>` : ''}</td>
             </tr>
             <tr>
-              <td style="padding:8px 0;color:#6b7280;">Unlocks:</td>
-              <td style="padding:8px 0;text-align:right;font-weight:600;">${context.unlocks_used || 0} used of ${context.unlocks_quota || 3}</td>
+              <td style="padding:8px 0;color:#6b7280;">Credits:</td>
+              <td style="padding:8px 0;text-align:right;font-weight:600;">${creditsLine}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#6b7280;">Applications this week:</td>
+              <td style="padding:8px 0;text-align:right;font-weight:600;">${context.applications_this_week || 0}</td>
             </tr>
           </table>
         </div>`;
 
-      // Build the manager plan section
       let planHtml = '';
       if (context.pending_plans && context.pending_plans.length > 0) {
         const planItems = context.pending_plans.map(p =>
@@ -466,7 +514,18 @@ const TEMPLATES = {
           </div>`;
       }
 
-      // Build the new brands section
+      let campaignsHtml = '';
+      if (context.live_campaigns && context.live_campaigns.length > 0) {
+        const campaignItems = context.live_campaigns.map(c =>
+          `<p style="margin:0 0 12px 0;"><strong>${c.name}</strong> — ${c.reason || c.category || 'Gifted PR · open now'}${c.spots ? ` · ${c.spots} spots left` : ''}</p>`
+        ).join('');
+        campaignsHtml = `
+          <div style="margin:20px 0;">
+            <p style="margin:0 0 12px 0;font-weight:600;color:#374151;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">OPEN BRAND PR CAMPAIGNS</p>
+            ${campaignItems}
+          </div>`;
+      }
+
       let brandsHtml = '';
       if (context.new_brands && context.new_brands.length > 0) {
         const brandItems = context.new_brands.map(b =>
@@ -474,7 +533,7 @@ const TEMPLATES = {
         ).join('');
         brandsHtml = `
           <div style="margin:20px 0;">
-            <p style="margin:0 0 12px 0;font-weight:600;color:#374151;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">NEW BRANDS IN YOUR <span style="background:#fef3c7;padding:2px 6px;border-radius:4px;">MATCH</span> LIST</p>
+            <p style="margin:0 0 12px 0;font-weight:600;color:#374151;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;">FOR YOU THIS WEEK</p>
             ${brandItems}
           </div>`;
       }
@@ -484,9 +543,10 @@ const TEMPLATES = {
 <p style="margin:0 0 20px 0;">Here's what's new this week.</p>
 ${progressHtml}
 ${planHtml}
+${campaignsHtml}
 ${brandsHtml}`,
-        preheader: "Your weekly update from your Newcollab manager.",
-        primaryCta: { label: "See my full plan", url: "https://app.newcollab.co/creator/dashboard/pr-ready?utm_source=email&utm_medium=lifecycle&utm_campaign=weekly_digest" },
+        preheader: "Credits, live gifted PR lists, and this week's plan.",
+        primaryCta: { label: "See live campaigns", url: "https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=lifecycle&utm_campaign=weekly_digest" },
         utmCampaign: 'weekly_digest'
       });
     }

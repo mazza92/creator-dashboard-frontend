@@ -5,7 +5,7 @@ import {
   Space, Tag, message,
 } from 'antd';
 import {
-  CopyOutlined, EyeOutlined, MailOutlined, PlusOutlined, ReloadOutlined,
+  CopyOutlined, EyeInvisibleOutlined, EyeOutlined, MailOutlined, PlusOutlined, ReloadOutlined,
   PushpinOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
@@ -204,16 +204,42 @@ export default function AdminBrandPRRosters() {
 
   async function mutateCreator(path, applicationId) {
     const token = detail?.campaign?.token;
+    const campaignId = detail?.campaign?.id || drawer?.id;
     if (!token) return;
     setBusyId(applicationId);
     try {
-      const { data } = await axios.post(
+      await axios.post(
         `${API_BASE}/api/brand-pr/r/${token}/${path}`,
+        { application_id: applicationId },
+        { headers, withCredentials: true }
+      );
+      if (campaignId) {
+        const { data } = await axios.get(`${API_BASE}/api/admin/brand-pr/campaigns/${campaignId}`, {
+          headers, withCredentials: true,
+        });
+        setDetail(data);
+      }
+      load();
+    } catch (err) {
+      message.error(err.response?.data?.error || 'Action failed');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function hideCreator(applicationId, hide = true) {
+    const campaignId = detail?.campaign?.id || drawer?.id;
+    if (!campaignId) return;
+    setBusyId(applicationId);
+    try {
+      const { data } = await axios.post(
+        `${API_BASE}/api/admin/brand-pr/campaigns/${campaignId}/${hide ? 'hide' : 'unhide'}`,
         { application_id: applicationId },
         { headers, withCredentials: true }
       );
       setDetail(data);
       load();
+      message.success(hide ? 'Hidden from the brand roster' : 'Back on the brand roster');
     } catch (err) {
       message.error(err.response?.data?.error || 'Action failed');
     } finally {
@@ -315,8 +341,14 @@ export default function AdminBrandPRRosters() {
 
   const campaign = detail?.campaign;
   const creators = detail?.creators || [];
+  const visibleCreators = creators.filter((c) => !c.hidden);
+  const hiddenCreators = creators.filter((c) => c.hidden);
   const selectedIds = (campaign?.selected_application_ids || []).map(Number);
   const locked = campaign?.status === 'locked' || campaign?.status === 'shipped';
+
+  function creatorMeta(c) {
+    return [c.handle, c.city, c.followers_label && `${c.followers_label} foll.`, c.engagement_label].filter(Boolean).join(' · ');
+  }
 
   return (
     <Wrap>
@@ -603,42 +635,73 @@ export default function AdminBrandPRRosters() {
               </Space>
             </DrawerBar>
             <Hint style={{ marginBottom: 12 }}>
-              Approve puts them on the brand’s gift list. Skip hides them from the pick. Send the link when the list looks right.
+              Hide removes low-quality profiles from the brand’s roster entirely. They will not appear as skipped. Approve still puts them on the gift list.
             </Hint>
-            {creators.map((c) => {
+            {visibleCreators.map((c) => {
               const on = selectedIds.includes(c.application_id);
+              const busy = locked || busyId === c.application_id;
               return (
                 <CreatorRow key={c.application_id} $skip={c.skipped} $on={on}>
                   <div>
                     <b>{c.name}</b>
-                    <em>{[c.handle, c.city, c.followers_label && `${c.followers_label} foll.`, c.engagement_label].filter(Boolean).join(' · ')}</em>
+                    <em>{creatorMeta(c)}</em>
                   </div>
-                  <Space size={4}>
+                  <Space size={4} wrap>
+                    {c.kit_slug && (
+                      <Button size="small" href={`/kit/${c.kit_slug}`} target="_blank" rel="noreferrer" icon={<EyeOutlined />} />
+                    )}
                     {c.skipped ? (
-                      <Button size="small" disabled={locked || busyId === c.application_id} onClick={() => mutateCreator('unskip', c.application_id)}>
+                      <Button size="small" disabled={busy} onClick={() => mutateCreator('unskip', c.application_id)}>
                         Unskip
                       </Button>
                     ) : (
-                      <>
-                        <Button
-                          size="small"
-                          type={on ? 'primary' : 'default'}
-                          disabled={locked || busyId === c.application_id}
-                          onClick={() => mutateCreator(on ? 'deselect' : 'select', c.application_id)}
-                        >
-                          {on ? 'Approved' : 'Approve'}
-                        </Button>
-                        {!on && (
-                          <Button size="small" disabled={locked || busyId === c.application_id} onClick={() => mutateCreator('skip', c.application_id)}>
-                            Skip
-                          </Button>
-                        )}
-                      </>
+                      <Button
+                        size="small"
+                        type={on ? 'primary' : 'default'}
+                        disabled={busy}
+                        onClick={() => mutateCreator(on ? 'deselect' : 'select', c.application_id)}
+                      >
+                        {on ? 'Approved' : 'Approve'}
+                      </Button>
                     )}
+                    <Button
+                      size="small"
+                      danger
+                      icon={<EyeInvisibleOutlined />}
+                      disabled={busy}
+                      onClick={() => hideCreator(c.application_id, true)}
+                    >
+                      Hide
+                    </Button>
                   </Space>
                 </CreatorRow>
               );
             })}
+            {hiddenCreators.length > 0 && (
+              <>
+                <HiddenHead>Hidden from brand · {hiddenCreators.length}</HiddenHead>
+                {hiddenCreators.map((c) => (
+                  <CreatorRow key={c.application_id} $skip $hidden>
+                    <div>
+                      <b>{c.name}</b>
+                      <em>{creatorMeta(c)}</em>
+                    </div>
+                    <Space size={4}>
+                      {c.kit_slug && (
+                        <Button size="small" href={`/kit/${c.kit_slug}`} target="_blank" rel="noreferrer" icon={<EyeOutlined />} />
+                      )}
+                      <Button
+                        size="small"
+                        disabled={locked || busyId === c.application_id}
+                        onClick={() => hideCreator(c.application_id, false)}
+                      >
+                        Restore
+                      </Button>
+                    </Space>
+                  </CreatorRow>
+                ))}
+              </>
+            )}
             {!creators.length && <Empty>No applications for this brand yet.</Empty>}
             {campaign.status === 'active' && (
               <Popconfirm title="Close this roster link?" onConfirm={() => revoke(campaign.id)}>
@@ -839,11 +902,20 @@ const CreatorRow = styled.div`
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid ${tokens.border};
-  opacity: ${(p) => (p.$skip ? 0.5 : 1)};
-  background: ${(p) => (p.$on ? '#ecfdf5' : 'transparent')};
+  opacity: ${(p) => (p.$skip || p.$hidden ? 0.55 : 1)};
+  background: ${(p) => (p.$hidden ? '#fff7f7' : p.$on ? '#ecfdf5' : 'transparent')};
   margin: 0 -12px;
   padding-left: 12px;
   padding-right: 12px;
   b { display: block; font-size: 13px; }
   em { display: block; font-style: normal; font-size: 12px; color: ${tokens.textMuted}; }
+`;
+
+const HiddenHead = styled.div`
+  margin: 16px 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: ${tokens.textMuted};
 `;

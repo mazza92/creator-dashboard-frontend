@@ -96,6 +96,7 @@ const CreatorOverview = lazy(() => import('./creator-portal/CreatorOverview'));
 const BrandOverview = lazy(() => import('./components/BrandOverview'));
 const MediaKit = lazy(() => import('./creator-portal/MediaKit'));
 const PortfolioBuilder = lazy(() => import('./creator-portal/PortfolioBuilder'));
+const PublicKitStudio = lazy(() => import('./kit-builder/PublicKitStudio'));
 const ContentHub = lazy(() => import('./creator-portal/ContentHub'));
 const PRPipeline = lazy(() => import('./creator-portal/PRPipeline'));
 const UnifiedBrandDirectory = lazy(() => import('./cra-pages/UnifiedBrandDirectory'));
@@ -469,6 +470,7 @@ function AppContent() {
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             {/* Public media kit page */}
             <Route path='/kit/:username' element={<PublicMediaKitWrapper />} />
+            <Route path='/media-kit' element={<LandingPageLayout hideFooter><LazyRoute><PublicKitStudio /></LazyRoute></LandingPageLayout>} />
             <Route path='/r/:token' element={<LazyRoute skeleton={<RosterSplash />}><BrandPRRoster /></LazyRoute>} />
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<OnboardingRouter />} />

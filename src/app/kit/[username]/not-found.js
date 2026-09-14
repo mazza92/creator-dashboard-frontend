@@ -7,8 +7,8 @@ export default function NotFound() {
   return (
     <ErrorContainer>
       <ErrorIcon>404</ErrorIcon>
-      <ErrorTitle>Media Kit Not Found</ErrorTitle>
-      <ErrorText>This creator hasn't published their media kit yet.</ErrorText>
+      <ErrorTitle>Portfolio not found</ErrorTitle>
+      <ErrorText>This creator hasn’t published their UGC portfolio yet.</ErrorText>
       <BackLink href="/">Go to NewCollab</BackLink>
     </ErrorContainer>
   );

@@ -868,12 +868,8 @@ export default function CreatorOnboarding() {
     }
   };
 
-  // TikTok Login Kit is sandbox-only until TikTok approves the production app.
-  // Production onboarding must keep using the social scrapers.
-  const VERIFIABLE_PLATFORMS = (
-    typeof window !== 'undefined'
-    && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ) ? ['tiktok'] : [];
+  // TikTok Login Kit is the official source of creator TikTok stats and videos.
+  const VERIFIABLE_PLATFORMS = ['tiktok'];
 
   // Check region on mount - block users from restricted regions
   useEffect(() => {
@@ -945,9 +941,11 @@ export default function CreatorOnboarding() {
       const errorMessages = {
         'private': 'Your account appears to be private. Please make it public and try again.',
         'below_follower_min': 'You need at least 500 followers to join.',
-        'below_post_min': 'You need at least 5 posts to join.',
+        'below_post_min': 'You need at least 12 public videos to join.',
         'restricted_region': 'newcollab is not available in your region.',
         'oauth_error': 'Connection was cancelled or failed. Please try again.',
+        'inactive': 'Your TikTok needs a public video posted in the last 30 days.',
+        'no_username': 'TikTok did not return a username. Reconnect and grant profile access.',
       };
       setError(errorMessages[reason] || 'Verification failed. Please try again.');
 
@@ -1431,17 +1429,25 @@ export default function CreatorOnboarding() {
 
                   {/* For Instagram/TikTok OAuth flow (if VERIFIABLE_PLATFORMS is enabled), show OAuth connect info */}
                   {platform && VERIFIABLE_PLATFORMS.includes(platform) && (
-                    <VerificationNote>
-                      {verificationStatus === 'verifying' ? (
-                        <>⏳ Connecting to {platform === 'instagram' ? 'Instagram' : 'TikTok'}...</>
-                      ) : verificationStatus === 'verified' ? (
-                        <>✓ Verified: {verifiedProfile?.follower_count?.toLocaleString()} followers</>
-                      ) : verificationStatus === 'failed' ? (
-                        <>❌ Verification failed. Please try again.</>
-                      ) : (
-                        <>Click continue to securely connect your {platform === 'instagram' ? 'Instagram' : 'TikTok'} account</>
+                    <>
+                      <VerificationNote>
+                        {verificationStatus === 'verifying' ? (
+                          <>⏳ Connecting to {platform === 'instagram' ? 'Instagram' : 'TikTok'}...</>
+                        ) : verificationStatus === 'verified' ? (
+                          <>✓ Verified: {verifiedProfile?.follower_count?.toLocaleString()} followers</>
+                        ) : verificationStatus === 'failed' ? (
+                          <>❌ Verification failed. Please try again.</>
+                        ) : (
+                          <>Connect TikTok to pull your official stats and videos. We never ask for your password.</>
+                        )}
+                      </VerificationNote>
+                      {verificationStatus !== 'verified' && (
+                        <RequirementsHint>
+                          <strong>What brands need</strong>
+                          Public account · 500+ followers · 12+ videos · Posted in the last 30 days
+                        </RequirementsHint>
                       )}
-                    </VerificationNote>
+                    </>
                   )}
                 </FormGroup>
 

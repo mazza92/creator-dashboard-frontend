@@ -2137,15 +2137,16 @@ const LandingPage = () => {
           <Container>
             <FeatureRow>
               <FeatureText>
-                <FeatureTag>Auto Media Kit</FeatureTag>
-                <FeatureH3>Your media kit, generated automatically. Every pitch looks pro.</FeatureH3>
-                <FeatureP>Brands won't reply without one. newcollab builds your media kit from your profile (stats, audience, niche) and attaches it to every pitch automatically. No Canva. No design skills. Done in 30 seconds.</FeatureP>
+                <FeatureTag>Free UGC portfolio</FeatureTag>
+                <FeatureH3>A UGC portfolio brands can open. No Canva.</FeatureH3>
+                <FeatureP>Free UGC portfolio builder — pick a layout, paste posts, set rates, publish at newcollab.co/kit/you. No account. Put the link in your Instagram bio and TikTok description so we can track when a brand opens it.</FeatureP>
                 <FeatureBullet>
-                  <FeatureBulletItem>Stats pulled live from your profile</FeatureBulletItem>
-                  <FeatureBulletItem>Audience age, niche, platform included</FeatureBulletItem>
-                  <FeatureBulletItem>Auto-attached to every AI pitch</FeatureBulletItem>
-                  <FeatureBulletItem>Always up to date, no manual edits</FeatureBulletItem>
+                  <FeatureBulletItem>Free UGC portfolio builder with ready-made layouts</FeatureBulletItem>
+                  <FeatureBulletItem>Suggested packages plus custom rates if you already know what to charge</FeatureBulletItem>
+                  <FeatureBulletItem>Clean Instagram, TikTok, and YouTube embeds</FeatureBulletItem>
+                  <FeatureBulletItem>Public portfolio URL for your bio. Brand view tracking when they tap it</FeatureBulletItem>
                 </FeatureBullet>
+                <BtnBlack href="/media-kit" style={{ marginTop: 20, display: 'inline-block' }}>Build your free UGC portfolio →</BtnBlack>
               </FeatureText>
               <FeatureVisual>
                 <MockupCard>
@@ -2155,7 +2156,7 @@ const LandingPage = () => {
                       <MockupDot $color="#FFBD2E" />
                       <MockupDot $color="#28CA41" />
                     </MockupDots>
-                    <MockupTitle>My Media Kit</MockupTitle>
+                    <MockupTitle>My UGC portfolio</MockupTitle>
                   </MockupHeader>
                   <MockupBody>
                     <KitCard>
@@ -2188,8 +2189,8 @@ const LandingPage = () => {
                     </KitCard>
                     <div style={{ marginTop: 12 }}>
                       <KitAttachedBadge>
-                        <span>📎</span>
-                        <span>Auto-attached to your pitch email</span>
+                        <span>🔗</span>
+                        <span>newcollab.co/kit/carolstyle · free UGC portfolio</span>
                       </KitAttachedBadge>
                     </div>
                   </MockupBody>
@@ -2700,7 +2701,7 @@ const LandingPage = () => {
                   <a href="/register/creator">AI Pitch Writer</a>
                   <a href="/register/creator">PR Pipeline</a>
                   <a href="/register/creator">For You Feed</a>
-                  <a href="/register/creator">Media Kit Builder</a>
+                  <a href="/media-kit">Free UGC portfolio builder</a>
                 </FooterLinks>
               </div>
               <div>

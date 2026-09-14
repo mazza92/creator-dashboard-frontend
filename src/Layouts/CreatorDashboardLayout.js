@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Sparkles, Bell, Users, BadgeCheck, Video } from 'lucide-react';
+import { Search, Sparkles, Bell, Users, BadgeCheck, Video, FileText } from 'lucide-react';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
@@ -381,6 +381,8 @@ const PoolMobileBadge = styled(CountBadge)`
 const Content = styled.main`
   min-height: calc(100vh - 64px);
   padding-top: 8px;
+  min-width: 0;
+  overflow-x: clip;
 
   @media (max-width: 840px) {
     min-height: calc(100vh - 108px);
@@ -505,6 +507,7 @@ const navItems = [
 ];
 
 const moreNavItems = [
+  { label: 'My Kit', icon: FileText, path: '/creator/dashboard/my-kit' },
   { label: 'Assistant', icon: BadgeCheck, path: '/creator/dashboard/pr-ready' },
   { label: 'Content Hub', icon: Video, path: '/creator/dashboard/content-hub', isNew: true },
   { label: 'Pool', icon: Users, path: '/creator/dashboard/pool' },

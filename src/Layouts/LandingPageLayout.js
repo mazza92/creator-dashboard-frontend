@@ -10,6 +10,8 @@ import Header from '../components/Header';
 import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 import CookieSettings from '../components/CookieSettings';
+import FreePortfolioBanner from '../components/FreePortfolioBanner';
+import { shouldShowFreePortfolioBanner } from '../lib/freePortfolioBanner';
 import { tokens } from '../theme/tokens';
 
 
@@ -18,6 +20,9 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+  }
+
+  *:not([data-kit-root], [data-kit-root] *) {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif !important;
@@ -91,8 +96,8 @@ const HeaderWrapper = styled.header`
   background: transparent !important;
   padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   position: ${props => props.$isMobile ? 'fixed' : 'absolute'};
   top: 0;
   left: 0;
@@ -109,6 +114,15 @@ const HeaderWrapper = styled.header`
     background: ${props => props.$isScrolled ? 'rgba(255, 255, 255, 0.8)' : 'transparent'} !important;
     box-shadow: ${props => props.$isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.05)' : 'none'};
   }
+`;
+
+const HeaderBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
 `;
 
 const ContentContainer = styled.div`
@@ -519,6 +533,7 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
   const isLoginPage = location.pathname === '/login';
   const isTransparentHeader = isSignupPage || isLoginPage;
   const isLandingPage = location.pathname === '/';
+  const showPortfolioBanner = !hideHeader && shouldShowFreePortfolioBanner(location.pathname);
 
   // Generate canonical URL (stripping query parameters)
   // Use custom prop if provided, otherwise fallback to current path
@@ -620,30 +635,34 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
       <GlobalStyle />
       {!hideHeader && (
         <HeaderWrapper $isMobile={isMobile} $isScrolled={isScrolled}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <LogoContainer>
-              <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
-            </LogoContainer>
-          </Link>
-          <NavLinks>
-            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
-            <NavLink to="/directory" $isSignupPage={isTransparentHeader}>Brands</NavLink>
-            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
-            <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
-            <NavLink to="/about" $isSignupPage={isTransparentHeader}>About</NavLink>
-          </NavLinks>
-          <AuthButtons>
-            <LoginButton to="/login" $isSignupPage={isTransparentHeader}>Log in</LoginButton>
-            <SignupButton to="/register">Sign up</SignupButton>
-          </AuthButtons>
-          <MobileCTAButton to="/register/creator">
-            Sign up free
-          </MobileCTAButton>
-          <MobileMenuButton
-            type="text"
-            icon={mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          />
+          {showPortfolioBanner && <FreePortfolioBanner />}
+          <HeaderBar>
+            <Link to="/" style={{ textDecoration: 'none' }}>
+              <LogoContainer>
+                <LogoImg src="/newcollab-logo-dark.png" alt="newcollab" />
+              </LogoContainer>
+            </Link>
+            <NavLinks>
+              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
+              <NavLink to="/media-kit" $isSignupPage={isTransparentHeader}>Free portfolio</NavLink>
+              <NavLink to="/directory" $isSignupPage={isTransparentHeader}>Brands</NavLink>
+              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
+              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
+              <NavLink to="/about" $isSignupPage={isTransparentHeader}>About</NavLink>
+            </NavLinks>
+            <AuthButtons>
+              <LoginButton to="/login" $isSignupPage={isTransparentHeader}>Log in</LoginButton>
+              <SignupButton to="/register">Sign up</SignupButton>
+            </AuthButtons>
+            <MobileCTAButton to="/register/creator">
+              Sign up free
+            </MobileCTAButton>
+            <MobileMenuButton
+              type="text"
+              icon={mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            />
+          </HeaderBar>
         </HeaderWrapper>
       )}
       <ContentContainer $hideHeader={hideHeader}>
@@ -675,6 +694,9 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
           <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
             Features
           </MobileHashNavLink>
+          <MobileNavLink to="/media-kit" onClick={closeMobileMenu}>
+            Free portfolio
+          </MobileNavLink>
           <MobileNavLink to="/directory" onClick={closeMobileMenu}>
             Brands
           </MobileNavLink>

@@ -3038,7 +3038,7 @@ export default function PRReady() {
                     lineHeight: 1.45,
                   }}
                 >
-                  Unlimited posts attached + brand view tracker. Unlock Pro.
+                  Unlimited Brand PR unlocks + brand view tracker. Unlock Pro.
                 </p>
                 <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
                   Unlock Pro — {plan?.price || '$19/mo'}

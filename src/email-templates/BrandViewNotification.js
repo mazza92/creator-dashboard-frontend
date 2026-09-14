@@ -1,11 +1,11 @@
 /**
  * Brand View Notification Email Template
  *
- * Triggered when a brand clicks a tracked ref link from a creator's pitch.
- * Clean, minimal design focused on creating urgency and driving upgrade to Pro.
+ * Triggered when a brand reviews a creator on a gifted PR roster
+ * (or opens a tracked media kit link).
  *
  * Free users: See brand category (e.g. "A skincare brand") + upgrade CTA
- * Pro users: See brand name + follow-up CTA
+ * Pro users: See brand name
  *
  * Usage:
  *   generateBrandViewNotification({
@@ -55,35 +55,34 @@ export const generateBrandViewNotification = ({
     }
   }
 
-  // Different content for Pro vs Free users
   const headline = isPro
-    ? `${brandName} viewed your kit`
-    : `${categoryDisplay} viewed your kit`;
+    ? `${brandName} reviewed your application`
+    : `${categoryDisplay} reviewed your application`;
 
   const preheaderText = isPro
-    ? `They checked out your profile ${timeAgo}. Follow up now.`
-    : `See who it was and follow up while they are still interested.`;
+    ? `They opened your profile ${timeAgo}.`
+    : `See which brand is reviewing you.`;
 
   const subtitle = isPro
-    ? `They checked out your profile ${timeAgo}. Now is the perfect time to follow up.`
-    : `They checked out your profile ${timeAgo}. See who and follow up while they are still engaged.`;
+    ? `They opened your profile on their gifted PR list ${timeAgo}.`
+    : `They opened your profile ${timeAgo}. Upgrade to see which brand.`;
 
   const bodyHtml = isPro ? `
     <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151; line-height: 1.7;">
       Hey ${firstName},
     </p>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: #374151; line-height: 1.7;">
-      <strong>${brandName}</strong> clicked through to your media kit ${timeAgo}. This means they are actively evaluating you for a potential collab.
+      <strong>${brandName}</strong> is reviewing creators for gifted PR and opened your profile ${timeAgo}.
     </p>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: #374151; line-height: 1.7;">
-      Follow up while they are engaged. Most replies happen in the first 24 hours.
+      Keep your kit and shipping details up to date so you are ready if they add you to the gift list.
     </p>
   ` : `
     <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151; line-height: 1.7;">
       Hey ${firstName},
     </p>
     <p style="margin: 0 0 24px 0; font-size: 15px; color: #374151; line-height: 1.7;">
-      ${categoryDisplay} just clicked through to view your media kit. They are checking you out right now.
+      ${categoryDisplay} is reviewing gifted PR applications and opened your profile ${timeAgo}.
     </p>
   `;
 
@@ -98,10 +97,10 @@ export const generateBrandViewNotification = ({
               <td style="padding: 20px 24px; text-align: center;">
                 <p style="margin: 0 0 8px 0; font-size: 24px;">🔥</p>
                 <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: #92400e;">
-                  Strike while it is hot
+                  Brands are reviewing now
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #a16207; line-height: 1.5;">
-                  Follow up while they are engaged. Most replies happen in the first 24 hours.
+                  See which brand opened your profile, and apply to more gifted PR lists.
                 </p>
               </td>
             </tr>
@@ -126,7 +125,7 @@ export const generateBrandViewNotification = ({
                   <tr>
                     <td width="24" valign="top" style="font-size: 14px;">&#128065;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
-                      <strong>See exactly which brand</strong> viewed your kit
+                      <strong>See exactly which brand</strong> reviewed you
                     </td>
                   </tr>
                 </table>
@@ -138,7 +137,7 @@ export const generateBrandViewNotification = ({
                   <tr>
                     <td width="24" valign="top" style="font-size: 14px;">&#128231;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
-                      <strong>Send a follow-up pitch</strong> while they are engaged
+                      <strong>Apply to more gifted PR lists</strong> on For You
                     </td>
                   </tr>
                 </table>
@@ -150,7 +149,7 @@ export const generateBrandViewNotification = ({
                   <tr>
                     <td width="24" valign="top" style="font-size: 14px;">&#128230;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
-                      <strong>Unlimited pitches</strong> to any brand, every month
+                      <strong>Priority placement</strong> when brands are picking
                     </td>
                   </tr>
                 </table>
@@ -163,9 +162,9 @@ export const generateBrandViewNotification = ({
   ` : '';
 
   // CTA button - links to for-you page with upgrade param to trigger upgrade modal -> Stripe checkout
-  const ctaLabel = isPro ? 'Send Follow-Up Now' : 'See Who and Follow Up - $19/mo';
+  const ctaLabel = isPro ? "See who's reviewing you" : 'See which brand — $19/mo';
   const ctaUrl = isPro
-    ? 'https://app.newcollab.co/creator/dashboard/pr-pipeline?utm_source=email&utm_medium=brand_view'
+    ? 'https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=brand_view'
     : 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=kit_views&utm_source=email&utm_medium=brand_view';
 
   const ctaHtml = `
@@ -178,7 +177,7 @@ export const generateBrandViewNotification = ({
           </a>
           ${!isPro ? `
           <p style="margin: 14px 0 0 0; font-size: 12px; color: #9ca3af;">
-            Cancel anytime. One PR package pays for a year of Pro.
+            Cancel anytime. One gifted PR collab pays for a year of Pro.
           </p>
           ` : ''}
         </td>
@@ -286,7 +285,7 @@ export const generateBrandViewNotification = ({
             <tr>
               <td style="padding: 28px 24px 32px 24px; text-align: center;">
                 <p style="margin: 0 0 10px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">
-                  You are receiving this because a brand clicked your tracked kit link.
+                  You are receiving this because a brand reviewed your gifted PR application.
                 </p>
                 <p style="margin: 0 0 10px 0; font-size: 13px; color: #9ca3af;">
                   <a href="https://app.newcollab.co/creator/dashboard/settings" style="color: #9ca3af; text-decoration: underline;">Email settings</a>

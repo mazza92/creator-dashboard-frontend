@@ -979,7 +979,7 @@ const ForYou = () => {
             </KitViewsIcon>
             <KitViewsContent>
               <KitViewsTitle>
-                🔥 <strong>{kitViews.brands_this_week || kitViews.views_this_week}</strong> {(kitViews.brands_this_week || kitViews.views_this_week) === 1 ? 'brand' : 'brands'} viewed your kit this week
+                🔥 <strong>{kitViews.brands_this_week || kitViews.views_this_week}</strong> {(kitViews.brands_this_week || kitViews.views_this_week) === 1 ? 'brand' : 'brands'} checked out your profile this week
               </KitViewsTitle>
               {isPro && kitViews.views?.length > 0 ? (
                 <>
@@ -994,18 +994,18 @@ const ForYou = () => {
               ) : kitViews.teaser_brand_name ? (
                 <>
                   <KitViewsSub>
-                    {kitViews.teaser_brand_name} viewed your kit
+                    {kitViews.teaser_brand_name} reviewed your application
                     {kitViews.brands_this_week > 1
                       ? ` · ${kitViews.brands_this_week - 1} more behind Pro`
                       : ''}
                   </KitViewsSub>
                   <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
-                    See who else is checking you out →
+                    See who else is reviewing you →
                   </KitViewsUpgrade>
                 </>
               ) : (
                 <KitViewsUpgrade onClick={() => { setUpgradeReason('kit_views'); setShowUpgrade(true); }}>
-                  Upgrade to see who&apos;s checking you out →
+                  Upgrade to see who&apos;s reviewing you →
                 </KitViewsUpgrade>
               )}
             </KitViewsContent>
@@ -1033,11 +1033,7 @@ const ForYou = () => {
                     {view.view_count > 1 && <KitViewBadge>Viewed {view.view_count}x</KitViewBadge>}
                   </KitViewMeta>
                 </KitViewInfo>
-                {!view.has_replied && (
-                  <KitViewAction onClick={() => navigate(`/creator/dashboard/inbox`)}>
-                    Follow up →
-                  </KitViewAction>
-                )}
+                <KitViewBadge>Reviewing you</KitViewBadge>
               </KitViewRow>
             ))}
           </KitViewsList>
@@ -5142,22 +5138,6 @@ const KitViewBadge = styled.span`
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
-`;
-
-const KitViewAction = styled.button`
-  background: #111;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover {
-    background: #333;
-  }
 `;
 
 // Kit nudge — preview .nudge style

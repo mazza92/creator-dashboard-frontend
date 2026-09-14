@@ -77,10 +77,30 @@ export function profilesFromSocialLinks(links) {
   return out;
 }
 
+function normalizeResolvedProfile(p) {
+  if (!p || typeof p !== 'object') return null;
+  const platform = String(p.platform || '').trim().toLowerCase();
+  const handle = String(p.handle || '').trim().replace(/^@+/, '');
+  const url = String(p.url || '').trim() || (handle && SOCIAL_URLS[platform] ? SOCIAL_URLS[platform](handle) : '');
+  if (!url && !handle) return null;
+  const item = {
+    platform,
+    handle: handle ? `@${handle}` : null,
+    url: url || null,
+  };
+  const n = Number(String(p.followers ?? '').replace(/[^\d]/g, ''));
+  if (n) item.followers = n;
+  return item;
+}
+
 export function resolveKitSocialProfiles(kit) {
   if (!kit) return [];
-  if (Array.isArray(kit.social_profiles) && kit.social_profiles.length) {
-    return kit.social_profiles.filter((p) => p && (p.url || p.handle));
+  const theme = kit.kit_theme || kit.theme || {};
+  const lists = [kit.social_profiles, kit.socialProfiles, theme.social_profiles];
+  for (const list of lists) {
+    if (!Array.isArray(list) || !list.length) continue;
+    const mapped = list.map(normalizeResolvedProfile).filter(Boolean);
+    if (mapped.length) return mapped;
   }
   const fromLinks = profilesFromSocialLinks(kit.social_links);
   if (fromLinks.length) return fromLinks;
@@ -90,8 +110,8 @@ export function resolveKitSocialProfiles(kit) {
     .map(([platform, url]) => ({ platform, url, handle: null }));
   if (fromMap.length) return fromMap;
 
-  const handle = String(kit.social_handle || '').trim().replace(/^@+/, '');
-  const platform = String(kit.social_platform || '').trim().toLowerCase();
+  const handle = String(kit.social_handle || theme.social_handle || '').trim().replace(/^@+/, '');
+  const platform = String(kit.social_platform || theme.social_platform || '').trim().toLowerCase();
   if (handle && SOCIAL_URLS[platform]) {
     return [{ platform, handle: `@${handle}`, url: SOCIAL_URLS[platform](handle) }];
   }

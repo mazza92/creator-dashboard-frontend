@@ -1,5 +1,7 @@
 import { normalizeCategory } from '../constants/brandCategories';
 import { parseKitNiches, resolveKitSocialProfiles } from './kitBrandCta';
+import { normalizeKitTheme } from '../kit-builder/themes';
+import { normalizeKitLayout } from '../kit-builder/templates';
 
 export function formatKitNumber(n) {
   const num = Number(n);
@@ -55,13 +57,21 @@ export function normalizePublicKit(raw) {
   const ratesTiktok = Number(raw.rates_tiktok) || rateFromList(raw.rates, 'tiktok');
   const ratesPhoto = Number(raw.rates_photo) || rateFromList(raw.rates, 'photo');
   const gifted = raw.rates_gifted === true || raw.accepts_gifted === true;
+  const theme = normalizeKitTheme(raw.kit_theme || raw.theme);
 
   return {
     username: raw.username,
-    displayName: raw.display_name || raw.first_name || raw.username,
+    displayName: theme.display_name || raw.display_name || raw.first_name || raw.username,
     avatarUrl: raw.profile_photo_url || raw.avatar_url || '',
     bio: raw.bio || null,
     tagline: raw.tagline || null,
+    headline: theme.headline || raw.headline || raw.tagline || null,
+    about: theme.about || raw.about || raw.bio || null,
+    location: theme.location || raw.location || '',
+    email: theme.email || raw.email || '',
+    social_handle: raw.social_handle || theme.social_handle || '',
+    social_platform: raw.social_platform || theme.social_platform || '',
+    coverUrl: theme.cover_url || raw.cover_url || '',
     niches: [...new Set(
       parseKitNiches(raw.niches)
         .map((n) => normalizeCategory(n) || String(n).trim().toLowerCase())
@@ -70,6 +80,9 @@ export function normalizePublicKit(raw) {
     regions: (Array.isArray(raw.regions) ? raw.regions : []).map(formatRegionName).filter(Boolean),
     primaryAgeRange: String(raw.primary_age_range || '').trim(),
     followerCount,
+    likesCount: Number(raw.likes_count ?? raw.total_likes ?? 0) || 0,
+    videoCount: Number(raw.video_count ?? raw.social_media_count ?? 0) || 0,
+    avgViews: Number(raw.avg_views ?? 0) || 0,
     engagementRate: Number(raw.engagement_rate) || 0,
     socialProfiles: profiles,
     posts,
@@ -81,5 +94,7 @@ export function normalizePublicKit(raw) {
     isPro: !!raw.is_pro,
     kitViews: raw.kit_views,
     brands: collabBrands,
+    layout: normalizeKitLayout(raw.kit_layout || raw.layout),
+    theme,
   };
 }
