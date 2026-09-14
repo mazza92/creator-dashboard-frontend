@@ -31,10 +31,21 @@ function rateFromList(rates, needle) {
   return hit ? Number(hit.price) || 0 : 0;
 }
 
+function firstNumber(...values) {
+  for (let i = 0; i < values.length; i += 1) {
+    const value = values[i];
+    if (value != null && value !== '') {
+      const n = Number(value);
+      if (!Number.isNaN(n)) return n;
+    }
+  }
+  return 0;
+}
+
 export function normalizePublicKit(raw) {
   if (!raw) return null;
   const socialProfiles = resolveKitSocialProfiles(raw);
-  const followerCount = Number(raw.total_followers ?? raw.follower_count ?? 0) || 0;
+  const followerCount = firstNumber(raw.total_followers, raw.follower_count) || 0;
   const profiles = socialProfiles.map((profile) => {
     if (profile.followers) return profile;
     if (socialProfiles.length === 1 && followerCount) {
@@ -83,9 +94,9 @@ export function normalizePublicKit(raw) {
     regions: (Array.isArray(raw.regions) ? raw.regions : []).map(formatRegionName).filter(Boolean),
     primaryAgeRange: String(raw.primary_age_range || '').trim(),
     followerCount,
-    likesCount: Number(raw.likes_count ?? raw.total_likes ?? 0) || 0,
-    videoCount: Number(raw.video_count ?? raw.social_media_count ?? 0) || 0,
-    avgViews: Number(raw.avg_views ?? 0) || 0,
+    likesCount: firstNumber(raw.likes_count, raw.total_likes) || 0,
+    videoCount: firstNumber(raw.video_count, raw.social_media_count) || 0,
+    avgViews: firstNumber(raw.avg_views) || 0,
     engagementRate: Number(raw.engagement_rate) || 0,
     socialProfiles: profiles,
     posts,

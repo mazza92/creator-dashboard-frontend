@@ -67,7 +67,7 @@ export function profilesFromSocialLinks(links) {
       handle: handle ? `@${handle}` : null,
       url: url || null,
     };
-    const followers = link.followersCount ?? link.followers;
+    const followers = link.followersCount != null ? link.followersCount : link.followers;
     if (followers != null && followers !== '') {
       const n = Number(followers);
       if (!Number.isNaN(n)) item.followers = n;
@@ -88,7 +88,7 @@ function normalizeResolvedProfile(p) {
     handle: handle ? `@${handle}` : null,
     url: url || null,
   };
-  const n = Number(String(p.followers ?? '').replace(/[^\d]/g, ''));
+  const n = Number(String(p.followers != null ? p.followers : '').replace(/[^\d]/g, ''));
   if (n) item.followers = n;
   return item;
 }
