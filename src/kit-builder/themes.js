@@ -184,9 +184,11 @@ export const DEFAULT_THEME = {
   services: [],
   examples: [],
   brand_logos: [],
+  testimonials: [],
 };
 
 export const BRAND_LOGO_SLOTS = 8;
+export const TESTIMONIAL_SLOTS = 6;
 
 export function getLook(id) {
   return LOOKS.find((item) => item.id === id) || LOOKS[0];
@@ -309,12 +311,12 @@ export function normalizeSocialProfiles(raw, fallback = {}) {
   const seen = new Set();
   const out = [];
   (Array.isArray(raw) ? raw : []).forEach((item) => {
-    const platform = String(item?.platform || '').toLowerCase();
+    const platform = String((item && item.platform) || '').toLowerCase();
     if (!allowed.includes(platform) || seen.has(platform)) return;
-    const handle = String(item?.handle || '').replace(/^@+/, '').replace(/[^a-zA-Z0-9._]/g, '').slice(0, 40);
+    const handle = String((item && item.handle) || '').replace(/^@+/, '').replace(/[^a-zA-Z0-9._]/g, '').slice(0, 40);
     if (!handle) return;
     seen.add(platform);
-    const followers = String(item?.followers ?? '').replace(/[^\d]/g, '').slice(0, 10);
+    const followers = String(item && item.followers != null ? item.followers : '').replace(/[^\d]/g, '').slice(0, 10);
     const url = platform === 'tiktok'
       ? `https://tiktok.com/@${handle}`
       : platform === 'youtube'
@@ -357,6 +359,20 @@ export function normalizeBrandLogos(raw) {
   return out.slice(0, 12);
 }
 
+export function normalizeTestimonials(raw) {
+  const rows = Array.isArray(raw) ? raw : [];
+  const out = [];
+  rows.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const quote = String(item.quote || item.text || '').trim().slice(0, 320);
+    if (quote.length < 2) return;
+    const name = String(item.name || '').trim().slice(0, 60);
+    const role = String(item.role || item.brand || item.title || '').trim().slice(0, 80);
+    out.push({ quote, name, role });
+  });
+  return out.slice(0, TESTIMONIAL_SLOTS);
+}
+
 export function normalizeKitTheme(raw) {
   const src = raw && typeof raw === 'object' ? raw : {};
   const look = LOOKS.some((item) => item.id === src.look) ? src.look : DEFAULT_THEME.look;
@@ -365,9 +381,9 @@ export function normalizeKitTheme(raw) {
   const cover = String(src.cover_url || '').trim().slice(0, 500);
   const services = Array.isArray(src.services)
     ? src.services.slice(0, 12).map((row) => ({
-      id: String(row?.id || '').slice(0, 32),
-      title: String(row?.title || '').slice(0, 48),
-      body: String(row?.body || '').slice(0, 160),
+      id: String((row && row.id) || '').slice(0, 32),
+      title: String((row && row.title) || '').slice(0, 48),
+      body: String((row && row.body) || '').slice(0, 160),
     })).filter((row) => row.title)
     : [];
   const email = String(src.email || '').trim().slice(0, 120);
@@ -376,9 +392,9 @@ export function normalizeKitTheme(raw) {
     ...(Array.isArray(src.examples) ? src.examples : []),
   ]);
   const social_profiles = normalizeSocialProfiles(src.social_profiles, src);
-  const social_handle = social_profiles[0]?.handle
+  const social_handle = (social_profiles[0] && social_profiles[0].handle)
     || String(src.social_handle || src.handle || '').replace(/^@+/, '').replace(/[^a-zA-Z0-9._]/g, '').slice(0, 40);
-  const social_platform = social_profiles[0]?.platform
+  const social_platform = (social_profiles[0] && social_profiles[0].platform)
     || (['instagram', 'tiktok', 'youtube'].includes(String(src.social_platform || '').toLowerCase())
       ? String(src.social_platform).toLowerCase()
       : '');
@@ -399,6 +415,7 @@ export function normalizeKitTheme(raw) {
     examples: examplePosts.map((row) => row.url),
     example_posts: examplePosts,
     brand_logos: normalizeBrandLogos(src.brand_logos),
+    testimonials: normalizeTestimonials(src.testimonials),
   };
 }
 

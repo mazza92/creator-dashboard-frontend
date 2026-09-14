@@ -166,6 +166,7 @@ function PublicKitView({
   });
   const workItems = exampleWorkItems(kit.theme, posts);
   const logos = kit.theme.brand_logos || [];
+  const testimonials = Array.isArray(kit.theme.testimonials) ? kit.theme.testimonials : [];
 
   const videoPosts = posts.filter((p) => (
     p.post_type === 'reel' || p.platform === 'tiktok' || p.platform === 'youtube'
@@ -301,6 +302,27 @@ function PublicKitView({
     </Section>
   ) : null;
 
+  const testimonialsSection = testimonials.length ? (
+    <Section>
+      <Kicker>Testimonials</Kicker>
+      <DisplayTitle>What brands say</DisplayTitle>
+      <TestimonialGrid $count={testimonials.length}>
+        {testimonials.map((item, i) => (
+          <TestimonialCard key={`t-${i}`}>
+            <Quote>“{item.quote}”</Quote>
+            {(item.name || item.role) ? (
+              <Cite>
+                {item.name ? <b>{item.name}</b> : null}
+                {item.name && item.role ? ' · ' : null}
+                {item.role || null}
+              </Cite>
+            ) : null}
+          </TestimonialCard>
+        ))}
+      </TestimonialGrid>
+    </Section>
+  ) : null;
+
   return (
     <ThemeProvider theme={tokens}>
       <Page data-kit-root $t={tokens} $preview={preview}>
@@ -354,6 +376,7 @@ function PublicKitView({
               {workSection}
               {servicesSection}
               {brandsSection}
+              {testimonialsSection}
             </>
           ) : layout === 'gallery' ? (
             <>
@@ -362,6 +385,7 @@ function PublicKitView({
               {servicesSection}
               {packagesSection}
               {brandsSection}
+              {testimonialsSection}
             </>
           ) : (
             <>
@@ -369,6 +393,7 @@ function PublicKitView({
               {servicesSection}
               {workSection}
               {brandsSection}
+              {testimonialsSection}
               {packagesSection}
             </>
           )}
@@ -670,6 +695,36 @@ const Wordmarks = styled.div`
     font-weight: 500 !important;
     letter-spacing: -.02em;
   }
+`;
+const TestimonialGrid = styled.div`
+  display: grid;
+  grid-template-columns: ${p => (p.$count > 1 ? 'repeat(2, minmax(0, 1fr))' : '1fr')};
+  gap: 28px 48px;
+  @media (max-width: 640px) { grid-template-columns: 1fr; gap: 28px; }
+`;
+const TestimonialCard = styled.blockquote`
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+`;
+const Quote = styled.p`
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--kit-ink);
+  font-family: ${p => p.theme.headlineFont} !important;
+  font-style: italic;
+  font-weight: ${p => p.theme.headlineWeight || 500} !important;
+`;
+const Cite = styled.footer`
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 600 !important;
+  color: var(--kit-muted);
+  font-family: ${p => p.theme.bodyFont} !important;
+  font-style: normal;
+  b { color: var(--kit-ink); font-weight: 700 !important; }
 `;
 const EmptyWork = styled.div`
   border: 1px dashed var(--kit-line); border-radius: var(--kit-radius); padding: 22px;

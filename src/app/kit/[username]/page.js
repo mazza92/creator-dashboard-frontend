@@ -5,14 +5,12 @@ import KitViewTracker from './KitViewTracker';
 import { kitApiOrigin, mergeKitWithPublicProfile } from '../../../lib/kitBrandCta';
 
 function portfolioApiBase() {
-  // Prefer explicit env; in local Next.js hit the local Flask API so kit
-  // changes are visible without deploying api.newcollab.co.
+  if (process.env.NODE_ENV !== 'production') return 'http://localhost:5000';
   const fromEnv =
     process.env.NEXT_PUBLIC_API_BASE ||
     process.env.REACT_APP_BACKEND_URL ||
     process.env.REACT_APP_API_BASE;
   if (fromEnv) return fromEnv.replace(/\/$/, '').replace(/\/api$/, '');
-  if (process.env.NODE_ENV !== 'production') return 'http://localhost:5000';
   return 'https://api.newcollab.co';
 }
 
@@ -21,9 +19,8 @@ async function getMediaKit(username) {
   try {
     const apiBase = portfolioApiBase();
     const res = await fetch(`${apiBase}/api/portfolio/public/${username}`, {
-      // Dev: no cache so kit changes are visible immediately
-      next: { revalidate: process.env.NODE_ENV === 'production' ? 3600 : 0 },
-      cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
+      next: { revalidate: 0 },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -43,8 +40,8 @@ async function getMediaKit(username) {
     for (const profileUrl of profileUrls) {
       try {
         const profileRes = await fetch(profileUrl, {
-          next: { revalidate: process.env.NODE_ENV === 'production' ? 3600 : 0 },
-          cache: process.env.NODE_ENV === 'production' ? 'force-cache' : 'no-store',
+          next: { revalidate: 0 },
+          cache: 'no-store',
         });
         if (profileRes.ok) {
           const body = await profileRes.json();
@@ -162,9 +159,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// This page uses Static Site Generation (SSG) with Incremental Static Regeneration (ISR)
-// Pages are pre-rendered at build time and can be regenerated on-demand
-export const revalidate = 3600; // Revalidate every hour (ISR)
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 export default async function MediaKitPage({ params }) {
   const { username } = await params;

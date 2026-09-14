@@ -1,6 +1,6 @@
 import { normalizeCategory } from '../constants/brandCategories';
 import { parseKitNiches, resolveKitSocialProfiles } from './kitBrandCta';
-import { normalizeKitTheme } from '../kit-builder/themes';
+import { normalizeKitTheme, normalizeTestimonials } from '../kit-builder/themes';
 import { normalizeKitLayout } from '../kit-builder/templates';
 
 export function formatKitNumber(n) {
@@ -58,6 +58,9 @@ export function normalizePublicKit(raw) {
   const ratesPhoto = Number(raw.rates_photo) || rateFromList(raw.rates, 'photo');
   const gifted = raw.rates_gifted === true || raw.accepts_gifted === true;
   const theme = normalizeKitTheme(raw.kit_theme || raw.theme);
+  if (!theme.testimonials.length) {
+    theme.testimonials = normalizeTestimonials(raw.testimonials);
+  }
 
   return {
     username: raw.username,

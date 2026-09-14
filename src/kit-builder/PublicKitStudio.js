@@ -58,6 +58,7 @@ export default function PublicKitStudio() {
     examples: draft0.example_posts || draft0.examples || saved.example_posts || saved.examples,
     example_posts: draft0.example_posts || saved.example_posts,
     brand_logos: draft0.brand_logos || saved.brand_logos,
+    testimonials: draft0.testimonials || saved.testimonials,
     services: draft0.services || saved.services,
   };
   const draftRef = useRef(initial);
@@ -123,6 +124,7 @@ export default function PublicKitStudio() {
       coverUrl: draft.cover_url,
       examples: draft.example_posts || draft.examples,
       brandLogos: draft.brand_logos,
+      testimonials: draft.testimonials,
       formatIds: draft.formatIds,
     });
     const blocked = studioPublishError({ ...draft, socialProfiles: draft.socialProfiles || draft.social_profiles });
@@ -173,8 +175,8 @@ export default function PublicKitStudio() {
     }
   };
 
-  const copyUrl = async () => {
-    if (!live?.url) return;
+    const copyUrl = async () => {
+    if (!live || !live.url) return;
     try {
       await navigator.clipboard.writeText(live.url);
       setCopied(true);
@@ -222,20 +224,20 @@ export default function PublicKitStudio() {
                   Paste this link in your Instagram bio and TikTok profile description. When a brand taps it, we record the view on this portfolio.
                 </p>
                 <LiveActions>
-                  <Publish type="button" as="button" onClick={copyUrl}>{copied ? 'Copied' : 'Copy portfolio link'}</Publish>
-                  <Ghost href={live.url} target="_blank" rel="noopener noreferrer">View portfolio</Ghost>
-                  <Ghost as="button" type="button" onClick={publish} disabled={publishing}>
+                  <PublishBtn type="button" onClick={copyUrl}>{copied ? 'Copied' : 'Copy portfolio link'}</PublishBtn>
+                  <GhostLink href={live.url} target="_blank" rel="noopener noreferrer">View portfolio</GhostLink>
+                  <GhostBtn type="button" onClick={publish} disabled={publishing}>
                     {publishing ? 'Updating…' : 'Update live portfolio'}
-                  </Ghost>
+                  </GhostBtn>
                 </LiveActions>
                 {error ? <Err>{error}</Err> : null}
               </LiveCard>
             ) : (
               <>
                 {error ? <Err>{error}</Err> : null}
-                <Publish type="button" as="button" onClick={publish} disabled={publishing}>
+                <PublishBtn type="button" onClick={publish} disabled={publishing}>
                   {publishing ? 'Publishing…' : 'Publish this UGC portfolio free'}
-                </Publish>
+                </PublishBtn>
                 <Sub>
                   No account needed. {loggedIn ? <a href="/creator/dashboard/my-kit">Open My Kit to edit your signed-in portfolio</a> : 'Keep the link in your bio so brands can find you.'}
                 </Sub>
@@ -246,11 +248,11 @@ export default function PublicKitStudio() {
       />
       <PortfolioLiveModal
         open={!!shareModal}
-        slug={shareModal?.slug || live?.slug}
-        updated={!!shareModal?.updated}
+        slug={shareModal && shareModal.slug ? shareModal.slug : (live && live.slug)}
+        updated={!!(shareModal && shareModal.updated)}
         onClose={() => setShareModal(null)}
         onView={() => {
-          const href = live?.url || (shareModal?.slug ? publicKitUrl(shareModal.slug) : '');
+          const href = (live && live.url) || (shareModal && shareModal.slug ? publicKitUrl(shareModal.slug) : '');
           setShareModal(null);
           if (href) window.open(href, '_blank', 'noopener,noreferrer');
         }}
@@ -277,19 +279,25 @@ const Hero = styled.div`
 const Eyebrow = styled.div`
   font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #4f46e5;
 `;
-const Publish = styled.a`
+const PublishBtn = styled.button`
   display: block; margin-top: 24px; text-align: center; background: #0f172a; color: #fff;
   text-decoration: none; border-radius: 12px; padding: 14px 16px; font-weight: 700;
   min-height: 48px; box-sizing: border-box; border: 0; width: 100%; cursor: pointer;
   font-family: inherit; font-size: 15px;
   &:disabled { opacity: .6; cursor: wait; }
 `;
-const Ghost = styled.a`
+const GhostBtn = styled.button`
   display: block; margin-top: 10px; text-align: center;
   border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px;
   color: #0f172a; text-decoration: none; font-weight: 700; min-height: 44px; box-sizing: border-box;
   width: 100%; background: #fff; cursor: pointer; font-family: inherit; font-size: 15px;
   &:disabled { opacity: .6; cursor: wait; }
+`;
+const GhostLink = styled.a`
+  display: block; margin-top: 10px; text-align: center;
+  border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px;
+  color: #0f172a; text-decoration: none; font-weight: 700; min-height: 44px; box-sizing: border-box;
+  width: 100%; background: #fff; cursor: pointer; font-family: inherit; font-size: 15px;
 `;
 const Sub = styled.p`
   font-size: 13px; color: #64748b; text-align: center; margin: 12px 0 0;

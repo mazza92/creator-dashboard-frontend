@@ -6,8 +6,8 @@ import PublicKitView from '../components/PublicKitView';
 import { KIT_LAYOUTS, normalizeKitLayout } from './templates';
 import { RATE_OFFERS, formatRate, ratesFromDraft, suggestRates } from './pricingOffers';
 import {
-  ACCENTS, BRAND_LOGO_SLOTS, COVER_SAMPLES, EXAMPLE_SLOTS, FONT_PAIRS, LOOKS,
-  normalizeBrandLogos, normalizeExamplePosts, normalizeKitTheme, useKitFonts,
+  ACCENTS, BRAND_LOGO_SLOTS, COVER_SAMPLES, EXAMPLE_SLOTS, FONT_PAIRS, LOOKS, TESTIMONIAL_SLOTS,
+  normalizeBrandLogos, normalizeExamplePosts, normalizeKitTheme, normalizeTestimonials, useKitFonts,
 } from './themes';
 import { CONTENT_FORMATS, DEFAULT_FORMAT_IDS, formatIdsFromServices, servicesFromFormatIds } from './contentFormats';
 import { NICHE_OPTIONS } from '../constants/brandCategories';
@@ -39,9 +39,9 @@ export function socialProfileUrl(platform, handle) {
 
 export function seedSocialProfiles(list, fallback = {}) {
   const rows = (Array.isArray(list) ? list : []).map((item) => ({
-    platform: SOCIAL_PLATFORMS.some((p) => p.id === item?.platform) ? item.platform : 'instagram',
-    handle: item?.handle || '',
-    followers: item?.followers != null ? String(item.followers) : '',
+    platform: SOCIAL_PLATFORMS.some((p) => p.id === (item && item.platform)) ? item.platform : 'instagram',
+    handle: (item && item.handle) || '',
+    followers: item && item.followers != null ? String(item.followers) : '',
   }));
   while (rows.length > 1 && !cleanSocialHandle(rows[rows.length - 1].handle) && !rows[rows.length - 1].followers) {
     rows.pop();
@@ -101,9 +101,9 @@ export function seedExamplePosts(list) {
   const next = (list || []).map((item) => {
     if (typeof item === 'string') return { url: item, title: '', description: '' };
     return {
-      url: item?.url || '',
-      title: item?.title || '',
-      description: item?.description || item?.body || '',
+      url: (item && item.url) || '',
+      title: (item && item.title) || '',
+      description: (item && item.description) || (item && item.body) || '',
     };
   });
   while (next.length > 1 && !next[next.length - 1].url && !next[next.length - 1].title && !next[next.length - 1].description) {
@@ -124,16 +124,35 @@ export function studioPersonName(name, fallback = '') {
 
 export function seedLogos(list) {
   const next = (list || []).map((row) => ({
-    name: row?.name || '',
-    logo_url: row?.logo_url || '',
+    name: row && row.name ? row.name : '',
+    logo_url: row && row.logo_url ? row.logo_url : '',
   }));
   while (next.length > 1 && !next[next.length - 1].name && !next[next.length - 1].logo_url) next.pop();
   return next.length ? next.slice(0, BRAND_LOGO_SLOTS) : [{ name: '', logo_url: '' }];
 }
 
+export function seedTestimonials(list) {
+  const next = (Array.isArray(list) ? list : []).map((row) => ({
+    quote: row && row.quote ? row.quote : (row && row.text ? row.text : ''),
+    name: row && row.name ? row.name : '',
+    role: row && row.role ? row.role : (row && row.brand ? row.brand : ''),
+  }));
+  while (
+    next.length > 1
+    && !String(next[next.length - 1].quote || '').trim()
+    && !String(next[next.length - 1].name || '').trim()
+    && !String(next[next.length - 1].role || '').trim()
+  ) {
+    next.pop();
+  }
+  return next.length
+    ? next.slice(0, TESTIMONIAL_SLOTS)
+    : [{ quote: '', name: '', role: '' }];
+}
+
 export function buildStudioKit({
   layout, name, handle, socialPlatform, socialProfiles, niche, followers, email, headline, about, location,
-  offerId, customRates, look, font, accent, coverUrl, examples, brandLogos, formatIds, extras = {},
+  offerId, customRates, look, font, accent, coverUrl, examples, brandLogos, testimonials, formatIds, extras = {},
 }) {
   const profiles = seedSocialProfiles(socialProfiles, { handle, socialPlatform, followers });
   const primary = primarySocial(profiles);
@@ -142,14 +161,16 @@ export function buildStudioKit({
   const profileFollowers = profiles
     .map((row) => Number(String(row.followers || '').replace(/[^\d]/g, '')) || 0)
     .filter(Boolean);
-  const followerCount = extras.followerCount
-    ?? (profileFollowers.length ? Math.max(...profileFollowers) : (Number(String(followers).replace(/[^\d]/g, '')) || 0));
+  // Avoid `?.` + `??` together — Next 16.1.3 SWC emits undeclared `_ref` in prod.
+  const followerCount = extras.followerCount != null
+    ? extras.followerCount
+    : (profileFollowers.length ? Math.max(...profileFollowers) : (Number(String(followers || '').replace(/[^\d]/g, '')) || 0));
   const rates = ratesFromDraft({ offerId, customRates }, followerCount);
   const slug = String(socialHandle || name || extras.username || 'you')
     .replace(/^@/, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '') || 'you';
-  const services = servicesFromFormatIds(formatIds?.length ? formatIds : DEFAULT_FORMAT_IDS);
+  const services = servicesFromFormatIds((formatIds && formatIds.length) ? formatIds : DEFAULT_FORMAT_IDS);
   const themeProfiles = profiles
     .filter((row) => cleanSocialHandle(row.handle))
     .map((row) => ({
@@ -167,10 +188,12 @@ export function buildStudioKit({
     examples,
     example_posts: examples,
     brand_logos: normalizeBrandLogos(brandLogos),
+    testimonials: normalizeTestimonials(testimonials),
     services,
   });
   const socials = {};
   themeProfiles.forEach((row) => { if (row.url) socials[row.platform] = row.url; });
+  const extraRates = extras.rates || {};
   return {
     username: extras.username || slug,
     first_name: displayName || 'Your name',
@@ -178,7 +201,7 @@ export function buildStudioKit({
     tagline: headline,
     bio: about,
     niches: extras.niches || [niche],
-    follower_count: extras.followerCount ?? followerCount,
+    follower_count: extras.followerCount != null ? extras.followerCount : followerCount,
     email: theme.email,
     social_handle: socialHandle,
     social_platform: platform,
@@ -191,10 +214,10 @@ export function buildStudioKit({
     video_count: extras.videoCount || 0,
     avg_views: extras.avgViews || 0,
     engagement_rate: extras.engagementRate != null ? extras.engagementRate : 4.2,
-    rates_reel: extras.rates?.reel ?? rates.reel,
-    rates_tiktok: extras.rates?.tiktok ?? rates.tiktok,
-    rates_photo: extras.rates?.photo ?? rates.photo,
-    rates_gifted: extras.rates?.gifted ?? rates.gifted,
+    rates_reel: extraRates.reel != null ? extraRates.reel : rates.reel,
+    rates_tiktok: extraRates.tiktok != null ? extraRates.tiktok : rates.tiktok,
+    rates_photo: extraRates.photo != null ? extraRates.photo : rates.photo,
+    rates_gifted: extraRates.gifted != null ? extraRates.gifted : rates.gifted,
     kit_layout: layout,
     kit_theme: theme,
     avatar_url: extras.avatarUrl || '',
@@ -244,13 +267,14 @@ export default function KitStudioEditor({
       : initial.examples
   ));
   const [brandLogos, setBrandLogos] = useState(seedLogos(initial.brand_logos));
+  const [testimonials, setTestimonials] = useState(seedTestimonials(initial.testimonials));
   const [uploadingAt, setUploadingAt] = useState(-1);
 
   useKitFonts(font);
 
   const kit = buildStudioKit({
     layout, name, socialProfiles, niche, email, headline, about, location,
-    offerId, customRates, look, font, accent, coverUrl, examples, brandLogos, formatIds, extras,
+    offerId, customRates, look, font, accent, coverUrl, examples, brandLogos, testimonials, formatIds, extras,
   });
   const followerCount = kit.follower_count || 0;
   const suggested = suggestRates(followerCount);
@@ -268,6 +292,7 @@ export default function KitStudioEditor({
     examples,
     example_posts: examples,
     brand_logos: brandLogos,
+    testimonials,
     services: servicesFromFormatIds(formatIds),
     formatIds,
   };
@@ -275,7 +300,7 @@ export default function KitStudioEditor({
   const persist = (patch) => {
     const next = { ...draftRef.current, ...patch, touched: true };
     draftRef.current = next;
-    persistDraft?.(next);
+    persistDraft && persistDraft(next);
   };
 
   const setExampleAt = (index, patch) => {
@@ -330,11 +355,11 @@ export default function KitStudioEditor({
     persist({ examples: next, example_posts: next });
   };
 
-  const tiktokVideos = Array.isArray(extras?.tiktokVideos) ? extras.tiktokVideos.filter((row) => row?.url) : [];
-  const officialFollowers = String(extras?.officialFollowers || '').replace(/[^\d]/g, '');
-  const officialHandle = cleanSocialHandle(extras?.officialHandle);
-  const officialPlatform = String(extras?.officialPlatform || '').toLowerCase();
-  const officialLikes = Number(extras?.likesCount || 0) || 0;
+  const tiktokVideos = Array.isArray(extras.tiktokVideos) ? extras.tiktokVideos.filter((row) => row && row.url) : [];
+  const officialFollowers = String(extras.officialFollowers || '').replace(/[^\d]/g, '');
+  const officialHandle = cleanSocialHandle(extras.officialHandle);
+  const officialPlatform = String(extras.officialPlatform || '').toLowerCase();
+  const officialLikes = Number(extras.likesCount || 0) || 0;
 
   useEffect(() => {
     if (studioPersonName(name) || !extras.displayName) return;
@@ -420,6 +445,27 @@ export default function KitStudioEditor({
     const next = [...brandLogos, { name: '', logo_url: '' }];
     setBrandLogos(next);
     persist({ brand_logos: next });
+  };
+
+  const setTestimonialAt = (index, patch) => {
+    const next = testimonials.map((row, i) => (i === index ? { ...row, ...patch } : row));
+    setTestimonials(next);
+    persist({ testimonials: next });
+  };
+
+  const addTestimonial = () => {
+    if (testimonials.length >= TESTIMONIAL_SLOTS) return;
+    const next = [...testimonials, { quote: '', name: '', role: '' }];
+    setTestimonials(next);
+    persist({ testimonials: next });
+  };
+
+  const removeTestimonial = (index) => {
+    const next = testimonials.length <= 1
+      ? [{ quote: '', name: '', role: '' }]
+      : testimonials.filter((_, i) => i !== index);
+    setTestimonials(next);
+    persist({ testimonials: next });
   };
 
   const handleLogoUpload = async (index, file) => {
@@ -627,7 +673,7 @@ export default function KitStudioEditor({
                         type="file"
                         accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
                         onChange={(e) => {
-                          const file = e.target.files?.[0];
+                          const file = e.target.files && e.target.files[0];
                           e.target.value = '';
                           handleLogoUpload(i, file);
                         }}
@@ -640,6 +686,48 @@ export default function KitStudioEditor({
           ))}
           {brandLogos.length < BRAND_LOGO_SLOTS && (
             <AddMore type="button" onClick={addLogo}>Add more</AddMore>
+          )}
+
+          <Label>Testimonials</Label>
+          <Hint>Quotes from brands you’ve worked with — feedback, DMs, or a short review. Shows on your public portfolio.</Hint>
+          {testimonials.map((row, i) => (
+            <PostCard key={`quote-${i}`}>
+              <Field>
+                <span>Quote {i + 1}</span>
+                <textarea
+                  rows={3}
+                  value={row.quote}
+                  onChange={(e) => setTestimonialAt(i, { quote: e.target.value })}
+                  placeholder="“Easy to brief and delivered on time — content our team could post as-is.”"
+                />
+              </Field>
+              <Row>
+                <Field>
+                  <span>From (name)</span>
+                  <input
+                    value={row.name}
+                    onChange={(e) => setTestimonialAt(i, { name: e.target.value })}
+                    placeholder="Alex"
+                  />
+                </Field>
+                <Field>
+                  <span>Brand / role</span>
+                  <input
+                    value={row.role}
+                    onChange={(e) => setTestimonialAt(i, { role: e.target.value })}
+                    placeholder="Weleda · Creator lead"
+                  />
+                </Field>
+              </Row>
+              {testimonials.length > 1 ? (
+                <AddMore type="button" onClick={() => removeTestimonial(i)} style={{ color: '#b45309' }}>
+                  Remove quote
+                </AddMore>
+              ) : null}
+            </PostCard>
+          ))}
+          {testimonials.length < TESTIMONIAL_SLOTS && (
+            <AddMore type="button" onClick={addTestimonial}>Add another quote</AddMore>
           )}
 
           <Label>Your details</Label>
@@ -667,7 +755,7 @@ export default function KitStudioEditor({
               <input value={location} onChange={(e) => { setLocation(e.target.value); persist({ location: e.target.value }); }} placeholder="Paris" />
             </Field>
           </Row>
-          <Field as="div">
+          <FieldBlock>
             <span>Social handles *</span>
             <Hint style={{ margin: '0 0 8px' }}>Add every platform you want brands to check. Followers can differ by channel.</Hint>
             {socialProfiles.map((row, i) => {
@@ -694,7 +782,7 @@ export default function KitStudioEditor({
                     })}
                   </PlatformPick>
                   <SocialFields>
-                    <input
+                    <SocialInput
                       value={row.handle}
                       onChange={(e) => setSocialAt(i, { handle: e.target.value })}
                       placeholder="@gigi"
@@ -702,7 +790,7 @@ export default function KitStudioEditor({
                       autoCorrect="off"
                     />
                     <SocialFollowRow $withRemove={socialProfiles.length > 1}>
-                      <input
+                      <SocialInput
                         value={row.followers}
                         onChange={(e) => setSocialAt(i, { followers: e.target.value })}
                         placeholder="Followers on this platform"
@@ -725,7 +813,7 @@ export default function KitStudioEditor({
             {socialProfiles.length < SOCIAL_PLATFORMS.length ? (
               <AddMore type="button" onClick={addSocial}>Add another platform</AddMore>
             ) : null}
-          </Field>
+          </FieldBlock>
           <Field>
             <span>Headline</span>
             <input value={headline} onChange={(e) => { setHeadline(e.target.value); persist({ headline: e.target.value }); }} />
@@ -1085,6 +1173,10 @@ const Field = styled.label`
   }
   input, select { min-height: 44px; padding-top: 0; padding-bottom: 0; }
 `;
+const FieldBlock = styled.div`
+  display: grid; gap: 6px; margin-top: 10px; font-size: 12px; color: #64748b; font-weight: 600;
+  min-width: 0;
+`;
 const Count = styled.span`
   font-size: 11px;
   font-weight: 600;
@@ -1110,6 +1202,17 @@ const PlatformBtn = styled.button`
 `;
 const SocialFields = styled.div`
   display: grid; gap: 8px; min-width: 0;
+`;
+const SocialInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 12px;
+  font: 16px/1.4 ${STUDIO_FONT};
+  color: #0f172a;
+  background: #fff;
 `;
 const SocialFollowRow = styled.div`
   display: grid;

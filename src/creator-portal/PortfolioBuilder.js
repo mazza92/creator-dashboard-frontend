@@ -101,6 +101,7 @@ function draftToSettingsPatch(draft, currentUser) {
         ? draft.example_posts
         : draft.examples,
       brand_logos: draft.brand_logos,
+      testimonials: draft.testimonials,
       services: draft.services,
     }),
   };
@@ -138,7 +139,7 @@ const PortfolioBuilder = ({ currentUser }) => {
       const crm = crmRes?.data || {};
       setKitViews({
         ...portfolio,
-        views_this_week: crm.views_this_week ?? portfolio.views_this_week ?? 0,
+        views_this_week: crm.views_this_week != null ? crm.views_this_week : (portfolio.views_this_week || 0),
         brands_this_week: crm.brands_this_week || 0,
         teaser_brand_name: crm.teaser_brand_name || null,
         views: crm.views || [],
@@ -329,6 +330,7 @@ const PortfolioBuilder = ({ currentUser }) => {
       ? kitTheme.example_posts
       : kitTheme.examples,
     brand_logos: kitTheme.brand_logos,
+    testimonials: kitTheme.testimonials,
     services: kitTheme.services,
   }), [kitSettings, kitTheme, currentUser, niche, followers]);
 
