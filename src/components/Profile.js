@@ -36,14 +36,8 @@ function Profile() {
 
     async function fetchUserData() {
         try {
-            const response = await fetch("http://localhost:5000/profile", {
-                method: "GET",
-                credentials: "include",  // ✅ Ensures session cookies are sent
-            });
-    
-            if (!response.ok) throw new Error("Failed to fetch profile data");
-            const data = await response.json();
-            setUserData(data);
+            const response = await apiClient.get('/profile');
+            setUserData(response.data);
         } catch (error) {
             console.error("Error fetching profile data:", error);
         }
@@ -147,11 +141,10 @@ function Profile() {
             } else if (editingField === 'image_profile' && fileList.length > 0) {
                 formData.append('image', fileList[0].originFileObj);
             }
-            fetch("http://localhost:5000/profile/update", {
-                method: "PUT",
-                body: formData,
+            apiClient.put('/profile/update', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             })
-                .then(response => response.json())
+                .then(response => response.data)
                 .then(data => {
                     if (data.error) {
                         console.error("Error updating profile:", data.error);
@@ -178,14 +171,9 @@ function Profile() {
         setStripeLoading(true);
         try {
             // Don't try to detect country from browser - let user select during Stripe onboarding
-            const res = await fetch('http://localhost:5000/connect-stripe-account', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: userData.email })
-            });
-            const data = await res.json();
-            if (res.ok && data.url) {
+            const res = await apiClient.post('/connect-stripe-account', { email: userData.email });
+            const data = res.data;
+            if (res.status === 200 && data.url) {
                 window.location.href = data.url;
             } else if (data.message) {
                 message.success(data.message);
