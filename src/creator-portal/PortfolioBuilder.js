@@ -6,7 +6,7 @@ import { apiClient, getRuntimeApiUrl } from '../config/api';
 import UpgradeModal from './UpgradeModal';
 import KitStudioEditor, { STUDIO_FONT, cleanSocialHandle, primarySocial, seedSocialProfiles, studioPublishError } from '../kit-builder/KitStudioEditor';
 import { matchOfferId, ratesFromDraft } from '../kit-builder/pricingOffers';
-import { COVER_SAMPLES, normalizeExamples, normalizeKitTheme } from '../kit-builder/themes';
+import { COVER_SAMPLES, normalizeExamples, normalizeKitTheme, resolveCoverUrl } from '../kit-builder/themes';
 import KitLoading from '../kit-builder/KitLoading';
 import { normalizeKitLayout } from '../kit-builder/templates';
 import { clearKitDraft, readKitDraft } from '../kit-builder/draft';
@@ -322,7 +322,7 @@ const PortfolioBuilder = ({ currentUser }) => {
     look: kitTheme.look,
     font: kitTheme.font,
     accent: kitTheme.accent,
-    cover_url: kitTheme.cover_url || COVER_SAMPLES[0].url,
+    cover_url: resolveCoverUrl(kitTheme.cover_url || COVER_SAMPLES[0].url),
     examples: (Array.isArray(kitTheme.example_posts) && kitTheme.example_posts.length)
       ? kitTheme.example_posts
       : kitTheme.examples,
@@ -390,6 +390,7 @@ const PortfolioBuilder = ({ currentUser }) => {
         extras={extras}
         persist={persist}
         onUploadLogo={handleUploadLogo}
+        onSave={flushSave}
         busy={publishing}
         busyLabel={kitSettings.kit_published ? 'Updating portfolio' : 'Publishing portfolio'}
         formTop={(

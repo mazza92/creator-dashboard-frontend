@@ -120,15 +120,92 @@ export const ACCENTS = ['#C45C3A', '#B85C62', '#5C6B4A', '#1F3A5F', '#111111', '
 
 // Unsplash License (https://unsplash.com/license) — free to use.
 // Objective aesthetic backgrounds only: textures, nature, abstracts. No portraits.
+// Pattern covers use short tokens (not data URIs) so they survive the 500-char cover_url cap.
+export const COVER_GRAIN = 'nc-cover:grain';
+export const COVER_GRID = 'nc-cover:grid';
+export const COVER_LINEN = 'nc-cover:linen';
+
+export function isPatternCover(url) {
+  return String(url || '').startsWith('nc-cover:');
+}
+
+const RETIRED_COVERS = [
+  { match: 'photo-1441974231531', next: COVER_GRAIN }, // Canopy
+  { match: 'photo-1470071459604', next: COVER_GRID }, // Dusk
+  { match: 'photo-1507525428034', next: COVER_LINEN }, // Sand
+];
+
+export function resolveCoverUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return COVER_GRAIN;
+  if (isPatternCover(raw)) return raw;
+  const retired = RETIRED_COVERS.find((item) => raw.includes(item.match));
+  if (retired) return retired.next;
+  if (raw.startsWith('data:image/svg')) {
+    return raw.includes('1c1916') || raw.includes('#161310') ? COVER_GRID : COVER_GRAIN;
+  }
+  return raw.slice(0, 500);
+}
+
+export function coverStyle(url) {
+  const resolved = resolveCoverUrl(url);
+  if (resolved === COVER_GRAIN) {
+    return {
+      backgroundColor: '#e7d7c4',
+      backgroundImage: [
+        'radial-gradient(1150px 640px at 12% -18%, rgba(255,252,247,.7), transparent 56%)',
+        'radial-gradient(900px 520px at 108% 120%, rgba(186,132,84,.22), transparent 52%)',
+        'radial-gradient(circle at 1px 1px, rgba(92,62,38,.16) .7px, transparent 1px)',
+      ].join(', '),
+      backgroundSize: 'auto, auto, 3px 3px',
+      backgroundPosition: 'center, center, 0 0',
+      backgroundRepeat: 'no-repeat, no-repeat, repeat',
+    };
+  }
+  if (resolved === COVER_LINEN) {
+    return {
+      backgroundColor: '#efe6d8',
+      backgroundImage: [
+        'linear-gradient(90deg, rgba(140,110,80,.07) 1px, transparent 1px)',
+        'linear-gradient(180deg, rgba(140,110,80,.05) 1px, transparent 1px)',
+        'radial-gradient(900px 500px at 0% 100%, rgba(196,150,110,.18), transparent 55%)',
+      ].join(', '),
+      backgroundSize: '8px 8px, 8px 8px, auto',
+      backgroundPosition: '0 0, 0 0, center',
+      backgroundRepeat: 'repeat, repeat, no-repeat',
+    };
+  }
+  if (resolved === COVER_GRID) {
+    return {
+      backgroundColor: '#161310',
+      backgroundImage: [
+        'radial-gradient(920px 540px at 82% -8%, rgba(255,255,255,.08), transparent 56%)',
+        'radial-gradient(circle at 1px 1px, rgba(255,255,255,.2) 1.15px, transparent 0)',
+      ].join(', '),
+      backgroundSize: 'auto, 22px 22px',
+      backgroundPosition: 'center, 0 0',
+      backgroundRepeat: 'no-repeat, repeat',
+    };
+  }
+  const safe = String(resolved || '').replace(/["')]/g, '');
+  return {
+    backgroundColor: '#1a1612',
+    backgroundImage: safe && !isPatternCover(safe) ? `url("${safe}")` : 'none',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  };
+}
+
 export const COVER_SAMPLES = [
   { id: 'plaster', label: 'Plaster', url: 'https://images.unsplash.com/photo-1604147706283-d7119b5b822c?auto=format&fit=crop&w=2000&q=80' },
   { id: 'wave', label: 'Silk', url: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?auto=format&fit=crop&w=2000&q=80' },
   { id: 'mesh', label: 'Mesh', url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=2000&q=80' },
   { id: 'bloom', label: 'Bloom', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=2000&q=80' },
   { id: 'botanical', label: 'Leaves', url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=2000&q=80' },
-  { id: 'sand', label: 'Sand', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=80' },
-  { id: 'canopy', label: 'Canopy', url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2000&q=80' },
-  { id: 'dusk', label: 'Dusk', url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=2000&q=80' },
+  { id: 'linen', label: 'Linen', url: COVER_LINEN },
+  { id: 'grain', label: 'Grain', url: COVER_GRAIN },
+  { id: 'grid', label: 'Grid', url: COVER_GRID },
 ];
 
 export const EXAMPLE_SLOTS = 24;
@@ -175,7 +252,7 @@ export const DEFAULT_THEME = {
   look: 'ivory',
   font: 'playfair',
   accent: '',
-  cover_url: COVER_SAMPLES[0].url,
+  cover_url: COVER_GRAIN,
   display_name: '',
   headline: '',
   about: '',
@@ -378,7 +455,7 @@ export function normalizeKitTheme(raw) {
   const look = LOOKS.some((item) => item.id === src.look) ? src.look : DEFAULT_THEME.look;
   const font = FONT_PAIRS.some((item) => item.id === src.font) ? src.font : DEFAULT_THEME.font;
   const accent = /^#[0-9A-Fa-f]{6}$/.test(String(src.accent || '')) ? src.accent : '';
-  const cover = String(src.cover_url || '').trim().slice(0, 500);
+  const cover = resolveCoverUrl(src.cover_url);
   const services = Array.isArray(src.services)
     ? src.services.slice(0, 12).map((row) => ({
       id: String((row && row.id) || '').slice(0, 32),

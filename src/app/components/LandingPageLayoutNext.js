@@ -10,6 +10,7 @@ import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 import CookieSettings from '../../components/CookieSettings';
 import FreePortfolioBanner from '../../components/FreePortfolioBanner';
+import AuthNavButtons from '../../components/AuthNavButtons';
 import { shouldShowFreePortfolioBanner } from '../../lib/freePortfolioBanner';
 import { tokens } from '../../theme/tokens';
 
@@ -643,12 +644,9 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
               <NavLink href="/about" prefetch={false} $isSignupPage={isTransparentHeader}>About</NavLink>
             </NavLinks>
             <AuthButtons>
-              <LoginButton href="/login" prefetch={false} $isSignupPage={isTransparentHeader}>Log in</LoginButton>
-              <SignupButton href="/register/creator" prefetch={false}>Sign up</SignupButton>
+              <AuthNavButtons isSignupPage={isTransparentHeader} />
             </AuthButtons>
-            <MobileCTAButton href="/register/creator" prefetch={false}>
-              Sign up free
-            </MobileCTAButton>
+            <AuthNavButtons variant="mobile-cta" />
             <MobileMenuButton
               type="text"
               icon={mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
@@ -709,12 +707,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
           </MobileNavLink>
         </MobileNavLinks>
         <MobileAuthButtons>
-          <LoginButton href="/login" prefetch={false} onClick={closeMobileMenu}>
-            Log in
-          </LoginButton>
-          <SignupButton href="/register/creator" prefetch={false} onClick={closeMobileMenu}>
-            Sign up
-          </SignupButton>
+          <AuthNavButtons variant="mobile-menu" onNavigate={closeMobileMenu} />
         </MobileAuthButtons>
       </MobileMenu>
       {!hideFooter && (

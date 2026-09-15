@@ -11,6 +11,7 @@ import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 import CookieSettings from '../components/CookieSettings';
 import FreePortfolioBanner from '../components/FreePortfolioBanner';
+import AuthNavButtons from '../components/AuthNavButtons';
 import { shouldShowFreePortfolioBanner } from '../lib/freePortfolioBanner';
 import { tokens } from '../theme/tokens';
 
@@ -651,12 +652,9 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
               <NavLink to="/about" $isSignupPage={isTransparentHeader}>About</NavLink>
             </NavLinks>
             <AuthButtons>
-              <LoginButton to="/login" $isSignupPage={isTransparentHeader}>Log in</LoginButton>
-              <SignupButton to="/register">Sign up</SignupButton>
+              <AuthNavButtons isSignupPage={isTransparentHeader} />
             </AuthButtons>
-            <MobileCTAButton to="/register/creator">
-              Sign up free
-            </MobileCTAButton>
+            <AuthNavButtons variant="mobile-cta" />
             <MobileMenuButton
               type="text"
               icon={mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
@@ -714,12 +712,7 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
           </MobileNavLink>
         </MobileNavLinks>
         <MobileAuthButtons>
-          <LoginButton to="/login" onClick={closeMobileMenu}>
-            Log in
-          </LoginButton>
-          <SignupButton to="/register" onClick={closeMobileMenu}>
-            Sign up
-          </SignupButton>
+          <AuthNavButtons variant="mobile-menu" onNavigate={closeMobileMenu} />
         </MobileAuthButtons>
       </MobileMenu>
       {!hideFooter && <Footer>

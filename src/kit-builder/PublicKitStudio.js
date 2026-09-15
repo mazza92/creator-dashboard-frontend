@@ -4,13 +4,18 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import KitStudioEditor, { STUDIO_FONT, buildStudioKit, cleanSocialHandle, primarySocial, seedSocialProfiles, studioPublishError } from './KitStudioEditor';
 import { RATE_OFFERS } from './pricingOffers';
-import { COVER_SAMPLES, normalizeKitTheme } from './themes';
+import { COVER_GRAIN, normalizeKitTheme, resolveCoverUrl } from './themes';
 import { normalizeKitLayout } from './templates';
 import { readKitDraft, writeKitDraft } from './draft';
 import { getRuntimeApiUrl } from '../config/api';
 import PortfolioLiveModal from './PortfolioLiveModal';
-
-const EDIT_TOKEN_KEY = 'newcollab_free_portfolio_token';
+import useDashboardSession from '../hooks/useDashboardSession';
+import {
+  GUEST_KIT_TOKEN_KEY,
+  dashboardHomeHref,
+  editProfileHref,
+  rememberPublishedKitSlug,
+} from '../lib/dashboardLinks';
 
 function publicKitUrl(slug) {
   if (typeof window === 'undefined') return `https://newcollab.co/kit/${slug}`;
@@ -22,7 +27,8 @@ function publicKitUrl(slug) {
 export default function PublicKitStudio() {
   const saved = useMemo(() => normalizeKitTheme(readKitDraft() || {}), []);
   const draft0 = useMemo(() => readKitDraft() || {}, []);
-  const loggedIn = typeof window !== 'undefined' && !!localStorage.getItem('token');
+  const session = useDashboardSession();
+  const loggedIn = session.status === 'in';
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState('');
   const [live, setLive] = useState(null);
@@ -54,7 +60,7 @@ export default function PublicKitStudio() {
     look: draft0.look || saved.look,
     font: draft0.font || saved.font,
     accent: draft0.accent || saved.accent || '',
-    cover_url: draft0.cover_url || saved.cover_url || COVER_SAMPLES[0].url,
+    cover_url: resolveCoverUrl(draft0.cover_url || saved.cover_url || COVER_GRAIN),
     examples: draft0.example_posts || draft0.examples || saved.example_posts || saved.examples,
     example_posts: draft0.example_posts || saved.example_posts,
     brand_logos: draft0.brand_logos || saved.brand_logos,
@@ -62,6 +68,10 @@ export default function PublicKitStudio() {
     services: draft0.services || saved.services,
   };
   const draftRef = useRef(initial);
+
+  useEffect(() => {
+    writeKitDraft(draftRef.current);
+  }, []);
 
   useEffect(() => {
     if (!loggedIn) return undefined;
@@ -136,7 +146,7 @@ export default function PublicKitStudio() {
     setPublishing(true);
     setError('');
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem(EDIT_TOKEN_KEY) : '';
+      const token = typeof window !== 'undefined' ? localStorage.getItem(GUEST_KIT_TOKEN_KEY) : '';
       const base = getRuntimeApiUrl() || '';
       const res = await fetch(`${base}/api/portfolio/free`, {
         method: 'POST',
@@ -164,7 +174,8 @@ export default function PublicKitStudio() {
         }
         throw new Error(data.error || 'Could not publish');
       }
-      if (data.edit_token) localStorage.setItem(EDIT_TOKEN_KEY, data.edit_token);
+      if (data.edit_token) localStorage.setItem(GUEST_KIT_TOKEN_KEY, data.edit_token);
+      if (data.slug) rememberPublishedKitSlug(data.slug);
       const alreadyLive = !!live;
       setLive({ slug: data.slug, url: publicKitUrl(data.slug), edit_token: data.edit_token });
       setShareModal({ updated: alreadyLive, slug: data.slug });
@@ -195,6 +206,12 @@ export default function PublicKitStudio() {
           Build a public UGC portfolio brands can open — rates, posts, and packages — without Canva and without an account.
           Your free portfolio lives at <strong>newcollab.co/kit/you</strong>. Paste that link in your Instagram bio and TikTok description so we can track when a brand opens it.
         </p>
+        {loggedIn ? (
+          <DashRow>
+            <a href={dashboardHomeHref(session.role || 'creator')}>← Back to dashboard</a>
+            <a href={editProfileHref(session.role || 'creator')}>Edit profile</a>
+          </DashRow>
+        ) : null}
       </Hero>
       <KitStudioEditor
         initial={initial}
@@ -229,6 +246,12 @@ export default function PublicKitStudio() {
                   <GhostBtn type="button" onClick={publish} disabled={publishing}>
                     {publishing ? 'Updating…' : 'Update live portfolio'}
                   </GhostBtn>
+                  {loggedIn ? (
+                    <>
+                      <GhostLink href={editProfileHref(session.role || 'creator')}>Edit profile</GhostLink>
+                      <GhostLink href={dashboardHomeHref(session.role || 'creator')}>Back to dashboard</GhostLink>
+                    </>
+                  ) : null}
                 </LiveActions>
                 {error ? <Err>{error}</Err> : null}
               </LiveCard>
@@ -239,7 +262,16 @@ export default function PublicKitStudio() {
                   {publishing ? 'Publishing…' : 'Publish this UGC portfolio free'}
                 </PublishBtn>
                 <Sub>
-                  No account needed. {loggedIn ? <a href="/creator/dashboard/my-kit">Open My Kit to edit your signed-in portfolio</a> : 'Keep the link in your bio so brands can find you.'}
+                  No account needed.{' '}
+                  {loggedIn ? (
+                    <>
+                      <a href={editProfileHref(session.role || 'creator')}>Edit profile</a>
+                      {' · '}
+                      <a href={dashboardHomeHref(session.role || 'creator')}>Back to dashboard</a>
+                    </>
+                  ) : (
+                    'Keep the link in your bio so brands can find you.'
+                  )}
                 </Sub>
               </>
             )}
@@ -250,6 +282,7 @@ export default function PublicKitStudio() {
         open={!!shareModal}
         slug={shareModal && shareModal.slug ? shareModal.slug : (live && live.slug)}
         updated={!!(shareModal && shareModal.updated)}
+        loggedIn={loggedIn}
         onClose={() => setShareModal(null)}
         onView={() => {
           const href = (live && live.url) || (shareModal && shareModal.slug ? publicKitUrl(shareModal.slug) : '');
@@ -278,6 +311,18 @@ const Hero = styled.div`
 `;
 const Eyebrow = styled.div`
   font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #4f46e5;
+`;
+const DashRow = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  a {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    text-decoration: none;
+  }
+  a:hover { text-decoration: underline; }
 `;
 const PublishBtn = styled.button`
   display: block; margin-top: 24px; text-align: center; background: #0f172a; color: #fff;

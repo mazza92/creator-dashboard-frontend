@@ -5,7 +5,8 @@ import { FaTiktok } from 'react-icons/fa6';
 import { categoryEmoji, categoryLabel } from '../constants/brandCategories';
 import { kitBrandCta } from '../lib/kitBrandCta';
 import { formatKitNumber, normalizePublicKit } from '../lib/publicKit';
-import { COVER_SAMPLES, EXAMPLE_SLOTS, resolveThemeTokens, servicesForNiche, useKitFonts } from '../kit-builder/themes';
+import KitOwnerBar from './KitOwnerBar';
+import { EXAMPLE_SLOTS, coverStyle, resolveCoverUrl, resolveThemeTokens, servicesForNiche, useKitFonts } from '../kit-builder/themes';
 import { normalizeKitLayout } from '../kit-builder/templates';
 import KitPostEmbed, { parseSocialUrl } from '../kit-builder/KitPostEmbed';
 
@@ -156,7 +157,7 @@ function PublicKitView({
   const services = (kit.theme.services && kit.theme.services.length)
     ? kit.theme.services
     : servicesForNiche(niche);
-  const cover = kit.coverUrl || COVER_SAMPLES[0].url;
+  const cover = resolveCoverUrl(kit.coverUrl || kit.theme?.cover_url);
   const perPlatformFollowers = socials.filter((p) => p.followers);
 
   const posterByKey = {};
@@ -326,6 +327,7 @@ function PublicKitView({
   return (
     <ThemeProvider theme={tokens}>
       <Page data-kit-root $t={tokens} $preview={preview}>
+        {!preview ? <KitOwnerBar username={username || kit.username} /> : null}
         {layout !== 'gallery' && (
           <Cover $preview={preview} $src={cover}>
             <CoverShade />
@@ -442,10 +444,11 @@ const Cover = styled.header`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #1a1612;
-  background-image: ${p => (p.$src ? `url(${p.$src})` : 'none')};
-  background-size: cover;
-  background-position: center;
+  background-color: ${p => coverStyle(p.$src).backgroundColor};
+  background-image: ${p => coverStyle(p.$src).backgroundImage};
+  background-size: ${p => coverStyle(p.$src).backgroundSize};
+  background-position: ${p => coverStyle(p.$src).backgroundPosition};
+  background-repeat: ${p => coverStyle(p.$src).backgroundRepeat};
   width: 100%;
   flex-shrink: 0;
   ${p => p.$preview ? `

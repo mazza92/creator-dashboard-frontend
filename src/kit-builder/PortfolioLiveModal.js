@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
+import { dashboardHomeHref, editProfileHref } from '../lib/dashboardLinks';
 const STUDIO_FONT = "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif";
 
 export function portfolioShareUrl(slug) {
@@ -18,6 +19,7 @@ export default function PortfolioLiveModal({
   open,
   slug,
   updated = false,
+  loggedIn = false,
   onClose,
   onView,
 }) {
@@ -87,7 +89,14 @@ export default function PortfolioLiveModal({
           {onView ? (
             <Ghost type="button" onClick={onView}>View portfolio</Ghost>
           ) : null}
-          <Done type="button" onClick={onClose}>Done</Done>
+          {loggedIn ? (
+            <Ghost as="a" href={editProfileHref('creator')}>Edit profile</Ghost>
+          ) : null}
+          {loggedIn ? (
+            <Done as="a" href={dashboardHomeHref('creator')}>Dashboard</Done>
+          ) : (
+            <Done type="button" onClick={onClose}>Done</Done>
+          )}
         </Actions>
       </Card>
     </Scrim>,
@@ -184,7 +193,8 @@ const Actions = styled.div`
   display: flex;
   gap: 8px;
   margin-top: 16px;
-  button { flex: 1; }
+  flex-wrap: wrap;
+  button, a { flex: 1; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
 `;
 const Ghost = styled.button`
   min-height: 44px;

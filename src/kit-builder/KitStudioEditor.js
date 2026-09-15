@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styled, { keyframes } from 'styled-components';
 import PublicKitView from '../components/PublicKitView';
 import { KIT_LAYOUTS, normalizeKitLayout } from './templates';
 import { RATE_OFFERS, formatRate, ratesFromDraft, suggestRates } from './pricingOffers';
 import {
   ACCENTS, BRAND_LOGO_SLOTS, COVER_SAMPLES, EXAMPLE_SLOTS, FONT_PAIRS, LOOKS, TESTIMONIAL_SLOTS,
-  normalizeBrandLogos, normalizeExamplePosts, normalizeKitTheme, normalizeTestimonials, useKitFonts,
+  coverStyle, isPatternCover, normalizeBrandLogos, normalizeExamplePosts, normalizeKitTheme, normalizeTestimonials, resolveCoverUrl, useKitFonts,
 } from './themes';
 import { CONTENT_FORMATS, DEFAULT_FORMAT_IDS, formatIdsFromServices, servicesFromFormatIds } from './contentFormats';
 import { NICHE_OPTIONS } from '../constants/brandCategories';
@@ -220,6 +221,8 @@ export function buildStudioKit({
     rates_gifted: extraRates.gifted != null ? extraRates.gifted : rates.gifted,
     kit_layout: layout,
     kit_theme: theme,
+    cover_url: theme.cover_url,
+    coverUrl: theme.cover_url,
     avatar_url: extras.avatarUrl || '',
     posts: extras.posts || [],
   };
@@ -233,10 +236,14 @@ export default function KitStudioEditor({
   formTop,
   embedded = false,
   onUploadLogo,
+  onSave,
   busy = false,
   busyLabel = 'Publishing portfolio',
 }) {
   const [pane, setPane] = useState('edit');
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [dockReady, setDockReady] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [layout, setLayout] = useState(normalizeKitLayout(initial.layout));
   const [name, setName] = useState(initial.name || '');
@@ -260,7 +267,7 @@ export default function KitStudioEditor({
   const [look, setLook] = useState(initial.look || 'ivory');
   const [font, setFont] = useState(initial.font || 'playfair');
   const [accent, setAccent] = useState(initial.accent || '');
-  const [coverUrl, setCoverUrl] = useState(initial.cover_url || COVER_SAMPLES[0].url);
+  const [coverUrl, setCoverUrl] = useState(resolveCoverUrl(initial.cover_url || COVER_SAMPLES[0].url));
   const [examples, setExamples] = useState(seedExamplePosts(
     (Array.isArray(initial.example_posts) && initial.example_posts.length)
       ? initial.example_posts
@@ -271,6 +278,7 @@ export default function KitStudioEditor({
   const [uploadingAt, setUploadingAt] = useState(-1);
 
   useKitFonts(font);
+  useEffect(() => setDockReady(true), []);
 
   const kit = buildStudioKit({
     layout, name, socialProfiles, niche, email, headline, about, location,
@@ -301,6 +309,26 @@ export default function KitStudioEditor({
     const next = { ...draftRef.current, ...patch, touched: true };
     draftRef.current = next;
     persistDraft && persistDraft(next);
+  };
+
+  const handleSave = async () => {
+    if (!onSave || saving) return;
+    setSaving(true);
+    try {
+      await onSave();
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 1600);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const showPane = async (next) => {
+    if (next === 'preview' && onSave) {
+      try { await onSave(); } catch { /* still switch */ }
+    }
+    setPane(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const setExampleAt = (index, patch) => {
@@ -489,11 +517,6 @@ export default function KitStudioEditor({
           </BusyCard>
         </Busy>
       ) : null}
-      <MobileTabs $embedded={embedded}>
-        <Tab type="button" $on={pane === 'edit'} onClick={() => setPane('edit')}>Edit</Tab>
-        <Tab type="button" $on={pane === 'preview'} onClick={() => setPane('preview')}>Preview</Tab>
-      </MobileTabs>
-
       <Grid $embedded={embedded}>
         <Form $pane={pane}>
           {formTop}
@@ -542,18 +565,24 @@ export default function KitStudioEditor({
           </Accents>
 
           <Label>Cover background</Label>
-          <Hint>Aesthetic textures and landscapes — not portraits. Your photo belongs in About.</Hint>
+          <Hint>Textured paper, grain, and pattern — not portraits. Your photo belongs in About.</Hint>
           <Covers>
             {COVER_SAMPLES.map((item) => (
               <CoverBtn key={item.id} type="button" $on={coverUrl === item.url} onClick={() => { setCoverUrl(item.url); persist({ cover_url: item.url }); }}>
-                <img src={`${item.url.replace('w=2000', 'w=480')}`} alt={item.label} />
+                {isPatternCover(item.url)
+                  ? <CoverSwatch style={coverStyle(item.url)} />
+                  : <img src={`${item.url.replace('w=2000', 'w=480')}`} alt="" />}
                 <em>{item.label}</em>
               </CoverBtn>
             ))}
           </Covers>
           <Field>
             <span>Or paste an image URL</span>
-            <input value={coverUrl} onChange={(e) => { setCoverUrl(e.target.value); persist({ cover_url: e.target.value }); }} placeholder="https://" />
+            <input
+              value={isPatternCover(coverUrl) ? '' : coverUrl}
+              onChange={(e) => { setCoverUrl(e.target.value); persist({ cover_url: e.target.value }); }}
+              placeholder={isPatternCover(coverUrl) ? 'Using a textured preset' : 'https://'}
+            />
           </Field>
 
           <Label>Your posts</Label>
@@ -991,6 +1020,20 @@ export default function KitStudioEditor({
           </PickerModal>
         </PickerScrim>
       ) : null}
+      {dockReady && !pickerOpen ? createPortal(
+        <Dock $embedded={embedded} role="toolbar" aria-label="Edit or preview this portfolio">
+          <Segment>
+            <SegBtn type="button" $on={pane === 'edit'} onClick={() => showPane('edit')}>Edit</SegBtn>
+            <SegBtn type="button" $on={pane === 'preview'} onClick={() => showPane('preview')}>Preview</SegBtn>
+          </Segment>
+          {onSave ? (
+            <SaveBtn type="button" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving' : savedFlash ? 'Saved' : 'Save'}
+            </SaveBtn>
+          ) : null}
+        </Dock>,
+        document.body,
+      ) : null}
     </Shell>
   );
 }
@@ -1045,30 +1088,6 @@ const BusyLabel = styled.div`
   text-transform: uppercase;
   color: #8a8478;
 `;
-const MobileTabs = styled.div`
-  display: none;
-  @media (max-width: 960px) {
-    display: flex;
-    position: sticky;
-    top: ${p => p.$embedded ? '0' : '96px'};
-    z-index: 30;
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: ${p => p.$embedded ? '0 0 12px' : '12px 16px 16px'};
-    gap: 8px;
-    background: #f8fafc;
-  }
-`;
-const Tab = styled.button`
-  flex: 1;
-  min-height: 44px;
-  border-radius: 12px;
-  border: 1px solid ${p => p.$on ? '#0f172a' : '#e2e8f0'};
-  background: ${p => p.$on ? '#0f172a' : '#fff'};
-  color: ${p => p.$on ? '#fff' : '#0f172a'};
-  font: 700 14px/1 ${STUDIO_FONT};
-  cursor: pointer;
-`;
 const Grid = styled.div`
   max-width: 1180px;
   margin: 0 auto;
@@ -1079,8 +1098,13 @@ const Grid = styled.div`
   gap: 28px;
   @media (max-width: 960px) {
     grid-template-columns: minmax(0, 1fr);
-    padding: ${p => p.$embedded ? '4px 0 48px' : '20px 16px 64px'};
+    padding: ${p => p.$embedded ? '4px 0 108px' : '20px 16px 120px'};
     gap: 16px;
+  }
+  @media (max-width: 640px) {
+    padding-bottom: ${p => p.$embedded
+      ? 'calc(118px + 55px + max(10px, env(safe-area-inset-bottom, 0px)))'
+      : '120px'};
   }
 `;
 const Form = styled.div`
@@ -1144,13 +1168,17 @@ const CoverBtn = styled.button`
   position: relative;
   aspect-ratio: 16 / 10; padding: 0; border-radius: 10px; overflow: hidden; cursor: pointer;
   border: 2px solid ${p => p.$on ? '#4f46e5' : 'transparent'};
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  img, span { width: 100%; height: 100%; object-fit: cover; display: block; }
   em {
     position: absolute; left: 6px; bottom: 6px;
     font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .04em;
     text-transform: uppercase; color: #fff;
-    text-shadow: 0 1px 4px rgba(0,0,0,.45);
+    background: rgba(15, 23, 42, .55);
+    padding: 3px 6px; border-radius: 6px;
   }
+`;
+const CoverSwatch = styled.span`
+  display: block;
 `;
 const Row = styled.div`
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px;
@@ -1408,4 +1436,59 @@ const PreviewFrame = styled.div`
     max-height: none;
     border-radius: 12px;
   }
+`;
+const Dock = styled.div`
+  display: none;
+  @media (max-width: 960px) {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgba(248, 250, 252, .94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid #e8edf3;
+  }
+  @media (max-width: 640px) {
+    bottom: ${p => p.$embedded ? 'calc(55px + max(10px, env(safe-area-inset-bottom, 0px)))' : '0'};
+    padding-bottom: ${p => p.$embedded ? '10px' : 'calc(10px + env(safe-area-inset-bottom, 0px))'};
+    z-index: ${p => p.$embedded ? 90 : 70};
+  }
+`;
+const Segment = styled.div`
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  padding: 3px;
+  border-radius: 14px;
+  background: #eceff3;
+`;
+const SegBtn = styled.button`
+  flex: 1;
+  min-height: 42px;
+  border: 0;
+  border-radius: 11px;
+  background: ${p => p.$on ? '#0f172a' : 'transparent'};
+  color: ${p => p.$on ? '#fff' : '#475569'};
+  font: 700 14px/1 ${STUDIO_FONT};
+  cursor: pointer;
+  box-shadow: ${p => p.$on ? '0 1px 2px rgba(15, 23, 42, .18)' : 'none'};
+`;
+const SaveBtn = styled.button`
+  flex-shrink: 0;
+  min-height: 48px;
+  min-width: 88px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 14px;
+  background: #0f172a;
+  color: #fff;
+  font: 700 14px/1 ${STUDIO_FONT};
+  cursor: pointer;
+  &:disabled { opacity: .7; }
 `;

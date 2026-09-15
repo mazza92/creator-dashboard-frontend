@@ -4,7 +4,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Sparkles, Bell, Users, BadgeCheck, Video, FileText } from 'lucide-react';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import { message, Avatar } from 'antd';
-import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined, EditOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { UserContext } from '../contexts/UserContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -791,11 +791,21 @@ const CreatorDashboardLayout = () => {
             ))}
             <MenuDivider />
             <MenuItem onClick={() => {
-              window.open(`/kit/${userData?.username}`, '_blank');
+              navigate('/creator/dashboard/profile');
+              setShowUserMenu(false);
+            }}>
+              <EditOutlined />
+              Edit profile
+            </MenuItem>
+            <MenuItem onClick={() => {
+              const slug = userData?.username;
+              if (slug) {
+                window.open(`https://newcollab.co/kit/${slug}`, '_blank', 'noopener,noreferrer');
+              }
               setShowUserMenu(false);
             }}>
               <UserOutlined />
-              View Profile
+              View public profile
             </MenuItem>
             <MenuItem onClick={() => {
               navigate('/creator/dashboard/settings');
