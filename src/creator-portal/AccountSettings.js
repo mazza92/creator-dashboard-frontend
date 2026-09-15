@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings, FiEdit2 } from 'react-icons/fi';
+import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings, FiEdit2, FiAlertTriangle } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
@@ -53,11 +53,27 @@ const AccountSettings = () => {
   const [socialHandle, setSocialHandle] = useState('');
   const [scanning, setScanning] = useState(false);
   const [lastScan, setLastScan] = useState(null);
+  const [accountEmail, setAccountEmail] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteEmail, setDeleteEmail] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     fetchSubscriptionStatus();
     fetchCreatorProfile();
   }, []);
+
+  useEffect(() => {
+    if (!showDeleteModal) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape' && !deletingAccount) {
+        setShowDeleteModal(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showDeleteModal, deletingAccount]);
 
   // Email nudge CTA: /creator/dashboard/settings?upgrade=pro
   useEffect(() => {
@@ -91,17 +107,46 @@ const AccountSettings = () => {
 
   const fetchCreatorProfile = async () => {
     try {
-      const response = await api.get('/api/pr-crm/for-you');
-      if (response.data.success && response.data.profile) {
-        const rawNiches = response.data.profile.niches || [];
+      const [forYouResponse, profileResponse] = await Promise.all([
+        api.get('/api/pr-crm/for-you'),
+        api.get('/profile').catch(() => null),
+      ]);
+      if (forYouResponse.data.success && forYouResponse.data.profile) {
+        const rawNiches = forYouResponse.data.profile.niches || [];
         const normalizedNiches = rawNiches.map(n =>
           typeof n === 'string' ? n.toLowerCase().trim() : ''
         ).filter(Boolean);
         setSelectedNiches(normalizedNiches);
-        setFollowerCount(response.data.profile.followers?.toString() || '');
+        setFollowerCount(forYouResponse.data.profile.followers?.toString() || '');
       }
+      const email = profileResponse?.data?.email;
+      if (email) setAccountEmail(email);
     } catch (error) {
       console.error('Error fetching creator profile:', error);
+    }
+  };
+
+  const canConfirmDelete =
+    deleteConfirmation.trim().toUpperCase() === 'DELETE' &&
+    deleteEmail.trim().toLowerCase() === accountEmail.trim().toLowerCase() &&
+    Boolean(accountEmail);
+
+  const handleDeleteAccount = async () => {
+    if (!canConfirmDelete || deletingAccount) return;
+    setDeletingAccount(true);
+    try {
+      await api.post('/api/account/delete', {
+        confirmation: 'DELETE',
+        email: deleteEmail.trim(),
+      });
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('authToken');
+      window.location.href = '/login?deleted=1';
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Could not delete your account. Please try again.');
+      setDeletingAccount(false);
     }
   };
 
@@ -242,7 +287,7 @@ const AccountSettings = () => {
           <FiSettings size={28} />
         </HeaderIcon>
         <HeaderTitle>Account Settings</HeaderTitle>
-        <HeaderSubtitle>Manage your subscription and billing</HeaderSubtitle>
+        <HeaderSubtitle>Manage your subscription, billing, and account</HeaderSubtitle>
       </Header>
 
       <Section>
@@ -554,6 +599,105 @@ const AccountSettings = () => {
           </NicheHelpText>
         </NicheCard>
       </Section>
+
+      <Section>
+        <SectionTitle>Privacy & data</SectionTitle>
+        <DangerCard>
+          <DangerHeader>
+            <DangerIcon>
+              <FiAlertTriangle size={20} />
+            </DangerIcon>
+            <div>
+              <DangerTitle>Delete my account</DangerTitle>
+              <DangerCopy>
+                Permanently erase your Newcollab account and personal data. This cannot be undone.
+              </DangerCopy>
+            </div>
+          </DangerHeader>
+          <DangerList>
+            <li>Profile, media kit, pitches, saved brands, and social connections</li>
+            <li>Messages, applications, and collaboration history on Newcollab</li>
+            {tier !== 'free' && (
+              <li>Your {getPlanName(tier)} subscription will be canceled immediately</li>
+            )}
+            <li>You can create a new account later with the same email</li>
+          </DangerList>
+          <DangerButton
+            type="button"
+            onClick={() => {
+              setDeleteConfirmation('');
+              setDeleteEmail('');
+              setShowDeleteModal(true);
+            }}
+          >
+            Delete my account
+          </DangerButton>
+          <NicheHelpText>
+            Encrypted backups may retain residual data for up to 30 days, then they expire. Payment processors keep invoices they are legally required to store.
+          </NicheHelpText>
+        </DangerCard>
+      </Section>
+
+      {showDeleteModal && (
+        <DeleteOverlay
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-account-title"
+          onClick={() => !deletingAccount && setShowDeleteModal(false)}
+        >
+          <DeleteModal onClick={(e) => e.stopPropagation()}>
+            <DangerTitle id="delete-account-title">Delete account permanently?</DangerTitle>
+            <DangerCopy>
+              This will immediately remove your account and personal data from Newcollab. Type{' '}
+              <strong>DELETE</strong> and your email to confirm.
+            </DangerCopy>
+            {accountEmail && (
+              <DangerCopy>
+                Account email: <strong>{accountEmail}</strong>
+              </DangerCopy>
+            )}
+            <DeleteField>
+              <DeleteLabel htmlFor="delete-confirm-phrase">Type DELETE</DeleteLabel>
+              <DeleteInput
+                id="delete-confirm-phrase"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+                disabled={deletingAccount}
+              />
+            </DeleteField>
+            <DeleteField>
+              <DeleteLabel htmlFor="delete-confirm-email">Type your email</DeleteLabel>
+              <DeleteInput
+                id="delete-confirm-email"
+                type="email"
+                value={deleteEmail}
+                onChange={(e) => setDeleteEmail(e.target.value)}
+                placeholder={accountEmail || 'you@email.com'}
+                autoComplete="off"
+                disabled={deletingAccount}
+              />
+            </DeleteField>
+            <DeleteActions>
+              <DeleteCancel
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deletingAccount}
+              >
+                Keep my account
+              </DeleteCancel>
+              <DangerButton
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={!canConfirmDelete || deletingAccount}
+              >
+                {deletingAccount ? 'Deleting…' : 'Permanently delete'}
+              </DangerButton>
+            </DeleteActions>
+          </DeleteModal>
+        </DeleteOverlay>
+      )}
     </Container>
   );
 };
@@ -939,6 +1083,139 @@ const NicheHelpText = styled.p`
   font-size: 13px;
   color: #9CA3AF;
   margin: 16px 0 0 0;
+`;
+
+const DangerCard = styled.div`
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #FECACA;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+`;
+
+const DangerHeader = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+`;
+
+const DangerIcon = styled.div`
+  color: #DC2626;
+  margin-top: 2px;
+`;
+
+const DangerTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 4px 0;
+`;
+
+const DangerCopy = styled.p`
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+`;
+
+const DangerList = styled.ul`
+  margin: 0 0 20px 0;
+  padding-left: 18px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.6;
+`;
+
+const DangerButton = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  background: #DC2626;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #B91C1C;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const DeleteOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+  padding: 16px;
+`;
+
+const DeleteModal = styled.div`
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+`;
+
+const DeleteField = styled.div`
+  margin-bottom: 14px;
+`;
+
+const DeleteLabel = styled.label`
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+`;
+
+const DeleteInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+
+  &:focus {
+    outline: none;
+    border-color: #DC2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+  }
+`;
+
+const DeleteActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+const DeleteCancel = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  background: #F3F4F6;
+  color: #111827;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #E5E7EB;
+  }
 `;
 
 export default AccountSettings;

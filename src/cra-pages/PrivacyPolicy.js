@@ -82,6 +82,9 @@ const PrivacyPolicy = () => {
             <li>Object to data processing</li>
             <li>Data portability</li>
           </ul>
+          <Paragraph>
+            Creators can delete their account from Account Settings in the dashboard. That request permanently removes your profile, media kit, pitches, saved brands, messages, and connected social data from our production database. Paid subscriptions are canceled immediately. Encrypted backups may retain residual copies for up to 30 days, and payment processors keep invoices they are legally required to store. After deletion you can create a new account with the same email.
+          </Paragraph>
         </Section>
 
         <Section>

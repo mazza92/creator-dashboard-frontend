@@ -324,6 +324,18 @@ const ErrorBanner = styled.div`
   animation: ${fadeIn} 0.25s ease;
 `;
 
+const SuccessBanner = styled.div`
+  background: #ECFDF5;
+  color: #065F46;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  border: 1px solid #A7F3D0;
+  animation: ${fadeIn} 0.25s ease;
+`;
+
 const FirebaseWarning = styled.div`
   margin: 14px 0 0 0;
   padding: 10px 12px;
@@ -506,6 +518,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const [form] = Form.useForm();
 
   const googleLoginEnabled = Boolean(firebaseConfigured && auth);
+  const accountDeleted = searchParams.get('deleted') === '1';
 
   const postLoginPath = (data) => {
     if (data?.user_role === 'creator') {
@@ -665,6 +678,11 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   // Shared inner form markup used by both modal and full-page versions
   const renderFormBody = () => (
     <>
+      {accountDeleted && (
+        <SuccessBanner>
+          Your account and personal data have been permanently deleted.
+        </SuccessBanner>
+      )}
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       <Form
