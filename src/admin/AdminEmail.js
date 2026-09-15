@@ -9,7 +9,7 @@ import {
   TeamOutlined, RiseOutlined, EyeOutlined, ThunderboltOutlined,
   TrophyOutlined, ClockCircleOutlined, EditOutlined, PlusOutlined,
   CheckCircleOutlined, ExclamationCircleOutlined, LockOutlined,
-  DesktopOutlined, MobileOutlined, CopyOutlined
+  DesktopOutlined, MobileOutlined, CopyOutlined, StarOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
 import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement, resolveAnnouncementPreheader, generatePROpportunity, generatePROpportunitySubject, productFromBrand, websiteFromBrand, samplePROpportunity, DEFAULT_PR_EXCHANGE, generatePRRosterLive, generatePRRosterLiveSubject, applyUrlFromBrand, normalizeRosterBrands, samplePRRosterLive } from '../email-templates';
@@ -73,6 +73,34 @@ const FOUNDER_WINBACK_ANNOUNCEMENT = {
   utmCampaign: 'canceled_pro_winback',
   campaignName: 'Canceled Pro winback — $12/3mo',
   segmentId: 'canceled_pro',
+};
+
+const PRO_CHECKIN_ANNOUNCEMENT = {
+  emailSubject: '{{first_name}}, 3 questions so I stop guessing',
+  headerTitle: 'A 60-second check-in from Maher.',
+  headerSubtitle: '',
+  gradient: 'dark',
+  bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
+<p style="margin: 0 0 16px 0;">You already pay for Pro. I am stuck converting free users (0.55%) and I do not want to keep guessing what almost stopped people like you.</p>
+<p style="margin: 0 0 16px 0;">Reply to this email with anything you have — even one line:</p>
+<p style="margin: 0 0 8px 0;">1. What almost made you <strong>not</strong> pay?</p>
+<p style="margin: 0 0 8px 0;">2. What have you actually used since you upgraded?</p>
+<p style="margin: 0 0 16px 0;">3. What would make this an easy yes to recommend to another creator?</p>
+<p style="margin: 0;">No pitch. I will use the answers to fix the product, not sell you something else.</p>
+<p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
+  calloutText: 'Reply with the 3 answers. One line each is enough.',
+  calloutIcon: '',
+  listItems: [
+    { icon: '1', title: 'What almost stopped you', text: 'Price, unclear value, “I can do this on Instagram,” something else.' },
+    { icon: '2', title: 'What you actually use', text: 'Directory, pitches, kit, gifted campaigns — be honest if it is sitting unused.' },
+    { icon: '3', title: 'What would make it a no-brainer', text: 'The one thing that would make you tell a friend to pay.' },
+  ],
+  ctaLabel: 'Reply with your 3 answers',
+  ctaUrl: 'mailto:team@newcollab.co?subject=Pro%20check-in',
+  preheader: 'What almost stopped you from paying? I need the real answer.',
+  utmCampaign: 'pro_checkin',
+  campaignName: 'Pro check-in — conversion research',
+  segmentId: 'pro_tier',
 };
 
 const AdminEmail = () => {
@@ -762,6 +790,7 @@ const AdminEmail = () => {
       case 'power_users': return <TrophyOutlined />;
       case 'at_quota_limit': return <ThunderboltOutlined />;
       case 'canceled_pro': return <ReloadOutlined />;
+      case 'pro_tier': return <StarOutlined />;
       case 'dormant': return <ClockCircleOutlined />;
       default: return <MailOutlined />;
     }
@@ -1201,6 +1230,30 @@ const AdminEmail = () => {
                       <span>Canceled Pro</span>
                       <span>Live Composer</span>
                       <span>$12 / 3 mo</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
+                      <EyeOutlined /> Compose &amp; Preview
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setAnnouncementConfig({
+                        ...PRO_CHECKIN_ANNOUNCEMENT,
+                      });
+                      setShowAnnouncementPreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
+                    <div className="template-icon-large">★</div>
+                    <h4>Pro check-in</h4>
+                    <p>Ask paying Pro users what almost stopped them. Targets live Pro only — not free, not canceled.</p>
+                    <div className="template-features">
+                      <span>Pro only</span>
+                      <span>Live Composer</span>
+                      <span>Reply CTA</span>
                     </div>
                     <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
                       <EyeOutlined /> Compose &amp; Preview
@@ -1721,6 +1774,8 @@ const AdminEmail = () => {
                         ? 'Loaded. Segment is already set to At 3/3 unlocks. Send a test first.'
                         : announcementConfig.segmentId === 'canceled_pro'
                         ? 'Loaded. Segment is already set to Canceled Pro. Send a test first.'
+                        : announcementConfig.segmentId === 'pro_tier'
+                        ? 'Loaded. Segment is already set to Pro users. Send a test first.'
                         : 'Template loaded! Finish setting up your campaign.'
                     );
                   }}
