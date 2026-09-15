@@ -1,6 +1,18 @@
 export const KIT_BRAND_CTA =
   'https://app.newcollab.co/for-brands?utm_source=public_kit&utm_medium=share&utm_campaign=get-in-touch';
 
+const PORTFOLIO_NAME_PLACEHOLDERS = new Set(['your name', 'untitled']);
+
+export function publicPortfolioName(raw = {}) {
+  const theme = raw.kit_theme || raw.theme || {};
+  const typed = String(theme.display_name || '').trim();
+  const username = String(raw.username || '').replace(/^@/, '').trim();
+  if (typed && !PORTFOLIO_NAME_PLACEHOLDERS.has(typed.toLowerCase())) {
+    return typed;
+  }
+  return username;
+}
+
 export function kitBrandCta(username) {
   const url = new URL(KIT_BRAND_CTA);
   if (username) url.searchParams.set('creator', String(username).replace(/^@/, ''));

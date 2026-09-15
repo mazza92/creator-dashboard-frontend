@@ -1,5 +1,5 @@
 import { normalizeCategory } from '../constants/brandCategories';
-import { parseKitNiches, resolveKitSocialProfiles } from './kitBrandCta';
+import { parseKitNiches, publicPortfolioName, resolveKitSocialProfiles } from './kitBrandCta';
 import { normalizeKitTheme, normalizeTestimonials } from '../kit-builder/themes';
 import { normalizeKitLayout } from '../kit-builder/templates';
 
@@ -40,18 +40,6 @@ function firstNumber(...values) {
     }
   }
   return 0;
-}
-
-const PORTFOLIO_NAME_PLACEHOLDERS = new Set(['your name', 'untitled']);
-
-export function publicPortfolioName(raw = {}) {
-  const theme = raw.kit_theme || raw.theme || {};
-  const typed = String(theme.display_name || '').trim();
-  const username = String(raw.username || '').replace(/^@/, '').trim();
-  if (typed && !PORTFOLIO_NAME_PLACEHOLDERS.has(typed.toLowerCase())) {
-    return typed;
-  }
-  return username;
 }
 
 export function normalizePublicKit(raw) {

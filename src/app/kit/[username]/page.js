@@ -2,8 +2,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import MediaKitClient from './MediaKitClient';
 import KitViewTracker from './KitViewTracker';
-import { kitApiOrigin, mergeKitWithPublicProfile } from '../../../lib/kitBrandCta';
-import { publicPortfolioName } from '../../../lib/publicKit';
+import { kitApiOrigin, mergeKitWithPublicProfile, publicPortfolioName } from '../../../lib/kitBrandCta';
 
 function portfolioApiBase() {
   if (process.env.NODE_ENV !== 'production') return 'http://localhost:5000';
