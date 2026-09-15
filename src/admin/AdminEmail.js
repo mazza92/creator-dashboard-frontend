@@ -76,28 +76,31 @@ const FOUNDER_WINBACK_ANNOUNCEMENT = {
 };
 
 const PRO_CHECKIN_ANNOUNCEMENT = {
-  emailSubject: '{{first_name}}, 3 questions so I stop guessing',
-  headerTitle: 'A 60-second check-in from Maher.',
+  emailSubject: '{{first_name}}, quick check-in from Mazza',
+  headerTitle: 'A personal check-in from Mazza.',
   headerSubtitle: '',
   gradient: 'dark',
   bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
-<p style="margin: 0 0 16px 0;">You already pay for Pro. I am stuck converting free users (0.55%) and I do not want to keep guessing what almost stopped people like you.</p>
-<p style="margin: 0 0 16px 0;">Reply to this email with anything you have — even one line:</p>
-<p style="margin: 0 0 8px 0;">1. What almost made you <strong>not</strong> pay?</p>
-<p style="margin: 0 0 8px 0;">2. What have you actually used since you upgraded?</p>
-<p style="margin: 0 0 16px 0;">3. What would make this an easy yes to recommend to another creator?</p>
-<p style="margin: 0;">No pitch. I will use the answers to fix the product, not sell you something else.</p>
-<p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
-  calloutText: 'Reply with the 3 answers. One line each is enough.',
+<p style="margin: 0 0 16px 0;">Mazza here, founder of Newcollab.</p>
+<p style="margin: 0 0 16px 0;">I'm reaching out personally to every Pro subscriber this week. You've been with us and I want you to maximize the platform. Your feedback is the single most valuable thing I have to build Newcollab into something creators genuinely can't do without.</p>
+<p style="margin: 0 0 16px 0;">If you have 3 minutes, could you reply with a few honest lines on:</p>
+<p style="margin: 0 0 8px 0;">1. What made you upgrade to Pro in the first place? <em>(the exact reason that tipped it)</em></p>
+<p style="margin: 0 0 8px 0;">2. Are you getting what you came for? <em>(be brutally honest — we can only fix what we know)</em></p>
+<p style="margin: 0 0 8px 0;">3. What's the one thing that's actually working well for you on Newcollab right now?</p>
+<p style="margin: 0 0 8px 0;">4. What's the one thing missing or frustrating that would make Pro a no-brainer if we fixed it?</p>
+<p style="margin: 0 0 16px 0;">5. If you had to cancel Pro today, what would push you to do it? <em>(this one helps me protect your investment)</em></p>
+<p style="margin: 0 0 16px 0;">In return, once I read your reply, I'll personally send back:</p>
+<p style="margin: 0 0 8px 0;">• A full audit of your profile</p>
+<p style="margin: 0 0 8px 0;">• 2–3 brand suggestions I'd prioritise for your profile</p>
+<p style="margin: 0 0 16px 0;">• Any tactical content tips and a plan based on what's been working for other creators like you</p>
+<p style="margin: 0;">That's my job as founder — to make sure Pro delivers real value, not just access.</p>
+<p style="margin: 16px 0 0 0;">Mazza<br>Founder, Newcollab</p>`,
+  calloutText: "Reply with 5 honest lines. I'll send a profile audit + brand suggestions back.",
   calloutIcon: '',
-  listItems: [
-    { icon: '1', title: 'What almost stopped you', text: 'Price, unclear value, “I can do this on Instagram,” something else.' },
-    { icon: '2', title: 'What you actually use', text: 'Directory, pitches, kit, gifted campaigns — be honest if it is sitting unused.' },
-    { icon: '3', title: 'What would make it a no-brainer', text: 'The one thing that would make you tell a friend to pay.' },
-  ],
-  ctaLabel: 'Reply with your 3 answers',
+  listItems: [],
+  ctaLabel: 'Reply to Mazza',
   ctaUrl: 'mailto:team@newcollab.co?subject=Pro%20check-in',
-  preheader: 'What almost stopped you from paying? I need the real answer.',
+  preheader: 'A personal check-in — reply and I’ll send a profile audit back.',
   utmCampaign: 'pro_checkin',
   campaignName: 'Pro check-in — conversion research',
   segmentId: 'pro_tier',
@@ -1249,7 +1252,7 @@ const AdminEmail = () => {
                     <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
                     <div className="template-icon-large">★</div>
                     <h4>Pro check-in</h4>
-                    <p>Ask paying Pro users what almost stopped them. Targets live Pro only — not free, not canceled.</p>
+                    <p>Mazza check-in for live Pro only. Reply CTA — not a sales blast.</p>
                     <div className="template-features">
                       <span>Pro only</span>
                       <span>Live Composer</span>
@@ -1697,6 +1700,67 @@ const AdminEmail = () => {
                         placeholder="Optional highlighted tip or callout text"
                       />
                     </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Numbered list (optional)</label>
+                    {(announcementConfig.listItems || []).map((item, index) => (
+                      <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                        <Input
+                          value={item.icon || ''}
+                          onChange={(e) => setAnnouncementConfig((c) => {
+                            const next = [...(c.listItems || [])];
+                            next[index] = { ...next[index], icon: e.target.value };
+                            return { ...c, listItems: next };
+                          })}
+                          style={{ width: 52 }}
+                          placeholder="#"
+                        />
+                        <div style={{ flex: 1 }}>
+                          <Input
+                            value={item.title || ''}
+                            onChange={(e) => setAnnouncementConfig((c) => {
+                              const next = [...(c.listItems || [])];
+                              next[index] = { ...next[index], title: e.target.value };
+                              return { ...c, listItems: next };
+                            })}
+                            placeholder="Title"
+                            style={{ marginBottom: 6 }}
+                          />
+                          <Input
+                            value={item.text || ''}
+                            onChange={(e) => setAnnouncementConfig((c) => {
+                              const next = [...(c.listItems || [])];
+                              next[index] = { ...next[index], text: e.target.value };
+                              return { ...c, listItems: next };
+                            })}
+                            placeholder="Supporting text"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => setAnnouncementConfig((c) => ({
+                            ...c,
+                            listItems: (c.listItems || []).filter((_, i) => i !== index),
+                          }))}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                    <Space>
+                      <Button
+                        onClick={() => setAnnouncementConfig((c) => ({
+                          ...c,
+                          listItems: [...(c.listItems || []), { icon: String((c.listItems || []).length + 1), title: '', text: '' }],
+                        }))}
+                      >
+                        Add item
+                      </Button>
+                      {(announcementConfig.listItems || []).length > 0 && (
+                        <Button onClick={() => setAnnouncementConfig((c) => ({ ...c, listItems: [] }))}>
+                          Clear list
+                        </Button>
+                      )}
+                    </Space>
                   </div>
                   <div className="form-group">
                     <label>CTA Button Label</label>
