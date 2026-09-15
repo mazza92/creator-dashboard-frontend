@@ -298,7 +298,7 @@ const PortfolioBuilder = ({ currentUser }) => {
     layout: normalizeKitLayout(kitSettings?.kit_layout),
     name: kitTheme.display_name && String(kitTheme.display_name).toLowerCase() !== 'your name'
       ? kitTheme.display_name
-      : (kitSettings?.display_name || currentUser?.first_name || currentUser?.name || ''),
+      : '',
     handle: kitTheme.social_handle
       ? `@${kitTheme.social_handle}`
       : (kitSettings?.social_handle
@@ -336,7 +336,9 @@ const PortfolioBuilder = ({ currentUser }) => {
 
   const extras = {
     username: slug || currentUser?.username || 'you',
-    displayName: kitSettings?.display_name || initial.name || currentUser?.first_name || '',
+    displayName: kitTheme.display_name && String(kitTheme.display_name).toLowerCase() !== 'your name'
+      ? kitTheme.display_name
+      : (slug || currentUser?.username || ''),
     niches: Array.isArray(currentUser?.niches) && currentUser.niches.length
       ? currentUser.niches
       : [initial.niche],

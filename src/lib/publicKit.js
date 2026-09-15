@@ -42,6 +42,18 @@ function firstNumber(...values) {
   return 0;
 }
 
+const PORTFOLIO_NAME_PLACEHOLDERS = new Set(['your name', 'untitled']);
+
+export function publicPortfolioName(raw = {}) {
+  const theme = raw.kit_theme || raw.theme || {};
+  const typed = String(theme.display_name || '').trim();
+  const username = String(raw.username || '').replace(/^@/, '').trim();
+  if (typed && !PORTFOLIO_NAME_PLACEHOLDERS.has(typed.toLowerCase())) {
+    return typed;
+  }
+  return username;
+}
+
 export function normalizePublicKit(raw) {
   if (!raw) return null;
   const socialProfiles = resolveKitSocialProfiles(raw);
@@ -75,7 +87,7 @@ export function normalizePublicKit(raw) {
 
   return {
     username: raw.username,
-    displayName: theme.display_name || raw.display_name || raw.first_name || raw.username,
+    displayName: publicPortfolioName(raw) || raw.username,
     avatarUrl: raw.profile_photo_url || raw.avatar_url || '',
     bio: raw.bio || null,
     tagline: raw.tagline || null,

@@ -136,20 +136,11 @@ export function mergeKitWithPublicProfile(kit, profile) {
     if (p.platform && p.url && !socials[p.platform]) socials[p.platform] = p.url;
   });
 
-  const username = String(next.username || profile.username || '').replace(/^@/, '').toLowerCase();
-  const currentName = String(next.first_name || next.display_name || '').trim();
-  const profileName = String(profile.display_name || '').trim();
-  const betterName = currentName && currentName.toLowerCase() !== username
-    ? currentName
-    : (profileName || currentName);
-
   return {
     ...next,
     social_links: Array.isArray(profile.social_links) ? profile.social_links : next.social_links,
     social_profiles,
     socials,
     bio: next.bio || profile.bio || null,
-    first_name: betterName || next.first_name,
-    display_name: betterName || next.display_name,
   };
 }

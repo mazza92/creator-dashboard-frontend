@@ -180,7 +180,7 @@ export function buildStudioKit({
       followers: String(row.followers || '').replace(/[^\d]/g, '').slice(0, 10),
       url: socialProfileUrl(row.platform, row.handle),
     }));
-  const displayName = studioPersonName(name, extras.displayName);
+  const displayName = studioPersonName(name, extras.username);
   const theme = normalizeKitTheme({
     look, font, accent, cover_url: coverUrl, display_name: displayName, headline, about, location, email,
     social_platform: platform,
@@ -197,8 +197,8 @@ export function buildStudioKit({
   const extraRates = extras.rates || {};
   return {
     username: extras.username || slug,
-    first_name: displayName || 'Your name',
-    display_name: displayName || 'Your name',
+    first_name: studioPersonName(name) || extras.username || 'Your name',
+    display_name: studioPersonName(name) || extras.username || 'Your name',
     tagline: headline,
     bio: about,
     niches: extras.niches || [niche],
@@ -388,12 +388,6 @@ export default function KitStudioEditor({
   const officialHandle = cleanSocialHandle(extras.officialHandle);
   const officialPlatform = String(extras.officialPlatform || '').toLowerCase();
   const officialLikes = Number(extras.likesCount || 0) || 0;
-
-  useEffect(() => {
-    if (studioPersonName(name) || !extras.displayName) return;
-    setName(extras.displayName);
-    persist({ name: extras.displayName });
-  }, [extras.displayName]);
 
   useEffect(() => {
     if (officialPlatform !== 'tiktok' || (!officialFollowers && !officialHandle)) return;

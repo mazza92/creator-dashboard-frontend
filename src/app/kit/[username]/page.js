@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import MediaKitClient from './MediaKitClient';
 import KitViewTracker from './KitViewTracker';
 import { kitApiOrigin, mergeKitWithPublicProfile } from '../../../lib/kitBrandCta';
+import { publicPortfolioName } from '../../../lib/publicKit';
 
 function portfolioApiBase() {
   if (process.env.NODE_ENV !== 'production') return 'http://localhost:5000';
@@ -60,7 +61,7 @@ async function getMediaKit(username) {
     return {
       success: true,
       media_kit: {
-        display_name: merged.display_name || merged.first_name || merged.username,
+        display_name: publicPortfolioName(merged) || merged.username,
         username: merged.username,
         tagline: merged.tagline,
         profile_photo_url: merged.avatar_url,
