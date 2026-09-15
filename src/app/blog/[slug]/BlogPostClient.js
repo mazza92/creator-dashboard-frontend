@@ -6,7 +6,7 @@ import { HomeOutlined, CalendarOutlined, ClockCircleOutlined, QuestionCircleOutl
 import Link from 'next/link';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
-import { getPostContentHtml, isBlogWidgetEnabled } from '../../../lib/blogContent';
+import { getPostContentHtml, isBlogWidgetEnabled, getFaqAnswerHtml } from '../../../lib/blogContent';
 import BlogBrandSearchWidget from '../../../components/BlogBrandSearchWidget';
 
 const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -69,6 +69,10 @@ const BlogContent = styled.div`
     color: #1a1a1a;
   }
 
+  a {
+    color: #26A69A;
+  }
+
   p {
     margin-bottom: 1.5em;
   }
@@ -110,6 +114,19 @@ const BlogContent = styled.div`
     border-radius: 8px;
     overflow-x: auto;
     margin: 1.5em 0;
+  }
+
+  .portfolio-scroll-stopper {
+    margin: 2.75rem 0;
+  }
+
+  .portfolio-scroll-stopper p {
+    margin: 0;
+  }
+
+  .portfolio-scroll-stopper .pss-btn {
+    color: #fff !important;
+    text-decoration: none !important;
   }
 `;
 
@@ -357,7 +374,7 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
                   ),
                   children: (
                     <Paragraph style={{ margin: 0, fontSize: '16px', lineHeight: '1.6' }}>
-                      {faq.answer}
+                      <span dangerouslySetInnerHTML={{ __html: getFaqAnswerHtml(faq.answer, post.slug) }} />
                     </Paragraph>
                   ),
                   style: {

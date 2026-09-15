@@ -1054,7 +1054,7 @@ const MobileTabs = styled.div`
     z-index: 30;
     max-width: 1180px;
     margin: 0 auto;
-    padding: ${p => p.$embedded ? '0 0 12px' : '8px 16px 12px'};
+    padding: ${p => p.$embedded ? '0 0 12px' : '12px 16px 16px'};
     gap: 8px;
     background: #f8fafc;
   }
@@ -1073,13 +1073,13 @@ const Grid = styled.div`
   max-width: 1180px;
   margin: 0 auto;
   min-width: 0;
-  padding: ${p => p.$embedded ? '8px 0 48px' : '24px 24px 80px'};
+  padding: ${p => p.$embedded ? '8px 0 48px' : '40px 24px 80px'};
   display: grid;
   grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
   gap: 28px;
   @media (max-width: 960px) {
     grid-template-columns: minmax(0, 1fr);
-    padding: ${p => p.$embedded ? '4px 0 48px' : '8px 16px 64px'};
+    padding: ${p => p.$embedded ? '4px 0 48px' : '20px 16px 64px'};
     gap: 16px;
   }
 `;

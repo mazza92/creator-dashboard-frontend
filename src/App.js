@@ -67,6 +67,7 @@ import VerifyEmailPending from './components/VerifyEmailPending';
 import VerifyEmail from './components/VerifyEmail';
 import ResendVerification from './components/ResendVerification';
 import LoadingSpinner from './components/LoadingSpinner';
+import KitLoading from './kit-builder/KitLoading';
 import StripeSuccess from './components/StripeSuccess';
 import api from './config/api';
 // Creator profiles - Next.js has /app/c/[username], but keep CRA route for dev/fallback
@@ -470,7 +471,7 @@ function AppContent() {
             <Route path='/c/:username' element={<PublicCreatorProfile />} />
             {/* Public media kit page */}
             <Route path='/kit/:username' element={<PublicMediaKitWrapper />} />
-            <Route path='/media-kit' element={<LandingPageLayout hideFooter><LazyRoute><PublicKitStudio /></LazyRoute></LandingPageLayout>} />
+            <Route path='/media-kit' element={<LandingPageLayout hideFooter><LazyRoute skeleton={<KitLoading inset />}><PublicKitStudio /></LazyRoute></LandingPageLayout>} />
             <Route path='/r/:token' element={<LazyRoute skeleton={<RosterSplash />}><BrandPRRoster /></LazyRoute>} />
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<OnboardingRouter />} />

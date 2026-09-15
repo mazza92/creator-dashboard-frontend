@@ -1357,6 +1357,13 @@ const FAQAnswer = styled.div`
   font-size: 14px;
   color: ${colors.text2};
   line-height: 1.7;
+
+  a {
+    color: ${colors.rose};
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 `;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1847,7 +1854,7 @@ const LandingPage = () => {
     "@type": "WebSite",
     "name": "newcollab",
     "url": "https://newcollab.co",
-    "description": "PR forms directory and brand outreach tool for nano and micro creators — 2,000+ brands with open PR application forms, AI pitch emails, and auto media kit.",
+    "description": "PR forms directory and brand outreach tool for nano and micro creators — 2,000+ brands with open PR application forms, AI pitch emails, a free UGC portfolio builder, and auto media kit.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://newcollab.co/brands?q={search_term_string}",
@@ -1864,7 +1871,7 @@ const LandingPage = () => {
         "name": "How do I get my first brand deal as a small creator?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks — the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start."
+          "text": "Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit or a free UGC portfolio from https://newcollab.co/media-kit. Most creators land their first deal within 2 weeks — the key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start."
         }
       },
       {
@@ -1872,7 +1879,7 @@ const LandingPage = () => {
         "name": "Do I need a media kit to pitch brands?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — it's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed."
+          "text": "Yes — it's the #1 reason brands ignore cold emails. Publish a free UGC portfolio in minutes at https://newcollab.co/media-kit (no Canva, no account) and paste that link in your pitch, Instagram bio, and TikTok description. Signed-in creators also get an auto-generated media kit attached to every pitch."
         }
       },
       {
@@ -1888,7 +1895,7 @@ const LandingPage = () => {
         "name": "What is a PR package?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A PR package is when a brand sends you their products for free in exchange for content on your channels — a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply."
+          "text": "A PR package is when a brand sends you their products for free in exchange for content on your channels — a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit or a free UGC portfolio from https://newcollab.co/media-kit. newcollab handles finding the brand, writing the pitch, and tracking the reply."
         }
       },
       {
@@ -1904,7 +1911,7 @@ const LandingPage = () => {
         "name": "What is a brand PR application form?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A brand PR application form is a public submission page where creators apply to receive gifted products (PR packages) in exchange for social media content. Brands use these forms to vet creators by niche, follower count, and engagement rate. newcollab lists brands with open PR forms and lets you apply with an AI-generated pitch and auto-attached media kit."
+          "text": "A brand PR application form is a public submission page where creators apply to receive gifted products (PR packages) in exchange for social media content. Brands use these forms to vet creators by niche, follower count, and engagement rate. newcollab lists brands with open PR forms and lets you apply with an AI-generated pitch and a free UGC portfolio from https://newcollab.co/media-kit."
         }
       },
       {
@@ -1912,7 +1919,7 @@ const LandingPage = () => {
         "name": "Is newcollab free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — free plan includes full brand directory access, auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) unlocks unlimited contacts, batch send, full For You feed, and the $PR Value dashboard."
+          "text": "Yes — free plan includes full brand directory access, a free UGC portfolio builder (https://newcollab.co/media-kit), auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) unlocks unlimited contacts, batch send, full For You feed, and the $PR Value dashboard."
         }
       }
     ]
@@ -2667,7 +2674,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit. Most creators land their first deal within 2 weeks. The key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start.
+                  Sign up for newcollab, browse the brand directory filtered to your niche, and send an AI-generated pitch with your auto-attached media kit or a <a href="/media-kit">free UGC portfolio</a>. Most creators land their first deal within 2 weeks. The key is sending enough pitches and following up. The free plan gives you 3 pitches a month to start.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2676,7 +2683,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes! It's the #1 reason brands ignore cold emails. newcollab auto-generates yours from your profile, so every pitch includes your stats, audience demographics, niche, and past collabs. No design skills needed.
+                  Yes! It&apos;s the #1 reason brands ignore cold emails. Publish a <a href="/media-kit">free UGC portfolio</a> in minutes — no Canva, no account — and paste that link in your pitch, Instagram bio, and TikTok description. Signed-in creators also get an auto-generated media kit on every pitch.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2694,7 +2701,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  A PR package is when a brand sends you their products for free in exchange for content on your channels: a post, TikTok, story, or reel. You pitch the brand directly via email with your media kit. newcollab handles finding the brand, writing the pitch, and tracking the reply.
+                  A PR package is when a brand sends you their products for free in exchange for content on your channels: a post, TikTok, story, or reel. You pitch the brand directly via email with your <a href="/media-kit">media kit</a>. newcollab handles finding the brand, writing the pitch, and tracking the reply.
                 </FAQAnswer>
               </FAQItem>
               <FAQItem>
@@ -2722,7 +2729,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes! The free plan includes full brand directory access, auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) unlocks unlimited contacts, batch send, full For You feed, and the $PR Value dashboard.
+                  Yes! The free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) unlocks unlimited contacts, batch send, full For You feed, and the $PR Value dashboard.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>

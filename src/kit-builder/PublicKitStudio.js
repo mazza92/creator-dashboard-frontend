@@ -271,10 +271,10 @@ const Page = styled.div`
 const Hero = styled.div`
   max-width: 1180px;
   margin: 0 auto;
-  padding: 128px 24px 12px;
-  h1 { font-size: clamp(28px, 5vw, 40px); letter-spacing: -.03em; margin: 8px 0 12px; line-height: 1.12; }
+  padding: 188px 24px 40px;
+  h1 { font-size: clamp(28px, 5vw, 40px); letter-spacing: -.03em; margin: 10px 0 16px; line-height: 1.12; }
   p { color: #475569; font-size: 16px; max-width: 720px; line-height: 1.6; margin: 0; }
-  @media (max-width: 768px) { padding: 108px 16px 8px; }
+  @media (max-width: 768px) { padding: 144px 16px 28px; }
 `;
 const Eyebrow = styled.div`
   font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #4f46e5;

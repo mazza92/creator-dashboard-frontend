@@ -29,6 +29,9 @@ Disallow: /reset-password
 # Explicitly allow all public content
 Allow: /blog/
 Allow: /blog/*
+Allow: /media-kit
+Allow: /kit/
+Allow: /kit/*
 Allow: /about
 Allow: /contact
 Allow: /directory

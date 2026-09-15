@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { getFaqAnswerSchemaText } from '../../../lib/blogContent';
 
 /**
  * Injects the FAQPage JSON-LD into <head> after mount via useEffect.
@@ -20,7 +21,7 @@ import { useEffect } from 'react';
  *   3. Hydration mismatches elsewhere cannot cause a duplicate.
  *   4. Google's crawler executes JavaScript and finds the schema.
  */
-export default function BlogFaqSchemaScript({ faq }) {
+export default function BlogFaqSchemaScript({ faq, slug }) {
   useEffect(() => {
     if (!faq?.length) return;
 
@@ -35,7 +36,7 @@ export default function BlogFaqSchemaScript({ faq }) {
         name: item.question,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: item.answer,
+          text: getFaqAnswerSchemaText(item.answer, slug),
         },
       })),
     };
@@ -50,7 +51,7 @@ export default function BlogFaqSchemaScript({ faq }) {
       const el = document.getElementById(SCRIPT_ID);
       if (el) el.remove();
     };
-  }, [faq]);
+  }, [faq, slug]);
 
   return null;
 }

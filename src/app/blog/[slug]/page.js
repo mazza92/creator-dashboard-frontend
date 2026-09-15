@@ -92,7 +92,7 @@ export default async function BlogPostPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
       />
-      <BlogFaqSchemaScript faq={post.faq} />
+      <BlogFaqSchemaScript faq={post.faq} slug={post.slug} />
       {howToSchema && (
         <script
           type="application/ld+json"

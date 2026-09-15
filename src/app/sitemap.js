@@ -14,7 +14,7 @@ export const maxDuration = 60;
 
 const STATIC_PAGES = [
   { url: '/',                          priority: 1.0, changeFrequency: 'daily'   },
-  { url: '/media-kit',                 priority: 0.9, changeFrequency: 'weekly'  },
+  { url: '/media-kit',                 priority: 1.0, changeFrequency: 'daily'   },
   { url: '/directory',                 priority: 0.9, changeFrequency: 'daily'   },
   { url: '/pr-list',                   priority: 0.9, changeFrequency: 'daily'   },
   { url: '/directory/skincare',        priority: 0.8, changeFrequency: 'weekly'  },

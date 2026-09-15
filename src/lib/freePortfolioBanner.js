@@ -9,6 +9,16 @@ export const FREE_PORTFOLIO_BANNER_BLOG_SLUGS = new Set([
   'us-brands-send-pr-micro-influencers-2026-list',
   'brands-that-pay-for-ugc-content-2026',
   'k-beauty-korean-skincare-brands-pr-list-small-creators-2026',
+  'how-to-build-a-ugc-portfolio-brands-want-2026',
+  '50-ugc-product-ideas-for-beginners-2026',
+  'creators-guide-building-media-kit-2025',
+  'how-to-create-high-impact-media-kit-under-30-minutes-free-template',
+  'how-to-get-on-pr-lists-complete-application-guide-2026',
+  '5-copy-paste-pr-pitch-templates-get-replies-micro-influencers',
+  'brand-deals-small-creators-2025',
+  'reach-out-brands-influencer-2025',
+  'pr-emails-for-brands-2026',
+  'how-i-got-on-pr-lists-australia-2026',
 ]);
 
 function normalizePathname(pathname) {
@@ -22,8 +32,6 @@ export function shouldShowFreePortfolioBanner(pathname) {
   if (path === '/') return true;
   if (path === '/directory' || path.startsWith('/directory/')) return true;
   if (/^\/brand\/[a-z0-9][a-z0-9-]*$/i.test(path)) return true;
-  if (path.startsWith('/blog/')) {
-    return FREE_PORTFOLIO_BANNER_BLOG_SLUGS.has(path.slice('/blog/'.length));
-  }
+  if (path.startsWith('/blog')) return true;
   return false;
 }

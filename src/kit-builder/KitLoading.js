@@ -3,9 +3,9 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 
-export default function KitLoading({ label = 'Loading portfolio', error = false }) {
+export default function KitLoading({ label = 'Loading portfolio', error = false, inset = false }) {
   return (
-    <Wrap>
+    <Wrap $inset={inset}>
       <Inner>
         <Mark aria-hidden="true">{error ? '—' : 'N'}</Mark>
         {!error ? <Track><Bar /></Track> : null}
@@ -21,7 +21,8 @@ const slide = keyframes`
 `;
 
 const Wrap = styled.div`
-  min-height: 100vh;
+  min-height: ${p => (p.$inset ? 'calc(100vh - 140px)' : '100vh')};
+  padding-top: ${p => (p.$inset ? '40px' : '0')};
   display: grid;
   place-items: center;
   background: #f6f4ef;

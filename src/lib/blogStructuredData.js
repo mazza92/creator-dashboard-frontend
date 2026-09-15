@@ -3,13 +3,15 @@
  * nesting FAQPage inside BlogPosting causes GSC "Duplicate field FAQPage" errors.
  */
 
-function faqQuestions(faq) {
+import { getFaqAnswerSchemaText } from './blogContent';
+
+function faqQuestions(faq, slug) {
   return faq.map((item) => ({
     '@type': 'Question',
     name: item.question,
     acceptedAnswer: {
       '@type': 'Answer',
-      text: item.answer,
+      text: getFaqAnswerSchemaText(item.answer, slug),
     },
   }));
 }
@@ -68,7 +70,7 @@ export function buildFaqPageSchema(post) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqQuestions(post.faq),
+    mainEntity: faqQuestions(post.faq, post.slug),
   };
 }
 
