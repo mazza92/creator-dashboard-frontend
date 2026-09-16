@@ -198,6 +198,8 @@ const FounderNote = styled.p`
     text-underline-offset: 3px;
   }
 `;
+
+const HeroTrust = styled.div`
   display: flex;
   gap: 22px;
   font-size: 13px;
