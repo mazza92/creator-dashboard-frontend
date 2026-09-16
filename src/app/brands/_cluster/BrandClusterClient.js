@@ -11,7 +11,7 @@ import {
   relatedLinks,
   trackBrandCtaClick,
 } from './catalog';
-import { CITATION_DEFINITION, CITATION_LAST_UPDATED } from '../../../lib/citationFacts';
+import { CITATION_LAST_UPDATED } from '../../../lib/citationFacts';
 
 const colors = {
   pink: '#e8395f',
@@ -68,22 +68,8 @@ const HeroSub = styled.p`
   font-size: 19px;
   color: ${colors.inkSoft};
   max-width: 640px;
-  margin: 0 0 14px;
+  margin: 0 0 32px;
   line-height: 1.5;
-`;
-
-const HeroDef = styled.p`
-  font-size: 16px;
-  color: ${colors.ink};
-  max-width: 720px;
-  margin: 0 0 8px;
-  line-height: 1.55;
-`;
-
-const Updated = styled.p`
-  font-size: 13px;
-  color: ${colors.muted};
-  margin: 0 0 28px;
 `;
 
 const CTARow = styled.div`
@@ -318,8 +304,6 @@ export default function BrandClusterClient({ page }) {
           <HeroTag>For DTC brands · gifted UGC</HeroTag>
           <H1>{page.h1[0]} <span>{page.h1[1]}</span></H1>
           <HeroSub>{page.sub}</HeroSub>
-          <HeroDef>{CITATION_DEFINITION}</HeroDef>
-          <Updated>Facts last updated {CITATION_LAST_UPDATED}.</Updated>
           <CTARow>
             <BtnPrimary href={signupUrl} onClick={onCta('hero')}>Start free campaign →</BtnPrimary>
             <BtnSecondary href="#how">See how it works</BtnSecondary>

@@ -6,7 +6,7 @@ import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { FAQ_ITEMS, HOW_STEPS, PAGE_URL, SIGNUP_URL } from './content';
 import { relatedLinks, trackBrandCtaClick } from '../_cluster/catalog';
 import CitationCompareTable from '../../components/CitationCompareTable';
-import { CITATION_DEFINITION, CITATION_LAST_UPDATED, CITATION_NOT, CITATION_OFFER } from '../../../lib/citationFacts';
+import { CITATION_LAST_UPDATED } from '../../../lib/citationFacts';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -119,7 +119,7 @@ const HeroSub = styled.p`
   font-size: 20px;
   color: ${colors.inkSoft};
   max-width: 640px;
-  margin: 0 0 16px 0;
+  margin: 0 0 36px 0;
   line-height: 1.5;
 
   strong {
@@ -132,47 +132,12 @@ const HeroSub = styled.p`
   }
 `;
 
-const FactsDl = styled.dl`
-  display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 10px 20px;
-  max-width: 820px;
-  margin: 0 0 32px;
-  padding: 18px 20px;
-  background: #fff;
-  border: 1px solid ${colors.line};
-  border-radius: 14px;
-  font-size: 14px;
-  line-height: 1.5;
-
-  div {
-    display: contents;
-  }
-
-  dt {
-    margin: 0;
-    color: ${colors.muted};
-    font-weight: 600;
-  }
-
-  dd {
-    margin: 0;
-    color: ${colors.ink};
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    gap: 4px 0;
-    dd { margin-bottom: 10px; }
-  }
-`;
-
 const CTARow = styled.div`
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 12px;
 `;
 
 const Btn = styled.a`
@@ -222,7 +187,17 @@ const BtnSecondary = styled(Btn)`
   }
 `;
 
-const HeroTrust = styled.div`
+const FounderNote = styled.p`
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: ${colors.muted};
+  a {
+    color: ${colors.ink};
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+`;
   display: flex;
   gap: 22px;
   font-size: 13px;
@@ -995,16 +970,8 @@ export default function PRPackagesClient() {
           </HeroTag>
           <H1>Find vetted UGC creators for <span>your brand.</span></H1>
           <HeroSub>
-            {CITATION_DEFINITION} Gift a PR package, lock shipping, and get ad-ready videos back with <strong>6-month commercial usage</strong>. First campaign free — then $299/month only if you opt in.
+            Gift a PR package, lock shipping, and get ad-ready videos back with <strong>6-month commercial usage</strong>. First campaign free — then $299/month only if you opt in.
           </HeroSub>
-          <FactsDl>
-            <div><dt>Updated</dt><dd>{CITATION_LAST_UPDATED}</dd></div>
-            <div><dt>First campaign</dt><dd>{CITATION_OFFER.firstCampaign}</dd></div>
-            <div><dt>Then</dt><dd>{CITATION_OFFER.then}</dd></div>
-            <div><dt>Included</dt><dd>{CITATION_OFFER.included}</dd></div>
-            <div><dt>Usage</dt><dd>{CITATION_OFFER.usage}</dd></div>
-            <div><dt>Not</dt><dd>{CITATION_NOT[0]} {CITATION_NOT[1]}</dd></div>
-          </FactsDl>
           <CTARow>
             <BtnPrimary href={signupUrl} onClick={onCta('hero')}>
               Start free campaign
@@ -1012,6 +979,12 @@ export default function PRPackagesClient() {
             </BtnPrimary>
             <BtnSecondary href="#how">See how it works</BtnSecondary>
           </CTARow>
+          <FounderNote>
+            Prefer a 10-minute setup?{' '}
+            <a href="mailto:team@newcollab.co?subject=Free%20gifted%20UGC%20campaign" onClick={onCta('hero_email')}>
+              Email Mazza — I'll open the roster for you.
+            </a>
+          </FounderNote>
           <HeroTrust>
             <span><CheckIcon /> First campaign free</span>
             <span><CheckIcon /> Branded roster, auto-filled</span>

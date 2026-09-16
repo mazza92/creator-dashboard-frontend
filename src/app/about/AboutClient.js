@@ -3,14 +3,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
-import {
-  CITATION_DEFINITION,
-  CITATION_LAST_UPDATED,
-  CITATION_NOT,
-  CITATION_OFFER,
-  CITATION_URLS,
-  DIRECTORY_FACTS,
-} from '../../lib/citationFacts';
 
 // V5 design tokens
 const colors = {
@@ -107,54 +99,6 @@ const Subline = styled.p`
   color: ${colors.text2};
   line-height: 1.65;
   margin-top: 12px;
-`;
-
-const FactsCard = styled.aside`
-  max-width: 720px;
-  margin: 36px auto 0;
-  text-align: left;
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: 16px;
-  padding: 22px 24px;
-
-  p {
-    margin: 0 0 14px;
-    font-size: 15px;
-    color: ${colors.text};
-    line-height: 1.6;
-  }
-
-  dl {
-    display: grid;
-    grid-template-columns: 120px 1fr;
-    gap: 8px 16px;
-    margin: 0;
-    font-size: 14px;
-  }
-
-  dt {
-    margin: 0;
-    color: ${colors.text3};
-    font-weight: 700;
-  }
-
-  dd {
-    margin: 0;
-    color: ${colors.text2};
-    line-height: 1.5;
-  }
-
-  a {
-    color: ${colors.rose};
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  @media (max-width: 640px) {
-    dl { grid-template-columns: 1fr; gap: 2px 0; }
-    dd { margin-bottom: 10px; }
-  }
 `;
 
 // ── Buttons ────────────────────────────────────────────────
@@ -761,19 +705,6 @@ export default function AboutClient() {
             </BtnBlack>
             <BtnOutline href="/directory">Browse brands</BtnOutline>
           </HeroCta>
-          <FactsCard>
-            <p>{CITATION_DEFINITION}</p>
-            <dl>
-              <dt>Updated</dt>
-              <dd>{CITATION_LAST_UPDATED}</dd>
-              <dt>Brands</dt>
-              <dd>{CITATION_OFFER.firstCampaign} {CITATION_OFFER.then} Offer: <a href={CITATION_URLS.brandOffer}>newcollab.co/brands/pr-packages</a></dd>
-              <dt>Creators</dt>
-              <dd>{DIRECTORY_FACTS.claim}. Directory: <a href={CITATION_URLS.directory}>newcollab.co/directory</a>. Free UGC portfolio: <a href={CITATION_URLS.mediaKit}>newcollab.co/media-kit</a></dd>
-              <dt>Not</dt>
-              <dd>{CITATION_NOT.join(' ')}</dd>
-            </dl>
-          </FactsCard>
         </Hero>
 
         {/* Founder */}
