@@ -6,6 +6,7 @@ import {
   buildClusterFaqSchema,
   buildClusterHowToSchema,
   buildClusterServiceSchema,
+  buildClusterWebPageSchema,
   clusterSlugs,
   getClusterPage,
 } from '../_cluster/catalog';
@@ -59,6 +60,7 @@ export default async function BrandClusterRoute({ params }) {
 
   return (
     <>
+      <JsonLd data={buildClusterWebPageSchema(page)} />
       <JsonLd data={buildClusterFaqSchema(page)} />
       <JsonLd data={buildClusterServiceSchema(page)} />
       <JsonLd data={buildClusterHowToSchema(page)} />

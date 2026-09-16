@@ -1,3 +1,5 @@
+import { CITATION_DEFINITION, CITATION_LAST_UPDATED_ISO } from '../../../lib/citationFacts';
+
 export const SITE = 'https://newcollab.co';
 export const BRAND_APP_URL = 'https://app.newcollab.co/for-brands';
 
@@ -427,5 +429,17 @@ export function buildClusterBreadcrumbSchema(page) {
       { '@type': 'ListItem', position: 2, name: 'Gifted UGC for brands', item: `${SITE}/brands/pr-packages` },
       { '@type': 'ListItem', position: 3, name: page.navTitle, item: `${SITE}/brands/${page.slug}` },
     ],
+  };
+}
+
+export function buildClusterWebPageSchema(page) {
+  const url = `${SITE}/brands/${page.slug}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: page.title,
+    url,
+    dateModified: CITATION_LAST_UPDATED_ISO,
+    description: page.compare ? `${CITATION_DEFINITION} ${page.description}` : page.description,
   };
 }

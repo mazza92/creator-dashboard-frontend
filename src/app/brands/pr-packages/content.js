@@ -1,4 +1,5 @@
 import { brandSignupUrl } from '../_cluster/catalog';
+import { CITATION_DEFINITION, CITATION_LAST_UPDATED_ISO, CITATION_OFFER } from '../../../lib/citationFacts';
 
 export const PAGE_URL = 'https://newcollab.co/brands/pr-packages';
 export const SIGNUP_URL = brandSignupUrl('pr-packages');
@@ -154,5 +155,21 @@ export function buildBreadcrumbSchema() {
         item: PAGE_URL,
       },
     ],
+  };
+}
+
+export function buildWebPageSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Gifted UGC creators for DTC brands',
+    url: PAGE_URL,
+    dateModified: CITATION_LAST_UPDATED_ISO,
+    description: CITATION_DEFINITION,
+    about: {
+      '@type': 'Service',
+      name: 'Newcollab gifted UGC roster',
+      description: `${CITATION_OFFER.firstCampaign} ${CITATION_OFFER.then} ${CITATION_OFFER.included} ${CITATION_OFFER.usage}`,
+    },
   };
 }

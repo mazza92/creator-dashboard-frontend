@@ -11,6 +11,7 @@ import {
   relatedLinks,
   trackBrandCtaClick,
 } from './catalog';
+import { CITATION_DEFINITION, CITATION_LAST_UPDATED } from '../../../lib/citationFacts';
 
 const colors = {
   pink: '#e8395f',
@@ -67,8 +68,22 @@ const HeroSub = styled.p`
   font-size: 19px;
   color: ${colors.inkSoft};
   max-width: 640px;
-  margin: 0 0 32px;
+  margin: 0 0 14px;
   line-height: 1.5;
+`;
+
+const HeroDef = styled.p`
+  font-size: 16px;
+  color: ${colors.ink};
+  max-width: 720px;
+  margin: 0 0 8px;
+  line-height: 1.55;
+`;
+
+const Updated = styled.p`
+  font-size: 13px;
+  color: ${colors.muted};
+  margin: 0 0 28px;
 `;
 
 const CTARow = styled.div`
@@ -303,6 +318,8 @@ export default function BrandClusterClient({ page }) {
           <HeroTag>For DTC brands · gifted UGC</HeroTag>
           <H1>{page.h1[0]} <span>{page.h1[1]}</span></H1>
           <HeroSub>{page.sub}</HeroSub>
+          <HeroDef>{CITATION_DEFINITION}</HeroDef>
+          <Updated>Facts last updated {CITATION_LAST_UPDATED}.</Updated>
           <CTARow>
             <BtnPrimary href={signupUrl} onClick={onCta('hero')}>Start free campaign →</BtnPrimary>
             <BtnSecondary href="#how">See how it works</BtnSecondary>
@@ -315,6 +332,36 @@ export default function BrandClusterClient({ page }) {
           </Trust>
         </Wrap>
       </HeroSection>
+
+      {page.compare && (
+        <Section>
+          <Wrap>
+            <SecLabel>Comparison</SecLabel>
+            <SecTitle>{page.uniqueTitle} <span>{page.uniqueSpan}</span></SecTitle>
+            <SecSub>{page.uniqueBody}</SecSub>
+            <TableWrap>
+              <Table>
+                <thead>
+                  <tr>
+                    <th> </th>
+                    {page.compare.columns.map((col) => <th key={col}>{col}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {page.compare.rows.map((row) => (
+                    <tr key={row.label}>
+                      <td>{row.label}</td>
+                      <td>{row.them}</td>
+                      <td>{row.us}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </TableWrap>
+            {page.compare.source && <Source>Last updated {CITATION_LAST_UPDATED}. {page.compare.source}</Source>}
+          </Wrap>
+        </Section>
+      )}
 
       <Section>
         <Wrap>
@@ -332,37 +379,15 @@ export default function BrandClusterClient({ page }) {
         </Wrap>
       </Section>
 
-      <Section style={{ background: colors.bgTint }}>
-        <Wrap>
-          <SecLabel>Why this page exists</SecLabel>
-          <SecTitle>{page.uniqueTitle} <span>{page.uniqueSpan}</span></SecTitle>
-          <SecSub>{page.uniqueBody}</SecSub>
-          {page.compare && (
-            <>
-              <TableWrap>
-                <Table>
-                  <thead>
-                    <tr>
-                      <th> </th>
-                      {page.compare.columns.map((col) => <th key={col}>{col}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {page.compare.rows.map((row) => (
-                      <tr key={row.label}>
-                        <td>{row.label}</td>
-                        <td>{row.them}</td>
-                        <td>{row.us}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </TableWrap>
-              {page.compare.source && <Source>{page.compare.source}</Source>}
-            </>
-          )}
-        </Wrap>
-      </Section>
+      {!page.compare && (
+        <Section style={{ background: colors.bgTint }}>
+          <Wrap>
+            <SecLabel>Why this page exists</SecLabel>
+            <SecTitle>{page.uniqueTitle} <span>{page.uniqueSpan}</span></SecTitle>
+            <SecSub>{page.uniqueBody}</SecSub>
+          </Wrap>
+        </Section>
+      )}
 
       <Section id="how">
         <Wrap>

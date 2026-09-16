@@ -1,9 +1,9 @@
 import AboutClient from './AboutClient';
 
 export const metadata = {
-  title: 'About newcollab | Built for Creators Who Want Brand Deals',
+  title: 'About Newcollab | Gifted UGC for brands and PR tools for creators',
   description:
-    'newcollab was built by a founder who spent years in influencer marketing and saw the same problem everywhere: creators with great content, no system to reach brands. So we built one.',
+    'Newcollab is a gifted UGC roster for DTC brands and a PR-forms directory plus free UGC portfolio builder for creators. It is not a paid UGC marketplace. Built by Mazza.',
   alternates: {
     canonical: 'https://newcollab.co/about',
   },

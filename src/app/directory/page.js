@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import DirectoryClient from './DirectoryClient';
+import { CITATION_LAST_UPDATED_ISO, DIRECTORY_FACTS } from '../../lib/citationFacts';
 
 export const metadata = {
   title: '2,000+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
@@ -54,8 +55,23 @@ export default async function DirectoryPage() {
     // fall back to client-side fetching — DirectoryClient handles this gracefully
   }
 
+  const datasetSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: 'Newcollab public PR application forms',
+    description: DIRECTORY_FACTS.method,
+    url: DIRECTORY_FACTS.url,
+    dateModified: CITATION_LAST_UPDATED_ISO,
+    creator: { '@type': 'Organization', name: 'Newcollab', url: 'https://newcollab.co' },
+    ...(initialTotal ? { variableMeasured: `${initialTotal} brands with a public application URL` } : {}),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetSchema) }}
+      />
       <h1 style={srOnly}>2,000+ PR Forms for Brands: Direct Application Links</h1>
       <Suspense fallback={null}>
         <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />

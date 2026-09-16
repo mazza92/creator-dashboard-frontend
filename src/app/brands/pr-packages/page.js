@@ -5,6 +5,7 @@ import {
   buildFaqPageSchema,
   buildHowToSchema,
   buildServiceSchema,
+  buildWebPageSchema,
 } from './content';
 
 export const metadata = {
@@ -31,6 +32,9 @@ export const metadata = {
       'Vetted UGC creators on a branded roster. Select, lock, ship. 5–10 videos with 6-month commercial reuse. First campaign free, then $299/month.',
     creator: '@newcollab',
   },
+  other: {
+    'article:modified_time': '2026-09-16',
+  },
 };
 
 function JsonLd({ data }) {
@@ -45,6 +49,7 @@ function JsonLd({ data }) {
 export default function PRPackagesPage() {
   return (
     <>
+      <JsonLd data={buildWebPageSchema()} />
       <JsonLd data={buildFaqPageSchema()} />
       <JsonLd data={buildServiceSchema()} />
       <JsonLd data={buildHowToSchema()} />

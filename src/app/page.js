@@ -30,7 +30,7 @@ const websiteSchema = {
   name: 'newcollab',
   url: 'https://newcollab.co',
   description:
-    'PR forms directory and brand outreach tool for nano and micro creators — 2,000+ brands with open PR application forms, AI pitch emails, a free UGC portfolio builder, and auto media kit.',
+    'Newcollab is a gifted UGC roster for DTC brands and a PR-forms directory plus free UGC portfolio builder for creators. 2,000+ brands with public PR application forms. It is not a paid UGC marketplace.',
   potentialAction: {
     '@type': 'SearchAction',
     target: 'https://newcollab.co/brands?q={search_term_string}',
@@ -44,7 +44,7 @@ const organizationSchema = {
   name: 'newcollab',
   url: 'https://newcollab.co',
   logo: 'https://newcollab.co/logo.png',
-  description: 'Newcollab helps creators in the US, Canada, Australia, and UK land brand PR packages with direct application forms, AI pitch emails, a free UGC portfolio builder, and auto-generated media kits.',
+  description: 'Newcollab is a gifted UGC roster for DTC brands and a PR-forms directory plus free UGC portfolio builder for creators. It is not a paid UGC marketplace.',
   areaServed: ['US', 'CA', 'AU', 'GB'],
   sameAs: [
     'https://instagram.com/newcollab',

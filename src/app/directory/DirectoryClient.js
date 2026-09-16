@@ -11,6 +11,7 @@ import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
 import ForBrandsCta from '../components/ForBrandsCta';
 import { getCategoryColors } from '../../utils/categoryColors';
 import { normalizeCategory, categoryLabel } from '../../constants/brandCategories';
+import { CITATION_LAST_UPDATED, DIRECTORY_FACTS, directoryCountLabel } from '../../lib/citationFacts';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -980,8 +981,13 @@ export default function DirectoryClient({
           <h1>{collectionTitle || '2,000+ PR Forms for Brands: Direct Application Links'}</h1>
           <p>
             {collectionDescription ||
-              'Browse 2,000+ verified brand PR forms with direct application links, response rates, and follower requirements. Find brands that reply to micro-influencer pitches in beauty, skincare, K-beauty, fashion, wellness, and more.'}
+              `${directoryCountLabel(total || initialTotal)}. Last checked ${CITATION_LAST_UPDATED}. Method: brands listed with a public application URL. Filter by beauty, skincare, K-beauty, fashion, wellness, and more.`}
           </p>
+          {!collectionTitle && (
+            <p style={{ marginTop: 12, fontSize: 13, color: '#8A8A8A' }}>
+              {DIRECTORY_FACTS.method}
+            </p>
+          )}
           {/* Only show QuickLinks when there are brands to filter, or when not on a country page */}
           {(!initialCountry || total > 0 || loading) && (
             <QuickLinks>
