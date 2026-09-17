@@ -91,6 +91,8 @@ import NotFound from './cra-pages/NotFound';
 // Lazy-loaded heavy components for code splitting (reduces initial bundle ~40%)
 // These load on-demand when the route is accessed
 const BrandPRHome = lazy(() => import('./cra-pages/BrandPRHome'));
+const Polly = lazy(() => import('./creator-portal/Polly'));
+const Timeline = lazy(() => import('./creator-portal/Timeline'));
 const BrandPRRoster = lazy(() => import('./cra-pages/BrandPRRoster'));
 const Pool = lazy(() => import('./cra-pages/Pool'));
 const CreatorOverview = lazy(() => import('./creator-portal/CreatorOverview'));
@@ -549,7 +551,10 @@ function AppContent() {
                 <Route path='dashboard/pr-brands' element={<LazyRoute skeleton={<ForYouSkeleton />}><BrandPRHome /></LazyRoute>} />
                 <Route path='dashboard/pr-pipeline' element={<LazyRoute><PRPipeline /></LazyRoute>} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
-                <Route path='dashboard/for-you' element={<LazyRoute skeleton={<ForYouSkeleton />}><BrandPRHome /></LazyRoute>} />
+                <Route path='dashboard/for-you' element={<LazyRoute skeleton={<ForYouSkeleton />}><Polly /></LazyRoute>} />
+                <Route path='dashboard/polly' element={<Navigate to="/creator/dashboard/for-you" replace />} />
+                <Route path='dashboard/timeline/:brandId' element={<LazyRoute skeleton={<ForYouSkeleton />}><Timeline /></LazyRoute>} />
+                <Route path='dashboard/timeline' element={<LazyRoute skeleton={<ForYouSkeleton />}><Timeline /></LazyRoute>} />
                 <Route path='dashboard/pr-ready' element={<PRReady />} />
                 <Route path='dashboard/pool' element={<LazyRoute><Pool /></LazyRoute>} />
                 <Route path='dashboard/media-kit' element={<LazyRoute><MediaKit /></LazyRoute>} />

@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import { apiClient } from '../config/api';
 import { useNotification } from './NotificationContext'; // Import useNotification
+import { clearPollyLocalThreads } from '../creator-portal/pollyStorage';
 
 export const UserContext = createContext(null);
 
@@ -144,6 +145,7 @@ export const UserProvider = ({ children }) => {
             localStorage.removeItem('userRole');
             localStorage.removeItem('userId');
             localStorage.removeItem('authToken');
+            clearPollyLocalThreads();
             window.location.href = '/login';
         }
     };

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Sparkles, Bell, Users, BadgeCheck, Video, FileText } from 'lucide-react';
+import { Search, Sparkles, Bell, FileText, Calendar } from 'lucide-react';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
@@ -379,15 +379,32 @@ const PoolMobileBadge = styled(CountBadge)`
 `;
 
 const Content = styled.main`
-  min-height: calc(100vh - 64px);
-  padding-top: 8px;
   min-width: 0;
   overflow-x: clip;
 
-  @media (max-width: 840px) {
-    min-height: calc(100vh - 108px);
-    padding-top: 4px;
-  }
+  ${p => p.$polly ? `
+    height: calc(100vh - 64px);
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    @media (max-width: 840px) {
+      height: calc(100vh - 108px);
+    }
+    > * {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+  ` : `
+    min-height: calc(100vh - 64px);
+    padding-top: 8px;
+    @media (max-width: 840px) {
+      min-height: calc(100vh - 108px);
+      padding-top: 4px;
+    }
+  `}
 `;
 
 // Dropdown Menu
@@ -502,16 +519,13 @@ const EmptyNotifications = styled.div`
 // ============================================================
 
 const navItems = [
-  { label: 'For You', icon: Sparkles, path: '/creator/dashboard/for-you' },
+  { label: 'Polly', icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Directory', icon: Search, path: '/creator/dashboard/pr-brands' },
+  { label: 'Timeline', icon: Calendar, path: '/creator/dashboard/timeline' },
+  { label: 'My Kit', icon: FileText, path: '/creator/dashboard/my-kit' },
 ];
 
-const moreNavItems = [
-  { label: 'My Kit', icon: FileText, path: '/creator/dashboard/my-kit' },
-  { label: 'Assistant', icon: BadgeCheck, path: '/creator/dashboard/pr-ready' },
-  { label: 'Content Hub', icon: Video, path: '/creator/dashboard/content-hub', isNew: true },
-  { label: 'Pool', icon: Users, path: '/creator/dashboard/pool' },
-];
+const moreNavItems = [];
 
 function creditChipCopy(balance) {
   if (!balance) return 'Credits';
@@ -704,12 +718,15 @@ const CreatorDashboardLayout = () => {
             <NavTab
               key={path}
               to={path}
-              $active={location.pathname === path}
+              $active={
+                location.pathname === path
+                || (path === '/creator/dashboard/timeline' && location.pathname.startsWith('/creator/dashboard/timeline'))
+              }
               onMouseEnter={() => handleNavHover(path)}
             >
               <Icon />
               {label}
-              {label === 'For You' && matchedRemaining > 0 && (
+              {label === 'Polly' && matchedRemaining > 0 && (
                 <ForYouDesktopBadge>{matchedRemaining}</ForYouDesktopBadge>
               )}
             </NavTab>
@@ -771,7 +788,7 @@ const CreatorDashboardLayout = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <MenuLabel>More</MenuLabel>
+            {moreNavItems.length > 0 && <MenuLabel>More</MenuLabel>}
             {moreNavItems.map(({ label, icon: Icon, path, isNew }) => (
               <MenuItem
                 key={path}
@@ -853,7 +870,7 @@ const CreatorDashboardLayout = () => {
         )}
       </TopNav>
 
-      <Content>
+      <Content $polly={/\/dashboard\/(for-you|polly)(\/|$)/.test(location.pathname)}>
         <Outlet />
       </Content>
 

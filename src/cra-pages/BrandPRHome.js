@@ -65,6 +65,60 @@ function statusToStage(status) {
   return 0;
 }
 
+function formatApplicants(n, { afterApply } = {}) {
+  const count = Number(n) || 0;
+  if (afterApply) {
+    if (count <= 1) return { value: '1', label: 'creator applied — you’re first' };
+    return { value: count.toLocaleString('en-US'), label: 'creators applied, including you' };
+  }
+  if (count <= 0) return { value: '0', label: 'creators on this list yet' };
+  return {
+    value: count.toLocaleString('en-US'),
+    label: count === 1 ? 'creator already applied' : 'creators already applied',
+  };
+}
+
+function formatReplyRate(rate) {
+  const n = Number(rate);
+  if (Number.isFinite(n) && n > 0) {
+    return { value: `${Math.round(n)}%`, label: 'avg brand reply rate' };
+  }
+  return { value: 'New', label: 'reply rate still building' };
+}
+
+function ApplyTransparency({ stats, afterApply = false }) {
+  if (!stats) return null;
+  const applicants = formatApplicants(stats.applicants, { afterApply });
+  const reply = formatReplyRate(stats.response_rate);
+  const days = Number(stats.avg_response_days);
+  return (
+    <TransparencyBox>
+      <StatPair>
+        <StatCell>
+          <b>{applicants.value}</b>
+          <em>{applicants.label}</em>
+        </StatCell>
+        <StatCell>
+          <b>{reply.value}</b>
+          <em>{reply.label}</em>
+        </StatCell>
+      </StatPair>
+      {afterApply ? (
+        <TransparencyNote>
+          We’ll email you when they pick or pass. Track every step on Timeline.
+          {Number.isFinite(days) && days > 0 ? ` Typical reply window is about ${days} day${days === 1 ? '' : 's'}.` : ''}
+        </TransparencyNote>
+      ) : (
+        <TransparencyNote>
+          {Number(stats.applicants) > 0
+            ? 'Live count for this campaign. Reply rate is this brand’s history — not a guarantee.'
+            : 'You’ll be first on this list. Reply rate is this brand’s history when we have it.'}
+        </TransparencyNote>
+      )}
+    </TransparencyBox>
+  );
+}
+
 function initials(name) {
   const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return '?';
@@ -771,7 +825,10 @@ export default function BrandPRHome() {
         return exists ? prev.map(mark) : [{ ...current, applied: true, applyStatus: data.status || 'review' }, ...prev];
       });
       setDirBrands((prev) => prev.map(mark));
-      setDoneBrand(current);
+      setDoneBrand({
+        ...current,
+        transparency: data.transparency || pack?.transparency || null,
+      });
       setView('done');
     } catch (err) {
       const status = err.response?.status;
@@ -1429,6 +1486,12 @@ export default function BrandPRHome() {
                 I agree to the gifted terms and 6-month UGC usage
               </Chk>
             </Block>
+            {pack?.transparency && (
+              <Block>
+                <h2>Before you send</h2>
+                <ApplyTransparency stats={pack.transparency} />
+              </Block>
+            )}
             <Foot>
               <Cta type="button" disabled={submitting || !agreed || !shipReady(ship)} onClick={submitApply}>
                 {submitting ? 'Applying…' : 'Apply for Brand PR'}
@@ -1453,6 +1516,14 @@ export default function BrandPRHome() {
             {doneBrand.name} will see your posts and where to ship. If they pick you, the box comes to your address. We’ll email you either way.
           </p>
         </Done>
+        {doneBrand.transparency && (
+          <ApplyTransparency stats={doneBrand.transparency} afterApply />
+        )}
+        <DoneActions>
+          <Cta type="button" onClick={() => navigate(`/creator/dashboard/timeline/${doneBrand.id}`)}>
+            Track this on Timeline
+          </Cta>
+        </DoneActions>
         {noCredits && (
           <OutBanner type="button" onClick={() => showPaywall('done_last_credit')}>
             <b>That was your last free credit</b>
@@ -3092,6 +3163,51 @@ const CheckMark = styled.div`
   margin: 0 auto 14px;
   font-size: 20px;
   font-weight: 700;
+`;
+const TransparencyBox = styled.div`
+  margin: 18px 0 8px;
+  background: ${CREAM};
+  border: 1px solid ${LINE};
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: ${tokens.shadowCard};
+`;
+const StatPair = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+`;
+const StatCell = styled.div`
+  background: ${tokens.subtle};
+  border-radius: 12px;
+  padding: 12px 12px 11px;
+  min-width: 0;
+  b {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    color: ${INK};
+    line-height: 1.15;
+  }
+  em {
+    display: block;
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 600;
+    color: ${MUTED};
+    margin-top: 4px;
+    line-height: 1.35;
+  }
+`;
+const TransparencyNote = styled.p`
+  margin: 10px 2px 0;
+  font-size: 12px;
+  color: ${MUTED};
+  line-height: 1.45;
+`;
+const DoneActions = styled.div`
+  margin: 4px 0 16px;
 `;
 const Related = styled.div`
   margin: 8px 0 24px;

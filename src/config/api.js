@@ -3,76 +3,72 @@ import axios from 'axios';
 // Default to direct API domain in production to match existing backend setup.
 // In development, use the CRA proxy (configured in package.json) to avoid cross-origin cookie issues.
 // Ensure we never use localhost in production (browser security blocks it)
-const getApiUrl = () => {
-  // Runtime check: if we're running in browser on production domain, never use localhost
-  const isProductionDomain = typeof window !== 'undefined' &&
-    (window.location.hostname === 'newcollab.co' ||
-     window.location.hostname === 'www.newcollab.co' ||
-     window.location.hostname === 'app.newcollab.co');
-
-  const envUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL;
-
-  if (envUrl) {
-    // If env var is set but points to localhost, override it in production
-    if (envUrl.includes('localhost')) {
-      if (isProductionDomain || process.env.NODE_ENV === 'production') {
-        console.warn('⚠️ REACT_APP_API_URL points to localhost in production, using https://api.newcollab.co instead');
-        return 'https://api.newcollab.co';
-      }
-      // In development with explicit localhost env var, use it directly
-      return envUrl;
-    }
-    return envUrl;
-  }
-
-  // No env var set - use the production API for production domains
-  if (isProductionDomain) {
-    return 'https://api.newcollab.co';
-  }
-
-  // In development on localhost, use empty baseURL to leverage the CRA proxy (package.json proxy setting)
-  // This makes requests go through localhost:3000 which proxies to localhost:5000, solving cookie issues
-  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return ''; // Empty baseURL = relative URLs = goes through CRA proxy
-  }
-
-  // Final fallback - default to production API if nothing else matches
-  const fallbackUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co';
-  
-  // Safety check - never return undefined
-  if (!fallbackUrl) {
-    console.error('🔥 CRITICAL: API URL is undefined, forcing production API');
-    return 'https://api.newcollab.co';
-  }
-  
-  return fallbackUrl;
+const isProductionHost = () => {
+  if (typeof window === 'undefined') return false;
+  const h = window.location.hostname;
+  return h === 'newcollab.co' || h === 'www.newcollab.co' || h === 'app.newcollab.co';
 };
 
-// Use a function that checks at runtime, not just build time
+const isLocalDashboard = () => (
+  typeof window !== 'undefined' && !isProductionHost()
+);
+
+const stripApiSuffix = (url) => String(url || '').replace(/\/api\/?$/, '');
+
+const getApiUrl = () => {
+  if (isProductionHost()) {
+    return 'https://api.newcollab.co';
+  }
+
+  // Any local/dev host talks to local Flask via the CRA proxy — never production.
+  if (isLocalDashboard()) {
+    const envUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_BASE || '';
+    if (/localhost|127\.0\.0\.1/.test(envUrl)) {
+      return stripApiSuffix(envUrl);
+    }
+    return '';
+  }
+
+  const envUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && /localhost|127\.0\.0\.1/.test(envUrl)) {
+    return stripApiSuffix(envUrl);
+  }
+  return process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.newcollab.co';
+};
+
 let cachedApiUrl = null;
 const getRuntimeApiUrl = () => {
+  if (isLocalDashboard() && cachedApiUrl && String(cachedApiUrl).includes('newcollab.co')) {
+    cachedApiUrl = null;
+  }
   if (cachedApiUrl === null) {
     cachedApiUrl = getApiUrl();
-    // Ensure we never return undefined
-    if (!cachedApiUrl && cachedApiUrl !== '') {
-      console.error('⚠️ API URL is undefined, defaulting to production API');
-      cachedApiUrl = 'https://api.newcollab.co';
+    if (cachedApiUrl == null) {
+      cachedApiUrl = isLocalDashboard() ? '' : 'https://api.newcollab.co';
     }
-    console.log('🌐 API_URL resolved to:', cachedApiUrl, {
+    console.log('🌐 API_URL resolved to:', cachedApiUrl === '' ? '(CRA proxy → :5000)' : cachedApiUrl, {
       hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
       nodeEnv: process.env.NODE_ENV,
       reactAppUrl: process.env.REACT_APP_API_URL,
-      nextPublicUrl: process.env.NEXT_PUBLIC_API_URL
     });
   }
   return cachedApiUrl;
 };
 
-// For build-time compatibility, still export a constant, but it will be overridden at runtime
-const API_URL = getApiUrl() || 'https://api.newcollab.co';
+const axiosBaseURL = () => {
+  if (isLocalDashboard()) {
+    const url = getRuntimeApiUrl();
+    if (url && String(url).includes('newcollab.co')) return '';
+    return url == null ? '' : url;
+  }
+  const url = getRuntimeApiUrl();
+  return url == null ? 'https://api.newcollab.co' : url;
+};
+
+const API_URL = axiosBaseURL();
 
 const api = axios.create({
-    baseURL: getRuntimeApiUrl() || 'https://api.newcollab.co',
+    baseURL: axiosBaseURL(),
     headers: {
         'Content-Type': 'application/json',
     },
@@ -82,10 +78,11 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         // Ensure baseURL is never undefined at request time
-        if (!config.baseURL || config.baseURL === 'undefined') {
-            const runtimeUrl = getRuntimeApiUrl();
-            config.baseURL = runtimeUrl;
-            console.warn('⚠️ BaseURL was undefined, set to:', runtimeUrl);
+        if (isLocalDashboard()) {
+            config.baseURL = axiosBaseURL();
+        } else if (config.baseURL == null || config.baseURL === 'undefined') {
+            config.baseURL = axiosBaseURL();
+            console.warn('⚠️ BaseURL was undefined, set to:', config.baseURL);
         }
         
         // Only send CSRF token for endpoints that require JWT authentication
@@ -316,10 +313,10 @@ export const getProxiedMediaUrl = (url) => {
 };
 
 export function getOAuthApiOrigin() {
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    const explicit = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE;
-    if (explicit && /localhost:5000/.test(explicit)) {
-      return 'http://localhost:5000';
+  if (typeof window !== 'undefined' && !isProductionHost()) {
+    const explicit = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE || '';
+    if (/localhost|127\.0\.0\.1/.test(explicit)) {
+      return stripApiSuffix(explicit);
     }
     return window.location.origin;
   }

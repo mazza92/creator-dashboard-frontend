@@ -5,7 +5,7 @@ import { needsWaitlistGate, WAITLIST_PATH } from '../utils/creatorApproval';
 
 /**
  * Creator `/` and `/dashboard` index redirect.
- * Pending/rejected → waitlist; otherwise For You.
+ * Pending/rejected → waitlist; otherwise Polly (For You home).
  */
 export default function CreatorHomeRedirect() {
   const { user } = useContext(UserContext);

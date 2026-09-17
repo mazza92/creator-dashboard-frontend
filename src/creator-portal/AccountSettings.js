@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings, FiEdit2, FiAlertTriangle } from 'react-icons/fi';
-import api from '../config/api';
+import api, { getOAuthApiOrigin } from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import CancelRetentionModal from './CancelRetentionModal';
@@ -48,10 +48,8 @@ const AccountSettings = () => {
   const [savingNiches, setSavingNiches] = useState(false);
   const [nichesDirty, setNichesDirty] = useState(false);
 
-  // Social scrape (PR-Ready)
-  const [socialPlatform, setSocialPlatform] = useState('instagram');
-  const [socialHandle, setSocialHandle] = useState('');
-  const [scanning, setScanning] = useState(false);
+  // TikTok Login Kit (PR-Ready / kit / matching)
+  const [tiktokRefreshing, setTiktokRefreshing] = useState(false);
   const [lastScan, setLastScan] = useState(null);
   const [accountEmail, setAccountEmail] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -75,7 +73,50 @@ const AccountSettings = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [showDeleteModal, deletingAccount]);
 
-  // Email nudge CTA: /creator/dashboard/settings?upgrade=pro
+  // TikTok Login Kit return: /creator/dashboard/settings?social=success
+  useEffect(() => {
+    const social = searchParams.get('social');
+    const platform = searchParams.get('platform');
+    if (!social || (platform && platform !== 'tiktok')) return;
+
+    const handle = (searchParams.get('handle') || '').replace(/^@/, '');
+    const followers = searchParams.get('followers');
+    const posts = searchParams.get('posts');
+    const reason = searchParams.get('reason');
+
+    if (social === 'success') {
+      if (handle) {
+        setLastScan({
+          handle,
+          platform: 'tiktok',
+          followers: followers != null ? Number(followers) : null,
+          posts: posts != null ? Number(posts) : null,
+        });
+      }
+      message.success(
+        handle
+          ? `TikTok updated for @${handle}`
+          : 'TikTok data refreshed across your account'
+      );
+      fetchCreatorProfile();
+    } else if (social === 'failed') {
+      const reasonText = {
+        oauth_error: 'TikTok login did not complete. Try again.',
+        restricted_region: 'TikTok Login Kit is not available in your region.',
+        no_username: 'TikTok did not return a username. Try reconnecting.',
+        below_follower_min: 'TikTok connected, but follower minimum was not met.',
+        below_post_min: 'TikTok connected, but there were not enough public posts.',
+        inactive: 'TikTok connected, but the account looks inactive.',
+      }[reason] || 'Could not refresh TikTok. Try again.';
+      message.error(reasonText);
+    }
+
+    const next = new URLSearchParams(searchParams);
+    ['social', 'platform', 'handle', 'followers', 'posts', 'reason'].forEach((key) => {
+      next.delete(key);
+    });
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
   useEffect(() => {
     const feature = consumeUpgradeDeeplink(searchParams);
     if (!feature) return;
@@ -121,6 +162,16 @@ const AccountSettings = () => {
       }
       const email = profileResponse?.data?.email;
       if (email) setAccountEmail(email);
+      const socialRes = await api.get('/api/social/status').catch(() => null);
+      const social = socialRes?.data;
+      if (social?.handle && social.platform === 'tiktok') {
+        setLastScan({
+          handle: String(social.handle).replace(/^@/, ''),
+          platform: social.platform || 'tiktok',
+          followers: social.follower_count,
+          posts: social.media_count,
+        });
+      }
     } catch (error) {
       console.error('Error fetching creator profile:', error);
     }
@@ -190,38 +241,12 @@ const AccountSettings = () => {
     }
   };
 
-  const scanSocialProfile = async () => {
-    const handle = socialHandle.trim().replace(/^@/, '');
-    if (!handle) {
-      message.warning('Enter your Instagram or TikTok username');
-      return;
-    }
-    if (handle.includes('..')) {
-      message.error('Username cannot have consecutive periods');
-      return;
-    }
-    setScanning(true);
-    try {
-      const res = await api.post('/api/pr-ready/refresh-scrape', {
-        handle,
-        platform: socialPlatform,
-      });
-      if (res.data?.warning) message.warning(res.data.warning);
-      else message.success(`Scanned @${handle}`);
-      setLastScan({
-        handle: res.data?.handle || handle,
-        platform: res.data?.platform || socialPlatform,
-        followers: res.data?.scrape?.follower_count,
-        posts: res.data?.scrape?.recent_posts?.length
-          || res.data?.scrape?.recent_thumbnails?.length
-          || 0,
-      });
-    } catch (error) {
-      console.error('Error scanning profile:', error);
-      message.error(error.response?.data?.error || 'Scan failed. Try again.');
-    } finally {
-      setScanning(false);
-    }
+  const reconnectTikTok = () => {
+    if (tiktokRefreshing) return;
+    setTiktokRefreshing(true);
+    const apiBase = getOAuthApiOrigin();
+    const returnUrl = encodeURIComponent(`${window.location.origin}/creator/dashboard/settings`);
+    window.location.href = `${apiBase}/api/social/connect/tiktok?return_url=${returnUrl}&source=settings`;
   };
 
   const handleManageSubscription = async () => {
@@ -463,57 +488,39 @@ const AccountSettings = () => {
 
       <Section>
         <SectionHeader>
-          <SectionTitle>Social profile</SectionTitle>
+          <SectionTitle>TikTok profile</SectionTitle>
           <SectionSubtitle>
-            Scan Instagram or TikTok to power PR-Ready score, bio rewrite, and kit tools
+            Reconnect with TikTok Login Kit to refresh followers, posts, and kit data across your account
           </SectionSubtitle>
         </SectionHeader>
         <NicheCard>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-            {['instagram', 'tiktok'].map((p) => (
-              <NicheChip
-                key={p}
-                $selected={socialPlatform === p}
-                onClick={() => setSocialPlatform(p)}
-                style={{ textTransform: 'capitalize' }}
-              >
-                {p}
-              </NicheChip>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ color: '#6B7280', fontWeight: 700 }}>@</span>
-            <input
-              value={socialHandle}
-              onChange={(e) =>
-                setSocialHandle(
-                  e.target.value.replace(/[^a-zA-Z0-9_.]/g, '').slice(0, 30).toLowerCase()
-                )
-              }
-              placeholder="yourhandle"
-              style={{
-                flex: 1,
-                border: '1px solid #E5E7EB',
-                borderRadius: 10,
-                padding: '10px 12px',
-                fontSize: 14,
-              }}
-            />
-          </div>
+          {lastScan?.handle ? (
+            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#111827', fontWeight: 600 }}>
+              @{lastScan.handle}
+            </p>
+          ) : (
+            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6B7280' }}>
+              No TikTok connected yet
+            </p>
+          )}
           {lastScan && (
             <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280' }}>
-              Last scan: @{lastScan.handle} on {lastScan.platform}
-              {lastScan.followers != null ? ` · ${lastScan.followers} followers` : ''}
+              Last connected on TikTok
+              {lastScan.followers != null ? ` · ${Number(lastScan.followers).toLocaleString()} followers` : ''}
               {lastScan.posts ? ` · ${lastScan.posts} posts` : ''}
             </p>
           )}
           <SaveNichesButton
-            onClick={scanSocialProfile}
-            disabled={scanning || !socialHandle.trim()}
+            onClick={reconnectTikTok}
+            disabled={tiktokRefreshing}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            {scanning ? 'Scanning…' : 'Scan profile'}
+            {tiktokRefreshing
+              ? 'Opening TikTok…'
+              : lastScan?.handle
+                ? 'Refresh TikTok data'
+                : 'Connect TikTok'}
           </SaveNichesButton>
         </NicheCard>
       </Section>

@@ -48,6 +48,7 @@ const AdminReports = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
+  const [polly, setPolly] = useState(null);
   const [nudgeSent, setNudgeSent] = useState({});
   const [trafficRefreshing, setTrafficRefreshing] = useState(false);
   const [lastFetched, setLastFetched] = useState(null);
@@ -85,8 +86,13 @@ const AdminReports = () => {
       params.append('at_limit_limit', '200');
       params.append('period', selectedPeriod);
       const url = `/api/admin/reports/founder-dashboard?${params.toString()}`;
-      const { data: dashboardData } = await api.get(url, getApiConfig());
+      const pollyUrl = `/api/admin/reports/polly?period=${selectedPeriod}`;
+      const [{ data: dashboardData }, pollyRes] = await Promise.all([
+        api.get(url, getApiConfig()),
+        api.get(pollyUrl, getApiConfig()).catch(() => ({ data: null })),
+      ]);
       setData(dashboardData);
+      setPolly(pollyRes?.data || null);
       setLastFetched(new Date());
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -366,6 +372,42 @@ const AdminReports = () => {
             </Milestone>
           </MilestoneRow>
         </GoalCard>
+
+        <SectionLabel>Polly beta</SectionLabel>
+        <TrafficGrid>
+          <HealthCard>
+            <HcLabel>Opened Polly</HcLabel>
+            <HcValue>{polly?.reach?.openers || 0}</HcValue>
+            <HcDelta $up={(polly?.reach?.active_threads || 0) > 0}>
+              {polly?.reach?.active_threads || 0} active threads · {polly?.chat?.turns || 0} turns
+            </HcDelta>
+          </HealthCard>
+          <HealthCard>
+            <HcLabel>Chat errors</HcLabel>
+            <HcValue $color={(polly?.chat?.errors || 0) > 0 ? 'rose' : 'green'}>{polly?.chat?.errors || 0}</HcValue>
+            <HcDelta $up={!(polly?.chat?.error_rate > 0)}>
+              {polly?.chat?.error_rate || 0}% error rate
+            </HcDelta>
+          </HealthCard>
+          <HealthCard>
+            <HcLabel>Outcomes</HcLabel>
+            <HcValue>{polly?.outcomes?.pitch_sent || 0}</HcValue>
+            <HcDelta $up>
+              {polly?.outcomes?.applied || 0} gifted applies · {polly?.outcomes?.kit_views || 0} kit views
+            </HcDelta>
+          </HealthCard>
+          <HealthCard>
+            <HcLabel>LLM this period</HcLabel>
+            <HcValue style={{ fontSize: 18, letterSpacing: 0 }}>
+              {Object.keys(polly?.llm || {}).length
+                ? Object.entries(polly.llm).map(([k, v]) => `${k} ${v}`).join(' · ')
+                : 'n/a yet'}
+            </HcValue>
+            <HcDelta $up>
+              {polly?.applies?.creators || 0} creators applied via Brand PR
+            </HcDelta>
+          </HealthCard>
+        </TrafficGrid>
 
         {/* 2. TOP BRANDS BY PITCHES */}
         <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
