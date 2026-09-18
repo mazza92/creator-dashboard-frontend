@@ -44,6 +44,21 @@ const PERIOD_OPTIONS = [
   { key: 'all', label: 'All time' },
 ];
 
+function formatPollyUsd(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return '$0.00';
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  if (n >= 0.01) return `$${n.toFixed(3)}`;
+  return `$${n.toFixed(4)}`;
+}
+
+function formatPollyTokens(value) {
+  const n = Number(value) || 0;
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${Math.round(n / 100) / 10}k`;
+  return String(n);
+}
+
 const AdminReports = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -397,14 +412,19 @@ const AdminReports = () => {
             </HcDelta>
           </HealthCard>
           <HealthCard>
-            <HcLabel>LLM this period</HcLabel>
-            <HcValue style={{ fontSize: 18, letterSpacing: 0 }}>
-              {Object.keys(polly?.llm || {}).length
-                ? Object.entries(polly.llm).map(([k, v]) => `${k} ${v}`).join(' · ')
+            <HcLabel>LLM cost</HcLabel>
+            <HcValue style={{ fontSize: (polly?.cost?.priced_turns || 0) ? 30 : 18, letterSpacing: (polly?.cost?.priced_turns || 0) ? -1 : 0 }}>
+              {(polly?.cost?.priced_turns || 0)
+                ? formatPollyUsd(polly.cost.usd)
                 : 'n/a yet'}
             </HcValue>
             <HcDelta $up>
-              {polly?.applies?.creators || 0} creators applied via Brand PR
+              {Object.keys(polly?.llm || {}).length
+                ? Object.entries(polly.llm).map(([k, v]) => `${k} ${v}`).join(' · ')
+                : 'no chat turns'}
+              {(polly?.cost?.input_tokens || polly?.cost?.output_tokens)
+                ? ` · ${formatPollyTokens((polly.cost.input_tokens || 0) + (polly.cost.output_tokens || 0))} tok`
+                : ''}
             </HcDelta>
           </HealthCard>
         </TrafficGrid>

@@ -1,5 +1,6 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
@@ -15,26 +16,74 @@ import {
 } from './pollyStorage';
 
 const STARTERS = [
-  { id: 'get_set_up', label: 'Get me set up', action: 'discovery' },
-  { id: 'what_is_nc', label: 'What is Newcollab?', action: 'explain_newcollab' },
-  { id: 'first_deal', label: 'Help me land my first brand deal', action: 'discovery' },
+  { id: 'line_up', label: 'Find me 3 brands to pitch today', action: 'suggest_brands', skip_discovery: true },
+  { id: 'name_a_brand', label: 'Write a pitch for a brand I name', action: 'ask_brand' },
+  { id: 'more_replies', label: 'Help me get more replies from brands', action: 'coach_profile' },
 ];
+
+function isOpenerOnlyThread(msgs) {
+  if (!Array.isArray(msgs) || msgs.length !== 1) return false;
+  const m = msgs[0] || {};
+  if (String(m.role || '').toLowerCase() !== 'assistant') return false;
+  if ((m.brands || []).length || m.pitch || (m.task_chips || []).length) return false;
+  const c = String(m.content || '');
+  return /i['’]m polly|creator assistant|what do you want to land first|mind if i ask you/i.test(c);
+}
 
 function normalizeStarters(list) {
   return (list || []).map((s) => {
-    if (s?.action === 'coach_portfolio' || /portfolio/i.test(s?.label || '')) {
+    if (s?.id === 'portfolio' || (s?.action === 'coach_portfolio' && /portfolio|review my kit/i.test(s?.label || ''))) {
       return { ...s, label: 'Review my kit', action: s.action || 'coach_portfolio' };
     }
     return s;
   });
 }
 
-function kitActionsFrom(data) {
-  if (Array.isArray(data?.kit_actions) && data.kit_actions.length) return data.kit_actions;
-  if (data?.intent === 'coach_portfolio') {
-    return [{ label: 'Open My Kit', href: '/creator/dashboard/my-kit', external: false }];
+const KIT_EDITOR_PATH = '/creator/dashboard/my-kit';
+
+function stripKitEditorPaths(text) {
+  return String(text || '')
+    .replace(/_{1,2}\s*\/?(?:https?:\/\/[^\s_]+)?creator\/dashboard\/my-kit\s*_{1,2}/gi, '')
+    .replace(/(?:here'?s the link:?\s*)?(?:https?:\/\/[^\s)]+)?\/?creator\/dashboard\/my-kit/gi, '')
+    .replace(/here'?s the link:?\s*/gi, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function wantsPortfolioCta(text) {
+  return /creator\/dashboard\/my-kit|open your kit|publish.{0,40}kit|\bmy kit\b|isn't published|not published/i.test(
+    text || ''
+  );
+}
+
+function portfolioAction() {
+  return { label: 'My portfolio', href: KIT_EDITOR_PATH, external: false };
+}
+
+function kitActionsFrom(data, content) {
+  const incoming = Array.isArray(data?.kit_actions) ? data.kit_actions : [];
+  const actions = incoming.map((a) => (
+    !a.external && /open my kit/i.test(a.label || '') ? { ...a, label: 'My portfolio' } : a
+  ));
+  if (actions.length) return actions;
+  const text = content || data?.message || '';
+  if (
+    data?.intent === 'coach_portfolio'
+    || data?.intent === 'coach_profile'
+    || wantsPortfolioCta(text)
+  ) {
+    return [portfolioAction()];
   }
   return [];
+}
+
+function kitUi(msg) {
+  const source = msg?.content || '';
+  const actions = (msg?.kit_actions || []).length
+    ? msg.kit_actions
+    : (wantsPortfolioCta(source) ? [portfolioAction()] : []);
+  return { text: stripKitEditorPaths(source), actions };
 }
 
 function brandBlurb(brand) {
@@ -129,7 +178,8 @@ const Sub = styled.p`
   font-size: 16px;
   line-height: 1.5;
   margin: 0 auto 22px;
-  max-width: 36ch;
+  max-width: 42ch;
+  white-space: pre-line;
 `;
 
 const Chips = styled.div`
@@ -366,19 +416,6 @@ const Ghost = styled.button`
   font-family: inherit;
 `;
 
-const GhostLink = styled.a`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: ${t.subtle};
-  color: ${t.ink};
-  border-radius: ${t.radiusBtn};
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-`;
-
 const bounce = keyframes`
   0%, 80%, 100% { opacity: .35; transform: translateY(0); }
   40% { opacity: 1; transform: translateY(-3px); }
@@ -454,10 +491,49 @@ const Send = styled.button`
   &:disabled { opacity: 0.35; cursor: default; }
 `;
 
+function KitMessage({ msg, onOpen }) {
+  const ui = kitUi(msg);
+  const body = chatTextWithoutPitch(ui.text, !!msg.pitch);
+  return (
+    <>
+      <AssistantText>
+        <PollyRichText text={scrubPollyVoice(body)} />
+      </AssistantText>
+      {ui.actions.length > 0 && (
+        <PitchActions style={{ marginTop: 12 }}>
+          {ui.actions.map((action) => (
+            action.external ? (
+              <Primary
+                key={action.href}
+                href={action.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {action.label}
+              </Primary>
+            ) : (
+              <Ghost
+                key={action.href}
+                type="button"
+                onClick={() => onOpen(action.href)}
+              >
+                {action.label}
+              </Ghost>
+            )
+          ))}
+        </PitchActions>
+      )}
+    </>
+  );
+}
+
 export default function Polly() {
+  const navigate = useNavigate();
   const { user } = useContext(UserContext) || {};
   const creatorId = user?.creator_id;
-  const [greeting, setGreeting] = useState("Hey, what's on the list today?");
+  const [greeting, setGreeting] = useState(
+    "Hey, I'm Polly. I will be your Creator Assistant to help you unlock brand PR and paid UGC deals.\n\nWhat do you want to land first?"
+  );
   const [credits, setCredits] = useState(null);
   const [messages, setMessages] = useState([]);
   const [suggested, setSuggested] = useState([]);
@@ -511,30 +587,21 @@ export default function Polly() {
           return;
         }
 
-        if (serverMsgs.length) {
+        const usableServer = isOpenerOnlyThread(serverMsgs) ? [] : serverMsgs;
+        const usableLocal = isOpenerOnlyThread(local?.messages) ? [] : (local?.messages || []);
+
+        if (usableServer.length) {
           hydratedRef.current = true;
-          setMessages(serverMsgs);
+          setMessages(usableServer);
           setSuggested(serverSuggested);
-          if (ownerId) writePollyLocal(ownerId, serverMsgs, serverSuggested);
+          if (ownerId) writePollyLocal(ownerId, usableServer, serverSuggested);
           return;
         }
 
-        if (local?.messages?.length) {
+        if (usableLocal.length) {
           hydratedRef.current = true;
-          setMessages(local.messages);
+          setMessages(usableLocal);
           setSuggested(local.suggested || []);
-          return;
-        }
-
-        const openerText = (res.data.opener || res.data.greeting || '').trim();
-        if (openerText) {
-          const opener = { id: newId(), role: 'assistant', content: openerText };
-          hydratedRef.current = true;
-          setMessages([opener]);
-          apiClient.put('/api/polly/thread', {
-            messages: [opener],
-            suggested_brands: [],
-          }).catch(() => {});
           return;
         }
 
@@ -596,13 +663,14 @@ export default function Polly() {
         setStarters(normalizeStarters(data.starters));
       }
       if (data.paywall) setShowUpgrade(true);
+      const rawMessage = data.message || 'Done.';
       const assistant = {
         id: newId(),
         role: 'assistant',
-        content: scrubPollyVoice(data.message || 'Done.'),
+        content: stripKitEditorPaths(scrubPollyVoice(rawMessage)),
         brands: data.brands || [],
         pitch: data.pitch || null,
-        kit_actions: kitActionsFrom(data),
+        kit_actions: kitActionsFrom(data, rawMessage),
         task_chips: data.task_chips || [],
       };
       const next = [...history, assistant];
@@ -694,7 +762,7 @@ export default function Polly() {
             </Chips>
           </Empty>
         )}
-        {brief && (
+        {brief && messages.length > 0 && (
           <BriefCard>
             <div className="kicker">Polly brief</div>
             <div className="title">{brief.title}</div>
@@ -702,7 +770,7 @@ export default function Polly() {
             {brief.priority ? <div className="priority">🎯 {brief.priority}</div> : null}
             {brief.watched?.length ? (
               <ul>
-                {brief.watched.map((item) => <li key={item}>{item}</li>)}
+                {brief.watched.map((item, i) => <li key={`${item}-${i}`}>{item}</li>)}
               </ul>
             ) : null}
             {brief.chips?.length ? (
@@ -728,29 +796,7 @@ export default function Polly() {
                 <div>
                   {msg.kind === 'alert' ? <PitchLabel>Kit view</PitchLabel> : null}
                   {msg.kind === 'nudge' ? <PitchLabel>Polly nudge</PitchLabel> : null}
-                  <AssistantText>
-                    <PollyRichText text={msg.role === 'assistant' ? scrubPollyVoice(chatTextWithoutPitch(msg.content, !!msg.pitch)) : msg.content} />
-                  </AssistantText>
-                  {msg.kit_actions?.length > 0 && (
-                    <PitchActions style={{ marginTop: 12 }}>
-                      {msg.kit_actions.map((action) => (
-                        action.external ? (
-                          <Primary
-                            key={action.href}
-                            href={action.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {action.label}
-                          </Primary>
-                        ) : (
-                          <GhostLink key={action.href} href={action.href}>
-                            {action.label}
-                          </GhostLink>
-                        )
-                      ))}
-                    </PitchActions>
-                  )}
+                  <KitMessage msg={msg} onOpen={navigate} />
                   {msg.task_chips?.length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.map((s) => (
@@ -845,7 +891,7 @@ export default function Polly() {
           <Input
             ref={inputRef}
             rows={1}
-            placeholder="Message Polly"
+            placeholder="Ask anything"
             value={draft}
             disabled={busy}
             onChange={(e) => {
