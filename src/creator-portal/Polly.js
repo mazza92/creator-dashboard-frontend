@@ -16,16 +16,23 @@ import {
 } from './pollyStorage';
 
 const STARTERS = [
+  { id: 'paid_ugc', label: 'Find paid UGC offers', action: 'suggest_gigs', skip_discovery: true },
   { id: 'line_up', label: 'Find me 3 brands to pitch today', action: 'suggest_brands', skip_discovery: true },
   { id: 'name_a_brand', label: 'Write a pitch for a brand I name', action: 'ask_brand' },
   { id: 'more_replies', label: 'Help me get more replies from brands', action: 'coach_profile' },
 ];
 
+const MORE_GIGS_CHIP = {
+  id: 'more_gigs',
+  label: 'Find more offers',
+  action: 'suggest_gigs',
+};
+
 function isOpenerOnlyThread(msgs) {
   if (!Array.isArray(msgs) || msgs.length !== 1) return false;
   const m = msgs[0] || {};
   if (String(m.role || '').toLowerCase() !== 'assistant') return false;
-  if ((m.brands || []).length || m.pitch || (m.task_chips || []).length) return false;
+  if ((m.brands || []).length || (m.gigs || []).length || m.pitch || (m.task_chips || []).length) return false;
   const c = String(m.content || '');
   return /i['’]m polly|creator assistant|what do you want to land first|mind if i ask you/i.test(c);
 }
@@ -88,6 +95,30 @@ function kitUi(msg) {
     ? msg.kit_actions
     : (wantsPortfolioCta(source) ? [portfolioAction()] : []);
   return { text: stripKitEditorPaths(source), actions };
+}
+
+function gigBlurb(gig) {
+  const desc = String(gig?.blurb || gig?.campaign_description || '').replace(/\s+/g, ' ').trim();
+  return desc;
+}
+
+function gigApplyLabel(gig) {
+  if (gig?.already_applied) return 'Open again';
+  const mode = gig?.apply_mode || (gig?.external_apply_url ? 'url' : 'kit');
+  if (mode === 'email') return 'Apply via email';
+  if (mode === 'url' || gig?.is_sourced || gig?.external_apply_url) return 'Apply here';
+  return 'Apply with kit';
+}
+
+function launchGigApply(gig, data = {}) {
+  const mode = data.apply_mode || gig?.apply_mode || (gig?.external_apply_url ? 'url' : gig?.apply_email ? 'email' : 'kit');
+  const url = data.external_apply_url || gig?.external_apply_url;
+  const email = data.apply_email || gig?.apply_email;
+  if ((mode === 'email' || (!url && email)) && email) {
+    window.location.href = `mailto:${email}`;
+    return;
+  }
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 function brandBlurb(brand) {
@@ -285,6 +316,12 @@ const BrandList = styled.div`
   display: grid;
   gap: 8px;
   min-width: 0;
+`;
+
+const GigMoreRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
 `;
 
 const BrandCard = styled.div`
@@ -536,7 +573,7 @@ export default function Polly() {
   const { user } = useContext(UserContext) || {};
   const creatorId = user?.creator_id;
   const [greeting, setGreeting] = useState(
-    "Hey, I'm Polly. I will be your Creator Assistant to help you unlock brand PR and paid UGC deals.\n\nWhat do you want to land first?"
+    "Hey, I'm Polly. I'm your Creator Assistant — I line up brand PR to pitch, and I pull paid UGC offers from other platforms into one list.\n\nWhat do you want to land first?"
   );
   const [credits, setCredits] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -544,6 +581,7 @@ export default function Polly() {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [contactingId, setContactingId] = useState(null);
+  const [applyingGigId, setApplyingGigId] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [starters, setStarters] = useState(STARTERS);
   const [brief, setBrief] = useState(null);
@@ -641,8 +679,8 @@ export default function Polly() {
     setBusy(true);
     try {
       const payload = {
-        messages: history.map(({ role, content: c, brands, pitch, id }) => ({
-          id, role, content: c, brands, pitch,
+        messages: history.map(({ role, content: c, brands, gigs, pitch, id }) => ({
+          id, role, content: c, brands, gigs, pitch,
         })),
         suggested_brands: suggestedRef.current,
         ...extras,
@@ -672,6 +710,7 @@ export default function Polly() {
         role: 'assistant',
         content: stripKitEditorPaths(scrubPollyVoice(rawMessage)),
         brands: data.brands || [],
+        gigs: data.gigs || [],
         pitch: data.pitch || null,
         kit_actions: kitActionsFrom(data, rawMessage),
         task_chips: data.task_chips || [],
@@ -699,6 +738,7 @@ export default function Polly() {
           role: 'assistant',
           content: stripKitEditorPaths(scrubPollyVoice(rawMessage)),
           brands: data.brands || [],
+          gigs: data.gigs || [],
           pitch: data.pitch || null,
           kit_actions: kitActionsFrom(data, rawMessage),
           task_chips: data.task_chips?.length
@@ -757,6 +797,45 @@ export default function Polly() {
     });
   };
 
+  const applyGig = async (gig) => {
+    if (busy || !gig?.id) return;
+    setApplyingGigId(gig.id);
+    try {
+      const res = await apiClient.post(`/api/opportunities/${gig.id}/apply`, {}, { timeout: 30000 });
+      const data = res.data || {};
+      if (typeof data.used === 'number') {
+        try {
+          window.dispatchEvent(new CustomEvent('nc-credits-changed', { detail: { used: data.used } }));
+        } catch (_) { /* ignore */ }
+      }
+      setMessages((prev) => prev.map((msg) => {
+        if (!Array.isArray(msg.gigs)) return msg;
+        return {
+          ...msg,
+          gigs: msg.gigs.map((g) => (g.id === gig.id ? { ...g, already_applied: true } : g)),
+        };
+      }));
+      launchGigApply(gig, data);
+    } catch (err) {
+      const status = err.response?.status;
+      const errData = err.response?.data || {};
+      if (errData.error === 'limit_reached' || status === 403 || status === 402) {
+        setShowUpgrade(true);
+      } else if (status === 409) {
+        setMessages((prev) => prev.map((msg) => {
+          if (!Array.isArray(msg.gigs)) return msg;
+          return {
+            ...msg,
+            gigs: msg.gigs.map((g) => (g.id === gig.id ? { ...g, already_applied: true } : g)),
+          };
+        }));
+        launchGigApply(gig);
+      }
+    } finally {
+      setApplyingGigId(null);
+    }
+  };
+
   const copyPitch = async (pitch) => {
     try { await navigator.clipboard.writeText(pitch.body || ''); } catch (_) { /* ignore */ }
   };
@@ -770,6 +849,8 @@ export default function Polly() {
     el.style.height = 'auto';
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
+
+  const lastGigIdx = messages.reduce((acc, m, i) => ((m.gigs || []).length ? i : acc), -1);
 
   return (
     <Shell>
@@ -822,7 +903,7 @@ export default function Polly() {
             ) : null}
           </BriefCard>
         )}
-        {messages.map((msg) => (
+        {messages.map((msg, idx) => (
           <Turn key={msg.id || msg.content}>
             {msg.role === 'user' ? (
               <UserRow>
@@ -849,6 +930,48 @@ export default function Polly() {
                         </Chip>
                       ))}
                     </Chips>
+                  )}
+                  {msg.gigs?.length > 0 && (
+                    <>
+                      <BrandList style={{ marginTop: 12 }}>
+                        {msg.gigs.map((gig) => (
+                          <BrandCard key={gig.id}>
+                            <Logo>
+                              <BrandLogoMark brand={{ name: gig.name || gig.brand_name, logo: gig.logo }} />
+                            </Logo>
+                            <BrandMeta>
+                              <div className="name">{gig.name || gig.brand_name}</div>
+                              <div className="cat">
+                                {[
+                                  gig.source_label ? `via ${gig.source_label}` : (gig.is_sourced ? 'via other platform' : null),
+                                  gig.pay_label,
+                                  gig.category,
+                                ].filter(Boolean).join(' · ')}
+                              </div>
+                              {gigBlurb(gig) ? <div className="why">{gigBlurb(gig)}</div> : null}
+                            </BrandMeta>
+                            <ContactBtn
+                              type="button"
+                              disabled={busy || applyingGigId === gig.id}
+                              onClick={() => applyGig(gig)}
+                            >
+                              {applyingGigId === gig.id ? 'Opening…' : gigApplyLabel(gig)}
+                            </ContactBtn>
+                          </BrandCard>
+                        ))}
+                      </BrandList>
+                      {idx === lastGigIdx && (
+                        <GigMoreRow>
+                          <Chip
+                            type="button"
+                            onClick={() => sendStarter(MORE_GIGS_CHIP)}
+                            disabled={busy}
+                          >
+                            {MORE_GIGS_CHIP.label}
+                          </Chip>
+                        </GigMoreRow>
+                      )}
+                    </>
                   )}
                   {msg.brands?.length > 0 && (
                     <BrandList style={{ marginTop: 12 }}>
