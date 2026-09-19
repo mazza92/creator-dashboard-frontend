@@ -39,6 +39,10 @@ function normalizeStarters(list) {
   });
 }
 
+function isUnlockChip(s) {
+  return s?.action === 'unlock_pro' || s?.id === 'unlock_pro';
+}
+
 const KIT_EDITOR_PATH = '/creator/dashboard/my-kit';
 
 function stripKitEditorPaths(text) {
@@ -191,15 +195,15 @@ const Chips = styled.div`
 
 const Chip = styled.button`
   border: 1px solid ${t.line};
-  background: ${t.cream};
-  color: ${t.ink};
+  background: ${p => (p.$emphasis ? t.action : t.cream)};
+  color: ${p => (p.$emphasis ? '#fff' : t.ink)};
   border-radius: ${t.radiusPill};
   padding: 10px 14px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: ${p => (p.$emphasis ? 600 : 500)};
   cursor: pointer;
   font-family: inherit;
-  &:hover { border-color: ${t.borderHover}; background: ${t.white}; }
+  &:hover { border-color: ${p => (p.$emphasis ? t.action : t.borderHover)}; background: ${p => (p.$emphasis ? t.action : t.white)}; }
 `;
 
 const Turn = styled.div`
@@ -662,7 +666,6 @@ export default function Polly() {
       if (Array.isArray(data.starters) && data.starters.length) {
         setStarters(normalizeStarters(data.starters));
       }
-      if (data.paywall) setShowUpgrade(true);
       const rawMessage = data.message || 'Done.';
       const assistant = {
         id: newId(),
@@ -682,13 +685,37 @@ export default function Polly() {
     } catch (err) {
       const status = err.response?.status;
       const data = err.response?.data || {};
-      if (status === 402 || data.paywall) setShowUpgrade(true);
-      const assistant = {
-        id: newId(),
-        role: 'assistant',
-        content: data.error || data.message || 'Something went wrong. Try again.',
-      };
-      setMessages(prev => [...prev, assistant]);
+      if (status === 402 || data.paywall) {
+        if (data.credits) {
+          setCredits(data.credits);
+          try {
+            window.dispatchEvent(new CustomEvent('nc-credits-changed', { detail: data.credits }));
+          } catch (_) { /* ignore */ }
+        }
+        const rawMessage = data.message
+          || "You're out of free unlocks this month.\n\nUnlock Pro and I'll keep pitching with you.";
+        const assistant = {
+          id: newId(),
+          role: 'assistant',
+          content: stripKitEditorPaths(scrubPollyVoice(rawMessage)),
+          brands: data.brands || [],
+          pitch: data.pitch || null,
+          kit_actions: kitActionsFrom(data, rawMessage),
+          task_chips: data.task_chips?.length
+            ? data.task_chips
+            : [{ id: 'unlock_pro', label: 'Unlock Pro to keep pitching', action: 'unlock_pro' }],
+        };
+        const next = [...history, assistant];
+        setMessages(next);
+        persistThread(next, suggestedRef.current);
+      } else {
+        const assistant = {
+          id: newId(),
+          role: 'assistant',
+          content: data.error || data.message || 'Something went wrong. Try again.',
+        };
+        setMessages(prev => [...prev, assistant]);
+      }
     } finally {
       setBusy(false);
       setContactingId(null);
@@ -704,6 +731,10 @@ export default function Polly() {
 
   const sendStarter = (chip) => {
     if (busy || !chip) return;
+    if (chip.action === 'unlock_pro' || chip.id === 'unlock_pro') {
+      setShowUpgrade(true);
+      return;
+    }
     send(chip.label, {
       action: chip.action,
       brand_id: chip.brand_id,
@@ -753,6 +784,7 @@ export default function Polly() {
                 <Chip
                   key={s.id || s.label}
                   type="button"
+                  $emphasis={isUnlockChip(s)}
                   onClick={() => sendStarter(s)}
                   disabled={busy}
                 >
@@ -776,7 +808,13 @@ export default function Polly() {
             {brief.chips?.length ? (
               <Chips style={{ marginTop: 12 }}>
                 {brief.chips.map((s) => (
-                  <Chip key={s.id || s.label} type="button" onClick={() => sendStarter(s)} disabled={busy}>
+                  <Chip
+                    key={s.id || s.label}
+                    type="button"
+                    $emphasis={isUnlockChip(s)}
+                    onClick={() => sendStarter(s)}
+                    disabled={busy}
+                  >
                     {s.label}
                   </Chip>
                 ))}
@@ -803,6 +841,7 @@ export default function Polly() {
                         <Chip
                           key={s.id || s.label}
                           type="button"
+                          $emphasis={isUnlockChip(s)}
                           onClick={() => sendStarter(s)}
                           disabled={busy}
                         >
@@ -879,6 +918,7 @@ export default function Polly() {
               <Chip
                 key={s.id || s.label}
                 type="button"
+                $emphasis={isUnlockChip(s)}
                 onClick={() => sendStarter(s)}
                 disabled={busy}
               >
@@ -914,7 +954,7 @@ export default function Polly() {
         currentCount={credits?.used || 0}
         limit={credits?.limit || 3}
         unlockRemaining={credits?.remaining ?? 0}
-        feature={Number(credits?.remaining) <= 0 ? 'limit_reached' : 'credits'}
+        feature={Number(credits?.remaining) <= 0 ? 'unlock_paywall' : 'credits'}
       />
     </Shell>
   );
