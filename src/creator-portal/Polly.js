@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../config/api';
@@ -35,6 +35,11 @@ function isOpenerOnlyThread(msgs) {
   if ((m.brands || []).length || (m.gigs || []).length || m.pitch || (m.task_chips || []).length) return false;
   const c = String(m.content || '');
   return /i['’]m polly|creator assistant|what do you want to land first|mind if i ask you/i.test(c);
+}
+
+function usableThreadMessages(msgs) {
+  if (!Array.isArray(msgs) || !msgs.length) return [];
+  return isOpenerOnlyThread(msgs) ? [] : msgs;
 }
 
 function normalizeStarters(list) {
@@ -98,8 +103,52 @@ function kitUi(msg) {
 }
 
 function gigBlurb(gig) {
-  const desc = String(gig?.blurb || gig?.campaign_description || '').replace(/\s+/g, ' ').trim();
-  return desc;
+  return String(gig?.blurb || gig?.campaign_description || '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function gigDedupeKey(gig) {
+  const norm = (value) => String(value || '')
+    .toLowerCase()
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ' ')
+    .replace(/\$[\d,]+(?:\s*[-–]\s*\$?[\d,]+)?/g, ' ')
+    .replace(/\b\d+\s*k\b/g, ' ')
+    .replace(/\bstreaming\b/g, 'stream')
+    .replace(/\blive[\s-]*stream\b/g, 'live stream')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const stripBrand = (text, brand) => {
+    let keep = text;
+    brand.split(' ').filter((word) => word.length >= 3).forEach((word) => {
+      keep = keep.replace(new RegExp(`\\b${word}\\b`, 'g'), ' ');
+    });
+    return keep.replace(/\s+/g, ' ').trim();
+  };
+  const brand = norm(gig?.brand_name || gig?.name);
+  const source = String(gig?.source_platform || gig?.source_label || '').trim().toLowerCase();
+  let title = stripBrand(norm(gig?.product_name), brand);
+  if (title.length < 10) {
+    title = stripBrand(norm(gig?.blurb || gig?.campaign_description), brand)
+      .split(' ')
+      .slice(0, 8)
+      .join(' ');
+  }
+  return `${brand}|${source}|${title}`;
+}
+
+function uniqueGigs(gigs) {
+  const seen = new Set();
+  const out = [];
+  (gigs || []).forEach((gig) => {
+    const key = gigDedupeKey(gig);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(gig);
+  });
+  return out;
 }
 
 function gigApplyLabel(gig) {
@@ -127,6 +176,54 @@ function brandBlurb(brand) {
   const why = String(brand?.why || '').replace(/\s+/g, ' ').trim();
   if (why && !/already sit in/i.test(why)) return why;
   return '';
+}
+
+function contactLineFor(brand) {
+  const name = String(brand?.name || 'this brand').trim();
+  const lines = [
+    `Pitch ${name} for me`,
+    `Write a pitch for ${name}`,
+    `Draft an email to ${name}`,
+    `Let's pitch ${name}`,
+    `Reach out to ${name}`,
+    `Let's try ${name}`,
+    `Send a note to ${name}`,
+    `Start with ${name}`,
+    `Get me in with ${name}`,
+    `Contact ${name}`,
+  ];
+  contactLineFor._n = (contactLineFor._n || 0) + 1;
+  return lines[(contactLineFor._n - 1) % lines.length];
+}
+
+const LOCATION_GAP = /\[\s*CITY\s*,\s*COUNTRY\s*\]/i;
+
+function pitchHasPlaceholder(pitch) {
+  return LOCATION_GAP.test(String(pitch?.body || '')) || Boolean(pitch?.needs_location);
+}
+
+function patchLastPitch(msgs, update) {
+  if (!update || !Array.isArray(msgs)) return msgs || [];
+  const next = msgs.map((msg) => ({ ...msg }));
+  for (let i = next.length - 1; i >= 0; i -= 1) {
+    if (next[i]?.pitch?.body || next[i]?.pitch?.subject) {
+      next[i] = { ...next[i], pitch: { ...next[i].pitch, ...update } };
+      break;
+    }
+  }
+  return next;
+}
+
+function PitchBodyText({ body }) {
+  const text = String(body || '');
+  const parts = text.split(/(\[\s*CITY\s*,\s*COUNTRY\s*\])/i);
+  return (
+    <PitchBody>
+      {parts.map((part, i) => (
+        LOCATION_GAP.test(part) ? <PitchGap key={i}>{part}</PitchGap> : part
+      ))}
+    </PitchBody>
+  );
 }
 
 function BrandLogoMark({ brand }) {
@@ -187,6 +284,24 @@ const Empty = styled.div`
   justify-content: center;
   text-align: center;
   padding: 24px 8px 32px;
+`;
+
+const ResumePending = styled.div`
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 24px 4px 12px;
+`;
+
+const ResumeBar = styled.div`
+  height: ${p => p.$h || 14}px;
+  width: ${p => p.$w || '72%'};
+  max-width: 100%;
+  border-radius: 10px;
+  background: ${t.subtle};
+  align-self: ${p => (p.$end ? 'flex-end' : 'flex-start')};
 `;
 
 const AvatarMark = styled.img`
@@ -318,6 +433,111 @@ const BrandList = styled.div`
   min-width: 0;
 `;
 
+const GigList = styled.div`
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+`;
+
+const GigCardShell = styled.article`
+  background: ${t.white};
+  border: 1px solid ${t.line};
+  border-radius: 16px;
+  padding: 12px 14px 12px;
+  min-width: 0;
+`;
+
+const GigTop = styled.div`
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+`;
+
+const GigHead = styled.div`
+  min-width: 0;
+`;
+
+const GigTitleRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const GigName = styled.div`
+  font-weight: 650;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: ${t.ink};
+  line-height: 1.25;
+  min-width: 0;
+`;
+
+const GigPay = styled.div`
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: ${t.ink};
+`;
+
+const GigProduct = styled.div`
+  margin-top: 2px;
+  font-size: 13px;
+  color: ${t.inkSoft};
+  line-height: 1.35;
+`;
+
+const GigMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: ${t.muted};
+  line-height: 1.3;
+`;
+
+const GigBody = styled.div`
+  margin-top: 8px;
+`;
+
+const GigText = styled.p`
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: ${t.inkSoft};
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  ${p => (p.$open ? '' : `
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  `)}
+`;
+
+const MoreLink = styled.button`
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: ${t.muted};
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { color: ${t.ink}; }
+`;
+
+const GigActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+`;
+
 const GigMoreRow = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -423,6 +643,25 @@ const PitchBody = styled.pre`
   font-size: 13.5px;
   line-height: 1.5;
   color: ${t.inkSoft};
+  margin: 0 0 12px;
+`;
+
+const PitchGap = styled.mark`
+  background: #fde8e8;
+  color: #9b1c1c;
+  font-weight: 700;
+  padding: 0 3px;
+  border-radius: 4px;
+`;
+
+const PitchCoach = styled.div`
+  background: #fff6e8;
+  border: 1px solid #f0d9b0;
+  color: #6b4a12;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.4;
   margin: 0 0 12px;
 `;
 
@@ -532,6 +771,61 @@ const Send = styled.button`
   &:disabled { opacity: 0.35; cursor: default; }
 `;
 
+function GigDesc({ text }) {
+  const [open, setOpen] = useState(false);
+  const cleaned = gigBlurb({ blurb: text });
+  if (!cleaned) return null;
+  const long = cleaned.length > 220 || cleaned.split('\n').length > 4;
+  return (
+    <GigBody>
+      <GigText $open={open || !long}>{cleaned}</GigText>
+      {long ? (
+        <MoreLink type="button" onClick={() => setOpen((v) => !v)}>
+          {open ? 'Show less' : 'Show more'}
+        </MoreLink>
+      ) : null}
+    </GigBody>
+  );
+}
+
+function GigCard({ gig, busy, applying, onApply }) {
+  const name = gig?.name || gig?.brand_name || 'Paid UGC offer';
+  const title = String(gig?.product_name || '').trim();
+  const showTitle = title && title.toLowerCase() !== String(name).toLowerCase();
+  const source = gig?.source_label || (gig?.is_sourced ? 'other platform' : '');
+  return (
+    <GigCardShell>
+      <GigTop>
+        <Logo>
+          <BrandLogoMark brand={{ name, logo: gig?.logo }} />
+        </Logo>
+        <GigHead>
+          <GigTitleRow>
+            <GigName>{name}</GigName>
+            {gig?.pay_label ? <GigPay>{gig.pay_label}</GigPay> : null}
+          </GigTitleRow>
+          {showTitle ? <GigProduct>{title}</GigProduct> : null}
+          <GigMeta>
+            {gig?.location ? <span>{gig.location}</span> : null}
+            {source ? <span>via {source}</span> : null}
+            {gig?.category ? <span>{gig.category}</span> : null}
+          </GigMeta>
+        </GigHead>
+      </GigTop>
+      <GigDesc text={gigBlurb(gig)} />
+      <GigActions>
+        <ContactBtn
+          type="button"
+          disabled={busy || applying}
+          onClick={onApply}
+        >
+          {applying ? 'Opening…' : gigApplyLabel(gig)}
+        </ContactBtn>
+      </GigActions>
+    </GigCardShell>
+  );
+}
+
 function KitMessage({ msg, onOpen }) {
   const ui = kitUi(msg);
   const body = chatTextWithoutPitch(ui.text, !!msg.pitch);
@@ -570,18 +864,20 @@ function KitMessage({ msg, onOpen }) {
 
 export default function Polly() {
   const navigate = useNavigate();
-  const { user } = useContext(UserContext) || {};
+  const { user, loading: userLoading } = useContext(UserContext) || {};
   const creatorId = user?.creator_id;
   const [greeting, setGreeting] = useState(
-    "Hey, I'm Polly. I'm your Creator Assistant — I line up brand PR to pitch, and I pull paid UGC offers from other platforms into one list.\n\nWhat do you want to land first?"
+    "Hey, I'm Polly. I'm your Creator Assistant — I line up brand PR to pitch, and I find all paid UGC offers across all the platforms out there so you have them here in one place.\n\nWhat do you want to land first?"
   );
   const [credits, setCredits] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [ready, setReady] = useState(false);
   const [suggested, setSuggested] = useState([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [contactingId, setContactingId] = useState(null);
   const [applyingGigId, setApplyingGigId] = useState(null);
+  const [mailHold, setMailHold] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [starters, setStarters] = useState(STARTERS);
   const [brief, setBrief] = useState(null);
@@ -596,6 +892,20 @@ export default function Polly() {
   useEffect(() => { suggestedRef.current = suggested; }, [suggested]);
   useEffect(() => { creatorIdRef.current = creatorId; }, [creatorId]);
 
+  useLayoutEffect(() => {
+    if (!creatorId) {
+      if (userLoading === false) setReady(true);
+      return;
+    }
+    const local = readPollyLocal(creatorId);
+    const cached = usableThreadMessages(local?.messages);
+    if (!cached.length) return;
+    setMessages(cached);
+    setSuggested(local?.suggested || []);
+    hydratedRef.current = true;
+    setReady(true);
+  }, [creatorId, userLoading]);
+
   useEffect(() => {
     if (!creatorId || !hydratedRef.current) return;
     writePollyLocal(creatorId, messages, suggested);
@@ -603,6 +913,29 @@ export default function Polly() {
 
   useEffect(() => {
     let cancelled = false;
+    const applyServerThread = (msgs, brands, ownerId) => {
+      const usable = usableThreadMessages(msgs);
+      if (!usable.length) return false;
+      hydratedRef.current = true;
+      setMessages(usable);
+      setSuggested(Array.isArray(brands) ? brands : []);
+      setReady(true);
+      if (ownerId) writePollyLocal(ownerId, usable, brands || []);
+      return true;
+    };
+
+    (async () => {
+      try {
+        const res = await apiClient.get('/api/polly/thread');
+        if (cancelled || !res.data?.success) return;
+        applyServerThread(
+          res.data.messages,
+          res.data.suggested_brands,
+          creatorIdRef.current,
+        );
+      } catch (_) { /* bootstrap still runs */ }
+    })();
+
     (async () => {
       try {
         const res = await apiClient.get('/api/polly/bootstrap');
@@ -624,34 +957,24 @@ export default function Polly() {
           hydratedRef.current = true;
           setMessages([]);
           setSuggested([]);
+          setReady(true);
           if (ownerId) writePollyLocal(ownerId, [], []);
           apiClient.put('/api/polly/thread', { messages: [], suggested_brands: [] }).catch(() => {});
           return;
         }
 
-        const usableServer = isOpenerOnlyThread(serverMsgs) ? [] : serverMsgs;
-        const usableLocal = isOpenerOnlyThread(local?.messages) ? [] : (local?.messages || []);
+        if (applyServerThread(serverMsgs, serverSuggested, ownerId)) return;
+        if (applyServerThread(local?.messages, local?.suggested, ownerId)) return;
 
-        if (usableServer.length) {
+        if (!messagesRef.current.length) {
           hydratedRef.current = true;
-          setMessages(usableServer);
-          setSuggested(serverSuggested);
-          if (ownerId) writePollyLocal(ownerId, usableServer, serverSuggested);
-          return;
+          setMessages([]);
+          setSuggested([]);
         }
-
-        if (usableLocal.length) {
-          hydratedRef.current = true;
-          setMessages(usableLocal);
-          setSuggested(local.suggested || []);
-          return;
-        }
-
-        hydratedRef.current = true;
-        setMessages([]);
-        setSuggested([]);
+        setReady(true);
       } catch (err) {
         console.warn('Polly bootstrap', err);
+        if (!cancelled && !messagesRef.current.length) setReady(true);
       }
     })();
     return () => { cancelled = true; };
@@ -704,18 +1027,23 @@ export default function Polly() {
       if (Array.isArray(data.starters) && data.starters.length) {
         setStarters(normalizeStarters(data.starters));
       }
+      let thread = history;
+      if (data.pitch_update) {
+        thread = patchLastPitch(history, data.pitch_update);
+        setMailHold(false);
+      }
       const rawMessage = data.message || 'Done.';
       const assistant = {
         id: newId(),
         role: 'assistant',
         content: stripKitEditorPaths(scrubPollyVoice(rawMessage)),
         brands: data.brands || [],
-        gigs: data.gigs || [],
+        gigs: uniqueGigs(data.gigs || []),
         pitch: data.pitch || null,
         kit_actions: kitActionsFrom(data, rawMessage),
         task_chips: data.task_chips || [],
       };
-      const next = [...history, assistant];
+      const next = [...thread, assistant];
       setMessages(next);
       persistThread(next, nextSuggested);
       if (data.pitch) {
@@ -738,7 +1066,7 @@ export default function Polly() {
           role: 'assistant',
           content: stripKitEditorPaths(scrubPollyVoice(rawMessage)),
           brands: data.brands || [],
-          gigs: data.gigs || [],
+          gigs: uniqueGigs(data.gigs || []),
           pitch: data.pitch || null,
           kit_actions: kitActionsFrom(data, rawMessage),
           task_chips: data.task_chips?.length
@@ -790,7 +1118,7 @@ export default function Polly() {
   const contactBrand = (brand) => {
     if (busy || !brand?.id) return;
     setContactingId(brand.id);
-    send(`Let's hit up ${brand.name}`, {
+    send(contactLineFor(brand), {
       action: 'generate_pitch',
       brand_id: brand.id,
       brand_name: brand.name,
@@ -837,10 +1165,18 @@ export default function Polly() {
   };
 
   const copyPitch = async (pitch) => {
+    if (pitchHasPlaceholder(pitch)) {
+      setMailHold(true);
+      return;
+    }
     try { await navigator.clipboard.writeText(pitch.body || ''); } catch (_) { /* ignore */ }
   };
 
   const openMail = (pitch) => {
+    if (pitchHasPlaceholder(pitch)) {
+      setMailHold(true);
+      return;
+    }
     if (pitch?.mailto) window.location.href = pitch.mailto;
   };
 
@@ -855,7 +1191,13 @@ export default function Polly() {
   return (
     <Shell>
       <Thread ref={threadRef}>
-        {messages.length === 0 && (
+        {!ready && messages.length === 0 ? (
+          <ResumePending>
+            <ResumeBar $w="58%" $h="44" />
+            <ResumeBar $w="42%" $h="36" $end />
+            <ResumeBar $w="70%" $h="54" />
+          </ResumePending>
+        ) : messages.length === 0 ? (
           <Empty>
             <AvatarMark src={POLLY_AVATAR_URL} alt="Polly" />
             <Title>Polly</Title>
@@ -874,7 +1216,7 @@ export default function Polly() {
               ))}
             </Chips>
           </Empty>
-        )}
+        ) : null}
         {brief && messages.length > 0 && (
           <BriefCard>
             <div className="kicker">Polly brief</div>
@@ -931,35 +1273,19 @@ export default function Polly() {
                       ))}
                     </Chips>
                   )}
-                  {msg.gigs?.length > 0 && (
+                  {uniqueGigs(msg.gigs).length > 0 && (
                     <>
-                      <BrandList style={{ marginTop: 12 }}>
-                        {msg.gigs.map((gig) => (
-                          <BrandCard key={gig.id}>
-                            <Logo>
-                              <BrandLogoMark brand={{ name: gig.name || gig.brand_name, logo: gig.logo }} />
-                            </Logo>
-                            <BrandMeta>
-                              <div className="name">{gig.name || gig.brand_name}</div>
-                              <div className="cat">
-                                {[
-                                  gig.source_label ? `via ${gig.source_label}` : (gig.is_sourced ? 'via other platform' : null),
-                                  gig.pay_label,
-                                  gig.category,
-                                ].filter(Boolean).join(' · ')}
-                              </div>
-                              {gigBlurb(gig) ? <div className="why">{gigBlurb(gig)}</div> : null}
-                            </BrandMeta>
-                            <ContactBtn
-                              type="button"
-                              disabled={busy || applyingGigId === gig.id}
-                              onClick={() => applyGig(gig)}
-                            >
-                              {applyingGigId === gig.id ? 'Opening…' : gigApplyLabel(gig)}
-                            </ContactBtn>
-                          </BrandCard>
+                      <GigList style={{ marginTop: 12 }}>
+                        {uniqueGigs(msg.gigs).map((gig) => (
+                          <GigCard
+                            key={gig.id}
+                            gig={gig}
+                            busy={busy}
+                            applying={applyingGigId === gig.id}
+                            onApply={() => applyGig(gig)}
+                          />
                         ))}
-                      </BrandList>
+                      </GigList>
                       {idx === lastGigIdx && (
                         <GigMoreRow>
                           <Chip
@@ -1007,7 +1333,13 @@ export default function Polly() {
                         {msg.pitch.brand_name || 'this brand'}
                       </PitchLabel>
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>
-                      <PitchBody>{msg.pitch.body}</PitchBody>
+                      {pitchHasPlaceholder(msg.pitch) ? (
+                        <PitchCoach>
+                          Don&apos;t send this yet. Tell Polly your city and country
+                          {mailHold ? ' — brands clock leftover [CITY, COUNTRY] instantly.' : ' so the shipping line looks professional.'}
+                        </PitchCoach>
+                      ) : null}
+                      <PitchBodyText body={msg.pitch.body} />
                       <PitchActions>
                         {msg.pitch.mailto && (
                           <Primary href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch); }}>

@@ -50,6 +50,7 @@ const AccountSettings = () => {
 
   // TikTok Login Kit (PR-Ready / kit / matching)
   const [tiktokRefreshing, setTiktokRefreshing] = useState(false);
+  const [instagramRefreshing, setInstagramRefreshing] = useState(false);
   const [lastScan, setLastScan] = useState(null);
   const [accountEmail, setAccountEmail] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -77,7 +78,7 @@ const AccountSettings = () => {
   useEffect(() => {
     const social = searchParams.get('social');
     const platform = searchParams.get('platform');
-    if (!social || (platform && platform !== 'tiktok')) return;
+    if (!social || (platform && platform !== 'tiktok' && platform !== 'instagram')) return;
 
     const handle = (searchParams.get('handle') || '').replace(/^@/, '');
     const followers = searchParams.get('followers');
@@ -88,26 +89,30 @@ const AccountSettings = () => {
       if (handle) {
         setLastScan({
           handle,
-          platform: 'tiktok',
+          platform: platform || 'tiktok',
           followers: followers != null ? Number(followers) : null,
           posts: posts != null ? Number(posts) : null,
         });
       }
+      const label = platform === 'instagram' ? 'Instagram' : 'TikTok';
       message.success(
         handle
-          ? `TikTok updated for @${handle}`
-          : 'TikTok data refreshed across your account'
+          ? `${label} updated for @${handle}`
+          : `${label} data refreshed across your account`
       );
       fetchCreatorProfile();
     } else if (social === 'failed') {
+      const label = platform === 'instagram' ? 'Instagram' : 'TikTok';
       const reasonText = {
-        oauth_error: 'TikTok login did not complete. Try again.',
-        restricted_region: 'TikTok Login Kit is not available in your region.',
-        no_username: 'TikTok did not return a username. Try reconnecting.',
-        below_follower_min: 'TikTok connected, but follower minimum was not met.',
-        below_post_min: 'TikTok connected, but there were not enough public posts.',
-        inactive: 'TikTok connected, but the account looks inactive.',
-      }[reason] || 'Could not refresh TikTok. Try again.';
+        oauth_error: `${label} login did not complete. Try again.`,
+        restricted_region: `${label} Login is not available in your region.`,
+        no_username: `${label} did not return a username. Try reconnecting.`,
+        need_professional: 'Instagram Login needs a Creator or Business account. Switch to Professional in Instagram, then try again.',
+        need_instagram_tester: 'Instagram allowed the login, but this account is not a tester on the Meta app yet. Add it under App Roles → Instagram Testers, accept the invite in Instagram, then try again.',
+        below_follower_min: `${label} connected, but follower minimum was not met.`,
+        below_post_min: `${label} connected, but there were not enough public posts.`,
+        inactive: `${label} connected, but the account looks inactive.`,
+      }[reason] || `Could not refresh ${label}. Try again.`;
       message.error(reasonText);
     }
 
@@ -164,7 +169,7 @@ const AccountSettings = () => {
       if (email) setAccountEmail(email);
       const socialRes = await api.get('/api/social/status').catch(() => null);
       const social = socialRes?.data;
-      if (social?.handle && social.platform === 'tiktok') {
+      if (social?.handle && (social.platform === 'tiktok' || social.platform === 'instagram')) {
         setLastScan({
           handle: String(social.handle).replace(/^@/, ''),
           platform: social.platform || 'tiktok',
@@ -247,6 +252,14 @@ const AccountSettings = () => {
     const apiBase = getOAuthApiOrigin();
     const returnUrl = encodeURIComponent(`${window.location.origin}/creator/dashboard/settings`);
     window.location.href = `${apiBase}/api/social/connect/tiktok?return_url=${returnUrl}&source=settings`;
+  };
+
+  const reconnectInstagram = () => {
+    if (instagramRefreshing) return;
+    setInstagramRefreshing(true);
+    const apiBase = getOAuthApiOrigin();
+    const returnUrl = encodeURIComponent(`${window.location.origin}/creator/dashboard/settings`);
+    window.location.href = `${apiBase}/api/social/connect/instagram?return_url=${returnUrl}&source=settings`;
   };
 
   const handleManageSubscription = async () => {
@@ -488,13 +501,52 @@ const AccountSettings = () => {
 
       <Section>
         <SectionHeader>
+          <SectionTitle>Instagram profile</SectionTitle>
+          <SectionSubtitle>
+            Connect Instagram Login to refresh followers, posts, and kit data. Needs a Creator or Business account.
+          </SectionSubtitle>
+        </SectionHeader>
+        <NicheCard>
+          {lastScan?.platform === 'instagram' && lastScan?.handle ? (
+            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#111827', fontWeight: 600 }}>
+              @{lastScan.handle}
+            </p>
+          ) : (
+            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#6B7280' }}>
+              No Instagram connected yet
+            </p>
+          )}
+          {lastScan?.platform === 'instagram' && (
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280' }}>
+              Last connected on Instagram
+              {lastScan.followers != null ? ` · ${Number(lastScan.followers).toLocaleString()} followers` : ''}
+              {lastScan.posts ? ` · ${lastScan.posts} posts` : ''}
+            </p>
+          )}
+          <SaveNichesButton
+            onClick={reconnectInstagram}
+            disabled={instagramRefreshing}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {instagramRefreshing
+              ? 'Opening Instagram…'
+              : lastScan?.platform === 'instagram' && lastScan?.handle
+                ? 'Refresh Instagram data'
+                : 'Connect Instagram'}
+          </SaveNichesButton>
+        </NicheCard>
+      </Section>
+
+      <Section>
+        <SectionHeader>
           <SectionTitle>TikTok profile</SectionTitle>
           <SectionSubtitle>
             Reconnect with TikTok Login Kit to refresh followers, posts, and kit data across your account
           </SectionSubtitle>
         </SectionHeader>
         <NicheCard>
-          {lastScan?.handle ? (
+          {lastScan?.platform === 'tiktok' && lastScan?.handle ? (
             <p style={{ margin: '0 0 12px', fontSize: 14, color: '#111827', fontWeight: 600 }}>
               @{lastScan.handle}
             </p>
@@ -503,7 +555,7 @@ const AccountSettings = () => {
               No TikTok connected yet
             </p>
           )}
-          {lastScan && (
+          {lastScan?.platform === 'tiktok' && (
             <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280' }}>
               Last connected on TikTok
               {lastScan.followers != null ? ` · ${Number(lastScan.followers).toLocaleString()} followers` : ''}
@@ -518,7 +570,7 @@ const AccountSettings = () => {
           >
             {tiktokRefreshing
               ? 'Opening TikTok…'
-              : lastScan?.handle
+              : lastScan?.platform === 'tiktok' && lastScan?.handle
                 ? 'Refresh TikTok data'
                 : 'Connect TikTok'}
           </SaveNichesButton>

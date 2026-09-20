@@ -869,7 +869,7 @@ export default function CreatorOnboarding() {
   };
 
   // TikTok Login Kit is the official source of creator TikTok stats and videos.
-  const VERIFIABLE_PLATFORMS = ['tiktok'];
+  const VERIFIABLE_PLATFORMS = ['tiktok', 'instagram'];
 
   // Check region on mount - block users from restricted regions
   useEffect(() => {
@@ -941,11 +941,15 @@ export default function CreatorOnboarding() {
       const errorMessages = {
         'private': 'Your account appears to be private. Please make it public and try again.',
         'below_follower_min': 'You need at least 500 followers to join.',
-        'below_post_min': 'You need at least 12 public videos to join.',
+        'below_post_min': 'You need at least 12 public posts to join.',
         'restricted_region': 'newcollab is not available in your region.',
         'oauth_error': 'Connection was cancelled or failed. Please try again.',
-        'inactive': 'Your TikTok needs a public video posted in the last 30 days.',
-        'no_username': 'TikTok did not return a username. Reconnect and grant profile access.',
+        'need_professional': 'Instagram Login needs a Creator or Business account. Switch to Professional in Instagram Settings, then try again.',
+        'need_instagram_tester': 'Instagram allowed the login, but this account is not a tester on the Meta app yet. In App Dashboard → App Roles → Instagram Testers, add the handle, accept the invite in Instagram → Settings → Website permissions, then try again.',
+        'inactive': oauthPlatform === 'instagram'
+          ? 'Your Instagram needs a public post from the last 30 days.'
+          : 'Your TikTok needs a public video posted in the last 30 days.',
+        'no_username': 'The platform did not return a username. Reconnect and grant profile access.',
       };
       setError(errorMessages[reason] || 'Verification failed. Please try again.');
 
@@ -1438,7 +1442,7 @@ export default function CreatorOnboarding() {
                         ) : verificationStatus === 'failed' ? (
                           <>❌ Verification failed. Please try again.</>
                         ) : (
-                          <>Connect TikTok to pull your official stats and videos. We never ask for your password.</>
+                          <>Connect {platform === 'instagram' ? 'Instagram' : 'TikTok'} to pull your official stats and posts. We never ask for your password.</>
                         )}
                       </VerificationNote>
                       {verificationStatus !== 'verified' && (
