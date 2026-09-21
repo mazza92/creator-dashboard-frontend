@@ -103,10 +103,20 @@ function kitUi(msg) {
 }
 
 function gigBlurb(gig) {
-  return String(gig?.blurb || gig?.campaign_description || '')
+  return String(gig?.summary || gig?.blurb || '')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+function gigPayText(gig) {
+  const label = String(gig?.pay_label || '').trim();
+  if (/\$\s*\d/.test(label)) return label;
+  const amount = Number(gig?.pr_value_usd);
+  if (Number.isFinite(amount) && amount > 0) {
+    return `$${amount.toLocaleString('en-US')}`;
+  }
+  return label;
 }
 
 function gigDedupeKey(gig) {
@@ -472,6 +482,10 @@ const GigName = styled.div`
   color: ${t.ink};
   line-height: 1.25;
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 `;
 
 const GigPay = styled.div`
@@ -479,12 +493,21 @@ const GigPay = styled.div`
   font-size: 13px;
   font-weight: 650;
   color: ${t.ink};
+  font-variant-numeric: tabular-nums;
 `;
 
 const GigProduct = styled.div`
   margin-top: 2px;
   font-size: 13px;
   color: ${t.inkSoft};
+  line-height: 1.35;
+`;
+
+const GigDeliverable = styled.div`
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${t.ink};
   line-height: 1.35;
 `;
 
@@ -511,7 +534,7 @@ const GigText = styled.p`
   overflow-wrap: anywhere;
   ${p => (p.$open ? '' : `
     display: -webkit-box;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   `)}
@@ -773,9 +796,9 @@ const Send = styled.button`
 
 function GigDesc({ text }) {
   const [open, setOpen] = useState(false);
-  const cleaned = gigBlurb({ blurb: text });
+  const cleaned = gigBlurb({ summary: text });
   if (!cleaned) return null;
-  const long = cleaned.length > 220 || cleaned.split('\n').length > 4;
+  const long = cleaned.length > 240;
   return (
     <GigBody>
       <GigText $open={open || !long}>{cleaned}</GigText>
@@ -789,22 +812,35 @@ function GigDesc({ text }) {
 }
 
 function GigCard({ gig, busy, applying, onApply }) {
-  const name = gig?.name || gig?.brand_name || 'Paid UGC offer';
-  const title = String(gig?.product_name || '').trim();
-  const showTitle = title && title.toLowerCase() !== String(name).toLowerCase();
+  const poster = String(gig?.brand_name || gig?.name || '').trim();
+  const unknown = Boolean(gig?.brand_unknown) || /^unknown brand$/i.test(poster);
+  const headline = String(gig?.headline || '').trim();
+  const brand = unknown ? '' : poster;
+  const title = brand || headline || 'Paid UGC offer';
+  const rest = brand
+    ? headline.replace(new RegExp(`^${brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[-–:|]\\s*`, 'i'), '').trim()
+    : headline;
+  const subtitle = brand && rest && rest.toLowerCase() !== brand.toLowerCase()
+    && !/^(affiliate|overview|what we|what to expect|why partner|welcome|how it works)/i.test(rest)
+    ? rest
+    : '';
   const source = gig?.source_label || (gig?.is_sourced ? 'other platform' : '');
+  const deliverable = String(gig?.deliverable || '').trim();
+  const summary = gigBlurb(gig);
+  const pay = gigPayText(gig);
+  const showDeliverable = deliverable && !summary.toLowerCase().includes(deliverable.toLowerCase());
   return (
     <GigCardShell>
       <GigTop>
         <Logo>
-          <BrandLogoMark brand={{ name, logo: gig?.logo }} />
+          <BrandLogoMark brand={{ name: title, logo: gig?.logo }} />
         </Logo>
         <GigHead>
           <GigTitleRow>
-            <GigName>{name}</GigName>
-            {gig?.pay_label ? <GigPay>{gig.pay_label}</GigPay> : null}
+            <GigName>{title}</GigName>
+            {pay ? <GigPay>{pay}</GigPay> : null}
           </GigTitleRow>
-          {showTitle ? <GigProduct>{title}</GigProduct> : null}
+          {subtitle ? <GigProduct>{subtitle}</GigProduct> : null}
           <GigMeta>
             {gig?.location ? <span>{gig.location}</span> : null}
             {source ? <span>via {source}</span> : null}
@@ -812,7 +848,8 @@ function GigCard({ gig, busy, applying, onApply }) {
           </GigMeta>
         </GigHead>
       </GigTop>
-      <GigDesc text={gigBlurb(gig)} />
+      {showDeliverable ? <GigDeliverable>{deliverable}</GigDeliverable> : null}
+      <GigDesc text={summary} />
       <GigActions>
         <ContactBtn
           type="button"

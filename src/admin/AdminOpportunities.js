@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Button, Input, message, Modal, Tag, Space, Card, Statistic, Row, Col, Popconfirm, Select, AutoComplete } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined, ClearOutlined, UndoOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
 import AdminContentSubmissions from './AdminContentSubmissions';
@@ -33,6 +33,7 @@ const AdminOpportunities = () => {
   const [logoUrls, setLogoUrls] = useState({});
   const [editingOpp, setEditingOpp] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [enriching, setEnriching] = useState(false);
   const [pageTab, setPageTab] = useState(() => {
     if (typeof window === 'undefined') return 'opportunities';
     const tab = new URLSearchParams(window.location.search).get('tab');
@@ -198,6 +199,94 @@ const AdminOpportunities = () => {
       fetchOpportunities();
     } catch (error) {
       message.error('Failed to delete opportunity');
+    }
+  };
+
+  const handleEnrich = async (ids) => {
+    const batchSize = 25;
+    const queue = (ids && ids.length)
+      ? ids.filter(Boolean)
+      : opportunities.map((opp) => opp.id).filter(Boolean);
+    if (!queue.length) {
+      message.warning('No listings to clean');
+      return;
+    }
+    setEnriching(true);
+    const key = 'opp-enrich';
+    let enrichedTotal = 0;
+    let llmTotal = 0;
+    let done = 0;
+    try {
+      message.loading({ content: `Cleaning 0/${queue.length} listings…`, key, duration: 0 });
+      for (let i = 0; i < queue.length; i += batchSize) {
+        const batch = queue.slice(i, i + batchSize);
+        const { data } = await axios.post(`${API_BASE}/api/opportunities/admin/enrich`, {
+          ids: batch,
+          use_llm: true,
+          status: statusFilter,
+        }, {
+          withCredentials: true,
+          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        });
+        if (!data?.success && data?.error) {
+          throw new Error(data.error);
+        }
+        enrichedTotal += Number(data?.enriched) || 0;
+        llmTotal += Number(data?.llm) || 0;
+        done = Math.min(i + batch.length, queue.length);
+        message.loading({
+          content: `Cleaning ${done}/${queue.length} listings…`,
+          key,
+          duration: 0,
+        });
+      }
+      message.success({
+        content: llmTotal
+          ? `Cleaned ${enrichedTotal} listings (${llmTotal} rewritten)`
+          : `Cleaned ${enrichedTotal} listings`,
+        key,
+      });
+      fetchOpportunities();
+    } catch (error) {
+      message.error({
+        content: `${error.response?.data?.error || error.message || 'Failed to clean listings'}. Progress: ${done}/${queue.length}.`,
+        key,
+      });
+    } finally {
+      setEnriching(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setEnriching(true);
+    const key = 'opp-restore';
+    try {
+      message.loading({ content: 'Restoring pricing on scanner listings…', key, duration: 0 });
+      const { data } = await axios.post(`${API_BASE}/api/opportunities/admin/restore`, {
+        status: statusFilter,
+      }, {
+        withCredentials: true,
+        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+      });
+      if (!data?.success && data?.error) {
+        throw new Error(data.error);
+      }
+      const restored = Number(data?.restored) || 0;
+      const withAmount = Number(data?.with_amount) || 0;
+      message.success({
+        content: withAmount
+          ? `Restored ${restored} listings (${withAmount} with a $ amount)`
+          : `Restored ${restored} listings`,
+        key,
+      });
+      fetchOpportunities();
+    } catch (error) {
+      message.error({
+        content: error.response?.data?.error || error.message || 'Failed to restore pricing',
+        key,
+      });
+    } finally {
+      setEnriching(false);
     }
   };
 
@@ -391,6 +480,21 @@ const AdminOpportunities = () => {
         <FilterBtn $active={statusFilter === 'rejected'} onClick={() => setStatusFilter('rejected')}>
           Rejected
         </FilterBtn>
+        <Button
+          icon={<ClearOutlined />}
+          loading={enriching}
+          onClick={() => handleEnrich()}
+          disabled={!opportunities.length}
+        >
+          Clean listings{opportunities.length ? ` (${opportunities.length})` : ''}
+        </Button>
+        <Button
+          icon={<UndoOutlined />}
+          loading={enriching}
+          onClick={handleRestore}
+        >
+          Restore pricing
+        </Button>
       </FilterRow>
 
       <OppList>
@@ -449,7 +553,7 @@ const AdminOpportunities = () => {
                 <DetailSection>
                   <DetailLabel>Campaign Details</DetailLabel>
                   <DetailGrid>
-                    <DetailItem><strong>PR Value:</strong> ${opp.pr_value_usd || '?'}</DetailItem>
+                    <DetailItem><strong>Pay:</strong> {opp.pay_label || (opp.pr_value_usd != null ? `$${opp.pr_value_usd}` : '—')}</DetailItem>
                     <DetailItem><strong>Creator Count:</strong> {opp.creator_count_range || 'N/A'}</DetailItem>
                     <DetailItem><strong>Deadline:</strong> {opp.application_deadline || 'No deadline'}</DetailItem>
                   </DetailGrid>
@@ -492,7 +596,7 @@ const AdminOpportunities = () => {
             )}
 
             <OppMeta>
-              <MetaItem>Value: ${opp.pr_value_usd || '?'}</MetaItem>
+              <MetaItem>Pay: {opp.pay_label || (opp.pr_value_usd != null ? `$${opp.pr_value_usd}` : '—')}</MetaItem>
               <MetaItem>Spots: {opp.spots_filled}/{opp.spots_total}</MetaItem>
               <MetaItem>Created: {new Date(opp.created_at).toLocaleDateString()}</MetaItem>
             </OppMeta>
@@ -557,6 +661,15 @@ const AdminOpportunities = () => {
               <Button icon={<EditOutlined />} onClick={() => openEditModal(opp)}>
                 Edit
               </Button>
+              {opp.is_sourced && (
+                <Button
+                  icon={<ClearOutlined />}
+                  onClick={() => handleEnrich([opp.id])}
+                  loading={enriching}
+                >
+                  Clean
+                </Button>
+              )}
               <Popconfirm
                 title="Delete this opportunity?"
                 description="This will permanently remove the listing and all applications."
