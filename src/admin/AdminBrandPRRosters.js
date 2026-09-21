@@ -55,7 +55,6 @@ export default function AdminBrandPRRosters() {
   const [search, setSearch] = useState('');
   const [mintOpen, setMintOpen] = useState(false);
   const [mintBrand, setMintBrand] = useState(null);
-  const [mintSlots, setMintSlots] = useState(5);
   const [mintTitle, setMintTitle] = useState('');
   const [mintSku, setMintSku] = useState('');
   const [brandOpts, setBrandOpts] = useState([]);
@@ -501,7 +500,7 @@ export default function AdminBrandPRRosters() {
                 </BrandCell>
               </td>
               <td>
-                <div>{row.fill_count ?? row.review_count}/{row.fill_target || '—'}</div>
+                <div>{row.fill_count ?? row.review_count}</div>
                 <em style={{ color: '#6b7280', fontSize: 12, fontStyle: 'normal' }}>
                   {row.status === 'active'
                     ? (row.spotlighted
@@ -588,7 +587,7 @@ export default function AdminBrandPRRosters() {
         </Field>
         <Field>
           <label>Creators the brand must pick</label>
-          <InputNumber min={1} max={50} value={mintSlots} onChange={(v) => setMintSlots(v || 5)} style={{ width: '100%' }} />
+          <Hint>Always 5. Fill (applicants) stays open — only the gift list is capped.</Hint>
         </Field>
         <Field>
           <label>SKU note (optional)</label>
@@ -602,7 +601,7 @@ export default function AdminBrandPRRosters() {
           onClick={() => mintCampaign({
             brandId: mintBrand.id,
             brandName: mintBrand.brand_name,
-            slots: mintSlots,
+            slots: 5,
             title: mintTitle,
             sku: mintSku,
           })}

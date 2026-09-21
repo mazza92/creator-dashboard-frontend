@@ -122,7 +122,6 @@ const BrandAdmin = () => {
   const [bulkApplying, setBulkApplying] = useState(false);
   const [bulkEnriching, setBulkEnriching] = useState(false);
   const [mintVisible, setMintVisible] = useState(false);
-  const [mintSlotLimit, setMintSlotLimit] = useState(5);
   const [mintTitle, setMintTitle] = useState('');
   const [mintLink, setMintLink] = useState('');
   const [minting, setMinting] = useState(false);
@@ -170,7 +169,7 @@ const BrandAdmin = () => {
         '/api/admin/brand-pr/campaigns',
         {
           brand_id: brand.id,
-          slot_limit: mintSlotLimit || 5,
+          slot_limit: 5,
           title: mintTitle || `${brand.name} · PR roster`,
           ...(force ? { force: true } : {}),
         },
@@ -1620,14 +1619,8 @@ const BrandAdmin = () => {
               placeholder="Glow Recipe · PR test"
             />
           </Form.Item>
-          <Form.Item label="Slot limit (exact picks to lock)">
-            <InputNumber
-              min={1}
-              max={50}
-              value={mintSlotLimit}
-              onChange={(v) => setMintSlotLimit(v || 5)}
-              style={{ width: '100%' }}
-            />
+          <Form.Item label="Creators the brand must pick">
+            <div style={{ color: '#666' }}>Always 5. Fill (applicants) is uncapped.</div>
           </Form.Item>
           <Space style={{ width: '100%', marginBottom: 12 }}>
             <Button type="primary" loading={minting} onClick={mintCampaignLink}>
