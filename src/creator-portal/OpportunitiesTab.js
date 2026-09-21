@@ -4,6 +4,7 @@ import axios from 'axios';
 import { tokens } from '../theme/tokens';
 import { Users, MapPin, Check } from 'lucide-react';
 import { JobFeedSkeleton } from '../components/creator/PrSkeletons';
+import { brandMarkEmoji } from './brandMarkEmoji';
 
 // Social platform icons
 const TikTokIcon = () => (
@@ -320,6 +321,24 @@ const OpportunitiesTab = ({ pitchLimits, onShowUpgrade, isPro, onCountChange, on
   );
 };
 
+function OppBrandMark({ opp }) {
+  const src = String(opp?.brand_logo_url || '').trim();
+  const [broken, setBroken] = useState(false);
+  const mark = brandMarkEmoji({
+    name: opp?.brand_name,
+    category: opp?.display_niche || opp?.brand_category,
+    niche: Array.isArray(opp?.creator_niches) ? opp.creator_niches[0] : '',
+  });
+  if (!src || broken) {
+    return (
+      <BrandLogoFallback style={{ background: mark.bg }} aria-hidden>
+        {mark.emoji}
+      </BrandLogoFallback>
+    );
+  }
+  return <BrandLogoImg src={src} alt="" onError={() => setBroken(true)} />;
+}
+
 const OppCard = ({ opp, isPro, applying, applied, onApply, showLowFitHint }) => {
   const mode = opp.apply_mode || (opp.external_apply_url ? 'url' : 'kit');
   const isExternal = mode === 'url' || mode === 'email' || mode === 'external' || opp.is_sourced;
@@ -369,11 +388,7 @@ const OppCard = ({ opp, isPro, applying, applied, onApply, showLowFitHint }) => 
   return (
     <Card>
       <CardTop>
-        {opp.brand_logo_url ? (
-          <BrandLogoImg src={opp.brand_logo_url} alt={opp.brand_name} />
-        ) : (
-          <BrandLogoFallback>{opp.brand_name.substring(0, 2).toUpperCase()}</BrandLogoFallback>
-        )}
+        <OppBrandMark opp={opp} />
         <BrandBlock>
           <BrandNameRow>
             <BrandName>{opp.brand_name}</BrandName>
@@ -565,7 +580,8 @@ const BrandLogoImg = styled.img`
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #fff;
   flex-shrink: 0;
 `;
 
@@ -577,9 +593,8 @@ const BrandLogoFallback = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 800;
-  color: ${tokens.textMuted};
+  font-size: 22px;
+  line-height: 1;
   flex-shrink: 0;
 `;
 

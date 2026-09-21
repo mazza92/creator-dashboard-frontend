@@ -14,19 +14,28 @@ import {
   threadsLookCopied,
   writePollyLocal,
 } from './pollyStorage';
+import { brandMarkEmoji } from './brandMarkEmoji';
+
+const STARTER_LABELS = {
+  paid_ugc: 'Show paid UGC I can apply to now',
+  line_up: 'Pitch 3 brands for me today',
+  name_a_brand: 'Write a pitch for a brand I name',
+  more_replies: 'Make my kit get more replies',
+};
+
+const STARTER_HINTS = {
+  paid_ugc: 'Live briefs — tap Apply',
+  line_up: "I'll draft the emails",
+  name_a_brand: 'You pick, I write it',
+  more_replies: 'Rates, bio, and proof brands open',
+};
 
 const STARTERS = [
-  { id: 'paid_ugc', label: 'Find paid UGC offers', action: 'suggest_gigs', skip_discovery: true },
-  { id: 'line_up', label: 'Find me 3 brands to pitch today', action: 'suggest_brands', skip_discovery: true },
-  { id: 'name_a_brand', label: 'Write a pitch for a brand I name', action: 'ask_brand' },
-  { id: 'more_replies', label: 'Help me get more replies from brands', action: 'coach_profile' },
+  { id: 'paid_ugc', label: 'Show paid UGC I can apply to now', hint: STARTER_HINTS.paid_ugc, action: 'suggest_gigs', skip_discovery: true },
+  { id: 'line_up', label: 'Pitch 3 brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true },
+  { id: 'name_a_brand', label: 'Write a pitch for a brand I name', hint: STARTER_HINTS.name_a_brand, action: 'ask_brand' },
+  { id: 'more_replies', label: 'Make my kit get more replies', hint: STARTER_HINTS.more_replies, action: 'coach_profile' },
 ];
-
-const MORE_GIGS_CHIP = {
-  id: 'more_gigs',
-  label: 'Find more offers',
-  action: 'suggest_gigs',
-};
 
 function isOpenerOnlyThread(msgs) {
   if (!Array.isArray(msgs) || msgs.length !== 1) return false;
@@ -44,10 +53,24 @@ function usableThreadMessages(msgs) {
 
 function normalizeStarters(list) {
   return (list || []).map((s) => {
+    let next = { ...s, hint: s.hint || STARTER_HINTS[s.id] };
+    if (s?.id === 'paid_ugc') next.label = STARTER_LABELS.paid_ugc;
+    if (s?.id === 'name_a_brand') next.label = STARTER_LABELS.name_a_brand;
+    if (s?.id === 'more_replies') next.label = STARTER_LABELS.more_replies;
+    if (s?.id === 'line_up' && /3 brands/i.test(s.label || '')) next.label = STARTER_LABELS.line_up;
     if (s?.id === 'portfolio' || (s?.action === 'coach_portfolio' && /portfolio|review my kit/i.test(s?.label || ''))) {
-      return { ...s, label: 'Review my kit', action: s.action || 'coach_portfolio' };
+      next = { ...next, label: 'Review my kit', action: s.action || 'coach_portfolio' };
     }
-    return s;
+    return next;
+  }).filter((s) => s.id !== 'more_gigs');
+}
+
+function composerStarters(list, messages) {
+  const hasGigs = (messages || []).some((msg) => (msg.gigs || []).length);
+  return (list || []).filter((s) => {
+    if (s.id === 'more_gigs') return false;
+    if (hasGigs && s.id === 'paid_ugc') return false;
+    return true;
   });
 }
 
@@ -237,10 +260,21 @@ function PitchBodyText({ body }) {
 }
 
 function BrandLogoMark({ brand }) {
-  const src = brand?.logo || brand?.logo_url || '';
+  const src = String(brand?.logo || brand?.logo_url || '').trim();
   const [broken, setBroken] = useState(false);
-  const initial = String(brand?.name || '?').slice(0, 1);
-  if (!src || broken) return initial;
+  useEffect(() => { setBroken(false); }, [src]);
+  const mark = brandMarkEmoji({
+    name: brand?.name,
+    category: brand?.category,
+    niche: brand?.niche,
+  });
+  if (!src || broken) {
+    return (
+      <span className="mark-fallback" style={{ background: mark.bg }} aria-hidden>
+        {mark.emoji}
+      </span>
+    );
+  }
   return <img src={src} alt="" onError={() => setBroken(true)} />;
 }
 
@@ -347,6 +381,43 @@ const Chips = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
+`;
+
+const SuggestGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  margin: 4px auto 0;
+  text-align: left;
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SuggestCard = styled.button`
+  border: 1px solid ${t.line};
+  background: ${t.cream};
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  .title {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: ${t.ink};
+    line-height: 1.3;
+  }
+  .hint {
+    font-size: 12.5px;
+    color: ${t.muted};
+    margin-top: 4px;
+    line-height: 1.35;
+  }
+  &:hover { background: ${t.white}; border-color: ${t.borderHover}; }
+  &:disabled { opacity: 0.55; cursor: default; }
 `;
 
 const Chip = styled.button`
@@ -562,9 +633,22 @@ const GigActions = styled.div`
 `;
 
 const GigMoreRow = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 10px;
+`;
+
+const ShowMoreBtn = styled.button`
+  width: 100%;
+  border: 1px solid ${t.line};
+  background: ${t.white};
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${t.ink};
+  cursor: pointer;
+  font-family: inherit;
+  &:hover { background: ${t.cream}; }
+  &:disabled { opacity: 0.5; cursor: default; }
 `;
 
 const BrandCard = styled.div`
@@ -588,9 +672,19 @@ const Logo = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
   color: ${t.muted};
+  flex-shrink: 0;
   img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+  .mark-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    line-height: 1;
+  }
 `;
 
 const BrandMeta = styled.div`
@@ -833,7 +927,7 @@ function GigCard({ gig, busy, applying, onApply }) {
     <GigCardShell>
       <GigTop>
         <Logo>
-          <BrandLogoMark brand={{ name: title, logo: gig?.logo }} />
+          <BrandLogoMark brand={{ name: title, logo: gig?.logo, category: gig?.category }} />
         </Logo>
         <GigHead>
           <GigTitleRow>
@@ -917,6 +1011,7 @@ export default function Polly() {
   const [mailHold, setMailHold] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [starters, setStarters] = useState(STARTERS);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [brief, setBrief] = useState(null);
   const threadRef = useRef(null);
   const inputRef = useRef(null);
@@ -1070,12 +1165,16 @@ export default function Polly() {
         setMailHold(false);
       }
       const rawMessage = data.message || 'Done.';
+      const gigs = uniqueGigs(data.gigs || []);
       const assistant = {
         id: newId(),
         role: 'assistant',
         content: stripKitEditorPaths(scrubPollyVoice(rawMessage)),
         brands: data.brands || [],
-        gigs: uniqueGigs(data.gigs || []),
+        gigs,
+        gigs_has_more: typeof data.gigs_has_more === 'boolean'
+          ? data.gigs_has_more
+          : gigs.length >= 3,
         pitch: data.pitch || null,
         kit_actions: kitActionsFrom(data, rawMessage),
         task_chips: data.task_chips || [],
@@ -1135,7 +1234,7 @@ export default function Polly() {
   };
 
   const sendStarter = (chip) => {
-    if (busy || !chip) return;
+    if (busy || loadingMore || !chip) return;
     if (chip.action === 'unlock_pro' || chip.id === 'unlock_pro') {
       setShowUpgrade(true);
       return;
@@ -1150,6 +1249,71 @@ export default function Polly() {
       chip_id: chip.id,
       is_followup: Boolean(chip.is_followup) || chip.id === 'draft_followup' || /follow-?up/i.test(chip.label || ''),
     });
+  };
+
+  const loadMoreGigs = async () => {
+    if (busy || loadingMore) return;
+    const history = messagesRef.current || [];
+    const exclude = [];
+    history.forEach((msg) => {
+      (msg.gigs || []).forEach((gig) => {
+        if (gig?.id != null) exclude.push(gig.id);
+      });
+    });
+    setLoadingMore(true);
+    try {
+      let extra = [];
+      let hasMore = false;
+      try {
+        const res = await apiClient.post('/api/polly/gigs/more', {
+          exclude_ids: exclude,
+          messages: history.map(({ role, content: c, brands, gigs, pitch, id }) => ({
+            id, role, content: c, brands, gigs, pitch,
+          })),
+        }, { timeout: 30000 });
+        extra = uniqueGigs(res.data?.gigs || []);
+        hasMore = Boolean(res.data?.gigs_has_more);
+      } catch (err) {
+        if (err.response?.status !== 404) throw err;
+        const res = await apiClient.post('/api/polly/chat', {
+          messages: [
+            ...history.map(({ role, content: c, brands, gigs, pitch, id }) => ({
+              id, role, content: c, brands, gigs, pitch,
+            })),
+            { role: 'user', content: 'Show more offers' },
+          ],
+          suggested_brands: suggestedRef.current,
+          action: 'suggest_gigs',
+          starter: 'more_gigs',
+          chip_id: 'more_gigs',
+        }, { timeout: 90000 });
+        extra = uniqueGigs(res.data?.gigs || []);
+        hasMore = res.data?.gigs_has_more !== false && extra.length >= 3;
+        if (Array.isArray(res.data?.starters) && res.data.starters.length) {
+          setStarters(normalizeStarters(res.data.starters));
+        }
+      }
+      setMessages((prev) => {
+        let last = -1;
+        prev.forEach((msg, i) => {
+          if ((msg.gigs || []).length) last = i;
+        });
+        const next = prev.map((msg, i) => {
+          if (i !== last) return msg;
+          const merged = uniqueGigs([...(msg.gigs || []), ...extra]);
+          return {
+            ...msg,
+            gigs: merged,
+            gigs_has_more: Boolean(hasMore && extra.length),
+          };
+        });
+        persistThread(next, suggestedRef.current);
+        return next;
+      });
+    } catch (_) { /* keep the list; user can retry */ }
+    finally {
+      setLoadingMore(false);
+    }
   };
 
   const contactBrand = (brand) => {
@@ -1239,19 +1403,19 @@ export default function Polly() {
             <AvatarMark src={POLLY_AVATAR_URL} alt="Polly" />
             <Title>Polly</Title>
             <Sub>{greeting}</Sub>
-            <Chips>
+            <SuggestGrid>
               {starters.map((s) => (
-                <Chip
+                <SuggestCard
                   key={s.id || s.label}
                   type="button"
-                  $emphasis={isUnlockChip(s)}
                   onClick={() => sendStarter(s)}
                   disabled={busy}
                 >
-                  {s.label}
-                </Chip>
+                  <div className="title">{s.label}</div>
+                  {s.hint ? <div className="hint">{s.hint}</div> : null}
+                </SuggestCard>
               ))}
-            </Chips>
+            </SuggestGrid>
           </Empty>
         ) : null}
         {brief && messages.length > 0 && (
@@ -1323,15 +1487,15 @@ export default function Polly() {
                           />
                         ))}
                       </GigList>
-                      {idx === lastGigIdx && (
+                      {idx === lastGigIdx && msg.gigs_has_more !== false && (
                         <GigMoreRow>
-                          <Chip
+                          <ShowMoreBtn
                             type="button"
-                            onClick={() => sendStarter(MORE_GIGS_CHIP)}
-                            disabled={busy}
+                            onClick={loadMoreGigs}
+                            disabled={busy || loadingMore}
                           >
-                            {MORE_GIGS_CHIP.label}
-                          </Chip>
+                            {loadingMore ? 'Loading more…' : 'Show more offers'}
+                          </ShowMoreBtn>
                         </GigMoreRow>
                       )}
                     </>
@@ -1404,15 +1568,15 @@ export default function Polly() {
         )}
       </Thread>
       <ComposerWrap>
-        {messages.length > 0 && starters.length > 0 && (
+        {messages.length > 0 && composerStarters(starters, messages).length > 0 && (
           <ChipRow>
-            {starters.map((s) => (
+            {composerStarters(starters, messages).map((s) => (
               <Chip
                 key={s.id || s.label}
                 type="button"
                 $emphasis={isUnlockChip(s)}
                 onClick={() => sendStarter(s)}
-                disabled={busy}
+                disabled={busy || loadingMore}
               >
                 {s.label}
               </Chip>
