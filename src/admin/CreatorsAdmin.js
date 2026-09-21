@@ -807,7 +807,7 @@ const CreatorsAdmin = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={() => applySearchNow()}
-            placeholder="Find by @handle, email, name, or kit slug"
+            placeholder="Find by @handle, email, name, kit slug, or bio"
             allowClear
             size="large"
             prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
