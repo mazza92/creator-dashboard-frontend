@@ -642,19 +642,20 @@ export default function BrandPRHome() {
   useEffect(() => {
     const slug = searchParams.get('brand');
     if (!slug || loadingList) return;
-    const fromLists = [...matched, ...dirBrands].find((b) => b.slug === slug);
+    const want = String(slug).toLowerCase();
+    const slugMatches = (b) => String(b?.slug || '').toLowerCase() === want;
+    const fromLists = [...recruiting, ...openLists, ...matched, ...dirBrands].find(slugMatches);
     const open = async () => {
-      if (fromLists) {
-        openApply(fromLists, 'deeplink');
-      } else {
+      let brand = fromLists;
+      if (!brand) {
         try {
-          const { data } = await api.get('/api/public/brands', { params: { slug, limit: 1 } });
-          const brand = (data.brands || [])[0];
-          if (brand) openApply(normalizeBrand(brand, appliedMap), 'deeplink');
+          const { data } = await api.get(`/api/public/brands/${encodeURIComponent(slug)}`);
+          brand = normalizeBrand(data.brand || data, appliedMap);
         } catch (err) {
           console.error('Deep-link brand failed', err);
         }
       }
+      if (brand) openApply(brand, 'deeplink');
       const next = new URLSearchParams(searchParams);
       next.delete('brand');
       setSearchParams(next, { replace: true });

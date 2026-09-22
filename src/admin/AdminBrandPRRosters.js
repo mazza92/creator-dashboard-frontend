@@ -327,8 +327,8 @@ export default function AdminBrandPRRosters() {
       product: row.sku_note || row.hero_product || '',
       category: row.category || '',
       applyUrl: row.brand_slug
-        ? `https://app.newcollab.co/creator/dashboard/for-you?brand=${encodeURIComponent(row.brand_slug)}`
-        : 'https://app.newcollab.co/creator/dashboard/for-you',
+        ? `https://app.newcollab.co/creator/dashboard/pr-brands?brand=${encodeURIComponent(row.brand_slug)}`
+        : 'https://app.newcollab.co/creator/dashboard/pr-brands',
     })).filter((b) => b.brandName);
     try {
       sessionStorage.setItem('nc_new_campaign_email_brands', JSON.stringify(brands));

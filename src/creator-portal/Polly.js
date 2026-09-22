@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
@@ -995,6 +995,7 @@ function KitMessage({ msg, onOpen }) {
 
 export default function Polly() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, loading: userLoading } = useContext(UserContext) || {};
   const creatorId = user?.creator_id;
   const [greeting, setGreeting] = useState(
@@ -1019,6 +1020,12 @@ export default function Polly() {
   const suggestedRef = useRef(suggested);
   const creatorIdRef = useRef(creatorId);
   const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    const brand = searchParams.get('brand');
+    if (!brand) return;
+    navigate(`/creator/dashboard/pr-brands?${searchParams.toString()}`, { replace: true });
+  }, [searchParams, navigate]);
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { suggestedRef.current = suggested; }, [suggested]);

@@ -46,11 +46,24 @@ const categoryColor = (category) => {
 };
 
 export const applyUrlFromBrand = (brand = {}, override = '') => {
-  const raw = String(override || '').trim();
-  if (raw) return normalizeWebsiteUrl(raw);
   const slug = String(brand.slug || '').trim();
-  if (slug) return `https://app.newcollab.co/creator/dashboard/for-you?brand=${encodeURIComponent(slug)}`;
-  return 'https://app.newcollab.co/creator/dashboard/for-you';
+  if (slug) {
+    return `https://app.newcollab.co/creator/dashboard/pr-brands?brand=${encodeURIComponent(slug)}`;
+  }
+  const raw = String(override || '').trim();
+  if (raw) {
+    try {
+      const u = new URL(raw, 'https://app.newcollab.co');
+      const fromQuery = u.searchParams.get('brand');
+      if (fromQuery && u.pathname.includes('/creator/dashboard/')) {
+        return `https://app.newcollab.co/creator/dashboard/pr-brands?brand=${encodeURIComponent(fromQuery)}`;
+      }
+    } catch {
+      /* keep raw */
+    }
+    return normalizeWebsiteUrl(raw);
+  }
+  return 'https://app.newcollab.co/creator/dashboard/pr-brands';
 };
 
 export const normalizeRosterBrands = (config = {}) => {
@@ -199,12 +212,6 @@ export const generatePRRosterLive = (config = {}) => {
     : (count === 1
       ? `<strong>${escapeHtml(names[0])}</strong> is actively running a PR campaign. Applications are open — apply if you want in.`
       : `<strong>${count} brands</strong> are actively running PR campaigns. Applications are open — scan the list and apply.`);
-  const browseUrl = count === 1
-    ? applyUrlFromBrand(previewBrands[0])
-    : 'https://app.newcollab.co/creator/dashboard/for-you';
-  const browseLabel = variant === 'new_campaigns'
-    ? (count === 1 ? 'Apply now' : 'See new campaigns')
-    : (count === 1 ? 'Open this campaign' : 'See all open campaigns');
   const cards = previewBrands.map(renderBrandCard).join('');
   const preheaderPadding = '\u200C\u00A0'.repeat(90);
 
@@ -254,18 +261,10 @@ export const generatePRRosterLive = (config = {}) => {
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding: 22px 40px 8px 40px;" class="padding-mobile">
+                    <td style="padding: 22px 40px 36px 40px;" class="padding-mobile">
                       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                         ${cards}
                       </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 40px 36px 40px; text-align: center;" class="padding-mobile">
-                      <a href="${escapeHtml(browseUrl)}"
-                         style="display: inline-block; background: #111827; color: #ffffff; font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: 8px; text-decoration: none;">
-                        ${browseLabel}
-                      </a>
                     </td>
                   </tr>
                 </table>
