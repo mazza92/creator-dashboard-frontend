@@ -4,6 +4,7 @@ import { UserContext, UserProvider } from './contexts/UserContext';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Analytics } from '@vercel/analytics/react';
+import CookieSettings from './components/CookieSettings';
 import IndexNowInitializer from './components/IndexNowInitializer';
 import IndexNowTest from './components/IndexNowTest';
 import QueryParamRedirect from './components/QueryParamRedirect';
@@ -582,6 +583,7 @@ function App() {
                     <AnalyticsProvider>
                         <Elements stripe={stripePromise}>
                             <AppContent />
+                            <CookieSettings />
                             <Analytics />
                         </Elements>
                     </AnalyticsProvider>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import styled from 'styled-components';
+import { openCookieSettings } from '../../lib/cookieConsent';
 
 // ═══════════════════════════════════════════════════════════════════
 // INTENT VARIANTS (plain data - rendered with Accent component below)
@@ -1338,7 +1339,7 @@ function LandFirstPRPackageClient() {
           </FooterBrand>
           <p>&copy; 2026 Newcollab &middot; Made for creators landing their first PR deals.</p>
           <FooterLinks>
-            <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a> &middot; <a href="mailto:team@newcollab.co">team@newcollab.co</a>
+            <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a> &middot; <a href="#cookie-settings" onClick={(e) => { e.preventDefault(); openCookieSettings(); }}>Cookies</a> &middot; <a href="mailto:team@newcollab.co">team@newcollab.co</a>
           </FooterLinks>
         </Wrap>
       </Footer>

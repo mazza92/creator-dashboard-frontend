@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { openCookieSettings } from '../lib/cookieConsent';
 
 // ═══════════════════════════════════════════════════════════════════
 // INTENT VARIANTS (plain data - rendered with Accent component below)
@@ -1422,7 +1423,7 @@ function LandFirstPRPackage() {
           </FooterBrand>
           <p>© 2026 Newcollab · Made for creators landing their first PR deals.</p>
           <FooterLinks>
-            <a href="/privacy-policy">Privacy</a> · <a href="/terms-of-service">Terms</a> · <a href="mailto:team@newcollab.co">team@newcollab.co</a>
+            <a href="/privacy-policy">Privacy</a> · <a href="/terms-of-service">Terms</a> · <a href="#cookie-settings" onClick={(e) => { e.preventDefault(); openCookieSettings(); }}>Cookies</a> · <a href="mailto:team@newcollab.co">team@newcollab.co</a>
           </FooterLinks>
         </Wrap>
       </Footer>

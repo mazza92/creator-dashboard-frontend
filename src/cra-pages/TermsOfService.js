@@ -15,133 +15,165 @@ const Section = styled.section`
   margin-bottom: 40px;
 `;
 
+const LAST_UPDATED = '23 September 2026';
+
 const TermsOfService = () => {
   return (
     <Container>
         <Title level={1}>Terms of Service</Title>
-        <Paragraph>Last updated: {new Date().toLocaleDateString()}</Paragraph>
+        <Paragraph>Last updated: {LAST_UPDATED}</Paragraph>
+        <Paragraph>
+          These terms govern your use of Newcollab on{' '}
+          <a href="https://newcollab.co">newcollab.co</a> and{' '}
+          <a href="https://app.newcollab.co">app.newcollab.co</a>. By creating an
+          account or using the site you agree to them. If you do not agree, do
+          not use Newcollab. Privacy practices are in the{' '}
+          <a href="/privacy-policy">Privacy Policy</a>.
+        </Paragraph>
 
         <Section>
-          <Title level={2}>1. Agreement to Terms</Title>
+          <Title level={2}>1. The product</Title>
           <Paragraph>
-            By accessing or using Newcollab, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our platform.
-          </Paragraph>
-        </Section>
-
-        <Section>
-          <Title level={2}>2. Platform Description</Title>
-          <Paragraph>
-            Newcollab is a platform that connects content creators with brands for collaboration opportunities. We facilitate:
-          </Paragraph>
-          <ul>
-            <li>Content project submissions by creators</li>
-            <li>Brand bidding and campaign invites</li>
-            <li>Secure payment processing</li>
-            <li>Communication between creators and brands</li>
-          </ul>
-        </Section>
-
-        <Section>
-          <Title level={2}>3. User Responsibilities</Title>
-          <Paragraph>
-            As a user of Newcollab, you agree to:
+            Newcollab helps creators find brand PR and paid UGC, and helps DTC
+            brands run gifted UGC rosters. It includes:
           </Paragraph>
           <ul>
-            <li>Provide accurate and complete information</li>
-            <li>Maintain the security of your account</li>
-            <li>Comply with all applicable laws and regulations</li>
-            <li>Respect intellectual property rights</li>
-            <li>Engage in fair and honest business practices</li>
+            <li>A public directory of brands with PR application routes.</li>
+            <li>Creator accounts: My Kit, gifted PR apply, pitches, Timeline, Polly, and paid UGC listing cards.</li>
+            <li>Creator Pro: a paid subscription (currently advertised at $19/month) with extra apply credits and a monthly gifting-campaign placement as described in-app.</li>
+            <li>Brand Gifted UGC: a branded roster, lock-and-ship CSV, and 6-month commercial usage on delivered files. First campaign is free of platform fee (product and shipping only); then $299/month if the brand opts in. We do not auto-bill that seat.</li>
           </ul>
+          <Paragraph>
+            Newcollab is not a paid-per-video marketplace, not an escrow for
+            creator invoices, and not a full-service UGC agency. Brands do not
+            pay creators through Newcollab for gifted campaigns. Third-party
+            paid UGC cards link out to the source brief.
+          </Paragraph>
         </Section>
 
         <Section>
-          <Title level={2}>4. Creator Guidelines</Title>
+          <Title level={2}>2. Eligibility and accounts</Title>
           <Paragraph>
-            Content creators must:
+            You must be at least 18 (or the age of majority where you live) to
+            apply for gifted PR, connect a professional Instagram or TikTok
+            account, or buy a paid plan. You must provide accurate information
+            and keep your password and connected logins safe. You are
+            responsible for activity on your account. We may refuse, suspend, or
+            close accounts that are fake, abusive, or underage.
+          </Paragraph>
+        </Section>
+
+        <Section>
+          <Title level={2}>3. Creator terms</Title>
+          <Paragraph>
+            Directory unlocks and gifted applications use credits as shown in
+            the app. Free credits are limited; Pro extends them. When you apply
+            to a gifted roster you agree, unless the in-app brief says otherwise:
           </Paragraph>
           <ul>
-            <li>Provide accurate audience metrics and engagement data</li>
-            <li>Deliver content as agreed in collaboration terms</li>
-            <li>Disclose sponsored content according to platform guidelines</li>
-            <li>Maintain professional communication with brands</li>
-            <li>Follow platform-specific content guidelines</li>
+            <li>The collab is gifted product, not a cash fee.</li>
+            <li>If they ship: one organic post on your account plus one UGC file (photo or video) the brand can download, within 4 days of receipt.</li>
+            <li>The brand gets 6-month commercial usage of that UGC (ads and their channels). You keep ownership. No exclusivity and no royalties during that term.</li>
+            <li>You are added to their gifted list. Being on the list means they may pick who gets a box — it is not a shipping guarantee.</li>
           </ul>
-        </Section>
-
-        <Section>
-          <Title level={2}>5. Brand Guidelines</Title>
           <Paragraph>
-            Brands must:
+            You must disclose gifted or paid content as required by the FTC,
+            ASA, and the platform you post on. Metrics you show must not be
+            fake. Polly drafts pitches and advice; you send them. You are
+            responsible for what you send brands.
           </Paragraph>
-          <ul>
-            <li>Provide accurate company information</li>
-            <li>Honor agreed payment terms</li>
-            <li>Respect creator creative freedom within agreed parameters</li>
-            <li>Provide clear campaign requirements</li>
-            <li>Maintain professional communication</li>
-          </ul>
         </Section>
 
         <Section>
-          <Title level={2}>6. Payment Terms</Title>
+          <Title level={2}>4. Brand terms</Title>
           <Paragraph>
-            Payment processing is handled through secure third-party providers (Stripe/PayPal). We:
+            Brand roster seats work as described on{' '}
+            <a href="https://newcollab.co/brands/pr-packages">/brands/pr-packages</a>:
+            you select creators, lock, export shipping, gift product, and receive
+            UGC with 6-month commercial usage. Creators keep copyright. You do
+            not get perpetual ownership unless you strike a separate deal off
+            platform. Honor shipping and selection in good faith. Do not scrape
+            the creator pool or spam applicants.
           </Paragraph>
-          <ul>
-            <li>Hold funds in escrow until content delivery</li>
-            <li>Release payments upon content approval</li>
-            <li>Charge a platform fee for successful collaborations</li>
-            <li>Process refunds according to our refund policy</li>
-          </ul>
         </Section>
 
         <Section>
-          <Title level={2}>7. Intellectual Property</Title>
+          <Title level={2}>5. Subscriptions, credits, and refunds</Title>
           <Paragraph>
-            Users retain rights to their content, subject to:
+            Paid plans are billed by Stripe (or PayPal where a legacy checkout
+            still runs). Creator Pro renews until you cancel in Account Settings
+            or by emailing team@newcollab.co. Cancellation stops future renewals;
+            it does not refund the current period unless we failed to deliver a
+            promised gifting-campaign placement that month — in that case email
+            us and we will place you on the next campaign or refund that invoice,
+            as stated in the Pro offer.
           </Paragraph>
-          <ul>
-            <li>Collaboration agreements between creators and brands</li>
-            <li>Platform usage rights for promotional purposes</li>
-            <li>Content licensing terms specified in each collaboration</li>
-          </ul>
-        </Section>
-
-        <Section>
-          <Title level={2}>8. Dispute Resolution</Title>
           <Paragraph>
-            We encourage users to resolve disputes amicably. For unresolved issues:
+            Brand $299 seats are opt-in after the free first campaign. We do not
+            auto-bill that product. Cancel a paid brand seat by emailing
+            team@newcollab.co. Usage already granted on delivered content
+            continues for its 6-month term.
           </Paragraph>
-          <ul>
-            <li>Contact our support team for mediation</li>
-            <li>Follow our dispute resolution process</li>
-            <li>Arbitration may be required for certain disputes</li>
-          </ul>
         </Section>
 
         <Section>
-          <Title level={2}>9. Platform Modifications</Title>
+          <Title level={2}>6. Polly and listings</Title>
           <Paragraph>
-            We reserve the right to:
+            Polly is an automated assistant. Replies can be wrong. She is not
+            legal, tax, or immigration advice. Paid UGC cards are scraped or
+            sourced listings; availability, pay, and the application are
+            controlled by the third party. We do not guarantee a brand reply, a
+            PR box, or a paid job.
           </Paragraph>
-          <ul>
-            <li>Modify or discontinue the platform</li>
-            <li>Update these terms with notice to users</li>
-            <li>Suspend or terminate accounts for violations</li>
-          </ul>
         </Section>
 
         <Section>
-          <Title level={2}>10. Contact Information</Title>
+          <Title level={2}>7. Intellectual property</Title>
           <Paragraph>
-            For questions about these terms, please contact:
-            <br />
-            Email: team@newcollab.co
+            You keep your content. You grant Newcollab a license to host, display,
+            and match it so the product works (kit, applications, roster, emails).
+            Gifted usage rights between you and a brand are the ones you accept
+            at apply time (section 3) or in a later written deal. Newcollab’s
+            name, site, and software stay ours. Do not copy the directory or
+            creator pool for a competing scrape.
+          </Paragraph>
+        </Section>
+
+        <Section>
+          <Title level={2}>8. Acceptable use</Title>
+          <Paragraph>
+            Do not: scrape at scale, create fake engagement or fake kits, harass
+            users, upload malware, attempt to access other accounts, or use
+            Newcollab to send spam. We may remove content or close accounts that
+            break these terms or the law.
+          </Paragraph>
+        </Section>
+
+        <Section>
+          <Title level={2}>9. Disclaimers and liability</Title>
+          <Paragraph>
+            The service is provided as is. Brands, creators, and third-party
+            listing sites are independent. To the fullest extent allowed by law,
+            Newcollab is not liable for lost profits, lost deals, or indirect
+            damages, and our total liability for a claim is limited to the fees
+            you paid us in the 12 months before the claim (or $50 if you paid
+            nothing). Some places do not allow these limits; in those places
+            they apply only as far as the law allows. Consumers keep any
+            mandatory rights they cannot waive.
+          </Paragraph>
+        </Section>
+
+        <Section>
+          <Title level={2}>10. Changes and contact</Title>
+          <Paragraph>
+            We may update these terms and the product. The date at the top will
+            change. Continued use after a material update means you accept the
+            new terms. Questions, cancellations, and disputes: start with{' '}
+            <a href="mailto:team@newcollab.co">team@newcollab.co</a>.
           </Paragraph>
         </Section>
     </Container>
   );
 };
 
-export default TermsOfService; 
+export default TermsOfService;

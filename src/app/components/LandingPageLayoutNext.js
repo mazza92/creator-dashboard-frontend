@@ -8,10 +8,10 @@ import { MenuOutlined, CloseOutlined, ArrowUpOutlined } from '@ant-design/icons'
 import styled, { createGlobalStyle } from 'styled-components';
 import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
-import CookieSettings from '../../components/CookieSettings';
 import FreePortfolioBanner from '../../components/FreePortfolioBanner';
 import AuthNavButtons from '../../components/AuthNavButtons';
 import { shouldShowFreePortfolioBanner } from '../../lib/freePortfolioBanner';
+import { openCookieSettings } from '../../lib/cookieConsent';
 import { tokens } from '../../theme/tokens';
 
 const GlobalStyle = createGlobalStyle`
@@ -521,7 +521,6 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [showCookieSettings, setShowCookieSettings] = useState(false);
   const pathname = usePathname() || '/';
   const router = useRouter();
 
@@ -619,7 +618,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
 
   const handleOpenCookieSettings = (e) => {
     if (e) e.preventDefault();
-    setShowCookieSettings(true);
+    openCookieSettings();
   };
 
   return (
@@ -719,7 +718,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
             <FooterLink href="/contact">Contact</FooterLink>
             <FooterLink href="/privacy-policy">Privacy</FooterLink>
             <FooterLink href="/terms-of-service">Terms</FooterLink>
-            <FooterLink onClick={handleOpenCookieSettings}>Cookie Settings</FooterLink>
+            <FooterLink href="#cookie-settings" onClick={handleOpenCookieSettings}>Cookie settings</FooterLink>
           </FooterLinks>
           <div style={{ marginBottom: '32px' }}>
             <SocialIcon>
@@ -746,10 +745,6 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
           <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
         </Footer>
       )}
-      <CookieSettings
-        isVisible={showCookieSettings}
-        onClose={() => setShowCookieSettings(false)}
-      />
     </LayoutWrapper>
   );
 }

@@ -2,7 +2,7 @@ import TermsClient from './TermsClient';
 
 export const metadata = {
   title: 'Terms of Service | Newcollab',
-  description: "Newcollab's terms of service - Learn about the rules and guidelines for using our creator-brand collaboration platform.",
+  description: "Newcollab terms: gifted PR, Creator Pro, brand roster seats, UGC usage, subscriptions, and acceptable use. Contact team@newcollab.co.",
   alternates: {
     canonical: 'https://newcollab.co/terms-of-service',
   },

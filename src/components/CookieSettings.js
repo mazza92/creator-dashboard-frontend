@@ -1,198 +1,333 @@
-import React, { useState, useEffect } from 'react';
-import { Switch, Typography, Button, Space } from 'antd';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import { tokens } from '../theme/tokens';
+import {
+  OPEN_COOKIE_SETTINGS_EVENT,
+  applyConsent,
+  defaultDenied,
+  defaultGranted,
+  isConsentRegion,
+  readConsent,
+  saveAndApplyConsent,
+} from '../lib/cookieConsent';
 
-const { Title, Text } = Typography;
-
-const CookieBanner = styled(motion.div)`
+const Panel = styled(motion.div)`
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  z-index: 1000;
-  border: 1px solid rgba(38, 166, 154, 0.1);
+  z-index: 10050;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  max-width: 560px;
+  margin: 0 auto;
+  background: ${tokens.surface};
+  color: ${tokens.textPrimary};
+  border: 1px solid ${tokens.border};
+  border-radius: ${tokens.radiusCard};
+  box-shadow: ${tokens.shadowHover};
+  padding: 22px 22px 18px;
+  font-family: ${tokens.fontFamily};
+  pointer-events: auto;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 
-  @media (max-width: 768px) {
-    bottom: 16px;
-    right: 16px;
-    left: 16px;
-    max-width: none;
+  @media (min-width: 640px) {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    margin: 0;
+    width: 420px;
   }
 `;
 
-const CookieSection = styled.div`
-  margin-bottom: 16px;
+const Kicker = styled.p`
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${tokens.textMuted};
 `;
 
-const CookieHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+const Heading = styled.h2`
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: ${tokens.textPrimary};
 `;
 
-const CookieDescription = styled(Text)`
-  color: #64748b;
+const Copy = styled.p`
+  margin: 0 0 16px;
   font-size: 14px;
-  display: block;
-  margin-bottom: 12px;
+  line-height: 1.55;
+  color: ${tokens.textSecondary};
+
+  a {
+    color: ${tokens.textPrimary};
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 `;
 
-const CookieSettings = ({ isVisible, onClose }) => {
-  const [cookiePreferences, setCookiePreferences] = useState({
-    necessary: true,
-    analytics: false,
-    marketing: false,
-    preferences: false,
-  });
+const Row = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
 
-  const [showDetails, setShowDetails] = useState(false);
+const Btn = styled.button`
+  appearance: none;
+  border: 1px solid ${props => (props.$solid ? tokens.action : tokens.borderHover)};
+  background: ${props => (props.$solid ? tokens.action : tokens.surface)};
+  color: ${props => (props.$solid ? '#fff' : tokens.textPrimary)};
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: ${tokens.radiusBtn};
+  padding: 11px 14px;
+  min-height: 44px;
+  flex: 1 1 120px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+
+  &:hover {
+    background: ${props => (props.$solid ? tokens.actionHover : tokens.subtle)};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${tokens.action};
+    outline-offset: 2px;
+  }
+`;
+
+const Ghost = styled.button`
+  appearance: none;
+  border: 0;
+  background: none;
+  color: ${tokens.textSecondary};
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 8px 0 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: ${tokens.textPrimary};
+  }
+`;
+
+const Category = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid ${tokens.border};
+`;
+
+const CatCopy = styled.div`
+  min-width: 0;
+`;
+
+const CatTitle = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${tokens.textPrimary};
+`;
+
+const CatDesc = styled.div`
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: ${tokens.textMuted};
+`;
+
+const Switch = styled.button`
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  cursor: ${props => (props.disabled ? 'default' : 'pointer')};
+  background: ${props => (props.$on ? tokens.action : '#D4D4D4')};
+  position: relative;
+  transition: background 0.15s;
+
+  span {
+    position: absolute;
+    top: 3px;
+    left: ${props => (props.$on ? '21px' : '3px')};
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.15s;
+    box-shadow: 0 1px 2px rgba(15, 15, 15, 0.2);
+  }
+`;
+
+function Toggle({ on, disabled, onToggle, label }) {
+  return (
+    <Switch
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      $on={on}
+      onClick={() => !disabled && onToggle(!on)}
+    >
+      <span />
+    </Switch>
+  );
+}
+
+export default function CookieSettings() {
+  const [ready, setReady] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [customize, setCustomize] = useState(false);
+  const [prefs, setPrefs] = useState(defaultDenied());
 
   useEffect(() => {
-    const savedPreferences = localStorage.getItem('cookiePreferences');
-    if (savedPreferences) {
-      setCookiePreferences(JSON.parse(savedPreferences));
+    const stored = readConsent();
+    if (stored) {
+      setPrefs(stored);
+      applyConsent(stored);
+      setOpen(false);
+    } else if (isConsentRegion()) {
+      applyConsent(defaultDenied());
+      setOpen(true);
+    } else {
+      const granted = defaultGranted();
+      saveAndApplyConsent(granted);
+      setPrefs(granted);
+      setOpen(false);
     }
+    setReady(true);
+
+    const onOpen = () => {
+      const current = readConsent() || defaultDenied();
+      setPrefs(current);
+      setCustomize(true);
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_COOKIE_SETTINGS_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_COOKIE_SETTINGS_EVENT, onOpen);
   }, []);
 
-  const handleSavePreferences = () => {
-    localStorage.setItem('cookiePreferences', JSON.stringify(cookiePreferences));
-    onClose();
+  const close = () => {
+    setOpen(false);
+    setCustomize(false);
   };
 
-  const handleAcceptAll = () => {
-    const allAccepted = {
-      necessary: true,
-      analytics: true,
-      marketing: true,
-      preferences: true,
-    };
-    setCookiePreferences(allAccepted);
-    localStorage.setItem('cookiePreferences', JSON.stringify(allAccepted));
-    onClose();
+  const acceptAll = () => {
+    setPrefs(saveAndApplyConsent(defaultGranted()));
+    close();
   };
 
-  const handleRejectAll = () => {
-    const allRejected = {
-      necessary: true,
-      analytics: false,
-      marketing: false,
-      preferences: false,
-    };
-    setCookiePreferences(allRejected);
-    localStorage.setItem('cookiePreferences', JSON.stringify(allRejected));
-    onClose();
+  const rejectAll = () => {
+    setPrefs(saveAndApplyConsent(defaultDenied()));
+    close();
+  };
+
+  const saveCustom = () => {
+    setPrefs(saveAndApplyConsent({
+      analytics: !!prefs.analytics,
+      marketing: !!prefs.marketing,
+    }));
+    close();
   };
 
   return (
     <AnimatePresence>
-      {isVisible && (
-        <CookieBanner
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        >
-          {!showDetails ? (
-            <>
-              <Text style={{ marginBottom: 16, display: 'block' }}>
-                We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.
-              </Text>
-              <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-                <Button onClick={() => setShowDetails(true)}>
+      {ready && open && (
+        <>
+          <Panel
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby="nc-cookie-title"
+            initial={{ y: 24, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 16, opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+          >
+            <Kicker>Privacy</Kicker>
+            <Heading id="nc-cookie-title">
+              {customize ? 'Cookie settings' : 'Cookies on Newcollab'}
+            </Heading>
+
+            {!customize ? (
+              <>
+                <Copy>
+                  We use analytics and ads cookies only if you say yes. Necessary
+                  cookies keep you logged in. You can reject them — the product
+                  still works.{' '}
+                  <a href="/privacy-policy">Privacy policy</a>
+                </Copy>
+                <Row>
+                  <Btn type="button" onClick={rejectAll}>Reject all</Btn>
+                  <Btn type="button" $solid onClick={acceptAll}>Accept all</Btn>
+                </Row>
+                <Ghost type="button" onClick={() => setCustomize(true)}>
                   Customize
-                </Button>
-                <Space>
-                  <Button onClick={handleRejectAll}>Reject All</Button>
-                  <Button type="primary" onClick={handleAcceptAll}>
-                    Accept All
-                  </Button>
-                </Space>
-              </Space>
-            </>
-          ) : (
-            <>
-              <Title level={5} style={{ marginBottom: 16 }}>Cookie Settings</Title>
-              
-              <CookieSection>
-                <CookieHeader>
-                  <div>
-                    <Title level={5} style={{ margin: 0, fontSize: 14 }}>Necessary Cookies</Title>
-                    <CookieDescription>
-                      Essential for the website to function properly.
-                    </CookieDescription>
-                  </div>
-                  <Switch checked disabled />
-                </CookieHeader>
-              </CookieSection>
+                </Ghost>
+              </>
+            ) : (
+              <>
+                <Copy>
+                  Choose what we can store. Necessary cookies are always on.{' '}
+                  <a href="/privacy-policy">Privacy policy</a>
+                </Copy>
 
-              <CookieSection>
-                <CookieHeader>
-                  <div>
-                    <Title level={5} style={{ margin: 0, fontSize: 14 }}>Analytics Cookies</Title>
-                    <CookieDescription>
-                      Help us understand how visitors interact with our website.
-                    </CookieDescription>
-                  </div>
-                  <Switch
-                    checked={cookiePreferences.analytics}
-                    onChange={(checked) => setCookiePreferences(prev => ({ ...prev, analytics: checked }))}
+                <Category>
+                  <CatCopy>
+                    <CatTitle>Necessary</CatTitle>
+                    <CatDesc>Login, security, and remembering this choice.</CatDesc>
+                  </CatCopy>
+                  <Toggle on disabled label="Necessary cookies" onToggle={() => {}} />
+                </Category>
+
+                <Category>
+                  <CatCopy>
+                    <CatTitle>Analytics</CatTitle>
+                    <CatDesc>Google Analytics 4 and Microsoft Clarity (how the product is used).</CatDesc>
+                  </CatCopy>
+                  <Toggle
+                    on={!!prefs.analytics}
+                    label="Analytics cookies"
+                    onToggle={(on) => setPrefs((p) => ({ ...p, analytics: on }))}
                   />
-                </CookieHeader>
-              </CookieSection>
+                </Category>
 
-              <CookieSection>
-                <CookieHeader>
-                  <div>
-                    <Title level={5} style={{ margin: 0, fontSize: 14 }}>Marketing Cookies</Title>
-                    <CookieDescription>
-                      Used to display relevant advertisements.
-                    </CookieDescription>
-                  </div>
-                  <Switch
-                    checked={cookiePreferences.marketing}
-                    onChange={(checked) => setCookiePreferences(prev => ({ ...prev, marketing: checked }))}
+                <Category>
+                  <CatCopy>
+                    <CatTitle>Marketing</CatTitle>
+                    <CatDesc>Meta Pixel and TikTok Pixel so we can measure our own ads.</CatDesc>
+                  </CatCopy>
+                  <Toggle
+                    on={!!prefs.marketing}
+                    label="Marketing cookies"
+                    onToggle={(on) => setPrefs((p) => ({ ...p, marketing: on }))}
                   />
-                </CookieHeader>
-              </CookieSection>
+                </Category>
 
-              <CookieSection>
-                <CookieHeader>
-                  <div>
-                    <Title level={5} style={{ margin: 0, fontSize: 14 }}>Preference Cookies</Title>
-                    <CookieDescription>
-                      Remember your preferences and settings.
-                    </CookieDescription>
-                  </div>
-                  <Switch
-                    checked={cookiePreferences.preferences}
-                    onChange={(checked) => setCookiePreferences(prev => ({ ...prev, preferences: checked }))}
-                  />
-                </CookieHeader>
-              </CookieSection>
-
-              <Space style={{ width: '100%', justifyContent: 'space-between', marginTop: 16 }}>
-                <Button onClick={() => setShowDetails(false)}>
-                  Back
-                </Button>
-                <Space>
-                  <Button onClick={handleRejectAll}>Reject All</Button>
-                  <Button type="primary" onClick={handleSavePreferences}>
-                    Save Preferences
-                  </Button>
-                </Space>
-              </Space>
-            </>
-          )}
-        </CookieBanner>
+                <Row style={{ marginTop: 16 }}>
+                  <Btn type="button" onClick={rejectAll}>Reject all</Btn>
+                  <Btn type="button" $solid onClick={saveCustom}>Save choices</Btn>
+                </Row>
+                <Ghost type="button" onClick={acceptAll}>Accept all</Ghost>
+              </>
+            )}
+          </Panel>
+        </>
       )}
     </AnimatePresence>
   );
-};
-
-export default CookieSettings; 
+}

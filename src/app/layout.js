@@ -3,6 +3,7 @@ import Script from 'next/script';
 import './globals.css';
 import StyledComponentsRegistry from './registry';
 import { AnalyticsProviderNext } from './components/AnalyticsProviderNext';
+import CookieSettings from '../components/CookieSettings';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,7 +19,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* Google Analytics with cross-domain tracking */}
+        <Script src="/cookie-consent-init.js" strategy="beforeInteractive" />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           strategy="afterInteractive"
@@ -39,6 +40,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={inter.className}>
         <StyledComponentsRegistry>
+          <CookieSettings />
           {/* AnalyticsProviderNext handles its own internal Suspense for
               useSearchParams — children are NOT inside a Suspense boundary,
               so Next.js fully SSRs every page. */}

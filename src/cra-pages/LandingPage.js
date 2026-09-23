@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fi';
 import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
+import { openCookieSettings } from '../lib/cookieConsent';
 
 // ═══════════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -2841,6 +2842,7 @@ const LandingPage = () => {
               <FooterBottomLinks>
                 <a href="/privacy-policy">Privacy</a>
                 <a href="/terms-of-service">Terms</a>
+                <a href="#cookie-settings" onClick={(e) => { e.preventDefault(); openCookieSettings(); }}>Cookies</a>
               </FooterBottomLinks>
             </FooterBottom>
           </FooterInner>

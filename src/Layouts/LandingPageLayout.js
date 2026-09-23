@@ -9,10 +9,10 @@ import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
-import CookieSettings from '../components/CookieSettings';
 import FreePortfolioBanner from '../components/FreePortfolioBanner';
 import AuthNavButtons from '../components/AuthNavButtons';
 import { shouldShowFreePortfolioBanner } from '../lib/freePortfolioBanner';
+import { openCookieSettings } from '../lib/cookieConsent';
 import { tokens } from '../theme/tokens';
 
 
@@ -525,7 +525,6 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [showCookieSettings, setShowCookieSettings] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   // eslint-disable-next-line no-unused-vars
@@ -625,7 +624,7 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
 
   const handleOpenCookieSettings = (e) => {
     if (e) e.preventDefault();
-    setShowCookieSettings(true);
+    openCookieSettings();
   };
 
   return (
@@ -722,7 +721,7 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
           <FooterLink href="/contact">Contact</FooterLink>
           <FooterLink href="/privacy-policy">Privacy</FooterLink>
           <FooterLink href="/terms-of-service">Terms</FooterLink>
-          <FooterLink onClick={handleOpenCookieSettings}>Cookie Settings</FooterLink>
+          <FooterLink href="#cookie-settings" onClick={handleOpenCookieSettings}>Cookie settings</FooterLink>
         </FooterLinks>
         <div style={{ marginBottom: '32px' }}>
           <SocialIcon>
@@ -748,10 +747,6 @@ export default function LandingPageLayout({ hideHeader, hideFooter, children, ca
         </div>
         <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
       </Footer>}
-      <CookieSettings 
-        isVisible={showCookieSettings}
-        onClose={() => setShowCookieSettings(false)}
-      />
     </LayoutWrapper>
   );
 } 
