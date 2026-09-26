@@ -720,6 +720,7 @@ export default function CreatorOnboarding() {
   const [platform, setPlatform] = useState('');
   const [verificationStatus, setVerificationStatus] = useState(null); // null | 'verifying' | 'verified' | 'failed'
   const [verificationError, setVerificationError] = useState(null);
+  const [igHandleFallback, setIgHandleFallback] = useState(false);
   const [verifiedProfile, setVerifiedProfile] = useState(null);
   // Scraping state
   const [showScraping, setShowScraping] = useState(false);
@@ -870,6 +871,8 @@ export default function CreatorOnboarding() {
 
   // TikTok Login Kit is the official source of creator TikTok stats and videos.
   const VERIFIABLE_PLATFORMS = ['tiktok', 'instagram'];
+  const instagramOauthBlocked = platform === 'instagram' && igHandleFallback;
+  const oauthConnect = VERIFIABLE_PLATFORMS.includes(platform) && !instagramOauthBlocked;
 
   // Check region on mount - block users from restricted regions
   useEffect(() => {
@@ -937,6 +940,12 @@ export default function CreatorOnboarding() {
       // OAuth failed - show error
       setPlatform(oauthPlatform || 'instagram');
       setVerificationStatus('failed');
+      if (
+        oauthPlatform === 'instagram' &&
+        (reason === 'instagram_graph_denied' || reason === 'need_instagram_tester' || reason === 'no_username')
+      ) {
+        setIgHandleFallback(true);
+      }
 
       const errorMessages = {
         'private': 'Your account appears to be private. Please make it public and try again.',
@@ -945,7 +954,8 @@ export default function CreatorOnboarding() {
         'restricted_region': 'newcollab is not available in your region.',
         'oauth_error': 'Connection was cancelled or failed. Please try again.',
         'need_professional': 'Instagram Login needs a Creator or Business account. Switch to Professional in Instagram Settings, then try again.',
-        'need_instagram_tester': 'Instagram allowed the login, but this account is not a tester on the Meta app yet. In App Dashboard → App Roles → Instagram Testers, add the handle, accept the invite in Instagram → Settings → Website permissions, then try again.',
+        'need_instagram_tester': 'Instagram signed you in, but Meta did not return your profile. Enter your @username below to finish.',
+        'instagram_graph_denied': 'Instagram signed you in, but Meta did not return your profile. Enter your @username below to finish.',
         'inactive': oauthPlatform === 'instagram'
           ? 'Your Instagram needs a public post from the last 30 days.'
           : 'Your TikTok needs a public video posted in the last 30 days.',
@@ -977,8 +987,8 @@ export default function CreatorOnboarding() {
       return;
     }
 
-    // For TikTok, redirect to OAuth (handle comes back from TikTok)
-    if (VERIFIABLE_PLATFORMS.includes(platform)) {
+    // Official OAuth. Instagram falls back to handle scrape if Graph is denied.
+    if (oauthConnect) {
       setLoading(true);
       setVerificationStatus('verifying');
 
@@ -1387,6 +1397,7 @@ export default function CreatorOnboarding() {
                           setVerificationStatus(null);
                           setVerificationError(null);
                           setScrapeHelp(null);
+                          setIgHandleFallback(false);
                           setError('');
                         }}
                       >
@@ -1399,7 +1410,7 @@ export default function CreatorOnboarding() {
                   </PlatformGrid>
 
                   {/* For scrapable platforms, show username only - stats will be scraped */}
-                  {platform && SCRAPABLE_PLATFORMS.includes(platform) && !VERIFIABLE_PLATFORMS.includes(platform) && (
+                  {platform && SCRAPABLE_PLATFORMS.includes(platform) && !oauthConnect && (
                     <div style={{ marginTop: '16px' }}>
                       <FormLabel>Your creator handle</FormLabel>
                       <InputWrap>
@@ -1418,7 +1429,9 @@ export default function CreatorOnboarding() {
                         />
                       </InputWrap>
                       <VerificationNote style={{ marginTop: '12px' }}>
-                        We'll verify your profile and fetch your stats automatically
+                        {igHandleFallback
+                          ? 'Instagram login worked. Enter the same @username so we can load your public profile.'
+                          : "We'll verify your profile and fetch your stats automatically"}
                       </VerificationNote>
                       <RequirementsHint>
                         <strong>What brands need</strong>
@@ -1432,7 +1445,7 @@ export default function CreatorOnboarding() {
                   )}
 
                   {/* For Instagram/TikTok OAuth flow (if VERIFIABLE_PLATFORMS is enabled), show OAuth connect info */}
-                  {platform && VERIFIABLE_PLATFORMS.includes(platform) && (
+                  {platform && oauthConnect && (
                     <>
                       <VerificationNote>
                         {verificationStatus === 'verifying' ? (
@@ -1485,12 +1498,12 @@ export default function CreatorOnboarding() {
                     disabled={
                       loading ||
                       !platform ||
-                      (VERIFIABLE_PLATFORMS.includes(platform) ? false : !username.trim())
+                      (oauthConnect ? false : !username.trim())
                     }
                   >
                     {loading ? (
                       verificationStatus === 'verifying' ? 'Connecting...' : 'Saving...'
-                    ) : VERIFIABLE_PLATFORMS.includes(platform) ? (
+                    ) : oauthConnect ? (
                       `Connect ${platform === 'instagram' ? 'Instagram' : 'TikTok'} →`
                     ) : (
                       'Continue →'

@@ -352,6 +352,18 @@ const FAILURE_MESSAGES = {
     blocked: false,
     actions: ['retry', 'try_other']
   },
+  instagram_graph_denied: {
+    title: 'Instagram login worked, profile did not',
+    message: 'Instagram signed you in, but Meta did not return your profile. Enter your public @username on the previous step, or try TikTok.',
+    blocked: false,
+    actions: ['retry', 'try_other']
+  },
+  need_instagram_tester: {
+    title: 'Instagram login worked, profile did not',
+    message: 'Instagram signed you in, but Meta did not return your profile. Enter your public @username on the previous step, or try TikTok.',
+    blocked: false,
+    actions: ['retry', 'try_other']
+  },
   fetch_error: {
     title: 'Verification failed',
     message: 'Something went wrong while checking your account. Please try again.',
