@@ -24,18 +24,40 @@ const STARTER_LABELS = {
 };
 
 const STARTER_HINTS = {
+  gifted_lists: 'Brands picking creators for boxes now',
   paid_ugc: 'Live briefs — tap Apply',
   line_up: "I'll draft the emails",
   name_a_brand: 'You pick, I write it',
   more_replies: 'Rates, bio, and proof brands open',
 };
 
+const DIRECTORY_PATH = '/creator/dashboard/pr-brands';
+
 const STARTERS = [
-  { id: 'paid_ugc', label: 'Show paid UGC I can apply to now', hint: STARTER_HINTS.paid_ugc, action: 'suggest_gigs', skip_discovery: true },
-  { id: 'line_up', label: 'Pitch 3 brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true },
+  { id: 'gifted_lists', label: 'Apply to gifted PR lists', hint: STARTER_HINTS.gifted_lists, action: 'open_directory', href: DIRECTORY_PATH },
+  { id: 'line_up', label: 'Pitch 3 gifted brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true, deal: 'gifted' },
   { id: 'name_a_brand', label: 'Write a pitch for a brand I name', hint: STARTER_HINTS.name_a_brand, action: 'ask_brand' },
   { id: 'more_replies', label: 'Make my kit get more replies', hint: STARTER_HINTS.more_replies, action: 'coach_profile' },
+  { id: 'paid_ugc', label: 'Show paid UGC I can apply to now', hint: STARTER_HINTS.paid_ugc, action: 'suggest_gigs', skip_discovery: true },
 ];
+
+const DEEP_LINK_CHIPS = {
+  checkin_replied: { label: 'They replied', action: 'task_act' },
+  checkin_quiet: { label: 'Still quiet', action: 'task_act' },
+  checkin_not_sent: { label: 'I never sent it', action: 'task_act' },
+  pr_arrived: { label: 'Yes arrived', action: 'task_act' },
+  pr_not_yet: { label: 'Not yet', action: 'task_act' },
+  move_on: { label: 'Move on to next brand', action: 'task_act' },
+  draft_followup: { label: 'Draft a follow-up', action: 'generate_pitch', is_followup: true },
+  help_reply: { label: 'Help me reply', action: 'chat' },
+  need_idea: { label: 'Need a content idea', action: 'chat' },
+  line_up: { label: 'Line up brands for me', action: 'suggest_brands', deal: 'gifted' },
+};
+
+function logPitchHandoff(pitch, method) {
+  if (!pitch?.brand_id) return;
+  apiClient.post('/api/polly/pitch/handoff', { brand_id: pitch.brand_id, method }).catch(() => {});
+}
 
 function isOpenerOnlyThread(msgs) {
   if (!Array.isArray(msgs) || msgs.length !== 1) return false;
@@ -367,13 +389,15 @@ const Title = styled.h1`
   margin: 0 0 8px;
 `;
 
-const Sub = styled.p`
+const Sub = styled.div`
   color: ${t.muted};
   font-size: 16px;
   line-height: 1.5;
   margin: 0 auto 22px;
   max-width: 42ch;
-  white-space: pre-line;
+
+  p { margin: 0 0 10px; }
+  p:last-child { margin-bottom: 0; }
 `;
 
 const Chips = styled.div`
@@ -754,6 +778,20 @@ const PitchSubject = styled.div`
   margin-bottom: 8px;
 `;
 
+const PitchTo = styled.div`
+  font-size: 13px;
+  color: ${t.muted};
+  margin-bottom: 4px;
+  word-break: break-all;
+`;
+
+const PitchHint = styled.div`
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: ${t.muted};
+  margin-top: 10px;
+`;
+
 const PitchBody = styled.pre`
   white-space: pre-wrap;
   font-family: inherit;
@@ -999,7 +1037,7 @@ export default function Polly() {
   const { user, loading: userLoading } = useContext(UserContext) || {};
   const creatorId = user?.creator_id;
   const [greeting, setGreeting] = useState(
-    "Hey, I'm Polly. I'm your Creator Assistant — I line up brand PR to pitch, and I find all paid UGC offers across all the platforms out there so you have them here in one place.\n\nWhat do you want to land first?"
+    "Hey, I'm Polly. I'm your Creator Assistant — I get you on brands' gifted PR lists and write the pitches for the ones worth emailing. When you're ready for paid work, I pull paid UGC offers from across the platforms into one place.\n\nWhat do you want to land first?"
   );
   const [credits, setCredits] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -1010,6 +1048,8 @@ export default function Polly() {
   const [contactingId, setContactingId] = useState(null);
   const [applyingGigId, setApplyingGigId] = useState(null);
   const [mailHold, setMailHold] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(null);
+  const [mailTriedId, setMailTriedId] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [starters, setStarters] = useState(STARTERS);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -1246,10 +1286,15 @@ export default function Polly() {
       setShowUpgrade(true);
       return;
     }
+    if (chip.action === 'open_directory') {
+      navigate(chip.href || DIRECTORY_PATH);
+      return;
+    }
     send(chip.label, {
       action: chip.action,
       brand_id: chip.brand_id,
       brand_name: chip.brand_name,
+      deal: chip.deal,
       skip_discovery: Boolean(chip.skip_discovery),
       starter: chip.id,
       task_id: chip.task_id,
@@ -1257,6 +1302,24 @@ export default function Polly() {
       is_followup: Boolean(chip.is_followup) || chip.id === 'draft_followup' || /follow-?up/i.test(chip.label || ''),
     });
   };
+
+  const deepLinkRef = useRef(false);
+  useEffect(() => {
+    const chipId = searchParams.get('chip');
+    if (!chipId || deepLinkRef.current || !ready || !creatorId) return;
+    deepLinkRef.current = true;
+    navigate('/creator/dashboard/for-you', { replace: true });
+    const base = DEEP_LINK_CHIPS[chipId];
+    if (!base) return;
+    const brandName = searchParams.get('brand_name') || '';
+    const brandId = Number(searchParams.get('brand_id')) || undefined;
+    const taskId = Number(searchParams.get('task_id')) || undefined;
+    let label = base.label;
+    if (chipId === 'checkin_replied' && brandName) label = `${brandName} replied`;
+    else if (chipId === 'draft_followup') label = brandName ? `Draft a follow-up to ${brandName}` : 'Draft a follow-up to the brand that viewed my kit';
+    sendStarter({ ...base, id: chipId, label, brand_id: brandId, brand_name: brandName || undefined, task_id: taskId });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, ready, creatorId]);
 
   const loadMoreGigs = async () => {
     if (busy || loadingMore) return;
@@ -1372,20 +1435,38 @@ export default function Polly() {
     }
   };
 
-  const copyPitch = async (pitch) => {
-    if (pitchHasPlaceholder(pitch)) {
-      setMailHold(true);
-      return;
-    }
-    try { await navigator.clipboard.writeText(pitch.body || ''); } catch (_) { /* ignore */ }
+  const flashCopied = (key) => {
+    setCopiedKey(key);
+    window.setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1800);
   };
 
-  const openMail = (pitch) => {
+  const copyPitch = async (pitch, msgId) => {
     if (pitchHasPlaceholder(pitch)) {
       setMailHold(true);
       return;
     }
-    if (pitch?.mailto) window.location.href = pitch.mailto;
+    const text = pitch.subject ? `Subject: ${pitch.subject}\n\n${pitch.body || ''}` : (pitch.body || '');
+    try { await navigator.clipboard.writeText(text); } catch (_) { /* ignore */ }
+    flashCopied(`${msgId}:pitch`);
+    logPitchHandoff(pitch, 'copy_pitch');
+  };
+
+  const copyEmail = async (pitch, msgId) => {
+    if (!pitch?.email) return;
+    try { await navigator.clipboard.writeText(pitch.email); } catch (_) { /* ignore */ }
+    flashCopied(`${msgId}:email`);
+    logPitchHandoff(pitch, 'copy_email');
+  };
+
+  const openMail = (pitch, msgId) => {
+    if (pitchHasPlaceholder(pitch)) {
+      setMailHold(true);
+      return;
+    }
+    if (!pitch?.mailto) return;
+    setMailTriedId(msgId);
+    logPitchHandoff(pitch, 'open_email');
+    window.location.href = pitch.mailto;
   };
 
   const resizeInput = (el) => {
@@ -1409,7 +1490,7 @@ export default function Polly() {
           <Empty>
             <AvatarMark src={POLLY_AVATAR_URL} alt="Polly" />
             <Title>Polly</Title>
-            <Sub>{greeting}</Sub>
+            <Sub><PollyRichText text={scrubPollyVoice(greeting)} /></Sub>
             <SuggestGrid>
               {starters.map((s) => (
                 <SuggestCard
@@ -1540,6 +1621,7 @@ export default function Polly() {
                         {msg.pitch.is_followup ? 'Follow-up for' : 'Pitch for'}{' '}
                         {msg.pitch.brand_name || 'this brand'}
                       </PitchLabel>
+                      {msg.pitch.email ? <PitchTo>To: {msg.pitch.email}</PitchTo> : null}
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>
                       {pitchHasPlaceholder(msg.pitch) ? (
                         <PitchCoach>
@@ -1550,14 +1632,27 @@ export default function Polly() {
                       <PitchBodyText body={msg.pitch.body} />
                       <PitchActions>
                         {msg.pitch.mailto && (
-                          <Primary href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch); }}>
+                          <Primary href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch, msg.id); }}>
                             Open email
                           </Primary>
                         )}
-                        <Ghost type="button" onClick={() => copyPitch(msg.pitch)}>
-                          {msg.pitch.is_followup ? 'Copy follow-up' : 'Copy pitch'}
+                        {msg.pitch.email && (
+                          <Ghost type="button" onClick={() => copyEmail(msg.pitch, msg.id)}>
+                            {copiedKey === `${msg.id}:email` ? 'Copied' : 'Copy email'}
+                          </Ghost>
+                        )}
+                        <Ghost type="button" onClick={() => copyPitch(msg.pitch, msg.id)}>
+                          {copiedKey === `${msg.id}:pitch`
+                            ? 'Copied'
+                            : (msg.pitch.is_followup ? 'Copy follow-up' : 'Copy pitch')}
                         </Ghost>
                       </PitchActions>
+                      {mailTriedId === msg.id ? (
+                        <PitchHint>
+                          Nothing opened? Copy the email and the pitch, paste them into Gmail or your mail app,
+                          then tap &ldquo;I sent it&rdquo; so I can track the follow-up.
+                        </PitchHint>
+                      ) : null}
                     </PitchCard>
                   )}
                 </div>
