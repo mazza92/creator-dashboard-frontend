@@ -20,6 +20,21 @@ function cardKey(c, i) {
   return c.handle || `anon-${i}`;
 }
 
+function Thumbs({ thumbs, href, label }) {
+  const [broken, setBroken] = useState([]);
+  const shown = (thumbs || []).filter((u) => !broken.includes(u)).slice(0, 3);
+  const body = shown.length ? (
+    <Strip $n={shown.length}>
+      {shown.map((u) => (
+        <img key={u} src={u} alt="" loading="lazy" onError={() => setBroken((b) => [...b, u])} />
+      ))}
+    </Strip>
+  ) : (
+    <NoThumbs>{titleCase(label)} UGC</NoThumbs>
+  );
+  return href ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label="View profile">{body}</a> : body;
+}
+
 export default function BrandLaunch() {
   const [params, setParams] = useSearchParams();
   const niche = (params.get('niche') || 'skincare').trim().toLowerCase();
@@ -46,7 +61,7 @@ export default function BrandLaunch() {
     setError('');
     setPicked([]);
     api.get('/api/v1/integrations/search-creators', {
-      params: { niche, platform, country: country || undefined, limit: 8 },
+      params: { niche, platform, country: country || undefined, limit: 24, view: 'landing' },
       timeout: 15000,
     })
       .then(({ data: payload }) => { if (!cancelled) setData(payload); })
@@ -158,39 +173,69 @@ export default function BrandLaunch() {
                 <span>Start a roster anyway. We open it to creators in your niche and you only pick the ones you like.</span>
               </Empty>
             ) : (
-              <Grid>
-                {creators.map((c, i) => {
-                  const key = cardKey(c, i);
-                  const on = picked.includes(key);
-                  return (
-                    <Card key={key} $on={on}>
-                      <CardHead>
-                        <div>
-                          <Handle>{c.handle || `${titleCase((c.niches || [])[0] || label)} creator`}</Handle>
-                          <Sub>{[c.platform, c.country].filter(Boolean).join(' · ') || 'Creator'}</Sub>
-                        </div>
-                        <Pick type="button" $on={on} onClick={() => togglePick(key)}>{on ? 'Added' : 'Add'}</Pick>
-                      </CardHead>
-                      <Stats>
-                        <span><b>{c.followers}</b> followers</span>
-                        {c.engagement_rate ? <span><b>{c.engagement_rate}</b> engagement</span> : null}
-                        {c.avg_views ? <span><b>{c.avg_views}</b> avg views</span> : null}
-                        {c.gifted_collabs ? <span><b>{c.gifted_collabs}</b> gifted collabs</span> : null}
-                      </Stats>
-                      <Tags>{(c.niches || []).map((n) => <Tag key={n}>{n}</Tag>)}</Tags>
-                      {c.preview_url ? (
-                        <KitLink href={c.preview_url} target="_blank" rel="noopener noreferrer">View media kit</KitLink>
-                      ) : (
-                        <Private>Full profile visible on your private roster</Private>
-                      )}
-                    </Card>
-                  );
-                })}
-              </Grid>
+              <>
+                <Grid>
+                  {creators.map((c, i) => {
+                    const key = cardKey(c, i);
+                    const on = picked.includes(key);
+                    return (
+                      <Card key={key} $on={on}>
+                        <Thumbs thumbs={c.thumbnails} href={c.preview_url} label={(c.niches || [])[0] || label} />
+                        <CardBody>
+                          <div>
+                            <Handle>{c.handle || `${titleCase((c.niches || [])[0] || label)} creator`}</Handle>
+                            <Sub>{[c.platform, c.country].filter(Boolean).join(' · ') || 'UGC creator'}</Sub>
+                          </div>
+                          <Stats>
+                            <span><b>{c.followers}</b> followers</span>
+                            {c.engagement_rate ? <span><b>{c.engagement_rate}</b> engagement</span> : null}
+                            {c.avg_views ? <span><b>{c.avg_views}</b> avg views</span> : null}
+                            {c.gifted_collabs ? <span><b>{c.gifted_collabs}</b> gifted collabs</span> : null}
+                          </Stats>
+                          {c.worked_with?.length ? (
+                            <Worked>Worked with <b>{c.worked_with.join(', ')}</b></Worked>
+                          ) : null}
+                          <Tags>{(c.niches || []).map((n) => <Tag key={n}>{n}</Tag>)}</Tags>
+                        </CardBody>
+                        <CardFoot>
+                          {c.preview_url ? (
+                            <ViewBtn href={c.preview_url} target="_blank" rel="noopener noreferrer">View profile</ViewBtn>
+                          ) : (
+                            <Private>Profile shared on your private roster</Private>
+                          )}
+                          <Pick
+                            type="button"
+                            $on={on}
+                            disabled={!on && picked.length >= 5}
+                            title={!on && picked.length >= 5 ? 'Up to 5 creators' : undefined}
+                            onClick={() => togglePick(key)}
+                          >
+                            {on ? '✓ Added' : '+ Add'}
+                          </Pick>
+                        </CardFoot>
+                      </Card>
+                    );
+                  })}
+                </Grid>
+                {total > creators.length ? (
+                  <More>
+                    Showing {creators.length} of {total}. Your private roster opens to every matched {label} creator,
+                    and they apply to your product.
+                  </More>
+                ) : null}
+              </>
             )}
+            {picked.length > 0 && !sent ? (
+              <MobileBar>
+                <span>{picked.length} of 5 added</span>
+                <button type="button" onClick={() => document.getElementById('launch-form')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Continue
+                </button>
+              </MobileBar>
+            ) : null}
           </div>
 
-          <Side>
+          <Side id="launch-form">
             {sent ? (
               <Done>
                 <h2>You’re in.</h2>
@@ -292,17 +337,93 @@ const Grid = styled.div`
 const Card = styled.article`
   background: #fff;
   border: 1px solid ${(p) => (p.$on ? GREEN : LINE)};
+  box-shadow: ${(p) => (p.$on ? `0 0 0 1px ${GREEN}` : 'none')};
   border-radius: 14px;
-  padding: 14px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 10px;
 `;
-const CardHead = styled.div`
+const Strip = styled.div`
+  display: grid;
+  grid-template-columns: repeat(${(p) => p.$n}, 1fr);
+  gap: 2px;
+  background: #f2f1ec;
+  aspect-ratio: 3 / 2;
+  img { width: 100%; height: 100%; object-fit: cover; display: block; min-height: 0; }
+`;
+const NoThumbs = styled.div`
+  aspect-ratio: 3 / 2;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f2f1ec, #e9efe9);
+  color: ${MUTE};
+  font-size: 13px;
+  font-weight: 600;
+`;
+const CardBody = styled.div`
+  padding: 12px 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+`;
+const CardFoot = styled.div`
+  padding: 12px 14px 14px;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  align-items: flex-start;
+  gap: 8px;
+`;
+const Worked = styled.div`
+  font-size: 12px;
+  color: ${MUTE};
+  b { color: ${INK}; font-weight: 600; }
+`;
+const ViewBtn = styled.a`
+  font-size: 13px;
+  font-weight: 650;
+  color: ${INK};
+  text-decoration: none;
+  border: 1px solid ${LINE};
+  border-radius: 8px;
+  padding: 7px 10px;
+  &:hover { border-color: ${INK}; }
+`;
+const More = styled.p`
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: ${MUTE};
+`;
+const MobileBar = styled.div`
+  display: none;
+  @media (max-width: 900px) {
+    display: flex;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 20;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: ${INK};
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    button {
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      color: ${INK};
+      font-weight: 700;
+      padding: 8px 14px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+  }
 `;
 const Handle = styled.div` font-weight: 700; font-size: 15px; word-break: break-all; `;
 const Sub = styled.div` font-size: 12px; color: ${MUTE}; margin-top: 2px; `;
@@ -316,6 +437,7 @@ const Pick = styled.button`
   font-size: 12px;
   cursor: pointer;
   font-family: inherit;
+  &:disabled { opacity: .45; cursor: not-allowed; }
 `;
 const Stats = styled.div`
   display: flex;
@@ -331,13 +453,6 @@ const Tag = styled.span`
   padding: 3px 8px;
   border-radius: 999px;
   background: #f2f1ec;
-`;
-const KitLink = styled.a`
-  font-size: 13px;
-  font-weight: 650;
-  color: ${INK};
-  text-decoration: underline;
-  text-underline-offset: 3px;
 `;
 const Private = styled.span` font-size: 12px; color: ${MUTE}; `;
 const Side = styled.aside`
