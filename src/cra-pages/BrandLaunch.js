@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../config/api';
@@ -10,6 +10,7 @@ const CREAM = '#fbfaf7';
 const GREEN = '#1f8a5b';
 const GREEN_BG = '#eef8f2';
 
+const PAGE_SIZE = 24;
 const NICHES = ['skincare', 'beauty', 'haircare', 'supplements', 'fitness', 'fashion', 'food', 'home', 'pet', 'baby'];
 
 function titleCase(s) {
@@ -20,18 +21,37 @@ function cardKey(c, i) {
   return c.handle || `anon-${i}`;
 }
 
-function Thumbs({ thumbs, href, label }) {
+function Thumbs({ thumbs, avatar, href, label }) {
   const [broken, setBroken] = useState([]);
+  const markBroken = (u) => setBroken((b) => [...b, u]);
   const shown = (thumbs || []).filter((u) => !broken.includes(u)).slice(0, 3);
-  const body = shown.length ? (
-    <Strip $n={shown.length}>
-      {shown.map((u) => (
-        <img key={u} src={u} alt="" loading="lazy" onError={() => setBroken((b) => [...b, u])} />
-      ))}
-    </Strip>
-  ) : (
-    <NoThumbs>{titleCase(label)} UGC</NoThumbs>
-  );
+  let body;
+  if (shown.length) {
+    body = (
+      <Strip $n={shown.length}>
+        {shown.map((u) => <img key={u} src={u} alt="" loading="lazy" onError={() => markBroken(u)} />)}
+      </Strip>
+    );
+  } else if (avatar && !broken.includes(avatar)) {
+    body = (
+      <NoThumbs>
+        <Avatar src={avatar} alt="" loading="lazy" onError={() => markBroken(avatar)} />
+      </NoThumbs>
+    );
+  } else if (!href) {
+    body = (
+      <Locked>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <rect x="4" y="11" width="16" height="10" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
+        <span>{titleCase(label)} creator</span>
+        <small>Profile unlocks on your private roster</small>
+      </Locked>
+    );
+  } else {
+    body = <NoThumbs>{titleCase(label)} UGC</NoThumbs>;
+  }
   return href ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label="View profile">{body}</a> : body;
 }
 
@@ -55,20 +75,36 @@ export default function BrandLaunch() {
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState('');
 
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchPage = useCallback((offset) => api.get('/api/v1/integrations/search-creators', {
+    params: { niche, platform, country: country || undefined, limit: PAGE_SIZE, offset, view: 'landing' },
+    timeout: 15000,
+  }), [niche, platform, country]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError('');
     setPicked([]);
-    api.get('/api/v1/integrations/search-creators', {
-      params: { niche, platform, country: country || undefined, limit: 24, view: 'landing' },
-      timeout: 15000,
-    })
+    fetchPage(0)
       .then(({ data: payload }) => { if (!cancelled) setData(payload); })
       .catch((err) => { if (!cancelled) setError(err.response?.data?.error || 'Could not load creators'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [niche, platform, country]);
+  }, [fetchPage]);
+
+  function loadMore() {
+    if (loadingMore || !data) return;
+    setLoadingMore(true);
+    fetchPage(data.creators.length)
+      .then(({ data: next }) => setData((cur) => ({
+        ...next,
+        creators: [...(cur?.creators || []), ...(next.creators || [])],
+      })))
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  }
 
   useEffect(() => {
     const prev = document.title;
@@ -180,7 +216,12 @@ export default function BrandLaunch() {
                     const on = picked.includes(key);
                     return (
                       <Card key={key} $on={on}>
-                        <Thumbs thumbs={c.thumbnails} href={c.preview_url} label={(c.niches || [])[0] || label} />
+                        <Thumbs
+                          thumbs={c.thumbnails}
+                          avatar={c.avatar_url}
+                          href={c.preview_url}
+                          label={(c.niches || [])[0] || label}
+                        />
                         <CardBody>
                           <div>
                             <Handle>{c.handle || `${titleCase((c.niches || [])[0] || label)} creator`}</Handle>
@@ -201,7 +242,7 @@ export default function BrandLaunch() {
                           {c.preview_url ? (
                             <ViewBtn href={c.preview_url} target="_blank" rel="noopener noreferrer">View profile</ViewBtn>
                           ) : (
-                            <Private>Profile shared on your private roster</Private>
+                            <Private>Private profile</Private>
                           )}
                           <Pick
                             type="button"
@@ -217,11 +258,10 @@ export default function BrandLaunch() {
                     );
                   })}
                 </Grid>
-                {total > creators.length ? (
-                  <More>
-                    Showing {creators.length} of {total}. Your private roster opens to every matched {label} creator,
-                    and they apply to your product.
-                  </More>
+                {data?.has_more ? (
+                  <MoreBtn type="button" onClick={loadMore} disabled={loadingMore}>
+                    {loadingMore ? 'Loading…' : `Show more creators (${creators.length} of ${total})`}
+                  </MoreBtn>
                 ) : null}
               </>
             )}
@@ -390,10 +430,46 @@ const ViewBtn = styled.a`
   padding: 7px 10px;
   &:hover { border-color: ${INK}; }
 `;
-const More = styled.p`
+const Locked = styled.div`
+  aspect-ratio: 3 / 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(31, 138, 91, .14), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(18, 20, 26, .08), transparent 50%),
+    #f2f1ec;
+  color: ${INK};
+  text-align: center;
+  padding: 0 16px;
+  span { font-size: 14px; font-weight: 650; margin-top: 4px; }
+  small { font-size: 12px; color: ${MUTE}; }
+`;
+const Avatar = styled.img`
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+`;
+const MoreBtn = styled.button`
+  display: block;
+  width: 100%;
   margin: 14px 0 0;
-  font-size: 13px;
-  color: ${MUTE};
+  border: 1px solid ${LINE};
+  border-radius: 10px;
+  background: #fff;
+  color: ${INK};
+  font-weight: 650;
+  font-size: 14px;
+  min-height: 44px;
+  cursor: pointer;
+  font-family: inherit;
+  &:hover { border-color: ${INK}; }
+  &:disabled { opacity: .6; }
 `;
 const MobileBar = styled.div`
   display: none;
