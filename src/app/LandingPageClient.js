@@ -2554,15 +2554,16 @@ const LandingPage = () => {
                 <PricingPrice className="gradient"><sup>$</sup>19</PricingPrice>
                 <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
                 <PricingFeatures>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>1 gifted campaign a month</strong>, guaranteed. The brand ships, you post</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Unlimited credits on top</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Unlimited AI pitches</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong>: 10 brands at once</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>AI follow-up writer</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Full For You feed</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Priority brand alerts</PricingFeatureItem>
                 </PricingFeatures>
-                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro · $19/mo</PricingBtn>
+                <PricingBtn className="black" href="/register/creator?plan=pro">Get placed · $19/mo</PricingBtn>
                 <PricingNote>Cancel anytime · No contracts</PricingNote>
               </PricingCard>
             </PricingGrid>
@@ -2640,7 +2641,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes, the free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) unlocks unlimited pitches, batch send, full For You feed, and the $PR Value dashboard.
+                  Yes, the free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) places you on one live gifted campaign every month, guaranteed, plus unlimited credits, batch send, full For You feed, and the $PR Value dashboard on top.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>

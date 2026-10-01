@@ -6,6 +6,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
+import { ReplySignalChip } from '../components/ReplySignal';
 import { scrubPollyVoice } from './pollyVoice';
 import {
   clearOrphanPollyLocal,
@@ -1243,7 +1244,7 @@ export default function Polly() {
           } catch (_) { /* ignore */ }
         }
         const rawMessage = data.message
-          || "You're out of free unlocks this month.\n\nUnlock Pro and I'll keep pitching with you.";
+          || "You're out of free credits this month.\n\nGo Pro and we'll place you on a gifted campaign this month, plus unlimited credits on top.";
         const assistant = {
           id: newId(),
           role: 'assistant',
@@ -1254,7 +1255,7 @@ export default function Polly() {
           kit_actions: kitActionsFrom(data, rawMessage),
           task_chips: data.task_chips?.length
             ? data.task_chips
-            : [{ id: 'unlock_pro', label: 'Unlock Pro to keep pitching', action: 'unlock_pro' }],
+            : [{ id: 'unlock_pro', label: 'Go Pro · get placed this month', action: 'unlock_pro' }],
         };
         const next = [...history, assistant];
         setMessages(next);
@@ -1295,6 +1296,7 @@ export default function Polly() {
       brand_id: chip.brand_id,
       brand_name: chip.brand_name,
       deal: chip.deal,
+      confirm_cold: Boolean(chip.confirm_cold),
       skip_discovery: Boolean(chip.skip_discovery),
       starter: chip.id,
       task_id: chip.task_id,
@@ -1603,6 +1605,9 @@ export default function Polly() {
                                 .join(' · ')}
                             </div>
                             {brandBlurb(brand) ? <div className="why">{brandBlurb(brand)}</div> : null}
+                            {brand.reply_signal ? (
+                              <div style={{ marginTop: 6 }}><ReplySignalChip signal={brand.reply_signal} /></div>
+                            ) : null}
                           </BrandMeta>
                           <ContactBtn
                             type="button"

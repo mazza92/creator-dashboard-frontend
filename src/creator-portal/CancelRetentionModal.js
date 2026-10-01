@@ -153,8 +153,8 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
               <Eyebrow>Stay on Pro</Eyebrow>
               <Title>$12 a month for the next 3 months</Title>
               <Body>
-                Same unlimited credits and pipeline. The next three invoices are $12 instead of $19,
-                then it returns to $19. Use the extra time to land the first collab.
+                Keep your guaranteed gifted campaign every month, plus unlimited credits on top. The next
+                three invoices are $12 instead of $19, then it returns to $19.
               </Body>
               <Primary type="button" disabled={busy} onClick={acceptOffer}>
                 {busy ? 'Updating…' : 'Switch me to $12 / month'}
@@ -170,7 +170,8 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
               <Eyebrow>Cancel Pro</Eyebrow>
               <Title>You keep access until {periodLabel}</Title>
               <Body>
-                No extra charge. After that date you go back to the free plan (3 credits a month).
+                No extra charge. After that date you lose your guaranteed gifted campaign each month
+                and go back to the free plan (3 credits a month).
                 You can still change your mind in Settings before then.
               </Body>
               <Danger type="button" disabled={busy} onClick={confirmCancel}>

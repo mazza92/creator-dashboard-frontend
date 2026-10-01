@@ -121,6 +121,12 @@ export default function BrandPRRoster() {
   const [toast, setToast] = useState('');
   const [logoBroken, setLogoBroken] = useState(false);
   const [preview, setPreview] = useState(() => readRosterPreview(token));
+  const [quickIds, setQuickIds] = useState(() => (
+    (new URLSearchParams(window.location.search).get('pick') || '')
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n > 0)
+  ));
   const viewedIds = useRef(new Set());
 
   useEffect(() => {
@@ -148,7 +154,11 @@ export default function BrandPRRoster() {
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.get(`/api/brand-pr/r/${token}`, { timeout: 20000 });
+      const utmMedium = new URLSearchParams(window.location.search).get('utm_medium');
+      const { data } = await api.get(`/api/brand-pr/r/${token}`, {
+        timeout: 20000,
+        params: utmMedium ? { utm_medium: utmMedium } : undefined,
+      });
       applyPayload(data);
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Could not load this roster');
@@ -223,6 +233,10 @@ export default function BrandPRRoster() {
   const drawer = creators.find((c) => c.application_id === drawerId) || null;
   const openCreators = creators.filter((c) => !c.skipped);
   const skippedCreators = creators.filter((c) => c.skipped);
+  const quickCreators = locked ? [] : quickIds
+    .map((id) => creators.find((c) => c.application_id === id && c.status === 'review' && !c.skipped))
+    .filter(Boolean)
+    .slice(0, slotLimit);
 
   const brand = campaign?.brand || {};
   const brandName = brand.name || 'Brand';
@@ -296,6 +310,25 @@ export default function BrandPRRoster() {
       await mutate('lock');
       setStep(2);
       setToast('Addresses unlocked — export CSV for Shopify');
+    } catch {
+      /* toast set */
+    }
+  }
+
+  function dismissQuickPick() {
+    setQuickIds([]);
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('pick')) return;
+    params.delete('pick');
+    const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
+    window.history.replaceState({}, '', next);
+  }
+
+  async function onQuickPick() {
+    try {
+      await mutate('quick-pick', { application_ids: quickCreators.map((c) => c.application_id) });
+      dismissQuickPick();
+      setToast('Locked. Addresses are ready to export.');
     } catch {
       /* toast set */
     }
@@ -375,7 +408,7 @@ export default function BrandPRRoster() {
   const coverImage = mediaUrl(brand.cover_image || '');
   const logoUrl = mediaUrl(brand.logo || '');
   const productStill = coverImage && coverImage !== logoUrl ? coverImage : '';
-  const canLock = !locked && selectedIds.length === slotLimit;
+  const canLock = !locked && selectedIds.length >= 1 && selectedIds.length <= slotLimit;
   const regionLabel = formatRegions(brand.regions);
   const siteHref = websiteHref(brand.website);
   const siteLabel = websiteLabel(brand.website);
@@ -383,7 +416,7 @@ export default function BrandPRRoster() {
   const tt = socialHandle(brand.tiktok);
   const showLogo = brand.logo && !logoBroken;
   const dealLine = [
-    `Gift ${plural(slotLimit, '1 creator', `${slotLimit} creators`)}`,
+    `Gift ${plural(slotLimit, '1 creator', `up to ${slotLimit} creators`)}`,
     'product + shipping',
     '1 organic',
     '1 UGC · 6 months',
@@ -393,8 +426,8 @@ export default function BrandPRRoster() {
   const stepMeta = [
     {
       n: 1,
-      label: `Pick ${slotLimit}`,
-      hint: locked ? 'Done' : remaining ? `${remaining} left` : 'Ready',
+      label: 'Pick',
+      hint: locked ? 'Done' : selectedIds.length ? `${selectedIds.length}/${slotLimit}` : `Up to ${slotLimit}`,
       done: locked,
     },
     {
@@ -487,12 +520,33 @@ export default function BrandPRRoster() {
                   <h1>
                     {locked
                       ? 'Gift list locked'
-                      : remaining
-                        ? `Choose ${remaining} more`
-                        : `Lock ${slotLimit} to reveal addresses`}
+                      : !selectedIds.length
+                        ? `Pick up to ${slotLimit} creators`
+                        : remaining
+                          ? `${selectedIds.length} picked · lock now or add ${remaining} more`
+                          : `Lock ${slotLimit} to reveal addresses`}
                   </h1>
-                  <p>Skip anyone who isn’t a fit. Addresses stay hidden until you lock.</p>
+                  <p>Gift 1 to {slotLimit}. Skip anyone who isn’t a fit. Addresses stay hidden until you lock.</p>
                 </Head>
+
+                {quickCreators.length > 0 && (
+                  <Paywall>
+                    <div>
+                      <PaywallTitle>
+                        Approve {plural(quickCreators.length, 'this creator', `these ${quickCreators.length} creators`)}?
+                      </PaywallTitle>
+                      <PaywallSub>
+                        {quickCreators.map((c) => c.handle || c.name).join(', ')}. You get their shipping addresses right away.
+                      </PaywallSub>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <BtnPrimary type="button" disabled={busy} onClick={onQuickPick}>
+                        {busy ? 'Locking…' : `Approve ${quickCreators.length} & get addresses`}
+                      </BtnPrimary>
+                      <BtnGhost type="button" disabled={busy} onClick={dismissQuickPick}>I’ll choose myself</BtnGhost>
+                    </div>
+                  </Paywall>
+                )}
 
                 {!creators.length ? (
                   <EmptyState>
@@ -564,8 +618,8 @@ export default function BrandPRRoster() {
                   {locked
                     ? 'List locked'
                     : canLock
-                      ? 'Lock list & export'
-                      : `Add ${remaining} more`}
+                      ? `Lock ${selectedIds.length} & export`
+                      : 'Pick at least 1'}
                 </Go>
               </Tray>
             </Layout>

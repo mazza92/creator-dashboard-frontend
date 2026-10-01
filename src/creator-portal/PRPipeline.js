@@ -9,6 +9,7 @@ import PRPackageModal from './PRPackageModal';
 import { UnlockModalV2 } from './unlockV2';
 import UpgradeModal from './UpgradeModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { PRO_OFFER, PRO_PRICE } from '../config/proOffer';
 
 // Feature flag for V2 modal testing
 const USE_UNLOCK_V2 = true;
@@ -1084,7 +1085,7 @@ const PRPipeline = () => {
       return `${savedUnlockCount} saved brand${savedUnlockCount === 1 ? '' : 's'}. Apply from For You to get in the running.`;
     }
     if (atCap) {
-      return 'Free credits used this month. Keep applying with Pro at $19/mo.';
+      return PRO_OFFER.outOfCredits;
     }
     return 'Applies you send land here after we vet them.';
   })();
@@ -1138,7 +1139,7 @@ const PRPipeline = () => {
             <QuotaTitle>
               {packsRemaining > 0 && packsRemaining !== Infinity
                 ? `${packsRemaining} pack${packsRemaining === 1 ? '' : 's'} left this month`
-                : 'Monthly packs used. Go Pro or grab 3 more'}
+                : 'Monthly packs used. Go Pro · get placed this month'}
             </QuotaTitle>
             <QuotaSub>{pitchLimits.used} used · resets {getNextResetDate()}</QuotaSub>
           </QuotaText>
@@ -1289,10 +1290,10 @@ const PRPipeline = () => {
           }}>
             <LockIconWrap>🔒</LockIconWrap>
             <LockedTextWrap>
-              <LockedTitle>Keep sending this month</LockedTitle>
-              <LockedSub>Unlimited packs with Pro at $19/mo.</LockedSub>
+              <LockedTitle>{PRO_OFFER.headline}</LockedTitle>
+              <LockedSub>{PRO_OFFER.priceLine}</LockedSub>
             </LockedTextWrap>
-            <LockedCta>$19</LockedCta>
+            <LockedCta>{PRO_PRICE}</LockedCta>
           </LockedCard>
         )}
       </BrandList>

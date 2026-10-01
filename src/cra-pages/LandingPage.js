@@ -1920,7 +1920,7 @@ const LandingPage = () => {
         "name": "Is newcollab free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — free plan includes full brand directory access, a free UGC portfolio builder (https://newcollab.co/media-kit), auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) unlocks unlimited contacts, batch send, full For You feed, and the $PR Value dashboard."
+          "text": "Yes — free plan includes full brand directory access, a free UGC portfolio builder (https://newcollab.co/media-kit), auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) places you on one live gifted campaign every month, guaranteed, plus unlimited credits, batch send, full For You feed, and the $PR Value dashboard on top."
         }
       }
     ]
@@ -2644,15 +2644,16 @@ const LandingPage = () => {
                 <PricingPrice className="gradient"><sup>$</sup>19</PricingPrice>
                 <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
                 <PricingFeatures>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>1 gifted campaign a month</strong>, guaranteed. The brand ships, you post</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Unlimited credits on top</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Unlimited AI pitches</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong> (10 brands at once)</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>AI follow-up writer</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Full For You feed</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Priority brand alerts</PricingFeatureItem>
                 </PricingFeatures>
-                <PricingBtn className="black" href="/register/creator?plan=pro">Start Pro for $19/mo</PricingBtn>
+                <PricingBtn className="black" href="/register/creator?plan=pro">Get placed · $19/mo</PricingBtn>
                 <PricingNote>Cancel anytime · No contracts</PricingNote>
               </PricingCard>
             </PricingGrid>
@@ -2730,7 +2731,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes! The free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) unlocks unlimited contacts, batch send, full For You feed, and the $PR Value dashboard.
+                  Yes! The free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) places you on one live gifted campaign every month, guaranteed, plus unlimited credits, batch send, full For You feed, and the $PR Value dashboard on top.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>

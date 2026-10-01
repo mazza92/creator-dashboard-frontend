@@ -235,7 +235,7 @@ export const EXPANDED_CONTENT = {
   },
   row6: {
     freePreview: '3 more improvements available',
-    proUpsell: 'Unlock all with Pro',
+    proUpsell: 'Go Pro · get placed this month',
     proPricing: '$19/mo',
   },
 };

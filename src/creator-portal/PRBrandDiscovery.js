@@ -724,12 +724,7 @@ const PlanBadge = styled.div`
   font-weight: 600;
 
   ${props => {
-    if (props.tier === 'elite') {
-      return `
-        background: linear-gradient(135deg, #3B82F6, #EC4899);
-        color: white;
-      `;
-    } else if (props.tier === 'pro') {
+    if (props.tier === 'pro') {
       return `
         background: #3B82F6;
         color: white;
@@ -2279,11 +2274,6 @@ const PRBrandDiscovery = () => {
       <PageHeader>
         <Title>Brands that send PR to small creators</Title>
         <PlanBadge tier={subscriptionTier}>
-          {subscriptionTier === 'elite' && (
-            <>
-              <FiZap /> Elite (Unlimited)
-            </>
-          )}
           {subscriptionTier === 'pro' && (
             <>
               <FiZap /> Pro (Unlimited)
@@ -2594,7 +2584,7 @@ const PRBrandDiscovery = () => {
           }}
           brand={selectedBrandForPitch}
           onPitchSent={handlePitchSent}
-          isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+          isPro={subscriptionTier === 'pro'}
           onOpenOpportunities={() => {
             sessionStorage.setItem('foryouForceOpportunities', '1');
             sessionStorage.setItem('foryouTabPicked', '1');
@@ -2616,7 +2606,7 @@ const PRBrandDiscovery = () => {
           }}
           brand={selectedBrandForPitch}
           onPitchSent={handlePitchSent}
-          isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+          isPro={subscriptionTier === 'pro'}
         />
       ) : (
         <AIPitchModal

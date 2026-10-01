@@ -108,7 +108,7 @@ const ForYou = () => {
     sessionStorage.getItem('foryouForceOpportunities') ? 'opportunities' : 'matches'
   ));
   const [pitchLimits, setPitchLimits] = useState({ used: 0, limit: 3, canPitch: true });
-  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, pack_credits: 0, tier: 'free', reset_at: null, is_unlimited: false });
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, tier: 'free', reset_at: null, is_unlimited: false });
   const [opportunityCount, setOpportunityCount] = useState(0);
 
   useEffect(() => {
@@ -198,7 +198,7 @@ const ForYou = () => {
   const [bannerSeen, setBannerSeen] = useState(false);
   const bannerRef = useRef(null);
 
-  const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  const isPro = subscriptionTier === 'pro';
   const atLimit = !isPro && pitchesSentThisMonth >= FREE_PITCH_LIMIT;
 
   const parseNicheList = (raw) => {
@@ -833,9 +833,7 @@ const ForYou = () => {
         {/* Free plan: one unlock meter. Paywall only at 0 left. */}
         {!isPro && data?.has_profile && !unlockBalance.is_unlimited && (() => {
           const unlocksLeft = unlockBalance.remaining ?? 3;
-          const packCredits = unlockBalance.pack_credits || 0;
           const packsExhausted = unlocksLeft <= 0;
-          const pipCount = packCredits > 0 ? Math.min(Math.max(unlocksLeft, 3), 6) : 3;
           return (
             <>
               <CreditTrackers>
@@ -844,18 +842,16 @@ const ForYou = () => {
                     <CreditTrackerLabel>Packs this month</CreditTrackerLabel>
                     <CreditTrackerCount $low={packsExhausted}>
                       {unlocksLeft}
-                      {packCredits > 0 ? null : <CreditTrackerMax>/3</CreditTrackerMax>}
+                      <CreditTrackerMax>/3</CreditTrackerMax>
                     </CreditTrackerCount>
                   </CreditTrackerTop>
                   <CreditPipsRow>
-                    {Array.from({ length: pipCount }).map((_, i) => (
+                    {Array.from({ length: 3 }).map((_, i) => (
                       <CreditPip key={i} $available={i < unlocksLeft} $tone="unlock" />
                     ))}
                   </CreditPipsRow>
                   <CreditTrackerHint>
-                    {packCredits > 0
-                      ? `${packCredits} extra pack${packCredits === 1 ? '' : 's'} from your $9 bundle`
-                      : 'Email plus a pitch, ready to send'}
+                    Email plus a pitch, ready to send
                   </CreditTrackerHint>
                 </CreditTracker>
               </CreditTrackers>
@@ -879,7 +875,7 @@ const ForYou = () => {
           <QuotaBanner $isPro>
             <QuotaText>
               <QuotaTitle $isPro>Pro</QuotaTitle>
-              <QuotaSub $isPro>Unlimited emails and pitches</QuotaSub>
+              <QuotaSub $isPro>1 gifted campaign a month + unlimited credits</QuotaSub>
             </QuotaText>
           </QuotaBanner>
         )}

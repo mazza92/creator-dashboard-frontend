@@ -6,6 +6,7 @@ import UpgradeModal from '../creator-portal/UpgradeModal';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import SegmentTabs from '../components/creator/SegmentTabs';
 import BrandSocialHeader, { parseSocial } from '../components/creator/BrandSocialHeader';
+import { ColdBrandNote, ReplySignalChip } from '../components/ReplySignal';
 import {
   ApplyExamplesSkeleton,
   CreditChipSkeleton,
@@ -16,6 +17,7 @@ import { CANONICAL_CATEGORIES, categoryEmoji, categoryLabel } from '../constants
 import { SERVED_COUNTRY_GROUPS, normalizeServedCountry } from '../constants/servedCountries';
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
+import { PRO_OFFER } from '../config/proOffer';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 
 const ROSE = '#E11D48';
@@ -178,7 +180,9 @@ function cardStats(brand) {
   });
 
   const rate = Number(brand.responseRate);
-  if (Number.isFinite(rate) && rate > 0) {
+  if (brand.replySignal?.tier === 'cold') {
+    stats.push({ value: `${Math.round(rate) || 0}%`, label: 'creators heard back' });
+  } else if (Number.isFinite(rate) && rate > 0) {
     stats.push({ value: `${Math.round(rate)}%`, label: 'reply rate' });
   } else if (brand.avgResponseTime) {
     stats.push({ value: `~${brand.avgResponseTime}d`, label: 'avg reply' });
@@ -215,6 +219,11 @@ function brandMatchesCreatorNiches(brand, niches) {
   return asList(brand?.niches).some((n) => set.has(String(n || '').toLowerCase()));
 }
 
+function observedRate(signal) {
+  if (!signal || signal.tier !== 'cold' || !Number(signal.pitched)) return null;
+  return Math.round((100 * (Number(signal.replied) || 0)) / Number(signal.pitched));
+}
+
 function normalizeBrand(raw, appliedMap) {
   if (!raw) return null;
   const id = raw.id;
@@ -244,7 +253,8 @@ function normalizeBrand(raw, appliedMap) {
     matchScore: raw.match_score ?? raw.matchScore ?? null,
     hasForm: !!(raw.has_application_form || raw.hasApplication),
     hasEmail: !!(raw.has_email_contact || raw.hasEmailContact),
-    responseRate: raw.response_rate ?? raw.responseRate,
+    responseRate: observedRate(raw.reply_signal || raw.replySignal) ?? raw.response_rate ?? raw.responseRate,
+    replySignal: raw.reply_signal || raw.replySignal || null,
     applyStatus: applied?.apply_status || raw.apply_status || null,
     applied: Boolean(applied || raw.apply_status),
     social: parseSocial(raw.social || raw.pr_social_profile),
@@ -396,6 +406,7 @@ export default function BrandPRHome() {
   const [view, setView] = useState('list');
   const [step, setStep] = useState(1);
   const [current, setCurrent] = useState(null);
+  const [coldWarn, setColdWarn] = useState(null);
   const [pack, setPack] = useState(null);
   const [packLoading, setPackLoading] = useState(false);
   const [mediaLoading, setMediaLoading] = useState(false);
@@ -681,6 +692,17 @@ export default function BrandPRHome() {
     }
     trackApplyEvent('apply_opened', { source: applySourceRef.current, brand_id: brand.id });
     setCurrent(brand);
+    setColdWarn(null);
+    if (!brand.rosterOpen && !quota?.is_unlimited) {
+      api.get(`/api/pr-crm/brands/${brand.id}/reply-signal`)
+        .then(({ data }) => {
+          if (applyReqRef.current === req && data?.warn) {
+            setColdWarn(data);
+            trackApplyEvent('apply_cold_warned', { source: applySourceRef.current, brand_id: brand.id });
+          }
+        })
+        .catch(() => {});
+    }
     setView('apply');
     setStep(1);
     setPicked([]);
@@ -700,6 +722,7 @@ export default function BrandPRHome() {
           social: data.social || data.brand.social,
           match_score: prev?.matchScore ?? data.brand.match_score,
           apply_status: prev?.applyStatus,
+          reply_signal: data.brand.reply_signal || prev?.replySignal,
         }, appliedMap) || prev);
       }
       if (data.already_applied) {
@@ -971,6 +994,7 @@ export default function BrandPRHome() {
               ) : live ? (
                 <CatChip $tone="hot">Recruiting</CatChip>
               ) : null}
+              <ReplySignalChip signal={brand.replySignal} compact />
             </CoverChips>
           </CardMedia>
         )}
@@ -1000,6 +1024,7 @@ export default function BrandPRHome() {
                   ) : live ? (
                     <CatChip $tone="hot">Recruiting</CatChip>
                   ) : null}
+                  <ReplySignalChip signal={brand.replySignal} compact />
                 </ChipRow>
               )}
             </Meta>
@@ -1033,7 +1058,7 @@ export default function BrandPRHome() {
           {brand.applied ? (
             <Tracker stage={statusToStage(brand.applyStatus)} compact />
           ) : noCredits ? (
-            <Cta type="button" onClick={() => showPaywall('card_credits')}>Get more credits</Cta>
+            <Cta type="button" onClick={() => showPaywall('card_credits')}>{PRO_OFFER.ctaShort}</Cta>
           ) : (
             <Cta type="button" onClick={() => openApply(brand)}>
               {isRecruiting ? 'Apply to this campaign' : live ? 'Apply before spots fill' : 'Apply for Brand PR'}
@@ -1093,7 +1118,7 @@ export default function BrandPRHome() {
                   <i className={heat.id === 'late' || heat.id === 'recruit' ? 'on' : ''} />
                 </HeatBar>
                 {noCredits ? (
-                  <Cta type="button" onClick={() => showPaywall(recruit ? 'recruit_credits' : 'campaign_credits')}>Get more credits</Cta>
+                  <Cta type="button" onClick={() => showPaywall(recruit ? 'recruit_credits' : 'campaign_credits')}>{PRO_OFFER.ctaShort}</Cta>
                 ) : (
                   <Cta type="button" onClick={() => openApply(brand, source)}>
                     {recruit ? 'Apply to this campaign' : 'Apply before spots fill'}
@@ -1253,6 +1278,19 @@ export default function BrandPRHome() {
 
         {step === 1 && (
           <>
+            {coldWarn?.warn && (
+              <ColdBrandNote
+                brandName={current.name}
+                signal={coldWarn.signal}
+                remaining={coldWarn.remaining}
+                alternatives={coldWarn.alternatives || []}
+                pickLabel="Apply instead"
+                onPick={(alt) => {
+                  trackApplyEvent('apply_cold_switched', { source: applySourceRef.current, brand_id: alt.id });
+                  openApply(normalizeBrand(alt, appliedMap), applySourceRef.current);
+                }}
+              />
+            )}
             {current.description && current.description.trim() !== String(current.social?.bio || '').trim() && current.description.trim().length > 220 && (
               <Block>
                 <h2>About</h2>
@@ -1528,7 +1566,7 @@ export default function BrandPRHome() {
         {noCredits && (
           <OutBanner type="button" onClick={() => showPaywall('done_last_credit')}>
             <b>That was your last free credit</b>
-            <span>Go Pro to apply to every brand that gifts your size. No pitch.</span>
+            <span>Go Pro and we place you on a gifted campaign this month. No pitch.</span>
           </OutBanner>
         )}
         <Tracker stage={0} />
@@ -1594,7 +1632,7 @@ export default function BrandPRHome() {
               {forYouLane === 'jobs'
                 ? 'Paid briefs from brands hiring creators. Same monthly credits as Brand PR.'
                 : (noCredits
-                  ? 'No free credits left. Go Pro to keep requesting boxes this month.'
+                  ? PRO_OFFER.outOfCredits
                   : remaining === 1
                     ? 'Last free credit this month. Pick a brand you’d actually post.'
                     : 'Apply in 3 steps. We take it to the brand. You never write a pitch.')}

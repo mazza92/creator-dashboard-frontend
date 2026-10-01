@@ -6,6 +6,7 @@ import api from '../config/api';
 import { message } from 'antd';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 import { dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
+import { PRO_OFFER, PRO_FEATURES } from '../config/proOffer';
 
 const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining }) => {
   const [loading, setLoading] = useState(false);
@@ -95,30 +96,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       text: <><strong>If we miss, I make it right.</strong> Email me that month and I place you on the next campaign or refund it.</>,
     },
   ] : [
-    {
-      emoji: '🎁',
-      bg: '#dbeafe',
-      text: <><strong>Unlimited Brand PR credits</strong> this month. Stay in the running for every gift that fits.</>,
-    },
-    {
-      emoji: '🚫',
-      bg: '#fef2f4',
-      text: <><strong>You never send a pitch.</strong> We vet you. The brand picks from a roster.</>,
-    },
-    {
-      emoji: '⭐',
-      bg: '#fef3c7',
-      text: <><strong>2,000+ gifting brands</strong> matched to your size, including micro-friendly filters</>,
-    },
-    {
-      emoji: '🔁',
-      bg: '#ede9fe',
-      text: <><strong>We follow up for you</strong> so your request stays warm after you tap send</>,
-    },
+    ...PRO_FEATURES.slice(0, 3).map((f, i) => ({
+      emoji: ['🎁', '🚫', '➕'][i],
+      bg: ['#dbeafe', '#fef2f4', '#ede9fe'][i],
+      text: <><strong>{f.title}</strong> {f.body}</>,
+    })),
     {
       emoji: '👀',
       bg: '#fce7f3',
-      text: <><strong>See which brands opened your kit</strong></>,
+      text: <><strong>See which brands opened your kit</strong> and follow up while you&apos;re fresh.</>,
     },
   ];
 
@@ -165,19 +151,19 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </>
               ) : (
                 <>
-                  {used} of {total} free credits used.<br />
-                  Go Pro for unlimited credits on every brand that <PinkSpan>gifts</PinkSpan>.
+                  Skip the waiting. Get placed on a<br />
+                  <PinkSpan>gifted campaign</PinkSpan> this month.
                 </>
               )}
             </Headline>
             <Subtext>
               {isWinback
-                ? 'Then $19. Same Pro — 1 gifting campaign a month plus unlimited credits. Cancel anytime.'
+                ? 'Then $19. Same Pro — 1 gifted campaign a month plus unlimited credits. Cancel anytime.'
                 : feature === 'last_unlock'
-                ? 'Use this credit now. Pro gives unlimited credits this month — we vet, the brand picks, you never pitch.'
+                ? 'Use this credit now. Then Pro places you on a live gifted campaign every month — the brand ships, you post.'
                 : atCap
                 ? 'Pro is $19/mo. We place you on one live gifted campaign each month — product + shipping, you post. No cold pitching.'
-                : 'Each credit puts you on a brand roster. More credits, more chances the box shows up. Pro is how you keep going all month.'}
+                : `${PRO_OFFER.promise} ${PRO_OFFER.extra}`}
             </Subtext>
 
             {!isWinback && (
@@ -241,12 +227,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 <StatLabel>Brands</StatLabel>
               </StatChip>
               <StatChip>
-                <StatValue>Unlimited</StatValue>
-                <StatLabel>Credits / month</StatLabel>
+                <StatValue>1 / month</StatValue>
+                <StatLabel>Gifted campaign</StatLabel>
               </StatChip>
               <StatChip>
-                <StatValue>No pitch</StatValue>
-                <StatLabel>We submit</StatLabel>
+                <StatValue>Unlimited</StatValue>
+                <StatLabel>Credits on top</StatLabel>
               </StatChip>
             </StatsGrid>
 
@@ -313,7 +299,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   </>
                 ) : (
                   <>
-                    <strong>First PR is a numbers game.</strong> Use a credit, we vet, the brand picks. Pro is how you keep using credits.
+                    <strong>Cold pitches mostly go unanswered.</strong> A placement on a live gifted campaign doesn&apos;t depend on a reply.
                   </>
                 )}
               </ProofText>
@@ -349,8 +335,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 {loading
                   ? 'Processing...'
                   : billingInterval === 'yearly'
-                    ? 'Unlimited credits · $152/year (save 33%)'
-                    : 'Unlimited credits · $19/month'}
+                    ? 'Get placed every month · $152/year (save 33%)'
+                    : PRO_OFFER.ctaPrice}
               </CtaButton>
             )}
 

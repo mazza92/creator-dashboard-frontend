@@ -443,7 +443,6 @@ const CreatorsAdmin = () => {
   const tierTagColor = (t) => {
     const norm = String(t || 'free').toLowerCase();
     if (norm === 'pro') return 'purple';
-    if (norm === 'elite') return 'magenta';
     return 'default';
   };
 
@@ -870,7 +869,6 @@ const CreatorsAdmin = () => {
                 <Select value={tier || undefined} onChange={(v) => { setTier(v || ''); setPage(1); }} allowClear placeholder="Tier" style={{ width: '100%' }}>
                   <Option value="free">Free</Option>
                   <Option value="pro">Pro</Option>
-                  <Option value="elite">Elite</Option>
                 </Select>
                 <Select value={platform || undefined} onChange={(v) => { setPlatform(v || ''); setPage(1); }} allowClear placeholder="Platform" options={PLATFORM_FILTER_OPTIONS} style={{ width: '100%' }} />
                 <Select value={verified || undefined} onChange={(v) => { setVerified(v || ''); setPage(1); }} allowClear placeholder="Verified" style={{ width: '100%' }}>

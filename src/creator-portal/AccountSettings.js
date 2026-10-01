@@ -8,6 +8,7 @@ import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import CancelRetentionModal from './CancelRetentionModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { PRO_OFFER } from '../config/proOffer';
 import { consumeUpgradeDeeplink, stripUpgradeQuery, dismissUpgradeDeeplink } from '../utils/upgradeDeeplink';
 
 // Niche options - must match onboarding for consistency
@@ -286,7 +287,6 @@ const AccountSettings = () => {
 
   const getPlanColor = (tier) => {
     switch(tier) {
-      case 'elite': return 'linear-gradient(135deg, #3B82F6, #EC4899)';
       case 'pro': return '#3B82F6';
       default: return '#6B7280';
     }
@@ -294,7 +294,6 @@ const AccountSettings = () => {
 
   const getPlanName = (tier) => {
     switch(tier) {
-      case 'elite': return 'Elite';
       case 'pro': return 'Pro';
       default: return 'Free';
     }
@@ -302,7 +301,6 @@ const AccountSettings = () => {
 
   const getPlanPrice = (tier) => {
     switch(tier) {
-      case 'elite': return '$49';
       case 'pro': return '$19';
       default: return '$0';
     }
@@ -367,10 +365,10 @@ const AccountSettings = () => {
             {tier === 'pro' && (
               <>
                 <Feature>
-                  <FiCheck /> Unlimited brand saves
+                  <FiCheck /> 1 gifted campaign placement every month, guaranteed
                 </Feature>
                 <Feature>
-                  <FiCheck /> Unlimited PR Packages
+                  <FiCheck /> Unlimited credits on top
                 </Feature>
                 <Feature>
                   <FiCheck /> Brand emails and forms
@@ -380,26 +378,6 @@ const AccountSettings = () => {
                 </Feature>
                 <Feature>
                   <FiCheck /> Priority support
-                </Feature>
-              </>
-            )}
-
-            {tier === 'elite' && (
-              <>
-                <Feature>
-                  <FiCheck /> Everything in Pro
-                </Feature>
-                <Feature>
-                  <FiCheck /> Unlimited PR Packages
-                </Feature>
-                <Feature>
-                  <FiCheck /> Professional PR tools
-                </Feature>
-                <Feature>
-                  <FiCheck /> Guaranteed PR packages
-                </Feature>
-                <Feature>
-                  <FiCheck /> Auto-follow up system
                 </Feature>
               </>
             )}
@@ -490,10 +468,10 @@ const AccountSettings = () => {
                 whileTap={{ scale: 0.98 }}
               >
                 <FiZap />
-                Upgrade Plan
+                {PRO_OFFER.cta}
               </UpgradeButton>
               <HelpText>
-                Get unlimited brand contacts + personalized templates with Pro
+                {PRO_OFFER.promise} {PRO_OFFER.extra}
               </HelpText>
             </>
           )}
@@ -617,7 +595,7 @@ const AccountSettings = () => {
               {subscriptionInfo?.contacts_used_this_week || 0}
               {tier === 'free' && <UsageLimit> / {subscriptionInfo?.contacts_limit || 3}</UsageLimit>}
             </UsageValue>
-            {(tier === 'pro' || tier === 'elite') && <UsageUnlimited>Unlimited</UsageUnlimited>}
+            {tier === 'pro' && <UsageUnlimited>Unlimited</UsageUnlimited>}
             {tier === 'free' && <UsageNote>Resets monthly</UsageNote>}
           </UsageCard>
         </UsageGrid>
@@ -835,12 +813,7 @@ const PlanBadge = styled.div`
   font-weight: 700;
 
   ${props => {
-    if (props.tier === 'elite') {
-      return `
-        background: linear-gradient(135deg, #3B82F6, #EC4899);
-        color: white;
-      `;
-    } else if (props.tier === 'pro') {
+    if (props.tier === 'pro') {
       return `
         background: #3B82F6;
         color: white;

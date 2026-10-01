@@ -190,7 +190,7 @@ export const useProgressiveForYou = () => {
   });
 
   // Derived state
-  const isPro = ['pro', 'elite'].includes(subscriptionQuery.data?.tier || 'free');
+  const isPro = (subscriptionQuery.data?.tier || 'free') === 'pro';
 
   // Process pipeline data
   const savedIds = new Set(

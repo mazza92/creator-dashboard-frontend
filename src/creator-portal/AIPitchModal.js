@@ -180,7 +180,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
     } catch (error) {
       console.error('Error tracking pitch:', error);
       if (error.response?.data?.upgrade_required) {
-        message.warning(error.response.data.error || 'Monthly contact limit reached. Upgrade to continue!');
+        message.warning(error.response.data.error || 'Out of free credits. Pro places you on a gifted campaign this month.');
       } else {
         message.error('Could not track this contact. Please try again.');
       }

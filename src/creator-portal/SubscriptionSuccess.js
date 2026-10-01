@@ -4,36 +4,18 @@ import { motion } from 'framer-motion';
 import { FiCheckCircle, FiArrowRight } from 'react-icons/fi';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
-import { trackPackPurchase, trackProPurchase } from '../utils/subscriptionAnalytics';
+import { trackProPurchase } from '../utils/subscriptionAnalytics';
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
-  const [packInfo, setPackInfo] = useState(null);
-  const isPackPurchase = searchParams.get('product') === 'packs';
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-    const packs = searchParams.get('product') === 'packs';
 
-    if (sessionId && packs) {
-      trackPackPurchase({ sessionId });
-      try {
-        const ttqKey = `ttq_purchase_${sessionId}`;
-        if (!window.sessionStorage.getItem(ttqKey) && window.ttq) {
-          window.ttq.track('CompletePayment', {
-            content_type: 'product',
-            content_id: 'pack_bundle_3',
-            content_name: 'NewCollab 3 Packs',
-            value: 9,
-            currency: 'USD'
-          });
-          window.sessionStorage.setItem(ttqKey, '1');
-        }
-      } catch (_) { /* ignore */ }
-    } else if (sessionId) {
+    if (sessionId) {
       trackProPurchase({ sessionId, tier: 'pro' });
 
       const ttqKey = `ttq_purchase_${sessionId}`;
@@ -53,16 +35,6 @@ const SubscriptionSuccess = () => {
 
     const confirmAndFetchStatus = async () => {
       try {
-        if (sessionId && packs) {
-          const packRes = await api.post(
-            '/api/subscription/confirm-pack-checkout',
-            { session_id: sessionId }
-          );
-          setPackInfo(packRes.data);
-          setLoading(false);
-          return;
-        }
-
         if (sessionId) {
           await api.post(
             '/api/subscription/confirm-checkout',
@@ -73,17 +45,6 @@ const SubscriptionSuccess = () => {
         const response = await api.get('/api/subscription/status');
         setSubscriptionInfo(response.data);
 
-        const tier = response.data?.tier || 'pro';
-
-        if (sessionId && tier !== 'pro') {
-          try {
-            window.sessionStorage.removeItem(`ga4_purchase_${sessionId}`);
-          } catch (_) {
-            /* ignore */
-          }
-          trackProPurchase({ sessionId, tier });
-        }
-
         setLoading(false);
       } catch (error) {
         console.error('Error confirming checkout:', error);
@@ -93,41 +54,6 @@ const SubscriptionSuccess = () => {
 
     setTimeout(confirmAndFetchStatus, 1000);
   }, [searchParams]);
-
-  if (isPackPurchase) {
-    const packsAdded = packInfo?.packs || 3;
-    return (
-      <Container>
-        <SuccessCard
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <IconWrapper>
-            <FiCheckCircle size={80} />
-          </IconWrapper>
-
-          <Title>3 packs added</Title>
-
-          <Message>
-            {loading
-              ? 'Confirming your packs...'
-              : `You have ${packsAdded} more emails and pitches ready to send. Go unlock the next brand that fits.`}
-          </Message>
-
-          <ButtonGroup>
-            <PrimaryButton
-              onClick={() => navigate('/creator/dashboard/for-you')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Back to For You <FiArrowRight />
-            </PrimaryButton>
-          </ButtonGroup>
-        </SuccessCard>
-      </Container>
-    );
-  }
 
   return (
     <Container>
@@ -140,27 +66,21 @@ const SubscriptionSuccess = () => {
           <FiCheckCircle size={80} />
         </IconWrapper>
 
-        <Title>Welcome to {subscriptionInfo?.tier === 'elite' ? 'Elite' : 'Pro'}! 🎉</Title>
+        <Title>Welcome to Pro! 🎉</Title>
 
         <Message>
-          Pro is on. Brands usually take 2–4 weeks to reply — silence this week is normal.
-          Send 5 applications to brands that gift your size. We write the pitch and follow up.
+          Pro is on. We&apos;ll place you on a gifted campaign this month and email you when the roster is confirmed.
+          Unlimited credits are live now, so keep applying to other brands that gift your size.
         </Message>
 
         {!loading && subscriptionInfo && (
           <Features>
+            <Feature>✅ Your gifted campaign this month — we&apos;ll email you when the roster is confirmed</Feature>
+            <Feature>✅ Unlimited credits on top, live now</Feature>
             <Feature>✅ This week: send 5 applications (we write them)</Feature>
-            <Feature>✅ Unlimited brand credits while you wait</Feature>
             <Feature>✅ We follow up so requests stay warm</Feature>
             <Feature>✅ Kit-open tracking so you know who looked</Feature>
             <Feature>✅ Ready-to-send pitches in 3 tones</Feature>
-            {subscriptionInfo.tier === 'elite' && (
-              <>
-                <Feature>✅ Professional PR tools</Feature>
-                <Feature>✅ Personal PR coach</Feature>
-                <Feature>✅ Exclusive brand partnerships</Feature>
-              </>
-            )}
           </Features>
         )}
 

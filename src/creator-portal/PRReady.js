@@ -2353,7 +2353,7 @@ export default function PRReady() {
                       {freeRunwayDone ? (
                         <ClimbUnlockBlock>
                           <ClimbUnlockTitle>
-                            Unlock · Weekly manager coaching + unlimited PR unlocks
+                            Go Pro · 1 gifted campaign a month + weekly manager coaching
                           </ClimbUnlockTitle>
                           <ClimbUnlockSub>
                             {weekGain > 0
@@ -2763,7 +2763,7 @@ export default function PRReady() {
                   ) : null}
                   {unlocksLeft === 0 && (
                     <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                      Unlock Pro — {plan?.price || '$19/mo'}
+                      Get placed — {plan?.price || '$19/mo'}
                     </Btn>
                   )}
                 </ProHero>
@@ -2899,7 +2899,7 @@ export default function PRReady() {
             </div>
             {!isPro && (
               <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                Unlock full week — {plan?.price || '$19/mo'}
+                Get placed + the full week — {plan?.price || '$19/mo'}
               </Btn>
             )}
             <Btn $variant="ghost" onClick={() => setPackOpen(false)}>
@@ -3038,10 +3038,10 @@ export default function PRReady() {
                     lineHeight: 1.45,
                   }}
                 >
-                  Unlimited Brand PR unlocks + brand view tracker. Unlock Pro.
+                  Pro places you on a gifted campaign this month. Unlimited credits and the brand view tracker on top.
                 </p>
                 <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                  Unlock Pro — {plan?.price || '$19/mo'}
+                  Get placed — {plan?.price || '$19/mo'}
                 </Btn>
               </>
             )}

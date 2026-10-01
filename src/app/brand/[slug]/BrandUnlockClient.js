@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { trackProBeginCheckout } from '../../../utils/subscriptionAnalytics';
+import { PRO_OFFER } from '../../../config/proOffer';
 
 const API_BASE =
   typeof window !== 'undefined' && window.location.hostname === 'localhost'
@@ -15,7 +16,7 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
   const [pitchesLeft, setPitchesLeft] = useState(3);
   const [isLoggedIn, setIsLoggedIn] = useState(null);
 
-  const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  const isPro = subscriptionTier === 'pro';
 
   // Fetch subscription status on mount
   useEffect(() => {
@@ -233,11 +234,11 @@ export default function BrandUnlockClient({ slug, brandName, brandId, hasDirectL
       {isLoggedIn && (
         <div style={styles.pitchInfo}>
           {isPro ? (
-            <>✨ Pro member - Unlimited brand pitches</>
+            <>✨ Pro: {PRO_OFFER.short}</>
           ) : pitchesLeft > 0 ? (
             <>{pitchesLeft} free pitch{pitchesLeft !== 1 ? 'es' : ''} left this month</>
           ) : (
-            <>You've used your 3 free pitches this month. <span onClick={handleUpgrade} style={{ color: '#92400E', textDecoration: 'underline', cursor: 'pointer' }}>Upgrade to Pro</span></>
+            <>You've used your 3 free credits this month. <span onClick={handleUpgrade} style={{ color: '#92400E', textDecoration: 'underline', cursor: 'pointer' }}>{PRO_OFFER.ctaPrice}</span></>
           )}
         </div>
       )}

@@ -21,7 +21,7 @@ const SubscriptionCancel = () => {
         <Title>Subscription Cancelled</Title>
 
         <Message>
-          No worries! You can still upgrade anytime to unlock unlimited brand saves, PR Packages, and premium features.
+          No worries. Come back to Pro anytime and we place you on a gifted campaign every month, with unlimited credits on top.
         </Message>
 
         <FreeTierInfo>

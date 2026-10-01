@@ -8,6 +8,7 @@ import { ArrowLeft, Users, Mail, Music2, Target, Smartphone, Gift, Zap, Check } 
 import { FiInstagram } from 'react-icons/fi';
 import { UserContext } from '../contexts/UserContext';
 import { getRuntimeApiUrl } from '../config/api';
+import { PRO_OFFER } from '../config/proOffer';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import BrandLogo from '../components/BrandLogo';
@@ -39,7 +40,7 @@ const PublicBrandPage = () => {
   const [relatedBrands, setRelatedBrands] = useState([]);
 
   const FREE_PITCH_LIMIT = 3;
-  const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  const isPro = subscriptionTier === 'pro';
   const pitchesLeft = Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisMonth);
   const atLimit = !isPro && pitchesLeft === 0;
   const isLocked = brand?.requires_pro && !isPro;
@@ -234,7 +235,7 @@ const PublicBrandPage = () => {
           </CtaBtn>
           <CtaHint>
             {atLimit
-              ? 'Monthly limit reached · Upgrade for unlimited contacts'
+              ? PRO_OFFER.outOfCredits
               : 'This brand is only accessible on Pro'}
           </CtaHint>
         </>
@@ -248,7 +249,7 @@ const PublicBrandPage = () => {
         </CtaBtnContact>
         <CtaHint>
           {isPro
-            ? 'Unlimited contacts included in your Pro plan'
+            ? `Pro: ${PRO_OFFER.short}`
             : `${pitchesLeft} free contact${pitchesLeft !== 1 ? 's' : ''} remaining this month`}
         </CtaHint>
       </>

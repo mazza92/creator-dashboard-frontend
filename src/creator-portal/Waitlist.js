@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import api from '../config/api';
 import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from './UpgradeModal';
+import { PRO_OFFER } from '../config/proOffer';
 import { message } from 'antd';
 
 export default function Waitlist() {
@@ -115,19 +116,23 @@ export default function Waitlist() {
               <ProIcon>⚡</ProIcon>
               Skip the line with Pro
             </ProBadge>
-            <ProHeadline>Pro members get in instantly</ProHeadline>
+            <ProHeadline>Get in now. Get placed this month.</ProHeadline>
             <ProSubline>
-              Plus everything Pro unlocks
+              {PRO_OFFER.promise}
             </ProSubline>
 
             <ProBenefits>
+              <Benefit>
+                <BenefitIcon>✓</BenefitIcon>
+                <BenefitText><strong>1 gifted campaign a month</strong> — guaranteed, the brand ships, you post</BenefitText>
+              </Benefit>
               <Benefit>
                 <BenefitIcon>✓</BenefitIcon>
                 <BenefitText><strong>Instant approval</strong> — skip the waitlist</BenefitText>
               </Benefit>
               <Benefit>
                 <BenefitIcon>✓</BenefitIcon>
-                <BenefitText><strong>Unlimited brand PR credits</strong> this month</BenefitText>
+                <BenefitText><strong>Unlimited credits on top</strong> for every other brand</BenefitText>
               </Benefit>
               <Benefit>
                 <BenefitIcon>✓</BenefitIcon>
@@ -148,7 +153,7 @@ export default function Waitlist() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              Get instant access · $19/month
+              Skip the line · get placed · $19/month
             </ProButton>
 
             <ProFooter>Cancel anytime · No long-term commitment</ProFooter>

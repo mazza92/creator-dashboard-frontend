@@ -13,6 +13,7 @@ import { UnlockModalV2 } from '../creator-portal/unlockV2';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { PRO_OFFER } from '../config/proOffer';
 
 // Feature flag for V2 modal testing
 const USE_UNLOCK_V2 = true;
@@ -91,7 +92,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   // Subscription/quota tracking (for logged-in users)
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, pack_credits: 0, tier: 'free', reset_at: null });
+  const [unlockBalance, setUnlockBalance] = useState({ remaining: 3, used: 0, tier: 'free', reset_at: null });
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
   const FREE_UNLOCK_LIMIT = 3; // Free users get 3 brand unlocks per month
 
@@ -273,7 +274,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           setUnlockBalance({
             remaining: data.unlock_balance.remaining ?? FREE_UNLOCK_LIMIT,
             used: data.unlock_balance.used ?? 0,
-            pack_credits: data.unlock_balance.pack_credits ?? 0,
             tier: data.unlock_balance.tier || 'free',
             reset_at: data.unlock_balance.reset_at
           });
@@ -331,7 +331,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         setUnlockBalance({
           remaining: balanceResponse.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: balanceResponse.data.used ?? 0,
-          pack_credits: balanceResponse.data.pack_credits ?? 0,
           tier: balanceResponse.data.tier || 'free',
           reset_at: balanceResponse.data.reset_at
         });
@@ -594,7 +593,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
 
     // Check unlock limit for free users (backend also enforces this)
-    const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+    const isPro = subscriptionTier === 'pro';
     if (!isPro && unlockBalance.remaining <= 0) {
       setUpgradeModalVisible(true);
       return;
@@ -611,7 +610,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     e.preventDefault();
     e.stopPropagation();
 
-    const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+    const isPro = subscriptionTier === 'pro';
     if (!isPro && unlockBalance.remaining <= 0) {
       setUpgradeModalVisible(true);
       return;
@@ -638,7 +637,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         setUnlockBalance({
           remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: response.data.used ?? 0,
-          pack_credits: response.data.pack_credits ?? 0,
           tier: response.data.tier || 'free',
           reset_at: response.data.reset_at
         });
@@ -696,7 +694,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         setUnlockBalance({
           remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
           used: response.data.used ?? 0,
-          pack_credits: response.data.pack_credits ?? 0,
           tier: response.data.tier || 'free',
           reset_at: response.data.reset_at
         });
@@ -910,12 +907,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
   const handleFilterChange = (key, value) => {
     // Check if free user is trying to use PRO "responsive" filter
-    if (key === 'activity' && value === 'responsive' && subscriptionTier !== 'pro' && subscriptionTier !== 'elite') {
+    if (key === 'activity' && value === 'responsive' && subscriptionTier !== 'pro') {
       setUpgradeModalVisible(true);
       return;
     }
     // Micro-creator filter is Pro-gated (admin-curated micro_friendly flag)
-    if (key === 'microOnly' && value && subscriptionTier !== 'pro' && subscriptionTier !== 'elite') {
+    if (key === 'microOnly' && value && subscriptionTier !== 'pro') {
       setUpgradeModalVisible(true);
       return;
     }
@@ -943,8 +940,8 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     setSearchParams(params);
   };
 
-  const isProUser = subscriptionTier === 'pro' || subscriptionTier === 'elite';
-  // Pro-gated: the micro filter only actually applies for Pro/Elite, even when
+  const isProUser = subscriptionTier === 'pro';
+  // Pro-gated: the micro filter only actually applies for Pro, even when
   // the dashboard default or a ?micro=1 deep link sets it in state.
   const microFilterActive = !!filters.microOnly && isProUser;
 
@@ -1067,7 +1064,6 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           {/* Monthly Quota Tracker - Show for logged-in FREE users */}
           {user && subscriptionTier === 'free' && isDashboardView && (() => {
             const remaining = unlockBalance.remaining ?? FREE_UNLOCK_LIMIT;
-            const packCredits = unlockBalance.pack_credits || 0;
             const used = unlockBalance.used ?? Math.max(0, FREE_UNLOCK_LIMIT - Math.min(remaining, FREE_UNLOCK_LIMIT));
             return (
               <QuotaBanner $exhausted={remaining <= 0}>
@@ -1078,19 +1074,17 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 </QuotaDots>
                 <QuotaText>
                   <QuotaTitle>
-                    {packCredits > 0
-                      ? `${remaining} packs left`
-                      : `${remaining} of ${FREE_UNLOCK_LIMIT} unlocks left`}
+                    {`${remaining} of ${FREE_UNLOCK_LIMIT} unlocks left`}
                   </QuotaTitle>
                   <QuotaSub>
                     {remaining <= 0
-                      ? 'Keep sending with Pro at $19/mo'
+                      ? 'Pro places you on a gifted campaign this month'
                       : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
                   </QuotaSub>
                 </QuotaText>
                 {remaining <= 0 && (
                   <QuotaUpgrade onClick={() => setUpgradeModalVisible(true)}>
-                    Go Pro · $19/mo
+                    {PRO_OFFER.ctaPrice}
                   </QuotaUpgrade>
                 )}
               </QuotaBanner>
@@ -1451,7 +1445,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 const isSaved = isBrandSaved(brand.id);
                 const isPitched = pitchedBrands.has(brand.id);
                 const isUnlocked = unlockedBrands.has(brand.id);
-                const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+                const isPro = subscriptionTier === 'pro';
                 const unlocksLeft = unlockBalance.remaining;
 
                 // Use dashboard route for logged-in creators in dashboard, public route otherwise
@@ -1642,7 +1636,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               setSelectedBrandForPitch(null);
               navigate('/creator/dashboard/for-you');
             }}
-            isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+            isPro={subscriptionTier === 'pro'}
             onUpgrade={() => {
               setShowPitchModal(false);
               setUpgradeModalVisible(true);
@@ -1663,7 +1657,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
               fetchSubscriptionStatus();
               fetchUnlockedBrands();
             }}
-            isPro={subscriptionTier === 'pro' || subscriptionTier === 'elite'}
+            isPro={subscriptionTier === 'pro'}
           />
         )
       )}

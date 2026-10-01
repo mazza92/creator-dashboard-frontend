@@ -123,6 +123,18 @@ export const generateBrandViewNotification = ({
               <td style="padding: 0 0 10px 0;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                   <tr>
+                    <td width="24" valign="top" style="font-size: 14px;">&#127873;</td>
+                    <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
+                      <strong>Get placed on 1 gifted campaign a month</strong>. The brand ships, you post
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 0 0 10px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr>
                     <td width="24" valign="top" style="font-size: 14px;">&#128065;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
                       <strong>See exactly which brand</strong> reviewed you
@@ -137,7 +149,7 @@ export const generateBrandViewNotification = ({
                   <tr>
                     <td width="24" valign="top" style="font-size: 14px;">&#128231;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
-                      <strong>Apply to more gifted PR lists</strong> on For You
+                      <strong>Unlimited credits on top</strong> to apply to more gifted PR lists
                     </td>
                   </tr>
                 </table>
@@ -162,7 +174,7 @@ export const generateBrandViewNotification = ({
   ` : '';
 
   // CTA button - links to for-you page with upgrade param to trigger upgrade modal -> Stripe checkout
-  const ctaLabel = isPro ? "See who's reviewing you" : 'See which brand — $19/mo';
+  const ctaLabel = isPro ? "See who's reviewing you" : 'Get placed + see which brand — $19/mo';
   const ctaUrl = isPro
     ? 'https://app.newcollab.co/creator/dashboard/for-you?utm_source=email&utm_medium=brand_view'
     : 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=kit_views&utm_source=email&utm_medium=brand_view';
@@ -177,7 +189,7 @@ export const generateBrandViewNotification = ({
           </a>
           ${!isPro ? `
           <p style="margin: 14px 0 0 0; font-size: 12px; color: #9ca3af;">
-            Cancel anytime. One gifted PR collab pays for a year of Pro.
+            Cancel anytime. If we miss a month, we place you on the next one or refund it.
           </p>
           ` : ''}
         </td>

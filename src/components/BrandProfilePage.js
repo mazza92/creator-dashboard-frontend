@@ -42,7 +42,7 @@ const BrandProfilePage = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const FREE_PITCH_LIMIT = 3;
-  const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
+  const isPro = subscriptionTier === 'pro';
   const pitchesLeft = Math.max(0, FREE_PITCH_LIMIT - pitchesSentThisMonth);
   const atLimit = !isPro && pitchesLeft === 0;
   const isLocked = brand?.requires_pro && !isPro;
@@ -229,7 +229,7 @@ const BrandProfilePage = () => {
           </CtaBtn>
           <CtaHint>
             {atLimit
-              ? 'Monthly limit reached · Upgrade for unlimited contacts'
+              ? 'Out of free credits. Pro places you on a gifted campaign this month.'
               : 'This brand is only accessible on Pro'}
           </CtaHint>
         </>
@@ -244,7 +244,7 @@ const BrandProfilePage = () => {
         </CtaBtnContact>
         <CtaHint>
           {isPro
-            ? 'Unlimited contacts included in your Pro plan'
+            ? 'Pro: 1 gifted campaign a month + unlimited credits'
             : `${pitchesLeft} free contact${pitchesLeft !== 1 ? 's' : ''} remaining this month`}
         </CtaHint>
       </>

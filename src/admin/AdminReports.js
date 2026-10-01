@@ -281,29 +281,14 @@ const AdminReports = () => {
     );
   }
 
-  const { mrr, at_limit_users, at_limit_count, at_limit_last_month = 0, at_limit_change = 0, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, packs: packsRaw, onboarding_survey: survey } = data;
-  const packs = packsRaw || {
-    price_cents: 900,
-    packs_per_purchase: 3,
-    all_time: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0, repeat_buyers: 0 },
-    period: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0 },
-    prev_period: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0 },
-    today: { purchases: 0, revenue_cents: 0, packs: 0 },
-    this_month: { purchases: 0, buyers: 0, revenue_cents: 0, packs: 0 },
-    daily: [],
-    recent: [],
-    buyers_with_credits: 0,
-  };
-  const packDollars = (cents) => `$${Math.round((cents || 0) / 100)}`;
+  const { mrr, at_limit_users, at_limit_count, at_limit_last_month = 0, at_limit_change = 0, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, onboarding_survey: survey } = data;
 
   // Calculate funnel percentages
   const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
   const unlockedPct = calcPct(funnel.unlocked_brand, funnel.signed_up);
   const multiPct = calcPct(funnel.pitched_multiple, funnel.unlocked_brand);
   const subscribedPro = funnel.subscribed_pro ?? mrr.total_paid ?? 0;
-  const boughtPack = funnel.bought_pack ?? packs.all_time?.buyers ?? 0;
   const proFromMultiPct = calcPct(subscribedPro, funnel.pitched_multiple);
-  const packFromMultiPct = calcPct(boughtPack, funnel.pitched_multiple);
   const neverUnlocked = Math.max(0, (funnel.signed_up || 0) - (funnel.unlocked_brand || 0));
   const unlockedOnceOnly = Math.max(0, (funnel.unlocked_brand || 0) - (funnel.pitched_multiple || 0));
   const multiNoPro = Math.max(0, (funnel.pitched_multiple || 0) - subscribedPro);
@@ -816,18 +801,6 @@ const AdminReports = () => {
               <FCount>{funnel.pitched_multiple}</FCount>
             </FStep>
 
-            <FDrop $good={packFromMultiPct >= 5}>↓ {packFromMultiPct}% bought extra packs ($9). {packFromMultiPct >= 5 ? 'Paywall converting' : 'New $9 path'}</FDrop>
-
-            <FStep>
-              <FLabel>Bought extra pack</FLabel>
-              <FBarTrack>
-                <FBarFill style={{ width: `${Math.max(calcPct(boughtPack, funnel.signed_up), 1)}%`, background: colors.amber }}>
-                  {boughtPack}
-                </FBarFill>
-              </FBarTrack>
-              <FCount>{boughtPack}</FCount>
-            </FStep>
-
             <FDrop $good={proFromMultiPct >= 5}>↓ {proFromMultiPct}% of those subscribed Pro — {proFromMultiPct >= 5 ? 'converting' : 'this is the conversion problem'}</FDrop>
 
             <FStep>
@@ -848,7 +821,7 @@ const AdminReports = () => {
               : unlockedOnceOnly >= multiNoPro
                 ? `${unlockedOnceOnly} used 1 credit and never reached 3.`
                 : `${multiNoPro} used 3+ credits and did not subscribe Pro.`}
-            {' '}Funnel is signup → credit → 3 credits → $9 pack or Pro.
+            {' '}Funnel is signup → credit → 3 credits → Pro.
           </InsightBox>
         </FunnelCard>
 
@@ -894,17 +867,6 @@ const AdminReports = () => {
             </WcTop>
             <WcValue>{this_month.signups}</WcValue>
             <WcSub>This month · {this_month.signups_last_month || 0} last month · {this_month.total_signups} total</WcSub>
-          </WeekCard>
-
-          <WeekCard>
-            <WcTop>
-              <WcLabel>Extra packs this month</WcLabel>
-              <WcDelta $up>one-time $9</WcDelta>
-            </WcTop>
-            <WcValue style={{ color: 'var(--rose)' }}>{this_month.pack_purchases ?? packs.this_month?.purchases ?? 0}</WcValue>
-            <WcSub>
-              {packDollars(this_month.pack_revenue_cents ?? packs.this_month?.revenue_cents)} · {this_month.pack_buyers ?? packs.this_month?.buyers ?? 0} buyers
-            </WcSub>
           </WeekCard>
         </WeekGrid>
 

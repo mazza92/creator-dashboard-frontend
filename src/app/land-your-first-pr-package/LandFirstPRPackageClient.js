@@ -1281,9 +1281,10 @@ function LandFirstPRPackageClient() {
               <ProBadge>MOST POPULAR</ProBadge>
               <PriceTier>PRO</PriceTier>
               <PriceNum>$19<small> /month</small></PriceNum>
-              <PriceDesc>Your full-time AI manager. Cancel anytime.</PriceDesc>
+              <PriceDesc>We place you on a gifted campaign every month. Cancel anytime.</PriceDesc>
               <PriceList>
-                <PriceItem><Check>✓</Check><span><b>Unlimited brand unlocks</b> — no monthly cap</span></PriceItem>
+                <PriceItem><Check>✓</Check><span><b>1 gifted campaign a month, guaranteed</b> — the brand ships, you post</span></PriceItem>
+                <PriceItem><Check>✓</Check><span>Unlimited credits on top</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Weekly personalized coaching plan</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Auto follow-ups sent for you</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Priority brand matches (first look)</span></PriceItem>

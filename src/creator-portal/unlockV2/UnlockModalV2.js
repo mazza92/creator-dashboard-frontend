@@ -16,6 +16,7 @@ import { CountryDropdown } from 'react-country-region-selector';
 import { ALLOWED_REGION_CODES, PRIORITY_REGION_CODES } from '../../constants/allowedRegions';
 import PitchBodyEditor from '../PitchBodyEditor';
 import { copyPitchRich, pitchPlainForEmail } from '../../utils/pitchBodyFormat';
+import { ColdBrandNote } from '../../components/ReplySignal';
 
 const LOCATION_PLACEHOLDER = '[CITY, COUNTRY]';
 
@@ -2951,11 +2952,38 @@ const NextActionLink = styled.button`
 `;
 
 // Loading/Flash states
+const ColdGateWrap = styled.div`
+  padding: 4px 2px 8px;
+`;
+
+const ColdGateActions = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+
+  button {
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    background: #111827;
+    color: #fff;
+  }
+  button.ghost {
+    background: #f3f4f6;
+    color: #111827;
+  }
+`;
+
 const PHASE_LOADING = 'loading';
 const PHASE_FLASH = 'flash';
 const PHASE_MODAL = 'modal';
 const PHASE_OUTREACH = 'outreach';
 const PHASE_NEXT = 'next_actions';
+const PHASE_COLD = 'cold_check';
 
 // ============================================
 // PROGRESS RING SVG COMPONENT
@@ -3107,6 +3135,7 @@ const UnlockModalV2 = ({
   const startGenerationRef = useRef(null);
   const genIdRef = useRef(0);
   const [showQuotaUpgrade, setShowQuotaUpgrade] = useState(false);
+  const [coldGate, setColdGate] = useState(null);
   const [pitchCity, setPitchCity] = useState('');
   const [pitchCountry, setPitchCountry] = useState('');
   const [needsLocation, setNeedsLocation] = useState(false);
@@ -3453,8 +3482,27 @@ const UnlockModalV2 = ({
       cardTimersRef.current.forEach(timer => clearTimeout(timer));
       cardTimersRef.current = [];
 
-      // Start generation
-      startGenerationRef.current?.();
+      setColdGate(null);
+      const openId = genIdRef.current;
+      const begin = () => {
+        if (genIdRef.current === openId) startGenerationRef.current?.();
+      };
+      const coldCheckId = brand?.brand_id || brand?.id;
+      if (!isFollowup && !isPro && coldCheckId) {
+        apiClient.get(`/api/pr-crm/brands/${coldCheckId}/reply-signal`, { timeout: 4000 })
+          .then(({ data }) => {
+            if (genIdRef.current !== openId) return;
+            if (data?.warn) {
+              setColdGate(data);
+              setPhase(PHASE_COLD);
+              return;
+            }
+            begin();
+          })
+          .catch(begin);
+      } else {
+        begin();
+      }
 
       // Fallback timer for "Almost done..."
       fallbackTimerRef.current = setTimeout(() => {
@@ -3473,6 +3521,7 @@ const UnlockModalV2 = ({
         quotaUpgradeTimerRef.current = null;
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, brandKey]);
 
   // Initialize editable pitch when packageData loads
@@ -3863,6 +3912,36 @@ const UnlockModalV2 = ({
           )}
 
           <ModalBody>
+            {phase === PHASE_COLD && coldGate && (
+              <ColdGateWrap>
+                <ColdBrandNote
+                  brandName={brandName}
+                  signal={coldGate.signal}
+                  remaining={coldGate.remaining}
+                  alternatives={coldGate.alternatives || []}
+                  pickLabel="Open"
+                  onPick={(alt) => {
+                    onClose?.();
+                    navigate(`/creator/dashboard/pr-brands?brand=${encodeURIComponent(alt.slug || '')}`);
+                  }}
+                />
+                <ColdGateActions>
+                  <button type="button" className="ghost" onClick={onClose}>Not now</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setColdGate(null);
+                      setShowFallback(false);
+                      setPhase(PHASE_LOADING);
+                      startGenerationRef.current?.();
+                    }}
+                  >
+                    Use a credit on {brandName} anyway
+                  </button>
+                </ColdGateActions>
+              </ColdGateWrap>
+            )}
+
             {phase === PHASE_LOADING && (
               <LootBoxLoading
                 brandName={brandName}
