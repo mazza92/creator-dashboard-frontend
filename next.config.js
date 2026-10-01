@@ -154,6 +154,11 @@ const nextConfig = {
         destination: 'https://app.newcollab.co/for-brands',
         permanent: false,
       },
+      {
+        source: '/brands/launch',
+        destination: 'https://app.newcollab.co/brands/launch',
+        permanent: false,
+      },
     ];
   },
   
