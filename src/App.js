@@ -95,6 +95,7 @@ const BrandPRHome = lazy(() => import('./cra-pages/BrandPRHome'));
 const Polly = lazy(() => import('./creator-portal/Polly'));
 const Timeline = lazy(() => import('./creator-portal/Timeline'));
 const BrandPRRoster = lazy(() => import('./cra-pages/BrandPRRoster'));
+const BrandLaunch = lazy(() => import('./cra-pages/BrandLaunch'));
 const Pool = lazy(() => import('./cra-pages/Pool'));
 const CreatorOverview = lazy(() => import('./creator-portal/CreatorOverview'));
 const BrandOverview = lazy(() => import('./components/BrandOverview'));
@@ -440,6 +441,7 @@ function AppContent() {
             {/* Brand PR Packages - Next.js has /app/brands/pr-packages, but keep CRA route for dev/fallback */}
             <Route path='/brands/pr-packages' element={<BrandPRPackagesPage />} />
             <Route path='/brands/send-pr-packages' element={<BrandPRPackagesPage />} />
+            <Route path='/brands/launch' element={<LazyRoute><BrandLaunch /></LazyRoute>} />
             {/* Google Ads Landing Page */}
             <Route path='/land-your-first-pr-package' element={<LandFirstPRPackage />} />
             {/* /f50 redirects to / (handled by vercel.json redirect, / is Next.js) */}
