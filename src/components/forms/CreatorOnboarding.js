@@ -940,10 +940,10 @@ export default function CreatorOnboarding() {
       // OAuth failed - show error
       setPlatform(oauthPlatform || 'instagram');
       setVerificationStatus('failed');
-      if (
-        oauthPlatform === 'instagram' &&
-        (reason === 'instagram_graph_denied' || reason === 'need_instagram_tester' || reason === 'no_username')
-      ) {
+      // Instagram Login only works for Professional accounts and can be cancelled
+      // or denied by Meta; fall back to the public-profile scrape so signup never stalls.
+      const igQualityFailure = ['private', 'below_follower_min', 'below_post_min', 'inactive', 'restricted_region'];
+      if (oauthPlatform === 'instagram' && !igQualityFailure.includes(reason)) {
         setIgHandleFallback(true);
       }
 
@@ -952,16 +952,25 @@ export default function CreatorOnboarding() {
         'below_follower_min': 'You need at least 500 followers to join.',
         'below_post_min': 'You need at least 12 public posts to join.',
         'restricted_region': 'newcollab is not available in your region.',
-        'oauth_error': 'Connection was cancelled or failed. Please try again.',
-        'need_professional': 'Instagram Login needs a Creator or Business account. Switch to Professional in Instagram Settings, then try again.',
+        'oauth_error': oauthPlatform === 'instagram'
+          ? 'Instagram login was cancelled or failed. Enter your @username below to continue.'
+          : 'Connection was cancelled or failed. Please try again.',
+        'need_professional': 'Instagram Login needs a Creator or Business account. Enter your @username below to continue with your public profile.',
         'need_instagram_tester': 'Instagram signed you in, but Meta did not return your profile. Enter your @username below to finish.',
         'instagram_graph_denied': 'Instagram signed you in, but Meta did not return your profile. Enter your @username below to finish.',
         'inactive': oauthPlatform === 'instagram'
           ? 'Your Instagram needs a public post from the last 30 days.'
           : 'Your TikTok needs a public video posted in the last 30 days.',
-        'no_username': 'The platform did not return a username. Reconnect and grant profile access.',
+        'no_username': oauthPlatform === 'instagram'
+          ? 'Instagram did not return your username. Enter your @username below to continue.'
+          : 'The platform did not return a username. Reconnect and grant profile access.',
       };
-      setError(errorMessages[reason] || 'Verification failed. Please try again.');
+      setError(
+        errorMessages[reason]
+        || (oauthPlatform === 'instagram'
+          ? 'Instagram login failed. Enter your @username below to continue.'
+          : 'Verification failed. Please try again.')
+      );
 
       // Clean up URL params
       window.history.replaceState({}, '', window.location.pathname);
@@ -1430,7 +1439,7 @@ export default function CreatorOnboarding() {
                       </InputWrap>
                       <VerificationNote style={{ marginTop: '12px' }}>
                         {igHandleFallback
-                          ? 'Instagram login worked. Enter the same @username so we can load your public profile.'
+                          ? "Enter your Instagram @username and we'll load your public profile."
                           : "We'll verify your profile and fetch your stats automatically"}
                       </VerificationNote>
                       <RequirementsHint>
@@ -1458,10 +1467,24 @@ export default function CreatorOnboarding() {
                           <>Connect {platform === 'instagram' ? 'Instagram' : 'TikTok'} to pull your official stats and posts. We never ask for your password.</>
                         )}
                       </VerificationNote>
+                      {platform === 'instagram' && verificationStatus !== 'verifying' && verificationStatus !== 'verified' && (
+                        <VerificationNote style={{ marginTop: '8px' }}>
+                          Personal account?{' '}
+                          <button
+                            type="button"
+                            onClick={() => { setIgHandleFallback(true); setVerificationStatus(null); setError(''); }}
+                            style={{ background: 'none', border: 0, padding: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}
+                          >
+                            Enter your @username instead
+                          </button>
+                        </VerificationNote>
+                      )}
                       {verificationStatus !== 'verified' && (
                         <RequirementsHint>
                           <strong>What brands need</strong>
-                          Public account · 500+ followers · 12+ videos · Posted in the last 30 days
+                          {platform === 'instagram'
+                            ? 'Public account · 500+ followers · 12+ posts · Posted in the last 30 days'
+                            : 'Public account · 500+ followers · 12+ videos · Posted in the last 30 days'}
                         </RequirementsHint>
                       )}
                     </>
