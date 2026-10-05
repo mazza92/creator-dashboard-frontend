@@ -44,6 +44,15 @@ const PERIOD_OPTIONS = [
   { key: 'all', label: 'All time' },
 ];
 
+const POLLY_FUNNEL_LABELS = {
+  opened: 'Opened Polly',
+  matches_shown: 'First matches shown',
+  pitch_or_apply: 'Pitched or applied',
+  kit_viewed: 'Kit viewed',
+  paywall_shown: 'Paywall shown',
+  upgraded: 'Upgraded (Pro now)',
+};
+
 function formatPollyUsd(value) {
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return '$0.00';
@@ -413,6 +422,29 @@ const AdminReports = () => {
             </HcDelta>
           </HealthCard>
         </TrafficGrid>
+
+        {polly?.funnel?.steps?.length ? (
+          <>
+            <SectionLabel>Polly funnel (creators who opened in window)</SectionLabel>
+            <TrafficGrid>
+              {polly.funnel.steps.map((step, i, all) => {
+                const base = all[0]?.creators || 0;
+                const prev = i > 0 ? all[i - 1].creators : step.creators;
+                const pct = base ? Math.round((step.creators / base) * 100) : 0;
+                const stepPct = prev ? Math.round((step.creators / prev) * 100) : 0;
+                return (
+                  <HealthCard key={step.key}>
+                    <HcLabel>{POLLY_FUNNEL_LABELS[step.key] || step.key}</HcLabel>
+                    <HcValue>{step.creators}</HcValue>
+                    <HcDelta $up={i === 0 || stepPct >= 30}>
+                      {i === 0 ? 'cohort' : `${pct}% of openers · ${stepPct}% of prev step`}
+                    </HcDelta>
+                  </HealthCard>
+                );
+              })}
+            </TrafficGrid>
+          </>
+        ) : null}
 
         {/* 2. TOP BRANDS BY PITCHES */}
         <SectionLabel style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

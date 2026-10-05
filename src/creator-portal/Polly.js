@@ -19,7 +19,7 @@ import { brandMarkEmoji } from './brandMarkEmoji';
 
 const STARTER_LABELS = {
   paid_ugc: 'Show paid UGC I can apply to now',
-  line_up: 'Pitch 3 brands for me today',
+  line_up: 'Pitch 3 gifted brands for me today',
   name_a_brand: 'Write a pitch for a brand I name',
   more_replies: 'Make my kit get more replies',
 };
@@ -35,8 +35,8 @@ const STARTER_HINTS = {
 const DIRECTORY_PATH = '/creator/dashboard/pr-brands';
 
 const STARTERS = [
-  { id: 'gifted_lists', label: 'Apply to gifted PR lists', hint: STARTER_HINTS.gifted_lists, action: 'open_directory', href: DIRECTORY_PATH },
   { id: 'line_up', label: 'Pitch 3 gifted brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true, deal: 'gifted' },
+  { id: 'gifted_lists', label: 'Apply to gifted PR lists', hint: STARTER_HINTS.gifted_lists, action: 'open_directory', href: DIRECTORY_PATH },
   { id: 'name_a_brand', label: 'Write a pitch for a brand I name', hint: STARTER_HINTS.name_a_brand, action: 'ask_brand' },
   { id: 'more_replies', label: 'Make my kit get more replies', hint: STARTER_HINTS.more_replies, action: 'coach_profile' },
   { id: 'paid_ugc', label: 'Show paid UGC I can apply to now', hint: STARTER_HINTS.paid_ugc, action: 'suggest_gigs', skip_discovery: true },
@@ -56,8 +56,22 @@ const DEEP_LINK_CHIPS = {
 };
 
 function logPitchHandoff(pitch, method) {
-  if (!pitch?.brand_id) return;
-  apiClient.post('/api/polly/pitch/handoff', { brand_id: pitch.brand_id, method }).catch(() => {});
+  if (!pitch?.brand_id) return Promise.resolve(null);
+  return apiClient
+    .post('/api/polly/pitch/handoff', {
+      brand_id: pitch.brand_id,
+      brand_name: pitch.brand_name || pitch.name || null,
+      is_followup: Boolean(pitch.is_followup),
+      method,
+    })
+    .then((res) => res?.data || null)
+    .catch(() => null);
+}
+
+function lockedPitchFrom(data) {
+  const p = data?.paywall_payload;
+  if (!p || !Array.isArray(p.preview) || !p.preview.length) return null;
+  return { brand_name: p.brand_name || null, lines: p.preview };
 }
 
 function isOpenerOnlyThread(msgs) {
@@ -793,6 +807,34 @@ const PitchHint = styled.div`
   margin-top: 10px;
 `;
 
+const LockedLines = styled.div`
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: ${t.inkSoft};
+  white-space: pre-wrap;
+`;
+
+const LockedBlur = styled.div`
+  margin: 6px 0 12px;
+  filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: ${t.inkSoft};
+`;
+
+const UnlockBtn = styled.button`
+  background: ${t.action};
+  color: #fff;
+  border: none;
+  border-radius: ${t.radiusBtn};
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
 const PitchBody = styled.pre`
   white-space: pre-wrap;
   font-family: inherit;
@@ -1051,6 +1093,9 @@ export default function Polly() {
   const [mailHold, setMailHold] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
   const [mailTriedId, setMailTriedId] = useState(null);
+  const [loggedSentId, setLoggedSentId] = useState(null);
+  const [autoAction, setAutoAction] = useState(null);
+  const autoFiredRef = useRef(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [starters, setStarters] = useState(STARTERS);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -1150,6 +1195,7 @@ export default function Polly() {
           hydratedRef.current = true;
           setMessages([]);
           setSuggested([]);
+          if (res.data.auto_action?.action) setAutoAction(res.data.auto_action);
         }
         setReady(true);
       } catch (err) {
@@ -1226,6 +1272,7 @@ export default function Polly() {
         pitch: data.pitch || null,
         kit_actions: kitActionsFrom(data, rawMessage),
         task_chips: data.task_chips || [],
+        locked_pitch: lockedPitchFrom(data),
       };
       const next = [...thread, assistant];
       setMessages(next);
@@ -1256,6 +1303,7 @@ export default function Polly() {
           task_chips: data.task_chips?.length
             ? data.task_chips
             : [{ id: 'unlock_pro', label: 'Go Pro · get placed this month', action: 'unlock_pro' }],
+          locked_pitch: lockedPitchFrom(data),
         };
         const next = [...history, assistant];
         setMessages(next);
@@ -1274,6 +1322,15 @@ export default function Polly() {
       inputRef.current?.focus();
     }
   }, [persistThread]);
+
+  useEffect(() => {
+    if (!autoAction || !ready || busy || autoFiredRef.current) return;
+    autoFiredRef.current = true;
+    const action = autoAction;
+    setAutoAction(null);
+    if (messagesRef.current.length) return;
+    send('', action);
+  }, [autoAction, ready, busy, send]);
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -1467,7 +1524,9 @@ export default function Polly() {
     }
     if (!pitch?.mailto) return;
     setMailTriedId(msgId);
-    logPitchHandoff(pitch, 'open_email');
+    logPitchHandoff(pitch, 'open_email').then((res) => {
+      if (res?.logged_sent) setLoggedSentId(msgId);
+    });
     window.location.href = pitch.mailto;
   };
 
@@ -1488,7 +1547,7 @@ export default function Polly() {
             <ResumeBar $w="42%" $h="36" $end />
             <ResumeBar $w="70%" $h="54" />
           </ResumePending>
-        ) : messages.length === 0 ? (
+        ) : messages.length === 0 && !autoAction && !(busy && autoFiredRef.current) ? (
           <Empty>
             <AvatarMark src={POLLY_AVATAR_URL} alt="Polly" />
             <Title>Polly</Title>
@@ -1620,6 +1679,19 @@ export default function Polly() {
                       ))}
                     </BrandList>
                   )}
+                  {msg.locked_pitch?.lines?.length > 0 && !msg.pitch && (
+                    <PitchCard style={{ marginTop: 12 }}>
+                      <PitchLabel>Pitch for {msg.locked_pitch.brand_name || 'this brand'}</PitchLabel>
+                      <LockedLines>{msg.locked_pitch.lines.join('\n\n')}</LockedLines>
+                      <LockedBlur aria-hidden="true">
+                        Here&apos;s why your audience fits and the exact content I&apos;d make for you,
+                        plus two recent posts that show it. Happy to send over a quick concept if useful.
+                      </LockedBlur>
+                      <UnlockBtn type="button" onClick={() => setShowUpgrade(true)}>
+                        Unlock this pitch with Pro
+                      </UnlockBtn>
+                    </PitchCard>
+                  )}
                   {msg.pitch && (
                     <PitchCard style={{ marginTop: 12 }}>
                       <PitchLabel>
@@ -1652,7 +1724,12 @@ export default function Polly() {
                             : (msg.pitch.is_followup ? 'Copy follow-up' : 'Copy pitch')}
                         </Ghost>
                       </PitchActions>
-                      {mailTriedId === msg.id ? (
+                      {mailTriedId === msg.id && loggedSentId === msg.id ? (
+                        <PitchHint>
+                          Marked as sent. I&apos;ll check on day 4 whether {msg.pitch.brand_name || 'they'} replied
+                          and draft the follow-up. Nothing opened? Copy the email and the pitch into Gmail or your mail app.
+                        </PitchHint>
+                      ) : mailTriedId === msg.id ? (
                         <PitchHint>
                           Nothing opened? Copy the email and the pitch, paste them into Gmail or your mail app,
                           then tap &ldquo;I sent it&rdquo; so I can track the follow-up.
