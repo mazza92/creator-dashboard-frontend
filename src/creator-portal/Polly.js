@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { apiClient } from '../config/api';
+import { apiClient, API_URL } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { UserContext } from '../contexts/UserContext';
@@ -66,6 +66,71 @@ function logPitchHandoff(pitch, method) {
     })
     .then((res) => res?.data || null)
     .catch(() => null);
+}
+
+function csrfToken() {
+  try {
+    const cookie = document.cookie.split('; ').find((row) => row.startsWith('csrf_access_token='));
+    return (cookie && cookie.split('=')[1]) || localStorage.getItem('csrf_token') || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+const INTENT_KIND = {
+  suggest_brands: 'brands',
+  generate_pitch: 'pitch',
+  suggest_gigs: 'gigs',
+};
+
+// Server-sent events from /chat/stream. Returns {status, data}, or null when streaming
+// isn't available so the caller can fall back to the plain request.
+async function postChatStream(payload, { onIntent, onDelta, onReset } = {}) {
+  if (typeof fetch !== 'function' || typeof TextDecoder === 'undefined') return null;
+  const headers = { 'Content-Type': 'application/json', Accept: 'text/event-stream' };
+  const csrf = csrfToken();
+  if (csrf) headers['X-CSRF-Token'] = csrf;
+  let res;
+  try {
+    res = await fetch(`${API_URL || ''}/api/polly/chat/stream`, {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify(payload),
+    });
+  } catch (_) {
+    return null;
+  }
+  if (!res.ok || !res.body || !(res.headers.get('content-type') || '').includes('text/event-stream')) {
+    return null;
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let result = null;
+  while (!result) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let cut = buffer.indexOf('\n\n');
+    while (cut >= 0) {
+      const block = buffer.slice(0, cut);
+      buffer = buffer.slice(cut + 2);
+      block.split('\n').forEach((line) => {
+        if (!line.startsWith('data:')) return;
+        let event;
+        try { event = JSON.parse(line.slice(5)); } catch (_) { return; }
+        if (event.type === 'intent') onIntent?.(event.intent);
+        else if (event.type === 'delta') onDelta?.(event.text || '');
+        else if (event.type === 'reset') onReset?.();
+        else if (event.type === 'done') result = { status: event.status || 200, data: event.data || {} };
+      });
+      cut = buffer.indexOf('\n\n');
+    }
+  }
+  try { reader.cancel(); } catch (_) { /* ignore */ }
+  if (!result) throw new Error('Polly stream ended early');
+  return result;
 }
 
 function lockedPitchFrom(data) {
@@ -1189,6 +1254,8 @@ export default function Polly() {
   const [busy, setBusy] = useState(false);
   const [busyKind, setBusyKind] = useState('chat');
   const [streamId, setStreamId] = useState(null);
+  const [liveText, setLiveText] = useState('');
+  const liveTextRef = useRef('');
   const [contactingId, setContactingId] = useState(null);
   const [applyingGigId, setApplyingGigId] = useState(null);
   const [mailHold, setMailHold] = useState(false);
@@ -1327,6 +1394,8 @@ export default function Polly() {
     if (userMsg) setMessages(history);
     setDraft('');
     setBusyKind(workingKind(extras, content));
+    liveTextRef.current = '';
+    setLiveText('');
     setBusy(true);
     try {
       const payload = {
@@ -1336,8 +1405,36 @@ export default function Polly() {
         suggested_brands: suggestedRef.current,
         ...extras,
       };
-      const res = await apiClient.post('/api/polly/chat', payload, { timeout: 90000 });
-      const data = res.data || {};
+      let result = null;
+      try {
+        result = await postChatStream(payload, {
+          onIntent: (intent) => { if (INTENT_KIND[intent]) setBusyKind(INTENT_KIND[intent]); },
+          onDelta: (chunk) => {
+            liveTextRef.current += chunk;
+            setLiveText(liveTextRef.current);
+          },
+          onReset: () => {
+            liveTextRef.current = '';
+            setLiveText('');
+          },
+        });
+      } catch (streamErr) {
+        console.warn('Polly stream', streamErr);
+        result = {
+          status: 500,
+          data: { success: false, error: 'Polly lost the connection. Try again.' },
+        };
+      }
+      if (!result) {
+        const res = await apiClient.post('/api/polly/chat', payload, { timeout: 90000 });
+        result = { status: res.status || 200, data: res.data || {} };
+      }
+      if (result.status >= 400) {
+        const httpErr = new Error(`Polly chat ${result.status}`);
+        httpErr.response = { status: result.status, data: result.data };
+        throw httpErr;
+      }
+      const data = result.data || {};
       if (data.credits) {
         setCredits(data.credits);
         try {
@@ -1377,7 +1474,9 @@ export default function Polly() {
         locked_pitch: lockedPitchFrom(data),
       };
       const next = [...thread, assistant];
-      setStreamId(assistant.id);
+      setStreamId(liveTextRef.current ? null : assistant.id);
+      liveTextRef.current = '';
+      setLiveText('');
       setMessages(next);
       persistThread(next, nextSuggested);
       if (data.pitch) {
@@ -1420,6 +1519,8 @@ export default function Polly() {
         setMessages(prev => [...prev, assistant]);
       }
     } finally {
+      liveTextRef.current = '';
+      setLiveText('');
       setBusy(false);
       setContactingId(null);
       inputRef.current?.focus();
@@ -1860,7 +1961,13 @@ export default function Polly() {
           <Turn>
             <AssistantRow>
               <PollyFace src={POLLY_AVATAR_URL} alt="" />
-              <PollyWorking kind={busyKind} />
+              {liveText ? (
+                <AssistantText aria-live="polite">
+                  <PollyRichText text={scrubPollyVoice(liveText)} />
+                </AssistantText>
+              ) : (
+                <PollyWorking kind={busyKind} />
+              )}
             </AssistantRow>
           </Turn>
         )}
