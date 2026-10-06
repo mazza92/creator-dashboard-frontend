@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiLock, FiShield, FiClock } from 'react-icons/fi';
@@ -81,7 +82,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     ...proFeatures.slice(0, 3),
   ] : proFeatures;
 
-  return (
+  const modal = (
     <AnimatePresence>
       <Overlay
         initial={{ opacity: 0 }}
@@ -331,6 +332,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       </Overlay>
     </AnimatePresence>
   );
+
+  return createPortal(modal, document.body);
 };
 
 // Styled Components
@@ -360,6 +363,7 @@ const ModalWrapper = styled(motion.div)`
   max-width: 460px;
   width: 100%;
   max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -369,13 +373,15 @@ const ModalWrapper = styled(motion.div)`
   @media (max-width: 480px) {
     max-width: 100%;
     max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 20px 20px 0 0;
     margin-top: auto;
   }
 `;
 
 const ModalScroll = styled.div`
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 36px 28px 20px;
   -webkit-overflow-scrolling: touch;
@@ -719,12 +725,13 @@ const ProofIcon = styled.div`
 const ProofText = styled.div``;
 
 const CtaArea = styled.div`
+  flex-shrink: 0;
   padding: 14px 28px 24px;
   background: #fff;
+  border-top: 1px solid #f1f2f4;
 
   @media (max-width: 480px) {
-    padding: 14px 22px 24px;
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    padding: 12px 22px calc(16px + env(safe-area-inset-bottom));
   }
 `;
 
