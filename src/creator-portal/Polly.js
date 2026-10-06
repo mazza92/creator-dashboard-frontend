@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient, API_URL } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
+import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from './PollyAutopilot';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
 import { ReplySignalChip } from '../components/ReplySignal';
@@ -25,7 +26,7 @@ const STARTER_LABELS = {
 };
 
 const STARTER_HINTS = {
-  gifted_lists: 'Brands picking creators for boxes now',
+  gifted_lists: 'Brands that send boxes to creators your size',
   paid_ugc: 'Live briefs — tap Apply',
   line_up: "I'll draft the emails",
   name_a_brand: 'You pick, I write it',
@@ -34,9 +35,23 @@ const STARTER_HINTS = {
 
 const DIRECTORY_PATH = '/creator/dashboard/pr-brands';
 
+const AUTOPILOT_NOTICES = {
+  gmail_connected: 'Gmail connected. Plan this week and approve the batch, and Polly takes it from there.',
+  gmail_denied: 'Gmail was not connected. You can try again any time.',
+  gmail_scope: 'Polly needs the "send email" permission ticked on the Google screen. Try connecting again.',
+  gmail_failed: "Gmail didn't connect. Try again in a moment.",
+};
+
+const AUTOPILOT_STARTER = {
+  id: 'autopilot',
+  label: 'Do my outreach for me',
+  hint: 'Autopilot: I pitch 20–30 brands a month from your Gmail',
+  action: 'autopilot',
+};
+
 const STARTERS = [
   { id: 'line_up', label: 'Pitch 3 gifted brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true, deal: 'gifted' },
-  { id: 'gifted_lists', label: 'Apply to gifted PR lists', hint: STARTER_HINTS.gifted_lists, action: 'open_directory', href: DIRECTORY_PATH },
+  { id: 'gifted_lists', label: 'Find gifted brands to pitch', hint: STARTER_HINTS.gifted_lists, action: 'suggest_brands', deal: 'gifted', skip_discovery: true },
   { id: 'name_a_brand', label: 'Write a pitch for a brand I name', hint: STARTER_HINTS.name_a_brand, action: 'ask_brand' },
   { id: 'more_replies', label: 'Make my kit get more replies', hint: STARTER_HINTS.more_replies, action: 'coach_profile' },
   { id: 'paid_ugc', label: 'Show paid UGC I can apply to now', hint: STARTER_HINTS.paid_ugc, action: 'suggest_gigs', skip_discovery: true },
@@ -53,6 +68,7 @@ const DEEP_LINK_CHIPS = {
   help_reply: { label: 'Help me reply', action: 'chat' },
   need_idea: { label: 'Need a content idea', action: 'chat' },
   line_up: { label: 'Line up brands for me', action: 'suggest_brands', deal: 'gifted' },
+  send_draft: { label: 'Show my pitch', action: 'generate_pitch' },
 };
 
 function logPitchHandoff(pitch, method) {
@@ -116,15 +132,15 @@ async function postChatStream(payload, { onIntent, onDelta, onReset } = {}) {
     while (cut >= 0) {
       const block = buffer.slice(0, cut);
       buffer = buffer.slice(cut + 2);
-      block.split('\n').forEach((line) => {
-        if (!line.startsWith('data:')) return;
+      for (const line of block.split('\n')) {
+        if (!line.startsWith('data:')) continue;
         let event;
-        try { event = JSON.parse(line.slice(5)); } catch (_) { return; }
+        try { event = JSON.parse(line.slice(5)); } catch (_) { continue; }
         if (event.type === 'intent') onIntent?.(event.intent);
         else if (event.type === 'delta') onDelta?.(event.text || '');
         else if (event.type === 'reset') onReset?.();
         else if (event.type === 'done') result = { status: event.status || 200, data: event.data || {} };
-      });
+      }
       cut = buffer.indexOf('\n\n');
     }
   }
@@ -1265,6 +1281,11 @@ export default function Polly() {
   const [autoAction, setAutoAction] = useState(null);
   const autoFiredRef = useRef(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [autopilotOpen, setAutopilotOpen] = useState(false);
+  const [autopilotSettingsOpen, setAutopilotSettingsOpen] = useState(false);
+  const [autopilotNotice, setAutopilotNotice] = useState('');
+  const autopilot = useAutopilot(Boolean(creatorId));
+  const autopilotAutoOpenedRef = useRef(false);
   const [starters, setStarters] = useState(STARTERS);
   const [loadingMore, setLoadingMore] = useState(false);
   const [brief, setBrief] = useState(null);
@@ -1377,7 +1398,22 @@ export default function Polly() {
   useEffect(() => {
     const el = threadRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, busy]);
+  }, [messages, busy, autopilotOpen]);
+
+  const reloadAutopilot = autopilot.reload;
+  const openAutopilot = useCallback(() => {
+    setAutopilotOpen(true);
+    reloadAutopilot();
+  }, [reloadAutopilot]);
+
+  useEffect(() => {
+    const ap = autopilot.state;
+    if (!ap || autopilotAutoOpenedRef.current) return;
+    autopilotAutoOpenedRef.current = true;
+    if (ap.is_pro && ap.gmail?.connected && (ap.items || []).some((i) => i.status === 'draft')) {
+      setAutopilotOpen(true);
+    }
+  }, [autopilot.state]);
 
   const persistThread = useCallback((nextMessages, nextSuggested) => {
     apiClient.put('/api/polly/thread', {
@@ -1493,7 +1529,7 @@ export default function Polly() {
           } catch (_) { /* ignore */ }
         }
         const rawMessage = data.message
-          || "You're out of free credits this month.\n\nGo Pro and we'll place you on a gifted campaign this month, plus unlimited credits on top.";
+          || "You're out of free credits this month.\n\nOn Pro I run your outreach on autopilot: 20–30 matched brands a month pitched from your Gmail, day-4 follow-ups, and unlimited roster applications.";
         const assistant = {
           id: newId(),
           role: 'assistant',
@@ -1504,7 +1540,7 @@ export default function Polly() {
           kit_actions: kitActionsFrom(data, rawMessage),
           task_chips: data.task_chips?.length
             ? data.task_chips
-            : [{ id: 'unlock_pro', label: 'Go Pro · get placed this month', action: 'unlock_pro' }],
+            : [{ id: 'unlock_pro', label: 'Put Polly on autopilot · Pro', action: 'unlock_pro' }],
           locked_pitch: lockedPitchFrom(data),
         };
         const next = [...history, assistant];
@@ -1552,6 +1588,10 @@ export default function Polly() {
       navigate(chip.href || DIRECTORY_PATH);
       return;
     }
+    if (chip.action === 'autopilot' || chip.id === 'autopilot') {
+      openAutopilot();
+      return;
+    }
     send(chip.label, {
       action: chip.action,
       brand_id: chip.brand_id,
@@ -1580,9 +1620,18 @@ export default function Polly() {
     let label = base.label;
     if (chipId === 'checkin_replied' && brandName) label = `${brandName} replied`;
     else if (chipId === 'draft_followup') label = brandName ? `Draft a follow-up to ${brandName}` : 'Draft a follow-up to the brand that viewed my kit';
+    else if (chipId === 'send_draft' && brandName) label = `Send my ${brandName} pitch`;
     sendStarter({ ...base, id: chipId, label, brand_id: brandId, brand_name: brandName || undefined, task_id: taskId });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, ready, creatorId]);
+
+  useEffect(() => {
+    const result = searchParams.get('autopilot');
+    if (!result) return;
+    setAutopilotNotice(AUTOPILOT_NOTICES[result] || '');
+    openAutopilot();
+    navigate('/creator/dashboard/for-you', { replace: true });
+  }, [searchParams, navigate, openAutopilot]);
 
   const loadMoreGigs = async () => {
     if (busy || loadingMore) return;
@@ -1744,6 +1793,10 @@ export default function Polly() {
 
   const lastGigIdx = messages.reduce((acc, m, i) => ((m.gigs || []).length ? i : acc), -1);
 
+  const apChip = autopilotChip(autopilot.state);
+  const closeAutopilot = () => { setAutopilotOpen(false); setAutopilotNotice(''); };
+  const dockStarters = messages.length > 0 ? composerStarters(starters, messages) : [];
+
   return (
     <Shell>
       <Thread ref={threadRef}>
@@ -1766,7 +1819,7 @@ export default function Polly() {
             <Title>Polly</Title>
             <Sub><PollyRichText text={scrubPollyVoice(greeting)} /></Sub>
             <SuggestGrid>
-              {starters.map((s) => (
+              {[...starters, ...(apChip && !autopilotOpen ? [AUTOPILOT_STARTER] : [])].map((s) => (
                 <SuggestCard
                   key={s.id || s.label}
                   type="button"
@@ -1809,7 +1862,7 @@ export default function Polly() {
           </BriefCard>
         )}
         {messages.map((msg, idx) => (
-          <Turn key={msg.id || msg.content}>
+          <Turn key={msg.id || `${idx}-${msg.role}`}>
             {msg.role === 'user' ? (
               <UserRow>
                 <UserBubble>{msg.content}</UserBubble>
@@ -1957,6 +2010,22 @@ export default function Polly() {
             )}
           </Turn>
         ))}
+        {autopilotOpen && (
+          <Turn>
+            <AssistantRow>
+              <PollyFace src={POLLY_AVATAR_URL} alt="" />
+              <AutopilotCard
+                state={autopilot.state}
+                setState={autopilot.setState}
+                reload={autopilot.reload}
+                notice={autopilotNotice}
+                onClose={closeAutopilot}
+                onOpenSettings={() => setAutopilotSettingsOpen(true)}
+                onUpgrade={() => setShowUpgrade(true)}
+              />
+            </AssistantRow>
+          </Turn>
+        )}
         {busy && (
           <Turn>
             <AssistantRow>
@@ -1973,9 +2042,19 @@ export default function Polly() {
         )}
       </Thread>
       <ComposerWrap>
-        {messages.length > 0 && composerStarters(starters, messages).length > 0 && (
+        {(dockStarters.length > 0 || (apChip && messages.length > 0)) && (
           <ChipRow>
-            {composerStarters(starters, messages).map((s) => (
+            {apChip && messages.length > 0 ? (
+              <Chip
+                type="button"
+                $emphasis={apChip.attention}
+                aria-expanded={autopilotOpen}
+                onClick={() => (autopilotOpen ? closeAutopilot() : openAutopilot())}
+              >
+                {apChip.label}
+              </Chip>
+            ) : null}
+            {dockStarters.map((s) => (
               <Chip
                 key={s.id || s.label}
                 type="button"
@@ -2016,6 +2095,13 @@ export default function Polly() {
         limit={credits?.limit || 3}
         unlockRemaining={credits?.remaining ?? 0}
         feature={Number(credits?.remaining) <= 0 ? 'unlock_paywall' : 'credits'}
+        source="polly"
+      />
+      <AutopilotSettings
+        isOpen={autopilotSettingsOpen}
+        state={autopilot.state}
+        setState={autopilot.setState}
+        onClose={() => setAutopilotSettingsOpen(false)}
       />
     </Shell>
   );

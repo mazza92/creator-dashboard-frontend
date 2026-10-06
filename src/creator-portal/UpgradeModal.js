@@ -8,7 +8,16 @@ import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 import { dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 import { PRO_OFFER, PRO_FEATURES } from '../config/proOffer';
 
-const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining }) => {
+function sourceFromPath(pathname) {
+  const path = String(pathname || '');
+  if (path.includes('/for-you') || path.includes('/polly')) return 'polly';
+  if (path.includes('/pr-brands') || path.includes('/directory')) return 'directory';
+  if (path.includes('/timeline')) return 'timeline';
+  if (path.includes('/my-kit')) return 'my_kit';
+  return 'other';
+}
+
+const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining, source }) => {
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState('monthly'); // Default to monthly
 
@@ -28,7 +37,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
         source: isWinback ? 'winback' : (feature || 'upgrade_modal'),
         interval,
       });
-      const payload = { tier, interval };
+      const payload = {
+        tier,
+        interval,
+        source: isWinback ? 'winback' : (source || sourceFromPath(window.location.pathname)),
+      };
       if (isWinback) payload.offer = 'winback';
       const response = await api.post(
         '/api/subscription/create-checkout',
@@ -53,60 +66,20 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   const busy = loading;
 
+  const proFeatures = PRO_FEATURES.map((f, i) => ({
+    emoji: ['⚡', '✉️', '➕', '📋'][i],
+    bg: ['#dbeafe', '#fef3c7', '#ede9fe', '#fce7f3'][i],
+    text: <><strong>{f.title}</strong> {f.body}</>,
+  }));
+
   const features = isWinback ? [
     {
       emoji: '1',
       bg: '#dbeafe',
       text: <><strong>$12 for the next 3 invoices.</strong> Then Pro returns to $19 unless you change it in Settings.</>,
     },
-    {
-      emoji: '2',
-      bg: '#fef3c7',
-      text: <><strong>1 gifting campaign guaranteed each month.</strong> We put you on a live gifted roster. The brand ships. You post.</>,
-    },
-    {
-      emoji: '3',
-      bg: '#ede9fe',
-      text: <><strong>Unlimited credits on top.</strong> Keep applying to other brands while that campaign runs.</>,
-    },
-    {
-      emoji: '👀',
-      bg: '#fce7f3',
-      text: <><strong>You never send a pitch.</strong> We vet you. The brand picks. No cold emails.</>,
-    },
-  ] : atCap ? [
-    {
-      emoji: '1',
-      bg: '#dbeafe',
-      text: <><strong>1 gifting campaign guaranteed each month.</strong> We put you on a live gifted roster. The brand ships. You post.</>,
-    },
-    {
-      emoji: '2',
-      bg: '#fef3c7',
-      text: <><strong>You never send a pitch.</strong> We vet you. The brand picks. No cold emails.</>,
-    },
-    {
-      emoji: '3',
-      bg: '#ede9fe',
-      text: <><strong>Unlimited credits on top.</strong> Keep applying to other brands while that campaign runs.</>,
-    },
-    {
-      emoji: '👀',
-      bg: '#fce7f3',
-      text: <><strong>If we miss, I make it right.</strong> Email me that month and I place you on the next campaign or refund it.</>,
-    },
-  ] : [
-    ...PRO_FEATURES.slice(0, 3).map((f, i) => ({
-      emoji: ['🎁', '🚫', '➕'][i],
-      bg: ['#dbeafe', '#fef2f4', '#ede9fe'][i],
-      text: <><strong>{f.title}</strong> {f.body}</>,
-    })),
-    {
-      emoji: '👀',
-      bg: '#fce7f3',
-      text: <><strong>See which brands opened your kit</strong> and follow up while you&apos;re fresh.</>,
-    },
-  ];
+    ...proFeatures.slice(0, 3),
+  ] : proFeatures;
 
   return (
     <AnimatePresence>
@@ -146,23 +119,21 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </>
               ) : atCap ? (
                 <>
-                  Your 3 are out. Pro guarantees<br />
-                  <PinkSpan>1 gifting campaign</PinkSpan> a month.
+                  Your 3 are out. Let Polly<br />
+                  <PinkSpan>do the pitching</PinkSpan> for you.
                 </>
               ) : (
                 <>
-                  Skip the waiting. Get placed on a<br />
-                  <PinkSpan>gifted campaign</PinkSpan> this month.
+                  Your creator manager,<br />
+                  <PinkSpan>on autopilot</PinkSpan>.
                 </>
               )}
             </Headline>
             <Subtext>
               {isWinback
-                ? 'Then $19. Same Pro — 1 gifted campaign a month plus unlimited credits. Cancel anytime.'
+                ? 'Then $19. Polly pitches 20–30 brands a month from your Gmail, plus unlimited roster applications. Cancel anytime.'
                 : feature === 'last_unlock'
-                ? 'Use this credit now. Then Pro places you on a live gifted campaign every month — the brand ships, you post.'
-                : atCap
-                ? 'Pro is $19/mo. We place you on one live gifted campaign each month — product + shipping, you post. No cold pitching.'
+                ? 'Use this credit now. Then on Pro, Polly pitches 20–30 brands a month for you and roster applications are unlimited.'
                 : `${PRO_OFFER.promise} ${PRO_OFFER.extra}`}
             </Subtext>
 
@@ -207,7 +178,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   <PriceAmount>$19</PriceAmount>
                   <PricePer>/ month</PricePer>
                 </PriceRow>
-                <PriceSubline>1 gifting campaign / month · cancel anytime</PriceSubline>
+                <PriceSubline>Polly on autopilot · cancel anytime</PriceSubline>
               </PriceCard>
               <FeatureList>
                 {features.map((f, i) => (
@@ -223,16 +194,16 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             {/* Stat Chips */}
             <StatsGrid>
               <StatChip>
-                <StatValue>2,000+</StatValue>
-                <StatLabel>Brands</StatLabel>
+                <StatValue>20–30</StatValue>
+                <StatLabel>Brands pitched / mo</StatLabel>
               </StatChip>
               <StatChip>
-                <StatValue>1 / month</StatValue>
-                <StatLabel>Gifted campaign</StatLabel>
+                <StatValue>Day 4</StatValue>
+                <StatLabel>Auto follow-up</StatLabel>
               </StatChip>
               <StatChip>
                 <StatValue>Unlimited</StatValue>
-                <StatLabel>Credits on top</StatLabel>
+                <StatLabel>Applications</StatLabel>
               </StatChip>
             </StatsGrid>
 
@@ -295,11 +266,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   </>
                 ) : atCap ? (
                   <>
-                    <strong>Your 3 free credits are in.</strong> Waiting until next month is how the box does not show up.
+                    <strong>Replies come from volume and follow-ups.</strong> Polly sends both while you make content.
                   </>
                 ) : (
                   <>
-                    <strong>Cold pitches mostly go unanswered.</strong> A placement on a live gifted campaign doesn&apos;t depend on a reply.
+                    <strong>You stay in control.</strong> Polly only sends the pitches you OK, from your own Gmail. She can&apos;t read your inbox.
                   </>
                 )}
               </ProofText>
@@ -323,7 +294,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   disabled={busy}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {loading ? 'Processing...' : 'Go Pro · 1 gifting campaign / month'}
+                  {loading ? 'Processing...' : PRO_OFFER.ctaPrice}
                 </CtaButton>
               </>
             ) : (
@@ -335,7 +306,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 {loading
                   ? 'Processing...'
                   : billingInterval === 'yearly'
-                    ? 'Get placed every month · $152/year (save 33%)'
+                    ? 'Put Polly on autopilot · $152/year (save 33%)'
                     : PRO_OFFER.ctaPrice}
               </CtaButton>
             )}

@@ -45,13 +45,29 @@ const PERIOD_OPTIONS = [
 ];
 
 const POLLY_FUNNEL_LABELS = {
-  opened: 'Opened Polly',
-  matches_shown: 'First matches shown',
+  opened: 'Opened Polly (free)',
+  matches_shown: 'Saw matches',
   pitch_or_apply: 'Pitched or applied',
-  kit_viewed: 'Kit viewed',
-  paywall_shown: 'Paywall shown',
-  upgraded: 'Upgraded (Pro now)',
+  paywall_shown: 'Saw a Pro prompt',
+  upgraded: 'Upgraded after prompt',
 };
+
+const POLLY_MOMENT_LABELS = {
+  pitch: 'out of credits on a pitch',
+  retry: 'asked again after paywall',
+  after_send: 'after sending, out of credits',
+  kit_view: 'brand viewed kit',
+  chip: 'Pro chip',
+  starter: 'Pro starter',
+  no_polly_paywall: 'no Polly prompt',
+  unknown: 'unknown',
+};
+
+function formatMoments(moments) {
+  const entries = Object.entries(moments || {}).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return 'none yet';
+  return entries.map(([k, n]) => `${POLLY_MOMENT_LABELS[k] || k} ${n}`).join(' · ');
+}
 
 function formatPollyUsd(value) {
   const n = Number(value);
@@ -425,7 +441,7 @@ const AdminReports = () => {
 
         {polly?.funnel?.steps?.length ? (
           <>
-            <SectionLabel>Polly funnel (creators who opened in window)</SectionLabel>
+            <SectionLabel>Polly funnel (free creators who opened in window, each step needs the last)</SectionLabel>
             <TrafficGrid>
               {polly.funnel.steps.map((step, i, all) => {
                 const base = all[0]?.creators || 0;
@@ -442,6 +458,37 @@ const AdminReports = () => {
                   </HealthCard>
                 );
               })}
+            </TrafficGrid>
+            <TrafficGrid>
+              <HealthCard>
+                <HcLabel>Upgraded after opening</HcLabel>
+                <HcValue>{polly.funnel.upgraded_any ?? 0}</HcValue>
+                <HcDelta $up={(polly.funnel.upgraded_any ?? 0) > 0}>
+                  {formatMoments(polly.funnel.upgrade_moments)}
+                </HcDelta>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Pro prompts seen</HcLabel>
+                <HcValue>{polly.funnel.paywall_any ?? 0}</HcValue>
+                <HcDelta $up>{formatMoments(polly.funnel.paywall_moments)}</HcDelta>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Brand viewed their kit</HcLabel>
+                <HcValue>{polly.funnel.kit_viewed ?? 0}</HcValue>
+                <HcDelta $up={(polly.funnel.kit_viewed ?? 0) > 0}>free openers, any step</HcDelta>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Checkouts by screen</HcLabel>
+                <HcValue>
+                  {Object.values(polly.funnel.checkout_sources || {}).reduce((a, b) => a + b, 0)}
+                </HcValue>
+                <HcDelta $up>{formatMoments(polly.funnel.checkout_sources)}</HcDelta>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Already Pro at open</HcLabel>
+                <HcValue>{polly.funnel.already_pro ?? 0}</HcValue>
+                <HcDelta $up>left out of the funnel</HcDelta>
+              </HealthCard>
             </TrafficGrid>
           </>
         ) : null}
