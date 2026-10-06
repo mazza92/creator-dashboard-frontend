@@ -244,10 +244,27 @@ function kitUi(msg) {
 }
 
 function gigBlurb(gig) {
-  return String(gig?.summary || gig?.blurb || '')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
+  const text = String(gig?.summary || gig?.blurb || '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+,/g, ',')
+    .replace(/,{2,}/g, ',')
     .trim();
+  if (!text || text.length < 24) return '';
+  if (/^[a-z]/.test(text)) return '';
+  if (/^(usd|eur|gbp)\b/i.test(text)) return '';
+  if (/\ba to\b/i.test(text) || /,\s*,/.test(text) || /\bof\s*,/.test(text)) return '';
+  return text;
+}
+
+function gigPostedLabel(iso) {
+  if (!iso) return '';
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return '';
+  const days = Math.floor((Date.now() - then.getTime()) / 86400000);
+  if (days <= 0) return 'Posted today';
+  if (days === 1) return 'Posted yesterday';
+  if (days < 14) return `Posted ${days} days ago`;
+  return `Posted ${then.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
 }
 
 function gigPayText(gig) {
@@ -692,6 +709,10 @@ const GigProduct = styled.div`
   font-size: 13px;
   color: ${t.inkSoft};
   line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 `;
 
 const GigDeliverable = styled.div`
@@ -1121,7 +1142,14 @@ function GigCard({ gig, busy, applying, onApply }) {
   const deliverable = String(gig?.deliverable || '').trim();
   const summary = gigBlurb(gig);
   const pay = gigPayText(gig);
-  const showDeliverable = deliverable && !summary.toLowerCase().includes(deliverable.toLowerCase());
+  const posted = gigPostedLabel(gig?.posted_at);
+  const meta = [
+    gig?.location,
+    source ? `via ${source}` : '',
+    posted,
+  ].filter(Boolean).join(' · ');
+  const showDeliverable = deliverable.length > 8
+    && !summary.toLowerCase().includes(deliverable.toLowerCase());
   return (
     <GigCardShell>
       <GigTop>
@@ -1134,11 +1162,7 @@ function GigCard({ gig, busy, applying, onApply }) {
             {pay ? <GigPay>{pay}</GigPay> : null}
           </GigTitleRow>
           {subtitle ? <GigProduct>{subtitle}</GigProduct> : null}
-          <GigMeta>
-            {gig?.location ? <span>{gig.location}</span> : null}
-            {source ? <span>via {source}</span> : null}
-            {gig?.category ? <span>{gig.category}</span> : null}
-          </GigMeta>
+          {meta ? <GigMeta>{meta}</GigMeta> : null}
         </GigHead>
       </GigTop>
       {showDeliverable ? <GigDeliverable>{deliverable}</GigDeliverable> : null}
