@@ -912,6 +912,43 @@ const Typing = styled.div`
   span:nth-child(3) { animation-delay: .3s; }
 `;
 
+const shimmer = keyframes`
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+`;
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const WorkingStatus = styled.div`
+  font-size: 13px;
+  color: ${t.muted};
+  margin-top: 2px;
+  animation: ${fadeUp} .25s ease;
+`;
+
+const SkeletonCard = styled.div`
+  height: 64px;
+  border-radius: 14px;
+  border: 1px solid ${t.line};
+  background: linear-gradient(90deg, ${t.subtle} 0px, ${t.white} 80px, ${t.subtle} 160px);
+  background-size: 400px 100%;
+  animation: ${shimmer} 1.2s linear infinite;
+`;
+
+const SkeletonList = styled.div`
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  width: min(420px, 100%);
+`;
+
+const RevealIn = styled.div`
+  animation: ${fadeUp} .3s ease both;
+`;
+
 const ComposerWrap = styled.div`
   flex-shrink: 0;
   padding: 8px 16px 16px;
@@ -1038,13 +1075,75 @@ function GigCard({ gig, busy, applying, onApply }) {
   );
 }
 
-function KitMessage({ msg, onOpen }) {
+const WORKING_STEPS = {
+  brands: ['Reading your profile…', 'Checking who’s picking creators this week…', 'Picking your best 3…'],
+  pitch: ['Reading the brand…', 'Matching it to your content…', 'Writing your pitch…'],
+  gigs: ['Scanning paid boards…', 'Filtering for your size…'],
+  chat: ['Thinking…'],
+};
+
+function workingKind(extras, text) {
+  const action = extras?.action;
+  if (action === 'suggest_brands') return 'brands';
+  if (action === 'generate_pitch' || extras?.brand_id) return 'pitch';
+  if (action === 'suggest_gigs') return 'gigs';
+  if (/\b(brands?|match|who should i pitch)\b/i.test(text || '')) return 'brands';
+  if (/\b(pitch|email|write)\b/i.test(text || '')) return 'pitch';
+  return 'chat';
+}
+
+function PollyWorking({ kind }) {
+  const steps = WORKING_STEPS[kind] || WORKING_STEPS.chat;
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    setStep(0);
+    if (steps.length < 2) return undefined;
+    const id = setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 1100);
+    return () => clearInterval(id);
+  }, [kind, steps.length]);
+  return (
+    <div>
+      <Typing aria-label="Polly is typing"><span /><span /><span /></Typing>
+      <WorkingStatus key={step}>{steps[step]}</WorkingStatus>
+      {kind === 'brands' && (
+        <SkeletonList aria-hidden="true">
+          <SkeletonCard /><SkeletonCard /><SkeletonCard />
+        </SkeletonList>
+      )}
+    </div>
+  );
+}
+
+function useStreamedText(text, active) {
+  const [shown, setShown] = useState(active ? '' : text);
+  useEffect(() => {
+    if (!active || !text) {
+      setShown(text);
+      return undefined;
+    }
+    // Stream like a chat model: fast, word-sized chunks, capped at ~0.9s total.
+    const words = text.split(/(\s+)/);
+    const perTick = Math.max(1, Math.ceil(words.length / 45));
+    let i = 0;
+    setShown('');
+    const id = setInterval(() => {
+      i += perTick;
+      setShown(words.slice(0, i).join(''));
+      if (i >= words.length) clearInterval(id);
+    }, 20);
+    return () => clearInterval(id);
+  }, [text, active]);
+  return shown;
+}
+
+function KitMessage({ msg, onOpen, stream = false }) {
   const ui = kitUi(msg);
   const body = chatTextWithoutPitch(ui.text, !!msg.pitch);
+  const shown = useStreamedText(scrubPollyVoice(body), stream);
   return (
     <>
       <AssistantText>
-        <PollyRichText text={scrubPollyVoice(body)} />
+        <PollyRichText text={shown} />
       </AssistantText>
       {ui.actions.length > 0 && (
         <PitchActions style={{ marginTop: 12 }}>
@@ -1088,6 +1187,8 @@ export default function Polly() {
   const [suggested, setSuggested] = useState([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [busyKind, setBusyKind] = useState('chat');
+  const [streamId, setStreamId] = useState(null);
   const [contactingId, setContactingId] = useState(null);
   const [applyingGigId, setApplyingGigId] = useState(null);
   const [mailHold, setMailHold] = useState(false);
@@ -1225,6 +1326,7 @@ export default function Polly() {
     const history = userMsg ? [...messagesRef.current, userMsg] : messagesRef.current;
     if (userMsg) setMessages(history);
     setDraft('');
+    setBusyKind(workingKind(extras, content));
     setBusy(true);
     try {
       const payload = {
@@ -1275,6 +1377,7 @@ export default function Polly() {
         locked_pitch: lockedPitchFrom(data),
       };
       const next = [...thread, assistant];
+      setStreamId(assistant.id);
       setMessages(next);
       persistThread(next, nextSuggested);
       if (data.pitch) {
@@ -1536,12 +1639,21 @@ export default function Polly() {
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
 
+  const hasLocalThread = Boolean(creatorId && readPollyLocal(creatorId)?.messages?.length);
+
   const lastGigIdx = messages.reduce((acc, m, i) => ((m.gigs || []).length ? i : acc), -1);
 
   return (
     <Shell>
       <Thread ref={threadRef}>
-        {!ready && messages.length === 0 ? (
+        {!ready && messages.length === 0 && !hasLocalThread ? (
+          <Turn>
+            <AssistantRow>
+              <PollyFace src={POLLY_AVATAR_URL} alt="" />
+              <PollyWorking kind="brands" />
+            </AssistantRow>
+          </Turn>
+        ) : !ready && messages.length === 0 ? (
           <ResumePending>
             <ResumeBar $w="58%" $h="44" />
             <ResumeBar $w="42%" $h="36" $end />
@@ -1607,7 +1719,7 @@ export default function Polly() {
                 <div>
                   {msg.kind === 'alert' ? <PitchLabel>Kit view</PitchLabel> : null}
                   {msg.kind === 'nudge' ? <PitchLabel>Polly nudge</PitchLabel> : null}
-                  <KitMessage msg={msg} onOpen={navigate} />
+                  <KitMessage msg={msg} onOpen={navigate} stream={msg.id === streamId} />
                   {msg.task_chips?.length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.map((s) => (
@@ -1650,6 +1762,7 @@ export default function Polly() {
                     </>
                   )}
                   {msg.brands?.length > 0 && (
+                    <RevealIn>
                     <BrandList style={{ marginTop: 12 }}>
                       {msg.brands.map((brand) => (
                         <BrandCard key={brand.id}>
@@ -1678,6 +1791,7 @@ export default function Polly() {
                         </BrandCard>
                       ))}
                     </BrandList>
+                    </RevealIn>
                   )}
                   {msg.locked_pitch?.lines?.length > 0 && !msg.pitch && (
                     <PitchCard style={{ marginTop: 12 }}>
@@ -1746,7 +1860,7 @@ export default function Polly() {
           <Turn>
             <AssistantRow>
               <PollyFace src={POLLY_AVATAR_URL} alt="" />
-              <Typing aria-label="Polly is typing"><span /><span /><span /></Typing>
+              <PollyWorking kind={busyKind} />
             </AssistantRow>
           </Turn>
         )}
