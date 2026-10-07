@@ -15,10 +15,13 @@ export async function generateMetadata({ params }) {
       return {
         title: 'Creator Not Found | Newcollab',
         description: 'This creator profile could not be found.',
+        robots: { index: false, follow: true },
       };
     }
 
     const profile = await res.json();
+    // Most legacy profiles are a username and avatar only; keep those out of the index.
+    const isThin = (profile.bio || '').trim().length < 80 || !(profile.projects?.length > 0);
 
     const title = `@${profile.username} | Creator Profile on Newcollab`;
     const description = profile.bio || `Discover @${profile.username} on Newcollab - Connect with this creator for PR packages and brand partnerships.`;
@@ -54,12 +57,14 @@ export async function generateMetadata({ params }) {
       alternates: {
         canonical: url,
       },
+      ...(isThin && { robots: { index: false, follow: true } }),
     };
   } catch (error) {
     console.error('Error fetching creator metadata:', error);
     return {
       title: 'Creator Profile | Newcollab',
       description: 'Discover creators on Newcollab for PR packages and brand partnerships.',
+      robots: { index: false, follow: true },
     };
   }
 }

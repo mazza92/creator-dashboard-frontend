@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import CanadaDirectoryClient from './CanadaDirectoryClient';
 
 // SEO metadata for Canada Directory
@@ -34,6 +35,7 @@ export default function CanadaDirectoryPage() {
       <Suspense fallback={null}>
         <CanadaDirectoryClient />
       </Suspense>
+      <DirectoryBrandLinks label="Canadian" region="Canada" />
     </>
   );
 }

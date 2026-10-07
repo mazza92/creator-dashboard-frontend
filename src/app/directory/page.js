@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from './DirectoryBrandLinks';
 import DirectoryClient from './DirectoryClient';
 import { CITATION_LAST_UPDATED_ISO, DIRECTORY_FACTS } from '../../lib/citationFacts';
 
@@ -76,6 +77,7 @@ export default async function DirectoryPage() {
       <Suspense fallback={null}>
         <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>
+      <DirectoryBrandLinks />
     </>
   );
 }

@@ -1,4 +1,5 @@
 const path = require('path');
+const mergedPosts = require('./src/content/posts/merged.json');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -65,9 +66,20 @@ const nextConfig = {
   // Redirects (migrated from vercel.json)
   async redirects() {
     return [
+      // Thin duplicate posts consolidated into the strongest post on the topic
+      ...Object.entries(mergedPosts).map(([from, to]) => ({
+        source: `/blog/${from}`,
+        destination: `/blog/${to}`,
+        permanent: true,
+      })),
       {
         source: '/blog/:slug/',
         destination: '/blog/:slug',
+        permanent: true,
+      },
+      {
+        source: '/politique-de-confidentialite',
+        destination: '/privacy-policy',
         permanent: true,
       },
       {
@@ -130,7 +142,7 @@ const nextConfig = {
       },
       {
         source: '/blog/creator-brand-partnerships-2026',
-        destination: '/blog/creator-brand-partnerships-2025',
+        destination: `/blog/${mergedPosts['creator-brand-partnerships-2025']}`,
         permanent: true,
       },
       {

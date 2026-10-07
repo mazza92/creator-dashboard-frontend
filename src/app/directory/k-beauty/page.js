@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import KBeautyDirectoryClient from './KBeautyDirectoryClient';
 
 // SEO metadata for K-Beauty Directory
@@ -34,6 +35,7 @@ export default function KBeautyDirectoryPage() {
       <Suspense fallback={null}>
         <KBeautyDirectoryClient />
       </Suspense>
+      <DirectoryBrandLinks label="Skincare & K-beauty" category="skincare" limit={60} />
     </>
   );
 }

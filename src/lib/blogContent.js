@@ -2,6 +2,8 @@
  * Client-safe blog content helpers (no Node fs imports).
  */
 
+import MERGED_POSTS from '../content/posts/merged.json';
+
 // Phase 1 allowed slugs for blog widget (matches feature_flags.blog_widget_v1)
 const BLOG_WIDGET_ALLOWED_SLUGS = [
   'aussie-brands-pr-package-list-2026',
@@ -295,7 +297,7 @@ export function linkPortfolioMentions(html, options = {}) {
 
 export function getFaqAnswerHtml(answer, slug) {
   if (!answer) return '';
-  return linkPortfolioMentions(String(answer), { slug });
+  return linkPortfolioMentions(rewriteMergedPostLinks(String(answer)), { slug });
 }
 
 export function getFaqAnswerSchemaText(answer, slug) {
@@ -526,8 +528,19 @@ export function stripEmbeddedFaqFromContent(html) {
   return html.slice(0, start);
 }
 
+const MERGED_LINK_RE = /(href=["'])(?:https:\/\/(?:www\.)?newcollab\.co)?\/blog\/([a-z0-9-]+)\/?(?=[#?"'])/gi;
+
+/** Point links at merged posts straight to their target (skip the 301 hop). */
+export function rewriteMergedPostLinks(html) {
+  if (!html || typeof html !== 'string') return html;
+  return html.replace(MERGED_LINK_RE, (match, prefix, slug) => {
+    const target = MERGED_POSTS[slug.toLowerCase()];
+    return target ? `${prefix}/blog/${target}` : match;
+  });
+}
+
 export function getPostContentHtml(post, options = {}) {
-  let html = post?.content || '';
+  let html = rewriteMergedPostLinks(post?.content || '');
 
   // Strip embedded FAQ if post has structured FAQ
   if (post?.faq?.length) {

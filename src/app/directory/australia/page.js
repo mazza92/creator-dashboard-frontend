@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import AustraliaDirectoryClient from './AustraliaDirectoryClient';
 
 // SEO metadata for Australia Directory
@@ -34,6 +35,7 @@ export default function AustraliaDirectoryPage() {
       <Suspense fallback={null}>
         <AustraliaDirectoryClient />
       </Suspense>
+      <DirectoryBrandLinks label="Australian" region="Australia" />
     </>
   );
 }

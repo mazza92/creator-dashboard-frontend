@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import USDirectoryClient from './USDirectoryClient';
 
 // SEO metadata for US Directory
@@ -34,6 +35,7 @@ export default function USDirectoryPage() {
       <Suspense fallback={null}>
         <USDirectoryClient />
       </Suspense>
+      <DirectoryBrandLinks label="US" region="US" />
     </>
   );
 }

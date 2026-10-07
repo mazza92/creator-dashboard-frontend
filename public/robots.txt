@@ -1,11 +1,20 @@
-# Allow all legitimate crawlers
+# A crawler obeys only the most specific group that names it, so every
+# group below must carry the full Disallow list.
+
 User-agent: *
+User-agent: Googlebot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: GrokBot
+User-agent: ClaudeBot
+User-agent: GeminiBot
 Allow: /
 
 # Block URL parameters that create duplicate content
 Disallow: /*?ref=*
 Disallow: /*?source=*
-Disallow: /blog?search=*
+Disallow: /*?search=
+Disallow: /*&search=
 
 # Block RSS feed
 Disallow: /blog/rss.xml
@@ -26,52 +35,29 @@ Disallow: /login
 Disallow: /forgot-password
 Disallow: /reset-password
 
-# Explicitly allow all public content
-Allow: /blog/
-Allow: /blog/*
-Allow: /media-kit
-Allow: /kit/
-Allow: /kit/*
-Allow: /about
-Allow: /contact
-Allow: /directory
-Allow: /directory/*
-Allow: /brand/
-Allow: /brand/*
-Allow: /brands/
-Allow: /brands/*
-Allow: /register
-Allow: /register/creator
-Allow: /register/brand
-
-# AI search crawlers
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: GrokBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: GeminiBot
-Allow: /
-
-# Googlebot — no crawl-delay (Google ignores it; manage budget in GSC instead)
-User-agent: Googlebot
-Allow: /
-
 User-agent: Bingbot
-Crawl-delay: 5
-
 User-agent: Slurp
 Crawl-delay: 5
+Allow: /
+Disallow: /*?ref=*
+Disallow: /*?source=*
+Disallow: /*?search=
+Disallow: /*&search=
+Disallow: /blog/rss.xml
+Disallow: /missions/
+Disallow: /ressources
+Disallow: /f50
+Disallow: /brands/send-pr-packages
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /settings/
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
 
 # AI / LLM citation map
 # https://newcollab.co/llms.txt
 
-# Sitemap
 Sitemap: https://newcollab.co/sitemap.xml

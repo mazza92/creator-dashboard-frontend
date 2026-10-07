@@ -1,4 +1,5 @@
 import { getAllPosts } from '../../lib/blog';
+import { brandLetter, BRAND_LETTERS, fetchBrandIndex } from '../lib/brandIndex';
 
 const BASE = 'https://newcollab.co';
 const BRANDS_API = 'https://api.newcollab.co/api/public/brands';
@@ -115,11 +116,13 @@ function blogEntries(now) {
       .map(post => {
         if (!post?.slug) return null;
         const url = `${BASE}/blog/${post.slug}`;
+        // Posts canonicalised to another URL are not index candidates.
+        if (post.canonicalUrl && post.canonicalUrl !== url) return null;
         if (seen.has(url)) return null;
         seen.add(url);
         return sitemapEntry(
           url,
-          post.date ? safeDate(post.date, now) : now,
+          safeDate(post.dateModified || post.date, now),
           'monthly',
           0.8,
         );
@@ -183,11 +186,24 @@ async function fetchAllBrands() {
   }
 }
 
-function brandEntries(brands, now) {
+function letterEntries(brands, now) {
+  const latest = {};
+  for (const b of brands) {
+    const letter = brandLetter(b.name);
+    const updated = safeDate(b.updatedAt, now);
+    if (!latest[letter] || updated > latest[letter]) latest[letter] = updated;
+  }
+  return BRAND_LETTERS
+    .filter(letter => latest[letter])
+    .map(letter => sitemapEntry(`${BASE}/directory/brands/${letter}`, latest[letter], 'weekly', 0.6))
+    .filter(Boolean);
+}
+
+function brandEntries(brands, now, { filter }) {
   const seen = new Set();
   return brands
-    .filter(b => isGoodSlug(b.slug) && hasEnoughContent(b))
-    .map(b => sitemapEntry(`${BASE}/brand/${b.slug}`, now, 'weekly', 0.8))
+    .filter(b => isGoodSlug(b.slug) && (!filter || hasEnoughContent(b)))
+    .map(b => sitemapEntry(`${BASE}/brand/${b.slug}`, b.updatedAt || now, 'weekly', 0.8))
     .filter(entry => {
       if (!entry || seen.has(entry.url)) return false;
       seen.add(entry.url);
@@ -200,9 +216,14 @@ export default async function sitemap() {
   const pages = staticEntries(now);
   const posts = blogEntries(now);
 
+  const indexed = await fetchBrandIndex({ revalidate, timeoutMs: FETCH_BUDGET_MS });
+  if (indexed) {
+    return [...pages, ...posts, ...letterEntries(indexed, now), ...brandEntries(indexed, now, { filter: false })];
+  }
+
   try {
     const brands = await fetchAllBrands();
-    return [...pages, ...posts, ...brandEntries(brands, now)];
+    return [...pages, ...posts, ...brandEntries(brands, now, { filter: true })];
   } catch (err) {
     console.error('[sitemap] Failed to fetch brands:', err);
     return [...pages, ...posts];

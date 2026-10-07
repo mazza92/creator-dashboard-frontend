@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -2730,7 +2730,7 @@ const LandingPage = () => {
                   <a href="/blog/list-of-companies-that-send-pr-packages-2026">Companies That Send PR</a>
                   <a href="/blog/pr-emails-for-brands-2026">PR Email Contacts</a>
                   <a href="/blog/pr-list-for-clothing-brands-micro-influencers-2025">Fashion PR List</a>
-                  <a href="/blog/ultimate-list-of-gaming-tech-companies-that-sponsor-small-streamers">Gaming Sponsors</a>
+                  <a href="/blog/gaming-tech-brands-that-sponsor-small-streamers-2026">Gaming Sponsors</a>
                 </FooterLinks>
               </div>
             </FooterTop>

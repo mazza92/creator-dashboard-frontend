@@ -173,9 +173,11 @@ export async function generateMetadata({ params }) {
     brand?.seo?.description ||
     `Apply to ${brand.name} PR list. ${brand.description ? brand.description.slice(0, 120) : `Get free products and collaborate with ${brand.name}.`}`;
 
-  // Check if this is a low-quality page that shouldn't be indexed
-  // Either bad slug pattern OR thin content triggers noindex
-  const shouldNoIndex = isLowQualitySlug(slug, brand.name) || hasThinContent(brand);
+  // The API's `indexable` is the same rule the sitemap uses; the local checks
+  // are a fallback for older API responses.
+  const shouldNoIndex = typeof brand.indexable === 'boolean'
+    ? !brand.indexable
+    : isLowQualitySlug(slug, brand.name) || hasThinContent(brand);
 
   return {
     title,
@@ -200,7 +202,17 @@ export async function generateMetadata({ params }) {
   };
 }
 
-function JsonLd({ brand }) {
+function JsonLd({ brand, faqs }) {
+  const faqSchema = faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  } : null;
+
   const orgSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -229,6 +241,9 @@ function JsonLd({ brand }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      {faqSchema && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      )}
     </>
   );
 }
@@ -262,6 +277,106 @@ function formatFollowers(num) {
   return num.toString();
 }
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function formatMonthYear(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function normalizeApplicationMethod(method) {
+  const m = (method || '').toLowerCase();
+  if (m === 'direct_link' || m === 'form' || m === 'website') return 'form';
+  if (m === 'email_pitch' || m === 'email') return 'email';
+  if (m === 'dm') return 'dm';
+  return null;
+}
+
+function collabLabel(type) {
+  const t = (type || '').toLowerCase();
+  if (t === 'gifting' || t === 'gifted') return 'Gifted product (no fee)';
+  if (t === 'affiliate') return 'Affiliate commission on sales';
+  if (t === 'both') return 'Gifted product + affiliate commission';
+  if (t.includes('paid')) return 'Paid collaboration';
+  return type || null;
+}
+
+const TONE_TIPS = {
+  luxury: 'polished, editorial visuals: clean backgrounds, natural light and slow, detailed product shots',
+  premium: 'polished, editorial visuals with a focus on texture, finish and craftsmanship',
+  playful: 'fun, personality-led content: trends, humour and quick cuts work well',
+  functional: 'benefit-first content: show the product solving a real problem, with a clear before/after or demo',
+  clinical: 'ingredient-led, educational content: explain what it does and show results over time',
+  minimalist: 'calm, uncluttered content that lets the product speak for itself',
+  bold: 'high-energy, attention-grabbing content with strong hooks in the first second',
+  natural: 'authentic, everyday-routine content shot in natural light',
+};
+
+function toneTip(tone) {
+  const key = (tone || '').toLowerCase().trim();
+  return TONE_TIPS[key] || (key ? `content that matches their ${key} brand voice` : null);
+}
+
+function platformLabel(p) {
+  const key = (p || '').toLowerCase();
+  if (key === 'tiktok') return 'TikTok';
+  if (key === 'instagram') return 'Instagram';
+  if (key === 'youtube') return 'YouTube';
+  return p ? p.charAt(0).toUpperCase() + p.slice(1) : '';
+}
+
+function brandFaqs(brand, { minFollowers, regions, applicationMethod, collab, avgResponseTime }) {
+  const name = brand.name;
+  const faqs = [];
+  faqs.push({
+    question: `Does ${name} send PR packages to small influencers?`,
+    answer: minFollowers > 0
+      ? `${name} lists a minimum of around ${formatFollowers(minFollowers)} followers${brand.microFriendly ? ' and is marked micro-creator friendly on Newcollab' : ''}. Engagement and niche fit matter more than raw follower count.`
+      : `${name} has no stated follower minimum, so nano and micro creators can apply.`,
+  });
+  if (brand.heroProduct || brand.estimatedValue) {
+    faqs.push({
+      question: `What does ${name} send in a PR package?`,
+      answer: [
+        brand.heroProduct ? `Their best-known product is ${brand.heroProduct}.` : null,
+        brand.estimatedValue ? `A typical ${name} PR package is worth about $${brand.estimatedValue}.` : null,
+        brand.pricePoint ? `Products retail around $${brand.pricePoint}.` : null,
+      ].filter(Boolean).join(' '),
+    });
+  }
+  faqs.push({
+    question: `How do I apply to the ${name} PR list?`,
+    answer: applicationMethod === 'form'
+      ? `${name} takes creators through a direct application form. Newcollab links you to it after a free sign-up, and you can attach your media kit.`
+      : applicationMethod === 'email'
+      ? `${name} prefers an email pitch to their PR team. Send a short message with your media kit and one specific content idea.`
+      : `Use the contact details on this page to reach the ${name} PR team with your media kit and a content idea.`,
+  });
+  if (collab) {
+    faqs.push({
+      question: `Does ${name} pay creators?`,
+      answer: collab.startsWith('Gifted product (no fee)')
+        ? `${name} mainly runs a gifting programme: creators receive free product in exchange for honest content, with no fee.`
+        : `${name} runs a ${collab.toLowerCase()} programme.`,
+    });
+  }
+  if (regions.length > 0) {
+    faqs.push({
+      question: `Which countries does ${name} work with creators in?`,
+      answer: `${name} works with creators in ${regions.join(', ')}.`,
+    });
+  }
+  if (avgResponseTime) {
+    faqs.push({
+      question: `How long does ${name} take to reply?`,
+      answer: `Creators who hear back from ${name} usually get a reply in about ${avgResponseTime} days. Send one polite follow-up after 10 days if you haven't heard back.`,
+    });
+  }
+  return faqs.filter(f => f.answer);
+}
+
 export default async function BrandPage({ params }) {
   const { slug } = await params;
   const brand = await fetchBrand(slug);
@@ -291,8 +406,26 @@ export default async function BrandPage({ params }) {
   const responsesReceived = resolvedStats.totalResponses;
   const hasDirectLink = Boolean(brand?.gated?.hasDirectLink);
   const hasEmail = Boolean(brand?.gated?.hasEmailContact);
-  const isAcceptingPR = brand.is_accepting_pr ?? brand.accepting_pr ?? true;
-  const collabType = brand.collab_type || brand.collaboration_type;
+  const isAcceptingPR = brand.acceptingPr ?? brand.is_accepting_pr ?? brand.accepting_pr ?? true;
+  const collabType = collabLabel(brand.collaborationType || brand.collab_type || brand.collaboration_type);
+  const applicationMethod = normalizeApplicationMethod(brand.applicationMethod);
+  const contentTip = toneTip(brand.tone);
+  const examplePosts = Array.isArray(brand.examplePosts) ? brand.examplePosts : [];
+  const socialProfile = brand.socialProfile || null;
+  const updatedLabel = formatMonthYear(brand.updatedAt || brand.lastVerifiedAt);
+  const faqs = brandFaqs(brand, { minFollowers, regions, applicationMethod, collab: collabType, avgResponseTime });
+  const hasPackageFacts = Boolean(brand.heroProduct || brand.estimatedValue || brand.pricePoint || collabType);
+  const pitchIdeas = [
+    brand.heroProduct && `Build your pitch around ${brand.heroProduct}, the product ${brand.name} is best known for.`,
+    brand.targetAudience && `Show how your audience overlaps with theirs (${brand.targetAudience.toLowerCase()}) using your real demographics.`,
+    contentTip && `Suggest a format that fits their style: ${contentTip}.`,
+    niches.length > 0 && `Content in ${niches.join(', ')} is the closest fit.`,
+    maxFollowers > 0 && `They cap at ${formatFollowers(maxFollowers)} followers, so the programme favours smaller creators.`,
+    avgResponseTime && `Creators who hear back usually get a reply in about ${avgResponseTime} days, so follow up once after 10 days.`,
+  ].filter(Boolean);
+  if (pitchIdeas.length === 0) {
+    pitchIdeas.push(`Mention a specific ${brand.name} product you already use, explain why your audience would buy it, and propose one concrete video or post idea.`);
+  }
 
   const categoryLabel = brand.category
     ? brand.category.charAt(0).toUpperCase() + brand.category.slice(1)
@@ -310,7 +443,7 @@ export default async function BrandPage({ params }) {
 
   return (
     <BrandPageLayout canonicalUrl={`https://newcollab.co/brand/${brand.slug}`}>
-      <JsonLd brand={brand} />
+      <JsonLd brand={brand} faqs={faqs} />
       <style>{`
         /* Page wrapper - light gray background like dashboard */
         .bp-wrap {
@@ -568,6 +701,74 @@ export default async function BrandPage({ params }) {
           color: #4B4B4B;
           line-height: 1.7;
           margin: 0;
+        }
+
+        h2.bp-card-title { margin-top: 0; }
+        .bp-facts {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin: 0;
+        }
+        .bp-fact {
+          background: #F4F4F4;
+          border-radius: 12px;
+          padding: 12px 14px;
+        }
+        .bp-fact dt {
+          font-size: 11px;
+          font-weight: 600;
+          color: #8C8C8C;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+          margin-bottom: 4px;
+        }
+        .bp-fact dd {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #0F0F0F;
+        }
+        .bp-posts {
+          list-style: none;
+          margin: 12px 0 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .bp-posts li {
+          background: #F4F4F4;
+          border-radius: 10px;
+          padding: 10px 14px;
+          font-size: 13px;
+          color: #8C8C8C;
+        }
+        .bp-posts a {
+          color: #0F0F0F;
+          font-weight: 600;
+          text-decoration: none;
+        }
+        .bp-posts a:hover { color: #E11D48; }
+        .bp-faq dt {
+          font-size: 14px;
+          font-weight: 700;
+          color: #0F0F0F;
+          margin-top: 16px;
+        }
+        .bp-faq dd {
+          margin: 6px 0 0;
+          font-size: 14px;
+          color: #4B4B4B;
+          line-height: 1.7;
+        }
+        .bp-updated {
+          font-size: 12px;
+          color: #8C8C8C;
+          margin-top: 16px;
+        }
+        @media (max-width: 640px) {
+          .bp-facts { grid-template-columns: 1fr; }
         }
 
         /* Stats grid */
@@ -1051,6 +1252,72 @@ export default async function BrandPage({ params }) {
                 </section>
               )}
 
+              {hasPackageFacts && (
+                <section className="bp-card">
+                  <h2 className="bp-card-title">What {brand.name} sends creators</h2>
+                  <dl className="bp-facts">
+                    {brand.heroProduct && (
+                      <div className="bp-fact"><dt>Hero product</dt><dd>{brand.heroProduct}</dd></div>
+                    )}
+                    {brand.estimatedValue && (
+                      <div className="bp-fact"><dt>Typical PR package value</dt><dd>~${brand.estimatedValue}</dd></div>
+                    )}
+                    {brand.pricePoint && (
+                      <div className="bp-fact"><dt>Average retail price</dt><dd>~${brand.pricePoint}</dd></div>
+                    )}
+                    {collabType && (
+                      <div className="bp-fact"><dt>Collaboration type</dt><dd>{collabType}</dd></div>
+                    )}
+                    {Array.isArray(brand.productTypes) && brand.productTypes.length > 0 && (
+                      <div className="bp-fact"><dt>Product types</dt><dd>{brand.productTypes.join(', ')}</dd></div>
+                    )}
+                  </dl>
+                </section>
+              )}
+
+              {(brand.targetAudience || contentTip) && (
+                <section className="bp-card">
+                  <h2 className="bp-card-title">Who {brand.name} wants to reach</h2>
+                  {brand.targetAudience && (
+                    <p className="bp-card-desc">
+                      {brand.name}&apos;s customers are {brand.targetAudience.charAt(0).toLowerCase() + brand.targetAudience.slice(1)}.
+                      Creators whose followers match that profile get the strongest response.
+                    </p>
+                  )}
+                  {contentTip && (
+                    <p className="bp-card-desc" style={{ marginTop: 10 }}>
+                      <strong>Content that fits {brand.name}:</strong> {contentTip}.
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {(examplePosts.length > 0 || socialProfile) && (
+                <section className="bp-card">
+                  <h2 className="bp-card-title">{brand.name} on social</h2>
+                  {socialProfile && (
+                    <p className="bp-card-desc">
+                      @{socialProfile.handle} has {formatFollowers(socialProfile.followers)} followers on {platformLabel(socialProfile.platform)}
+                      {socialProfile.posts ? ` across ${socialProfile.posts.toLocaleString('en-US')} posts` : ''}
+                      {socialProfile.verified ? ' and is a verified account' : ''}.
+                      Study their recent posts before pitching so your idea matches what they already publish.
+                    </p>
+                  )}
+                  {examplePosts.length > 0 && (
+                    <ul className="bp-posts">
+                      {examplePosts.map(post => (
+                        <li key={post.url}>
+                          <a href={post.url} target="_blank" rel="nofollow noopener noreferrer">
+                            {post.title || `Recent ${platformLabel(post.platform)} post`}
+                          </a>
+                          <span> · {platformLabel(post.platform)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )}
+
               {/* Stats section */}
               <section className="bp-card">
                 <div className="bp-card-title">Brand Stats</div>
@@ -1069,7 +1336,7 @@ export default async function BrandPage({ params }) {
               </section>
 
               {/* What They're Looking For */}
-              {(minFollowers > 0 || niches?.length > 0 || platforms?.length > 0 || collabType) && (
+              {(minFollowers > 0 || niches?.length > 0 || platforms?.length > 0 || regions?.length > 0) && (
                 <section className="bp-card">
                   <div className="bp-card-title">What They're Looking For</div>
                   <div className="bp-req-list">
@@ -1109,19 +1376,6 @@ export default async function BrandPage({ params }) {
                         <div>
                           <div className="bp-req-label">Preferred Platforms</div>
                           <div className="bp-req-value">{platforms.join(', ')}</div>
-                        </div>
-                      </div>
-                    )}
-                    {collabType && (
-                      <div className="bp-req-row">
-                        <div className="bp-req-icon">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon-md">
-                            <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/><path d="M12 12V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 12h4"/><path d="m17.66 12.34 1.41-1.41"/><path d="M18 12h4"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="bp-req-label">Collaboration Type</div>
-                          <div className="bp-req-value">{collabType}</div>
                         </div>
                       </div>
                     )}
@@ -1343,64 +1597,34 @@ export default async function BrandPage({ params }) {
 
           {/* SEO content — server-rendered so Google can read every word */}
           <section className="bp-seo-footer">
-            <h2>How to Apply to {brand.name} PR List</h2>
+            <h2>How to get on the {brand.name} PR list</h2>
             <p>
-              {brand.name} accepts PR applications from content creators
-              {minFollowers > 0 ? ` with ${formatFollowers(minFollowers)}+ followers` : ''}
-              {platforms.length > 0 ? ` on ${platforms.join(' and ')}` : ''}.{' '}
-              {brand.applicationMethod === 'form'
-                ? `They use a direct application form — fill it out with your channel stats, niche, and a short pitch explaining why your audience is a good fit.`
-                : brand.applicationMethod === 'email'
-                ? `They prefer email pitches — send a concise message with your media kit, engagement rate, and a content idea tailored to their brand.`
-                : `Unlock the direct contact details above to reach their PR team.`}
+              {brand.name} works with creators
+              {minFollowers > 0 ? ` from around ${formatFollowers(minFollowers)} followers` : ' of any size'}
+              {platforms.length > 0 ? ` on ${platforms.map(platformLabel).join(' and ')}` : ''}
+              {regions.length > 0 ? ` in ${regions.join(', ')}` : ''}.{' '}
+              {applicationMethod === 'form'
+                ? `Applications go through ${brand.name}'s own creator form, so have your stats, niche and one content idea ready before you open it.`
+                : applicationMethod === 'email'
+                ? `The best route is an email pitch to their PR team: keep it to five sentences, attach your media kit and lead with one specific content idea.`
+                : `Unlock the contact details above to reach their PR team directly.`}
             </p>
 
-            <h2 style={{ marginTop: '20px' }}>
-              What {brand.name} Looks for in Creator Pitches
-            </h2>
-            <p>
-              {categoryLabel ? `As a ${categoryLabel.toLowerCase()} brand, ${brand.name}` : brand.name} typically looks for creators whose audience genuinely uses and cares about
-              {categoryLabel ? ` ${categoryLabel.toLowerCase()} products` : ' products in their niche'}.
-              {niches.length > 0
-                ? ` They are especially interested in ${niches.join(', ')} content.`
-                : ''}
-              {minFollowers > 0
-                ? ` A minimum of ${formatFollowers(minFollowers)} followers is required, but engagement rate matters more than raw follower count — brands consistently report that a 3–5% engagement rate converts better than a large passive audience.`
-                : ` There is no stated minimum follower requirement, making ${brand.name} accessible to nano and micro creators.`}
-              {maxFollowers > 0
-                ? ` They cap at ${formatFollowers(maxFollowers)} followers, keeping their program focused on micro-influencers.`
-                : ''}
-              {regions.length > 0
-                ? ` This program is open to creators based in ${regions.join(', ')}.`
-                : ''}
-            </p>
+            <h2 style={{ marginTop: '20px' }}>Pitch ideas for {brand.name}</h2>
+            <p>{pitchIdeas.join(' ')}</p>
 
-            <h2 style={{ marginTop: '20px' }}>
-              {brand.name} PR Application — Step by Step
-            </h2>
-            <p>
-              1. <strong>Build your media kit.</strong> Include your follower count, average views, engagement rate, audience demographics (age, location, gender split), and 2–3 examples of past brand content. Newcollab generates this automatically from your profile.
-            </p>
-            <p>
-              2. <strong>Write a personalised pitch.</strong> Mention a specific {brand.name} product you've used or admired, explain how your audience overlaps with their customer, and suggest a concrete content format (unboxing reel, 30-second TikTok, Instagram carousel). Generic pitches are ignored.
-            </p>
-            <p>
-              3. <strong>Send and follow up.</strong>{' '}
-              {brand.name} has an average response time of around {avgResponseTime} days for creators who hear back. If you don't get a reply within 10 days, send one polite follow-up referencing your original message. Many creators report that the follow-up is what got the deal.
-            </p>
-            <p>
-              4. <strong>Track your application.</strong> Use Newcollab's PR pipeline to log the date sent, follow-up status, and any reply. Creators who track their outreach close 3× more deals on average.
-            </p>
-
-            {collabType && (
-              <p style={{ marginTop: '16px' }}>
-                <strong>Collaboration type:</strong> {brand.name} runs a <em>{collabType}</em> programme — meaning
-                {collabType.toLowerCase().includes('gift')
-                  ? ' they send products in exchange for honest content, with no cash payment required.'
-                  : collabType.toLowerCase().includes('paid')
-                  ? ' selected creators receive a fee in addition to products.'
-                  : ` their programme is structured as ${collabType}.`}
-              </p>
+            {faqs.length > 0 && (
+              <>
+                <h2 style={{ marginTop: '20px' }}>{brand.name} PR FAQ</h2>
+                <dl className="bp-faq">
+                  {faqs.map(f => (
+                    <div key={f.question}>
+                      <dt>{f.question}</dt>
+                      <dd>{f.answer}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
             )}
 
             <p style={{ marginTop: '16px' }}>
@@ -1414,6 +1638,9 @@ export default async function BrandPage({ params }) {
               </a>{' '}
               to find your next collaboration.
             </p>
+            {updatedLabel && (
+              <p className="bp-updated">{brand.name} details last updated {updatedLabel}.</p>
+            )}
           </section>
         </div>
       </div>

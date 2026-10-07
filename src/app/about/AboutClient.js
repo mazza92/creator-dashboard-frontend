@@ -1066,7 +1066,7 @@ export default function AboutClient() {
                   <li>How to reach out without a cold DM</li>
                 </ul>
               </ForCard>
-              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/ultimate-list-of-gaming-tech-companies-that-sponsor-small-streamers'}>
+              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/gaming-tech-brands-that-sponsor-small-streamers-2026'}>
                 <ForCardTag $yes>Gaming</ForCardTag>
                 <h3>Gaming & Tech Sponsors</h3>
                 <ul>

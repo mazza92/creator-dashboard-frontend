@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import BeautyDirectoryClient from './BeautyDirectoryClient';
 import ForBrandsSeoLine from '../ForBrandsSeoLine';
 
@@ -155,6 +156,7 @@ export default async function BeautyDirectoryPage() {
       <Suspense fallback={null}>
         <BeautyDirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>
+      <DirectoryBrandLinks label="Beauty" category="beauty" />
 
       {/* Server-rendered SEO content - Google can index this */}
       <div style={{ padding: '0 24px 60px', background: '#FAFAFA' }}>

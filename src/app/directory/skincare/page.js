@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import SkincareDirectoryClient from './SkincareDirectoryClient';
 
 // SEO metadata for Skincare Directory
@@ -34,6 +35,7 @@ export default function SkincareDirectoryPage() {
       <Suspense fallback={null}>
         <SkincareDirectoryClient />
       </Suspense>
+      <DirectoryBrandLinks label="Skincare" category="skincare" />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import FashionDirectoryClient from './FashionDirectoryClient';
 import ForBrandsSeoLine from '../ForBrandsSeoLine';
 
@@ -139,6 +140,7 @@ export default async function FashionDirectoryPage() {
       <Suspense fallback={null}>
         <FashionDirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>
+      <DirectoryBrandLinks label="Fashion" category="fashion" />
 
       <div style={{ padding: '0 24px 60px', background: '#FAFAFA' }}>
         <section style={seoFooterStyle}>
