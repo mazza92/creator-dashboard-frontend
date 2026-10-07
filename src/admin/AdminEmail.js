@@ -106,6 +106,28 @@ const PRO_CHECKIN_ANNOUNCEMENT = {
   segmentId: 'pro_tier',
 };
 
+const POLLY_AUTOPILOT_LAUNCH_ANNOUNCEMENT = {
+  emailSubject: '{{first_name}}, meet your personal creator assistant',
+  headerTitle: 'Meet Polly, your personal creator assistant.',
+  headerSubtitle: '',
+  gradient: 'dark',
+  bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}}, Polly now reaches out to brands <strong>for you</strong>, so you can focus on what you do best: <strong>creating content</strong>. One tap puts her on autopilot:</p>
+<a href="https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=polly_autopilot_launch&utm_source=email&utm_medium=newsletter&utm_campaign=polly_autopilot_launch" style="display: block; text-decoration: none;"><img src="https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/polly_auto.gif?token=eyJraWQiOiI3MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvcG9sbHlfYXV0by5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzkxMzk5MTc3LCJleHAiOjE4MjI5MzUxNzd9.AJ6lHuP88xFUzMiKlNAs3YykazN-l2LpdSHFvvxtygg" alt="Turning on Polly autopilot in Newcollab" width="520" style="display: block; width: 100%; max-width: 520px; height: auto; border: 0; border-radius: 12px;"></a>`,
+  calloutText: '',
+  calloutIcon: '',
+  listItems: [
+    { icon: '🎯', title: 'She finds your brands', text: '20–30 matched brands a month, each with a real email.' },
+    { icon: '✍️', title: 'She pitches for you', text: 'Every pitch written for you, sent from your Gmail after your OK.' },
+    { icon: '🔁', title: 'She follows up', text: 'No brand slips through. You just keep creating.' },
+  ],
+  ctaLabel: 'Let Polly pitch for me · $19/mo',
+  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=polly_autopilot_launch&utm_source=email&utm_medium=newsletter&utm_campaign=polly_autopilot_launch',
+  preheader: 'Polly reaches out to brands for you, so you can focus on creating.',
+  utmCampaign: 'polly_autopilot_launch',
+  campaignName: 'Polly on autopilot — launch newsletter',
+  segmentId: 'free_tier',
+};
+
 const AdminEmail = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -706,9 +728,9 @@ const AdminEmail = () => {
             fetchCampaigns();
             if (data.is_complete) {
               message.success(`Campaign sent: ${data.already_sent || data.sent_this_batch || 0} delivered`);
-              fetchStats();
-              setSending(false);
-            } else {
+                  fetchStats();
+                  setSending(false);
+                } else {
               runSendPump(campaignId);
             }
 
@@ -738,8 +760,8 @@ const AdminEmail = () => {
   const handleContinueSending = async (campaignId) => {
     if (isLocalAdminHost()) {
       message.error(LOCALHOST_BULK_SEND_MSG);
-      return;
-    }
+          return;
+        }
     delete sendPumpsRef.current[campaignId];
     message.loading({ content: 'Resuming send...', key: `send-progress-${campaignId}`, duration: 0 });
     runSendPump(campaignId, { force: true, resetAttempts: true });
@@ -1188,6 +1210,30 @@ const AdminEmail = () => {
                     </div>
                     <Button type="default" block style={{ marginTop: 16, borderColor: '#9333EA', color: '#9333EA' }}>
                       <EyeOutlined /> Compose & Preview
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard
+                    onClick={() => {
+                      setAnnouncementConfig({
+                        ...POLLY_AUTOPILOT_LAUNCH_ANNOUNCEMENT,
+                      });
+                      setShowAnnouncementPreview(true);
+                    }}
+                    featured
+                  >
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>NEW</div>
+                    <div className="template-icon-large">✨</div>
+                    <h4>Polly on autopilot launch</h4>
+                    <p>Polly as your personal creator assistant: autopilot GIF, 3 benefits, upgrade CTA.</p>
+                    <div className="template-features">
+                      <span>Free tier</span>
+                      <span>Live Composer</span>
+                      <span>$19 Pro</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#111827', color: '#111827' }}>
+                      <EyeOutlined /> Compose &amp; Preview
                     </Button>
                   </ModernTemplateCard>
                 </Col>
@@ -1840,6 +1886,8 @@ const AdminEmail = () => {
                         ? 'Loaded. Segment is already set to Canceled Pro. Send a test first.'
                         : announcementConfig.segmentId === 'pro_tier'
                         ? 'Loaded. Segment is already set to Pro users. Send a test first.'
+                        : announcementConfig.segmentId === 'free_tier'
+                        ? 'Loaded. Segment is already set to Free Tier Users. Send a test first.'
                         : 'Template loaded! Finish setting up your campaign.'
                     );
                   }}
