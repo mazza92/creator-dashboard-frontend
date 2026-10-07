@@ -26,7 +26,7 @@ const sectionStyle = {
   border: '1px solid #E8E8E8',
   borderRadius: '18px',
   padding: '28px 32px',
-  margin: '40px auto 0',
+  margin: '0 auto',
   maxWidth: '900px',
   boxShadow: '0 1px 3px rgba(15,15,15,0.05)',
 };
@@ -53,7 +53,7 @@ export default async function DirectoryBrandLinks({ label, category, region, lim
   const named = brands.filter(b => b.slug && (b.name || b.brand_name));
 
   return (
-    <div style={wrapperStyle || { padding: '0 24px', background: '#FAFAFA' }}>
+    <div style={wrapperStyle || { padding: '0 24px 40px', background: '#FAFAFA' }}>
       <section style={sectionStyle}>
         <h2 style={headingStyle}>{label ? `${label} brands on Newcollab` : 'Brands on Newcollab'}</h2>
         <p style={subStyle}>

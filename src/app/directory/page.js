@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SiteFooter } from '../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from './DirectoryBrandLinks';
 import DirectoryClient from './DirectoryClient';
 import { CITATION_LAST_UPDATED_ISO, DIRECTORY_FACTS } from '../../lib/citationFacts';
@@ -78,6 +79,7 @@ export default async function DirectoryPage() {
         <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>
       <DirectoryBrandLinks />
+      <SiteFooter />
     </>
   );
 }

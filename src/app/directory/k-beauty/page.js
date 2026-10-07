@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import KBeautyDirectoryClient from './KBeautyDirectoryClient';
 
@@ -36,6 +37,7 @@ export default function KBeautyDirectoryPage() {
         <KBeautyDirectoryClient />
       </Suspense>
       <DirectoryBrandLinks label="Skincare & K-beauty" category="skincare" limit={60} />
+      <SiteFooter />
     </>
   );
 }

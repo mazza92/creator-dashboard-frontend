@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SiteFooter } from '../components/LandingPageLayoutNext';
 import DirectoryClient from '../directory/DirectoryClient';
 
 /**
@@ -72,6 +73,7 @@ export default async function PrListPage() {
       <Suspense fallback={null}>
         <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>
+      <SiteFooter />
     </>
   );
 }

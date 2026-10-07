@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import USDirectoryClient from './USDirectoryClient';
 
@@ -36,6 +37,7 @@ export default function USDirectoryPage() {
         <USDirectoryClient />
       </Suspense>
       <DirectoryBrandLinks label="US" region="US" />
+      <SiteFooter />
     </>
   );
 }

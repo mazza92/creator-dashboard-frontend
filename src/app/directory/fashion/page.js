@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import FashionDirectoryClient from './FashionDirectoryClient';
 import ForBrandsSeoLine from '../ForBrandsSeoLine';
@@ -195,6 +196,7 @@ export default async function FashionDirectoryPage() {
           <ForBrandsSeoLine linkStyle={seoLinkStyle} paragraphStyle={{ ...seoParagraphStyle, marginTop: '16px', marginBottom: 0 }} />
         </section>
       </div>
+      <SiteFooter />
     </>
   );
 }

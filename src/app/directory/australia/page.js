@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import AustraliaDirectoryClient from './AustraliaDirectoryClient';
 
@@ -36,6 +37,7 @@ export default function AustraliaDirectoryPage() {
         <AustraliaDirectoryClient />
       </Suspense>
       <DirectoryBrandLinks label="Australian" region="Australia" />
+      <SiteFooter />
     </>
   );
 }

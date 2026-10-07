@@ -975,7 +975,7 @@ export default function DirectoryClient({
   }, [queryParams, category, initialCountry, search]);
 
   return (
-    <LandingPageLayoutNext canonicalUrl="https://newcollab.co/directory">
+    <LandingPageLayoutNext canonicalUrl="https://newcollab.co/directory" hideFooter>
       <Page>
         <Hero>
           <h1>{collectionTitle || '2,000+ PR Forms for Brands: Direct Application Links'}</h1>

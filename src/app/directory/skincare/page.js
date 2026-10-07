@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import SkincareDirectoryClient from './SkincareDirectoryClient';
 
@@ -36,6 +37,7 @@ export default function SkincareDirectoryPage() {
         <SkincareDirectoryClient />
       </Suspense>
       <DirectoryBrandLinks label="Skincare" category="skincare" />
+      <SiteFooter />
     </>
   );
 }

@@ -616,11 +616,6 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenCookieSettings = (e) => {
-    if (e) e.preventDefault();
-    openCookieSettings();
-  };
-
   return (
     <LayoutWrapper>
       <GlobalStyle />
@@ -709,42 +704,53 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
           <AuthNavButtons variant="mobile-menu" onNavigate={closeMobileMenu} />
         </MobileAuthButtons>
       </MobileMenu>
-      {!hideFooter && (
-        <Footer>
-          <FooterLinks>
-            <FooterLink href="/about">About us</FooterLink>
-            <FooterLink href="/brands/pr-packages">For Brands</FooterLink>
-            <FooterLink href="/blog">Blog</FooterLink>
-            <FooterLink href="/contact">Contact</FooterLink>
-            <FooterLink href="/privacy-policy">Privacy</FooterLink>
-            <FooterLink href="/terms-of-service">Terms</FooterLink>
-            <FooterLink href="#cookie-settings" onClick={handleOpenCookieSettings}>Cookie settings</FooterLink>
-          </FooterLinks>
-          <div style={{ marginBottom: '32px' }}>
-            <SocialIcon>
-              <a href="https://www.linkedin.com/company/newcollab/" target="_blank" rel="noopener noreferrer">
-                <FaLinkedin />
-              </a>
-            </SocialIcon>
-            <SocialIcon>
-              <a href="https://x.com/newcollab_" target="_blank" rel="noopener noreferrer" aria-label="X">
-                <FaXTwitter />
-              </a>
-            </SocialIcon>
-            <SocialIcon>
-              <a href="https://www.instagram.com/newcollab.co/" target="_blank" rel="noopener noreferrer">
-                <FaInstagram />
-              </a>
-            </SocialIcon>
-            <SocialIcon>
-              <a href="https://www.tiktok.com/@newcollabco" target="_blank" rel="noopener noreferrer">
-                <FaTiktok />
-              </a>
-            </SocialIcon>
-          </div>
-          <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
-        </Footer>
-      )}
+      {!hideFooter && <SiteFooter />}
     </LayoutWrapper>
+  );
+}
+
+// Rendered standalone by pages that hide the layout footer so server-rendered
+// sections placed after the client layout still sit above it.
+export function SiteFooter() {
+  const handleOpenCookieSettings = (e) => {
+    if (e) e.preventDefault();
+    openCookieSettings();
+  };
+
+  return (
+    <Footer>
+      <FooterLinks>
+        <FooterLink href="/about">About us</FooterLink>
+        <FooterLink href="/brands/pr-packages">For Brands</FooterLink>
+        <FooterLink href="/blog">Blog</FooterLink>
+        <FooterLink href="/contact">Contact</FooterLink>
+        <FooterLink href="/privacy-policy">Privacy</FooterLink>
+        <FooterLink href="/terms-of-service">Terms</FooterLink>
+        <FooterLink href="#cookie-settings" onClick={handleOpenCookieSettings}>Cookie settings</FooterLink>
+      </FooterLinks>
+      <div style={{ marginBottom: '32px' }}>
+        <SocialIcon>
+          <a href="https://www.linkedin.com/company/newcollab/" target="_blank" rel="noopener noreferrer">
+            <FaLinkedin />
+          </a>
+        </SocialIcon>
+        <SocialIcon>
+          <a href="https://x.com/newcollab_" target="_blank" rel="noopener noreferrer" aria-label="X">
+            <FaXTwitter />
+          </a>
+        </SocialIcon>
+        <SocialIcon>
+          <a href="https://www.instagram.com/newcollab.co/" target="_blank" rel="noopener noreferrer">
+            <FaInstagram />
+          </a>
+        </SocialIcon>
+        <SocialIcon>
+          <a href="https://www.tiktok.com/@newcollabco" target="_blank" rel="noopener noreferrer">
+            <FaTiktok />
+          </a>
+        </SocialIcon>
+      </div>
+      <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
+    </Footer>
   );
 }
