@@ -247,10 +247,9 @@ const PrivacyPolicy = () => {
               never stored on our servers.
             </li>
             <li>
-              <strong>Restricted access:</strong> production systems and
-              credentials are limited to the Newcollab team members who operate
-              the service, and access to personal data is limited to what is
-              needed to run, support, and secure Newcollab.
+              <strong>Restricted access:</strong> only the Newcollab team can
+              access our production systems and credentials, and only to the
+              extent needed to run, support, and secure Newcollab.
             </li>
             <li>
               <strong>Backups and deletion:</strong> backups are encrypted, and
