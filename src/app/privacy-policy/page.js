@@ -2,7 +2,7 @@ import PrivacyPolicyClient from './PrivacyPolicyClient';
 
 export const metadata = {
   title: 'Privacy Policy | Newcollab',
-  description: "How Newcollab collects and uses account, kit, Google Sign-In, TikTok, Instagram, analytics, and payment data. Contact team@newcollab.co.",
+  description: "How Newcollab collects, uses, protects, and deletes account, kit, Google Sign-In, Gmail, TikTok, Instagram, analytics, and payment data. Contact team@newcollab.co.",
   alternates: {
     canonical: 'https://newcollab.co/privacy-policy',
   },

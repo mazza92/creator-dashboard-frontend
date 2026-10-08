@@ -16,7 +16,7 @@ const Section = styled.section`
   margin-bottom: 40px;
 `;
 
-const LAST_UPDATED = '1 October 2026';
+const LAST_UPDATED = '8 October 2026';
 
 const PrivacyPolicy = () => {
   return (
@@ -51,6 +51,7 @@ const PrivacyPolicy = () => {
             <li>Creator profile and kit: bio, niches, handles, rates, portfolio posts, shipping address and phone when you apply for gifted PR.</li>
             <li>Connected social accounts: TikTok Login Kit and Instagram Login Kit (Creator or Business) can give us your handle, user ID, follower counts, and public media used to build your kit and matching.</li>
             <li>Google Sign-In: name, email, Google user ID, and profile photo if Google provides them (see section 8).</li>
+            <li>Gmail, if you connect it for Polly Autopilot: your Gmail address and a send-only access token, stored encrypted (see sections 9 and 10).</li>
             <li>Collaboration data: brand applications, gifted-list status, pitches, timeline events, kit views by brands, Polly chat messages.</li>
             <li>Brand data: company name, site, campaign notes, roster picks, shipping CSVs they export from a roster they locked.</li>
             <li>Payment data: Stripe (and, where still used, PayPal) handles card and payout details. We store subscription status, customer IDs, and invoices — not full card numbers.</li>
@@ -157,7 +158,115 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>9. Cookies, analytics, and ads</Title>
+          <Title level={2}>9. Gmail for Polly Autopilot</Title>
+          <Paragraph>
+            Creators on Pro can connect Gmail so Polly Autopilot sends the brand
+            pitches they approved from their own address. This is optional and
+            only happens after you click Connect Gmail and accept Google’s
+            consent screen.
+          </Paragraph>
+          <ul>
+            <li>
+              <strong>What we access:</strong> we request only the{' '}
+              <code>gmail.send</code> scope plus your Gmail address
+              (<code>openid</code>, <code>email</code>). We cannot read, search,
+              label, or delete anything in your mailbox, and we never access
+              your inbox, contacts, or attachments.
+            </li>
+            <li>
+              <strong>How we use it:</strong> solely to send the pitch emails and
+              day-4 follow-ups you approved in Newcollab, to the brand address
+              shown on each pitch, and to record that the email was sent (Gmail
+              message and thread IDs) so follow-ups stay in the same thread and
+              appear on your Timeline. Nothing is sent without your approval.
+            </li>
+            <li>
+              <strong>Sharing:</strong> we do not sell, rent, or share Google
+              user data with anyone. The only recipient of an email is the brand
+              you approved it for. We do not use Gmail data for advertising,
+              and no human at Newcollab reads it except to fix a problem you
+              report to us, for security, or where the law requires it.
+            </li>
+            <li>
+              <strong>AI and machine learning:</strong> Polly writes pitch drafts
+              from your Newcollab profile, not from your Gmail. Data from Google
+              Workspace APIs is never used to develop, improve, or train
+              generalized or non-personalized AI or machine-learning models.
+            </li>
+            <li>
+              <strong>Retention and deletion:</strong> we keep your Gmail address,
+              the encrypted OAuth token, and a record of the pitches sent while
+              Gmail is connected. Click Disconnect Gmail in Polly at any time: we
+              revoke the token with Google and delete it from our database
+              immediately. Deleting your Newcollab account removes all of this
+              too. You can also revoke access at{' '}
+              <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">
+                myaccount.google.com/permissions
+              </a>
+              .
+            </li>
+          </ul>
+          <Paragraph>
+            Newcollab’s use and transfer of information received from Google APIs
+            to any other app will adhere to the{' '}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">
+              Google API Services User Data Policy
+            </a>
+            , including the Limited Use requirements.
+          </Paragraph>
+        </Section>
+
+        <Section>
+          <Title level={2}>10. How we protect your data</Title>
+          <Paragraph>
+            We use technical and organizational security procedures to protect
+            the confidentiality and integrity of personal data, including Google
+            user data:
+          </Paragraph>
+          <ul>
+            <li>
+              <strong>Encryption in transit:</strong> all traffic to newcollab.co,
+              app.newcollab.co, our API, and Google’s APIs uses HTTPS (TLS).
+            </li>
+            <li>
+              <strong>Encryption at rest for Google tokens:</strong> Gmail OAuth
+              tokens are encrypted with AES (Fernet: AES-128 with HMAC-SHA256)
+              before they are stored. The encryption key is kept as a server
+              secret, separate from the database. Short-lived access tokens are
+              held only in server memory and are never stored or logged.
+            </li>
+            <li>
+              <strong>Least privilege:</strong> we request the narrowest Google
+              scope that makes the feature work (send-only Gmail access), and
+              Google sign-in data is limited to basic profile information.
+            </li>
+            <li>
+              <strong>Protected sign-in flows:</strong> OAuth requests use a
+              signed, expiring state token to prevent forgery, and passwords are
+              stored only as salted hashes. Card data is handled by Stripe and
+              never stored on our servers.
+            </li>
+            <li>
+              <strong>Restricted access:</strong> production systems and
+              credentials are limited to the Newcollab team members who operate
+              the service, and access to personal data is limited to what is
+              needed to run, support, and secure Newcollab.
+            </li>
+            <li>
+              <strong>Backups and deletion:</strong> backups are encrypted, and
+              deleted data ages out of them within 30 days.
+            </li>
+          </ul>
+          <Paragraph>
+            No system is perfectly secure. If we learn of a breach affecting your
+            personal data, we will notify you and the relevant authorities as the
+            law requires. Report security issues to{' '}
+            <a href="mailto:team@newcollab.co">team@newcollab.co</a>.
+          </Paragraph>
+        </Section>
+
+        <Section>
+          <Title level={2}>11. Cookies, analytics, and ads</Title>
           <Paragraph>
             Strictly necessary cookies keep you logged in and remember this
             cookie choice. They do not require consent. Analytics and marketing
@@ -187,7 +296,7 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>10. Payments</Title>
+          <Title level={2}>12. Payments</Title>
           <Paragraph>
             Creator Pro and brand seats are billed by Stripe. Stripe’s terms and
             privacy policy apply to card data. We keep subscription state and
@@ -198,7 +307,7 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>11. International transfers</Title>
+          <Title level={2}>13. International transfers</Title>
           <Paragraph>
             We and our processors (including Google, Meta, TikTok, Stripe, and
             Microsoft) may process data in the United States and other countries.
@@ -208,7 +317,7 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>12. Retention</Title>
+          <Title level={2}>14. Retention</Title>
           <Paragraph>
             We keep account, kit, application, and billing records while the
             account is open and as long as we need them for disputes, tax, and
@@ -219,7 +328,7 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>13. Your rights</Title>
+          <Title level={2}>15. Your rights</Title>
           <Paragraph>
             Depending on where you live (including the UK/EEA and California),
             you can ask to access, correct, delete, or export your data, object
@@ -241,7 +350,7 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>14. Children</Title>
+          <Title level={2}>16. Children</Title>
           <Paragraph>
             Newcollab is not directed at children under 13, and we do not
             knowingly collect their data. Gifted PR, shipping, and paid plans
@@ -251,7 +360,7 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>15. Changes</Title>
+          <Title level={2}>17. Changes</Title>
           <Paragraph>
             We will update this page when our practices change and revise the
             date above. Material changes that affect Google, TikTok, or
@@ -260,7 +369,7 @@ const PrivacyPolicy = () => {
         </Section>
 
         <Section>
-          <Title level={2}>16. Contact</Title>
+          <Title level={2}>18. Contact</Title>
           <Paragraph>
             Privacy requests: <a href="mailto:team@newcollab.co">team@newcollab.co</a>
             <br />
