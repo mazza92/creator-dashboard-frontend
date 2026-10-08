@@ -1078,7 +1078,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   </QuotaTitle>
                   <QuotaSub>
                     {remaining <= 0
-                      ? 'Pro places you on a gifted campaign this month'
+                      ? PRO_OFFER.short
                       : `Resets ${unlockBalance.reset_at ? new Date(unlockBalance.reset_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'monthly'}`}
                   </QuotaSub>
                 </QuotaText>

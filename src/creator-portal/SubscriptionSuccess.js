@@ -69,14 +69,14 @@ const SubscriptionSuccess = () => {
         <Title>Welcome to Pro! 🎉</Title>
 
         <Message>
-          Pro is on. We&apos;ll place you on a gifted campaign this month and email you when the roster is confirmed.
-          Unlimited credits are live now, so keep applying to other brands that gift your size.
+          Pro is on. Turn on Polly autopilot and she pitches 20–30 brands a month from your Gmail.
+          Unlimited roster applications are live now.
         </Message>
 
         {!loading && subscriptionInfo && (
           <Features>
-            <Feature>✅ Your gifted campaign this month — we&apos;ll email you when the roster is confirmed</Feature>
-            <Feature>✅ Unlimited credits on top, live now</Feature>
+            <Feature>✅ Polly on autopilot — connect Gmail and she starts pitching</Feature>
+            <Feature>✅ Unlimited roster applications, live now</Feature>
             <Feature>✅ This week: send 5 applications (we write them)</Feature>
             <Feature>✅ We follow up so requests stay warm</Feature>
             <Feature>✅ Kit-open tracking so you know who looked</Feature>

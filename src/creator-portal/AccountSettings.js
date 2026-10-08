@@ -365,10 +365,10 @@ const AccountSettings = () => {
             {tier === 'pro' && (
               <>
                 <Feature>
-                  <FiCheck /> 1 gifted campaign placement every month, guaranteed
+                  <FiCheck /> Polly pitches 20–30 brands a month from your Gmail
                 </Feature>
                 <Feature>
-                  <FiCheck /> Unlimited credits on top
+                  <FiCheck /> Unlimited roster applications
                 </Feature>
                 <Feature>
                   <FiCheck /> Brand emails and forms

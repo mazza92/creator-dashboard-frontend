@@ -7,6 +7,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import ProfileScrapingLoader from '../components/ProfileScrapingLoader';
 import { UnlockModalV2 } from './unlockV2';
+import { PRO_OFFER } from '../config/proOffer';
 
 const COACHING_SCAN_FRAMES = [
   { id: 1, text: 'Fetching your profile…', icon: '🔍' },
@@ -2353,7 +2354,7 @@ export default function PRReady() {
                       {freeRunwayDone ? (
                         <ClimbUnlockBlock>
                           <ClimbUnlockTitle>
-                            Go Pro · 1 gifted campaign a month + weekly manager coaching
+                            {PRO_OFFER.cta}
                           </ClimbUnlockTitle>
                           <ClimbUnlockSub>
                             {weekGain > 0
@@ -2763,7 +2764,7 @@ export default function PRReady() {
                   ) : null}
                   {unlocksLeft === 0 && (
                     <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                      Get placed — {plan?.price || '$19/mo'}
+                      {PRO_OFFER.ctaShort} — {plan?.price || '$19/mo'}
                     </Btn>
                   )}
                 </ProHero>
@@ -2899,7 +2900,7 @@ export default function PRReady() {
             </div>
             {!isPro && (
               <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                Get placed + the full week — {plan?.price || '$19/mo'}
+                {PRO_OFFER.ctaShort} + the full week — {plan?.price || '$19/mo'}
               </Btn>
             )}
             <Btn $variant="ghost" onClick={() => setPackOpen(false)}>
@@ -3038,10 +3039,10 @@ export default function PRReady() {
                     lineHeight: 1.45,
                   }}
                 >
-                  Pro places you on a gifted campaign this month. Unlimited credits and the brand view tracker on top.
+                  {PRO_OFFER.promise} Unlimited applications and the brand view tracker on top.
                 </p>
                 <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                  Get placed — {plan?.price || '$19/mo'}
+                  {PRO_OFFER.ctaShort} — {plan?.price || '$19/mo'}
                 </Btn>
               </>
             )}

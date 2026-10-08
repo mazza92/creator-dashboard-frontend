@@ -124,7 +124,7 @@ export default function Waitlist() {
             <ProBenefits>
               <Benefit>
                 <BenefitIcon>✓</BenefitIcon>
-                <BenefitText><strong>1 gifted campaign a month</strong> — guaranteed, the brand ships, you post</BenefitText>
+                <BenefitText><strong>Polly on autopilot</strong> — she pitches 20–30 brands a month from your Gmail</BenefitText>
               </Benefit>
               <Benefit>
                 <BenefitIcon>✓</BenefitIcon>

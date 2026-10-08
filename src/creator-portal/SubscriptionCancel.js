@@ -21,7 +21,7 @@ const SubscriptionCancel = () => {
         <Title>Subscription Cancelled</Title>
 
         <Message>
-          No worries. Come back to Pro anytime and we place you on a gifted campaign every month, with unlimited credits on top.
+          No worries. Come back to Pro anytime and Polly pitches 20–30 brands a month from your Gmail, with unlimited applications on top.
         </Message>
 
         <FreeTierInfo>

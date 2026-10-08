@@ -59,6 +59,7 @@ const POLLY_MOMENT_LABELS = {
   kit_view: 'brand viewed kit',
   chip: 'Pro chip',
   starter: 'Pro starter',
+  credits_out: 'monthly offer, credits used up',
   no_polly_paywall: 'no Polly prompt',
   unknown: 'unknown',
 };
@@ -418,7 +419,7 @@ const AdminReports = () => {
             <HcLabel>Outcomes</HcLabel>
             <HcValue>{polly?.outcomes?.pitch_sent || 0}</HcValue>
             <HcDelta $up>
-              {polly?.outcomes?.applied || 0} gifted applies · {polly?.outcomes?.kit_views || 0} kit views
+              {polly?.outcomes?.applied || 0} gifted applies, all creators · {polly?.outcomes?.kit_views || 0} kit views
             </HcDelta>
           </HealthCard>
           <HealthCard>
@@ -438,6 +439,73 @@ const AdminReports = () => {
             </HcDelta>
           </HealthCard>
         </TrafficGrid>
+
+        <SectionLabel>Polly autopilot</SectionLabel>
+        <TrafficGrid>
+          <HealthCard>
+            <HcLabel>Turned on</HcLabel>
+            <HcValue>{polly?.autopilot?.enabled || 0}</HcValue>
+            <HcDelta $up={(polly?.autopilot?.enabled || 0) > 0}>
+              {polly?.autopilot?.paused || 0} paused
+            </HcDelta>
+          </HealthCard>
+          <HealthCard>
+            <HcLabel>Gmail connected</HcLabel>
+            <HcValue>{polly?.autopilot?.gmail_live || 0}</HcValue>
+            <HcDelta $up={(polly?.autopilot?.gmail_live || 0) > 0}>
+              live connections
+            </HcDelta>
+          </HealthCard>
+          <HealthCard>
+            <HcLabel>Ready to send</HcLabel>
+            <HcValue $color={(polly?.autopilot?.ready || 0) > 0 ? 'green' : undefined}>{polly?.autopilot?.ready || 0}</HcValue>
+            <HcDelta $up={(polly?.autopilot?.ready || 0) > 0}>
+              on, with Gmail
+            </HcDelta>
+          </HealthCard>
+          <HealthCard>
+            <HcLabel>Pitches sent</HcLabel>
+            <HcValue>{polly?.autopilot?.sent || 0}</HcValue>
+            <HcDelta $up={(polly?.autopilot?.sent || 0) > 0}>
+              {polly?.autopilot?.sent_creators || 0} creators in this window
+              {Object.keys(polly?.autopilot?.queue || {}).length
+                ? ` · ${Object.entries(polly.autopilot.queue).map(([k, v]) => `${k} ${v}`).join(' · ')}`
+                : ''}
+            </HcDelta>
+          </HealthCard>
+        </TrafficGrid>
+        {(polly?.autopilot?.creators || []).length > 0 && (
+          <TodayCard>
+            <TodayHeader>
+              <TodayTitle>Autopilot accounts</TodayTitle>
+              <TodaySubtitle>On means outreach is enabled. Ready means Gmail is connected too.</TodaySubtitle>
+            </TodayHeader>
+            <BrandTable>
+              <BrandTableHead>
+                <tr>
+                  <th>Creator</th>
+                  <th>Status</th>
+                  <th>Gmail</th>
+                  <th>Plan</th>
+                  <th>Approved</th>
+                  <th>Sent</th>
+                </tr>
+              </BrandTableHead>
+              <tbody>
+                {polly.autopilot.creators.map((row) => (
+                  <BrandTableRow key={row.creator_id}>
+                    <td>{row.username ? `@${row.username}` : row.creator_id}</td>
+                    <td>{row.enabled ? 'On' : 'Paused'}</td>
+                    <td>{row.gmail ? 'Connected' : 'Not connected'}</td>
+                    <td>{row.pro ? 'Pro' : 'Free'}</td>
+                    <td>{row.approved || 0}</td>
+                    <td>{row.sent || 0}</td>
+                  </BrandTableRow>
+                ))}
+              </tbody>
+            </BrandTable>
+          </TodayCard>
+        )}
 
         {polly?.funnel?.steps?.length ? (
           <>

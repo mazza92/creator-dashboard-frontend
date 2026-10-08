@@ -355,16 +355,17 @@ const TEMPLATES = {
     subject: (firstName, month) => `${firstName}, you're maxed out for ${month || 'this month'}`,
     getHtml: (firstName, resetDate, daysUntilReset) => generateEmailHtml({
       bodyText: `<p style="margin:0 0 20px 0;">Hi ${firstName},</p>
-<p style="margin:0 0 20px 0;"><strong>Your 3 are out.</strong> You used all 3 free credits this month. Most people never do.</p>
-<p style="margin:0 0 20px 0;">Waiting until ${resetDate} does not get you a box. Sending more cold pitches from here is how people stall. That is not what Pro is for anymore.</p>
-<p style="margin:0 0 12px 0;">If you go Pro today ($19/mo), you get <strong>1 gifting campaign guaranteed each month</strong>. We put you on a live gifted roster. The brand ships product. You post. You do not send a pitch.</p>
-<p style="margin:0 0 12px 0;"><strong>One campaign, guaranteed.</strong> Every paid month we place you on a live gifted roster that fits your niche.</p>
-<p style="margin:0 0 12px 0;"><strong>The brand ships. You post.</strong> You never send a pitch. We vet you. The brand picks from the roster.</p>
-<p style="margin:0 0 20px 0;"><strong>If we miss, I make it right.</strong> Reply that month. I put you on the next campaign or refund the invoice.</p>
-<p style="margin:0 0 20px 0;">Unlimited credits sit on top of that, so you can keep applying while the campaign runs.</p>
-<p style="margin:0 0 0 0;">Your 3 credits come back on ${resetDate} if you'd rather wait. That's ${daysUntilReset} days from now.</p>`,
-      preheader: "Your 3 are out. Pro guarantees 1 gifting campaign a month.",
-      primaryCta: { label: "Go Pro · 1 gifting campaign / month", url: "https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=gifting_guarantee&utm_source=email&utm_medium=lifecycle&utm_campaign=max_quota_hit" },
+<p style="margin:0 0 20px 0;"><strong>Your 3 are out.</strong> You used all 3 free pitches this month. Most people never do.</p>
+<p style="margin:0 0 20px 0;">The creators who get boxes are the ones who keep pitching. Stopping for ${daysUntilReset} days is where momentum dies.</p>
+<p style="margin:0 0 12px 0;">On Pro ($19/mo), Polly keeps going for you on <strong>autopilot</strong>:</p>
+<p style="margin:0 0 12px 0;"><strong>She picks 20–30 matched brands a month.</strong> Brands that gift creators your size, in your niche.</p>
+<p style="margin:0 0 12px 0;"><strong>She writes every pitch.</strong> You OK the week in one tap.</p>
+<p style="margin:0 0 12px 0;"><strong>She sends them from your Gmail.</strong> Replies land in your inbox, not ours.</p>
+<p style="margin:0 0 20px 0;"><strong>She follows up on day 4.</strong> The step almost everyone forgets.</p>
+<p style="margin:0 0 20px 0;">Unlimited roster applications and pitches come with it.</p>
+<p style="margin:0 0 0 0;">Your 3 free pitches come back on ${resetDate} if you'd rather wait.</p>`,
+      preheader: "Your 3 are out. Polly can keep pitching 20–30 brands a month from your Gmail.",
+      primaryCta: { label: "Put Polly on autopilot", url: "https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=quota_autopilot&utm_source=email&utm_medium=lifecycle&utm_campaign=max_quota_hit" },
       utmCampaign: 'max_quota_hit'
     })
   },

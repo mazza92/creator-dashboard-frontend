@@ -153,7 +153,7 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
               <Eyebrow>Stay on Pro</Eyebrow>
               <Title>$12 a month for the next 3 months</Title>
               <Body>
-                Keep your guaranteed gifted campaign every month, plus unlimited credits on top. The next
+                Keep Polly pitching 20–30 brands a month from your Gmail, plus unlimited applications. The next
                 three invoices are $12 instead of $19, then it returns to $19.
               </Body>
               <Primary type="button" disabled={busy} onClick={acceptOffer}>
@@ -170,8 +170,8 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
               <Eyebrow>Cancel Pro</Eyebrow>
               <Title>You keep access until {periodLabel}</Title>
               <Body>
-                No extra charge. After that date you lose your guaranteed gifted campaign each month
-                and go back to the free plan (3 credits a month).
+                No extra charge. After that date Polly stops pitching for you
+                and you go back to the free plan (3 credits a month).
                 You can still change your mind in Settings before then.
               </Body>
               <Danger type="button" disabled={busy} onClick={confirmCancel}>

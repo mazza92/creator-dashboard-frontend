@@ -13,6 +13,7 @@ import { resolveBrandStats } from '../utils/brandStats';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import LoadingSpinner from './LoadingSpinner';
+import { PRO_OFFER } from '../config/proOffer';
 
 // Use shared API config
 const getApiBase = () => {
@@ -229,7 +230,7 @@ const BrandProfilePage = () => {
           </CtaBtn>
           <CtaHint>
             {atLimit
-              ? 'Out of free credits. Pro places you on a gifted campaign this month.'
+              ? PRO_OFFER.outOfCredits
               : 'This brand is only accessible on Pro'}
           </CtaHint>
         </>
@@ -244,7 +245,7 @@ const BrandProfilePage = () => {
         </CtaBtnContact>
         <CtaHint>
           {isPro
-            ? 'Pro: 1 gifted campaign a month + unlimited credits'
+            ? `Pro: ${PRO_OFFER.short}`
             : `${pitchesLeft} free contact${pitchesLeft !== 1 ? 's' : ''} remaining this month`}
         </CtaHint>
       </>

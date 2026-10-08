@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import api from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import { PRO_OFFER } from '../config/proOffer';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import SegmentTabs from '../components/creator/SegmentTabs';
 import BrandSocialHeader, { parseSocial } from '../components/creator/BrandSocialHeader';
@@ -1566,7 +1567,7 @@ export default function BrandPRHome() {
         {noCredits && (
           <OutBanner type="button" onClick={() => showPaywall('done_last_credit')}>
             <b>That was your last free credit</b>
-            <span>Go Pro and we place you on a gifted campaign this month. No pitch.</span>
+            <span>{PRO_OFFER.outOfCredits}</span>
           </OutBanner>
         )}
         <Tracker stage={0} />

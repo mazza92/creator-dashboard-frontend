@@ -37,6 +37,7 @@ const readCachedManagerBar = () => {
 import { getCategoryColors } from '../utils/categoryColors';
 import { categoryLabel, CANONICAL_CATEGORIES, CATEGORY_LABELS } from '../constants/brandCategories';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
+import { PRO_OFFER } from '../config/proOffer';
 
 const getApiBase = () => {
   const base = process.env.REACT_APP_API_BASE ||
@@ -858,12 +859,12 @@ const ForYou = () => {
               {packsExhausted && (
                 <CreditUpgradeBar>
                   <CreditUpgradeHint>
-                    Free packs used. Pro guarantees 1 gifting campaign a month.
+                    Free pitches used. {PRO_OFFER.short}.
                   </CreditUpgradeHint>
                   <QuotaUpgrade onClick={() => {
                     setUpgradeReason('unlock_paywall');
                     setShowUpgrade(true);
-                  }}>Go Pro · 1 campaign / month</QuotaUpgrade>
+                  }}>{PRO_OFFER.ctaShort}</QuotaUpgrade>
                 </CreditUpgradeBar>
               )}
             </>
@@ -875,7 +876,7 @@ const ForYou = () => {
           <QuotaBanner $isPro>
             <QuotaText>
               <QuotaTitle $isPro>Pro</QuotaTitle>
-              <QuotaSub $isPro>1 gifted campaign a month + unlimited credits</QuotaSub>
+              <QuotaSub $isPro>{PRO_OFFER.short}</QuotaSub>
             </QuotaText>
           </QuotaBanner>
         )}

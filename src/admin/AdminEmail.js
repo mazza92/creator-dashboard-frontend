@@ -26,27 +26,27 @@ const isLocalAdminHost = () =>
 const ADMIN_PASSWORD = 'Ilovela1992!';
 
 const GIFTING_GUARANTEE_ANNOUNCEMENT = {
-  emailSubject: '{{first_name}}, Pro now guarantees 1 gifting campaign a month',
-  headerTitle: 'Your 3 are out. 1 gifting campaign a month.',
+  emailSubject: '{{first_name}}, your 3 are out. want Polly to keep pitching?',
+  headerTitle: 'Your 3 are out. Polly can keep going.',
   headerSubtitle: '',
   gradient: 'dark',
   bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
-<p style="margin: 0 0 16px 0;">You already used your 3 free packs. Sending more cold pitches from here is how people stall. That is not what Pro is for anymore.</p>
-<p style="margin: 0 0 16px 0;">If you go Pro today ($19/mo), you get <strong>1 gifting campaign guaranteed each month</strong>. We put you on a live gifted roster. The brand ships product. You post. You do not send a pitch.</p>
-<p style="margin: 0;">Unlimited credits still sit on top of that, so you can apply to more brands while the campaign runs. If we miss a month, reply to this email and I place you on the next one or refund it.</p>
+<p style="margin: 0 0 16px 0;">You already used your 3 free pitches. Stopping until they reset is where momentum dies.</p>
+<p style="margin: 0 0 16px 0;">On Pro ($19/mo), Polly keeps going on <strong>autopilot</strong>. She picks 20–30 matched brands a month, writes every pitch, sends them from your Gmail once you OK the week, and follows up on day 4.</p>
+<p style="margin: 0;">Unlimited roster applications come with it. Your 3 free pitches still come back next month if you'd rather wait.</p>
 <p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
-  calloutText: '1 gifted campaign / month. Product + shipping. No cold pitching.',
+  calloutText: '20–30 brands a month, pitched from your Gmail. You OK the week.',
   calloutIcon: '',
   listItems: [
-    { icon: '1', title: 'One campaign, guaranteed', text: 'Every paid month we place you on a live gifted roster that fits your niche.' },
-    { icon: '2', title: 'The brand ships. You post.', text: 'You never send a pitch. We vet you. The brand picks from the roster.' },
-    { icon: '3', title: 'If we miss, I make it right', text: 'Reply that month. I put you on the next campaign or refund the invoice.' },
+    { icon: '1', title: 'She picks the brands', text: '20–30 matched brands a month that gift creators your size.' },
+    { icon: '2', title: 'She writes and sends', text: 'From your Gmail, after you OK the week. Replies land in your inbox.' },
+    { icon: '3', title: 'She follows up on day 4', text: 'The step almost everyone forgets, done for you.' },
   ],
-  ctaLabel: 'Go Pro · 1 gifting campaign / month',
-  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=gifting_guarantee&utm_source=email&utm_medium=campaign&utm_campaign=gifting_1_per_month',
-  preheader: 'Stop cold pitching. One gifted campaign a month, guaranteed.',
-  utmCampaign: 'gifting_1_per_month',
-  campaignName: 'Gifting guarantee — 3/3 unlocks',
+  ctaLabel: 'Put Polly on autopilot',
+  ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=quota_autopilot&utm_source=email&utm_medium=campaign&utm_campaign=quota_autopilot',
+  preheader: 'Your 3 are out. Polly can keep pitching 20–30 brands a month from your Gmail.',
+  utmCampaign: 'quota_autopilot',
+  campaignName: 'Polly autopilot — 3/3 unlocks',
   segmentId: 'at_quota_limit',
 };
 
@@ -1248,9 +1248,9 @@ const AdminEmail = () => {
                     featured
                   >
                     <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
-                    <div className="template-icon-large">1</div>
-                    <h4>1 gifting campaign / month</h4>
-                    <p>Pro places them on a live gifted roster. Targets free users who used all 3 packs.</p>
+                    <div className="template-icon-large">✦</div>
+                    <h4>Polly autopilot — 3/3</h4>
+                    <p>Polly pitches 20–30 brands a month from their Gmail. Targets free users who used all 3 pitches.</p>
                     <div className="template-features">
                       <span>At 3/3</span>
                       <span>Live Composer</span>

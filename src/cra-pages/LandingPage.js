@@ -1920,7 +1920,7 @@ const LandingPage = () => {
         "name": "Is newcollab free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — free plan includes full brand directory access, a free UGC portfolio builder (https://newcollab.co/media-kit), auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) places you on one live gifted campaign every month, guaranteed, plus unlimited credits, batch send, full For You feed, and the $PR Value dashboard on top."
+          "text": "Yes — free plan includes full brand directory access, a free UGC portfolio builder (https://newcollab.co/media-kit), auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) puts Polly on autopilot: she pitches 20–30 matched brands a month from your Gmail and follows up on day 4, plus unlimited roster applications, batch send, full For You feed, and the $PR Value dashboard on top."
         }
       }
     ]
@@ -2644,8 +2644,8 @@ const LandingPage = () => {
                 <PricingPrice className="gradient"><sup>$</sup>19</PricingPrice>
                 <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
                 <PricingFeatures>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>1 gifted campaign a month</strong>, guaranteed. The brand ships, you post</PricingFeatureItem>
-                  <PricingFeatureItem><span className="pf-check">✓</span> Unlimited credits on top</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Polly on autopilot</strong>: 20–30 brands pitched a month from your Gmail</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> Unlimited roster applications</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong> (10 brands at once)</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>AI follow-up writer</strong></PricingFeatureItem>
@@ -2653,7 +2653,7 @@ const LandingPage = () => {
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>$PR Value dashboard</strong></PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Priority brand alerts</PricingFeatureItem>
                 </PricingFeatures>
-                <PricingBtn className="black" href="/register/creator?plan=pro">Get placed · $19/mo</PricingBtn>
+                <PricingBtn className="black" href="/register/creator?plan=pro">Put Polly on autopilot · $19/mo</PricingBtn>
                 <PricingNote>Cancel anytime · No contracts</PricingNote>
               </PricingCard>
             </PricingGrid>
@@ -2731,7 +2731,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes! The free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) places you on one live gifted campaign every month, guaranteed, plus unlimited credits, batch send, full For You feed, and the $PR Value dashboard on top.
+                  Yes! The free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 brand unlocks per month. Pro ($19/month) puts Polly on autopilot: she pitches 20–30 matched brands a month from your Gmail and follows up on day 4, plus unlimited roster applications, batch send, full For You feed, and the $PR Value dashboard on top.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>

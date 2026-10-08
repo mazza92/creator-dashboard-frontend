@@ -12,6 +12,7 @@ import { CountryDropdown } from 'react-country-region-selector';
 import { ALLOWED_REGION_CODES, PRIORITY_REGION_CODES } from '../constants/allowedRegions';
 import PitchBodyEditor from './PitchBodyEditor';
 import { copyPitchRich } from '../utils/pitchBodyFormat';
+import { PRO_OFFER } from '../config/proOffer';
 // Media kit enforcement removed - let users try the feature immediately
 
 const LOCATION_PLACEHOLDER = '[CITY, COUNTRY]';
@@ -180,7 +181,7 @@ const AIPitchModal = ({ isOpen, onClose, brand, onPitchSent, onUnlockUsed }) => 
     } catch (error) {
       console.error('Error tracking pitch:', error);
       if (error.response?.data?.upgrade_required) {
-        message.warning(error.response.data.error || 'Out of free credits. Pro places you on a gifted campaign this month.');
+        message.warning(error.response.data.error || PRO_OFFER.outOfCredits);
       } else {
         message.error('Could not track this contact. Please try again.');
       }
