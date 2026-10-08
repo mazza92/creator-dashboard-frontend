@@ -147,7 +147,7 @@ function Profile() {
                 .then(response => response.data)
                 .then(data => {
                     if (data.error) {
-                        console.error("Error updating profile:", data.error);
+                        message.error(data.error);
                     } else {
                         setUserData(prev => ({
                             ...prev,
@@ -158,7 +158,10 @@ function Profile() {
                         setModalVisible(false);
                     }
                 })
-                .catch(error => console.error("Validation or submission failed:", error));
+                .catch(error => {
+                    console.error("Validation or submission failed:", error);
+                    message.error(error?.response?.data?.error || 'Could not save your profile. Please try again.');
+                });
         });
     };
 
