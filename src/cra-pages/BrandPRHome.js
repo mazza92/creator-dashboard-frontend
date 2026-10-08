@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import api from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
-import { PRO_OFFER } from '../config/proOffer';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import SegmentTabs from '../components/creator/SegmentTabs';
 import BrandSocialHeader, { parseSocial } from '../components/creator/BrandSocialHeader';
