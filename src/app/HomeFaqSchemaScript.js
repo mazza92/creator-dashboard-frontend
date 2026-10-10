@@ -40,7 +40,7 @@ const FAQ_ITEMS = [
   {
     question: 'Is newcollab free?',
     answer:
-      'Yes — free plan includes full brand directory access, a free UGC portfolio builder (https://newcollab.co/media-kit), auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) puts Polly on autopilot: she pitches 20–30 matched brands a month from your Gmail and follows up on day 4, plus unlimited roster applications, batch send, full For You feed, and the $PR Value dashboard on top.',
+      'Yes — free plan includes full brand directory access, a free UGC portfolio builder (https://newcollab.co/media-kit), auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) makes Polly your manager: a Monday board with the week\'s pitches, sent from your Gmail and followed up on day 4, and when a brand says yes, the reply that turns it into a paid usage deal. Plus unlimited roster applications, batch send, full For You feed, and the $PR Value dashboard on top.',
   },
 ];
 

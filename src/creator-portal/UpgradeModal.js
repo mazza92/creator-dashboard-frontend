@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiLock, FiShield, FiClock } from 'react-icons/fi';
+import { FiX, FiLock, FiClock, FiBarChart2 } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 import { dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
-import { PRO_OFFER, PRO_FEATURES } from '../config/proOffer';
+import { PRO_OFFER, PRO_FEATURES, PRO_STATS } from '../config/proOffer';
 
 function sourceFromPath(pathname) {
   const path = String(pathname || '');
@@ -68,8 +68,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   const busy = loading;
 
   const proFeatures = PRO_FEATURES.map((f, i) => ({
-    emoji: ['⚡', '✉️', '➕', '📋'][i],
-    bg: ['#dbeafe', '#fef3c7', '#ede9fe', '#fce7f3'][i],
+    emoji: f.emoji,
+    bg: ['#dbeafe', '#fef3c7', '#ede9fe', '#dcfce7', '#fce7f3'][i % 5],
     text: <><strong>{f.title}</strong> {f.body}</>,
   }));
 
@@ -120,8 +120,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </>
               ) : atCap ? (
                 <>
-                  Your 3 are out. Let Polly<br />
-                  <PinkSpan>do the pitching</PinkSpan> for you.
+                  Your 3 are out. Put Polly<br />
+                  <PinkSpan>on autopilot</PinkSpan>.
                 </>
               ) : (
                 <>
@@ -132,9 +132,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             </Headline>
             <Subtext>
               {isWinback
-                ? 'Then $19. Polly pitches 20–30 brands a month from your Gmail, plus unlimited roster applications. Cancel anytime.'
+                ? 'Then $19. Polly finds the brands, runs the full outreach, and reports back on every pitch. Cancel anytime.'
                 : feature === 'last_unlock'
-                ? 'Use this credit now. Then on Pro, Polly pitches 20–30 brands a month for you and roster applications are unlimited.'
+                ? 'Use this credit now. Then on Pro, Polly finds the right brands and runs the full outreach for you.'
                 : `${PRO_OFFER.promise} ${PRO_OFFER.extra}`}
             </Subtext>
 
@@ -179,7 +179,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   <PriceAmount>$19</PriceAmount>
                   <PricePer>/ month</PricePer>
                 </PriceRow>
-                <PriceSubline>Polly on autopilot · cancel anytime</PriceSubline>
+                <PriceSubline>{PRO_OFFER.priceSubline}</PriceSubline>
               </PriceCard>
               <FeatureList>
                 {features.map((f, i) => (
@@ -194,18 +194,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               <>
             {/* Stat Chips */}
             <StatsGrid>
-              <StatChip>
-                <StatValue>20–30</StatValue>
-                <StatLabel>Brands pitched / mo</StatLabel>
-              </StatChip>
-              <StatChip>
-                <StatValue>Day 4</StatValue>
-                <StatLabel>Auto follow-up</StatLabel>
-              </StatChip>
-              <StatChip>
-                <StatValue>Unlimited</StatValue>
-                <StatLabel>Applications</StatLabel>
-              </StatChip>
+              {PRO_STATS.map((s) => (
+                <StatChip key={s.value}>
+                  <StatValue>{s.value}</StatValue>
+                  <StatLabel>{s.label}</StatLabel>
+                </StatChip>
+              ))}
             </StatsGrid>
 
             {/* Billing Toggle */}
@@ -240,7 +234,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 {billingInterval === 'yearly' ? (
                   <><s style={{ opacity: 0.65 }}>$228</s> <GreenText>Save $76 · 33% off</GreenText></>
                 ) : (
-                  'Billed monthly · cancel or pause anytime'
+                  PRO_OFFER.priceSubline
                 )}
               </PriceSubline>
             </PriceCard>
@@ -257,25 +251,14 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               </>
             )}
 
-            {/* Social Proof */}
-            <ProofBox>
-              <ProofIcon>✓</ProofIcon>
-              <ProofText>
-                {isWinback ? (
-                  <>
-                    <strong>You already used Pro.</strong> This cheaper window is for landing the first yes before it returns to $19.
-                  </>
-                ) : atCap ? (
-                  <>
-                    <strong>Replies come from volume and follow-ups.</strong> Polly sends both while you make content.
-                  </>
-                ) : (
-                  <>
-                    <strong>You stay in control.</strong> Polly only sends the pitches you OK, from your own Gmail. She can&apos;t read your inbox.
-                  </>
-                )}
-              </ProofText>
-            </ProofBox>
+            {isWinback ? (
+              <ProofBox>
+                <ProofIcon>✓</ProofIcon>
+                <ProofText>
+                  <strong>You already used Pro.</strong> This cheaper window is for landing the first yes before it returns to $19.
+                </ProofText>
+              </ProofBox>
+            ) : null}
           </ModalScroll>
 
           {/* Sticky CTA Area */}
@@ -307,7 +290,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 {loading
                   ? 'Processing...'
                   : billingInterval === 'yearly'
-                    ? 'Put Polly on autopilot · $152/year (save 33%)'
+                    ? PRO_OFFER.ctaYearly
                     : PRO_OFFER.ctaPrice}
               </CtaButton>
             )}
@@ -319,12 +302,12 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 Cancel anytime
               </TrustItem>
               <TrustItem>
-                <FiShield size={12} />
-                Secure checkout
-              </TrustItem>
-              <TrustItem>
                 <FiClock size={12} />
                 Pause anytime
+              </TrustItem>
+              <TrustItem>
+                <FiBarChart2 size={12} />
+                Full activity reports
               </TrustItem>
             </TrustRow>
           </CtaArea>

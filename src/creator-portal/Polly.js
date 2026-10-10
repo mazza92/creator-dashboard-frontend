@@ -5,6 +5,7 @@ import { apiClient, API_URL } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from './PollyAutopilot';
+import MondayBoard from './PollyBoard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
 import { ReplySignalChip } from '../components/ReplySignal';
@@ -34,20 +35,22 @@ const STARTER_HINTS = {
 };
 
 const DIRECTORY_PATH = '/creator/dashboard/pr-brands';
+const STICK_THRESHOLD_PX = 80;
 
 const AUTOPILOT_NOTICES = {
   gmail_connected: 'Gmail connected. Plan this week and approve the batch, and Polly takes it from there.',
   gmail_denied: 'Gmail was not connected. You can try again any time.',
-  gmail_scope: 'Polly needs the "send email" permission ticked on the Google screen. Try connecting again.',
   gmail_failed: "Gmail didn't connect. Try again in a moment.",
 };
 
 const AUTOPILOT_STARTER = {
   id: 'autopilot',
   label: 'Do my outreach for me',
-  hint: 'Autopilot: I pitch 20–30 brands a month from your Gmail',
+  hint: 'Pro: I send your pitches from Gmail and turn a yes into paid',
   action: 'autopilot',
 };
+
+const BOARD_STARTER = { id: 'open_board', label: 'Open my Monday board', action: 'board' };
 
 const STARTERS = [
   { id: 'line_up', label: 'Pitch 3 gifted brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true, deal: 'gifted' },
@@ -66,13 +69,16 @@ const DEEP_LINK_CHIPS = {
   move_on: { label: 'Move on to next brand', action: 'task_act' },
   draft_followup: { label: 'Draft a follow-up', action: 'generate_pitch', is_followup: true },
   help_reply: { label: 'Help me reply', action: 'chat' },
+  paid_reply: { label: 'Write my reply', action: 'paid_reply' },
+  ad_usage: { label: 'Ask them to run it as an ad', action: 'ad_usage' },
+  open_board: { label: 'Open my Monday board', action: 'board' },
   need_idea: { label: 'Need a content idea', action: 'chat' },
   line_up: { label: 'Line up brands for me', action: 'suggest_brands', deal: 'gifted' },
   send_draft: { label: 'Show my pitch', action: 'generate_pitch' },
 };
 
 function logPitchHandoff(pitch, method) {
-  if (!pitch?.brand_id) return Promise.resolve(null);
+  if (!pitch?.brand_id || pitch.is_reply) return Promise.resolve(null);
   return apiClient
     .post('/api/polly/pitch/handoff', {
       brand_id: pitch.brand_id,
@@ -445,7 +451,7 @@ const Thread = styled.div`
   overflow-x: hidden;
   overflow-y: auto;
   padding: 12px 16px 8px;
-  scroll-behavior: smooth;
+  overflow-anchor: none;
   scrollbar-width: none;
   -ms-overflow-style: none;
   &::-webkit-scrollbar { display: none; }
@@ -1308,12 +1314,14 @@ export default function Polly() {
   const [autopilotOpen, setAutopilotOpen] = useState(false);
   const [autopilotSettingsOpen, setAutopilotSettingsOpen] = useState(false);
   const [autopilotNotice, setAutopilotNotice] = useState('');
+  const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
   const autopilotAutoOpenedRef = useRef(false);
   const [starters, setStarters] = useState(STARTERS);
   const [loadingMore, setLoadingMore] = useState(false);
   const [brief, setBrief] = useState(null);
   const threadRef = useRef(null);
+  const stickToBottomRef = useRef(true);
   const inputRef = useRef(null);
   const messagesRef = useRef(messages);
   const suggestedRef = useRef(suggested);
@@ -1419,9 +1427,49 @@ export default function Polly() {
     return () => { cancelled = true; };
   }, []);
 
+  // Chat-style scroll: stay pinned to the newest message unless the reader scrolled up.
   useEffect(() => {
     const el = threadRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (!el) return undefined;
+    let lastTop = el.scrollTop;
+    const pin = () => {
+      if (stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+      lastTop = el.scrollTop;
+    };
+    // Only an upward move unpins: our own pins move down, and late-loading content doesn't scroll.
+    const onScroll = () => {
+      const top = el.scrollTop;
+      if (el.scrollHeight - top - el.clientHeight < STICK_THRESHOLD_PX) stickToBottomRef.current = true;
+      else if (top < lastTop - 2) stickToBottomRef.current = false;
+      lastTop = top;
+    };
+    const resize = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(pin) : null;
+    const watchChildren = () => {
+      if (!resize) return;
+      resize.disconnect();
+      resize.observe(el);
+      Array.from(el.children).forEach((child) => resize.observe(child));
+    };
+    const mutations = new MutationObserver(() => {
+      watchChildren();
+      pin();
+    });
+    watchChildren();
+    mutations.observe(el, { childList: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
+    pin();
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      mutations.disconnect();
+      if (resize) resize.disconnect();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = threadRef.current;
+    if (!el) return;
+    if (messages[messages.length - 1]?.role === 'user') stickToBottomRef.current = true;
+    if (stickToBottomRef.current) el.scrollTop = el.scrollHeight;
   }, [messages, busy, autopilotOpen]);
 
   const reloadAutopilot = autopilot.reload;
@@ -1532,6 +1580,7 @@ export default function Polly() {
         kit_actions: kitActionsFrom(data, rawMessage),
         task_chips: data.task_chips || [],
         locked_pitch: lockedPitchFrom(data),
+        ...(data.board ? { kind: 'board', board: data.board } : {}),
       };
       const next = [...thread, assistant];
       setStreamId(liveTextRef.current ? null : assistant.id);
@@ -1553,7 +1602,7 @@ export default function Polly() {
           } catch (_) { /* ignore */ }
         }
         const rawMessage = data.message
-          || "You're out of free credits this month.\n\nOn Pro I run your outreach on autopilot: 20–30 matched brands a month pitched from your Gmail, day-4 follow-ups, and unlimited roster applications.";
+          || "You're out of free credits this month.\n\nOn Pro I run your week from a Monday board: pitches sent from your Gmail with day-4 follow-ups, and when a brand says yes, the reply that turns it into a paid usage deal. Unlimited roster applications too.";
         const assistant = {
           id: newId(),
           role: 'assistant',
@@ -1564,7 +1613,7 @@ export default function Polly() {
           kit_actions: kitActionsFrom(data, rawMessage),
           task_chips: data.task_chips?.length
             ? data.task_chips
-            : [{ id: 'unlock_pro', label: 'Put Polly on autopilot · Pro', action: 'unlock_pro' }],
+            : [{ id: 'unlock_pro', label: 'Put Polly to work · Pro', action: 'unlock_pro' }],
           locked_pitch: lockedPitchFrom(data),
         };
         const next = [...history, assistant];
@@ -1645,6 +1694,8 @@ export default function Polly() {
     if (chipId === 'checkin_replied' && brandName) label = `${brandName} replied`;
     else if (chipId === 'draft_followup') label = brandName ? `Draft a follow-up to ${brandName}` : 'Draft a follow-up to the brand that viewed my kit';
     else if (chipId === 'send_draft' && brandName) label = `Send my ${brandName} pitch`;
+    else if (chipId === 'paid_reply' && brandName) label = `Write my reply to ${brandName}`;
+    else if (chipId === 'ad_usage' && brandName) label = `Ask ${brandName} to run it as an ad`;
     sendStarter({ ...base, id: chipId, label, brand_id: brandId, brand_name: brandName || undefined, task_id: taskId });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, ready, creatorId]);
@@ -1653,6 +1704,7 @@ export default function Polly() {
     const result = searchParams.get('autopilot');
     if (!result) return;
     setAutopilotNotice(AUTOPILOT_NOTICES[result] || '');
+    setAutopilotReturn(result);
     openAutopilot();
     navigate('/creator/dashboard/for-you', { replace: true });
   }, [searchParams, navigate, openAutopilot]);
@@ -1816,6 +1868,7 @@ export default function Polly() {
   const hasLocalThread = Boolean(creatorId && readPollyLocal(creatorId)?.messages?.length);
 
   const lastGigIdx = messages.reduce((acc, m, i) => ((m.gigs || []).length ? i : acc), -1);
+  const lastBoardIdx = messages.reduce((acc, m, i) => (m.board ? i : acc), -1);
 
   const apChip = autopilotChip(autopilot.state);
   const closeAutopilot = () => { setAutopilotOpen(false); setAutopilotNotice(''); };
@@ -1898,6 +1951,14 @@ export default function Polly() {
                   {msg.kind === 'alert' ? <PitchLabel>Kit view</PitchLabel> : null}
                   {msg.kind === 'nudge' ? <PitchLabel>Polly nudge</PitchLabel> : null}
                   <KitMessage msg={msg} onOpen={navigate} stream={msg.id === streamId} />
+                  {msg.board ? (
+                    <MondayBoard
+                      board={msg.board}
+                      live={idx === lastBoardIdx}
+                      busy={busy}
+                      onChip={sendStarter}
+                    />
+                  ) : null}
                   {msg.task_chips?.length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.map((s) => (
@@ -1987,7 +2048,7 @@ export default function Polly() {
                   {msg.pitch && (
                     <PitchCard style={{ marginTop: 12 }}>
                       <PitchLabel>
-                        {msg.pitch.is_followup ? 'Follow-up for' : 'Pitch for'}{' '}
+                        {msg.pitch.is_reply ? 'Reply to' : msg.pitch.is_followup ? 'Follow-up for' : 'Pitch for'}{' '}
                         {msg.pitch.brand_name || 'this brand'}
                       </PitchLabel>
                       {msg.pitch.email ? <PitchTo>To: {msg.pitch.email}</PitchTo> : null}
@@ -2013,10 +2074,10 @@ export default function Polly() {
                         <Ghost type="button" onClick={() => copyPitch(msg.pitch, msg.id)}>
                           {copiedKey === `${msg.id}:pitch`
                             ? 'Copied'
-                            : (msg.pitch.is_followup ? 'Copy follow-up' : 'Copy pitch')}
+                            : (msg.pitch.is_reply ? 'Copy reply' : msg.pitch.is_followup ? 'Copy follow-up' : 'Copy pitch')}
                         </Ghost>
                       </PitchActions>
-                      {mailTriedId === msg.id && loggedSentId === msg.id ? (
+                      {msg.pitch.is_reply ? null : mailTriedId === msg.id && loggedSentId === msg.id ? (
                         <PitchHint>
                           Marked as sent. I&apos;ll check on day 4 whether {msg.pitch.brand_name || 'they'} replied
                           and draft the follow-up. Nothing opened? Copy the email and the pitch into Gmail or your mail app.
@@ -2043,6 +2104,7 @@ export default function Polly() {
                 setState={autopilot.setState}
                 reload={autopilot.reload}
                 notice={autopilotNotice}
+                returnReason={autopilotReturn}
                 onClose={closeAutopilot}
                 onOpenSettings={() => setAutopilotSettingsOpen(true)}
                 onUpgrade={() => setShowUpgrade(true)}
@@ -2066,8 +2128,13 @@ export default function Polly() {
         )}
       </Thread>
       <ComposerWrap>
-        {(dockStarters.length > 0 || (apChip && messages.length > 0)) && (
+        {(dockStarters.length > 0 || ((apChip || credits?.is_unlimited) && messages.length > 0)) && (
           <ChipRow>
+            {credits?.is_unlimited && messages.length > 0 ? (
+              <Chip type="button" onClick={() => sendStarter(BOARD_STARTER)} disabled={busy || loadingMore}>
+                📋 Monday board
+              </Chip>
+            ) : null}
             {apChip && messages.length > 0 ? (
               <Chip
                 type="button"

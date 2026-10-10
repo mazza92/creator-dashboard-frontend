@@ -1,22 +1,51 @@
-// Single source for how Pro is sold. Lead with Polly doing the outreach, never with "unlimited credits".
+// Single source for how Pro is sold. Lead with Polly running the outreach, never with "unlimited credits".
 export const PRO_PRICE = '$19';
 export const PRO_PRICE_MONTHLY = '$19/mo';
 
 export const PRO_OFFER = {
-  headline: 'Put Polly on autopilot',
-  promise: 'Polly runs your brand outreach: 20–30 matched brands a month, pitched from your Gmail, with day-4 follow-ups.',
-  extra: 'Plus unlimited applications to gifted brand rosters.',
-  short: 'Polly pitches 20–30 brands a month + unlimited applications',
-  priceLine: '$19/mo · Polly on autopilot · cancel anytime',
-  cta: 'Go Pro · put Polly on autopilot',
-  ctaShort: 'Put Polly on autopilot',
-  ctaPrice: 'Put Polly on autopilot · $19/mo',
-  outOfCredits: 'Out of free credits. On Pro, applications are unlimited and Polly pitches brands for you.',
+  headline: 'Your creator manager, on autopilot.',
+  promise: 'Polly finds the right brands, runs the full outreach, and brings you gifted PR, brand deals and paid UGC gigs.',
+  extra: 'You focus on making great content.',
+  short: 'Polly finds the brands and runs your outreach',
+  priceLine: '$19/mo · Polly runs your outreach · cancel or pause anytime',
+  cta: 'Put Polly to work',
+  ctaShort: 'Put Polly to work',
+  ctaPrice: 'Put Polly to work · $19/mo',
+  ctaYearly: 'Put Polly to work · $152/yr',
+  priceSubline: 'Your creator career, on fast forward. Cancel or pause anytime.',
+  outOfCredits: 'Out of free credits. On Pro, Polly finds the brands, runs your outreach, and applications are unlimited.',
 };
 
+export const PRO_STATS = [
+  { value: '20–30', label: 'brands pitched for you / mo' },
+  { value: 'Full', label: 'outreach, start to reply' },
+  { value: 'All', label: 'gifted campaigns + paid gigs in one place' },
+];
+
 export const PRO_FEATURES = [
-  { title: 'Polly pitches 20–30 brands a month.', body: 'She picks matched brands with a working email and writes every pitch.' },
-  { title: 'Sent from your Gmail, after your OK.', body: 'One a weekday, with a day-4 follow-up in the same thread.' },
-  { title: 'Unlimited roster applications.', body: 'Apply to every gifted brand roster you want, and pitch by hand as much as you like.' },
-  { title: 'Every pitch tracked.', body: 'Sent, followed up, replied: it all lands on your Timeline.' },
+  {
+    emoji: '🎯',
+    title: 'No more guessing who to pitch.',
+    body: 'Polly picks 20–30 brands a month that gift and pay creators like you, each with a real contact.',
+  },
+  {
+    emoji: '🚀',
+    title: 'Pick your targets, Polly does the rest.',
+    body: 'Choose the brands you want. Polly writes every pitch and runs the full outreach for you, from first email to follow-ups, until brands reply.',
+  },
+  {
+    emoji: '📊',
+    title: 'Always know where you stand.',
+    body: "Polly reports back on everything she's working on: who she pitched, who replied, what's next.",
+  },
+  {
+    emoji: '💸',
+    title: 'Paid UGC gigs, sourced for you.',
+    body: 'Polly pulls paid briefs from across the web that fit your size and niche, so you never scroll job boards again.',
+  },
+  {
+    emoji: '🎁',
+    title: 'Every gifted campaign, unlimited.',
+    body: 'Apply to any open brand gifting campaign on Newcollab.',
+  },
 ];

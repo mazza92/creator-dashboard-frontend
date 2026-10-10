@@ -69,13 +69,14 @@ const SubscriptionSuccess = () => {
         <Title>Welcome to Pro! 🎉</Title>
 
         <Message>
-          Pro is on. Turn on Polly autopilot and she pitches 20–30 brands a month from your Gmail.
-          Unlimited roster applications are live now.
+          Pro is on. The goal this month: one yes, then Polly turns it into a paid usage deal.
+          Open Polly for your first Monday board.
         </Message>
 
         {!loading && subscriptionInfo && (
           <Features>
-            <Feature>✅ Polly on autopilot — connect Gmail and she starts pitching</Feature>
+            <Feature>✅ Your Monday board — connect Gmail and one tap sends the week&apos;s pitches</Feature>
+            <Feature>✅ When a brand says yes, Polly writes the reply with your ad usage rate</Feature>
             <Feature>✅ Unlimited roster applications, live now</Feature>
             <Feature>✅ This week: send 5 applications (we write them)</Feature>
             <Feature>✅ We follow up so requests stay warm</Feature>

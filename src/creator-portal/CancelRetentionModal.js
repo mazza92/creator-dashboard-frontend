@@ -153,7 +153,7 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
               <Eyebrow>Stay on Pro</Eyebrow>
               <Title>$12 a month for the next 3 months</Title>
               <Body>
-                Keep Polly pitching 20–30 brands a month from your Gmail, plus unlimited applications. The next
+                Keep your Monday board, your pitches from Gmail, and the paid usage reply when a brand says yes. The next
                 three invoices are $12 instead of $19, then it returns to $19.
               </Body>
               <Primary type="button" disabled={busy} onClick={acceptOffer}>

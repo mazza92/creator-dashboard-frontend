@@ -556,7 +556,6 @@ const SocialVerificationStep = ({
         <TrustBullets>
           <TrustTitle>What we check</TrustTitle>
           <TrustItem>Account is public (not private)</TrustItem>
-          <TrustItem>At least 500 followers</TrustItem>
           <TrustItem>At least 5 posts/videos</TrustItem>
           <TrustItem>We never post or access your DMs</TrustItem>
         </TrustBullets>

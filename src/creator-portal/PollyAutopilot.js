@@ -160,7 +160,9 @@ const Overlay = styled.div`
 
 const Sheet = styled.div`
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   background: ${t.white};
   border-radius: 20px;
   padding: 20px;
@@ -203,7 +205,7 @@ const Switch = styled.button`
 
 const Segments = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(${(p) => p.$cols || 2}, 1fr);
   gap: 6px;
   margin-top: 10px;
 `;
@@ -222,10 +224,112 @@ const Segment = styled.button`
   &:disabled { opacity: 0.5; cursor: default; }
 `;
 
-const PACES = [
-  { target: 12, name: 'Light', hint: '12 brands a month' },
-  { target: 24, name: 'Full', hint: '24 brands a month' },
+const Chips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+`;
+
+const Chip = styled.button`
+  border: 1px solid ${(p) => (p.$on ? t.ink : t.line)};
+  background: ${(p) => (p.$on ? t.ink : t.white)};
+  color: ${(p) => (p.$on ? t.white : t.ink)};
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  &:disabled { opacity: 0.5; cursor: default; }
+`;
+
+const Funnel = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+  div {
+    background: ${t.cream};
+    border-radius: 12px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  strong { display: block; font-size: 17px; }
+  span { font-size: 11px; color: ${t.muted}; }
+`;
+
+const Stepper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  button {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid ${t.line}; background: ${t.white};
+    font-size: 18px; line-height: 1; cursor: pointer; color: ${t.ink};
+    &:disabled { opacity: 0.4; cursor: default; }
+  }
+  .value { font-size: 22px; font-weight: 700; min-width: 34px; text-align: center; }
+`;
+
+const ConsentMock = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 2px solid #16A34A;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  .box {
+    width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0;
+    background: #1A73E8; color: #fff; font-size: 13px; line-height: 18px; text-align: center;
+  }
+`;
+
+const PickRow = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  cursor: ${(p) => (p.$disabled ? 'default' : 'pointer')};
+  opacity: ${(p) => (p.$disabled ? 0.5 : 1)};
+  & + & { border-top: 1px solid ${t.line}; }
+  input { width: 16px; height: 16px; accent-color: ${t.ink}; flex-shrink: 0; }
+  .brand { font-weight: 600; }
+  .sub { font-size: 12.5px; color: ${t.muted}; }
+`;
+
+const FOCUS = [
+  { id: 'auto', name: 'Let Polly pick', hint: 'From your goals' },
+  { id: 'gifted', name: 'Gifted PR', hint: 'Product + shipping' },
+  { id: 'paid', name: 'Paid deals', hint: 'Quotes your rate' },
 ];
+
+const FOLLOWUPS = [
+  { n: 0, name: 'Off', hint: 'Pitch only' },
+  { n: 1, name: 'Once', hint: 'Day 4' },
+  { n: 2, name: 'Twice', hint: 'Day 4 and day 10' },
+];
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+const CATEGORY_LABELS = {
+  haircare: 'Hair care',
+  pets: 'Pets',
+  baby: 'Baby & parenting',
+  home: 'Home',
+};
+
+function label(key) {
+  return CATEGORY_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+function toggle(list, value) {
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+}
 
 const ERRORS = {
   needs_location: 'I need your city before I can write these. Tell me in the chat (e.g. "Austin, United States") and tap Write again.',
@@ -284,9 +388,10 @@ export function autopilotChip(state) {
   return { label: `⚡ Autopilot · ${state.month?.sent || 0}/${state.monthly_target || 24}`, attention: false };
 }
 
-export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onClose, onOpenSettings }) {
+export function AutopilotCard({ state, setState, reload, notice, returnReason, onUpgrade, onClose, onOpenSettings }) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(null);
+  const [plan, setPlan] = useState(null);
   const [error, setError] = useState('');
   const [openId, setOpenId] = useState(null);
   const [edits, setEdits] = useState({});
@@ -324,7 +429,7 @@ export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onCl
     setState(res.data);
   });
 
-  const writeWeek = () => run(async () => {
+  const planWeek = () => run(async () => {
     const res = await apiClient.post('/api/polly/autopilot/plan');
     const brands = res.data?.brands || [];
     if (!brands.length) {
@@ -333,6 +438,17 @@ export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onCl
         : "I couldn't find new matches with a working email today. Try again tomorrow.");
       return;
     }
+    setPlan({
+      options: [...brands, ...(res.data?.alternates || [])],
+      size: res.data?.size || brands.length,
+      selected: brands.map((b) => b.id),
+    });
+  });
+
+  const writeWeek = () => run(async () => {
+    const chosen = new Set(plan?.selected || []);
+    const brands = (plan?.options || []).filter((b) => chosen.has(b.id));
+    setPlan(null);
     for (const [i, brand] of brands.entries()) {
       setProgress({ done: i, total: brands.length, name: brand.name });
       try {
@@ -381,21 +497,30 @@ export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onCl
         <span className="n">1</span>
         <div>
           <div className="t">I pick the brands</div>
-          <div className="d">{perWeek(target)} matched brands a week, each with a working email.</div>
+          <div className="d">{state?.per_week || perWeek(target)} matched brands a week, each with a real contact.</div>
         </div>
       </li>
       <li>
         <span className="n">2</span>
         <div>
-          <div className="t">I write them, you OK them</div>
-          <div className="d">Read the week&apos;s pitches in one go. Edit or skip any.</div>
+          <div className="t">I write the pitches</div>
+          <div className="d">You get the week&apos;s pitches in one go. Edit or skip any.</div>
         </div>
       </li>
       <li>
         <span className="n">3</span>
         <div>
           <div className="t">I send and follow up</div>
-          <div className="d">One a weekday from your Gmail, and a day-4 follow-up in the same thread if they&apos;re quiet.</div>
+          <div className="d">
+            From your own Gmail, so brands see you, not a platform. I keep following up until they reply.
+          </div>
+        </div>
+      </li>
+      <li>
+        <span className="n">4</span>
+        <div>
+          <div className="t">I report back</div>
+          <div className="d">Who I pitched, who replied, what&apos;s next. All in your timeline.</div>
         </div>
       </li>
     </Steps>
@@ -407,44 +532,91 @@ export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onCl
   } else if (!state.is_pro) {
     body = (
       <>
-        <p className="say">
-          On Pro I become your manager on autopilot. I pitch <strong>20–30 brands a month</strong> for you,
-          straight from your Gmail, and you get unlimited roster applications on top.
-        </p>
+        <p className="say">On Pro I run your brand outreach for you. Here&apos;s how it works:</p>
         {steps}
         <Actions>
-          <Btn $primary type="button" onClick={onUpgrade}>Put me on autopilot · $19/mo</Btn>
+          <Btn $primary type="button" onClick={onUpgrade}>Put Polly to work · $19/mo</Btn>
           <LinkBtn type="button" onClick={onClose}>Not now</LinkBtn>
         </Actions>
       </>
     );
   } else if (!state.available) {
     body = <p className="say">I&apos;m getting Autopilot ready. I&apos;ll tell you right here when it&apos;s on.</p>;
+  } else if (!gmail.connected && returnReason === 'gmail_scope') {
+    body = (
+      <>
+        <p className="say">
+          Almost there. Google didn&apos;t give me permission to send, so Gmail isn&apos;t connected yet.
+          On the Google screen, tick this box before you tap <strong>Continue</strong>:
+        </p>
+        <ConsentMock aria-hidden="true">
+          <span>Send email on your behalf</span>
+          <span className="box">✓</span>
+        </ConsentMock>
+        <p className="muted">That&apos;s the only permission I ask for. I can&apos;t read your inbox.</p>
+        <Actions>
+          <Btn $primary type="button" onClick={connect} disabled={busy}>
+            <GoogleMark /> Try again
+          </Btn>
+          <LinkBtn type="button" onClick={onClose}>Not now, I&apos;ll send them myself</LinkBtn>
+        </Actions>
+      </>
+    );
   } else if (!gmail.connected) {
     body = (
       <>
         <p className="say">
           {gmail.needs_reconnect
             ? 'Google stopped letting me send from your Gmail. Reconnect and I pick up where I left off.'
-            : "Let me do your outreach. Here's how it works:"}
+            : "Let me run your brand outreach. Here's how it works:"}
         </p>
         {gmail.needs_reconnect ? null : steps}
-        <Notice>
-          Google will ask you to let Newcollab <strong>send email on your behalf</strong>. That&apos;s the only
-          permission. I can&apos;t read your inbox, and nothing sends until you OK it.
-          {state.app_verified ? null : (
-            <>
-              {' '}Google is still reviewing Newcollab, so you&apos;ll see a &ldquo;hasn&apos;t verified this app&rdquo;
-              screen. That&apos;s their standard wording during review: tap <strong>Advanced</strong>, then{' '}
-              <strong>Go to Newcollab (unsafe)</strong>.
-            </>
-          )}
-        </Notice>
+        <p className="muted">Newcollab can only send emails you&apos;ve approved. It can&apos;t read your inbox.</p>
         <Actions>
           <Btn $primary type="button" onClick={connect} disabled={busy}>
             <GoogleMark /> {gmail.needs_reconnect ? 'Reconnect Gmail' : 'Connect Gmail'}
           </Btn>
-          <LinkBtn type="button" onClick={onClose}>Not now</LinkBtn>
+          <LinkBtn type="button" onClick={onClose}>Not now, I&apos;ll send them myself</LinkBtn>
+        </Actions>
+        <p className="muted" style={{ marginTop: 10 }}>
+          On Google&apos;s screen, tick <strong>Send email on your behalf</strong>.
+        </p>
+      </>
+    );
+  } else if (plan) {
+    const chosen = plan.selected;
+    const full = chosen.length >= plan.size;
+    body = (
+      <>
+        <p className="say">
+          Here are this week&apos;s picks. Untick any you don&apos;t want and choose others. I&apos;ll write up
+          to <strong>{plan.size}</strong>.
+        </p>
+        <List>
+          {plan.options.map((b) => {
+            const on = chosen.includes(b.id);
+            const disabled = !on && full;
+            return (
+              <PickRow key={b.id} $disabled={disabled}>
+                <input
+                  type="checkbox"
+                  checked={on}
+                  disabled={disabled || busy}
+                  onChange={() => setPlan((p) => ({ ...p, selected: toggle(p.selected, b.id) }))}
+                />
+                <span style={{ minWidth: 0 }}>
+                  <span className="brand">{b.name || b.brand_name}</span>
+                  {b.category ? <span className="sub"> · {b.category}</span> : null}
+                </span>
+              </PickRow>
+            );
+          })}
+        </List>
+        <Actions>
+          <Btn $primary type="button" onClick={writeWeek} disabled={busy || !chosen.length}>
+            Write {chosen.length} pitch{chosen.length === 1 ? '' : 'es'}
+          </Btn>
+          <LinkBtn type="button" onClick={() => setPlan(null)} disabled={busy}>Cancel</LinkBtn>
         </Actions>
       </>
     );
@@ -464,7 +636,7 @@ export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onCl
       <>
         <p className="say">
           I wrote <strong>{drafts.length} pitch{drafts.length > 1 ? 'es' : ''}</strong> for this week.
-          Give them a quick read, then I&apos;ll send one a weekday from {gmail.email}.
+          Give them a quick read, then I&apos;ll send them from {gmail.email} on your send days.
         </p>
         <List>
           {drafts.map((item) => {
@@ -525,13 +697,15 @@ export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onCl
         {fresh ? (
           <p className="say">
             You&apos;re set up. I&apos;ll pick <strong>{state.next_batch || perWeek(target)} brands</strong> that match you
-            and write their pitches. You read them before anything sends.
+            and write their pitches. You choose which ones and read them before anything sends.
           </p>
         ) : (
           <p className="say">
             {next
               ? <>Next up: <strong>{next.brand_name}</strong>, {when(next.scheduled_for)}.</>
-              : "This week's pitches are out. I'll follow up on day 4 if they're quiet."}
+              : state.followups
+                ? "This week's pitches are out. I'll follow up in the same thread if they're quiet."
+                : "This week's pitches are out."}
           </p>
         )}
         {!fresh ? (
@@ -551,7 +725,7 @@ export function AutopilotCard({ state, setState, reload, notice, onUpgrade, onCl
         ) : null}
         <Actions>
           {state.next_batch > 0 && scheduled.length < 2 ? (
-            <Btn $primary={fresh} type="button" onClick={writeWeek} disabled={busy}>
+            <Btn $primary={fresh} type="button" onClick={planWeek} disabled={busy}>
               {fresh ? "Write this week's pitches" : 'Line up next week'}
             </Btn>
           ) : null}
@@ -621,6 +795,13 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
     }
   };
 
+  const month = state.month || {};
+  const target = state.monthly_target || 24;
+  const [min, max] = state.target_range || [8, 30];
+  const days = state.send_days || [0, 1, 2, 3, 4];
+  const targeting = state.targeting;
+  const setTarget = (delta) => save({ monthly_target: Math.max(min, Math.min(max, target + delta)) });
+
   const disconnect = async () => {
     setBusy(true);
     try {
@@ -644,7 +825,9 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
             <div>
               <div className="label">{state.enabled ? 'On' : 'Paused'}</div>
               <div className="hint">
-                {state.enabled ? 'I send the pitches you OK, one a weekday.' : 'Nothing sends until you turn it back on.'}
+                {state.enabled
+                  ? 'Each week I write your pitches. Once you OK them, I send them from your Gmail on your send days and follow up for you.'
+                  : 'Nothing sends and no follow-ups go out until you turn it back on.'}
               </div>
             </div>
             <Switch
@@ -657,18 +840,118 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
           </div>
         </Setting>
         <Setting>
-          <div className="label">Pace</div>
-          <Segments>
-            {PACES.map((p) => (
+          <div className="label">Your pipeline this month</div>
+          <Funnel>
+            <div><strong>{month.drafts || 0}</strong><span>To OK</span></div>
+            <div><strong>{month.scheduled || 0}</strong><span>Scheduled</span></div>
+            <div><strong>{month.sent || 0}</strong><span>Pitched</span></div>
+            <div><strong>{month.followups || 0}</strong><span>Followed up</span></div>
+            <div><strong>{month.replied || 0}</strong><span>Replied</span></div>
+          </Funnel>
+          <Progress style={{ marginTop: 10 }}>
+            <div className="label"><span>{month.sent || 0} of {target} brands pitched</span></div>
+            <div className="track">
+              <div className="fill" style={{ width: `${Math.min(100, (100 * (month.sent || 0)) / target)}%` }} />
+            </div>
+          </Progress>
+        </Setting>
+        <Setting>
+          <div className="label">Monthly target</div>
+          <div className="hint">How many new brands I pitch for you each month.</div>
+          <Stepper>
+            <button type="button" aria-label="Fewer brands" onClick={() => setTarget(-2)} disabled={busy || target <= min}>−</button>
+            <span className="value">{target}</span>
+            <button type="button" aria-label="More brands" onClick={() => setTarget(2)} disabled={busy || target >= max}>+</button>
+            <span className="hint" style={{ margin: 0 }}>
+              About {state.per_week} a week{state.per_day > 1 ? ', up to 2 per send day' : ''}
+            </span>
+          </Stepper>
+        </Setting>
+        <Setting>
+          <div className="label">What to pitch for</div>
+          <Segments $cols={3}>
+            {FOCUS.map((f) => (
               <Segment
-                key={p.target}
+                key={f.id}
                 type="button"
-                $on={state.monthly_target === p.target}
-                onClick={() => save({ monthly_target: p.target })}
+                $on={state.deal_focus === f.id}
+                onClick={() => save({ deal_focus: f.id })}
                 disabled={busy}
               >
-                <strong>{p.name}</strong>
-                {p.hint}
+                <strong>{f.name}</strong>
+                {f.hint}
+              </Segment>
+            ))}
+          </Segments>
+        </Setting>
+        {targeting ? (
+          <Setting>
+            <div className="label">Brands to target</div>
+            <div className="hint">I pick brands in these categories. Leave all off and I match from your content.</div>
+            <Chips>
+              {targeting.niche_options.map((n) => (
+                <Chip
+                  key={n}
+                  type="button"
+                  $on={targeting.niches.includes(n)}
+                  onClick={() => save({ niches: toggle(targeting.niches, n) })}
+                  disabled={busy}
+                >
+                  {label(n)}
+                </Chip>
+              ))}
+            </Chips>
+            <div className="label" style={{ marginTop: 14 }}>Never pitch</div>
+            <Chips>
+              {targeting.avoid_options.map((c) => (
+                <Chip
+                  key={c}
+                  type="button"
+                  $on={targeting.avoid_categories.includes(c)}
+                  onClick={() => save({ avoid_categories: toggle(targeting.avoid_categories, c) })}
+                  disabled={busy}
+                >
+                  {label(c)}
+                </Chip>
+              ))}
+            </Chips>
+          </Setting>
+        ) : null}
+        <Setting>
+          <div className="label">Send days</div>
+          <div className="hint">Pitches go out in the US morning, EU afternoon.</div>
+          <Chips>
+            {DAYS.map((d, i) => {
+              const on = days.includes(i);
+              return (
+                <Chip
+                  key={d}
+                  type="button"
+                  $on={on}
+                  aria-pressed={on}
+                  onClick={() => save({ send_days: toggle(days, i).sort() })}
+                  disabled={busy || (on && days.length === 1)}
+                >
+                  {d}
+                </Chip>
+              );
+            })}
+          </Chips>
+        </Setting>
+        <Setting>
+          <div className="label">Follow-ups</div>
+          <div className="hint">Sent in the same Gmail thread. I stop as soon as you tell me a brand replied.</div>
+          <Segments $cols={3}>
+            {FOLLOWUPS.map((f) => (
+              <Segment
+                key={f.n}
+                type="button"
+                $on={state.followups === f.n}
+                onClick={() => save({ followups: f.n })}
+                disabled={busy}
+              >
+                <strong>{f.name}</strong>
+                {f.hint}
               </Segment>
             ))}
           </Segments>
@@ -682,10 +965,6 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
             <LinkBtn type="button" onClick={disconnect} disabled={busy}>Disconnect</LinkBtn>
           </div>
         </Setting>
-        <p className="muted" style={{ margin: '4px 0 0' }}>
-          I can only send email. I can&apos;t read your inbox. Every pitch waits for your OK, and follow-ups stop when
-          you tell me a brand replied.
-        </p>
       </Sheet>
     </Overlay>
   );

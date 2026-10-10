@@ -1281,9 +1281,9 @@ function LandFirstPRPackageClient() {
               <ProBadge>MOST POPULAR</ProBadge>
               <PriceTier>PRO</PriceTier>
               <PriceNum>$19<small> /month</small></PriceNum>
-              <PriceDesc>Polly pitches 20–30 brands a month from your Gmail. Cancel anytime.</PriceDesc>
+              <PriceDesc>Polly runs your week and turns a yes into a paid usage deal. Cancel anytime.</PriceDesc>
               <PriceList>
-                <PriceItem><Check>✓</Check><span><b>Polly on autopilot</b> — 20–30 brands a month, pitched from your Gmail</span></PriceItem>
+                <PriceItem><Check>✓</Check><span><b>A Monday board from Polly</b> — pitches from your Gmail, and the paid usage ask when a brand says yes</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Unlimited roster applications</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Weekly personalized coaching plan</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Auto follow-ups sent for you</span></PriceItem>

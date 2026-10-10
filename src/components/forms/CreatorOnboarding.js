@@ -1445,10 +1445,10 @@ export default function CreatorOnboarding() {
                       <RequirementsHint>
                         <strong>What brands need</strong>
                         {platform === 'youtube'
-                          ? 'Public channel · 500+ subscribers · 12+ videos · Posted in the last 30 days'
+                          ? 'Public channel · 12+ videos · Posted in the last 30 days'
                           : platform === 'tiktok'
-                            ? 'Public account · 500+ followers · 12+ videos · Posted in the last 30 days'
-                            : 'Public account · 500+ followers · 12+ posts · Posted in the last 30 days'}
+                            ? 'Public account · 12+ videos · Posted in the last 30 days'
+                            : 'Public account · 12+ posts · Posted in the last 30 days'}
                       </RequirementsHint>
                     </div>
                   )}
@@ -1483,8 +1483,8 @@ export default function CreatorOnboarding() {
                         <RequirementsHint>
                           <strong>What brands need</strong>
                           {platform === 'instagram'
-                            ? 'Public account · 500+ followers · 12+ posts · Posted in the last 30 days'
-                            : 'Public account · 500+ followers · 12+ videos · Posted in the last 30 days'}
+                            ? 'Public account · 12+ posts · Posted in the last 30 days'
+                            : 'Public account · 12+ videos · Posted in the last 30 days'}
                         </RequirementsHint>
                       )}
                     </>

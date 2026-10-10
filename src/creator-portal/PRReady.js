@@ -2900,7 +2900,7 @@ export default function PRReady() {
             </div>
             {!isPro && (
               <Btn $variant="accent" onClick={() => openUpgrade('pr_ready')}>
-                {PRO_OFFER.ctaShort} + the full week — {plan?.price || '$19/mo'}
+                {PRO_OFFER.ctaShort} — {plan?.price || '$19/mo'}
               </Btn>
             )}
             <Btn $variant="ghost" onClick={() => setPackOpen(false)}>
