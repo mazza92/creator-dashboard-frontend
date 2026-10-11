@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
@@ -153,23 +154,55 @@ const Overlay = styled.div`
   z-index: 1200;
   background: rgba(17, 24, 39, 0.45);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 16px;
+  @media (min-width: 720px) {
+    align-items: center;
+    padding: 24px;
+  }
 `;
 
 const Sheet = styled.div`
   width: 100%;
   max-width: 460px;
-  max-height: calc(100vh - 32px);
+  min-height: 0;
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 8px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background: ${t.white};
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: 20px 20px 0 0;
+  padding: 4px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   font-family: ${t.fontSans};
   color: ${t.ink};
   h3 { font-family: ${t.fontDisplay}; font-size: 22px; margin: 0; }
   .muted { font-size: 12.5px; color: ${t.muted}; line-height: 1.45; }
+  @media (min-width: 720px) {
+    border-radius: 20px;
+    padding: 20px;
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+  }
+`;
+
+const SheetHead = styled(Head)`
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 -16px 4px;
+  padding: 12px 12px 10px 16px;
+  background: ${t.white};
+  button {
+    width: 44px;
+    height: 44px;
+    font-size: 26px;
+  }
+  @media (min-width: 720px) {
+    margin: -20px -20px 4px;
+    padding: 16px 12px 10px 20px;
+    border-radius: 20px 20px 0 0;
+  }
 `;
 
 const Setting = styled.div`
@@ -255,7 +288,13 @@ const Funnel = styled.div`
     text-align: center;
   }
   strong { display: block; font-size: 17px; }
-  span { font-size: 11px; color: ${t.muted}; }
+  span { display: block; font-size: 11px; color: ${t.muted}; line-height: 1.2; overflow-wrap: anywhere; }
+  @media (max-width: 420px) {
+    gap: 4px;
+    div { padding: 8px 2px; }
+    strong { font-size: 15px; }
+    span { font-size: 10px; }
+  }
 `;
 
 const Stepper = styled.div`
@@ -783,6 +822,12 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
 
 export function AutopilotSettings({ isOpen, state, setState, onClose }) {
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
   if (!isOpen || !state) return null;
 
   const save = async (patch) => {
@@ -813,13 +858,13 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
     }
   };
 
-  return (
+  const sheet = (
     <Overlay onClick={onClose}>
       <Sheet onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Autopilot settings">
-        <Head as="div" style={{ marginBottom: 4 }}>
+        <SheetHead as="div">
           <h3>Autopilot</h3>
           <IconBtn type="button" onClick={onClose} aria-label="Close">×</IconBtn>
-        </Head>
+        </SheetHead>
         <Setting>
           <div className="line">
             <div>
@@ -968,4 +1013,5 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
       </Sheet>
     </Overlay>
   );
+  return createPortal(sheet, document.body);
 }
