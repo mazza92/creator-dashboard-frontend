@@ -119,82 +119,62 @@ function PollyConversion({ funnel, cost, calls }) {
     .reduce((sum, row) => sum + row.n, 0);
   const fromPrompt = funnel.upgraded_from_prompt ?? fromMoments;
   const anyUpgrade = funnel.upgraded_any || 0;
-  const withoutPrompt = funnel.upgraded_without_prompt ?? ((funnel.upgrade_moments || {}).no_polly_paywall || 0);
   const prompts = momentLines(funnel.paywall_moments, POLLY_MOMENT_LABELS);
   const checkouts = momentLines(funnel.checkout_sources, CHECKOUT_LABELS);
   const checkoutTotal = checkouts.reduce((sum, row) => sum + row.n, 0);
   const geminiUsd = Number(cost?.gemini_usd ?? cost?.usd) || 0;
   const priced = cost?.priced_turns || 0;
-  const models = cost?.models || [];
 
   return (
     <>
       <SectionLabel>Polly to Pro</SectionLabel>
-      <HcNote style={{ margin: '-4px 0 12px', maxWidth: 760 }}>
-        Free creators who opened Polly in this window.
-        {' '}{funnel.already_pro || 0} were already Pro, so they are not in these rates.
-      </HcNote>
       <TrafficGrid>
         <HealthCard>
           <HcLabel>Opened Polly</HcLabel>
           <HcValue>{opened}</HcValue>
-          <HcNote>Free creators</HcNote>
+          <HcRate>{funnel.already_pro || 0} already Pro</HcRate>
         </HealthCard>
         <HealthCard>
           <HcLabel>Saw brand matches</HcLabel>
           <HcValue>{sawMatches}</HcValue>
-          <HcNote>{pollyPct(sawMatches, opened)} of free openers</HcNote>
+          <HcRate>{pollyPct(sawMatches, opened)}</HcRate>
         </HealthCard>
         <HealthCard>
           <HcLabel>Pitched or applied</HcLabel>
           <HcValue>{pitched}</HcValue>
-          <HcNote>{pollyPct(pitched, opened)} of free openers. Not required to see a prompt.</HcNote>
+          <HcRate>{pollyPct(pitched, opened)}</HcRate>
         </HealthCard>
         <HealthCard>
           <HcLabel>Saw a Pro prompt</HcLabel>
           <HcValue>{prompted}</HcValue>
-          <HcNote>{pollyPct(prompted, opened)} of free openers. They do not have to pitch first.</HcNote>
+          <HcRate>{pollyPct(prompted, opened)}</HcRate>
         </HealthCard>
       </TrafficGrid>
       <TrafficGrid>
         <HealthCard>
           <HcLabel>Became Pro after a prompt</HcLabel>
           <HcValue $color={fromPrompt > 0 ? 'green' : undefined}>{fromPrompt}</HcValue>
-          <HcNote>
-            {pollyPct(fromPrompt, prompted)} of people who saw a prompt
-            {' · '}{pollyPct(fromPrompt, opened)} of free openers
-          </HcNote>
+          <HcRate>{pollyPct(fromPrompt, prompted)} of prompted</HcRate>
         </HealthCard>
         <HealthCard>
-          <HcLabel>Became Pro any way</HcLabel>
+          <HcLabel>Became Pro</HcLabel>
           <HcValue $color={anyUpgrade > 0 ? 'green' : undefined}>{anyUpgrade}</HcValue>
-          <HcNote>
-            {pollyPct(anyUpgrade, opened)} of free openers
-            {withoutPrompt ? ` · ${withoutPrompt} had no Polly prompt` : ''}
-          </HcNote>
+          <HcRate>{pollyPct(anyUpgrade, opened)}</HcRate>
         </HealthCard>
         <HealthCard>
           <HcLabel>Paid checkouts</HcLabel>
           <HcValue>{checkoutTotal}</HcValue>
-          <HcNote>
-            {checkoutTotal
-              ? `${checkouts.map((row) => `${row.label} ${row.n}`).join(' · ')}. Any creator in this window, not only the free openers above.`
-              : 'No completed checkouts in this window'}
-          </HcNote>
+          <HcRate>{checkoutTotal ? checkouts.map((row) => `${row.label} ${row.n}`).join(' · ') : '—'}</HcRate>
         </HealthCard>
         <HealthCard>
           <HcLabel>Kit viewed by a brand</HcLabel>
           <HcValue>{funnel.kit_viewed || 0}</HcValue>
-          <HcNote>Free openers. A brand has to open the kit. It is not a step they take.</HcNote>
         </HealthCard>
       </TrafficGrid>
       {prompts.length ? (
         <TodayCard style={{ marginBottom: 12 }}>
           <TodayHeader>
-            <TodayTitle>Where Polly asked them to go Pro</TodayTitle>
-            <TodaySubtitle>
-              {prompted} free creators saw at least one prompt. One person can see more than one, so these counts can add up to more than {prompted}.
-            </TodaySubtitle>
+            <TodayTitle>Pro prompts</TodayTitle>
           </TodayHeader>
           <BrandTable>
             <BrandTableHead>
@@ -215,55 +195,37 @@ function PollyConversion({ funnel, cost, calls }) {
         </TodayCard>
       ) : null}
       <SectionLabel>Gemini API spend</SectionLabel>
-      <HcNote style={{ margin: '-4px 0 12px', maxWidth: 760 }}>
-        Google AI Studio is the invoice. It includes every API key and every model on the project, after Google&apos;s savings. The API key cannot read that page, so this report cannot show the Studio total.
-        The Polly chat figure is only chat replies we already stored. It leaves out pitch writing, profile reading, For You, and anything else on the key. That is why it was about $2 while Studio showed about €71.
-        From this deploy on, every Gemini call this app makes is logged in the second number. Do not add the two numbers together. Polly would be counted twice.
-      </HcNote>
       <TrafficGrid>
         <HealthCard>
-          <HcLabel>Polly chat, already stored</HcLabel>
-          <HcValue>{priced ? formatPollyUsd(geminiUsd) : '$0.00'}</HcValue>
-          <HcNote>
-            {priced
-              ? `${priced} chat replies · ${formatPollyUsd(geminiUsd / priced)} each · ${formatPollyTokens(cost?.input_tokens)} in / ${formatPollyTokens(cost?.output_tokens)} out. Not the Google bill.`
-              : 'No Polly chat tokens stored in this window. Not the Google bill.'}
-          </HcNote>
+          <HcLabel>Polly chat</HcLabel>
+          <HcValue>{formatPollyUsd(geminiUsd)}</HcValue>
+          <HcRate>{priced} replies</HcRate>
         </HealthCard>
         <HealthCard>
-          <HcLabel>All calls logged here</HcLabel>
-          <HcValue>{(calls?.calls || 0) ? formatPollyUsd(calls.usd) : '$0.00'}</HcValue>
-          <HcNote>
-            {(calls?.calls || 0)
-              ? `${calls.calls} Gemini calls in this window, every feature.`
-              : 'Starts with the next deploy. Studio stays the invoice until then.'}
-          </HcNote>
+          <HcLabel>All Gemini calls</HcLabel>
+          <HcValue>{formatPollyUsd(calls?.usd)}</HcValue>
+          <HcRate>{calls?.calls || 0} calls</HcRate>
         </HealthCard>
         <HealthCard>
-          <HcLabel>Polly replies with no Gemini call</HcLabel>
-          <HcValue>{cost?.unpriced_turns || 0}</HcValue>
-          <HcNote>Saved answers and fallbacks. Not billed.</HcNote>
+          <HcLabel>Input tokens</HcLabel>
+          <HcValue style={{ fontSize: 22, letterSpacing: 0 }}>{formatPollyTokens(cost?.input_tokens)}</HcValue>
         </HealthCard>
-        {models.slice(0, 1).map((model) => (
-          <HealthCard key={model.model}>
-            <HcLabel>{model.model}</HcLabel>
-            <HcValue style={{ fontSize: 22, letterSpacing: 0 }}>{formatPollyUsd(model.usd)}</HcValue>
-            <HcNote>{model.turns} Polly chat replies</HcNote>
-          </HealthCard>
-        ))}
+        <HealthCard>
+          <HcLabel>Output tokens</HcLabel>
+          <HcValue style={{ fontSize: 22, letterSpacing: 0 }}>{formatPollyTokens(cost?.output_tokens)}</HcValue>
+        </HealthCard>
       </TrafficGrid>
       {(calls?.sources || []).length ? (
         <TodayCard style={{ marginBottom: 12 }}>
           <TodayHeader>
-            <TodayTitle>Gemini calls this app logged</TodayTitle>
-            <TodaySubtitle>Priced from the token counts Gemini returned. This is the in-app total, not the Studio invoice.</TodaySubtitle>
+            <TodayTitle>Spend by feature</TodayTitle>
           </TodayHeader>
           <BrandTable>
             <BrandTableHead>
               <tr>
                 <th>Feature</th>
                 <th>Calls</th>
-                <th>Estimate</th>
+                <th>Spend</th>
               </tr>
             </BrandTableHead>
             <tbody>
@@ -624,7 +586,7 @@ const AdminReports = () => {
             <HcValue>
               {(polly?.cost?.priced_turns || 0) ? formatPollyUsd(polly.cost.gemini_usd ?? polly.cost.usd) : '$0.00'}
             </HcValue>
-            <HcNote>Not the Google bill. See Gemini API spend below.</HcNote>
+            <HcRate>{polly?.cost?.priced_turns || 0} replies</HcRate>
           </HealthCard>
         </TrafficGrid>
 
@@ -1884,11 +1846,11 @@ const HcDelta = styled.div`
   color: ${props => props.$up ? colors.green : colors.rose};
 `;
 
-const HcNote = styled.div`
-  font-size: 12.5px;
-  font-weight: 500;
-  line-height: 1.45;
-  color: ${colors.text2};
+const HcRate = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${colors.text3};
+  margin-top: 4px;
 `;
 
 // Sparkline
