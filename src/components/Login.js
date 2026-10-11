@@ -8,6 +8,12 @@ import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { auth, firebaseConfigured } from './firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import {
+  inAppBrowserName,
+  inAppGoogleMessage,
+  openInSystemBrowserUrl,
+  googleSignInErrorMessage,
+} from '../utils/googleSignIn';
 import { apiClient } from '../config/api';
 import { FaTiktok } from 'react-icons/fa6';
 import { safeInternalPath } from '../utils/upgradeDeeplink';
@@ -599,9 +605,17 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
       message.error('Google Sign-In is unavailable (missing Firebase configuration).');
       return;
     }
+    const inApp = inAppBrowserName();
+    if (inApp) {
+      const chromeUrl = openInSystemBrowserUrl();
+      if (chromeUrl) window.location.href = chromeUrl;
+      setError(inAppGoogleMessage(inApp).replace('sign up with your email below', 'sign in with your email'));
+      return;
+    }
     setGoogleLoading(true);
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const idToken = await user.getIdToken();
@@ -648,10 +662,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         response: err.response?.data,
         status: err.response?.status,
       });
-      const errorMessage =
-        err.response?.data?.error ||
-        err.message ||
-        'Google Sign-In failed. Please try again.';
+      const errorMessage = googleSignInErrorMessage(err);
       if (
         err.response?.status === 404 &&
         errorMessage.includes('Please register first')

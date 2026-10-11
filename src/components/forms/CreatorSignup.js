@@ -6,6 +6,12 @@ import { UserContext, persistLoggedInUser } from '../../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { auth, firebaseConfigured } from '../firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import {
+  inAppBrowserName,
+  inAppGoogleMessage,
+  openInSystemBrowserUrl,
+  googleSignInErrorMessage,
+} from '../../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
 
 // ============================================================================
@@ -419,6 +425,7 @@ export default function CreatorSignup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState('');
   const [regionBlocked, setRegionBlocked] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -507,10 +514,19 @@ export default function CreatorSignup() {
       setError('Google sign-in is unavailable. Please use email.');
       return;
     }
+    const inApp = inAppBrowserName();
+    if (inApp) {
+      const chromeUrl = openInSystemBrowserUrl();
+      if (chromeUrl) window.location.href = chromeUrl;
+      setGoogleError(inAppGoogleMessage(inApp));
+      return;
+    }
     setGoogleLoading(true);
     setError('');
+    setGoogleError('');
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
 
@@ -548,14 +564,12 @@ export default function CreatorSignup() {
         return;
       }
 
-      const msg = err.response?.data?.error || err.message || 'Google sign-in failed';
+      const msg = googleSignInErrorMessage(err);
       // Check for region restriction (403 with "region" in message)
       if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
         setRegionBlocked(true);
-      } else if (err.response?.status === 404 && msg.includes('register')) {
-        setError('No account found. Please sign up with email first.');
       } else {
-        setError(msg);
+        setGoogleError(msg);
       }
     } finally {
       setGoogleLoading(false);
@@ -666,6 +680,7 @@ export default function CreatorSignup() {
               </>
             )}
           </GoogleBtn>
+          {googleError && <ErrorMsg>{googleError}</ErrorMsg>}
 
           <OrBar>or</OrBar>
 

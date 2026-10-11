@@ -6,6 +6,12 @@ import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { auth, firebaseConfigured } from '../components/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import {
+  inAppBrowserName,
+  inAppGoogleMessage,
+  openInSystemBrowserUrl,
+  googleSignInErrorMessage,
+} from '../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
 
 // ============================================================================
@@ -481,6 +487,7 @@ export default function Register() {
   };
 
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState('');
   const googleEnabled = Boolean(firebaseConfigured && auth);
 
   const handleGoogleSSO = async () => {
@@ -488,10 +495,19 @@ export default function Register() {
       setError('Google sign-in is unavailable. Please use email.');
       return;
     }
+    const inApp = inAppBrowserName();
+    if (inApp) {
+      const chromeUrl = openInSystemBrowserUrl();
+      if (chromeUrl) window.location.href = chromeUrl;
+      setGoogleError(inAppGoogleMessage(inApp));
+      return;
+    }
     setGoogleLoading(true);
     setError('');
+    setGoogleError('');
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const idToken = await user.getIdToken();
@@ -518,12 +534,12 @@ export default function Register() {
         return;
       }
 
-      const msg = err.response?.data?.error || err.message || 'Google sign-in failed';
+      const msg = googleSignInErrorMessage(err);
       // Check for region restriction (403 with "region" in message)
       if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
         setRegionBlocked(true);
       } else {
-        setError(msg);
+        setGoogleError(msg);
       }
     } finally {
       setGoogleLoading(false);
@@ -638,6 +654,7 @@ export default function Register() {
               </>
             )}
           </GoogleBtn>
+          {googleError && <ErrorMsg>{googleError}</ErrorMsg>}
 
           <OrBar>or</OrBar>
 
