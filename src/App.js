@@ -10,7 +10,7 @@ import IndexNowTest from './components/IndexNowTest';
 import QueryParamRedirect from './components/QueryParamRedirect';
 import CreatorHomeRedirect from './components/CreatorHomeRedirect';
 import { loginUrlWithReturn } from './utils/upgradeDeeplink';
-import { needsWaitlistGate, WAITLIST_PATH } from './utils/creatorApproval';
+import { creatorHomePath, creatorNeedsOnboarding, needsWaitlistGate, WAITLIST_PATH } from './utils/creatorApproval';
 import Waitlist from './creator-portal/Waitlist';
 import BrandOnboardingForm from './components/forms/BrandOnboardingForm';
 // eslint-disable-next-line no-unused-vars
@@ -307,9 +307,9 @@ function AppContent() {
                 navigate(loginUrlWithReturn(location), { replace: true });
             } else if (user) {
                 const onWaitlist = user.role === 'creator' && needsWaitlistGate(user.approval_status);
-                const correctBasePath = onWaitlist
-                    ? WAITLIST_PATH
-                    : (user.role === 'creator' ? '/creator/dashboard/for-you' : '/brand/dashboard/overview');
+                const correctBasePath = user.role === 'creator' || user.role === 'brand'
+                    ? creatorHomePath(user)
+                    : '/brand/dashboard/overview';
                 
                 // A brand user is allowed to visit a creator's profile page.
                 const isViewingCreatorProfileAsBrand = user.role === 'brand' && location.pathname.startsWith('/creator/profile/');
@@ -336,7 +336,7 @@ function AppContent() {
                 // If user has incomplete profile and is not on onboarding, redirect to onboarding
                 // But skip this if we just completed onboarding (give user context time to update)
                 // Also skip for email verification routes - users need to verify email after registration
-                if (hasIncompleteProfile && !justCompletedOnboarding &&
+                if ((hasIncompleteProfile || creatorNeedsOnboarding(user)) && !justCompletedOnboarding &&
                     !location.pathname.startsWith('/onboarding') &&
                     !location.pathname.startsWith('/register/creator') &&
                     !location.pathname.startsWith('/register/brand') &&
@@ -464,7 +464,7 @@ function AppContent() {
                 path='/directory'
                 element={
                     user && !new URLSearchParams(location.search).get('search') && !new URLSearchParams(location.search).get('q')
-                      ? <Navigate to={needsWaitlistGate(user.approval_status) ? WAITLIST_PATH : '/creator/dashboard/for-you'} replace />
+                      ? <Navigate to={creatorHomePath(user)} replace />
                       : <LazyRoute><UnifiedBrandDirectory /></LazyRoute>
                 }
             />
@@ -514,7 +514,7 @@ function AppContent() {
                             ? <Navigate to={
                                 user.role === 'brand'
                                   ? '/brand/dashboard/overview'
-                                  : (needsWaitlistGate(user.approval_status) ? WAITLIST_PATH : '/creator/dashboard/for-you')
+                                  : creatorHomePath(user)
                               } replace />
                             : <Navigate to={loginUrlWithReturn(location)} replace />
                 }

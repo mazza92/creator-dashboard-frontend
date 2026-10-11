@@ -47,12 +47,17 @@ const sanitizeUsername = (value) => {
   return cleaned.slice(0, 30).toLowerCase();
 };
 
+const looksLikeUrl = (value) => {
+  const v = String(value || '').trim();
+  if (/https?:\/\//i.test(v) || /www\./i.test(v) || /[/?#]/.test(v)) return true;
+  return /(?:^|@)(?:instagram|tiktok|youtube|facebook|twitter|x)\.[a-z]{2,}(?:\/|$)/i.test(v);
+};
+
 const validateUsernameFormat = (value) => {
   if (!value || !value.trim()) {
     return { valid: false, error: 'Username is required' };
   }
-  // Check for URL patterns that might have slipped through
-  if (/https?|www\.|\.com|\.co|\.net|\.org|facebook|instagram|tiktok/i.test(value)) {
+  if (looksLikeUrl(value)) {
     return { valid: false, error: 'Please enter a username, not a URL' };
   }
   // Allow letters, numbers, underscores, or periods at start (TikTok allows _username)

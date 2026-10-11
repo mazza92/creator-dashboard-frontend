@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { apiClient } from '../config/api';
 import { useNotification } from './NotificationContext'; // Import useNotification
 import { clearPollyLocalThreads } from '../creator-portal/pollyStorage';
+import { onboardingCompleteFromAuth, onboardingCompleteFromProfile } from '../utils/creatorApproval';
 
 export const UserContext = createContext(null);
 
@@ -17,6 +18,7 @@ export const persistLoggedInUser = (setUser, data) => {
         creator_id: data.creator_id,
         brand_id: data.brand_id,
         approval_status: data.approval_status ?? null,
+        onboarding_complete: onboardingCompleteFromAuth(data),
     });
 };
 
@@ -26,6 +28,7 @@ const userFromProfile = (profileData, sessionData = {}) => ({
     creator_id: profileData.creator_id,
     brand_id: profileData.brand_id || sessionData.brand_id,
     approval_status: profileData.approval_status ?? null,
+    onboarding_complete: onboardingCompleteFromProfile(profileData),
 });
 
 export const UserProvider = ({ children }) => {

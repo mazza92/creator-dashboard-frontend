@@ -101,7 +101,7 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
   const [total, setTotal] = useState(0);
   const [q, setQ] = useState('');
   const [qDebounced, setQDebounced] = useState('');
-  const [readyOnly, setReadyOnly] = useState(false);
+  const readyOnly = true;
   const [newestFirst, setNewestFirst] = useState(true);
   const [pendingAll, setPendingAll] = useState(0);
   const [pendingReady, setPendingReady] = useState(0);
@@ -139,7 +139,7 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
       const params = new URLSearchParams();
       params.set('limit', '500');
       params.set('sort', newestFirst ? 'newest' : 'oldest');
-      if (readyOnly) params.set('ready_only', '1');
+      params.set('ready_only', '1');
       if (qDebounced.trim()) params.set('q', qDebounced.trim());
       const { data } = await api.get(
         `/api/admin/creators/approval-queue?${params.toString()}`,
@@ -364,11 +364,6 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
             <Tooltip title={newestFirst ? 'Show oldest signups first' : 'Show new signups first'}>
               <Button size="small" onClick={() => setNewestFirst((v) => !v)}>
                 {newestFirst ? 'Newest' : 'Oldest'}
-              </Button>
-            </Tooltip>
-            <Tooltip title={readyOnly ? 'Showing complete profiles only' : 'Including incomplete signups'}>
-              <Button size="small" type={readyOnly ? 'default' : 'primary'} onClick={() => setReadyOnly((v) => !v)}>
-                {readyOnly ? 'Ready' : 'All'}
               </Button>
             </Tooltip>
             <Button size="small" icon={<ReloadOutlined />} onClick={() => fetchQueue()} />
