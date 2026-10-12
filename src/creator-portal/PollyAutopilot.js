@@ -417,12 +417,9 @@ export function autopilotChip(state) {
   if (!state) return null;
   if (!state.is_pro) return { label: '⚡ Autopilot · Pro', attention: false };
   if (!state.available) return null;
-  const items = state.items || [];
-  const drafts = items.filter((i) => i.status === 'draft').length;
   if (!state.gmail?.connected) {
     return { label: state.gmail?.needs_reconnect ? '⚡ Reconnect Autopilot' : '⚡ Turn on Autopilot', attention: true };
   }
-  if (drafts) return { label: `⚡ ${drafts} pitch${drafts > 1 ? 'es' : ''} to OK`, attention: true };
   if (!state.enabled) return { label: '⚡ Autopilot paused', attention: false };
   return { label: `⚡ Autopilot · ${state.month?.sent || 0}/${state.monthly_target || 24}`, attention: false };
 }
@@ -543,7 +540,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         <span className="n">2</span>
         <div>
           <div className="t">I write the pitches</div>
-          <div className="d">Every week, on my own. You get a day to read, edit or skip any before they send.</div>
+          <div className="d">Every week, on my own, from your settings. Nothing for you to approve.</div>
         </div>
       </li>
       <li>
@@ -610,7 +607,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
             : "Let me run your brand outreach. Here's how it works:"}
         </p>
         {gmail.needs_reconnect ? null : steps}
-        <p className="muted">Newcollab only sends pitches it showed you here first. It can&apos;t read your inbox.</p>
+        <p className="muted">Newcollab only sends your brand pitches and follow-ups. It can&apos;t read your inbox.</p>
         <Actions>
           <Btn $primary type="button" onClick={connect} disabled={busy}>
             <GoogleMark /> {gmail.needs_reconnect ? 'Reconnect Gmail' : 'Connect Gmail'}
@@ -675,7 +672,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
       <>
         <p className="say">
           I wrote <strong>{drafts.length} pitch{drafts.length > 1 ? 'es' : ''}</strong> for this week.
-          They go out from {gmail.email} on your send days, a day after I write them. Edit or skip any before then.
+          I&apos;ll schedule them on your next run from {gmail.email}. Skip any you don&apos;t want.
         </p>
         <List>
           {drafts.map((item) => {
@@ -736,8 +733,8 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         {fresh ? (
           <p className="say">
             You&apos;re set up. Within the hour I&apos;ll pick <strong>{state.next_batch || perWeek(target)} brands</strong> that
-            match you and write their pitches, then keep a week lined up until you hit {target}. Want to choose the brands
-            yourself? Start below.
+            match your settings, write their pitches and schedule them, then keep a week lined up until you hit {target}.
+            Nothing for you to do. Want to start this week now? Tap below.
           </p>
         ) : (
           <p className="say">
@@ -786,7 +783,12 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
                   <span className="brand">{item.brand_name}</span>
                   <span className="side">
                     {item.status === 'approved'
-                      ? when(item.scheduled_for)
+                      ? (
+                        <>
+                          {when(item.scheduled_for)}{' '}
+                          <LinkBtn type="button" onClick={() => skip(item)} disabled={busy}>Skip</LinkBtn>
+                        </>
+                      )
                       : item.followup_sent_at
                         ? 'Followed up'
                         : item.followup_status === 'cancelled'
@@ -872,7 +874,7 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
               <div className="label">{state.enabled ? 'On' : 'Paused'}</div>
               <div className="hint">
                 {state.enabled
-                  ? 'I keep a week of pitches written until you hit your target. Each one sends from your Gmail on your send days a day after I write it, unless you skip it, and I follow up for you.'
+                  ? 'I pick brands from these settings, write and send the pitches from your Gmail on your send days, follow up, and keep you posted until you hit your target. Nothing to approve.'
                   : 'Nothing sends and no follow-ups go out until you turn it back on.'}
               </div>
             </div>
