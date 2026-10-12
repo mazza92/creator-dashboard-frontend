@@ -1,9 +1,22 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
+// iOS Safari drops the redirect result when the auth handler lives on another
+// host, so iPhone sign-in uses this host's /__/auth proxy (see vercel.json).
+// That host's /__/auth/handler must be an authorized redirect URI on the
+// Google OAuth client.
+function resolveAuthDomain() {
+  const configured = process.env.REACT_APP_FIREBASE_AUTH_DOMAIN;
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return configured;
+  const { hostname, host } = window.location;
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (ios && hostname === 'app.newcollab.co') return host;
+  return configured;
+}
+
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  authDomain: resolveAuthDomain(),
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
