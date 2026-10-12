@@ -1871,7 +1871,8 @@ export default function Polly() {
   const lastGigIdx = messages.reduce((acc, m, i) => ((m.gigs || []).length ? i : acc), -1);
   const lastBoardIdx = messages.reduce((acc, m, i) => (m.board ? i : acc), -1);
 
-  const apChip = autopilotChip(autopilot.state);
+  const apChip = autopilotChip(autopilot.state)
+    || (!autopilot.state && credits?.is_unlimited ? { label: '⚡ Autopilot', attention: false } : null);
   const closeAutopilot = () => { setAutopilotOpen(false); setAutopilotNotice(''); };
   const dockStarters = messages.length > 0 ? composerStarters(starters, messages) : [];
 
@@ -1950,6 +1951,7 @@ export default function Polly() {
                 <PollyFace src={POLLY_AVATAR_URL} alt="" />
                 <div>
                   {msg.kind === 'alert' ? <PitchLabel>Kit view</PitchLabel> : null}
+                  {msg.kind === 'autopilot' ? <PitchLabel>Autopilot</PitchLabel> : null}
                   {msg.kind === 'nudge' ? <PitchLabel>Polly nudge</PitchLabel> : null}
                   <KitMessage msg={msg} onOpen={navigate} stream={msg.id === streamId} />
                   {msg.board ? (

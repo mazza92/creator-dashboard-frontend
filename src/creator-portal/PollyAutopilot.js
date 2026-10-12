@@ -395,6 +395,8 @@ function GoogleMark() {
   );
 }
 
+const STATUS_RETRIES = [3000, 10000, 30000];
+
 export function useAutopilot(active) {
   const [state, setState] = useState(null);
   const reload = useCallback(async () => {
@@ -407,7 +409,22 @@ export function useAutopilot(active) {
     }
   }, []);
   useEffect(() => {
-    if (active) reload();
+    if (!active) return undefined;
+    let cancelled = false;
+    let timer;
+    const load = async (attempt) => {
+      const data = await reload();
+      if (cancelled || data?.success || attempt >= STATUS_RETRIES.length) return;
+      timer = setTimeout(() => load(attempt + 1), STATUS_RETRIES[attempt]);
+    };
+    load(0);
+    const onFocus = () => { if (document.visibilityState === 'visible') reload(); };
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
   }, [active, reload]);
   return { state, setState, reload };
 }
