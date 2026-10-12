@@ -26,25 +26,25 @@ const isLocalAdminHost = () =>
 const ADMIN_PASSWORD = 'Ilovela1992!';
 
 const GIFTING_GUARANTEE_ANNOUNCEMENT = {
-  emailSubject: '{{first_name}}, your 3 are out. want Polly to keep pitching?',
-  headerTitle: 'Your 3 are out. Polly can keep going.',
+  emailSubject: '{{first_name}}, you create. Polly handles the brands.',
+  headerTitle: 'Meet your influencer manager.',
   headerSubtitle: '',
   gradient: 'dark',
   bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
-<p style="margin: 0 0 16px 0;">You already used your 3 free pitches. Stopping until they reset is where momentum dies.</p>
-<p style="margin: 0 0 16px 0;">On Pro ($19/mo), Polly keeps going on <strong>autopilot</strong>. She picks 20–30 matched brands a month, writes every pitch, sends them from your Gmail with nothing for you to approve, and follows up on day 4.</p>
-<p style="margin: 0;">Unlimited roster applications come with it. Your 3 free pitches still come back next month if you'd rather wait.</p>
-<p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
-  calloutText: '20–30 brands a month, pitched from your Gmail. Fully on autopilot.',
+<p style="margin: 0 0 16px 0;">You've used your 3 free pitches. Here's the easier way to keep going.</p>
+<p style="margin: 0 0 16px 0;">On Pro, <strong>Polly becomes your influencer manager</strong>. She finds brands that fit you, pitches up to 30 a month from your Gmail and follows up for you. You'll get updates on how it's going.</p>
+<p style="margin: 0 0 16px 0;">You keep creating content. She handles the brand outreach.</p>
+<p style="margin: 0;">A manager usually costs 15–20% of every deal. Polly is $19/mo, and you keep 100% of every deal.</p>`,
+  calloutText: 'You create. Polly pitches, follows up and reports back.',
   calloutIcon: '',
   listItems: [
-    { icon: '1', title: 'She picks the brands', text: '20–30 matched brands a month that gift creators your size.' },
-    { icon: '2', title: 'She writes and sends', text: 'From your Gmail, on your send days. Replies land in your inbox.' },
-    { icon: '3', title: 'She follows up on day 4', text: 'The step almost everyone forgets, done for you.' },
+    { icon: '1', title: 'She finds your brands', text: 'Matched to your niche and size, every week.' },
+    { icon: '2', title: 'She pitches and follows up', text: 'From your Gmail, with nothing for you to approve. Replies land in your inbox.' },
+    { icon: '3', title: 'She keeps you posted', text: 'Progress updates on who she pitched and who replied.' },
   ],
-  ctaLabel: 'Put Polly on autopilot',
+  ctaLabel: 'Hire Polly for $19/mo',
   ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=quota_autopilot&utm_source=email&utm_medium=campaign&utm_campaign=quota_autopilot',
-  preheader: 'Your 3 are out. Polly can keep pitching 20–30 brands a month from your Gmail.',
+  preheader: 'She pitches brands for you every week. You just keep creating.',
   utmCampaign: 'quota_autopilot',
   campaignName: 'Polly autopilot — 3/3 unlocks',
   segmentId: 'at_quota_limit',
