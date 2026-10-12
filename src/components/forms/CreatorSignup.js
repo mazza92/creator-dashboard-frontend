@@ -15,6 +15,7 @@ import {
   googleRedirectPending,
   isIgnorableGoogleCancel,
   isRegionBlockedError,
+  reportGoogleStep,
 } from '../../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
 
@@ -514,6 +515,7 @@ export default function CreatorSignup() {
   };
 
   const applyGoogleError = useCallback((err) => {
+    reportGoogleStep('error', err);
     if (isIgnorableGoogleCancel(err)) return;
     const msg = googleSignInErrorMessage(err);
     if (isRegionBlockedError(err, msg)) {
@@ -535,6 +537,7 @@ export default function CreatorSignup() {
       ...(signupContext.source_page && { signup_source_page: signupContext.source_page }),
       ...(signupContext.intent && { signup_intent: signupContext.intent }),
     });
+    reportGoogleStep('signup_ok');
 
     if (window.ttq && response.data?.needs_onboarding) {
       window.ttq.identify({
@@ -556,7 +559,7 @@ export default function CreatorSignup() {
     (async () => {
       if (googleRedirectPending()) setGoogleLoading(true);
       try {
-        const user = await consumeGoogleRedirectResult(auth);
+        const user = await consumeGoogleRedirectResult(auth, () => cancelled);
         if (cancelled || !user) return;
         setGoogleLoading(true);
         await finishGoogleUser(user);

@@ -4,12 +4,14 @@ import {
   signInWithPopup,
   signInWithRedirect,
 } from 'firebase/auth';
+import api from './api';
 
 const IN_APP_BROWSER_RE =
   /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|Bytedance|BytedanceWebview|Snapchat|LinkedInApp|Pinterest|Line\/|Twitter|MicroMessenger|GSA\/|GoogleApp|Ecosia|DuckDuckGo/i;
 
 const REDIRECT_FLAG = 'nc_google_redirect';
 const POPUP_TIMEOUT_MS = 40000;
+const STEP_TIMEOUT_MS = 20000;
 
 export function inAppBrowserName(ua = typeof navigator !== 'undefined' ? navigator.userAgent : '') {
   if (!ua || !IN_APP_BROWSER_RE.test(ua)) return null;
@@ -55,7 +57,7 @@ export function googleSignInErrorMessage(err) {
   if (code === 'auth/popup-blocked') {
     return 'Your browser blocked the Google window. Allow pop-ups for newcollab.co, or sign up with your email.';
   }
-  if (code === 'auth/popup-timeout') {
+  if (code === 'auth/popup-timeout' || code === 'auth/redirect-timeout') {
     return "Google sign-in didn't finish. Try again, or sign up with your email below.";
   }
   if (code === 'auth/operation-not-supported-in-this-environment' || code === 'auth/web-storage-unsupported') {
@@ -111,6 +113,40 @@ function popupWithTimeout(auth, provider, ms) {
   });
 }
 
+function withTimeout(promise, ms, code) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error("Google sign-in didn't finish");
+      err.code = code;
+      reject(err);
+    }, ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+export function reportGoogleStep(step, err) {
+  try {
+    const code = err?.code || err?.response?.status || '';
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 180) : '';
+    const host = typeof window !== 'undefined' ? window.location.host : '';
+    api.post('/api/track-event', {
+      event: 'google_signin',
+      location: `${step}|${code}|${host}|${ua}`,
+    }).catch(() => {});
+  } catch {
+    // never block sign-in on telemetry
+  }
+}
+
+function clearRedirectFlag() {
+  try {
+    sessionStorage.removeItem(REDIRECT_FLAG);
+  } catch {
+    // ignore
+  }
+}
+
 export async function startGoogleSignIn(auth) {
   const provider = googleProvider();
   if (shouldUseGoogleRedirect()) {
@@ -119,7 +155,15 @@ export async function startGoogleSignIn(auth) {
     } catch {
       // sessionStorage can be blocked; redirect still works.
     }
-    await signInWithRedirect(auth, provider);
+    reportGoogleStep('redirect_start');
+    try {
+      // Resolves only if the browser never leaves the page.
+      await withTimeout(signInWithRedirect(auth, provider), STEP_TIMEOUT_MS, 'auth/redirect-timeout');
+    } catch (err) {
+      clearRedirectFlag();
+      reportGoogleStep('redirect_start_failed', err);
+      throw err;
+    }
     return { redirected: true, user: null };
   }
   const result = await popupWithTimeout(auth, provider, POPUP_TIMEOUT_MS);
@@ -127,32 +171,35 @@ export async function startGoogleSignIn(auth) {
 }
 
 let redirectResultPromise = null;
-let redirectUserDelivered = false;
+let redirectUserClaimed = false;
 
-export async function consumeGoogleRedirectResult(auth) {
-  if (!auth) return null;
+function loadRedirectUser(auth) {
   if (!redirectResultPromise) {
-    redirectResultPromise = getRedirectResult(auth)
+    const pending = googleRedirectPending();
+    if (pending) reportGoogleStep('redirect_return');
+    redirectResultPromise = withTimeout(getRedirectResult(auth), STEP_TIMEOUT_MS, 'auth/redirect-timeout')
       .then((result) => {
-        try {
-          sessionStorage.removeItem(REDIRECT_FLAG);
-        } catch {
-          // ignore
-        }
-        return result?.user || null;
+        clearRedirectFlag();
+        const user = result?.user || (pending ? auth.currentUser : null) || null;
+        if (pending) reportGoogleStep(user ? 'redirect_user' : 'redirect_no_user');
+        return user;
       })
       .catch((err) => {
-        try {
-          sessionStorage.removeItem(REDIRECT_FLAG);
-        } catch {
-          // ignore
-        }
+        clearRedirectFlag();
+        if (pending) reportGoogleStep('redirect_error', err);
         throw err;
       });
   }
-  const user = await redirectResultPromise;
-  if (!user || redirectUserDelivered) return null;
-  redirectUserDelivered = true;
+  return redirectResultPromise;
+}
+
+// Returns the Google user once per page load. Callers that unmount before the
+// result arrives leave it for the next caller.
+export async function consumeGoogleRedirectResult(auth, isCancelled = () => false) {
+  if (!auth) return null;
+  const user = await loadRedirectUser(auth);
+  if (!user || redirectUserClaimed || isCancelled()) return null;
+  redirectUserClaimed = true;
   return user;
 }
 

@@ -15,6 +15,7 @@ import {
   googleRedirectPending,
   isIgnorableGoogleCancel,
   isRegionBlockedError,
+  reportGoogleStep,
 } from '../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
 
@@ -495,6 +496,7 @@ export default function Register() {
   const googleEnabled = Boolean(firebaseConfigured && auth);
 
   const applyGoogleError = useCallback((err) => {
+    reportGoogleStep('error', err);
     if (isIgnorableGoogleCancel(err)) return;
     const msg = googleSignInErrorMessage(err);
     if (isRegionBlockedError(err, msg)) {
@@ -528,7 +530,7 @@ export default function Register() {
     (async () => {
       if (googleRedirectPending()) setGoogleLoading(true);
       try {
-        const user = await consumeGoogleRedirectResult(auth);
+        const user = await consumeGoogleRedirectResult(auth, () => cancelled);
         if (cancelled || !user) return;
         setGoogleLoading(true);
         await finishGoogleUser(user);

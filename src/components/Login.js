@@ -17,6 +17,7 @@ import {
   googleRedirectPending,
   isIgnorableGoogleCancel,
   isRegionBlockedError,
+  reportGoogleStep,
 } from '../utils/googleSignIn';
 import { apiClient } from '../config/api';
 import { FaTiktok } from 'react-icons/fa6';
@@ -605,6 +606,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   };
 
   const applyGoogleError = useCallback((err) => {
+    reportGoogleStep('error', err);
     if (isIgnorableGoogleCancel(err)) return;
     const errorMessage = googleSignInErrorMessage(err);
     if (
@@ -645,7 +647,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
     (async () => {
       if (googleRedirectPending()) setGoogleLoading(true);
       try {
-        const user = await consumeGoogleRedirectResult(auth);
+        const user = await consumeGoogleRedirectResult(auth, () => cancelled);
         if (cancelled || !user) return;
         setGoogleLoading(true);
         await finishGoogleUser(user);

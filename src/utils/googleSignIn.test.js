@@ -4,8 +4,14 @@ jest.mock('firebase/auth', () => ({
   signInWithPopup: jest.fn(),
   signInWithRedirect: jest.fn(),
 }));
+jest.mock('./api', () => ({
+  __esModule: true,
+  default: { post: jest.fn(() => Promise.resolve()) },
+}));
 
+import { getRedirectResult } from 'firebase/auth';
 import {
+  consumeGoogleRedirectResult,
   inAppBrowserName,
   isIOS,
   shouldUseGoogleRedirect,
@@ -46,5 +52,15 @@ describe('googleSignIn helpers', () => {
     expect(isIgnorableGoogleCancel({ code: 'auth/popup-closed-by-user' })).toBe(true);
     expect(isIgnorableGoogleCancel({ code: 'auth/popup-timeout' })).toBe(false);
     expect(isRegionBlockedError({ response: { status: 403, data: { error: 'Restricted region' } } }, 'Restricted region')).toBe(true);
+    expect(googleSignInErrorMessage({ code: 'auth/redirect-timeout' })).toMatch(/didn't finish/i);
+  });
+
+  test('a caller that unmounted leaves the redirect user for the next one', async () => {
+    const user = { email: 'creator@example.com' };
+    getRedirectResult.mockResolvedValue({ user });
+    const auth = { currentUser: null };
+    await expect(consumeGoogleRedirectResult(auth, () => true)).resolves.toBeNull();
+    await expect(consumeGoogleRedirectResult(auth)).resolves.toBe(user);
+    await expect(consumeGoogleRedirectResult(auth)).resolves.toBeNull();
   });
 });
