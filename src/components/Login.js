@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -7,12 +7,16 @@ import { creatorPostAuthPath, WAITLIST_PATH } from '../utils/creatorApproval';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { auth, firebaseConfigured } from './firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import {
   inAppBrowserName,
   inAppGoogleMessage,
   openInSystemBrowserUrl,
   googleSignInErrorMessage,
+  startGoogleSignIn,
+  consumeGoogleRedirectResult,
+  googleRedirectPending,
+  isIgnorableGoogleCancel,
+  isRegionBlockedError,
 } from '../utils/googleSignIn';
 import { apiClient } from '../config/api';
 import { FaTiktok } from 'react-icons/fa6';
@@ -600,6 +604,60 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
     }
   };
 
+  const applyGoogleError = useCallback((err) => {
+    if (isIgnorableGoogleCancel(err)) return;
+    const errorMessage = googleSignInErrorMessage(err);
+    if (
+      err.response?.status === 404 &&
+      errorMessage.includes('Please register first')
+    ) {
+      message.info('No account available. Redirecting to registration.');
+      navigate('/register/creator', {
+        state: { email: err.response?.data?.email || '' },
+      });
+    } else if (isRegionBlockedError(err, errorMessage)) {
+      setRegionBlocked(true);
+    } else {
+      message.error(errorMessage);
+    }
+    setError(errorMessage);
+  }, [navigate]);
+
+  const finishGoogleUser = useCallback(async (user) => {
+    const idToken = await user.getIdToken();
+    const response = await apiClient.post('/google-signup', {
+      idToken,
+      email: user.email,
+      name: user.displayName,
+    });
+    const data = response.data;
+    persistLoggedInUser(setUser, data);
+    if (onSuccess) {
+      onSuccess();
+      return;
+    }
+    navigate(postLoginPath(data), { replace: true });
+  }, [navigate, onSuccess, setUser, searchParams]);
+
+  useEffect(() => {
+    if (!googleLoginEnabled) return undefined;
+    let cancelled = false;
+    (async () => {
+      if (googleRedirectPending()) setGoogleLoading(true);
+      try {
+        const user = await consumeGoogleRedirectResult(auth);
+        if (cancelled || !user) return;
+        setGoogleLoading(true);
+        await finishGoogleUser(user);
+      } catch (err) {
+        if (!cancelled) applyGoogleError(err);
+      } finally {
+        if (!cancelled) setGoogleLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [googleLoginEnabled, finishGoogleUser, applyGoogleError]);
+
   const handleGoogleSignIn = async () => {
     if (!googleLoginEnabled) {
       message.error('Google Sign-In is unavailable (missing Firebase configuration).');
@@ -613,76 +671,17 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
       return;
     }
     setGoogleLoading(true);
+    setError('');
+    let redirected = false;
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const idToken = await user.getIdToken();
-
-      console.log('🔑 Google Sign-In success:', {
-        email: user.email,
-        name: user.displayName,
-      });
-
-      const response = await apiClient.post('/google-signup', {
-        idToken,
-        email: user.email,
-        name: user.displayName,
-      });
-
-      const data = response.data;
-      console.log('✅ Google Sign-In response:', {
-        status: response.status,
-        data: {
-          user_id: data.user_id,
-          user_role: data.user_role,
-          creator_id: data.creator_id,
-          brand_id: data.brand_id,
-          redirect_url: data.redirect_url,
-        },
-      });
-
-      persistLoggedInUser(setUser, data);
-
-      const redirectUrl = postLoginPath(data);
-      console.log('🔄 Navigating to:', redirectUrl);
-      navigate(redirectUrl, { replace: true });
+      const result = await startGoogleSignIn(auth);
+      redirected = result.redirected;
+      if (redirected || !result.user) return;
+      await finishGoogleUser(result.user);
     } catch (err) {
-      // Handle user-cancelled popup - not an error, just ignore silently
-      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-        console.log('ℹ️ Google Sign-In cancelled by user');
-        setGoogleLoading(false);
-        return;
-      }
-
-      console.error('❌ Google Sign-In error:', {
-        code: err.code,
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-      });
-      const errorMessage = googleSignInErrorMessage(err);
-      if (
-        err.response?.status === 404 &&
-        errorMessage.includes('Please register first')
-      ) {
-        message.info('No account available. Redirecting to registration.');
-        navigate('/register/creator', {
-          state: { email: err.response?.data?.email || '' },
-        });
-      } else if (
-        err.response?.status === 403 &&
-        (errorMessage.toLowerCase().includes('region') || errorMessage.toLowerCase().includes('restricted'))
-      ) {
-        // Region restriction - show region blocked UI
-        setRegionBlocked(true);
-      } else {
-        message.error(errorMessage);
-      }
-      setError(errorMessage);
+      applyGoogleError(err);
     } finally {
-      setGoogleLoading(false);
+      if (!redirected) setGoogleLoading(false);
     }
   };
 

@@ -1,16 +1,20 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../utils/api';
 import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { auth, firebaseConfigured } from '../components/firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import {
   inAppBrowserName,
   inAppGoogleMessage,
   openInSystemBrowserUrl,
   googleSignInErrorMessage,
+  startGoogleSignIn,
+  consumeGoogleRedirectResult,
+  googleRedirectPending,
+  isIgnorableGoogleCancel,
+  isRegionBlockedError,
 } from '../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
 
@@ -490,6 +494,53 @@ export default function Register() {
   const [googleError, setGoogleError] = useState('');
   const googleEnabled = Boolean(firebaseConfigured && auth);
 
+  const applyGoogleError = useCallback((err) => {
+    if (isIgnorableGoogleCancel(err)) return;
+    const msg = googleSignInErrorMessage(err);
+    if (isRegionBlockedError(err, msg)) {
+      setRegionBlocked(true);
+    } else {
+      setGoogleError(msg);
+    }
+  }, []);
+
+  const finishGoogleUser = useCallback(async (user) => {
+    const idToken = await user.getIdToken();
+    const response = await apiClient.post('/google-signup', {
+      idToken,
+      email: user.email,
+      name: user.displayName,
+    });
+    const data = response.data;
+    persistLoggedInUser(setUser, data);
+    const redirectUrl = data.redirect_url || (data.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
+    try {
+      const urlObj = new URL(redirectUrl, window.location.origin);
+      navigate(urlObj.pathname + urlObj.search + urlObj.hash);
+    } catch {
+      navigate(redirectUrl);
+    }
+  }, [navigate, setUser]);
+
+  useEffect(() => {
+    if (!googleEnabled) return undefined;
+    let cancelled = false;
+    (async () => {
+      if (googleRedirectPending()) setGoogleLoading(true);
+      try {
+        const user = await consumeGoogleRedirectResult(auth);
+        if (cancelled || !user) return;
+        setGoogleLoading(true);
+        await finishGoogleUser(user);
+      } catch (err) {
+        if (!cancelled) applyGoogleError(err);
+      } finally {
+        if (!cancelled) setGoogleLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [googleEnabled, finishGoogleUser, applyGoogleError]);
+
   const handleGoogleSSO = async () => {
     if (!googleEnabled) {
       setError('Google sign-in is unavailable. Please use email.');
@@ -505,44 +556,16 @@ export default function Register() {
     setGoogleLoading(true);
     setError('');
     setGoogleError('');
+    let redirected = false;
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const idToken = await user.getIdToken();
-
-      const response = await apiClient.post('/google-signup', {
-        idToken,
-        email: user.email,
-        name: user.displayName,
-      });
-
-      const data = response.data;
-      persistLoggedInUser(setUser, data);
-      const redirectUrl = data.redirect_url || (data.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
-      try {
-        const urlObj = new URL(redirectUrl, window.location.origin);
-        navigate(urlObj.pathname + urlObj.search + urlObj.hash);
-      } catch {
-        navigate(redirectUrl);
-      }
+      const result = await startGoogleSignIn(auth);
+      redirected = result.redirected;
+      if (redirected || !result.user) return;
+      await finishGoogleUser(result.user);
     } catch (err) {
-      // Handle user-cancelled popup - not an error, just ignore silently
-      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-        setGoogleLoading(false);
-        return;
-      }
-
-      const msg = googleSignInErrorMessage(err);
-      // Check for region restriction (403 with "region" in message)
-      if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
-        setRegionBlocked(true);
-      } else {
-        setGoogleError(msg);
-      }
+      applyGoogleError(err);
     } finally {
-      setGoogleLoading(false);
+      if (!redirected) setGoogleLoading(false);
     }
   };
 

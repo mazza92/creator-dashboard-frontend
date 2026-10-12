@@ -1,16 +1,20 @@
-import React, { useState, useMemo, useContext } from 'react';
+import React, { useState, useMemo, useContext, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../../utils/api';
 import { UserContext, persistLoggedInUser } from '../../contexts/UserContext';
 import { Helmet } from 'react-helmet-async';
 import { auth, firebaseConfigured } from '../firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import {
   inAppBrowserName,
   inAppGoogleMessage,
   openInSystemBrowserUrl,
   googleSignInErrorMessage,
+  startGoogleSignIn,
+  consumeGoogleRedirectResult,
+  googleRedirectPending,
+  isIgnorableGoogleCancel,
+  isRegionBlockedError,
 } from '../../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
 
@@ -446,14 +450,14 @@ export default function CreatorSignup() {
   const googleEnabled = Boolean(firebaseConfigured && auth);
   const isValid = firstName.trim().length > 0 && email.includes('@') && password.length >= 8;
 
-  const doRedirect = (url) => {
+  const doRedirect = useCallback((url) => {
     try {
       const urlObj = new URL(url, window.location.origin);
       navigate(urlObj.pathname + urlObj.search + urlObj.hash);
     } catch {
       navigate(url);
     }
-  };
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -509,6 +513,62 @@ export default function CreatorSignup() {
     }
   };
 
+  const applyGoogleError = useCallback((err) => {
+    if (isIgnorableGoogleCancel(err)) return;
+    const msg = googleSignInErrorMessage(err);
+    if (isRegionBlockedError(err, msg)) {
+      setRegionBlocked(true);
+    } else {
+      setGoogleError(msg);
+    }
+  }, []);
+
+  const finishGoogleUser = useCallback(async (user) => {
+    const idToken = await user.getIdToken();
+    const response = await apiClient.post('/google-signup', {
+      idToken,
+      email: user.email,
+      name: user.displayName,
+      ...(signupContext.ref && { signup_ref: signupContext.ref }),
+      ...(signupContext.brand && { first_unlock_intent: signupContext.brand }),
+      ...(signupContext.brand_query && { brand_query: signupContext.brand_query }),
+      ...(signupContext.source_page && { signup_source_page: signupContext.source_page }),
+      ...(signupContext.intent && { signup_intent: signupContext.intent }),
+    });
+
+    if (window.ttq && response.data?.needs_onboarding) {
+      window.ttq.identify({
+        email: user.email,
+        external_id: response.data?.user_id || user.email,
+      });
+      window.ttq.track('CompleteRegistration');
+    }
+
+    persistLoggedInUser(setUser, response.data);
+    const redirectUrl = response.data?.redirect_url ||
+      (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
+    doRedirect(redirectUrl);
+  }, [doRedirect, setUser, signupContext]);
+
+  useEffect(() => {
+    if (!googleEnabled) return undefined;
+    let cancelled = false;
+    (async () => {
+      if (googleRedirectPending()) setGoogleLoading(true);
+      try {
+        const user = await consumeGoogleRedirectResult(auth);
+        if (cancelled || !user) return;
+        setGoogleLoading(true);
+        await finishGoogleUser(user);
+      } catch (err) {
+        if (!cancelled) applyGoogleError(err);
+      } finally {
+        if (!cancelled) setGoogleLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [googleEnabled, finishGoogleUser, applyGoogleError]);
+
   const handleGoogleSSO = async () => {
     if (!googleEnabled) {
       setError('Google sign-in is unavailable. Please use email.');
@@ -524,55 +584,16 @@ export default function CreatorSignup() {
     setGoogleLoading(true);
     setError('');
     setGoogleError('');
+    let redirected = false;
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, provider);
-      const idToken = await result.user.getIdToken();
-
-      const response = await apiClient.post('/google-signup', {
-        idToken,
-        email: result.user.email,
-        name: result.user.displayName,
-        // Signup context from URL params (blog widget, landing pages)
-        ...(signupContext.ref && { signup_ref: signupContext.ref }),
-        ...(signupContext.brand && { first_unlock_intent: signupContext.brand }),
-        ...(signupContext.brand_query && { brand_query: signupContext.brand_query }),
-        ...(signupContext.source_page && { signup_source_page: signupContext.source_page }),
-        ...(signupContext.intent && { signup_intent: signupContext.intent }),
-      });
-
-      // Track signup completion in TikTok pixel (only for new accounts) with user data for better EMQ
-      if (window.ttq && response.data?.needs_onboarding) {
-        // Identify user with email and external_id for better event matching
-        window.ttq.identify({
-          email: result.user.email,
-          external_id: response.data?.user_id || result.user.email
-        });
-        window.ttq.track('CompleteRegistration');
-      }
-
-      persistLoggedInUser(setUser, response.data);
-
-      const redirectUrl = response.data?.redirect_url ||
-        (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
-      doRedirect(redirectUrl);
+      const result = await startGoogleSignIn(auth);
+      redirected = result.redirected;
+      if (redirected || !result.user) return;
+      await finishGoogleUser(result.user);
     } catch (err) {
-      // Handle user-cancelled popup - not an error, just ignore silently
-      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-        setGoogleLoading(false);
-        return;
-      }
-
-      const msg = googleSignInErrorMessage(err);
-      // Check for region restriction (403 with "region" in message)
-      if (err.response?.status === 403 && (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('restricted'))) {
-        setRegionBlocked(true);
-      } else {
-        setGoogleError(msg);
-      }
+      applyGoogleError(err);
     } finally {
-      setGoogleLoading(false);
+      if (!redirected) setGoogleLoading(false);
     }
   };
 
