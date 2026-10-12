@@ -69,29 +69,26 @@ const SubscriptionSuccess = () => {
         <Title>Welcome to Pro! 🎉</Title>
 
         <Message>
-          Pro is on. The goal this month: one yes, then Polly turns it into a paid usage deal.
-          Open Polly for your first Monday board.
+          Pro is on. One last step: connect Gmail and Polly starts pitching brands for you.
         </Message>
 
         {!loading && subscriptionInfo && (
           <Features>
-            <Feature>✅ Your Monday board — connect Gmail and one tap sends the week&apos;s pitches</Feature>
-            <Feature>✅ When a brand says yes, Polly writes the reply with your ad usage rate</Feature>
-            <Feature>✅ Unlimited roster applications, live now</Feature>
-            <Feature>✅ This week: send 5 applications (we write them)</Feature>
-            <Feature>✅ We follow up so requests stay warm</Feature>
-            <Feature>✅ Kit-open tracking so you know who looked</Feature>
-            <Feature>✅ Ready-to-send pitches in 3 tones</Feature>
+            <Feature>✅ Polly picks matched brands every week</Feature>
+            <Feature>✅ She writes and sends the pitches from your Gmail, with nothing to approve</Feature>
+            <Feature>✅ She follows up on day 4 and 10 and keeps you posted</Feature>
+            <Feature>✅ When a brand says yes, she writes the reply with your rate</Feature>
+            <Feature>✅ Unlimited roster applications</Feature>
           </Features>
         )}
 
         <ButtonGroup>
           <PrimaryButton
-            onClick={() => navigate('/creator/dashboard/for-you')}
+            onClick={() => navigate('/creator/dashboard/for-you?autopilot=pro_started')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Start Discovering Brands <FiArrowRight />
+            Turn on Autopilot <FiArrowRight />
           </PrimaryButton>
 
           <SecondaryButton

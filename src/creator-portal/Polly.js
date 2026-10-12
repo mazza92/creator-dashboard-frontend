@@ -18,6 +18,7 @@ import {
   writePollyLocal,
 } from './pollyStorage';
 import { brandMarkEmoji } from './brandMarkEmoji';
+import { captureUpgradeDeeplink, dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 
 const STARTER_LABELS = {
   paid_ugc: 'Show paid UGC I can apply to now',
@@ -40,6 +41,7 @@ const STICK_THRESHOLD_PX = 80;
 const AUTOPILOT_NOTICES = {
   gmail_connected: "Gmail connected. I'll pick this week's brands, write the pitches and send them on your send days. Nothing to approve.",
   review: "Here's what I lined up. Change brands or target any time in settings.",
+  pro_started: "You're on Pro. Connect Gmail and I'll start pitching brands for you this week.",
   gmail_denied: 'Gmail was not connected. You can try again any time.',
   gmail_failed: "Gmail didn't connect. Try again in a moment.",
 };
@@ -1707,6 +1709,19 @@ export default function Polly() {
     setAutopilotNotice(AUTOPILOT_NOTICES[result] || '');
     setAutopilotReturn(result);
     openAutopilot();
+    navigate('/creator/dashboard/for-you', { replace: true });
+  }, [searchParams, navigate, openAutopilot]);
+
+  // Email upgrade CTAs (?upgrade=pro): open the Autopilot card, which carries the $19 upgrade.
+  useEffect(() => {
+    if (!searchParams.get('upgrade')) return;
+    captureUpgradeDeeplink(searchParams);
+    if (isWinbackUpgradePending()) {
+      setShowUpgrade(true);
+    } else {
+      dismissUpgradeDeeplink();
+      openAutopilot();
+    }
     navigate('/creator/dashboard/for-you', { replace: true });
   }, [searchParams, navigate, openAutopilot]);
 
