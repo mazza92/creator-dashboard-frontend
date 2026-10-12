@@ -38,7 +38,8 @@ const DIRECTORY_PATH = '/creator/dashboard/pr-brands';
 const STICK_THRESHOLD_PX = 80;
 
 const AUTOPILOT_NOTICES = {
-  gmail_connected: 'Gmail connected. Plan this week and approve the batch, and Polly takes it from there.',
+  gmail_connected: "Gmail connected. I'll write this week's pitches and send them from tomorrow. Read or skip any first.",
+  review: 'Here are the pitches I wrote. They go out on your send days unless you skip them.',
   gmail_denied: 'Gmail was not connected. You can try again any time.',
   gmail_failed: "Gmail didn't connect. Try again in a moment.",
 };

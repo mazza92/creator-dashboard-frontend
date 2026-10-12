@@ -543,7 +543,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         <span className="n">2</span>
         <div>
           <div className="t">I write the pitches</div>
-          <div className="d">You get the week&apos;s pitches in one go. Edit or skip any.</div>
+          <div className="d">Every week, on my own. You get a day to read, edit or skip any before they send.</div>
         </div>
       </li>
       <li>
@@ -610,7 +610,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
             : "Let me run your brand outreach. Here's how it works:"}
         </p>
         {gmail.needs_reconnect ? null : steps}
-        <p className="muted">Newcollab can only send emails you&apos;ve approved. It can&apos;t read your inbox.</p>
+        <p className="muted">Newcollab only sends pitches it showed you here first. It can&apos;t read your inbox.</p>
         <Actions>
           <Btn $primary type="button" onClick={connect} disabled={busy}>
             <GoogleMark /> {gmail.needs_reconnect ? 'Reconnect Gmail' : 'Connect Gmail'}
@@ -675,7 +675,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
       <>
         <p className="say">
           I wrote <strong>{drafts.length} pitch{drafts.length > 1 ? 'es' : ''}</strong> for this week.
-          Give them a quick read, then I&apos;ll send them from {gmail.email} on your send days.
+          They go out from {gmail.email} on your send days, a day after I write them. Edit or skip any before then.
         </p>
         <List>
           {drafts.map((item) => {
@@ -716,7 +716,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         </List>
         <Actions>
           <Btn $primary type="button" onClick={approveAll} disabled={busy}>
-            Looks good, send {drafts.length > 1 ? 'them' : 'it'}
+            Looks good, schedule {drafts.length > 1 ? 'them' : 'it'} now
           </Btn>
           <span className="muted">US morning, EU afternoon.</span>
         </Actions>
@@ -735,8 +735,9 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         ) : null}
         {fresh ? (
           <p className="say">
-            You&apos;re set up. I&apos;ll pick <strong>{state.next_batch || perWeek(target)} brands</strong> that match you
-            and write their pitches. You choose which ones and read them before anything sends.
+            You&apos;re set up. Within the hour I&apos;ll pick <strong>{state.next_batch || perWeek(target)} brands</strong> that
+            match you and write their pitches, then keep a week lined up until you hit {target}. Want to choose the brands
+            yourself? Start below.
           </p>
         ) : (
           <p className="say">
@@ -871,7 +872,7 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
               <div className="label">{state.enabled ? 'On' : 'Paused'}</div>
               <div className="hint">
                 {state.enabled
-                  ? 'Each week I write your pitches. Once you OK them, I send them from your Gmail on your send days and follow up for you.'
+                  ? 'I keep a week of pitches written until you hit your target. Each one sends from your Gmail on your send days a day after I write it, unless you skip it, and I follow up for you.'
                   : 'Nothing sends and no follow-ups go out until you turn it back on.'}
               </div>
             </div>
@@ -887,7 +888,7 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
         <Setting>
           <div className="label">Your pipeline this month</div>
           <Funnel>
-            <div><strong>{month.drafts || 0}</strong><span>To OK</span></div>
+            <div><strong>{month.drafts || 0}</strong><span>Written</span></div>
             <div><strong>{month.scheduled || 0}</strong><span>Scheduled</span></div>
             <div><strong>{month.sent || 0}</strong><span>Pitched</span></div>
             <div><strong>{month.followups || 0}</strong><span>Followed up</span></div>

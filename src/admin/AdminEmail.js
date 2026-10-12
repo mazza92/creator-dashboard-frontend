@@ -32,14 +32,14 @@ const GIFTING_GUARANTEE_ANNOUNCEMENT = {
   gradient: 'dark',
   bodyText: `<p style="margin: 0 0 16px 0;">Hi {{first_name}},</p>
 <p style="margin: 0 0 16px 0;">You already used your 3 free pitches. Stopping until they reset is where momentum dies.</p>
-<p style="margin: 0 0 16px 0;">On Pro ($19/mo), Polly keeps going on <strong>autopilot</strong>. She picks 20–30 matched brands a month, writes every pitch, sends them from your Gmail once you OK the week, and follows up on day 4.</p>
+<p style="margin: 0 0 16px 0;">On Pro ($19/mo), Polly keeps going on <strong>autopilot</strong>. She picks 20–30 matched brands a month, writes every pitch, sends them from your Gmail a day later unless you skip one, and follows up on day 4.</p>
 <p style="margin: 0;">Unlimited roster applications come with it. Your 3 free pitches still come back next month if you'd rather wait.</p>
 <p style="margin: 16px 0 0 0;">Maher<br>Founder, Newcollab</p>`,
-  calloutText: '20–30 brands a month, pitched from your Gmail. You OK the week.',
+  calloutText: "20–30 brands a month, pitched from your Gmail. Skip any you don't want.",
   calloutIcon: '',
   listItems: [
     { icon: '1', title: 'She picks the brands', text: '20–30 matched brands a month that gift creators your size.' },
-    { icon: '2', title: 'She writes and sends', text: 'From your Gmail, after you OK the week. Replies land in your inbox.' },
+    { icon: '2', title: 'She writes and sends', text: 'From your Gmail, a day after she writes them. Replies land in your inbox.' },
     { icon: '3', title: 'She follows up on day 4', text: 'The step almost everyone forgets, done for you.' },
   ],
   ctaLabel: 'Put Polly on autopilot',
@@ -117,7 +117,7 @@ const POLLY_AUTOPILOT_LAUNCH_ANNOUNCEMENT = {
   calloutIcon: '',
   listItems: [
     { icon: '🎯', title: 'She finds your brands', text: '20–30 matched brands a month, each with a real email.' },
-    { icon: '✍️', title: 'She pitches for you', text: 'Every pitch written for you, sent from your Gmail after your OK.' },
+    { icon: '✍️', title: 'She pitches for you', text: 'Every pitch written for you and sent from your Gmail. Skip any first.' },
     { icon: '🔁', title: 'She follows up', text: 'No brand slips through. You just keep creating.' },
   ],
   ctaLabel: 'Let Polly pitch for me · $19/mo',
