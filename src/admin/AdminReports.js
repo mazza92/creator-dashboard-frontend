@@ -3,10 +3,10 @@ import styled, { keyframes } from 'styled-components';
 import { Form, Input, message } from 'antd';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import api from '../config/api';
+import { adminHeaders, adminLogin, adminLogout, hasAdminToken } from './adminAuth';
 
 // Admin credentials
 const ADMIN_EMAIL = 'team@newcollab.co';
-const ADMIN_PASSWORD = 'Ilovela1992!';
 
 // Color palette
 const colors = {
@@ -261,7 +261,7 @@ const AdminReports = () => {
   // Check auth on mount
   useEffect(() => {
     const authStatus = sessionStorage.getItem('adminReportsAuth');
-    if (authStatus === 'true') {
+    if (authStatus === 'true' && hasAdminToken()) {
       setIsAuthenticated(true);
     }
   }, []);
@@ -274,7 +274,7 @@ const AdminReports = () => {
   }, [isAuthenticated, selectedPeriod]);
 
   const getApiConfig = () => ({
-    headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' }
+    headers: adminHeaders()
   });
 
   const fetchDashboardData = async (bustCache = false) => {
@@ -327,8 +327,8 @@ const AdminReports = () => {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  const handleLogin = (values) => {
-    if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
+  const handleLogin = async (values) => {
+    if (values.email === ADMIN_EMAIL && await adminLogin(values.email, values.password)) {
       sessionStorage.setItem('adminReportsAuth', 'true');
       setIsAuthenticated(true);
       message.success('Welcome to Founder Dashboard!');
@@ -339,6 +339,7 @@ const AdminReports = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('adminReportsAuth');
+    adminLogout();
     setIsAuthenticated(false);
   };
 

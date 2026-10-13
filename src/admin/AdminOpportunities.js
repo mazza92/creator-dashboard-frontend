@@ -6,10 +6,9 @@ import axios from 'axios';
 import { tokens } from '../theme/tokens';
 import AdminContentSubmissions from './AdminContentSubmissions';
 import AdminBrandPRRosters from './AdminBrandPRRosters';
+import { adminHeaders, adminLogin, hasAdminToken } from './adminAuth';
 
 const ADMIN_EMAIL = 'team@newcollab.co';
-const ADMIN_PASSWORD = 'Ilovela1992!';
-const ADMIN_TOKEN = 'pr-hunter-admin-2026';
 
 const getApiBase = () => {
   const base = process.env.REACT_APP_API_BASE ||
@@ -44,7 +43,7 @@ const AdminOpportunities = () => {
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('oppAdminAuth');
-    if (authStatus === 'true') {
+    if (authStatus === 'true' && hasAdminToken()) {
       setIsAuthenticated(true);
     }
   }, []);
@@ -55,8 +54,8 @@ const AdminOpportunities = () => {
     }
   }, [isAuthenticated, statusFilter]);
 
-  const handleLogin = () => {
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+  const handleLogin = async () => {
+    if (email === ADMIN_EMAIL && await adminLogin(email, password)) {
       sessionStorage.setItem('oppAdminAuth', 'true');
       setIsAuthenticated(true);
     } else {
@@ -69,7 +68,7 @@ const AdminOpportunities = () => {
     try {
       const response = await axios.get(`${API_BASE}/api/opportunities/admin/list?status=${statusFilter}`, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       if (response.data.success) {
         setOpportunities(response.data.opportunities || []);
@@ -86,7 +85,7 @@ const AdminOpportunities = () => {
     try {
       await axios.patch(`${API_BASE}/api/opportunities/admin/${oppId}/update`, { brand_logo_url: logoUrl }, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       message.success('Logo URL saved');
     } catch (error) {
@@ -105,7 +104,7 @@ const AdminOpportunities = () => {
     try {
       const { data } = await axios.patch(`${API_BASE}/api/opportunities/admin/${oppId}/publish`, { days_open: daysOpen }, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       const rosterUrl = data?.gifted_pr?.roster_url;
       message.success(rosterUrl ? `Live on Gifted PR. Roster: ${rosterUrl}` : 'Opportunity published');
@@ -122,7 +121,7 @@ const AdminOpportunities = () => {
     try {
       const { data } = await axios.post(`${API_BASE}/api/opportunities/admin/${oppId}/push-gifted-pr`, {}, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       const rosterUrl = data?.gifted_pr?.roster_url;
       message.success(rosterUrl ? `Pushed to Gifted PR. Roster: ${rosterUrl}` : 'Pushed to Gifted PR');
@@ -138,7 +137,7 @@ const AdminOpportunities = () => {
     try {
       await axios.patch(`${API_BASE}/api/opportunities/admin/${oppId}/reject`, {}, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       message.success('Opportunity rejected');
       fetchOpportunities();
@@ -153,7 +152,7 @@ const AdminOpportunities = () => {
     try {
       const response = await axios.get(`${API_BASE}/api/opportunities/admin/${opp.id}/applications`, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       if (response.data.success) {
         setApplications(response.data.applications || []);
@@ -167,7 +166,7 @@ const AdminOpportunities = () => {
     try {
       await axios.patch(`${API_BASE}/api/opportunities/admin/${oppId}/close`, { status: newStatus }, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       message.success(`Opportunity ${newStatus}`);
       fetchOpportunities();
@@ -180,7 +179,7 @@ const AdminOpportunities = () => {
     try {
       await axios.patch(`${API_BASE}/api/opportunities/admin/${oppId}/reopen`, { days_open: 14 }, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       message.success('Opportunity reopened');
       fetchOpportunities();
@@ -193,7 +192,7 @@ const AdminOpportunities = () => {
     try {
       await axios.delete(`${API_BASE}/api/opportunities/admin/${oppId}/delete`, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       message.success('Opportunity deleted');
       fetchOpportunities();
@@ -226,7 +225,7 @@ const AdminOpportunities = () => {
           status: statusFilter,
         }, {
           withCredentials: true,
-          headers: { 'X-Admin-Token': ADMIN_TOKEN }
+          headers: adminHeaders()
         });
         if (!data?.success && data?.error) {
           throw new Error(data.error);
@@ -266,7 +265,7 @@ const AdminOpportunities = () => {
         status: statusFilter,
       }, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       if (!data?.success && data?.error) {
         throw new Error(data.error);
@@ -352,7 +351,7 @@ const AdminOpportunities = () => {
       }
       await axios.patch(`${API_BASE}/api/opportunities/admin/${editingOpp.id}/edit`, payload, {
         withCredentials: true,
-        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+        headers: adminHeaders()
       });
       message.success('Opportunity updated');
       setEditingOpp(null);

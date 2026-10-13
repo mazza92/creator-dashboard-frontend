@@ -7,7 +7,7 @@ const axios = require('axios');
 
 const API_BASE = 'https://api.newcollab.co';
 const HUNTER_API_KEY = process.env.HUNTER_API_KEY;
-const ADMIN_TOKEN = 'pr-hunter-admin-2026';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 
 if (!HUNTER_API_KEY) {
   console.error('HUNTER_API_KEY not set');

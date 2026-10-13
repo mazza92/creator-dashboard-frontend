@@ -12,6 +12,7 @@ import {
   DesktopOutlined, MobileOutlined, CopyOutlined, StarOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
+import { adminHeaders, adminLogin, adminLogout, hasAdminToken } from './adminAuth';
 import { generateWeeklyBrandRoundup, generateSubjectLine, sampleBrands, generateGeneralAnnouncement, resolveAnnouncementPreheader, generatePROpportunity, generatePROpportunitySubject, productFromBrand, websiteFromBrand, samplePROpportunity, DEFAULT_PR_EXCHANGE, generatePRRosterLive, generatePRRosterLiveSubject, applyUrlFromBrand, normalizeRosterBrands, samplePRRosterLive } from '../email-templates';
 
 const { TextArea } = Input;
@@ -23,7 +24,6 @@ const LOCALHOST_BULK_SEND_MSG =
 
 const isLocalAdminHost = () =>
   typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const ADMIN_PASSWORD = 'Ilovela1992!';
 
 const GIFTING_GUARANTEE_ANNOUNCEMENT = {
   emailSubject: '{{first_name}}, you create. Polly handles the brands.',
@@ -211,7 +211,7 @@ const AdminEmail = () => {
   // Check auth on mount
   useEffect(() => {
     const authStatus = sessionStorage.getItem('adminEmailAuth');
-    if (authStatus === 'true') {
+    if (authStatus === 'true' && hasAdminToken()) {
       setIsAuthenticated(true);
     }
   }, []);
@@ -245,7 +245,7 @@ const AdminEmail = () => {
   }, [isAuthenticated]);
 
   const getApiConfig = () => ({
-    headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' }
+    headers: adminHeaders()
   });
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -607,8 +607,8 @@ const AdminEmail = () => {
     }
   };
 
-  const handleLogin = (values) => {
-    if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
+  const handleLogin = async (values) => {
+    if (values.email === ADMIN_EMAIL && await adminLogin(values.email, values.password)) {
       sessionStorage.setItem('adminEmailAuth', 'true');
       setIsAuthenticated(true);
       message.success('Welcome to Email Campaigns!');
@@ -619,6 +619,7 @@ const AdminEmail = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('adminEmailAuth');
+    adminLogout();
     setIsAuthenticated(false);
   };
 

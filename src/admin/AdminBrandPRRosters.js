@@ -10,8 +10,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import { tokens } from '../theme/tokens';
-
-const ADMIN_TOKEN = 'pr-hunter-admin-2026';
+import { adminHeaders } from './adminAuth';
 
 const getApiBase = () => {
   const base = process.env.REACT_APP_API_BASE ||
@@ -19,7 +18,6 @@ const getApiBase = () => {
   return base.replace(/\/+$/, '');
 };
 const API_BASE = getApiBase();
-const headers = { 'X-Admin-Token': ADMIN_TOKEN };
 
 const STATUS_COLOR = {
   active: 'green',
@@ -74,10 +72,10 @@ export default function AdminBrandPRRosters() {
       if (search.trim()) qs.set('q', search.trim());
       const [listRes, queueRes] = await Promise.all([
         axios.get(`${API_BASE}/api/admin/brand-pr/campaigns?${qs.toString()}`, {
-          headers, withCredentials: true,
+          headers: adminHeaders(), withCredentials: true,
         }),
         axios.get(`${API_BASE}/api/admin/brand-pr/queue`, {
-          headers, withCredentials: true,
+          headers: adminHeaders(), withCredentials: true,
         }),
       ]);
       setCampaigns(listRes.data.campaigns || []);
@@ -130,7 +128,7 @@ export default function AdminBrandPRRosters() {
     try {
       const { data } = await axios.get(
         `${API_BASE}/api/admin/brand-pr/brands/search?q=${encodeURIComponent(q)}`,
-        { headers, withCredentials: true }
+        { headers: adminHeaders(), withCredentials: true }
       );
       setBrandOpts((data.brands || []).map((b) => ({
         value: String(b.id),
@@ -153,7 +151,7 @@ export default function AdminBrandPRRosters() {
           title: title || `${brandName} · PR roster`,
           sku_note: sku || '',
         },
-        { headers, withCredentials: true }
+        { headers: adminHeaders(), withCredentials: true }
       );
       const camp = data.campaign || {};
       const url = rosterPortalUrl(camp);
@@ -187,7 +185,7 @@ export default function AdminBrandPRRosters() {
     setDetail(null);
     try {
       const { data } = await axios.get(`${API_BASE}/api/admin/brand-pr/campaigns/${id}`, {
-        headers, withCredentials: true,
+        headers: adminHeaders(), withCredentials: true,
       });
       setDetail(data);
     } catch (err) {
@@ -210,11 +208,11 @@ export default function AdminBrandPRRosters() {
       await axios.post(
         `${API_BASE}/api/brand-pr/r/${token}/${path}`,
         { application_id: applicationId },
-        { headers, withCredentials: true }
+        { headers: adminHeaders(), withCredentials: true }
       );
       if (campaignId) {
         const { data } = await axios.get(`${API_BASE}/api/admin/brand-pr/campaigns/${campaignId}`, {
-          headers, withCredentials: true,
+          headers: adminHeaders(), withCredentials: true,
         });
         setDetail(data);
       }
@@ -234,7 +232,7 @@ export default function AdminBrandPRRosters() {
       const { data } = await axios.post(
         `${API_BASE}/api/admin/brand-pr/campaigns/${campaignId}/${hide ? 'hide' : 'unhide'}`,
         { application_id: applicationId },
-        { headers, withCredentials: true }
+        { headers: adminHeaders(), withCredentials: true }
       );
       setDetail(data);
       load();
@@ -249,7 +247,7 @@ export default function AdminBrandPRRosters() {
   async function revoke(id) {
     try {
       await axios.post(`${API_BASE}/api/admin/brand-pr/campaigns/${id}/revoke`, {}, {
-        headers, withCredentials: true,
+        headers: adminHeaders(), withCredentials: true,
       });
       message.success('Roster closed');
       setDrawer(null);
@@ -295,7 +293,7 @@ export default function AdminBrandPRRosters() {
       const { data } = await axios.post(
         `${API_BASE}/api/admin/brand-pr/campaigns/spotlight`,
         { campaign_ids: ids, spotlight: on },
-        { headers, withCredentials: true }
+        { headers: adminHeaders(), withCredentials: true }
       );
       message.success(
         on

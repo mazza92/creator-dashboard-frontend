@@ -11,12 +11,12 @@ import {
   PlayCircleOutlined, SyncOutlined, LockOutlined, UserOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
+import { adminHeaders, adminLogin, adminLogout, hasAdminToken } from '../admin/adminAuth';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
 
 // Admin credentials - hardcoded for this internal tool
 const ADMIN_EMAIL = 'team@newcollab.co';
-const ADMIN_PASSWORD = 'Ilovela1992!';
 
 const PRHunter = () => {
   const [candidates, setCandidates] = useState([]);
@@ -38,7 +38,7 @@ const PRHunter = () => {
   // Check if already authenticated (stored in sessionStorage)
   useEffect(() => {
     const authStatus = sessionStorage.getItem('prHunterAuth');
-    if (authStatus === 'true') {
+    if (authStatus === 'true' && hasAdminToken()) {
       setIsAuthenticated(true);
     }
   }, []);
@@ -50,12 +50,11 @@ const PRHunter = () => {
     }
   }, [pagination.page, isAuthenticated]);
 
-  const handleLogin = (values) => {
+  const handleLogin = async (values) => {
     setLoginLoading(true);
     setLoginError('');
 
-    // Simple credential check - no backend call needed
-    if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
+    if (values.email === ADMIN_EMAIL && await adminLogin(values.email, values.password)) {
       sessionStorage.setItem('prHunterAuth', 'true');
       setIsAuthenticated(true);
       message.success('Welcome to PR Hunter!');
@@ -68,15 +67,14 @@ const PRHunter = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('prHunterAuth');
+    adminLogout();
     setIsAuthenticated(false);
     message.info('Logged out');
   };
 
   // Helper to get axios config with admin token
   const getApiConfig = (extraConfig = {}) => ({
-    headers: {
-      'X-Admin-Token': 'pr-hunter-admin-2026'
-    },
+    headers: adminHeaders(),
     ...extraConfig
   });
 
@@ -98,6 +96,7 @@ const PRHunter = () => {
       if (error.response?.status === 403 || error.response?.status === 401) {
         setIsAuthenticated(false);
         sessionStorage.removeItem('prHunterAuth');
+        adminLogout();
         message.error('Session expired. Please login again.');
       } else {
         message.error('Failed to load candidates');

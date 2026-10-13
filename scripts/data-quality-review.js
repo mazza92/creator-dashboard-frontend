@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://api.newcollab.co';
-const ADMIN_TOKEN = 'pr-hunter-admin-2026';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 
 // Generic/missing description patterns
 const GENERIC_PATTERNS = [

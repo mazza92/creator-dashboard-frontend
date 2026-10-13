@@ -18,7 +18,7 @@ const axios = require('axios');
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://api.newcollab.co';
 const HUNTER_API_KEY = process.env.HUNTER_API_KEY;
-const ADMIN_TOKEN = 'pr-hunter-admin-2026';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 
 // Parse CLI args
 const args = process.argv.slice(2);

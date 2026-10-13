@@ -8,12 +8,12 @@ import {
   ExportOutlined, LinkOutlined, LockOutlined, MailOutlined, ReloadOutlined, UserOutlined,
 } from '@ant-design/icons';
 import api from '../config/api';
+import { adminHeaders, adminLogin, adminLogout, hasAdminToken } from './adminAuth';
 
 const ADMIN_EMAIL = 'team@newcollab.co';
-const ADMIN_PASSWORD = 'Ilovela1992!';
 
 function getApiConfig() {
-  return { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } };
+  return { headers: adminHeaders() };
 }
 
 function formatFollowers(n) {
@@ -57,8 +57,9 @@ const UgcSupplyAdmin = () => {
 
   useEffect(() => {
     if (
-      sessionStorage.getItem('ugcSupplyAdminAuth') === 'true'
-      || sessionStorage.getItem('brandAdminAuth') === 'true'
+      (sessionStorage.getItem('ugcSupplyAdminAuth') === 'true'
+        || sessionStorage.getItem('brandAdminAuth') === 'true')
+      && hasAdminToken()
     ) {
       setIsAuthenticated(true);
     }
@@ -116,8 +117,8 @@ const UgcSupplyAdmin = () => {
     fetchStats();
   }, [isAuthenticated, fetchRows, fetchStats]);
 
-  const handleLogin = (values) => {
-    if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
+  const handleLogin = async (values) => {
+    if (values.email === ADMIN_EMAIL && await adminLogin(values.email, values.password)) {
       sessionStorage.setItem('ugcSupplyAdminAuth', 'true');
       setIsAuthenticated(true);
       message.success('Welcome to UGC Supply');
@@ -294,6 +295,7 @@ const UgcSupplyAdmin = () => {
           <Button
             onClick={() => {
               sessionStorage.removeItem('ugcSupplyAdminAuth');
+              adminLogout();
               setIsAuthenticated(false);
             }}
           >

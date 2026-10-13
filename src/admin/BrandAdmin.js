@@ -20,10 +20,10 @@ import {
   EditOutlined, ThunderboltOutlined
 } from '@ant-design/icons';
 import api from '../config/api';
+import { adminHeaders, adminLogin, adminLogout, hasAdminToken } from './adminAuth';
 
 // Admin credentials - same as PRHunter
 const ADMIN_EMAIL = 'team@newcollab.co';
-const ADMIN_PASSWORD = 'Ilovela1992!';
 
 // Category options
 import { CATEGORY_OPTIONS } from '../constants/brandCategories';
@@ -129,7 +129,7 @@ const BrandAdmin = () => {
   // Check auth on mount
   useEffect(() => {
     const authStatus = sessionStorage.getItem('brandAdminAuth');
-    if (authStatus === 'true') {
+    if (authStatus === 'true' && hasAdminToken()) {
       setIsAuthenticated(true);
     }
   }, []);
@@ -142,7 +142,7 @@ const BrandAdmin = () => {
   }, [isAuthenticated]);
 
   const getApiConfig = () => ({
-    headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' }
+    headers: adminHeaders()
   });
 
   const openMintModal = () => {
@@ -253,8 +253,8 @@ const BrandAdmin = () => {
     }
   };
 
-  const handleLogin = (values) => {
-    if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
+  const handleLogin = async (values) => {
+    if (values.email === ADMIN_EMAIL && await adminLogin(values.email, values.password)) {
       sessionStorage.setItem('brandAdminAuth', 'true');
       setIsAuthenticated(true);
       message.success('Welcome to Brand Admin!');
@@ -265,6 +265,7 @@ const BrandAdmin = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('brandAdminAuth');
+    adminLogout();
     setIsAuthenticated(false);
   };
 
@@ -918,7 +919,7 @@ const BrandAdmin = () => {
               params.data.logo = logoUrl;
               params.api.refreshCells({ rowNodes: [params.node], columns: ['logo'], force: true });
               // Save logo to backend
-              api.patch(`/api/admin/brands/${params.data.id}`, { logo: logoUrl }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+              api.patch(`/api/admin/brands/${params.data.id}`, { logo: logoUrl }, { headers: adminHeaders() });
             }
           } catch (e) { /* invalid URL, skip */ }
         }
@@ -1088,7 +1089,7 @@ const BrandAdmin = () => {
           params.data.has_application_form = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['has_application_form'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { has_application_form: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { has_application_form: newVal }, { headers: adminHeaders() });
             message.success('Updated Has App Form', 1);
           } catch (e) {
             params.data.has_application_form = !newVal;
@@ -1168,7 +1169,7 @@ const BrandAdmin = () => {
           params.data.payment_offered = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['payment_offered'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { payment_offered: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { payment_offered: newVal }, { headers: adminHeaders() });
             message.success('Updated Payment Offered', 1);
           } catch (e) {
             params.data.payment_offered = !newVal;
@@ -1191,7 +1192,7 @@ const BrandAdmin = () => {
           params.data.accepting_pr = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['accepting_pr'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { accepting_pr: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { accepting_pr: newVal }, { headers: adminHeaders() });
             message.success('Updated Accepting PR', 1);
           } catch (e) {
             params.data.accepting_pr = !newVal;
@@ -1213,7 +1214,7 @@ const BrandAdmin = () => {
           params.data.is_featured = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['is_featured'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { is_featured: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { is_featured: newVal }, { headers: adminHeaders() });
             message.success('Updated Featured', 1);
           } catch (e) {
             params.data.is_featured = !newVal;
@@ -1235,7 +1236,7 @@ const BrandAdmin = () => {
           params.data.open_pr_featured = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['open_pr_featured'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { open_pr_featured: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { open_pr_featured: newVal }, { headers: adminHeaders() });
             message.success('Updated Open PR', 1);
           } catch (e) {
             params.data.open_pr_featured = !newVal;
@@ -1257,7 +1258,7 @@ const BrandAdmin = () => {
           params.data.micro_friendly = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['micro_friendly'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { micro_friendly: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { micro_friendly: newVal }, { headers: adminHeaders() });
             message.success('Updated Micro-friendly', 1);
           } catch (e) {
             params.data.micro_friendly = !newVal;
@@ -1279,7 +1280,7 @@ const BrandAdmin = () => {
           params.data.roundup_featured = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['roundup_featured'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { roundup_featured: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { roundup_featured: newVal }, { headers: adminHeaders() });
             message.success('Updated Roundup', 1);
           } catch (e) {
             params.data.roundup_featured = !newVal;
@@ -1301,7 +1302,7 @@ const BrandAdmin = () => {
           params.data.is_premium = newVal;
           params.api.refreshCells({ rowNodes: [params.node], columns: ['is_premium'], force: true });
           try {
-            await api.patch(`/api/admin/brands/${params.data.id}`, { is_premium: newVal }, { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } });
+            await api.patch(`/api/admin/brands/${params.data.id}`, { is_premium: newVal }, { headers: adminHeaders() });
             message.success('Updated Premium', 1);
           } catch (e) {
             params.data.is_premium = !newVal;

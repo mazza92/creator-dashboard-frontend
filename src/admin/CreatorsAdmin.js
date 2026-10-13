@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../config/api';
+import { adminHeaders, adminLogin, adminLogout, hasAdminToken } from './adminAuth';
 import {
   Table,
   Input,
@@ -43,10 +44,9 @@ const { Text, Paragraph } = Typography;
 
 // Admin credentials (matches other admin CRM pages)
 const ADMIN_EMAIL = 'team@newcollab.co';
-const ADMIN_PASSWORD = 'Ilovela1992!';
 
 function getApiConfig() {
-  return { headers: { 'X-Admin-Token': 'pr-hunter-admin-2026' } };
+  return { headers: adminHeaders() };
 }
 
 const CTA_KIT_URL = 'https://app.newcollab.co/creator/dashboard/my-kit';
@@ -251,7 +251,7 @@ const CreatorsAdmin = () => {
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('creatorAdminAuth');
-    if (authStatus === 'true') setIsAuthenticated(true);
+    if (authStatus === 'true' && hasAdminToken()) setIsAuthenticated(true);
   }, []);
 
   const fetchCreators = useCallback(async () => {
@@ -653,8 +653,8 @@ const CreatorsAdmin = () => {
     },
   ], [sortField, sortOrder]);
 
-  const handleLogin = (values) => {
-    if (values.email === ADMIN_EMAIL && values.password === ADMIN_PASSWORD) {
+  const handleLogin = async (values) => {
+    if (values.email === ADMIN_EMAIL && await adminLogin(values.email, values.password)) {
       sessionStorage.setItem('creatorAdminAuth', 'true');
       setIsAuthenticated(true);
       message.success('Welcome to Creator Admin!');
@@ -665,6 +665,7 @@ const CreatorsAdmin = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('creatorAdminAuth');
+    adminLogout();
     setIsAuthenticated(false);
     setCreators([]);
     setTotal(0);

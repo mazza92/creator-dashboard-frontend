@@ -3,8 +3,7 @@ import styled from 'styled-components';
 import { Button, Input, Modal, Select, Tag, message, Space, Popconfirm } from 'antd';
 import axios from 'axios';
 import { trackContentHubEvent } from '../utils/contentHubAnalytics';
-
-const ADMIN_TOKEN = 'pr-hunter-admin-2026';
+import { adminHeaders } from './adminAuth';
 
 const getApiBase = () => {
   const base = process.env.REACT_APP_API_BASE ||
@@ -13,7 +12,6 @@ const getApiBase = () => {
 };
 const API_BASE = getApiBase();
 
-const headers = { 'X-Admin-Token': ADMIN_TOKEN };
 
 const TYPE_LABELS = {
   unboxing: 'Unboxing',
@@ -88,7 +86,7 @@ export default function AdminContentSubmissions() {
       const res = await axios.get(`${API_BASE}/api/admin/content-submissions`, {
         params,
         withCredentials: true,
-        headers,
+        headers: adminHeaders(),
       });
       if (res.data?.success) {
         setRows(res.data.submissions || []);
@@ -124,7 +122,7 @@ export default function AdminContentSubmissions() {
       const res = await axios.patch(
         `${API_BASE}/api/admin/content-submissions/${selected.id}/${path}`,
         { admin_notes: notes, ...body },
-        { withCredentials: true, headers },
+        { withCredentials: true, headers: adminHeaders() },
       );
       if (!res.data?.success) {
         message.error(res.data?.error || 'Action failed');
@@ -153,7 +151,7 @@ export default function AdminContentSubmissions() {
       const res = await axios.post(
         `${API_BASE}/api/admin/content-submissions/${selected.id}/add-brand`,
         newBrand,
-        { withCredentials: true, headers },
+        { withCredentials: true, headers: adminHeaders() },
       );
       if (!res.data?.success) {
         message.error(res.data?.error || 'Could not add brand');

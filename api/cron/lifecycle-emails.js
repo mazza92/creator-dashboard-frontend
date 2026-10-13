@@ -1016,7 +1016,7 @@ async function processWeeklyDigest() {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'https://api.newcollab.co';
       const response = await fetch(`${apiUrl}/api/lifecycle-email/context/weekly-digest/${user.id}`, {
-        headers: { 'X-Admin-Token': process.env.ADMIN_TOKEN || 'pr-hunter-admin-2026' }
+        headers: { 'X-Admin-Token': process.env.ADMIN_TOKEN || '' }
       });
 
       if (response.ok) {
