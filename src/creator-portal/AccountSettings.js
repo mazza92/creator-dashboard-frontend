@@ -111,6 +111,8 @@ const AccountSettings = () => {
         need_professional: 'Instagram Login needs a Creator or Business account. Switch to Professional in Instagram, then try again.',
         need_instagram_tester: 'Instagram signed you in, but Meta did not return the profile. This is a Meta app-access issue, not a cancelled login.',
         instagram_graph_denied: 'Instagram signed you in, but Meta blocked profile access. Try again, or reconnect after Advanced Access is approved on instagram_business_basic.',
+        instagram_login_paused: 'Instagram connect is paused for accounts without a saved @username. Contact team@newcollab.co to add yours.',
+        scrape_failed: 'We could not load your public Instagram profile right now. Try again in a few minutes.',
         below_follower_min: `${label} connected, but follower minimum was not met.`,
         below_post_min: `${label} connected, but there were not enough public posts.`,
         inactive: `${label} connected, but the account looks inactive.`,
@@ -485,7 +487,7 @@ const AccountSettings = () => {
         <SectionHeader>
           <SectionTitle>Instagram profile</SectionTitle>
           <SectionSubtitle>
-            Connect Instagram Login to refresh followers, posts, and kit data. Needs a Creator or Business account.
+            Refresh followers, posts, and kit data from your public Instagram profile.
           </SectionSubtitle>
         </SectionHeader>
         <NicheCard>
@@ -512,7 +514,7 @@ const AccountSettings = () => {
             whileTap={{ scale: 0.98 }}
           >
             {instagramRefreshing
-              ? 'Opening Instagram…'
+              ? 'Refreshing Instagram…'
               : lastScan?.platform === 'instagram' && lastScan?.handle
                 ? 'Refresh Instagram data'
                 : 'Connect Instagram'}

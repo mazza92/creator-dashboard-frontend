@@ -727,6 +727,7 @@ export default function CreatorOnboarding() {
   const [verificationStatus, setVerificationStatus] = useState(null); // null | 'verifying' | 'verified' | 'failed'
   const [verificationError, setVerificationError] = useState(null);
   const [igHandleFallback, setIgHandleFallback] = useState(false);
+  const [instagramOauthOn, setInstagramOauthOn] = useState(false);
   const [verifiedProfile, setVerifiedProfile] = useState(null);
   // Scraping state
   const [showScraping, setShowScraping] = useState(false);
@@ -877,7 +878,7 @@ export default function CreatorOnboarding() {
 
   // TikTok Login Kit is the official source of creator TikTok stats and videos.
   const VERIFIABLE_PLATFORMS = ['tiktok', 'instagram'];
-  const instagramOauthBlocked = platform === 'instagram' && igHandleFallback;
+  const instagramOauthBlocked = platform === 'instagram' && (!instagramOauthOn || igHandleFallback);
   const oauthConnect = VERIFIABLE_PLATFORMS.includes(platform) && !instagramOauthBlocked;
 
   // Check region on mount - block users from restricted regions
@@ -885,6 +886,7 @@ export default function CreatorOnboarding() {
     const checkRegion = async () => {
       try {
         const res = await apiClient.get('/api/social/check-region');
+        setInstagramOauthOn(res.data.instagram_oauth === true);
         if (!res.data.allowed) {
           setRegionBlocked(true);
         }
@@ -964,6 +966,8 @@ export default function CreatorOnboarding() {
         'need_professional': 'Instagram Login needs a Creator or Business account. Enter your @username below to continue with your public profile.',
         'need_instagram_tester': 'Instagram signed you in, but Meta did not return your profile. Enter your @username below to finish.',
         'instagram_graph_denied': 'Instagram signed you in, but Meta did not return your profile. Enter your @username below to finish.',
+        'instagram_login_paused': 'Enter your Instagram @username below to continue.',
+        'scrape_failed': 'We could not load your Instagram profile. Enter your @username below to try again.',
         'inactive': oauthPlatform === 'instagram'
           ? 'Your Instagram needs a public post from the last 30 days.'
           : 'Your TikTok needs a public video posted in the last 30 days.',
