@@ -20,7 +20,7 @@ export const PRO_OFFER = {
 };
 
 export const PRO_STATS = [
-  { value: '20–30', label: 'brands pitched for you / mo' },
+  { value: '~6', label: 'brands pitched for you / week' },
   { value: 'Full', label: 'outreach, start to reply' },
   { value: 'All', label: 'gifted campaigns + paid gigs in one place' },
 ];
@@ -29,12 +29,12 @@ export const PRO_FEATURES = [
   {
     emoji: '🎯',
     title: 'No more guessing who to pitch.',
-    body: 'Polly picks 20–30 brands a month that gift and pay creators like you, each with a real contact.',
+    body: 'Polly picks about 6 brands a week that gift and pay creators like you, each with a real contact.',
   },
   {
     emoji: '🚀',
-    title: 'Pick your targets, Polly does the rest.',
-    body: 'Choose the brands you want. Polly writes every pitch and runs the full outreach for you, from first email to follow-ups, until brands reply.',
+    title: 'Nothing to approve. Polly runs it.',
+    body: 'Polly writes and sends every pitch from your Gmail and follows up until brands reply. Want different brands? Change your niche and targets in Settings and she adjusts.',
   },
   {
     emoji: '📊',

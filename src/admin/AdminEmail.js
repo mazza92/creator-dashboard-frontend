@@ -116,7 +116,7 @@ const POLLY_AUTOPILOT_LAUNCH_ANNOUNCEMENT = {
   calloutText: '',
   calloutIcon: '',
   listItems: [
-    { icon: '🎯', title: 'She finds your brands', text: '20–30 matched brands a month, each with a real email.' },
+    { icon: '🎯', title: 'She finds your brands', text: 'About 6 matched brands a week, each with a real email.' },
     { icon: '✍️', title: 'She pitches for you', text: 'Every pitch written and sent from your Gmail. Nothing to approve.' },
     { icon: '🔁', title: 'She follows up', text: 'No brand slips through. You just keep creating.' },
   ],
@@ -1251,7 +1251,7 @@ const AdminEmail = () => {
                     <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
                     <div className="template-icon-large">✦</div>
                     <h4>Polly autopilot — 3/3</h4>
-                    <p>Polly pitches 20–30 brands a month from their Gmail. Targets free users who used all 3 pitches.</p>
+                    <p>Polly pitches about 6 brands a week from their Gmail. Targets free users who used all 3 pitches.</p>
                     <div className="template-features">
                       <span>At 3/3</span>
                       <span>Live Composer</span>
