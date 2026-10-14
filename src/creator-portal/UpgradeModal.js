@@ -8,6 +8,7 @@ import { message } from 'antd';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 import { dismissUpgradeDeeplink, getEmailCampaign, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 import { PRO_OFFER, PRO_FEATURES, PRO_STATS } from '../config/proOffer';
+import { useTrialDays } from '../utils/trialOffer';
 
 function sourceFromPath(pathname) {
   const path = String(pathname || '');
@@ -28,6 +29,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   const total = Number(limit || 3) || 3;
   const atCap = remainingKnown ? Number(unlockRemaining) <= 0 : used >= total;
   const isWinback = feature === 'winback' || isWinbackUpgradePending();
+  const trialDays = useTrialDays(isOpen && !isWinback);
+  const hasTrial = trialDays > 0;
 
   const handleUpgrade = async (tier) => {
     const interval = isWinback || atCap ? 'monthly' : billingInterval;
@@ -181,7 +184,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   <PriceAmount>$19</PriceAmount>
                   <PricePer>/ month</PricePer>
                 </PriceRow>
-                <PriceSubline>{PRO_OFFER.priceSubline}</PriceSubline>
+                <PriceSubline>
+                  {hasTrial ? <GreenText>{PRO_OFFER.trialSubline}</GreenText> : PRO_OFFER.priceSubline}
+                </PriceSubline>
               </PriceCard>
               <FeatureList>
                 {features.map((f, i) => (
@@ -233,7 +238,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </PricePer>
               </PriceRow>
               <PriceSubline>
-                {billingInterval === 'yearly' ? (
+                {hasTrial ? (
+                  <GreenText>
+                    {billingInterval === 'yearly' ? PRO_OFFER.trialSublineYearly : PRO_OFFER.trialSubline}
+                  </GreenText>
+                ) : billingInterval === 'yearly' ? (
                   <><s style={{ opacity: 0.65 }}>$228</s> <GreenText>Save $76 · 33% off</GreenText></>
                 ) : (
                   PRO_OFFER.priceSubline
@@ -280,7 +289,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                   disabled={busy}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {loading ? 'Processing...' : PRO_OFFER.ctaPrice}
+                  {loading ? 'Processing...' : hasTrial ? PRO_OFFER.ctaTrial : PRO_OFFER.ctaPrice}
                 </CtaButton>
               </>
             ) : (
@@ -291,9 +300,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               >
                 {loading
                   ? 'Processing...'
-                  : billingInterval === 'yearly'
-                    ? PRO_OFFER.ctaYearly
-                    : PRO_OFFER.ctaPrice}
+                  : hasTrial
+                    ? PRO_OFFER.ctaTrial
+                    : billingInterval === 'yearly'
+                      ? PRO_OFFER.ctaYearly
+                      : PRO_OFFER.ctaPrice}
               </CtaButton>
             )}
 

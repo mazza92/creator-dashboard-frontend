@@ -12,6 +12,9 @@ export const PRO_OFFER = {
   ctaShort: 'Put Polly to work',
   ctaPrice: 'Put Polly to work · $19/mo',
   ctaYearly: 'Put Polly to work · $152/yr',
+  ctaTrial: 'Start my free week',
+  trialSubline: 'Free for 7 days, then $19/mo',
+  trialSublineYearly: 'Free for 7 days, then $152/yr',
   priceSubline: 'Your creator career, on fast forward. Cancel or pause anytime.',
   outOfCredits: 'Out of free credits. On Pro, Polly finds the brands, runs your outreach, and applications are unlimited.',
 };

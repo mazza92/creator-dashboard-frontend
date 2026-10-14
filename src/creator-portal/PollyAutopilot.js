@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { apiClient } from '../config/api';
+import { PRO_OFFER } from '../config/proOffer';
+import { useTrialDays } from '../utils/trialOffer';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
 const Card = styled.div`
@@ -449,6 +451,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
   const [openId, setOpenId] = useState(null);
   const [edits, setEdits] = useState({});
   const [showSchedule, setShowSchedule] = useState(false);
+  const trialDays = useTrialDays(Boolean(state) && !state.is_pro);
 
   const items = state?.items || [];
   const drafts = items.filter((i) => i.status === 'draft');
@@ -588,7 +591,9 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         <p className="say">On Pro I run your brand outreach for you. Here&apos;s how it works:</p>
         {steps}
         <Actions>
-          <Btn $primary type="button" onClick={onUpgrade}>Put Polly to work · $19/mo</Btn>
+          <Btn $primary type="button" onClick={onUpgrade}>
+            {trialDays > 0 ? PRO_OFFER.ctaTrial : 'Put Polly to work · $19/mo'}
+          </Btn>
           <LinkBtn type="button" onClick={onClose}>Not now</LinkBtn>
         </Actions>
       </>
