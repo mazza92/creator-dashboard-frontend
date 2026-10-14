@@ -73,10 +73,10 @@ export function dismissUpgradeDeeplink() {
   }
 }
 
-// Last lifecycle email clicked, so checkout can credit it (last touch, 7 days).
+// Last lifecycle or Polly email clicked, so checkout can credit it (last touch, 7 days).
 export function captureEmailCampaign(search) {
   const params = asParams(search);
-  if (params.get('utm_medium') !== 'lifecycle') return null;
+  if (!['lifecycle', 'polly_alert'].includes(params.get('utm_medium'))) return null;
   const campaign = String(params.get('utm_campaign') || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40);
   if (!campaign) return null;
   try {
