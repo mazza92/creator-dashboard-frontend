@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { captureUpgradeDeeplink } from '../utils/upgradeDeeplink';
+import { captureEmailCampaign, captureUpgradeDeeplink } from '../utils/upgradeDeeplink';
 
 /**
  * Component to handle query parameter redirects for SEO
@@ -13,6 +13,7 @@ const QueryParamRedirect = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     captureUpgradeDeeplink(searchParams);
+    captureEmailCampaign(searchParams);
     // Leave email upgrade deeplinks intact until the destination page opens the modal.
     if (searchParams.get('upgrade')) {
       return;

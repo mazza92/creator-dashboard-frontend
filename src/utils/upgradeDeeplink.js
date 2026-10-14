@@ -1,4 +1,6 @@
 const STORAGE_KEY = 'openUpgradeModal';
+const EMAIL_CAMPAIGN_KEY = 'lastEmailCampaign';
+const EMAIL_CAMPAIGN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const UPGRADE_FEATURE_MAP = {
   pro: 'limit_reached',
@@ -71,6 +73,30 @@ export function dismissUpgradeDeeplink() {
   }
 }
 
+// Last lifecycle email clicked, so checkout can credit it (last touch, 7 days).
+export function captureEmailCampaign(search) {
+  const params = asParams(search);
+  if (params.get('utm_medium') !== 'lifecycle') return null;
+  const campaign = String(params.get('utm_campaign') || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40);
+  if (!campaign) return null;
+  try {
+    localStorage.setItem(EMAIL_CAMPAIGN_KEY, JSON.stringify({ campaign, at: Date.now() }));
+  } catch {
+    /* ignore quota / private mode */
+  }
+  return campaign;
+}
+
+export function getEmailCampaign() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(EMAIL_CAMPAIGN_KEY) || 'null');
+    if (!saved?.campaign || Date.now() - Number(saved.at || 0) > EMAIL_CAMPAIGN_TTL_MS) return null;
+    return saved.campaign;
+  } catch {
+    return null;
+  }
+}
+
 export function stripUpgradeQuery(search) {
   const next = new URLSearchParams(asParams(search));
   let changed = false;
@@ -106,5 +132,6 @@ export function safeInternalPath(raw) {
 export function loginUrlWithReturn(location) {
   const returnTo = `${location.pathname || '/'}${location.search || ''}${location.hash || ''}`;
   captureUpgradeDeeplink(location.search);
+  captureEmailCampaign(location.search);
   return `/login?redirect=${encodeURIComponent(returnTo)}`;
 }

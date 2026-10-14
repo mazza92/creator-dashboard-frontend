@@ -11,6 +11,7 @@ import { LOADING, TOKENS, MENTOR_VERDICTS, MENTOR_SECTIONS, SEND_BUTTON, NEXT_AC
 import { apiClient, getProxiedMediaUrl } from '../../config/api';
 import UpgradeModal from '../UpgradeModal';
 import { trackProBeginCheckout } from '../../utils/subscriptionAnalytics';
+import { getEmailCampaign } from '../../utils/upgradeDeeplink';
 import { beginBrandOutreach, getDuplicateOutreachMessage } from '../../utils/outreachSendGuard';
 import { CountryDropdown } from 'react-country-region-selector';
 import { ALLOWED_REGION_CODES, PRIORITY_REGION_CODES } from '../../constants/allowedRegions';
@@ -3644,7 +3645,11 @@ const UnlockModalV2 = ({
   const handleUpgradeClick = async () => {
     try {
       trackProBeginCheckout({ tier: 'pro', source: 'unlock_modal_v2' });
-      const response = await apiClient.post('/api/subscription/create-checkout', { tier: 'pro' });
+      const response = await apiClient.post('/api/subscription/create-checkout', {
+        tier: 'pro',
+        source: 'unlock_modal',
+        email_campaign: getEmailCampaign() || undefined,
+      });
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);

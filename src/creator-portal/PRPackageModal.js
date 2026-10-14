@@ -7,6 +7,7 @@ import { apiClient } from '../config/api';
 import { message, Tooltip, Modal as AntModal } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
+import { getEmailCampaign } from '../utils/upgradeDeeplink';
 import { beginBrandOutreach, getDuplicateOutreachMessage } from '../utils/outreachSendGuard';
 
 /**
@@ -96,7 +97,11 @@ const PRPackageModal = ({
     try {
       setUpgradeLoading(true);
       trackProBeginCheckout({ tier: 'pro', source: 'pr_package_modal' });
-      const response = await apiClient.post('/api/subscription/create-checkout', { tier: 'pro' });
+      const response = await apiClient.post('/api/subscription/create-checkout', {
+        tier: 'pro',
+        source: 'pr_package',
+        email_campaign: getEmailCampaign() || undefined,
+      });
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);

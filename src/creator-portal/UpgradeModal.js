@@ -6,7 +6,7 @@ import { FiX, FiLock, FiClock, FiBarChart2 } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
-import { dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
+import { dismissUpgradeDeeplink, getEmailCampaign, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 import { PRO_OFFER, PRO_FEATURES, PRO_STATS } from '../config/proOffer';
 
 function sourceFromPath(pathname) {
@@ -44,6 +44,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
         source: isWinback ? 'winback' : (source || sourceFromPath(window.location.pathname)),
       };
       if (isWinback) payload.offer = 'winback';
+      const emailCampaign = getEmailCampaign();
+      if (emailCampaign) payload.email_campaign = emailCampaign;
       const response = await api.post(
         '/api/subscription/create-checkout',
         payload
