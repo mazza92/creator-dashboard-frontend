@@ -467,7 +467,14 @@ const AdminReports = () => {
     );
   }
 
-  const { mrr, at_limit_users, at_limit_count, at_limit_last_month = 0, at_limit_change = 0, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, onboarding_survey: survey } = data;
+  const { mrr, at_limit_users, at_limit_count, at_limit_last_month = 0, at_limit_change = 0, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, onboarding_survey: survey, pace, trials } = data;
+  const ms = data.milestones || { goal: mrr.goal, scale: [0, 0.25, 0.5, 0.75, 1].map(q => Math.round(mrr.goal * q)), ladder: [] };
+  const money = (n) => `$${Math.round(n || 0).toLocaleString()}`;
+  const months = (m) => (m === null || m === undefined ? null : m < 1 ? '<1 mo' : `~${m} mo`);
+  const pipelinePct = trials?.pipeline_mrr
+    ? Math.min(((mrr.current + trials.pipeline_mrr) / (ms.goal || 1)) * 100, 100)
+    : 0;
+  const shortDate = (iso) => (iso ? new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
   // Calculate funnel percentages
   const calcPct = (num, denom) => denom > 0 ? Math.round((num / denom) * 100) : 0;
@@ -520,22 +527,46 @@ const AdminReports = () => {
 
           <ProgressWrap>
             <ProgressTrack>
+              {pipelinePct > 0 && <PipelineFill style={{ width: `${pipelinePct}%` }} />}
               <ProgressFill style={{ width: `${mrr.progress_pct}%` }} />
             </ProgressTrack>
             <ProgressLabels>
-              <span>$0</span>
-              <span>$250</span>
-              <span>$500</span>
-              <span>$750</span>
-              <span>$1,000</span>
+              {ms.scale.map((v) => <span key={v}>{money(v)}</span>)}
             </ProgressLabels>
+            {trials?.pipeline_mrr > 0 && (
+              <PipelineNote>
+                Light segment: +{money(trials.pipeline_mrr)} in active free trials ({money(trials.mrr_with_pipeline)} if all convert)
+              </PipelineNote>
+            )}
           </ProgressWrap>
+
+          {ms.ladder?.length > 0 && (
+            <UltimateRow>
+              <UltimateLabel>Road to {money(ms.ultimate)} MRR · {ms.ultimate_pct}% · {ms.ultimate_subs_needed} more Pro subscribers</UltimateLabel>
+              <LadderRow>
+                {ms.ladder.map((step) => (
+                  <LadderStep key={step.mrr} $reached={step.reached} $current={step.mrr === ms.goal}>
+                    {step.mrr >= 1000 ? `$${step.mrr / 1000}k` : `$${step.mrr}`}
+                  </LadderStep>
+                ))}
+              </LadderRow>
+            </UltimateRow>
+          )}
 
           <MilestoneRow>
             <Milestone>
-              <MilestoneLabel>Next milestone</MilestoneLabel>
-              <MilestoneVal>$120 MRR</MilestoneVal>
-              <MilestoneSub>10 Pro subscribers</MilestoneSub>
+              <MilestoneLabel>Growth pace (30 days)</MilestoneLabel>
+              {pace ? (
+                <>
+                  <MilestoneVal>{pace.net_mrr_30d >= 0 ? '+' : '-'}{money(Math.abs(pace.net_mrr_30d))} MRR</MilestoneVal>
+                  <MilestoneSub>
+                    {pace.new_paid_30d} new paid · {pace.churned_30d} churned
+                    {months(pace.months_to_goal) ? ` · ${money(ms.goal)} in ${months(pace.months_to_goal)} · ${money(ms.ultimate)} in ${months(pace.months_to_ultimate)}` : ' · not growing yet'}
+                  </MilestoneSub>
+                </>
+              ) : (
+                <MilestoneVal>—</MilestoneVal>
+              )}
             </Milestone>
             <Milestone>
               <MilestoneLabel>Conversion rate</MilestoneLabel>
@@ -558,6 +589,86 @@ const AdminReports = () => {
             </Milestone>
           </MilestoneRow>
         </GoalCard>
+
+        {trials && (
+          <>
+            <SectionLabel>Free trial (7 days)</SectionLabel>
+            <TrafficGrid>
+              <HealthCard>
+                <HcLabel>Active trials</HcLabel>
+                <HcValue>{trials.active}</HcValue>
+                <HcDelta $up={trials.gmail_connected === trials.active}>
+                  {trials.gmail_connected} Gmail connected · {trials.sending} sending
+                  {trials.cancel_known ? ` · ${trials.cancel_scheduled} cancelled` : ''}
+                </HcDelta>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Pipeline MRR</HcLabel>
+                <HcValue $color="green">+{money(trials.pipeline_mrr)}</HcValue>
+                <HcRate>
+                  Expected +{money(trials.expected_mrr)} at {trials.expected_rate}%
+                  {trials.expected_rate_basis === 'benchmark' ? ' (benchmark until 5 trials end)' : ' (our rate)'}
+                </HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Trial to paid</HcLabel>
+                <HcValue>{trials.conversion_rate === null ? '—' : `${trials.conversion_rate}%`}</HcValue>
+                <HcRate>
+                  {trials.ended
+                    ? `${trials.converted} paid · ${trials.lost} cancelled${trials.payment_failing ? ` · ${trials.payment_failing} payment failing` : ''} · ${money(trials.mrr_from_trials)} MRR`
+                    : trials.upcoming?.length
+                      ? `First trials end ${shortDate(trials.upcoming[0].trial_ends)}`
+                      : 'No trial has ended yet'}
+                </HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Share of new Pro</HcLabel>
+                <HcValue>{trials.period?.share_pct || 0}%</HcValue>
+                <HcRate>
+                  {trials.period?.started || 0} trials vs {trials.period?.paid_direct || 0} paid direct · {data.period?.label || 'this period'}
+                </HcRate>
+              </HealthCard>
+            </TrafficGrid>
+            {trials.upcoming?.length > 0 && (
+              <TodayCard>
+                <TodayHeader>
+                  <TodayTitle>Trials ending soon</TodayTitle>
+                  <TodaySubtitle>First charge is $19 on the end date unless they cancel.</TodaySubtitle>
+                </TodayHeader>
+                <BrandTable>
+                  <BrandTableHead>
+                    <tr>
+                      <th>Creator</th>
+                      <th>Ends</th>
+                      <th>Gmail</th>
+                      <th>Pitches sent</th>
+                      <th>Outlook</th>
+                    </tr>
+                  </BrandTableHead>
+                  <tbody>
+                    {trials.upcoming.map((row) => (
+                      <BrandTableRow key={row.creator_id}>
+                        <td>{row.username ? `@${row.username}` : row.creator_id}</td>
+                        <td>{shortDate(row.trial_ends)}</td>
+                        <td>{row.gmail ? 'Connected' : 'Not connected'}</td>
+                        <td>{row.sent || 0}</td>
+                        <td>
+                          {row.cancel_scheduled
+                            ? 'Cancelled, ends at trial end'
+                            : !row.gmail
+                              ? 'At risk: no Gmail'
+                              : row.sent
+                                ? 'On track'
+                                : 'Waiting for first send'}
+                        </td>
+                      </BrandTableRow>
+                    ))}
+                  </tbody>
+                </BrandTable>
+              </TodayCard>
+            )}
+          </>
+        )}
 
         <SectionLabel>Polly beta</SectionLabel>
         <TrafficGrid>
@@ -1442,6 +1553,7 @@ const ProgressWrap = styled.div`
 `;
 
 const ProgressTrack = styled.div`
+  position: relative;
   height: 10px;
   background: rgba(255,255,255,.12);
   border-radius: 10px;
@@ -1449,10 +1561,57 @@ const ProgressTrack = styled.div`
 `;
 
 const ProgressFill = styled.div`
+  position: absolute;
+  inset: 0 auto 0 0;
   height: 100%;
   border-radius: 10px;
   background: linear-gradient(90deg, ${colors.rose}, #f472b6);
   transition: width 0.6s ease;
+`;
+
+const PipelineFill = styled.div`
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 10px;
+  background: rgba(244,114,182,.35);
+  transition: width 0.6s ease;
+`;
+
+const PipelineNote = styled.div`
+  margin-top: 6px;
+  font-size: 11px;
+  color: #f9a8d4;
+`;
+
+const UltimateRow = styled.div`
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+const UltimateLabel = styled.div`
+  font-size: 12px;
+  opacity: 0.7;
+`;
+
+const LadderRow = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+`;
+
+const LadderStep = styled.span`
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid ${props => props.$current ? '#f472b6' : 'rgba(255,255,255,.15)'};
+  background: ${props => props.$reached ? 'rgba(244,114,182,.25)' : 'transparent'};
+  color: ${props => props.$reached || props.$current ? '#fff' : 'rgba(255,255,255,.45)'};
 `;
 
 const ProgressLabels = styled.div`
