@@ -42,6 +42,8 @@ const AUTOPILOT_NOTICES = {
   gmail_connected: "Gmail connected. I'll pick this week's brands, write the pitches and send them on your send days. Nothing to approve.",
   review: "Here's what I lined up. Change brands or target any time in settings.",
   pro_started: "You're on Pro. Connect Gmail and I'll start pitching brands for you this week.",
+  connect_gmail: "Connect Gmail and I'll send your waiting pitches on your next send day.",
+  resume: "Autopilot is paused. Switch it back on and I'll pick up on your next send day.",
   gmail_denied: 'Gmail was not connected. You can try again any time.',
   gmail_failed: "Gmail didn't connect. Try again in a moment.",
 };

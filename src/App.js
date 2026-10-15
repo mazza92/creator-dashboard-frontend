@@ -433,8 +433,8 @@ function AppContent() {
             <Route path='/about' element={<AboutPage />} />
             <Route path='/for-brands' element={<BrandSubmitPage />} />
             <Route path='/contact' element={<ContactPage />} />
-            <Route path='/privacy-policy' element={<PrivacyPolicy />} />
-            <Route path='/terms-of-service' element={<TermsOfService />} />
+            <Route path='/privacy-policy' element={<LandingPageLayout><PrivacyPolicy /></LandingPageLayout>} />
+            <Route path='/terms-of-service' element={<LandingPageLayout><TermsOfService /></LandingPageLayout>} />
             <Route path='/unsubscribed' element={<Unsubscribed />} />
             {/* Blog routes - Next.js has /app/blog, but keep CRA routes for dev/fallback */}
             <Route path='/blog' element={<BlogPage />} />

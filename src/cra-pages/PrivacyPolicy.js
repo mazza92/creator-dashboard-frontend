@@ -8,8 +8,12 @@ const { Title, Paragraph } = Typography;
 const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  padding: 80px 24px;
+  padding: 120px 24px 80px;
   font-family: 'Inter', sans-serif;
+
+  @media (max-width: 768px) {
+    padding: 96px 20px 64px;
+  }
 `;
 
 const Section = styled.section`
