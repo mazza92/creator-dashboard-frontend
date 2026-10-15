@@ -1,12 +1,6 @@
 {
   "buildCommand": "npm run build",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src/ public/ package.json api/",
-  "crons": [
-    {
-      "path": "/api/cron/lifecycle-emails",
-      "schedule": "0 * * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/__/auth/:path*",
