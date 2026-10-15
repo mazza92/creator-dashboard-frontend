@@ -15,7 +15,7 @@ const Section = styled.section`
   margin-bottom: 40px;
 `;
 
-const LAST_UPDATED = '23 September 2026';
+const LAST_UPDATED = '15 October 2026';
 
 const TermsOfService = () => {
   return (
@@ -25,9 +25,11 @@ const TermsOfService = () => {
         <Paragraph>
           These terms govern your use of Newcollab on{' '}
           <a href="https://newcollab.co">newcollab.co</a> and{' '}
-          <a href="https://app.newcollab.co">app.newcollab.co</a>. By creating an
-          account or using the site you agree to them. If you do not agree, do
-          not use Newcollab. Privacy practices are in the{' '}
+          <a href="https://app.newcollab.co">app.newcollab.co</a>. They are an
+          agreement between you and Mahery Zuffelato, entrepreneur individuel
+          trading as Newcollab (SIREN 885 080 481; full details in section 11).
+          By creating an account or using the site you agree to them. If you do
+          not agree, do not use Newcollab. Privacy practices are in the{' '}
           <a href="/privacy-policy">Privacy Policy</a>.
         </Paragraph>
 
@@ -109,6 +111,10 @@ const TermsOfService = () => {
             as stated in the Pro offer.
           </Paragraph>
           <Paragraph>
+            Prices are final amounts. VAT is not charged: TVA non applicable,
+            art. 293 B du CGI (French VAT exemption for micro-entrepreneurs).
+          </Paragraph>
+          <Paragraph>
             Brand $299 seats are opt-in after the free first campaign. We do not
             auto-bill that product. Cancel a paid brand seat by emailing
             team@newcollab.co. Usage already granted on delivered content
@@ -170,6 +176,38 @@ const TermsOfService = () => {
             change. Continued use after a material update means you accept the
             new terms. Questions, cancellations, and disputes: start with{' '}
             <a href="mailto:team@newcollab.co">team@newcollab.co</a>.
+          </Paragraph>
+        </Section>
+
+        <Section>
+          <Title level={2}>11. Legal notice (mentions légales)</Title>
+          <Paragraph>
+            <strong>Publisher and operator</strong>
+            <br />
+            Mahery Zuffelato, trading as Newcollab
+            <br />
+            Entrepreneur individuel (micro-entrepreneur)
+            <br />
+            15 boulevard Voltaire, 94210 Saint-Maur-des-Fossés, France
+            <br />
+            SIREN: 885 080 481
+            <br />
+            VAT: TVA non applicable, art. 293 B du CGI
+            <br />
+            Email: <a href="mailto:team@newcollab.co">team@newcollab.co</a>
+            <br />
+            Director of publication: Mahery Zuffelato
+          </Paragraph>
+          <Paragraph>
+            <strong>Hosting</strong>
+            <br />
+            Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, United States
+            {' '}(<a href="https://vercel.com" target="_blank" rel="noopener noreferrer">vercel.com</a>)
+          </Paragraph>
+          <Paragraph>
+            These terms are governed by French law. If you are a consumer, you
+            also keep the protection of the mandatory laws of the country where
+            you live, and you may bring a claim in the courts there.
           </Paragraph>
         </Section>
     </Container>

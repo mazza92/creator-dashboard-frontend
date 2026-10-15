@@ -16,7 +16,7 @@ const Section = styled.section`
   margin-bottom: 40px;
 `;
 
-const LAST_UPDATED = '8 October 2026';
+const LAST_UPDATED = '15 October 2026';
 
 const PrivacyPolicy = () => {
   return (
@@ -37,9 +37,22 @@ const PrivacyPolicy = () => {
             Newcollab is a creator–brand collaboration product: a public PR
             directory, gifted PR applications, media kits, an in-app assistant
             (Polly), paid UGC listing cards, creator Pro, and a gifted UGC roster
-            for brands. We are the controller of personal data processed for
-            those services. We are not a law firm; this page describes our
-            actual practices.
+            for brands. We are not a law firm; this page describes our actual
+            practices.
+          </Paragraph>
+          <Paragraph>
+            The data controller for personal data processed for those services is:
+          </Paragraph>
+          <Paragraph>
+            <strong>Mahery Zuffelato</strong>, trading as Newcollab
+            <br />
+            Entrepreneur individuel (micro-entrepreneur)
+            <br />
+            15 boulevard Voltaire, 94210 Saint-Maur-des-Fossés, France
+            <br />
+            SIREN: 885 080 481
+            <br />
+            Email: <a href="mailto:team@newcollab.co">team@newcollab.co</a>
           </Paragraph>
         </Section>
 
@@ -337,6 +350,12 @@ const PrivacyPolicy = () => {
             behavioral ads to third parties.
           </Paragraph>
           <Paragraph>
+            If you think we have not handled your data properly, you can complain
+            to the French data protection authority, the CNIL (
+            <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">cnil.fr</a>
+            ), or to the authority where you live.
+          </Paragraph>
+          <Paragraph>
             Creators can delete their account from Account Settings. That
             request permanently removes your profile, media kit, pitches, saved
             brands, Polly threads, messages, and connected social data from our
@@ -371,6 +390,9 @@ const PrivacyPolicy = () => {
           <Title level={2}>18. Contact</Title>
           <Paragraph>
             Privacy requests: <a href="mailto:team@newcollab.co">team@newcollab.co</a>
+            <br />
+            By post: Mahery Zuffelato (Newcollab), 15 boulevard Voltaire, 94210
+            Saint-Maur-des-Fossés, France
             <br />
             Related: <a href="/terms-of-service">Terms of Service</a>
           </Paragraph>
