@@ -333,7 +333,7 @@ export const sampleAnnouncementInsights = {
       items: [
         { icon: '📦', title: 'New brands added', text: 'Beauty of Joseon, Anua, Frank Body and 20 more added this week with open PR forms.' },
         { icon: '🎯', title: 'Tip: time your pitch', text: 'Brands respond fastest Tuesday to Thursday between 9am and 11am in their timezone.' },
-        { icon: '🚀', title: 'Upgrade to Pro', text: 'On Pro, Polly runs your week from a Monday board and turns a yes into a paid usage deal.' },
+        { icon: '🚀', title: 'Upgrade to Pro', text: 'On Pro, Polly pitches 60 brands a month for you from your Gmail and turns a yes into a paid usage deal.' },
       ]
     },
   ],

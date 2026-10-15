@@ -125,21 +125,21 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </>
               ) : atCap ? (
                 <>
-                  Your 3 are out. Put Polly<br />
-                  <PinkSpan>on autopilot</PinkSpan>.
+                  Your 3 are out. Let Polly pitch<br />
+                  <PinkSpan>60 brands a month</PinkSpan> for you.
                 </>
               ) : (
                 <>
-                  Your creator manager,<br />
-                  <PinkSpan>on autopilot</PinkSpan>.
+                  60 brands a month,<br />
+                  <PinkSpan>pitched for you</PinkSpan>.
                 </>
               )}
             </Headline>
             <Subtext>
               {isWinback
-                ? 'Then $19. Polly finds the brands, runs the full outreach, and reports back on every pitch. Cancel anytime.'
+                ? 'Then $19. Polly pitches 60 brands a month for you from your Gmail and reports back on every one. Cancel anytime.'
                 : feature === 'last_unlock'
-                ? 'Use this credit now. Then on Pro, Polly finds the right brands and runs the full outreach for you.'
+                ? 'Use this credit now. Then on Pro, Polly pitches 60 brands a month for you, every weekday, from your Gmail.'
                 : `${PRO_OFFER.promise} ${PRO_OFFER.extra}`}
             </Subtext>
 

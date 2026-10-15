@@ -367,7 +367,7 @@ const AccountSettings = () => {
             {tier === 'pro' && (
               <>
                 <Feature>
-                  <FiCheck /> A Monday board: Polly sends your pitches from Gmail
+                  <FiCheck /> Polly pitches 60 brands a month for you from your Gmail, with follow-ups
                 </Feature>
                 <Feature>
                   <FiCheck /> When a brand says yes, Polly writes the paid usage ask

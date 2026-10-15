@@ -125,7 +125,7 @@ export const generateBrandViewNotification = ({
                   <tr>
                     <td width="24" valign="top" style="font-size: 14px;">&#127873;</td>
                     <td valign="top" style="padding-left: 8px; font-size: 14px; color: #374151;">
-                      <strong>A Monday board from Polly</strong>: pitches from your Gmail, and the paid usage ask when a brand says yes
+                      <strong>60 brands a month pitched for you</strong>: from your Gmail, with follow-ups, and the paid usage ask when a brand says yes
                     </td>
                   </tr>
                 </table>

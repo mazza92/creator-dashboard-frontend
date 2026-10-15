@@ -299,20 +299,6 @@ const Funnel = styled.div`
   }
 `;
 
-const Stepper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  button {
-    width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid ${t.line}; background: ${t.white};
-    font-size: 18px; line-height: 1; cursor: pointer; color: ${t.ink};
-    &:disabled { opacity: 0.4; cursor: default; }
-  }
-  .value { font-size: 22px; font-weight: 700; min-width: 34px; text-align: center; }
-`;
-
 const ConsentMock = styled.div`
   display: flex;
   align-items: center;
@@ -382,8 +368,20 @@ function when(iso) {
   return new Date(iso).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
+const DEFAULT_TARGET = 60;
+const TARGET_OPTIONS = [30, 60, 100, 150];
+
 function perWeek(target) {
-  return Math.max(1, Math.ceil((target || 24) / 4));
+  return Math.max(1, Math.ceil((target || DEFAULT_TARGET) / 4));
+}
+
+function perWeekday(target) {
+  return Math.min(8, Math.ceil(perWeek(target) / 5));
+}
+
+// About 20 minutes a brand to find it, find the contact, write the pitch and follow up by hand.
+function hoursSaved(target) {
+  return Math.round((target || DEFAULT_TARGET) / 3);
 }
 
 function GoogleMark() {
@@ -440,7 +438,7 @@ export function autopilotChip(state) {
     return { label: state.gmail?.needs_reconnect ? '⚡ Reconnect Autopilot' : '⚡ Turn on Autopilot', attention: true };
   }
   if (!state.enabled) return { label: '⚡ Autopilot paused', attention: false };
-  return { label: `⚡ Autopilot · ${state.month?.sent || 0}/${state.monthly_target || 24}`, attention: false };
+  return { label: `⚡ Autopilot · ${state.month?.sent || 0}/${state.monthly_target || DEFAULT_TARGET}`, attention: false };
 }
 
 export function AutopilotCard({ state, setState, reload, notice, returnReason, onUpgrade, onClose, onOpenSettings }) {
@@ -459,7 +457,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
   const sent = items.filter((i) => i.status === 'sent');
   const failed = items.filter((i) => i.status === 'failed');
   const month = state?.month || {};
-  const target = state?.monthly_target || 24;
+  const target = state?.monthly_target || DEFAULT_TARGET;
   const gmail = state?.gmail || {};
   const pct = Math.min(100, Math.round((100 * (month.sent || 0)) / target));
 
@@ -552,31 +550,32 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
       <li>
         <span className="n">1</span>
         <div>
-          <div className="t">I pick the brands</div>
-          <div className="d">{state?.per_week || perWeek(target)} matched brands a week, each with a real contact.</div>
+          <div className="t">I pick {target} brands a month</div>
+          <div className="d">Only brands in your niche that gift or pay creators your size, each with a verified contact.</div>
         </div>
       </li>
       <li>
         <span className="n">2</span>
         <div>
-          <div className="t">I write the pitches</div>
-          <div className="d">Every week, on my own, from your settings. Nothing for you to approve.</div>
+          <div className="t">I write every pitch</div>
+          <div className="d">One for each brand, not a template. Nothing for you to approve.</div>
         </div>
       </li>
       <li>
         <span className="n">3</span>
         <div>
-          <div className="t">I send and follow up</div>
+          <div className="t">I send every weekday and follow up</div>
           <div className="d">
-            From your own Gmail, so brands see you, not a platform. I keep following up until they reply.
+            About {state?.per_day || perWeekday(target)} a day from your own Gmail, so brands see you, not a
+            platform. Follow-ups on day 4 and day 10.
           </div>
         </div>
       </li>
       <li>
         <span className="n">4</span>
         <div>
-          <div className="t">I report back</div>
-          <div className="d">Who I pitched, who replied, what&apos;s next. All in your timeline.</div>
+          <div className="t">You get {hoursSaved(target)} hours a month back</div>
+          <div className="d">Who I pitched, who replied, what&apos;s next, all in your timeline. You just film.</div>
         </div>
       </li>
     </Steps>
@@ -588,7 +587,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
   } else if (!state.is_pro) {
     body = (
       <>
-        <p className="say">On Pro I run your brand outreach for you. Here&apos;s how it works:</p>
+        <p className="say">On Pro I pitch <strong>{target} brands a month</strong> for you, every weekday. Here&apos;s how it works:</p>
         {steps}
         <Actions>
           <Btn $primary type="button" onClick={onUpgrade}>
@@ -754,9 +753,9 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         ) : null}
         {fresh ? (
           <p className="say">
-            You&apos;re set up. Within the hour I&apos;ll pick <strong>{state.next_batch || perWeek(target)} brands</strong> that
-            match your settings, write their pitches and schedule them, then keep a week lined up until you hit {target}.
-            Nothing for you to do. Want to start this week now? Tap below.
+            You&apos;re set up. Starting within the hour I pick brands that match your settings, write their pitches
+            and schedule them, <strong>about {state.per_week || perWeek(target)} a week</strong> until you hit {target}.
+            Nothing for you to do. Want the first ones out sooner? Tap below.
           </p>
         ) : (
           <p className="say">
@@ -866,11 +865,10 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
   };
 
   const month = state.month || {};
-  const target = state.monthly_target || 24;
-  const [min, max] = state.target_range || [8, 30];
+  const target = state.monthly_target || DEFAULT_TARGET;
+  const options = state.target_options || TARGET_OPTIONS;
   const days = state.send_days || [0, 1, 2, 3, 4];
   const targeting = state.targeting;
-  const setTarget = (delta) => save({ monthly_target: Math.max(min, Math.min(max, target + delta)) });
 
   const disconnect = async () => {
     setBusy(true);
@@ -926,16 +924,25 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
           </Progress>
         </Setting>
         <Setting>
-          <div className="label">Monthly target</div>
-          <div className="hint">How many new brands I pitch for you each month.</div>
-          <Stepper>
-            <button type="button" aria-label="Fewer brands" onClick={() => setTarget(-2)} disabled={busy || target <= min}>−</button>
-            <span className="value">{target}</span>
-            <button type="button" aria-label="More brands" onClick={() => setTarget(2)} disabled={busy || target >= max}>+</button>
-            <span className="hint" style={{ margin: 0 }}>
-              About {state.per_week} a week{state.per_day > 1 ? ', up to 2 per send day' : ''}
-            </span>
-          </Stepper>
+          <div className="label">Brands a month</div>
+          <div className="hint">
+            How many new brands I pitch for you each month. Right now that&apos;s about {state.per_week} a week,
+            {' '}{state.per_day} per send day, and about {hoursSaved(target)} hours of outreach off your plate.
+          </div>
+          <Segments $cols={4}>
+            {options.map((opt) => (
+              <Segment
+                key={opt}
+                type="button"
+                $on={target === opt}
+                onClick={() => save({ monthly_target: opt })}
+                disabled={busy}
+              >
+                <strong>{opt}</strong>
+                {opt === DEFAULT_TARGET ? 'Recommended' : `~${perWeekday(opt)} a day`}
+              </Segment>
+            ))}
+          </Segments>
         </Setting>
         <Setting>
           <div className="label">What to pitch for</div>

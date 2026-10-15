@@ -116,9 +116,9 @@ const POLLY_AUTOPILOT_LAUNCH_ANNOUNCEMENT = {
   calloutText: '',
   calloutIcon: '',
   listItems: [
-    { icon: '🎯', title: 'She finds your brands', text: 'About 6 matched brands a week, each with a real email.' },
-    { icon: '✍️', title: 'She pitches for you', text: 'Every pitch written and sent from your Gmail. Nothing to approve.' },
-    { icon: '🔁', title: 'She follows up', text: 'No brand slips through. You just keep creating.' },
+    { icon: '🎯', title: 'She finds your brands', text: '60 brands a month in your niche, each with a verified contact.' },
+    { icon: '✍️', title: 'She pitches for you', text: 'A pitch written for each brand, sent from your Gmail every weekday. Nothing to approve.' },
+    { icon: '🔁', title: 'She follows up', text: 'Day 4 and day 10, so no brand slips through. About 20 hours a month back for creating.' },
   ],
   ctaLabel: 'Let Polly pitch for me · $19/mo',
   ctaUrl: 'https://app.newcollab.co/creator/dashboard/for-you?upgrade=pro&ref=polly_autopilot_launch&utm_source=email&utm_medium=newsletter&utm_campaign=polly_autopilot_launch',
@@ -1251,7 +1251,7 @@ const AdminEmail = () => {
                     <div className="template-badge" style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #374151 100%)' }}>READY</div>
                     <div className="template-icon-large">✦</div>
                     <h4>Polly autopilot — 3/3</h4>
-                    <p>Polly pitches about 6 brands a week from their Gmail. Targets free users who used all 3 pitches.</p>
+                    <p>Polly pitches 60 brands a month from their Gmail. Targets free users who used all 3 pitches.</p>
                     <div className="template-features">
                       <span>At 3/3</span>
                       <span>Live Composer</span>
