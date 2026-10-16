@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import api from '../config/api';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 import RosterSplash, { readRosterPreview, writeRosterPreview } from './RosterSplash';
+import BriefMemo from '../components/brief/BriefMemo';
+import RosterBriefModal from '../components/brief/RosterBriefModal';
 
 const INK = tokens.ink;
 const MUTE = tokens.muted;
@@ -116,6 +118,8 @@ export default function BrandPRRoster() {
   const [creators, setCreators] = useState([]);
   const [billing, setBilling] = useState(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
+  const closeBrief = useCallback(() => setBriefOpen(false), []);
   const [step, setStep] = useState(1);
   const [drawerId, setDrawerId] = useState(null);
   const [toast, setToast] = useState('');
@@ -352,6 +356,13 @@ export default function BrandPRRoster() {
     }
   }
 
+  async function saveBrief(draft) {
+    const { data } = await api.post(`/api/brand-pr/r/${token}/brief`, { brief: draft });
+    applyPayload(data);
+    setBriefOpen(false);
+    setToast(data.campaign?.brief ? 'Brief saved. Your creators can see it now.' : 'Brief cleared.');
+  }
+
   async function onShipOne(c) {
     try {
       const data = await mutate('mark-shipped', { application_id: c.application_id });
@@ -469,9 +480,31 @@ export default function BrandPRRoster() {
     },
   ];
 
+  const briefCard = campaign?.brief ? (
+    <BriefWrap>
+      <BriefMemo brief={campaign.brief} brandName={brandName} compact />
+      <BriefEdit type="button" onClick={() => setBriefOpen(true)}>Edit brief</BriefEdit>
+    </BriefWrap>
+  ) : (
+    <BriefEmpty>
+      <div>
+        <b>Tell your creators what to make</b>
+        <span>Key message, must-show shots, tags. Takes a minute and lifts content quality.</span>
+      </div>
+      <BtnGhost type="button" onClick={() => setBriefOpen(true)}>Add brief</BtnGhost>
+    </BriefEmpty>
+  );
+
   return (
     <Shell>
       {toast && <Toast role="status">{toast}</Toast>}
+      <RosterBriefModal
+        open={briefOpen}
+        brief={campaign?.brief}
+        brandName={brandName}
+        onClose={closeBrief}
+        onSave={saveBrief}
+      />
 
       <Chrome>
         <Inner>
@@ -646,6 +679,9 @@ export default function BrandPRRoster() {
                       ? `Lock ${selectedIds.length} & export`
                       : 'Pick at least 1'}
                 </Go>
+                <BriefLink type="button" onClick={() => setBriefOpen(true)}>
+                  {campaign?.brief ? 'Edit creator brief ✓' : '+ Add a creator brief (optional)'}
+                </BriefLink>
               </Tray>
             </Layout>
           )}
@@ -656,6 +692,7 @@ export default function BrandPRRoster() {
                 <h1>Ship from Shopify or ShipStation</h1>
                 <p>Download the CSV and ship the way you already do. Mark each creator as their box goes out, or all at once.</p>
               </Head>
+              {briefCard}
               <ShipBar>
                 <BtnPrimary type="button" onClick={downloadCsv}>Download shipping CSV</BtnPrimary>
                 <BtnGhost type="button" disabled={busy || shipped} onClick={onMarkShipped}>
@@ -712,6 +749,7 @@ export default function BrandPRRoster() {
                 <h1>Content inbox</h1>
                 <p>Organic links and UGC files land here. Reuse in ads for 6 months.</p>
               </Head>
+              {briefCard}
               {billing?.needs_subscribe && billing?.delivered_count > 0 ? (
                 <Paywall>
                   <div>
@@ -1707,6 +1745,50 @@ const Meta = styled.div`
   b { display: block; font-size: 14px; color: ${INK}; margin-bottom: 4px; }
 `;
 const Ok = styled.span` color: ${GREEN_DEEP}; font-weight: 700; `;
+const BriefWrap = styled.div`
+  position: relative;
+  margin: 0 0 16px;
+`;
+const BriefEdit = styled.button`
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: ${INK};
+  text-decoration: underline;
+  cursor: pointer;
+`;
+const BriefEmpty = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px dashed ${LINE};
+  border-radius: 12px;
+  background: ${CREAM};
+  b { display: block; font-size: 14px; color: ${INK}; }
+  span { font-size: 13px; color: ${MUTE}; }
+  @media (max-width: 560px) { flex-direction: column; align-items: flex-start; }
+`;
+const BriefLink = styled.button`
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${MUTE};
+  text-decoration: underline;
+  cursor: pointer;
+`;
 const RowShip = styled.button`
   padding: 7px 12px;
   border-radius: 8px;

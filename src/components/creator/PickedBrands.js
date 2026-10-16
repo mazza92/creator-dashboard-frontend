@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import api from '../../config/api';
 import { creatorTokens as tokens } from '../../theme/creatorTokens';
+import BriefMemo from '../brief/BriefMemo';
 
 const DUE_DAYS = 10;
 
@@ -70,6 +71,7 @@ function PickedCard({ app, focused, onDelivered }) {
         <li><b>1 organic post</b> on TikTok or Instagram tagging {brandTag(app)}</li>
         <li><b>1 raw UGC video</b>, no music or captions, they can reuse in ads for 6 months</li>
       </Brief>
+      <BriefMemo brief={pick.brief} brandName={app.name} />
       {delivered && !editing ? (
         <Done>
           {delivered.organic_url && <a href={delivered.organic_url} target="_blank" rel="noreferrer">Organic post</a>}
