@@ -160,6 +160,10 @@ export default function BrandPRRoster() {
         params: utmMedium ? { utm_medium: utmMedium } : undefined,
       });
       applyPayload(data);
+      const wanted = new URLSearchParams(window.location.search).get('step');
+      const status = data.campaign?.status;
+      if (wanted === 'ship' && status === 'locked') setStep(2);
+      if (wanted === 'content' && status === 'shipped') setStep(3);
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Could not load this roster');
       setCampaign(null);
@@ -670,11 +674,16 @@ export default function BrandPRRoster() {
                 <h1>Content inbox</h1>
                 <p>Organic links and UGC files land here. Reuse in ads for 6 months.</p>
               </Head>
-              {billing?.needs_subscribe ? (
+              {billing?.needs_subscribe && billing?.delivered_count > 0 ? (
                 <Paywall>
                   <div>
-                    <PaywallTitle>Continue with Gifted UGC — $299/mo</PaywallTitle>
-                    <PaywallSub>Next month: {slotLimit} more creators, same 6-month ad reuse.</PaywallSub>
+                    <PaywallTitle>Keep the UGC coming — $299/mo</PaywallTitle>
+                    <PaywallSub>
+                      {billing.next_applicants > 0
+                        ? `${billing.next_applicants} more creators already applied. `
+                        : ''}
+                      Gift {slotLimit} new creators every month, same 6-month ad reuse. Cancel anytime.
+                    </PaywallSub>
                   </div>
                   <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
                     {checkoutBusy ? 'Opening checkout…' : 'Subscribe — $299/mo'}
@@ -693,6 +702,7 @@ export default function BrandPRRoster() {
               <Inbox>
                 {selectedCreators.map((c) => {
                   const ready = c.status === 'posted';
+                  const got = c.delivered;
                   const cover = stillUrl(c.posts?.[0]?.thumbnail_url);
                   return (
                     <Piece key={c.application_id}>
@@ -701,7 +711,17 @@ export default function BrandPRRoster() {
                       </Ph>
                       <Meta>
                         <b>{c.name}</b>
-                        {ready ? <Ok>Organic + UGC file ready</Ok> : 'Usually 5–10 days after delivery'}
+                        {got ? (
+                          <DeliveredLinks>
+                            {got.organic_url && (
+                              <a href={got.organic_url} target="_blank" rel="noopener noreferrer">View organic post</a>
+                            )}
+                            {got.ugc_url && (
+                              <a href={got.ugc_url} target="_blank" rel="noopener noreferrer">Open UGC file</a>
+                            )}
+                            {got.note && <Muted>“{got.note}”</Muted>}
+                          </DeliveredLinks>
+                        ) : ready ? <Ok>Organic + UGC file ready</Ok> : 'Usually 5–10 days after delivery'}
                       </Meta>
                     </Piece>
                   );
@@ -1649,6 +1669,11 @@ const Meta = styled.div`
   b { display: block; font-size: 14px; color: ${INK}; margin-bottom: 4px; }
 `;
 const Ok = styled.span` color: ${GREEN_DEEP}; font-weight: 700; `;
+const DeliveredLinks = styled.div`
+  display: grid;
+  gap: 4px;
+  a { color: ${GREEN_DEEP}; font-weight: 700; text-decoration: underline; }
+`;
 const Drawer = styled.div`
   display: ${(p) => (p.$open ? 'flex' : 'none')};
   position: fixed;

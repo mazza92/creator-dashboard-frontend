@@ -5,6 +5,7 @@ import api from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import SegmentTabs from '../components/creator/SegmentTabs';
+import PickedBrands from '../components/creator/PickedBrands';
 import BrandSocialHeader, { parseSocial } from '../components/creator/BrandSocialHeader';
 import { ColdBrandNote, ReplySignalChip } from '../components/ReplySignal';
 import {
@@ -58,7 +59,7 @@ function scrollPageTop() {
 const TRACK_STEPS = [
   { label: 'Review', emoji: '👀' },
   { label: 'Ships', emoji: '📦' },
-  { label: '3 posts', emoji: '📸' },
+  { label: 'Content', emoji: '📸' },
 ];
 
 function statusToStage(status) {
@@ -359,6 +360,7 @@ export default function BrandPRHome() {
   const tab = location.pathname.includes('pr-brands') ? 'dir' : 'foryou';
 
   const [quota, setQuota] = useState(null);
+  const [pickedApps, setPickedApps] = useState([]);
   const [appliedMap, setAppliedMap] = useState(() => new Map());
   const [matched, setMatched] = useState([]);
   const [openLists, setOpenLists] = useState([]);
@@ -474,6 +476,21 @@ export default function BrandPRHome() {
     (list || []).map((b) => normalizeBrand(b, map)).filter(Boolean)
   ), []);
 
+  const onPickDelivered = useCallback((applicationId, delivered) => {
+    setPickedApps((prev) => prev.map((a) => (
+      a.application_id === applicationId
+        ? { ...a, apply_status: 'posted', pick: { ...a.pick, delivered } }
+        : a
+    )));
+    setAppliedMap((prev) => {
+      const next = new Map(prev);
+      next.forEach((a, id) => {
+        if (a.application_id === applicationId) next.set(id, { ...a, apply_status: 'posted' });
+      });
+      return next;
+    });
+  }, []);
+
   const loadCore = useCallback(async () => {
     setLoadingList(true);
     try {
@@ -493,6 +510,7 @@ export default function BrandPRHome() {
       const apps = appsRes.data?.applications || [];
       const map = new Map(apps.map((a) => [a.id, a]));
       setAppliedMap(map);
+      setPickedApps(apps.filter((a) => a.pick));
 
       const liveMatched = mergeApplied(forYouRes.data?.matched || [], map)
         .filter((b) => b.applied || Number(b.matchScore) > 0);
@@ -1646,6 +1664,12 @@ export default function BrandPRHome() {
           ))}
         </Hero>
       </ListHead>
+
+      <PickedBrands
+        apps={pickedApps}
+        focusId={searchParams.get('picked')}
+        onDelivered={onPickDelivered}
+      />
 
       {tab === 'foryou' && (
         <>
