@@ -163,7 +163,8 @@ export default function BrandPRRoster() {
       const wanted = new URLSearchParams(window.location.search).get('step');
       const status = data.campaign?.status;
       if (wanted === 'ship' && status === 'locked') setStep(2);
-      if (wanted === 'content' && status === 'shipped') setStep(3);
+      const anyOut = (data.creators || []).some((c) => c.shipped_at || c.status === 'posted');
+      if (wanted === 'content' && (status === 'shipped' || anyOut)) setStep(3);
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Could not load this roster');
       setCampaign(null);
@@ -234,6 +235,9 @@ export default function BrandPRRoster() {
   const remaining = Math.max(0, slotLimit - selectedIds.length);
   const locked = campaign?.status === 'locked' || campaign?.status === 'shipped';
   const shipped = campaign?.status === 'shipped';
+  const isOut = (c) => Boolean(c.shipped_at) || c.status === 'posted';
+  const shippedCount = selectedCreators.filter(isOut).length;
+  const contentOpen = shipped || shippedCount > 0;
   const drawer = creators.find((c) => c.application_id === drawerId) || null;
   const openCreators = creators.filter((c) => !c.skipped);
   const skippedCreators = creators.filter((c) => c.skipped);
@@ -348,6 +352,19 @@ export default function BrandPRRoster() {
     }
   }
 
+  async function onShipOne(c) {
+    try {
+      const data = await mutate('mark-shipped', { application_id: c.application_id });
+      setToast(
+        data?.campaign?.status === 'shipped'
+          ? 'Everyone’s shipped. Content lands in your inbox.'
+          : `${c.name} marked shipped. We’ve told them it’s on the way.`
+      );
+    } catch {
+      /* toast set */
+    }
+  }
+
   async function onSubscribe() {
     setCheckoutBusy(true);
     try {
@@ -386,7 +403,7 @@ export default function BrandPRRoster() {
 
   function goStep(n) {
     if (n === 2 && !locked) return;
-    if (n === 3 && !shipped) return;
+    if (n === 3 && !contentOpen) return;
     setStep(n);
   }
 
@@ -437,13 +454,17 @@ export default function BrandPRRoster() {
     {
       n: 2,
       label: 'Ship',
-      hint: shipped ? 'Done' : locked ? 'CSV ready' : 'After lock',
+      hint: shipped
+        ? 'Done'
+        : shippedCount
+          ? `${shippedCount}/${selectedCreators.length} sent`
+          : locked ? 'CSV ready' : 'After lock',
       done: shipped,
     },
     {
       n: 3,
       label: 'Content',
-      hint: shipped ? 'Inbox' : 'After ship',
+      hint: contentOpen ? 'Inbox' : 'After ship',
       done: false,
     },
   ];
@@ -492,7 +513,7 @@ export default function BrandPRRoster() {
                   key={s.n}
                   type="button"
                   $on={step === s.n}
-                  disabled={(s.n === 2 && !locked) || (s.n === 3 && !shipped)}
+                  disabled={(s.n === 2 && !locked) || (s.n === 3 && !contentOpen)}
                   onClick={() => goStep(s.n)}
                 >
                   <StepNum $on={step === s.n}>{s.done ? '✓' : s.n}</StepNum>
@@ -633,12 +654,16 @@ export default function BrandPRRoster() {
             <>
               <Head>
                 <h1>Ship from Shopify or ShipStation</h1>
-                <p>Download the CSV, import it the way you already ship, then mark this roster shipped.</p>
+                <p>Download the CSV and ship the way you already do. Mark each creator as their box goes out, or all at once.</p>
               </Head>
               <ShipBar>
                 <BtnPrimary type="button" onClick={downloadCsv}>Download shipping CSV</BtnPrimary>
                 <BtnGhost type="button" disabled={busy || shipped} onClick={onMarkShipped}>
-                  {shipped ? 'Marked shipped' : 'I’ve shipped everyone'}
+                  {shipped
+                    ? 'All shipped'
+                    : shippedCount
+                      ? `Mark the other ${selectedCreators.length - shippedCount} shipped`
+                      : 'I’ve shipped everyone'}
                 </BtnGhost>
               </ShipBar>
               <TableWrap>
@@ -648,6 +673,7 @@ export default function BrandPRRoster() {
                       <th>Creator</th>
                       <th>Ship to</th>
                       <th>What to send</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -660,6 +686,18 @@ export default function BrandPRRoster() {
                         </td>
                         <td style={{ whiteSpace: 'pre-line' }}>{formatShipBlock(c.shipping_address)}</td>
                         <td>{sku || heroProduct}</td>
+                        <td>
+                          {isOut(c) ? (
+                            <Ok>
+                              {c.status === 'posted' ? 'Content in' : 'Shipped'}
+                              {c.shipped_at ? ` · ${new Date(c.shipped_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+                            </Ok>
+                          ) : (
+                            <RowShip type="button" disabled={busy} onClick={() => onShipOne(c)}>
+                              Mark shipped
+                            </RowShip>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -721,7 +759,7 @@ export default function BrandPRRoster() {
                             )}
                             {got.note && <Muted>“{got.note}”</Muted>}
                           </DeliveredLinks>
-                        ) : ready ? <Ok>Organic + UGC file ready</Ok> : 'Usually 5–10 days after delivery'}
+                        ) : ready ? <Ok>Organic + UGC file ready</Ok> : isOut(c) ? 'Usually 5–10 days after delivery' : 'Not shipped yet'}
                       </Meta>
                     </Piece>
                   );
@@ -1669,6 +1707,20 @@ const Meta = styled.div`
   b { display: block; font-size: 14px; color: ${INK}; margin-bottom: 4px; }
 `;
 const Ok = styled.span` color: ${GREEN_DEEP}; font-weight: 700; `;
+const RowShip = styled.button`
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid ${INK};
+  background: transparent;
+  color: ${INK};
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  &:hover:not(:disabled) { background: ${INK}; color: #fff; }
+  &:disabled { opacity: 0.5; cursor: default; }
+`;
 const DeliveredLinks = styled.div`
   display: grid;
   gap: 4px;
