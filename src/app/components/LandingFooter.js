@@ -153,6 +153,8 @@ export default function LandingFooter() {
             <FooterLinks>
               <a href="/about">About</a>
               <a href="/brands/pr-packages">For Brands</a>
+              <a href="/integrations/chatgpt">Newcollab for ChatGPT</a>
+              <a href="/integrations/claude">Newcollab for Claude</a>
               <a href="/blog">Blog</a>
               <a href="/#pricing">Pricing</a>
               <a href="mailto:hello@newcollab.co">Contact</a>

@@ -100,11 +100,15 @@ const PrivacyPolicy = () => {
             <li>Brands you apply to: kit, selected posts, and the shipping details you submitted so they can decide and ship a PR package.</li>
             <li>Creators on a brand roster: the brand sees applicants they unlocked on their roster page.</li>
             <li>
-              Creator search for brands, including our ChatGPT app and the brand launch page: creators with a
-              published kit can appear with their public handle, niches, follower range, country, gifting
-              preference, brands from their portfolio, kit link, and the photos already shown on their public kit.
+              Creator search for brands, including our ChatGPT app, our Claude connector and the brand launch page:
+              creators with a published kit can appear with their public handle, niches, follower range, country,
+              gifting preference, brands from their portfolio, kit link, and the photos already shown on their public kit.
               Creators without a published kit appear only as anonymous stats (niche, follower range, country) with
               no handle, name, contact details, or address. Unpublish your kit or email team@newcollab.co to be removed.
+              When ChatGPT or Claude calls this search, we receive only the search filters (niche, platform, country,
+              number of results) and the calling server&apos;s IP address. We use the IP address for rate limiting and
+              keep it for about a minute; results are cached for up to an hour. We do not receive the chat conversation,
+              the user&apos;s name, or their account details, and we do not share this data with third parties.
             </li>
             <li>Processors: Google (Firebase Auth, Gemini for Polly, Analytics), Meta (Instagram Login, ads pixel), TikTok (Login Kit), Stripe, Microsoft Clarity, email delivery, and hosting.</li>
             <li>Law enforcement or a buyer of the business, if we are legally required or transferring the product under the same protections.</li>

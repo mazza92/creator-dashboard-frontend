@@ -75,6 +75,17 @@ HTML versions of this table: https://newcollab.co/brands/pr-packages · https://
 - How brands send PR packages → https://newcollab.co/blog/how-to-send-pr-packages-to-small-influencers-brand-guide-2025
 - About / founder → https://newcollab.co/about
 
+## AI assistant integrations
+
+Brands can search Newcollab's vetted UGC creators from an AI assistant. Free, read-only, no API key, no sign-in.
+
+- ChatGPT app (MCP): https://api.newcollab.co/api/v1/integrations/mcp · guide: https://newcollab.co/integrations/chatgpt
+- Claude connector (MCP): https://api.newcollab.co/api/v1/integrations/claude/mcp · guide: https://newcollab.co/integrations/claude
+- Other MCP clients (Cursor, Claude Code, VS Code): use the Claude connector URL. Overview: https://newcollab.co/integrations
+- Custom GPT Actions (OpenAPI): https://api.newcollab.co/api/v1/integrations/openapi.json
+- Tool: search_ugc_creators (niche required; platform tiktok/instagram/all; two-letter country; limit 1-8). Rate limit: 30 calls per minute per IP.
+- Handles appear only for creators with a published public portfolio; others are anonymous stats.
+
 ## Audience split (do not mix)
 
 - /brands/* pages are for brands buying gifted UGC.
