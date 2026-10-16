@@ -287,6 +287,128 @@ const ASSISTANTS = {
       },
     ],
   },
+  gemini: {
+    slug: 'gemini',
+    name: 'Gemini',
+    vendor: 'Google',
+    appTerm: 'custom app',
+    navTitle: 'Newcollab in Gemini',
+    title: 'Find UGC Creators in Gemini (Newcollab Custom App + MCP) | Newcollab',
+    description:
+      'Search vetted UGC creators and micro-influencers by niche, platform and country from Google Gemini. Add Newcollab as a free custom app in under a minute, no API key needed.',
+    keywords: [
+      'find UGC creators Gemini',
+      'Gemini influencer search',
+      'Gemini connected apps influencer marketing',
+      'Gemini custom app MCP',
+      'UGC creator search Google Gemini',
+      'find micro influencers with Gemini',
+      'Newcollab Gemini app',
+    ],
+    h1: ['Find UGC creators', 'from Gemini'],
+    heroBullets: [
+      'Search vetted UGC creators by niche, platform and country',
+      'See follower band, engagement and who accepts gifted collabs',
+      'Add once on the web, then use it in Gemini on web and mobile',
+    ],
+    mcpUrl: `${API}/gemini/mcp`,
+    listed: false,
+    directoryUrl: null,
+    status: 'Google curates the Connected Apps catalog, so Newcollab is added as a custom app. The link works today.',
+    hubStatus: 'Custom app link live',
+    intro:
+      'Newcollab is a gifted UGC platform for DTC brands. Added to Gemini as a custom connected app, Newcollab lets you ask for UGC creators in plain English and get a vetted shortlist back in the chat, with each creator\u2019s platform, niches, follower band, engagement and gifting preference. One link then opens a free gifted roster on Newcollab with the same filters.',
+    steps: [
+      {
+        name: 'Connect',
+        time: 'under a minute',
+        text: 'On gemini.google.com, open Settings, then Connected Apps. Under Custom apps, choose Add a custom app, paste the Newcollab link below and click Next. There is nothing to sign in to.',
+      },
+      {
+        name: 'Ask',
+        time: 'seconds',
+        text: 'In a chat, type @Newcollab Creator Search followed by your request: niche, platform, country, or the product you want to seed. It works in any language you write in.',
+      },
+      {
+        name: 'Gift',
+        time: 'free first campaign',
+        text: 'Open the roster link in the results. Pick creators on a private roster, lock the list and export a shipping CSV for Shopify or ShipStation.',
+      },
+    ],
+    setupNote:
+      'Custom apps are added on the Gemini web app and then also work in the Gemini mobile app. Google requires a personal Google account and Keep Activity turned on; check Google\u2019s help page for current country availability.',
+    demo: {
+      prompt: '@Newcollab Creator Search find me 5 fitness creators who accept gifted products.',
+      reply:
+        'Here are 5 fitness UGC creators. Most are in the 1K–50K follower range and all are open to gifting, product in exchange for content. Each handle links to their public portfolio. Want me to open a free gifted roster with these filters?',
+    },
+    prompts: [
+      { label: 'Product seeding', text: '@Newcollab Creator Search find me 5 fitness creators who accept gifted products.' },
+      { label: 'Local market', text: '@Newcollab Creator Search show beauty creators in France on Instagram.' },
+      { label: 'Paid social', text: '@Newcollab Creator Search I need TikTok creators for supplement ads in the US with strong engagement.' },
+      { label: 'New niche', text: '@Newcollab Creator Search find pet product micro-influencers I could send PR boxes to.' },
+    ],
+    compare: {
+      columns: ['Gemini Connected Apps catalog', 'Custom app link'],
+      rows: [
+        { label: 'Status', a: 'Curated by Google partners', b: 'Live today' },
+        { label: 'Setup', a: 'One click if featured', b: 'Paste the link in Connected Apps' },
+        { label: 'Sign-in', a: 'None', b: 'None' },
+        { label: 'Creator search', a: 'Yes', b: 'Yes' },
+        { label: 'Gemini mobile', a: 'Yes', b: 'Yes, after adding on the web' },
+        { label: 'Cost', a: 'Free', b: 'Free' },
+      ],
+    },
+    devExtras: [
+      {
+        title: 'Gemini CLI',
+        text: 'Add the server to the Gemini CLI, then ask for creators in any session.',
+        code: `gemini mcp add --transport http newcollab ${API}/gemini/mcp`,
+      },
+      {
+        title: 'Gemini Enterprise',
+        text: 'Workspace admins can add it under Manage team, then Connected apps, then Add MCP Server, with No authentication.',
+        code: `${API}/gemini/mcp`,
+      },
+    ],
+    faqs: [
+      {
+        question: 'How do I add Newcollab to Gemini?',
+        answer:
+          'On gemini.google.com, open Settings, then Connected Apps. Under Custom apps, choose Add a custom app, paste https://api.newcollab.co/api/v1/integrations/gemini/mcp and click Next. No sign-in is needed. Then type @Newcollab Creator Search in any chat.',
+      },
+      {
+        question: 'Can Gemini find UGC creators on its own?',
+        answer:
+          'Gemini can search the web and name well-known influencers, but it cannot tell which creators make UGC, accept gifted collabs, or what their engagement is. The Newcollab custom app gives Gemini a live, vetted directory of opted-in creators to search.',
+      },
+      {
+        question: 'Is Newcollab in Gemini free?',
+        answer:
+          'Yes. The custom app is free and needs no Newcollab account or API key. If you go on to gift product, your first campaign on Newcollab has no platform fee, you only pay for product and shipping. After that it is $299 a month if you opt in, with no auto-billing.',
+      },
+      {
+        question: 'Why is Newcollab not in the Gemini Connected Apps list?',
+        answer:
+          'Google curates the apps featured in Connected Apps through its own partnerships and has no public submission process yet. Any MCP server can still be added as a custom app, which is how Newcollab works in Gemini today.',
+      },
+      {
+        question: 'Does it work in the Gemini mobile app?',
+        answer:
+          'Yes. Custom apps can only be added on the Gemini web app, but once added they are also available in the Gemini mobile app on the same Google account.',
+      },
+      {
+        question: 'What data does Newcollab receive from Gemini?',
+        answer:
+          'Only the search filters Gemini sends (niche, platform, country and number of results) and the calling server\u2019s IP address for rate limiting, kept for about a minute. We never receive your conversation or Google account details.',
+      },
+      {
+        question: 'Why do some creators show without a handle?',
+        answer:
+          'Handles appear only for creators who published a public UGC portfolio on Newcollab. Everyone else is shown as anonymous stats (niche, follower band, country) to protect their privacy. Brands see full profiles on their private Newcollab roster.',
+      },
+    ],
+  },
 };
 
 export function assistantSlugs() {
@@ -325,7 +447,7 @@ export function buildSchemas(a) {
       '@type': 'SoftwareApplication',
       name: `Newcollab for ${a.name}`,
       applicationCategory: 'BusinessApplication',
-      operatingSystem: `${a.name} (web, desktop${a.slug === 'claude' ? ', mobile' : ''})`,
+      operatingSystem: `${a.name} (web, desktop${a.slug === 'chatgpt' ? '' : ', mobile'})`,
       url,
       description: a.description,
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },

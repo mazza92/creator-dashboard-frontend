@@ -81,6 +81,7 @@ Brands can search Newcollab's vetted UGC creators from an AI assistant. Free, re
 
 - ChatGPT app (MCP): https://api.newcollab.co/api/v1/integrations/mcp · guide: https://newcollab.co/integrations/chatgpt
 - Claude connector (MCP): https://api.newcollab.co/api/v1/integrations/claude/mcp · guide: https://newcollab.co/integrations/claude
+- Gemini custom app (MCP): https://api.newcollab.co/api/v1/integrations/gemini/mcp · guide: https://newcollab.co/integrations/gemini
 - Other MCP clients (Cursor, Claude Code, VS Code): use the Claude connector URL. Overview: https://newcollab.co/integrations
 - Custom GPT Actions (OpenAPI): https://api.newcollab.co/api/v1/integrations/openapi.json
 - Tool: search_ugc_creators (niche required; platform tiktok/instagram/all; two-letter country; limit 1-8). Rate limit: 30 calls per minute per IP.

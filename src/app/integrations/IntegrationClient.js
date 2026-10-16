@@ -437,7 +437,7 @@ export default function IntegrationClient({ assistant: a, others }) {
   const track = (location) => () => trackIntegrationClick(campaign, location);
   const statusLine = a.listed
     ? `Listed in the ${a.name} directory.`
-    : `Directory listing in review with ${a.vendor}. The custom ${a.appTerm} link works today.`;
+    : a.status || `Directory listing in review with ${a.vendor}. The custom ${a.appTerm} link works today.`;
 
   return (
     <LandingPageLayoutNext canonicalUrl={`https://newcollab.co/integrations/${a.slug}`}>

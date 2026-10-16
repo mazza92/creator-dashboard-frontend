@@ -1,9 +1,9 @@
 import IntegrationsHubClient from './IntegrationsHubClient';
 import { API, LAST_UPDATED_ISO, SITE, allAssistants } from './_catalog';
 
-const TITLE = 'Find UGC Creators in ChatGPT, Claude and Any AI Assistant | Newcollab';
+const TITLE = 'Find UGC Creators in ChatGPT, Claude, Gemini and Any AI Assistant | Newcollab';
 const DESCRIPTION =
-  'Add Newcollab to ChatGPT, Claude or any MCP client and search vetted UGC creators by niche, platform and country. Free, read-only, no API key.';
+  'Add Newcollab to ChatGPT, Claude, Gemini or any MCP client and search vetted UGC creators by niche, platform and country. Free, read-only, no API key.';
 
 export const revalidate = 3600;
 
@@ -16,6 +16,7 @@ export const metadata = {
     'find UGC creators with AI',
     'ChatGPT influencer marketing app',
     'Claude influencer marketing connector',
+    'Gemini influencer search app',
     'AI influencer discovery tool',
   ],
   alternates: { canonical: `${SITE}/integrations` },
@@ -70,6 +71,7 @@ export default function IntegrationsHubRoute() {
           navTitle: a.navTitle,
           description: a.description,
           listed: a.listed,
+          hubStatus: a.hubStatus || null,
         }))}
         genericMcpUrl={`${API}/claude/mcp`}
       />

@@ -26,9 +26,9 @@ import { LAST_UPDATED, RATE_LIMIT, trackIntegrationClick, trackedUrl } from './_
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  @media (max-width: 900px) { grid-template-columns: 1fr; }
+  @media (max-width: 760px) { grid-template-columns: 1fr; }
 `;
 
 const CardLink = styled(Link)`
@@ -83,7 +83,7 @@ export default function IntegrationsHubClient({ assistants, genericMcpUrl }) {
           <HeroTag>AI integrations · free · read-only</HeroTag>
           <H1>Find UGC creators from <span>your AI assistant</span></H1>
           <Sub>
-            Newcollab plugs its vetted UGC creator directory into ChatGPT, Claude and any MCP client. Ask for creators
+            Newcollab plugs its vetted UGC creator directory into ChatGPT, Claude, Gemini and any MCP client. Ask for creators
             by niche, platform and country and get a shortlist back in the chat.
           </Sub>
           <Meta>Last updated {LAST_UPDATED}.</Meta>
@@ -99,7 +99,7 @@ export default function IntegrationsHubClient({ assistants, genericMcpUrl }) {
             {assistants.map((a) => (
               <CardLink key={a.slug} href={`/integrations/${a.slug}`}>
                 <Card style={{ height: '100%' }}>
-                  <Status>{a.listed ? 'Listed in directory' : 'Directory review · link live'}</Status>
+                  <Status>{a.listed ? 'Listed in directory' : a.hubStatus || 'Directory review · link live'}</Status>
                   <CardTitle>{a.navTitle}</CardTitle>
                   <CardText>{a.description}</CardText>
                   <More>Open the {a.name} guide →</More>

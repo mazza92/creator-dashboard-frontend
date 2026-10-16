@@ -52,7 +52,10 @@ export default async function IntegrationRoute({ params }) {
   return (
     <>
       {buildSchemas(a).map((schema) => <JsonLd key={schema['@type']} data={schema} />)}
-      <IntegrationClient assistant={a} others={otherAssistants(a.slug)} />
+      <IntegrationClient
+        assistant={a}
+        others={otherAssistants(a.slug).map(({ slug: s, navTitle }) => ({ slug: s, navTitle }))}
+      />
     </>
   );
 }

@@ -39,6 +39,7 @@ const STATIC_PAGES = [
   { url: '/integrations',              priority: 0.8, changeFrequency: 'monthly' },
   { url: '/integrations/chatgpt',      priority: 0.8, changeFrequency: 'monthly' },
   { url: '/integrations/claude',       priority: 0.8, changeFrequency: 'monthly' },
+  { url: '/integrations/gemini',       priority: 0.8, changeFrequency: 'monthly' },
   { url: '/blog',                      priority: 0.9, changeFrequency: 'daily'   },
   { url: '/about',                     priority: 0.7, changeFrequency: 'monthly' },
   { url: '/contact',                   priority: 0.7, changeFrequency: 'monthly' },
