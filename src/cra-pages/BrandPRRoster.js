@@ -128,6 +128,7 @@ export default function BrandPRRoster() {
   const [creators, setCreators] = useState([]);
   const [billing, setBilling] = useState(null);
   const [lockedInfo, setLockedInfo] = useState(null);
+  const [proof, setProof] = useState([]);
   const [paywall, setPaywall] = useState('');
   const [shortlistDismissed, setShortlistDismissed] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
@@ -156,6 +157,7 @@ export default function BrandPRRoster() {
     setCreators(data.creators || []);
     setBilling(data.billing || null);
     setLockedInfo(data.locked || null);
+    if (Array.isArray(data.proof)) setProof(data.proof);
     if (data.billing?.subscribed) setPaywall('');
     if (data.campaign?.brand) {
       setPreview(data.campaign.brand);
@@ -405,10 +407,14 @@ export default function BrandPRRoster() {
     }
   }
 
-  async function onSubscribe() {
+  async function onSubscribe(source) {
     setCheckoutBusy(true);
     try {
-      const { data } = await api.post(`/api/brand-billing/r/${token}/checkout`, {}, { timeout: 30000 });
+      const { data } = await api.post(
+        `/api/brand-billing/r/${token}/checkout`,
+        { source: typeof source === 'string' ? source : 'unknown' },
+        { timeout: 30000 },
+      );
       if (data?.checkout_url) {
         window.location.href = data.checkout_url;
         return;
@@ -629,7 +635,7 @@ export default function BrandPRRoster() {
                       <PaywallSub>{paywall} Cancel anytime.</PaywallSub>
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
+                      <BtnPrimary type="button" disabled={checkoutBusy} onClick={() => onSubscribe('paywall')}>
                         {checkoutBusy ? 'Opening checkout…' : 'Unlock — $299/mo'}
                       </BtnPrimary>
                       <BtnGhost type="button" onClick={() => setPaywall('')}>Keep my free {freePickLimit}</BtnGhost>
@@ -712,7 +718,7 @@ export default function BrandPRRoster() {
                             ))}
                           </Chips>
                         </div>
-                        <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
+                        <BtnPrimary type="button" disabled={checkoutBusy} onClick={() => onSubscribe('locked_list')}>
                           {checkoutBusy ? 'Opening checkout…' : `See all ${lockedCount + openCreators.length} — $299/mo`}
                         </BtnPrimary>
                       </Paywall>
@@ -729,6 +735,28 @@ export default function BrandPRRoster() {
                       </SkippedWrap>
                     )}
                   </>
+                )}
+                {proof.length > 0 && !locked && (
+                  <ProofWrap>
+                    <SectionLabel>Recently delivered on Newcollab</SectionLabel>
+                    <ProofGrid>
+                      {proof.map((p) => (
+                        <ProofCard key={p.post_url} href={p.post_url} target="_blank" rel="noopener noreferrer">
+                          <MiniAv $color={hueFromName(p.name)} $img={mediaUrl(p.avatar_url)}>{initials(p.name)}</MiniAv>
+                          <div>
+                            <b>{p.handle || p.name}</b>
+                            <span>
+                              {[p.followers_label, `for ${p.brand_name}`].filter(Boolean).join(' · ')}
+                            </span>
+                            <em>
+                              {p.days_to_post ? `Posted ${p.days_to_post} days after shipping · ` : ''}
+                              Watch on {p.platform}
+                            </em>
+                          </div>
+                        </ProofCard>
+                      ))}
+                    </ProofGrid>
+                  </ProofWrap>
                 )}
               </div>
 
@@ -851,7 +879,7 @@ export default function BrandPRRoster() {
                       Gift {slotLimit} new creators every month, same 6-month ad reuse. Cancel anytime.
                     </PaywallSub>
                   </div>
-                  <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
+                  <BtnPrimary type="button" disabled={checkoutBusy} onClick={() => onSubscribe('content_inbox')}>
                     {checkoutBusy ? 'Opening checkout…' : 'Subscribe — $299/mo'}
                   </BtnPrimary>
                 </Paywall>
@@ -1132,6 +1160,29 @@ const Inner = styled.div`
     padding: 0 16px;
     ${(p) => p.$bar ? 'align-items: flex-start; flex-wrap: wrap;' : ''}
   }
+`;
+const ProofWrap = styled.section`
+  margin-top: 28px;
+`;
+const ProofGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+`;
+const ProofCard = styled.a`
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid ${LINE};
+  border-radius: ${RADIUS};
+  color: inherit;
+  text-decoration: none;
+  b { display: block; font-size: 14px; }
+  span { display: block; font-size: 13px; color: ${MUTE}; }
+  em { display: block; margin-top: 4px; font-size: 12px; font-style: normal; color: ${MUTE}; }
+  &:hover { border-color: ${MUTE}; }
 `;
 const EmptyState = styled.div`
   padding: 48px 16px;
