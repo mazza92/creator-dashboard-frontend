@@ -134,7 +134,11 @@ const BrandSubmitPage = () => {
         spots_total: countMap[formData.creator_count_range] || 10
       };
 
-      await axios.post(`${API_BASE}/api/opportunities/public/submit`, payload);
+      const { data } = await axios.post(`${API_BASE}/api/opportunities/public/submit`, payload);
+      if (data?.roster_token) {
+        navigate(`/r/${data.roster_token}?new=1`);
+        return;
+      }
       setSubmitted(true);
     } catch (error) {
       console.error('Error submitting:', error);
@@ -169,7 +173,7 @@ const BrandSubmitPage = () => {
               <ConfirmIcon><Check size={32} strokeWidth={3} /></ConfirmIcon>
               <ConfirmTitle>Listing submitted</ConfirmTitle>
               <ConfirmSub>
-                We'll review your listing and notify you at {formData.brand_email} within 24 hours.
+                We're confirming your brand details, then we'll email your roster link to {formData.brand_email}.
                 Once live, creators can start applying.
               </ConfirmSub>
 
@@ -177,7 +181,7 @@ const BrandSubmitPage = () => {
                 <ConfirmStep>
                   <ConfirmStepNum>1</ConfirmStepNum>
                   <ConfirmStepText>
-                    <ConfirmStepTitle>Review (within 24 hours)</ConfirmStepTitle>
+                    <ConfirmStepTitle>Brand check</ConfirmStepTitle>
                     <ConfirmStepSub>We verify your brand and listing details.</ConfirmStepSub>
                   </ConfirmStepText>
                 </ConfirmStep>
@@ -234,7 +238,7 @@ const BrandSubmitPage = () => {
         <HeroStats>
           <HeroStat><HeroStatVal>Free</HeroStatVal><HeroStatLbl>To post</HeroStatLbl></HeroStat>
           <HeroStatDivider />
-          <HeroStat><HeroStatVal>24h</HeroStatVal><HeroStatLbl>Review time</HeroStatLbl></HeroStat>
+          <HeroStat><HeroStatVal>Instant</HeroStatVal><HeroStatLbl>Roster link</HeroStatLbl></HeroStat>
           <HeroStatDivider />
           <HeroStat><HeroStatVal>40%+</HeroStatVal><HeroStatLbl>Creator reply rate</HeroStatLbl></HeroStat>
           <HeroStatDivider />

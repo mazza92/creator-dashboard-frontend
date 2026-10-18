@@ -34,6 +34,16 @@ function initials(name) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+function shortDate(iso) {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function daysUntil(iso) {
+  const days = Math.ceil((new Date(iso) - Date.now()) / 86400000);
+  if (days <= 0) return 'due today';
+  return days === 1 ? '1 day left' : `${days} days left`;
+}
+
 function formatShipBlock(ship) {
   if (!ship) return 'Address pending';
   const lines = [
@@ -117,6 +127,9 @@ export default function BrandPRRoster() {
   const [campaign, setCampaign] = useState(null);
   const [creators, setCreators] = useState([]);
   const [billing, setBilling] = useState(null);
+  const [lockedInfo, setLockedInfo] = useState(null);
+  const [paywall, setPaywall] = useState('');
+  const [shortlistDismissed, setShortlistDismissed] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [briefOpen, setBriefOpen] = useState(false);
   const closeBrief = useCallback(() => setBriefOpen(false), []);
@@ -142,6 +155,8 @@ export default function BrandPRRoster() {
     setCampaign(data.campaign);
     setCreators(data.creators || []);
     setBilling(data.billing || null);
+    setLockedInfo(data.locked || null);
+    if (data.billing?.subscribed) setPaywall('');
     if (data.campaign?.brand) {
       setPreview(data.campaign.brand);
       writeRosterPreview(token, data.campaign.brand);
@@ -206,7 +221,7 @@ export default function BrandPRRoster() {
     const params = new URLSearchParams(window.location.search);
     const billingFlag = params.get('billing');
     if (billingFlag === 'success') {
-      setToast('Subscription started — you can mint the next campaign anytime.');
+      setToast('Gifted UGC is on. Every applicant is unlocked and you can gift up to 10.');
       params.delete('billing');
       params.delete('session_id');
       const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
@@ -245,10 +260,18 @@ export default function BrandPRRoster() {
   const drawer = creators.find((c) => c.application_id === drawerId) || null;
   const openCreators = creators.filter((c) => !c.skipped);
   const skippedCreators = creators.filter((c) => c.skipped);
-  const quickCreators = locked ? [] : quickIds
+  const topCreators = openCreators.filter((c) => c.top_pick);
+  const otherCreators = openCreators.filter((c) => !c.top_pick);
+  const subscribed = Boolean(billing?.subscribed);
+  const freePickLimit = Number(campaign?.free_pick_limit) || 5;
+  const paidPickLimit = Number(campaign?.paid_pick_limit) || 10;
+  const shortlistIds = quickIds.length ? quickIds : (campaign?.top_pick_ids || []).map(Number);
+  const quickCreators = locked || shortlistDismissed || selectedIds.length ? [] : shortlistIds
     .map((id) => creators.find((c) => c.application_id === id && c.status === 'review' && !c.skipped))
     .filter(Boolean)
     .slice(0, slotLimit);
+  const lockedCount = subscribed ? 0 : Number(lockedInfo?.count) || 0;
+  const targetRegions = (campaign?.target_regions || []).join(' and ');
 
   const brand = campaign?.brand || {};
   const brandName = brand.name || 'Brand';
@@ -282,6 +305,11 @@ export default function BrandPRRoster() {
       return data;
     } catch (err) {
       const msg = err.response?.data?.error || err.message || 'Action failed';
+      if (err.response?.status === 402 && err.response?.data?.paywall) {
+        setPaywall(msg);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        throw err;
+      }
       setToast(msg);
       setError(msg);
       throw err;
@@ -329,6 +357,7 @@ export default function BrandPRRoster() {
 
   function dismissQuickPick() {
     setQuickIds([]);
+    setShortlistDismissed(true);
     const params = new URLSearchParams(window.location.search);
     if (!params.has('pick')) return;
     params.delete('pick');
@@ -579,13 +608,34 @@ export default function BrandPRRoster() {
                     {locked
                       ? 'Gift list locked'
                       : !selectedIds.length
-                        ? `Pick up to ${slotLimit} creators`
+                        ? topCreators.length
+                          ? `Polly picked your ${plural(topCreators.length, 'best fit', `${topCreators.length} best fits`)}`
+                          : `Pick up to ${slotLimit} creators`
                         : remaining
                           ? `${selectedIds.length} picked · lock now or add ${remaining} more`
                           : `Lock ${slotLimit} to reveal addresses`}
                   </h1>
-                  <p>Gift 1 to {slotLimit}. Skip anyone who isn’t a fit. Addresses stay hidden until you lock.</p>
+                  <p>
+                    {topCreators.length && !locked
+                      ? `Matched on niche${targetRegions ? `, ${targetRegions}` : ''}, followers and real sample posts. Approve them in one click, or swap anyone.`
+                      : `Gift 1 to ${slotLimit}. Skip anyone who isn’t a fit. Addresses stay hidden until you lock.`}
+                  </p>
                 </Head>
+
+                {paywall && !subscribed && (
+                  <Paywall>
+                    <div>
+                      <PaywallTitle>Gift {paidPickLimit} creators a month — $299/mo</PaywallTitle>
+                      <PaywallSub>{paywall} Cancel anytime.</PaywallSub>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
+                        {checkoutBusy ? 'Opening checkout…' : 'Unlock — $299/mo'}
+                      </BtnPrimary>
+                      <BtnGhost type="button" onClick={() => setPaywall('')}>Keep my free {freePickLimit}</BtnGhost>
+                    </div>
+                  </Paywall>
+                )}
 
                 {quickCreators.length > 0 && (
                   <Paywall>
@@ -608,13 +658,18 @@ export default function BrandPRRoster() {
 
                 {!creators.length ? (
                   <EmptyState>
-                    <h2>No applications yet</h2>
-                    <p>When creators apply for {brandName}, they show up here.</p>
+                    <h2>Your roster is live</h2>
+                    <p>
+                      Creators in your niche can apply to {brandName} now, and most rosters get their first applicants
+                      within 24 hours. Polly ranks them by fit and pre-selects your best {freePickLimit}. We’ll email you
+                      this link when your first picks are in. Bookmark it, no login needed.
+                    </p>
                   </EmptyState>
                 ) : (
                   <>
+                    {topCreators.length > 0 && <SectionLabel>Polly’s picks</SectionLabel>}
                     <Grid>
-                      {openCreators.map((c) => (
+                      {topCreators.map((c) => (
                         <CreatorCard
                           key={c.application_id}
                           c={c}
@@ -627,6 +682,41 @@ export default function BrandPRRoster() {
                         />
                       ))}
                     </Grid>
+                    {topCreators.length > 0 && otherCreators.length > 0 && (
+                      <SectionLabel style={{ marginTop: 18 }}>Also applied</SectionLabel>
+                    )}
+                    <Grid>
+                      {otherCreators.map((c) => (
+                        <CreatorCard
+                          key={c.application_id}
+                          c={c}
+                          selected={selectedIds.includes(c.application_id)}
+                          locked={locked}
+                          busy={busy}
+                          onApprove={onApprove}
+                          onSkip={onSkip}
+                          onOpen={openDrawer}
+                        />
+                      ))}
+                    </Grid>
+                    {lockedCount > 0 && !locked && (
+                      <Paywall style={{ marginTop: 16 }}>
+                        <div>
+                          <PaywallTitle>{plural(lockedCount, '1 more creator applied', `${lockedCount} more creators applied`)}</PaywallTitle>
+                          <PaywallSub>
+                            Your free campaign shows Polly’s shortlist. Gifted UGC unlocks everyone who applied and lets you gift {paidPickLimit} a month.
+                          </PaywallSub>
+                          <Chips style={{ marginTop: 8 }}>
+                            {(lockedInfo?.teasers || []).map((t, i) => (
+                              <i key={i}>{[t.niche, t.followers_label, t.country_code].filter(Boolean).join(' · ') || 'Creator'}</i>
+                            ))}
+                          </Chips>
+                        </div>
+                        <BtnPrimary type="button" disabled={checkoutBusy} onClick={onSubscribe}>
+                          {checkoutBusy ? 'Opening checkout…' : `See all ${lockedCount + openCreators.length} — $299/mo`}
+                        </BtnPrimary>
+                      </Paywall>
+                    )}
                     {skippedCreators.length > 0 && !locked && (
                       <SkippedWrap>
                         <SkippedLabel>Skipped</SkippedLabel>
@@ -797,7 +887,11 @@ export default function BrandPRRoster() {
                             )}
                             {got.note && <Muted>“{got.note}”</Muted>}
                           </DeliveredLinks>
-                        ) : ready ? <Ok>Organic + UGC file ready</Ok> : isOut(c) ? 'Usually 5–10 days after delivery' : 'Not shipped yet'}
+                        ) : ready ? <Ok>Organic + UGC file ready</Ok> : c.content_due_at ? (
+                          c.content_overdue
+                            ? `Overdue since ${shortDate(c.content_due_at)}, Polly is chasing them`
+                            : `Due ${shortDate(c.content_due_at)} · ${daysUntil(c.content_due_at)}`
+                        ) : isOut(c) ? 'Usually 5–10 days after delivery' : 'Not shipped yet'}
                       </Meta>
                     </Piece>
                   );
@@ -979,7 +1073,11 @@ function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
             <LocationLine countryCode={c.country_code} country={c.country}>{where}</LocationLine>
           </div>
         </Who>
-        {(c.niche || c.country_code) && (
+        {c.fit_reasons?.length ? (
+          <Why>
+            {c.fit_reasons.map((r) => <span key={r}>✓ {r}</span>)}
+          </Why>
+        ) : (c.niche || c.country_code) && (
           <Chips>
             {c.niche ? <i>{c.niche}</i> : null}
             {c.country_code ? <i>{c.country_code.toUpperCase()}</i> : null}
@@ -1403,6 +1501,24 @@ const Chips = styled.div`
     border-radius: 999px;
     padding: 3px 8px;
   }
+`;
+const Why = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  span {
+    font-size: 12px;
+    font-weight: 600;
+    color: ${GREEN_DEEP};
+  }
+`;
+const SectionLabel = styled.div`
+  margin: 4px 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: ${MUTE};
 `;
 const StatusLine = styled.p`
   margin: 0;

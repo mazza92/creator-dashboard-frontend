@@ -146,7 +146,7 @@ export default function BrandLaunch() {
     ].join('\n');
     setSending(true);
     try {
-      await api.post('/api/opportunities/public/submit', {
+      const { data } = await api.post('/api/opportunities/public/submit', {
         brand_name: form.brand_name.trim(),
         brand_email: form.brand_email.trim(),
         brand_website: form.brand_website.trim(),
@@ -160,6 +160,10 @@ export default function BrandLaunch() {
         content_types: ['UGC', 'Organic post'],
         additional_notes: notes,
       });
+      if (data?.roster_token) {
+        window.location.assign(`/r/${data.roster_token}?new=1`);
+        return;
+      }
       setSent(true);
     } catch (err) {
       setFormError(err.response?.data?.error || 'Could not submit. Try again or email team@newcollab.co.');
@@ -280,7 +284,7 @@ export default function BrandLaunch() {
               <Done>
                 <h2>You’re in.</h2>
                 <p>
-                  We’ll open your private {label} roster and email the link to {form.brand_email} within 24 hours.
+                  We’re confirming your brand, then we’ll email your private {label} roster link to {form.brand_email}.
                   Pick up to 5 creators there, then export shipping in one click.
                 </p>
               </Done>
