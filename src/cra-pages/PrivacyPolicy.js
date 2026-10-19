@@ -20,7 +20,7 @@ const Section = styled.section`
   margin-bottom: 40px;
 `;
 
-const LAST_UPDATED = '15 October 2026';
+const LAST_UPDATED = '19 October 2026';
 
 const PrivacyPolicy = () => {
   return (
@@ -48,11 +48,9 @@ const PrivacyPolicy = () => {
             The data controller for personal data processed for those services is:
           </Paragraph>
           <Paragraph>
-            <strong>Mahery Zuffelato</strong>, trading as Newcollab
+            <strong>Newcollab</strong>
             <br />
-            Entrepreneur individuel (micro-entrepreneur)
-            <br />
-            15 boulevard Voltaire, 94210 Saint-Maur-des-Fossés, France
+            Entrepreneur individuel (micro-entrepreneur), based in Paris, France
             <br />
             SIREN: 885 080 481
             <br />
@@ -399,8 +397,7 @@ const PrivacyPolicy = () => {
           <Paragraph>
             Privacy requests: <a href="mailto:team@newcollab.co">team@newcollab.co</a>
             <br />
-            By post: Mahery Zuffelato (Newcollab), 15 boulevard Voltaire, 94210
-            Saint-Maur-des-Fossés, France
+            Newcollab, based in Paris, France
             <br />
             Related: <a href="/terms-of-service">Terms of Service</a>
           </Paragraph>

@@ -19,7 +19,7 @@ const Section = styled.section`
   margin-bottom: 40px;
 `;
 
-const LAST_UPDATED = '15 October 2026';
+const LAST_UPDATED = '19 October 2026';
 
 const TermsOfService = () => {
   return (
@@ -30,8 +30,8 @@ const TermsOfService = () => {
           These terms govern your use of Newcollab on{' '}
           <a href="https://newcollab.co">newcollab.co</a> and{' '}
           <a href="https://app.newcollab.co">app.newcollab.co</a>. They are an
-          agreement between you and Mahery Zuffelato, entrepreneur individuel
-          trading as Newcollab (SIREN 885 080 481; full details in section 11).
+          agreement between you and Newcollab, an entrepreneur individuel
+          based in Paris, France (SIREN 885 080 481; full details in section 11).
           By creating an account or using the site you agree to them. If you do
           not agree, do not use Newcollab. Privacy practices are in the{' '}
           <a href="/privacy-policy">Privacy Policy</a>.
@@ -188,19 +188,15 @@ const TermsOfService = () => {
           <Paragraph>
             <strong>Publisher and operator</strong>
             <br />
-            Mahery Zuffelato, trading as Newcollab
+            Newcollab
             <br />
-            Entrepreneur individuel (micro-entrepreneur)
-            <br />
-            15 boulevard Voltaire, 94210 Saint-Maur-des-Fossés, France
+            Entrepreneur individuel (micro-entrepreneur), based in Paris, France
             <br />
             SIREN: 885 080 481
             <br />
             VAT: TVA non applicable, art. 293 B du CGI
             <br />
             Email: <a href="mailto:team@newcollab.co">team@newcollab.co</a>
-            <br />
-            Director of publication: Mahery Zuffelato
           </Paragraph>
           <Paragraph>
             <strong>Hosting</strong>
