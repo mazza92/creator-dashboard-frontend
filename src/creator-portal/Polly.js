@@ -163,7 +163,7 @@ async function postChatStream(payload, { onIntent, onDelta, onReset } = {}) {
 function lockedPitchFrom(data) {
   const p = data?.paywall_payload;
   if (!p || !Array.isArray(p.preview) || !p.preview.length) return null;
-  return { brand_name: p.brand_name || null, lines: p.preview };
+  return { brand_name: p.brand_name || null, lines: p.preview, kind: p.kind || 'pitch' };
 }
 
 function isOpenerOnlyThread(msgs) {
@@ -2054,14 +2054,18 @@ export default function Polly() {
                   )}
                   {msg.locked_pitch?.lines?.length > 0 && !msg.pitch && (
                     <PitchCard style={{ marginTop: 12 }}>
-                      <PitchLabel>Pitch for {msg.locked_pitch.brand_name || 'this brand'}</PitchLabel>
+                      <PitchLabel>
+                        {msg.locked_pitch.kind === 'reply' ? 'Reply to' : 'Pitch for'}{' '}
+                        {msg.locked_pitch.brand_name || 'this brand'}
+                      </PitchLabel>
                       <LockedLines>{msg.locked_pitch.lines.join('\n\n')}</LockedLines>
                       <LockedBlur aria-hidden="true">
-                        Here&apos;s why your audience fits and the exact content I&apos;d make for you,
-                        plus two recent posts that show it. Happy to send over a quick concept if useful.
+                        {msg.locked_pitch.kind === 'reply'
+                          ? 'If you\u2019d like to run the video as an ad, I offer 30 days of paid usage at my rate. Happy to sort that now or once you\u2019ve seen the video.'
+                          : 'Here\u2019s why your audience fits and the exact content I\u2019d make for you, plus two recent posts that show it. Happy to send over a quick concept if useful.'}
                       </LockedBlur>
                       <UnlockBtn type="button" onClick={() => setShowUpgrade(true)}>
-                        Unlock this pitch with Pro
+                        {msg.locked_pitch.kind === 'reply' ? 'Finish this reply with Pro' : 'Unlock this pitch with Pro'}
                       </UnlockBtn>
                     </PitchCard>
                   )}
