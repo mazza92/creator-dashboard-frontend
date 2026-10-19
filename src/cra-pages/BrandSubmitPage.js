@@ -131,7 +131,8 @@ const BrandSubmitPage = () => {
         application_deadline: formData.application_deadline
           ? formData.application_deadline.format('YYYY-MM-DD')
           : null,
-        spots_total: countMap[formData.creator_count_range] || 10
+        spots_total: countMap[formData.creator_count_range] || 10,
+        ref: new URLSearchParams(window.location.search).get('ref') || undefined
       };
 
       const { data } = await axios.post(`${API_BASE}/api/opportunities/public/submit`, payload);

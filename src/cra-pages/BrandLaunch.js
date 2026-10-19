@@ -60,6 +60,7 @@ export default function BrandLaunch() {
   const niche = (params.get('niche') || 'skincare').trim().toLowerCase();
   const platform = params.get('platform') || 'all';
   const country = params.get('country') || '';
+  const ref = (params.get('ref') || '').trim();
   const utm = useMemo(() => ({
     source: params.get('utm_source') || 'direct',
     medium: params.get('utm_medium') || '',
@@ -105,6 +106,22 @@ export default function BrandLaunch() {
       .catch(() => {})
       .finally(() => setLoadingMore(false));
   }
+
+  useEffect(() => {
+    if (!ref) return undefined;
+    let cancelled = false;
+    api.get(`/api/brand-pipeline/public/brief/${encodeURIComponent(ref)}`, { timeout: 10000 })
+      .then(({ data: brand }) => {
+        if (cancelled || !brand?.success) return;
+        setForm((f) => ({
+          ...f,
+          brand_name: f.brand_name || brand.brand_name || '',
+          brand_website: f.brand_website || brand.brand_website || '',
+        }));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [ref]);
 
   useEffect(() => {
     const prev = document.title;
@@ -159,6 +176,7 @@ export default function BrandLaunch() {
         shipping_regions: country ? [country] : [],
         content_types: ['UGC', 'Organic post'],
         additional_notes: notes,
+        ref: ref || undefined,
       });
       if (data?.roster_token) {
         window.location.assign(`/r/${data.roster_token}?new=1`);
