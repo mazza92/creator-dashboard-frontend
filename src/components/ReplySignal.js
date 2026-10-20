@@ -6,14 +6,21 @@ export function replyTier(brand) {
   return sig && sig.tier ? sig.tier : null;
 }
 
-export function ReplySignalChip({ signal, compact = false }) {
+export function ReplySignalChip({ signal, compact = false, showDetail = false }) {
   if (!signal || !signal.tier) return null;
   const cold = signal.tier === 'cold';
-  return (
+  const chip = (
     <Chip $cold={cold} title={signal.detail || ''}>
       <span aria-hidden="true">{cold ? '🧊' : '💬'}</span>
-      {compact ? (cold ? 'Rarely replies' : 'Replies') : signal.label}
+      {compact ? (cold ? 'Long shot' : 'Replies') : signal.label}
     </Chip>
+  );
+  if (!showDetail || cold || !signal.detail) return chip;
+  return (
+    <>
+      {chip}
+      <Detail>{signal.detail}</Detail>
+    </>
   );
 }
 
@@ -62,6 +69,12 @@ const Chip = styled.span`
   background: ${(p) => (p.$cold ? '#EEF2F7' : '#E7F6EC')};
   color: ${(p) => (p.$cold ? '#475569' : '#166534')};
   border: 1px solid ${(p) => (p.$cold ? '#D7DEE8' : '#BFE5CB')};
+`;
+
+const Detail = styled.div`
+  font-size: 12px;
+  color: #166534;
+  margin-top: 4px;
 `;
 
 const Note = styled.div`

@@ -6,6 +6,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from './PollyAutopilot';
 import MondayBoard from './PollyBoard';
+import PitchBatchCard from './PollyPitchBatch';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
 import { ReplySignalChip } from '../components/ReplySignal';
@@ -117,6 +118,8 @@ function csrfToken() {
     return '';
   }
 }
+
+const BATCH_AFTER_CONNECT_KEY = 'pollySendBatchAfterConnect';
 
 // Past this, a turn is treated as stuck: the skeleton gives way to a retry chip.
 const TURN_TIMEOUT_MS = 40000;
@@ -1320,6 +1323,11 @@ export default function Polly() {
   const [messages, setMessages] = useState([]);
   const [ready, setReady] = useState(false);
   const [serverReady, setServerReady] = useState(false);
+  // A deep-linked task waits for the server thread; show Polly working meanwhile.
+  const [pendingLinkKind, setPendingLinkKind] = useState(() => {
+    const base = DEEP_LINK_CHIPS[searchParams.get('chip')];
+    return base ? workingKind({ action: base.action, brand_id: searchParams.get('brand_id') }, base.label) : null;
+  });
   const turnInFlightRef = useRef(false);
   const [suggested, setSuggested] = useState([]);
   const [draft, setDraft] = useState('');
@@ -1524,6 +1532,65 @@ export default function Polly() {
     }).catch(() => {});
   }, []);
 
+  const [sendingBatch, setSendingBatch] = useState(false);
+
+  const connectGmailForBatch = useCallback(async () => {
+    try {
+      sessionStorage.setItem(BATCH_AFTER_CONNECT_KEY, '1');
+      const res = await apiClient.get('/api/polly/autopilot/gmail/connect');
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+        return;
+      }
+    } catch (_) { /* fall through */ }
+    sessionStorage.removeItem(BATCH_AFTER_CONNECT_KEY);
+    setMessages((prev) => [...prev, {
+      id: newId(), role: 'assistant', content: "Gmail didn't open. Try again in a moment.",
+    }]);
+  }, []);
+
+  const sendBatch = useCallback(async () => {
+    if (sendingBatch) return;
+    setSendingBatch(true);
+    let reply;
+    try {
+      const res = await apiClient.post('/api/polly/pitch-batch/send', {}, { timeout: 60000 });
+      reply = res.data || {};
+    } catch (err) {
+      const data = err.response?.data || {};
+      if (err.response?.status === 409 && data.error === 'gmail_not_connected') {
+        setSendingBatch(false);
+        connectGmailForBatch();
+        return;
+      }
+      reply = { message: data.message || data.error || "The send didn't go through. Try again." };
+    }
+    const results = Array.isArray(reply.results) ? reply.results : [];
+    const byBrand = new Map(results.map((r) => [String(r.brand_id), r.status]));
+    const current = messagesRef.current;
+    let batchIdx = -1;
+    current.forEach((m, i) => { if (m.pitch_batch?.items?.length) batchIdx = i; });
+    const patched = current.map((m, i) => {
+      if (i !== batchIdx || !byBrand.size) return m;
+      const items = m.pitch_batch.items.map((item) => (
+        byBrand.has(String(item.brand_id)) ? { ...item, status: byBrand.get(String(item.brand_id)) } : item
+      ));
+      return { ...m, pitch_batch: { ...m.pitch_batch, items, status: reply.sent ? 'sent' : m.pitch_batch.status } };
+    });
+    const next = [...patched, {
+      id: newId(),
+      role: 'assistant',
+      content: scrubPollyVoice(reply.message || 'Done.'),
+      task_chips: reply.task_chips || [],
+    }];
+    setMessages(next);
+    persistThread(next, suggestedRef.current);
+    if (reply.sent) {
+      try { window.dispatchEvent(new Event('savedBrandCountChanged')); } catch (_) { /* ignore */ }
+    }
+    setSendingBatch(false);
+  }, [sendingBatch, connectGmailForBatch, persistThread]);
+
   const send = useCallback(async (text, extras = {}) => {
     const content = (text || '').trim();
     if (!content && !extras.action) return;
@@ -1603,6 +1670,9 @@ export default function Polly() {
         thread = patchLastPitch(history, data.pitch_update);
         setMailHold(false);
       }
+      if (data.pitch_batch?.items?.length) {
+        thread = thread.map((m) => (m.pitch_batch ? { ...m, pitch_batch: null } : m));
+      }
       const rawMessage = data.message || 'Done.';
       const gigs = uniqueGigs(data.gigs || []);
       const assistant = {
@@ -1615,6 +1685,7 @@ export default function Polly() {
           ? data.gigs_has_more
           : gigs.length >= 3,
         pitch: data.pitch || null,
+        pitch_batch: data.pitch_batch?.items?.length ? data.pitch_batch : null,
         kit_actions: kitActionsFrom(data, rawMessage),
         task_chips: data.task_chips || [],
         locked_pitch: lockedPitchFrom(data),
@@ -1626,7 +1697,7 @@ export default function Polly() {
       setLiveText('');
       setMessages(next);
       persistThread(next, nextSuggested);
-      if (data.pitch) {
+      if (data.pitch || data.pitch_batch) {
         try { window.dispatchEvent(new Event('savedBrandCountChanged')); } catch (_) { /* ignore */ }
       }
     } catch (err) {
@@ -1715,6 +1786,7 @@ export default function Polly() {
     send(chip.label, {
       action: chip.action,
       brand_id: chip.brand_id,
+      brand_ids: chip.brand_ids,
       brand_name: chip.brand_name,
       deal: chip.deal,
       confirm_cold: Boolean(chip.confirm_cold),
@@ -1729,9 +1801,14 @@ export default function Polly() {
 
   const deepLinkRef = useRef(false);
   useEffect(() => {
+    if (serverReady && !creatorId && userLoading === false) setPendingLinkKind(null);
+  }, [serverReady, creatorId, userLoading]);
+
+  useEffect(() => {
     const chipId = searchParams.get('chip');
     if (!chipId || deepLinkRef.current || !ready || !serverReady || !creatorId) return;
     deepLinkRef.current = true;
+    setPendingLinkKind(null);
     navigate('/creator/dashboard/for-you', { replace: true });
     const base = DEEP_LINK_CHIPS[chipId];
     if (!base) return;
@@ -1756,11 +1833,28 @@ export default function Polly() {
   useEffect(() => {
     const result = searchParams.get('autopilot');
     if (!result) return;
+    let batchPending = false;
+    try { batchPending = sessionStorage.getItem(BATCH_AFTER_CONNECT_KEY) === '1'; } catch (_) { /* ignore */ }
+    if (batchPending) {
+      if (!serverReady) return;
+      sessionStorage.removeItem(BATCH_AFTER_CONNECT_KEY);
+      navigate('/creator/dashboard/for-you', { replace: true });
+      if (result === 'gmail_connected') {
+        autopilot.reload();
+        sendBatch();
+      } else {
+        setMessages((prev) => [...prev, {
+          id: newId(), role: 'assistant', content: `${AUTOPILOT_NOTICES[result] || "Gmail didn't connect."} Your pitches are still here.`,
+        }]);
+      }
+      return;
+    }
     setAutopilotNotice(AUTOPILOT_NOTICES[result] || '');
     setAutopilotReturn(result);
     openAutopilot();
     navigate('/creator/dashboard/for-you', { replace: true });
-  }, [searchParams, navigate, openAutopilot]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, navigate, openAutopilot, serverReady]);
 
   // Email upgrade CTAs (?upgrade=pro): open the Autopilot card, which carries the $19 upgrade.
   useEffect(() => {
@@ -1944,7 +2038,7 @@ export default function Polly() {
   return (
     <Shell>
       <Thread ref={threadRef}>
-        {!ready && messages.length === 0 && !hasLocalThread ? (
+        {pendingLinkKind && messages.length === 0 ? null : !ready && messages.length === 0 && !hasLocalThread ? (
           <Turn>
             <AssistantRow>
               <PollyFace src={POLLY_AVATAR_URL} alt="" />
@@ -2085,7 +2179,7 @@ export default function Polly() {
                             </div>
                             {brandBlurb(brand) ? <div className="why">{brandBlurb(brand)}</div> : null}
                             {brand.reply_signal ? (
-                              <div style={{ marginTop: 6 }}><ReplySignalChip signal={brand.reply_signal} /></div>
+                              <div style={{ marginTop: 6 }}><ReplySignalChip signal={brand.reply_signal} showDetail /></div>
                             ) : null}
                           </BrandMeta>
                           <ContactBtn
@@ -2162,6 +2256,17 @@ export default function Polly() {
                       ) : null}
                     </PitchCard>
                   )}
+                  {msg.pitch_batch?.items?.length > 0 && (
+                    <PitchBatchCard
+                      batch={msg.pitch_batch}
+                      available={autopilot.state ? autopilot.state.available !== false : true}
+                      gmailConnected={Boolean(autopilot.state?.gmail?.connected)}
+                      sending={sendingBatch}
+                      disabled={busy}
+                      onSend={sendBatch}
+                      onConnect={connectGmailForBatch}
+                    />
+                  )}
                 </div>
               </AssistantRow>
             )}
@@ -2184,7 +2289,7 @@ export default function Polly() {
             </AssistantRow>
           </Turn>
         )}
-        {busy && (
+        {(busy || pendingLinkKind) && (
           <Turn>
             <AssistantRow>
               <PollyFace src={POLLY_AVATAR_URL} alt="" />
@@ -2193,7 +2298,7 @@ export default function Polly() {
                   <PollyRichText text={scrubPollyVoice(liveText)} />
                 </AssistantText>
               ) : (
-                <PollyWorking kind={busyKind} />
+                <PollyWorking kind={busy ? busyKind : pendingLinkKind} />
               )}
             </AssistantRow>
           </Turn>
