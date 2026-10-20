@@ -1319,6 +1319,8 @@ export default function Polly() {
   const [credits, setCredits] = useState(null);
   const [messages, setMessages] = useState([]);
   const [ready, setReady] = useState(false);
+  const [serverReady, setServerReady] = useState(false);
+  const turnInFlightRef = useRef(false);
   const [suggested, setSuggested] = useState([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
@@ -1387,6 +1389,8 @@ export default function Polly() {
       const usable = usableThreadMessages(msgs);
       if (!usable.length) return false;
       hydratedRef.current = true;
+      // A turn started off the local cache owns the thread until it lands.
+      if (turnInFlightRef.current) return true;
       setMessages(usable);
       setSuggested(Array.isArray(brands) ? brands : []);
       setReady(true);
@@ -1446,6 +1450,8 @@ export default function Polly() {
       } catch (err) {
         console.warn('Polly bootstrap', err);
         if (!cancelled && !messagesRef.current.length) setReady(true);
+      } finally {
+        if (!cancelled) setServerReady(true);
       }
     })();
     return () => { cancelled = true; };
@@ -1529,6 +1535,7 @@ export default function Polly() {
     liveTextRef.current = '';
     setLiveText('');
     setBusy(true);
+    turnInFlightRef.current = true;
     const abort = typeof AbortController === 'function' ? new AbortController() : null;
     const abortTimer = abort ? setTimeout(() => abort.abort(), TURN_TIMEOUT_MS) : null;
     try {
@@ -1667,6 +1674,7 @@ export default function Polly() {
       }
     } finally {
       if (abortTimer) clearTimeout(abortTimer);
+      turnInFlightRef.current = false;
       liveTextRef.current = '';
       setLiveText('');
       setBusy(false);
@@ -1722,7 +1730,7 @@ export default function Polly() {
   const deepLinkRef = useRef(false);
   useEffect(() => {
     const chipId = searchParams.get('chip');
-    if (!chipId || deepLinkRef.current || !ready || !creatorId) return;
+    if (!chipId || deepLinkRef.current || !ready || !serverReady || !creatorId) return;
     deepLinkRef.current = true;
     navigate('/creator/dashboard/for-you', { replace: true });
     const base = DEEP_LINK_CHIPS[chipId];
@@ -1743,7 +1751,7 @@ export default function Polly() {
       sample_posts: samplePosts.length ? samplePosts : undefined,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, ready, creatorId]);
+  }, [searchParams, ready, serverReady, creatorId]);
 
   useEffect(() => {
     const result = searchParams.get('autopilot');
