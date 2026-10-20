@@ -275,6 +275,12 @@ function normalizeBrand(raw, appliedMap) {
       || raw.rosterSpotlighted
       || Number(raw.roster_spotlighted || raw.rosterSpotlighted || 0) > 0
     ),
+    // Real opportunity (brand-submitted or admin-pushed). Everything else is pitched directly.
+    rosterLive: !!(
+      raw.rosterLive
+      || Number(raw.roster_spotlighted || raw.rosterSpotlighted || 0) > 0
+      || Number(raw.roster_inbound || raw.rosterInbound || 0) > 0
+    ),
   };
 }
 
@@ -408,6 +414,7 @@ export default function BrandPRHome() {
   const [view, setView] = useState('list');
   const [step, setStep] = useState(1);
   const [current, setCurrent] = useState(null);
+  const [pitchMode, setPitchMode] = useState(false);
   const [coldWarn, setColdWarn] = useState(null);
   const [pack, setPack] = useState(null);
   const [packLoading, setPackLoading] = useState(false);
@@ -710,8 +717,9 @@ export default function BrandPRHome() {
     }
     trackApplyEvent('apply_opened', { source: applySourceRef.current, brand_id: brand.id });
     setCurrent(brand);
+    setPitchMode(!brand.rosterLive);
     setColdWarn(null);
-    if (!brand.rosterOpen && !quota?.is_unlimited) {
+    if (!brand.rosterLive && !quota?.is_unlimited) {
       api.get(`/api/pr-crm/brands/${brand.id}/reply-signal`)
         .then(({ data }) => {
           if (applyReqRef.current === req && data?.warn) {
@@ -816,6 +824,42 @@ export default function BrandPRHome() {
       if (prev.length >= 3) return prev;
       return [...prev, post];
     });
+  }
+
+  async function submitPitch() {
+    if (!current) return;
+    if (picked.length !== 3) {
+      setSubmitError('Select 3 posts to continue.');
+      setStep(2);
+      return;
+    }
+    if (!shipReady(ship)) {
+      setSubmitError('Add a complete shipping address and phone number.');
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const { data } = await api.post(`/api/pr-crm/brands/${current.id}/pitch-prep`, {
+        selected_posts: picked.map((p) => ({ post_url: p.post_url })),
+        shipping: ship,
+        save_shipping: saveShip,
+        source: applySourceRef.current || (tab === 'dir' ? 'directory' : 'foryou'),
+      });
+      try {
+        sessionStorage.setItem(`pollyPitchSamples:${current.id}`, JSON.stringify(data.sample_posts || []));
+      } catch (_) { /* private mode: pitch still works without samples */ }
+      const params = new URLSearchParams({
+        chip: 'pitch_brand',
+        brand_id: String(current.id),
+        brand_name: data.brand_name || current.name || '',
+      });
+      navigate(`/creator/dashboard/for-you?${params.toString()}`);
+    } catch (err) {
+      setSubmitError(err.response?.data?.error || 'Could not save. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function submitApply() {
@@ -934,7 +978,7 @@ export default function BrandPRHome() {
       ? openLists
       : forYouCards.filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.rosterSpotlighted);
     return source
-      .filter((b) => !b.applied && !recruitingIds.has(b.id) && !b.rosterSpotlighted)
+      .filter((b) => b.rosterLive && !b.applied && !recruitingIds.has(b.id) && !b.rosterSpotlighted)
       .sort((a, b) => rank(b) - rank(a))
       .slice(0, 8);
   }, [openLists, forYouCards, recruitingIds]);
@@ -955,7 +999,7 @@ export default function BrandPRHome() {
   );
   const dirOpenCampaigns = useMemo(
     () => dirCards
-      .filter((b) => (b.rosterOpen || b.rosterFillCount > 0) && !b.applied && !b.rosterSpotlighted)
+      .filter((b) => b.rosterLive && !b.applied && !b.rosterSpotlighted)
       .sort((a, b) => (b.rosterFillCount || b.rosterHunger || 0) - (a.rosterFillCount || a.rosterHunger || 0))
       .slice(0, 8),
     [dirCards]
@@ -989,7 +1033,7 @@ export default function BrandPRHome() {
     const cat = brand.category || '';
     const catEmoji = categoryEmoji(cat);
     const catName = categoryLabel(cat);
-    const live = brand.rosterOpen && !brand.applied;
+    const live = brand.rosterLive && !brand.applied;
     const isRecruiting = brand.rosterSpotlighted && !brand.applied;
     return (
       <Card key={brand.id} $live={live} $recruit={isRecruiting}>
@@ -1079,7 +1123,7 @@ export default function BrandPRHome() {
             <Cta type="button" onClick={() => showPaywall('card_credits')}>{PRO_OFFER.ctaShort}</Cta>
           ) : (
             <Cta type="button" onClick={() => openApply(brand)}>
-              {isRecruiting ? 'Apply to this campaign' : live ? 'Apply before spots fill' : 'Apply for Brand PR'}
+              {isRecruiting ? 'Apply to this campaign' : live ? 'Apply before spots fill' : 'Pitch the brand'}
             </Cta>
           )}
         </CardBody>
@@ -1274,7 +1318,7 @@ export default function BrandPRHome() {
           </Stepper>
           <span style={{ width: 28 }} />
         </ApplyTop>
-        <StepLabel>Request PR package in 3 steps</StepLabel>
+        <StepLabel>{pitchMode ? 'Pitch this brand in 3 steps' : 'Request PR package in 3 steps'}</StepLabel>
         <Block style={{ marginTop: 8 }}>
           {step === 1 && current.cover && (
             <Cover src={current.cover} alt="" />
@@ -1302,7 +1346,7 @@ export default function BrandPRHome() {
                 signal={coldWarn.signal}
                 remaining={coldWarn.remaining}
                 alternatives={coldWarn.alternatives || []}
-                pickLabel="Apply instead"
+                pickLabel={pitchMode ? 'Pitch instead' : 'Apply instead'}
                 onPick={(alt) => {
                   trackApplyEvent('apply_cold_switched', { source: applySourceRef.current, brand_id: alt.id });
                   openApply(normalizeBrand(alt, appliedMap), applySourceRef.current);
@@ -1371,7 +1415,7 @@ export default function BrandPRHome() {
             </Block>
             )}
             <Foot>
-              <Cta type="button" onClick={() => setStep(2)}>Apply for Brand PR</Cta>
+              <Cta type="button" onClick={() => setStep(2)}>{pitchMode ? 'Pitch the brand' : 'Apply for Brand PR'}</Cta>
             </Foot>
           </>
         )}
@@ -1380,7 +1424,11 @@ export default function BrandPRHome() {
           <>
             <Block>
               <h2>Choose your best 3</h2>
-              <Sub>This is what the brand sees when they review your request. Lead with posts that show your style — you can pick different ones next time.</Sub>
+              <Sub>
+                {pitchMode
+                  ? 'Polly puts these 3 in your pitch so the brand sees your style. Lead with your strongest.'
+                  : 'This is what the brand sees when they review your request. Lead with posts that show your style — you can pick different ones next time.'}
+              </Sub>
               {packLoading ? (
                 <EmptyNote>Loading your posts…</EmptyNote>
               ) : posts.length ? (
@@ -1415,7 +1463,11 @@ export default function BrandPRHome() {
           <>
             <Block>
               <h2>Where should the box go?</h2>
-              <Sub>Only used if they pick you. Saved after the first apply.</Sub>
+              <Sub>
+                {pitchMode
+                  ? 'Polly only puts your city in the pitch. Your full address stays saved for when they say yes.'
+                  : 'Only used if they pick you. Saved after the first apply.'}
+              </Sub>
               <Lab htmlFor="ship-name">Full name <Req>*</Req></Lab>
               <Input
                 id="ship-name"
@@ -1530,6 +1582,7 @@ export default function BrandPRHome() {
                 Save for the next apply
               </SaveRow>
             </Block>
+            {!pitchMode && (
             <Block>
               <h2>What you’re agreeing to</h2>
               <Agree>
@@ -1543,18 +1596,29 @@ export default function BrandPRHome() {
                 I agree to the gifted terms and 6-month UGC usage
               </Chk>
             </Block>
-            {pack?.transparency && (
+            )}
+            {!pitchMode && pack?.transparency && (
               <Block>
                 <h2>Before you send</h2>
                 <ApplyTransparency stats={pack.transparency} />
               </Block>
             )}
             <Foot>
-              <Cta type="button" disabled={submitting || !agreed || !shipReady(ship)} onClick={submitApply}>
-                {submitting ? 'Applying…' : 'Apply for Brand PR'}
-              </Cta>
+              {pitchMode ? (
+                <Cta type="button" disabled={submitting || !shipReady(ship)} onClick={submitPitch}>
+                  {submitting ? 'Opening Polly…' : 'Write my pitch'}
+                </Cta>
+              ) : (
+                <Cta type="button" disabled={submitting || !agreed || !shipReady(ship)} onClick={submitApply}>
+                  {submitting ? 'Applying…' : 'Apply for Brand PR'}
+                </Cta>
+              )}
               {submitError && <Note style={{ color: ROSE }}>{submitError}</Note>}
-              <Note>We add you to their list. The brand never gets a cold email from you.</Note>
+              <Note>
+                {pitchMode
+                  ? 'Polly writes the pitch next. You check it before it goes out.'
+                  : 'We add you to their list. The brand never gets a cold email from you.'}
+              </Note>
             </Foot>
           </>
         )}
@@ -1613,7 +1677,7 @@ export default function BrandPRHome() {
                     {categoryLabel(b.category || '') || 'Brand'}
                   </CatChip>
                 </RelMeta>
-                <RelGo>Apply →</RelGo>
+                <RelGo>{b.rosterLive ? 'Apply →' : 'Pitch →'}</RelGo>
               </Rel>
             )) : (
               <EmptyNote className="empty">Browse Directory for more brands that gift your size.</EmptyNote>
@@ -1653,7 +1717,7 @@ export default function BrandPRHome() {
                   ? PRO_OFFER.outOfCredits
                   : remaining === 1
                     ? 'Last free credit this month. Pick a brand you’d actually post.'
-                    : 'Apply in 3 steps. We take it to the brand. You never write a pitch.')}
+                    : 'Pick a brand and your best 3 posts. Polly writes the pitch for you.')}
             </p>
             )}
           </div>

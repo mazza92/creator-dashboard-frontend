@@ -80,7 +80,21 @@ const DEEP_LINK_CHIPS = {
   need_idea: { label: 'Need a content idea', action: 'chat' },
   line_up: { label: 'Line up brands for me', action: 'suggest_brands', deal: 'gifted' },
   send_draft: { label: 'Show my pitch', action: 'generate_pitch' },
+  pitch_brand: { label: 'Pitch this brand for me', action: 'generate_pitch' },
 };
+
+function takePitchSamples(brandId) {
+  if (!brandId) return [];
+  const key = `pollyPitchSamples:${brandId}`;
+  try {
+    const raw = sessionStorage.getItem(key);
+    sessionStorage.removeItem(key);
+    const list = JSON.parse(raw || '[]');
+    return Array.isArray(list) ? list.slice(0, 3) : [];
+  } catch (_) {
+    return [];
+  }
+}
 
 function logPitchHandoff(pitch, method) {
   if (!pitch?.brand_id || pitch.is_reply) return Promise.resolve(null);
@@ -104,6 +118,9 @@ function csrfToken() {
   }
 }
 
+// Past this, a turn is treated as stuck: the skeleton gives way to a retry chip.
+const TURN_TIMEOUT_MS = 40000;
+
 const INTENT_KIND = {
   suggest_brands: 'brands',
   generate_pitch: 'pitch',
@@ -112,7 +129,7 @@ const INTENT_KIND = {
 
 // Server-sent events from /chat/stream. Returns {status, data}, or null when streaming
 // isn't available so the caller can fall back to the plain request.
-async function postChatStream(payload, { onIntent, onDelta, onReset } = {}) {
+async function postChatStream(payload, { onIntent, onDelta, onReset, signal } = {}) {
   if (typeof fetch !== 'function' || typeof TextDecoder === 'undefined') return null;
   const headers = { 'Content-Type': 'application/json', Accept: 'text/event-stream' };
   const csrf = csrfToken();
@@ -124,8 +141,10 @@ async function postChatStream(payload, { onIntent, onDelta, onReset } = {}) {
       credentials: 'include',
       headers,
       body: JSON.stringify(payload),
+      signal,
     });
-  } catch (_) {
+  } catch (err) {
+    if (signal?.aborted) throw err;
     return null;
   }
   if (!res.ok || !res.body || !(res.headers.get('content-type') || '').includes('text/event-stream')) {
@@ -1510,6 +1529,8 @@ export default function Polly() {
     liveTextRef.current = '';
     setLiveText('');
     setBusy(true);
+    const abort = typeof AbortController === 'function' ? new AbortController() : null;
+    const abortTimer = abort ? setTimeout(() => abort.abort(), TURN_TIMEOUT_MS) : null;
     try {
       const payload = {
         messages: history.map(({ role, content: c, brands, gigs, pitch, id }) => ({
@@ -1521,6 +1542,7 @@ export default function Polly() {
       let result = null;
       try {
         result = await postChatStream(payload, {
+          signal: abort?.signal,
           onIntent: (intent) => { if (INTENT_KIND[intent]) setBusyKind(INTENT_KIND[intent]); },
           onDelta: (chunk) => {
             liveTextRef.current += chunk;
@@ -1532,6 +1554,7 @@ export default function Polly() {
           },
         });
       } catch (streamErr) {
+        if (abort?.signal.aborted) throw streamErr;
         console.warn('Polly stream', streamErr);
         result = {
           status: 500,
@@ -1539,7 +1562,10 @@ export default function Polly() {
         };
       }
       if (!result) {
-        const res = await apiClient.post('/api/polly/chat', payload, { timeout: 90000 });
+        const res = await apiClient.post('/api/polly/chat', payload, {
+          timeout: TURN_TIMEOUT_MS,
+          signal: abort?.signal,
+        });
         result = { status: res.status || 200, data: res.data || {} };
       }
       if (result.status >= 400) {
@@ -1625,14 +1651,22 @@ export default function Polly() {
         setMessages(next);
         persistThread(next, suggestedRef.current);
       } else {
+        const timedOut = abort?.signal.aborted || err.code === 'ECONNABORTED';
+        const retry = extras.action
+          ? [{ ...extras, id: extras.starter || extras.chip_id || 'retry', label: 'Try again' }]
+          : [];
         const assistant = {
           id: newId(),
           role: 'assistant',
-          content: data.error || data.message || 'Something went wrong. Try again.',
+          content: timedOut
+            ? "That's taking me longer than it should. Tap below and I'll try again."
+            : (data.error || data.message || 'Something went wrong. Try again.'),
+          task_chips: retry,
         };
         setMessages(prev => [...prev, assistant]);
       }
     } finally {
+      if (abortTimer) clearTimeout(abortTimer);
       liveTextRef.current = '';
       setLiveText('');
       setBusy(false);
@@ -1680,6 +1714,7 @@ export default function Polly() {
       starter: chip.id,
       task_id: chip.task_id,
       chip_id: chip.id,
+      sample_posts: chip.sample_posts,
       is_followup: Boolean(chip.is_followup) || chip.id === 'draft_followup' || /follow-?up/i.test(chip.label || ''),
     });
   };
@@ -1701,7 +1736,12 @@ export default function Polly() {
     else if (chipId === 'send_draft' && brandName) label = `Send my ${brandName} pitch`;
     else if (chipId === 'paid_reply' && brandName) label = `Write my reply to ${brandName}`;
     else if (chipId === 'ad_usage' && brandName) label = `Ask ${brandName} to run it as an ad`;
-    sendStarter({ ...base, id: chipId, label, brand_id: brandId, brand_name: brandName || undefined, task_id: taskId });
+    else if (chipId === 'pitch_brand' && brandName) label = `Pitch ${brandName} for me`;
+    const samplePosts = chipId === 'pitch_brand' ? takePitchSamples(brandId) : [];
+    sendStarter({
+      ...base, id: chipId, label, brand_id: brandId, brand_name: brandName || undefined, task_id: taskId,
+      sample_posts: samplePosts.length ? samplePosts : undefined,
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, ready, creatorId]);
 

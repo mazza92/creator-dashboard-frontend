@@ -11,6 +11,24 @@ const SubscriptionSuccess = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [connecting, setConnecting] = useState(false);
+
+  const openPolly = () => navigate('/creator/dashboard/for-you?autopilot=pro_started');
+
+  const connectGmail = async () => {
+    setConnecting(true);
+    try {
+      const res = await api.get('/api/polly/autopilot/gmail/connect');
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+        return;
+      }
+    } catch (err) {
+      console.error('Gmail connect failed', err);
+    }
+    setConnecting(false);
+    openPolly();
+  };
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
@@ -84,20 +102,18 @@ const SubscriptionSuccess = () => {
 
         <ButtonGroup>
           <PrimaryButton
-            onClick={() => navigate('/creator/dashboard/for-you?autopilot=pro_started')}
+            onClick={connectGmail}
+            disabled={connecting}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Turn on Autopilot <FiArrowRight />
+            {connecting ? 'Opening Google…' : <>Connect Gmail <FiArrowRight /></>}
           </PrimaryButton>
+          <Reassure>Send-only access. Polly can&apos;t read your inbox.</Reassure>
 
-          <SecondaryButton
-            onClick={() => navigate('/creator/dashboard/pr-pipeline')}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            View Pipeline
-          </SecondaryButton>
+          <LaterLink type="button" onClick={openPolly}>
+            I&apos;ll do it later
+          </LaterLink>
         </ButtonGroup>
 
         <Footer>
@@ -203,21 +219,20 @@ const PrimaryButton = styled(motion.button)`
   }
 `;
 
-const SecondaryButton = styled(motion.button)`
-  width: 100%;
-  padding: 16px 32px;
-  background: white;
-  color: #3B82F6;
-  border: 2px solid #3B82F6;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
+const Reassure = styled.p`
+  font-size: 13px;
+  color: #6B7280;
+  margin: -4px 0 0;
+`;
 
-  &:hover {
-    background: #EFF6FF;
-  }
+const LaterLink = styled.button`
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px;
 `;
 
 const Footer = styled.p`
