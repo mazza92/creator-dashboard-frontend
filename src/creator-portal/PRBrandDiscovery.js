@@ -2521,7 +2521,7 @@ const PRBrandDiscovery = () => {
                   <GridCardCategory>{brand.category || 'Lifestyle'}</GridCardCategory>
 
                   <GridCardMeta>
-                    {brand.response_rate && brand.response_rate >= 30 && (
+                    {brand.response_rate >= 30 && (
                       <GridMetaBadge variant="success">
                         ⚡ {brand.response_rate}% reply
                       </GridMetaBadge>

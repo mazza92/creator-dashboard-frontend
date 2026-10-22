@@ -9,7 +9,7 @@ import { UserContext } from '../contexts/UserContext';
 import { getRuntimeApiUrl } from '../config/api';
 import BrandLogo from './BrandLogo';
 import { formatFollowers } from '../utils/format';
-import { resolveBrandStats } from '../utils/brandStats';
+import { resolveRealBrandStats } from '../utils/brandStats';
 import AIPitchModal from '../creator-portal/AIPitchModal';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import LoadingSpinner from './LoadingSpinner';
@@ -80,7 +80,7 @@ const BrandProfilePage = () => {
         domain: data.domain || extractDomain(data.website),
         is_accepting_pr: data.is_accepting_pr ?? data.accepting_pr ?? true,
         ...(() => {
-          const s = resolveBrandStats({
+          const s = resolveRealBrandStats({
             slug: data.slug || String(id),
             category: data.category,
             responseRate: data.response_rate ?? data.stats?.responseRate,
@@ -216,7 +216,7 @@ const BrandProfilePage = () => {
           <CtaBtnContacted disabled>
             <Check size={16} /> Pitch Sent — Awaiting Reply
           </CtaBtnContacted>
-          <CtaHint>Response rate: {brand.response_rate}% · Check your pipeline</CtaHint>
+          <CtaHint>{brand.response_rate ? `Response rate: ${brand.response_rate}% · ` : ''}Check your pipeline</CtaHint>
         </>
       );
     }
@@ -347,23 +347,27 @@ const BrandProfilePage = () => {
             )}
 
             {/* Stats */}
-            <Card>
-              <CardTitle>Brand Stats</CardTitle>
-              <StatsGrid>
-                <StatCard>
-                  <StatValue $green>{brand.response_rate}%</StatValue>
-                  <StatLabel>Response Rate</StatLabel>
-                  <StatSub>
-                    {brand.response_rate >= 40 ? 'Above average' : 'Industry average'}
-                  </StatSub>
-                </StatCard>
-                <StatCard>
-                  <StatValue>~{brand.avg_response_days}d</StatValue>
-                  <StatLabel>Avg. Response</StatLabel>
-                  <StatSub>When they reply</StatSub>
-                </StatCard>
-              </StatsGrid>
-            </Card>
+            {(brand.response_rate || brand.avg_response_days) && (
+              <Card>
+                <CardTitle>Brand Stats</CardTitle>
+                <StatsGrid>
+                  {brand.response_rate && (
+                    <StatCard>
+                      <StatValue $green>{brand.response_rate}%</StatValue>
+                      <StatLabel>Response Rate</StatLabel>
+                      <StatSub>From real creator pitches</StatSub>
+                    </StatCard>
+                  )}
+                  {brand.avg_response_days && (
+                    <StatCard>
+                      <StatValue>~{brand.avg_response_days}d</StatValue>
+                      <StatLabel>Avg. Response</StatLabel>
+                      <StatSub>When they reply</StatSub>
+                    </StatCard>
+                  )}
+                </StatsGrid>
+              </Card>
+            )}
 
             {/* What they're looking for */}
             {(brand.min_followers || brand.niches?.length > 0 || brand.platforms?.length > 0 || brand.collab_type) && (
@@ -489,16 +493,22 @@ const BrandProfilePage = () => {
                 </EmailTeaser>
 
                 {/* Quick stats */}
-                <QuickStats>
-                  <QuickStat>
-                    <QuickStatVal $green>{brand.response_rate}%</QuickStatVal>
-                    <QuickStatLbl>Response rate</QuickStatLbl>
-                  </QuickStat>
-                  <QuickStat>
-                    <QuickStatVal>~{brand.avg_response_days}d</QuickStatVal>
-                    <QuickStatLbl>Avg. reply time</QuickStatLbl>
-                  </QuickStat>
-                </QuickStats>
+                {(brand.response_rate || brand.avg_response_days) && (
+                  <QuickStats>
+                    {brand.response_rate && (
+                      <QuickStat>
+                        <QuickStatVal $green>{brand.response_rate}%</QuickStatVal>
+                        <QuickStatLbl>Response rate</QuickStatLbl>
+                      </QuickStat>
+                    )}
+                    {brand.avg_response_days && (
+                      <QuickStat>
+                        <QuickStatVal>~{brand.avg_response_days}d</QuickStatVal>
+                        <QuickStatLbl>Avg. reply time</QuickStatLbl>
+                      </QuickStat>
+                    )}
+                  </QuickStats>
+                )}
 
                 {/* CTA button — varies by state */}
                 {renderCta()}

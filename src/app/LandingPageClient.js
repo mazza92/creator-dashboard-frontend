@@ -1609,7 +1609,7 @@ const mapApiBrand = (b) => {
   const name = b.name || '';
   const replyRate = Math.round(b.responseRate || b.response_rate || 0);
   const replyDays = b.avgResponseTime || b.avg_response_time_days;
-  const replyTime = replyDays ? `Replies in ${replyDays} days` : 'Replies in 3–5 days';
+  const replyTime = replyDays ? `Replies in ${replyDays} days` : null;
   const cat = (() => {
     const c = (b.category || '').toLowerCase();
     if (c.includes('fashion') || c.includes('apparel')) return 'fashion';
@@ -1631,7 +1631,7 @@ const mapApiBrand = (b) => {
     cat,
     catLabel: b.category || 'Brand',
     replyTime,
-    replyRate: replyRate || 40,
+    replyRate: replyRate || null,
     hi: replyRate >= 40,
   };
 };
@@ -1656,14 +1656,14 @@ function LandingBrandLogo({ brand, style }) {
 
 // Static fallback — shown until the API responds
 const brandsDataFallback = [
-  { name: 'Rhode Skin', slug: 'rhode-skin', initials: 'RS', bg: '#B5002D', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2–3 days', replyRate: 52, hi: true },
-  { name: 'Anua', slug: 'anua', initials: 'AN', bg: '#2E7D4F', logo: null, cat: 'beauty', catLabel: 'K-Beauty', replyTime: 'Replies in 3–5 days', replyRate: 38, hi: true },
-  { name: 'Oh Polly', slug: 'oh-polly', initials: 'OP', bg: '#1A1A2E', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 5–7 days', replyRate: 29, hi: false },
-  { name: 'Fenty Beauty', slug: 'fenty-beauty', initials: 'FB', bg: '#8B4513', logo: null, cat: 'beauty', catLabel: 'Beauty', replyTime: 'Replies in 3–5 days', replyRate: 44, hi: true },
-  { name: 'Nopalera', slug: 'nopalera', initials: 'NP', bg: '#2D5016', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: 'Replies in 2–3 days', replyRate: 61, hi: true },
-  { name: 'Aura Bora', slug: 'aura-bora', initials: 'AB', bg: '#7C3AED', logo: null, cat: 'food', catLabel: 'Beverages', replyTime: 'Replies in 1–2 days', replyRate: 72, hi: true },
-  { name: 'Glow Recipe', slug: 'glow-recipe', initials: 'GR', bg: '#EC4899', logo: null, cat: 'skincare', catLabel: 'Skincare', replyTime: 'Replies in 3–5 days', replyRate: 45, hi: true },
-  { name: 'Princess Polly', slug: 'princess-polly', initials: 'PP', bg: '#6D28D9', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: 'Replies in 3–5 days', replyRate: 47, hi: true },
+  { name: 'Rhode Skin', slug: 'rhode-skin', initials: 'RS', bg: '#B5002D', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: null, replyRate: null, hi: false },
+  { name: 'Anua', slug: 'anua', initials: 'AN', bg: '#2E7D4F', logo: null, cat: 'beauty', catLabel: 'K-Beauty', replyTime: null, replyRate: null, hi: false },
+  { name: 'Oh Polly', slug: 'oh-polly', initials: 'OP', bg: '#1A1A2E', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: null, replyRate: null, hi: false },
+  { name: 'Fenty Beauty', slug: 'fenty-beauty', initials: 'FB', bg: '#8B4513', logo: null, cat: 'beauty', catLabel: 'Beauty', replyTime: null, replyRate: null, hi: false },
+  { name: 'Nopalera', slug: 'nopalera', initials: 'NP', bg: '#2D5016', logo: null, cat: 'beauty', catLabel: 'Skincare', replyTime: null, replyRate: null, hi: false },
+  { name: 'Aura Bora', slug: 'aura-bora', initials: 'AB', bg: '#7C3AED', logo: null, cat: 'food', catLabel: 'Beverages', replyTime: null, replyRate: null, hi: false },
+  { name: 'Glow Recipe', slug: 'glow-recipe', initials: 'GR', bg: '#EC4899', logo: null, cat: 'skincare', catLabel: 'Skincare', replyTime: null, replyRate: null, hi: false },
+  { name: 'Princess Polly', slug: 'princess-polly', initials: 'PP', bg: '#6D28D9', logo: null, cat: 'fashion', catLabel: 'Fashion', replyTime: null, replyRate: null, hi: false },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1993,9 +1993,9 @@ const LandingPage = () => {
                   <BrandCard key={brand.slug || i}>
                     <LandingBrandLogo brand={brand} />
                     <BrandName>{brand.name}</BrandName>
-                    <BrandCat>{brand.catLabel} · {brand.replyTime}</BrandCat>
+                    <BrandCat>{[brand.catLabel, brand.replyTime].filter(Boolean).join(' · ')}</BrandCat>
                     <BrandMeta>
-                      <ReplyRate $hi={brand.hi}>{brand.replyRate}% reply</ReplyRate>
+                      {brand.replyRate ? <ReplyRate $hi={brand.hi}>{brand.replyRate}% reply</ReplyRate> : <span />}
                       <LockBtn onClick={() => window.location.href = '/register/creator'}>🔒 Sign up</LockBtn>
                     </BrandMeta>
                   </BrandCard>

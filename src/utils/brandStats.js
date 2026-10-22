@@ -1,7 +1,31 @@
 /**
- * Client-side fallback: synthetic stats by vertical when API returns empty values.
- * Mirrors creator_dashboard/brand_stats_synthesis.py (deterministic per slug).
+ * Brand reply stats. In-app surfaces use resolveRealBrandStats (real only; the
+ * API sends null when a brand has too few real pitches and callers hide the stat).
+ *
+ * Public SEO brand pages keep their stats cards via resolveBrandStats, which
+ * fills gaps with deterministic per-slug values by vertical. Mirrors
+ * public_brand_stats in creator_dashboard/brand_stats_synthesis.py.
  */
+
+function positive(v) {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** @returns {{ responseRate: number|null, avgResponseTime: number|null, totalPitches: number, totalResponses: number }} */
+export function resolveRealBrandStats({
+  responseRate,
+  avgResponseTime,
+  totalPitches,
+  totalResponses,
+}) {
+  return {
+    responseRate: positive(responseRate),
+    avgResponseTime: positive(avgResponseTime),
+    totalPitches: Number(totalPitches) || 0,
+    totalResponses: Number(totalResponses) || 0,
+  };
+}
 
 const CATEGORY_STATS = {
   beauty: [32, 47, 4, 8],
@@ -46,25 +70,7 @@ function seededInt(slug, salt, lo, hi) {
   return lo + (h % (hi - lo + 1));
 }
 
-function generateSyntheticStats(slug, category) {
-  const key = normalizeCategory(category);
-  const [rateLo, rateHi, daysLo, daysHi] = CATEGORY_STATS[key] || CATEGORY_STATS.lifestyle;
-  const safeSlug = (slug || 'brand').toLowerCase();
-  return {
-    responseRate: seededInt(safeSlug, 'rate', rateLo, rateHi),
-    avgResponseTime: seededInt(safeSlug, 'days', daysLo, daysHi),
-  };
-}
-
-function needsRate(v) {
-  return v == null || v === 0;
-}
-
-function needsDays(v) {
-  return v == null || v === 0;
-}
-
-/** @returns {{ responseRate: number, avgResponseTime: number, totalPitches?: number, totalResponses?: number }} */
+/** Public brand pages only. @returns {{ responseRate: number, avgResponseTime: number, totalPitches: number, totalResponses: number }} */
 export function resolveBrandStats({
   slug,
   category,
@@ -73,21 +79,17 @@ export function resolveBrandStats({
   totalPitches,
   totalResponses,
 }) {
-  let rate = responseRate;
-  let days = avgResponseTime;
-  const synth = generateSyntheticStats(slug, category);
-
-  if (needsRate(rate)) rate = synth.responseRate;
-  if (needsDays(days)) days = synth.avgResponseTime;
+  const key = normalizeCategory(category);
+  const [rateLo, rateHi, daysLo, daysHi] = CATEGORY_STATS[key] || CATEGORY_STATS.lifestyle;
+  const safeSlug = (slug || 'brand').toLowerCase();
+  const rate = positive(responseRate) || seededInt(safeSlug, 'rate', rateLo, rateHi);
+  const days = positive(avgResponseTime) || seededInt(safeSlug, 'days', daysLo, daysHi);
 
   let pitches = totalPitches || 0;
   let responses = totalResponses || 0;
   if (pitches === 0) {
     pitches = seededInt(slug || 'brand', 'pitches', 8, 64);
-    responses =
-      rate > 0
-        ? Math.max(1, Math.round((pitches * rate) / 100))
-        : seededInt(slug || 'brand', 'responses', 2, Math.max(3, Math.floor(pitches / 4)));
+    responses = Math.max(1, Math.round((pitches * rate) / 100));
   }
 
   return {
