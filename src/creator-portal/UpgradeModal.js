@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiLock, FiClock, FiBarChart2 } from 'react-icons/fi';
+import { FiX, FiLock, FiCheck } from 'react-icons/fi';
 import api from '../config/api';
 import { message } from 'antd';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 import { dismissUpgradeDeeplink, getEmailCampaign, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
-import { PRO_OFFER, PRO_FEATURES, PRO_STATS } from '../config/proOffer';
+import { PRO_OFFER, PRO_COMPARE } from '../config/proOffer';
 import { useTrialDays } from '../utils/trialOffer';
 
 function sourceFromPath(pathname) {
@@ -19,9 +19,29 @@ function sourceFromPath(pathname) {
   return 'other';
 }
 
+function matchedLine({ names = [], count = 0 }) {
+  if (!names.length) return null;
+  const more = Math.max(count, names.length) - names.length;
+  const shown = names.length > 1
+    ? <>{names.slice(0, -1).map((n, i) => <React.Fragment key={n}>{i > 0 && ', '}<strong>{n}</strong></React.Fragment>)}{more > 0 ? ', ' : ' and '}<strong>{names[names.length - 1]}</strong></>
+    : <strong>{names[0]}</strong>;
+  return (
+    <>
+      {shown}
+      {more > 0 ? ` and ${more} more` : ''} {names.length > 1 || more > 0 ? 'are' : 'is'} matched to you and waiting.
+    </>
+  );
+}
+
+const CompareCell = ({ value, pro }) => {
+  if (value === true) return <CheckDot $pro={pro}><FiCheck size={13} strokeWidth={3} /></CheckDot>;
+  if (value === false) return <FiLock size={17} color="#4b5058" strokeWidth={2.4} />;
+  return <CellText $pro={pro}>{value}</CellText>;
+};
+
 const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining, source }) => {
   const [loading, setLoading] = useState(false);
-  const [billingInterval, setBillingInterval] = useState('monthly'); // Default to monthly
+  const [billingInterval, setBillingInterval] = useState('monthly');
 
   const remainingKnown = unlockRemaining != null && Number.isFinite(Number(unlockRemaining));
   const rawUsed = remainingKnown ? currentCount : (pitchLimits?.used ?? currentCount);
@@ -31,9 +51,22 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   const isWinback = feature === 'winback' || isWinbackUpgradePending();
   const trialDays = useTrialDays(isOpen && !isWinback);
   const hasTrial = trialDays > 0;
+  const [waiting, setWaiting] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen || isWinback) return undefined;
+    let alive = true;
+    api.get('/api/polly/paywall-brands')
+      .then(({ data }) => { if (alive) setWaiting(data || null); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [isOpen, isWinback]);
+  const matched = waiting ? matchedLine(waiting) : null;
+
+  const showYearly = !isWinback;
+  const interval = showYearly ? billingInterval : 'monthly';
 
   const handleUpgrade = async (tier) => {
-    const interval = isWinback || atCap ? 'monthly' : billingInterval;
     try {
       setLoading(true);
       trackProBeginCheckout({
@@ -70,22 +103,33 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   if (!isOpen) return null;
 
-  const busy = loading;
+  const eyebrow = isWinback
+    ? null
+    : feature === 'last_unlock'
+      ? 'Last free credit'
+      : atCap
+        ? `${total} of ${total} free credits used`
+        : null;
 
-  const proFeatures = PRO_FEATURES.map((f, i) => ({
-    emoji: f.emoji,
-    bg: ['#dbeafe', '#fef3c7', '#ede9fe', '#dcfce7', '#fce7f3'][i % 5],
-    text: <><strong>{f.title}</strong> {f.body}</>,
-  }));
+  const headline = isWinback ? (
+    <>Your brand manager<br />is back for <PinkSpan>$12/mo</PinkSpan></>
+  ) : (
+    <>Get your own<br /><PinkSpan>personal brand manager</PinkSpan></>
+  );
 
-  const features = isWinback ? [
-    {
-      emoji: '1',
-      bg: '#dbeafe',
-      text: <><strong>$12 for the next 3 invoices.</strong> Then Pro returns to $19 unless you change it in Settings.</>,
-    },
-    ...proFeatures.slice(0, 3),
-  ] : proFeatures;
+  const subline = isWinback
+    ? 'For your next 3 invoices, then $19. Cancel anytime.'
+    : 'Polly finds brands that fit you, pitches them from your Gmail every weekday and follows up, so you can just create.';
+
+  const ctaLabel = loading
+    ? 'Processing...'
+    : isWinback
+      ? 'Restart Pro at $12/mo'
+      : hasTrial
+        ? PRO_OFFER.ctaTrial
+        : interval === 'yearly'
+          ? 'Hire Polly · $152/yr'
+          : 'Hire Polly · $19/mo';
 
   const modal = (
     <AnimatePresence>
@@ -107,222 +151,86 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
               <FiX size={16} />
             </CloseButton>
 
-            {/* Icon */}
             <ModalIcon>
               <BoltIcon />
             </ModalIcon>
 
-            <Headline>
+            {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+            <Headline>{headline}</Headline>
+            <Subtext>{subline}</Subtext>
+
+            {matched && <MatchedNote>{matched}</MatchedNote>}
+
+            <Compare>
+              <ProColumn aria-hidden="true" />
+              <CompareRow $head>
+                <HeadLabel>What you get</HeadLabel>
+                <HeadLabel $center>Free</HeadLabel>
+                <ProHead><span>Pro</span></ProHead>
+              </CompareRow>
+              {PRO_COMPARE.map((row) => (
+                <CompareRow key={row.label}>
+                  <RowLabel>{row.label}</RowLabel>
+                  <Cell><CompareCell value={row.free} /></Cell>
+                  <Cell><CompareCell value={row.pro} pro /></Cell>
+                </CompareRow>
+              ))}
+            </Compare>
+
+            <Plans>
               {isWinback ? (
-                <>
-                  Come back at $12 for<br />
-                  the next <PinkSpan>3 months</PinkSpan>.
-                </>
-              ) : feature === 'last_unlock' ? (
-                <>
-                  Your last free credit is ready.<br />
-                  Use it. That&apos;s how <PinkSpan>first PR</PinkSpan> happens.
-                </>
-              ) : atCap ? (
-                <>
-                  Your 3 are out. Let Polly pitch<br />
-                  <PinkSpan>60 brands a month</PinkSpan> for you.
-                </>
+                <PlanOption type="button" $active>
+                  <div>
+                    <PlanName>Pro, monthly</PlanName>
+                    <PlanNote><s>$19</s> 3 invoices at $12, then $19</PlanNote>
+                  </div>
+                  <PlanPrice>$12/mo</PlanPrice>
+                </PlanOption>
               ) : (
                 <>
-                  60 brands a month,<br />
-                  <PinkSpan>pitched for you</PinkSpan>.
+                  <PlanOption
+                    type="button"
+                    $active={interval === 'monthly'}
+                    onClick={() => setBillingInterval('monthly')}
+                  >
+                    <div>
+                      <PlanName>Monthly</PlanName>
+                      <PlanNote>
+                        {hasTrial ? <GreenText>{PRO_OFFER.trialSubline}</GreenText> : 'Cancel or pause anytime'}
+                      </PlanNote>
+                    </div>
+                    <PlanPrice>$19/mo</PlanPrice>
+                  </PlanOption>
+                  {showYearly && (
+                    <PlanOption
+                      type="button"
+                      $active={interval === 'yearly'}
+                      onClick={() => setBillingInterval('yearly')}
+                    >
+                      <PlanTag>Save 33%</PlanTag>
+                      <div>
+                        <PlanName>Yearly</PlanName>
+                        <PlanNote>
+                          {hasTrial ? <GreenText>{PRO_OFFER.trialSublineYearly}</GreenText> : 'About $12.67 a month'}
+                        </PlanNote>
+                      </div>
+                      <PlanPrice>$152/yr</PlanPrice>
+                    </PlanOption>
+                  )}
                 </>
               )}
-            </Headline>
-            <Subtext>
-              {isWinback
-                ? 'Then $19. Polly pitches 60 brands a month for you from your Gmail and reports back on every one. Cancel anytime.'
-                : feature === 'last_unlock'
-                ? 'Use this credit now. Then on Pro, Polly pitches 60 brands a month for you, every weekday, from your Gmail.'
-                : `${PRO_OFFER.promise} ${PRO_OFFER.extra}`}
-            </Subtext>
-
-            {!isWinback && (
-            <ProgressSection>
-              <ProgressHeader>
-                <span>Free credits this month</span>
-                <strong>{used} / {total} used</strong>
-              </ProgressHeader>
-              <ProgressTrack>
-                <ProgressFill $width={Math.min((used / total) * 100, 100)} />
-              </ProgressTrack>
-            </ProgressSection>
-            )}
-
-            {isWinback ? (
-              <>
-              <PriceCard>
-                <ProBadge>Pro</ProBadge>
-                <PriceRow>
-                  <PriceAmount>$12</PriceAmount>
-                  <PricePer>/ month</PricePer>
-                </PriceRow>
-                <PriceSubline>
-                  <s style={{ opacity: 0.65 }}>$19</s> <GreenText>3 invoices at $12, then $19</GreenText>
-                </PriceSubline>
-              </PriceCard>
-              <FeatureList>
-                {features.map((f, i) => (
-                  <FeatureItem key={i}>
-                    <FeatureIcon style={{ background: f.bg }}>{f.emoji}</FeatureIcon>
-                    <FeatureText>{f.text}</FeatureText>
-                  </FeatureItem>
-                ))}
-              </FeatureList>
-              </>
-            ) : atCap ? (
-              <>
-              <PriceCard>
-                <ProBadge>Pro</ProBadge>
-                <PriceRow>
-                  <PriceAmount>$19</PriceAmount>
-                  <PricePer>/ month</PricePer>
-                </PriceRow>
-                <PriceSubline>
-                  {hasTrial ? <GreenText>{PRO_OFFER.trialSubline}</GreenText> : PRO_OFFER.priceSubline}
-                </PriceSubline>
-              </PriceCard>
-              <FeatureList>
-                {features.map((f, i) => (
-                  <FeatureItem key={i}>
-                    <FeatureIcon style={{ background: f.bg }}>{f.emoji}</FeatureIcon>
-                    <FeatureText>{f.text}</FeatureText>
-                  </FeatureItem>
-                ))}
-              </FeatureList>
-              </>
-            ) : (
-              <>
-            {/* Stat Chips */}
-            <StatsGrid>
-              {PRO_STATS.map((s) => (
-                <StatChip key={s.value}>
-                  <StatValue>{s.value}</StatValue>
-                  <StatLabel>{s.label}</StatLabel>
-                </StatChip>
-              ))}
-            </StatsGrid>
-
-            {/* Billing Toggle */}
-            <BillingToggle>
-              <BillingOption
-                $active={billingInterval === 'monthly'}
-                onClick={() => setBillingInterval('monthly')}
-              >
-                Monthly
-              </BillingOption>
-              <BillingOption
-                $active={billingInterval === 'yearly'}
-                onClick={() => setBillingInterval('yearly')}
-              >
-                Yearly
-                <SaveBadge>SAVE 33%</SaveBadge>
-              </BillingOption>
-            </BillingToggle>
-
-            {/* Price Card */}
-            <PriceCard>
-              <ProBadge>Pro</ProBadge>
-              <PriceRow>
-                <PriceAmount id="price-amount">
-                  {billingInterval === 'yearly' ? '$152' : '$19'}
-                </PriceAmount>
-                <PricePer>
-                  / {billingInterval === 'yearly' ? 'year' : 'month'}
-                </PricePer>
-              </PriceRow>
-              <PriceSubline>
-                {hasTrial ? (
-                  <GreenText>
-                    {billingInterval === 'yearly' ? PRO_OFFER.trialSublineYearly : PRO_OFFER.trialSubline}
-                  </GreenText>
-                ) : billingInterval === 'yearly' ? (
-                  <><s style={{ opacity: 0.65 }}>$228</s> <GreenText>Save $76 · 33% off</GreenText></>
-                ) : (
-                  PRO_OFFER.priceSubline
-                )}
-              </PriceSubline>
-            </PriceCard>
-
-            {/* Feature List */}
-            <FeatureList>
-              {features.map((f, i) => (
-                <FeatureItem key={i}>
-                  <FeatureIcon style={{ background: f.bg }}>{f.emoji}</FeatureIcon>
-                  <FeatureText>{f.text}</FeatureText>
-                </FeatureItem>
-              ))}
-            </FeatureList>
-              </>
-            )}
-
-            {isWinback ? (
-              <ProofBox>
-                <ProofIcon>✓</ProofIcon>
-                <ProofText>
-                  <strong>You already used Pro.</strong> This cheaper window is for landing the first yes before it returns to $19.
-                </ProofText>
-              </ProofBox>
-            ) : null}
+            </Plans>
           </ModalScroll>
 
-          {/* Sticky CTA Area */}
           <CtaArea>
-            {isWinback ? (
-              <CtaButton
-                onClick={() => handleUpgrade('pro')}
-                disabled={busy}
-                whileTap={{ scale: 0.98 }}
-              >
-                {loading ? 'Processing...' : 'Restart Pro at $12/mo'}
-              </CtaButton>
-            ) : atCap ? (
-              <>
-                <CtaButton
-                  onClick={() => handleUpgrade('pro')}
-                  disabled={busy}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {loading ? 'Processing...' : hasTrial ? PRO_OFFER.ctaTrial : PRO_OFFER.ctaPrice}
-                </CtaButton>
-              </>
-            ) : (
-              <CtaButton
-                onClick={() => handleUpgrade('pro')}
-                disabled={busy}
-                whileTap={{ scale: 0.98 }}
-              >
-                {loading
-                  ? 'Processing...'
-                  : hasTrial
-                    ? PRO_OFFER.ctaTrial
-                    : billingInterval === 'yearly'
-                      ? PRO_OFFER.ctaYearly
-                      : PRO_OFFER.ctaPrice}
-              </CtaButton>
-            )}
-
-            {/* Footer Trust Signals */}
-            <TrustRow>
-              <TrustItem>
-                <FiLock size={12} />
-                Cancel anytime
-              </TrustItem>
-              <TrustItem>
-                <FiClock size={12} />
-                Pause anytime
-              </TrustItem>
-              <TrustItem>
-                <FiBarChart2 size={12} />
-                Full activity reports
-              </TrustItem>
-            </TrustRow>
+            <CtaButton
+              onClick={() => handleUpgrade('pro')}
+              disabled={loading}
+              whileTap={{ scale: 0.98 }}
+            >
+              {ctaLabel}
+            </CtaButton>
+            <TrustLine>Cancel or pause anytime from Settings</TrustLine>
           </CtaArea>
         </ModalWrapper>
       </Overlay>
@@ -356,7 +264,7 @@ const Overlay = styled(motion.div)`
 const ModalWrapper = styled(motion.div)`
   background: #fff;
   border-radius: 20px;
-  max-width: 460px;
+  max-width: 440px;
   width: 100%;
   max-height: calc(100vh - 40px);
   max-height: calc(100dvh - 40px);
@@ -379,7 +287,7 @@ const ModalScroll = styled.div`
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 36px 28px 20px;
+  padding: 30px 24px 8px;
   -webkit-overflow-scrolling: touch;
 
   &::-webkit-scrollbar {
@@ -391,7 +299,7 @@ const ModalScroll = styled.div`
   }
 
   @media (max-width: 480px) {
-    padding: 32px 22px 18px;
+    padding: 28px 20px 8px;
   }
 `;
 
@@ -419,16 +327,27 @@ const CloseButton = styled.button`
 `;
 
 const ModalIcon = styled.div`
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: linear-gradient(135deg, #7c3aed 0%, #e8395f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 18px;
+  margin: 0 auto 14px;
   color: #fff;
   box-shadow: 0 8px 20px rgba(124, 58, 237, 0.28);
+`;
+
+const Eyebrow = styled.div`
+  width: fit-content;
+  margin: 0 auto 10px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: #f3f4f6;
+  color: #4b5058;
+  font-size: 12px;
+  font-weight: 600;
 `;
 
 const Headline = styled.h1`
@@ -450,31 +369,29 @@ const PinkSpan = styled.span`
 `;
 
 const BoltIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
     <path d="M13 2L4.5 12.5H11l-1 8.5 8.5-11H12l1-8z"/>
   </svg>
 );
 
 const Subtext = styled.p`
   font-size: 14px;
-  color: #6b6f78;
+  color: #4b5058;
   text-align: center;
-  line-height: 1.5;
-  margin: 0 0 20px 0;
+  line-height: 1.45;
+  margin: 0 0 16px 0;
 `;
 
-const ProgressSection = styled.div`
-  margin-bottom: 20px;
-`;
-
-const ProgressHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: #6b6f78;
-  margin-bottom: 6px;
-  font-weight: 500;
+const MatchedNote = styled.p`
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #2b2d33;
+  text-align: center;
 
   strong {
     color: #15161a;
@@ -482,168 +399,150 @@ const ProgressHeader = styled.div`
   }
 `;
 
-const ProgressTrack = styled.div`
-  height: 8px;
-  background: #f1f2f4;
-  border-radius: 100px;
-  overflow: hidden;
+const COLS = '1fr 64px 92px';
+
+const Compare = styled.div`
   position: relative;
+  margin-bottom: 18px;
 `;
 
-const ProgressFill = styled.div`
-  height: 100%;
-  border-radius: 100px;
-  width: ${p => p.$width}%;
-  background: linear-gradient(90deg, #e8395f 0%, #f472b6 100%);
-  position: relative;
-
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
-    animation: shimmer 2.4s ease-in-out infinite;
-  }
-
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 22px;
-`;
-
-const StatChip = styled.div`
-  background: #f7f7f8;
-  border-radius: 12px;
-  padding: 10px 8px;
-  text-align: center;
-  border: 1px solid #f1f2f4;
-`;
-
-const StatValue = styled.div`
-  font-size: 15px;
-  font-weight: 800;
-  color: #15161a;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-  }
-`;
-
-const StatLabel = styled.div`
-  font-size: 10px;
-  color: #6b6f78;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-top: 4px;
-  font-weight: 600;
-
-  @media (max-width: 480px) {
-    font-size: 9px;
-  }
-`;
-
-const BillingToggle = styled.div`
-  display: flex;
-  background: #f7f7f8;
-  border-radius: 12px;
-  padding: 4px;
-  margin-bottom: 16px;
-`;
-
-const BillingOption = styled.button`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 11px 8px;
-  border: none;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s;
-  font-family: inherit;
-  position: relative;
-  z-index: 2;
-  background: ${props => props.$active ? '#fff' : 'transparent'};
-  color: ${props => props.$active ? '#15161a' : '#6b6f78'};
-  box-shadow: ${props => props.$active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'};
-
-  &:hover {
-    color: #15161a;
-  }
-`;
-
-const SaveBadge = styled.span`
-  background: #e8f7ed;
-  color: #0f9d58;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 6px;
-  letter-spacing: 0.02em;
-`;
-
-const PriceCard = styled.div`
-  border: 1.5px solid #e8395f;
-  border-radius: 16px;
-  padding: 20px;
-  background: linear-gradient(180deg, #fef2f4 0%, #fff 60%);
-  position: relative;
-  margin-bottom: 20px;
-`;
-
-const ProBadge = styled.div`
+const ProColumn = styled.div`
   position: absolute;
-  top: -11px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #15161a;
-  color: #fff;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 92px;
+  border: 1.5px solid #e8395f;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fef2f4 0%, #fff 100%);
+`;
+
+const CompareRow = styled.div`
+  position: relative;
+  display: grid;
+  grid-template-columns: ${COLS};
+  align-items: center;
+  min-height: ${(p) => (p.$head ? '40px' : '38px')};
+`;
+
+const HeadLabel = styled.div`
   font-size: 11px;
   font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 100px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-`;
-
-const PriceRow = styled.div`
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 4px;
-`;
-
-const PriceAmount = styled.span`
-  font-size: 38px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
   color: #15161a;
-  line-height: 1;
+  text-align: ${(p) => (p.$center ? 'center' : 'left')};
 `;
 
-const PricePer = styled.span`
-  font-size: 15px;
-  color: #6b6f78;
+const ProHead = styled.div`
+  display: flex;
+  justify-content: center;
+
+  span {
+    background: #e8395f;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+`;
+
+const RowLabel = styled.div`
+  font-size: 14px;
   font-weight: 500;
+  color: #2b2d33;
+  line-height: 1.3;
+  padding-right: 8px;
 `;
 
-const PriceSubline = styled.div`
-  text-align: center;
+const Cell = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const CheckDot = styled.span`
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: ${(p) => (p.$pro ? '#e8395f' : '#15161a')};
+`;
+
+const CellText = styled.span`
   font-size: 13px;
-  color: #6b6f78;
+  font-weight: 700;
+  color: ${(p) => (p.$pro ? '#e8395f' : '#2b2d33')};
+  white-space: nowrap;
+`;
+
+const Plans = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+`;
+
+const PlanOption = styled.button`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid ${(p) => (p.$active ? '#e8395f' : '#e5e7eb')};
+  background: ${(p) => (p.$active ? '#fef2f4' : '#fff')};
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+`;
+
+const PlanTag = styled.span`
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  background: #0f9d58;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+`;
+
+const PlanName = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  color: #15161a;
+`;
+
+const PlanNote = styled.div`
+  font-size: 12px;
+  color: #4b5058;
+  margin-top: 2px;
+
+  s {
+    opacity: 0.65;
+    margin-right: 4px;
+  }
+`;
+
+const PlanPrice = styled.div`
+  font-size: 17px;
+  font-weight: 800;
+  color: #15161a;
+  white-space: nowrap;
 `;
 
 const GreenText = styled.span`
@@ -651,83 +550,14 @@ const GreenText = styled.span`
   font-weight: 700;
 `;
 
-const FeatureList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0 0 20px;
-`;
-
-const FeatureItem = styled.li`
-  display: flex;
-  gap: 12px;
-  padding: 8px 0;
-  font-size: 15px;
-  color: #2b2d33;
-  line-height: 1.4;
-  align-items: center;
-
-  strong {
-    color: #15161a;
-    font-weight: 700;
-  }
-`;
-
-const FeatureIcon = styled.span`
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  flex-shrink: 0;
-  line-height: 1;
-`;
-
-const FeatureText = styled.span`
-  flex: 1;
-`;
-
-const ProofBox = styled.div`
-  background: #e8f7ed;
-  border-radius: 12px;
-  padding: 14px 16px;
-  font-size: 13px;
-  color: #1a5638;
-  line-height: 1.5;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-
-  strong {
-    color: #0d3f26;
-  }
-`;
-
-const ProofIcon = styled.div`
-  width: 24px;
-  height: 24px;
-  background: #0f9d58;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #fff;
-  font-size: 14px;
-`;
-
-const ProofText = styled.div``;
-
 const CtaArea = styled.div`
   flex-shrink: 0;
-  padding: 14px 28px 24px;
+  padding: 12px 24px 18px;
   background: #fff;
   border-top: 1px solid #f1f2f4;
 
   @media (max-width: 480px) {
-    padding: 12px 22px calc(16px + env(safe-area-inset-bottom));
+    padding: 12px 20px calc(14px + env(safe-area-inset-bottom));
   }
 `;
 
@@ -763,50 +593,11 @@ const CtaButton = styled(motion.button)`
   }
 `;
 
-const SecondaryCta = styled.button`
-  display: block;
-  width: 100%;
-  margin-top: 10px;
-  padding: 14px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 14px;
-  background: #fff;
-  color: #15161a;
-  font-size: 15px;
-  font-weight: 650;
-  cursor: pointer;
-  font-family: inherit;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const TrustRow = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  padding-top: 14px;
-  flex-wrap: wrap;
-`;
-
-const TrustItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #6b6f78;
-
-  svg {
-    width: 12px;
-    height: 12px;
-  }
+const TrustLine = styled.div`
+  text-align: center;
+  font-size: 12px;
+  color: #4b5058;
+  padding-top: 10px;
 `;
 
 export default UpgradeModal;

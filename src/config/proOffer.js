@@ -20,36 +20,12 @@ export const PRO_OFFER = {
   outOfCredits: 'Out of free credits. On Pro, Polly pitches 60 brands a month for you from your Gmail, and applications are unlimited.',
 };
 
-export const PRO_STATS = [
-  { value: '60', label: 'brands pitched for you / month' },
-  { value: '~20h', label: 'of outreach saved / month' },
-  { value: '2', label: 'follow-ups per brand, automatic' },
-];
-
-export const PRO_FEATURES = [
-  {
-    emoji: '⏱️',
-    title: 'Get 20 hours a month back.',
-    body: 'Finding brands, hunting contacts, writing pitches, chasing replies: Polly does it for 60 brands a month while you film.',
-  },
-  {
-    emoji: '📅',
-    title: 'Pitches go out every weekday.',
-    body: 'About 3 a day from your own Gmail, then follow-ups on day 4 and day 10. Nothing to approve, nothing to remember.',
-  },
-  {
-    emoji: '🎯',
-    title: 'Only brands worth your time.',
-    body: 'Brands in your niche that gift or pay creators your size, each with a verified contact and a pitch written for that brand, not a template.',
-  },
-  {
-    emoji: '📊',
-    title: 'Always know where you stand.',
-    body: 'Who Polly pitched, who replied, what\'s next. Want more? Go up to 150 brands a month in Settings.',
-  },
-  {
-    emoji: '💸',
-    title: 'Paid gigs and every gifted campaign.',
-    body: 'Paid UGC briefs that fit your size and niche, plus unlimited applications to every gifting campaign on Newcollab.',
-  },
+// Free vs Pro rows for the paywall. `true` renders a check, `false` a lock, strings render as-is.
+export const PRO_COMPARE = [
+  { label: 'Brand matches from Polly', free: true, pro: true },
+  { label: 'Brands pitched for you', free: false, pro: '60/mo' },
+  { label: 'Sent from your Gmail', free: false, pro: true },
+  { label: 'Automatic follow-ups', free: false, pro: true },
+  { label: 'Gifting applications', free: '3/mo', pro: 'Unlimited' },
+  { label: 'Paid UGC briefs', free: false, pro: true },
 ];
