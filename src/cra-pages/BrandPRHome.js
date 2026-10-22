@@ -263,6 +263,8 @@ function normalizeBrand(raw, appliedMap) {
     rosterFillCount: Number(raw.roster_fill_count || raw.rosterFillCount) || 0,
     rosterFillTarget: Number(raw.roster_fill_target || raw.rosterFillTarget) || 0,
     rosterSlotLimit: Number(raw.roster_slot_limit || raw.rosterSlotLimit) || 0,
+    brandViewedAt: raw.roster_brand_viewed_at || raw.brandViewedAt || null,
+    brandEmailedAt: raw.roster_brand_emailed_at || raw.brandEmailedAt || null,
     rosterOpen: !!(
       raw.roster_open
       || raw.rosterOpen
@@ -284,20 +286,28 @@ function normalizeBrand(raw, appliedMap) {
   };
 }
 
-function campaignHeat(brand, variant) {
-  if (variant === 'recruit' || brand?.rosterSpotlighted) {
-    return { id: 'recruit', label: 'Actively recruiting', line: 'Waiting on new applicants.' };
-  }
-  const fill = Number(brand?.rosterFillCount || brand?.rosterHunger) || 0;
+function daysAgoText(value) {
+  const t = value ? new Date(value).getTime() : NaN;
+  if (!Number.isFinite(t)) return '';
+  const days = Math.floor((Date.now() - t) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  return `${days} days ago`;
+}
+
+// Only states we can prove: brand opened the list, we emailed it, or not sent yet.
+function listStatus(brand) {
+  const viewed = daysAgoText(brand?.brandViewedAt);
+  if (viewed) return { tone: 'open', label: 'Brand viewed list', line: `Opened ${viewed}, no picks yet` };
+  const emailed = daysAgoText(brand?.brandEmailedAt);
+  if (emailed) return { tone: 'mid', label: 'Sent to brand', line: `Emailed ${emailed}, no reply yet` };
+  return { tone: 'open', label: 'Open list', line: 'We send it once 3 creators join' };
+}
+
+function listFill(brand) {
   const target = Number(brand?.rosterFillTarget) || 15;
-  const ratio = target > 0 ? fill / target : 0;
-  if (ratio >= 0.7 || fill >= 10) {
-    return { id: 'late', label: 'Filling fast', line: 'More people are applying — still open.' };
-  }
-  if (ratio >= 0.4 || fill >= 6) {
-    return { id: 'mid', label: 'Heating up', line: 'Creators are already in.' };
-  }
-  return { id: 'open', label: 'Just opened', line: 'A short gift list in your niche.' };
+  const fill = Math.min(Number(brand?.rosterFillCount) || 0, target);
+  return { fill, target, pct: Math.round((fill / target) * 100) };
 }
 
 function creditCopy(quota) {
@@ -1052,9 +1062,9 @@ export default function BrandPRHome() {
                 </CatChip>
               )}
               {isRecruiting ? (
-                <CatChip $tone="recruit">Actively recruiting</CatChip>
+                <CatChip $tone="recruit">Open list</CatChip>
               ) : live ? (
-                <CatChip $tone="hot">Recruiting</CatChip>
+                <CatChip $tone="hot">Open list</CatChip>
               ) : null}
               <ReplySignalChip signal={brand.replySignal} compact />
             </CoverChips>
@@ -1082,9 +1092,9 @@ export default function BrandPRHome() {
                     </CatChip>
                   )}
                   {isRecruiting ? (
-                    <CatChip $tone="recruit">Actively recruiting</CatChip>
+                    <CatChip $tone="recruit">Open list</CatChip>
                   ) : live ? (
-                    <CatChip $tone="hot">Recruiting</CatChip>
+                    <CatChip $tone="hot">Open list</CatChip>
                   ) : null}
                   <ReplySignalChip signal={brand.replySignal} compact />
                 </ChipRow>
@@ -1123,7 +1133,7 @@ export default function BrandPRHome() {
             <Cta type="button" onClick={() => showPaywall('card_credits')}>{PRO_OFFER.ctaShort}</Cta>
           ) : (
             <Cta type="button" onClick={() => openApply(brand)}>
-              {isRecruiting ? 'Apply to this campaign' : live ? 'Apply before spots fill' : 'Pitch the brand'}
+              {isRecruiting || live ? 'Join the list' : 'Pitch the brand'}
             </Cta>
           )}
         </CardBody>
@@ -1138,23 +1148,22 @@ export default function BrandPRHome() {
       <CampaignDesk aria-label={recruit ? 'Live brand recruitment' : 'Open gift lists'} $recruit={recruit}>
         <CampaignHead>
           <CampaignLive $recruit={recruit}>
-            <i /> {recruit ? 'Actively recruiting' : 'Live now'}
+            <i /> Open lists
           </CampaignLive>
-          <h2>{recruit ? 'Live gifting campaigns' : 'They’re picking this week'}</h2>
+          <h2>Open gift lists</h2>
           <p>
-            {recruit
-              ? 'These brands are filling gift lists now and waiting on new applicants. One credit. We submit you. They pick who gets the box.'
-              : 'Active gift lists. One credit. We send you in. They pick who gets the box.'}
+            We send the brand your profile with up to 15 creators in your niche. They pick who gets a box. One credit.
           </p>
         </CampaignHead>
         <CampaignRail $count={brands.length}>
           {brands.map((brand) => {
-            const heat = campaignHeat(brand, variant);
+            const status = listStatus(brand);
+            const { fill, target, pct } = listFill(brand);
             const catName = categoryLabel(brand.category || '');
             return (
-              <CampaignCard key={brand.id} $heat={heat.id} $solo={brands.length === 1} $recruit={recruit}>
+              <CampaignCard key={brand.id} $heat={status.tone} $solo={brands.length === 1} $recruit={recruit}>
                 <CampaignTop>
-                  <CampaignPulse $heat={heat.id}>{heat.label}</CampaignPulse>
+                  <CampaignPulse $heat={status.tone}>{status.label}</CampaignPulse>
                   {brand.matchScore != null && Number(brand.matchScore) > 0 && (
                     <CampaignFit><b>{Math.round(brand.matchScore)}%</b> fit</CampaignFit>
                   )}
@@ -1167,24 +1176,21 @@ export default function BrandPRHome() {
                   )}
                   <div>
                     <h3>{brand.name}</h3>
-                    <em>{[catName, heat.line].filter(Boolean).join(' · ')}</em>
+                    <em>{[catName, status.line].filter(Boolean).join(' · ')}</em>
                   </div>
                 </CampaignBrand>
                 <CampaignOffer>
-                  <span>{recruit ? 'Gifted campaign' : 'Could be in the box'}</span>
+                  <span>Could be in the box</span>
                   <strong>{brand.heroProduct || 'A gifted product they choose'}</strong>
                 </CampaignOffer>
-                <HeatBar $late={heat.id === 'late'} $recruit={recruit} aria-hidden="true">
-                  <i className="on" />
-                  <i className={heat.id === 'mid' || heat.id === 'late' || heat.id === 'recruit' ? 'on' : ''} />
-                  <i className={heat.id === 'late' || heat.id === 'recruit' ? 'on' : ''} />
-                </HeatBar>
+                <ListFill $recruit={recruit}>
+                  <div aria-hidden="true"><i style={{ width: `${pct}%` }} /></div>
+                  <span>{fill} of {target} on the list</span>
+                </ListFill>
                 {noCredits ? (
                   <Cta type="button" onClick={() => showPaywall(recruit ? 'recruit_credits' : 'campaign_credits')}>{PRO_OFFER.ctaShort}</Cta>
                 ) : (
-                  <Cta type="button" onClick={() => openApply(brand, source)}>
-                    {recruit ? 'Apply to this campaign' : 'Apply before spots fill'}
-                  </Cta>
+                  <Cta type="button" onClick={() => openApply(brand, source)}>Join the list</Cta>
                 )}
               </CampaignCard>
             );
@@ -1942,7 +1948,7 @@ export default function BrandPRHome() {
                   aria-pressed={dirRecruiting}
                   onClick={() => setDirRecruiting((v) => !v)}
                 >
-                  Actively recruiting
+                  Open lists
                 </FilterToggle>
                 <FilterToggle
                   type="button"
@@ -1985,7 +1991,9 @@ export default function BrandPRHome() {
             )}
             {!loadingDir && !dirCards.length && (
               <EmptyNote as="div">
-                No brands match.
+                {dirRecruiting
+                  ? 'No open gift lists right now. New ones appear when brands post a gifting call.'
+                  : 'No brands match.'}
                 {dirFiltersOn && (
                   <>
                     {' '}
@@ -2345,18 +2353,27 @@ const CampaignOffer = styled.div`
     line-height: 1.3;
   }
 `;
-const HeatBar = styled.div`
+const ListFill = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
   gap: 5px;
 
-  i {
+  div {
     height: 4px;
     border-radius: 99px;
     background: #e8e2d6;
-    display: block;
+    overflow: hidden;
   }
-  i.on { background: ${(p) => (p.$recruit ? ROSE : p.$late ? HOT : GREEN)}; }
+  i {
+    display: block;
+    height: 100%;
+    min-width: 4px;
+    border-radius: 99px;
+    background: ${(p) => (p.$recruit ? ROSE : GREEN)};
+  }
+  span {
+    font-size: 11.5px;
+    color: #7a7468;
+  }
 `;
 const List = styled.div`
   display: grid;
