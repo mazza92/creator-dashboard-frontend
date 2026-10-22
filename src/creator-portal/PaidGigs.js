@@ -26,7 +26,7 @@ function money(n) {
 
 function payText(gig) {
   const label = String(gig?.pay_label || '').trim();
-  if (/\$\s*\d/.test(label)) return label;
+  if (/[$£€₹]\s*\d/.test(label)) return label;
   const amount = Number(gig?.pr_value_usd);
   if (Number.isFinite(amount) && amount > 0) return `$${amount.toLocaleString('en-US')}`;
   return label || 'Paid';
