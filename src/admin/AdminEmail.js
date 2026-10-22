@@ -160,6 +160,10 @@ const AdminEmail = () => {
   const [roundupBrands, setRoundupBrands] = useState([]);
   const [roundupBrandsLoading, setRoundupBrandsLoading] = useState(false);
 
+  const [showRadarPreview, setShowRadarPreview] = useState(false);
+  const [radar, setRadar] = useState(null);
+  const [radarLoading, setRadarLoading] = useState(false);
+
   // Individual user picker state
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [userSearchOptions, setUserSearchOptions] = useState([]);
@@ -395,6 +399,35 @@ const AdminEmail = () => {
       .filter((campaign) => campaign.status === 'sending')
       .forEach((campaign) => runSendPump(campaign.id));
   }, [campaigns, isAuthenticated]);
+
+  const fetchPaidUgcRadar = async () => {
+    setRadarLoading(true);
+    try {
+      const { data } = await api.get('/api/admin/email/paid-ugc-radar', getApiConfig());
+      setRadar(data);
+    } catch (error) {
+      console.error('Failed to build Paid UGC radar:', error);
+      message.error(error.response?.data?.error || 'Could not build the Paid UGC radar');
+    } finally {
+      setRadarLoading(false);
+    }
+  };
+
+  const openPaidUgcRadar = () => {
+    setShowRadarPreview(true);
+    fetchPaidUgcRadar();
+  };
+
+  const applyPaidUgcRadar = () => {
+    if (!radar?.html) return;
+    setEmailContent(radar.html);
+    setSubjectOverride(radar.subject);
+    setCampaignName(`Paid UGC Radar - ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`);
+    handleSegmentSelect(radar.segment_id || 'free_tier');
+    setShowRadarPreview(false);
+    setShowCampaignModal(true);
+    message.success('Paid UGC radar loaded for free users. Send yourself a test before sending.');
+  };
 
   const fetchRoundupBrands = async () => {
     setRoundupBrandsLoading(true);
@@ -1142,6 +1175,22 @@ const AdminEmail = () => {
 
               {/* Modern Template Cards */}
               <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                <Col xs={24} md={12} lg={8}>
+                  <ModernTemplateCard onClick={openPaidUgcRadar} featured>
+                    <div className="template-badge" style={{ background: 'linear-gradient(135deg, #C2410C 0%, #111827 100%)' }}>WEEKLY</div>
+                    <div className="template-icon-large">📡</div>
+                    <h4>Paid UGC Radar</h4>
+                    <p>Polly's weekly round-up of every live paid UGC offer, newest first. Free users only, with a Go Pro nudge.</p>
+                    <div className="template-features">
+                      <span>Free tier</span>
+                      <span>Live offers</span>
+                      <span>Polly style</span>
+                    </div>
+                    <Button type="default" block style={{ marginTop: 16, borderColor: '#C2410C', color: '#C2410C' }}>
+                      <EyeOutlined /> Preview &amp; Use
+                    </Button>
+                  </ModernTemplateCard>
+                </Col>
                 <Col xs={24} md={12} lg={8}>
                   <ModernTemplateCard
                     onClick={() => { setShowTemplatePreview(true); fetchRoundupBrands(); }}
@@ -2289,6 +2338,83 @@ const AdminEmail = () => {
                       : 'Loaded. Send a test first, then blast the gift list.');
                   }}
                 >
+                  Use This Template
+                </Button>
+              </div>
+            </TemplatePreviewContainer>
+          </Modal>
+
+          {/* Paid UGC Radar Preview Modal */}
+          <Modal
+            title={null}
+            open={showRadarPreview}
+            onCancel={() => setShowRadarPreview(false)}
+            footer={null}
+            width={900}
+            style={{ top: 20 }}
+            bodyStyle={{ padding: 0, background: '#1a1a2e' }}
+          >
+            <TemplatePreviewContainer>
+              <div className="preview-header">
+                <div>
+                  <h3>
+                    Paid UGC Radar
+                    {radarLoading && <Spin size="small" style={{ marginLeft: 10 }} />}
+                  </h3>
+                  <p>
+                    {radar?.stats
+                      ? `${radar.stats.new_this_week} new this week · ${radar.stats.total} live · sends to free users only`
+                      : 'Live paid UGC offers, newest first · free users only'}
+                  </p>
+                  {radar?.subject && <p style={{ marginTop: 4 }}>Subject: {radar.subject}</p>}
+                </div>
+                <Space>
+                  <Button icon={<ReloadOutlined />} onClick={fetchPaidUgcRadar} loading={radarLoading} title="Rebuild with the latest offers" />
+                  <Button
+                    type={previewViewMode === 'desktop' ? 'primary' : 'default'}
+                    icon={<DesktopOutlined />}
+                    onClick={() => setPreviewViewMode('desktop')}
+                  >
+                    Desktop
+                  </Button>
+                  <Button
+                    type={previewViewMode === 'mobile' ? 'primary' : 'default'}
+                    icon={<MobileOutlined />}
+                    onClick={() => setPreviewViewMode('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </Space>
+              </div>
+
+              <div className="preview-frame">
+                <div
+                  className={`device-frame ${previewViewMode}`}
+                  style={{ width: previewViewMode === 'mobile' ? 375 : 650 }}
+                >
+                  {previewViewMode === 'mobile' && <div className="device-notch" />}
+                  {radar?.html ? (
+                    <iframe
+                      srcDoc={radar.html.replace(/\{\{first_name\}\}/g, 'Sarah').replace(/\{\{unsubscribe_url\}\}/g, '#')}
+                      title="Paid UGC Radar Preview"
+                      style={{
+                        width: '100%',
+                        height: previewViewMode === 'mobile' ? 600 : 700,
+                        border: 'none',
+                        background: '#F7F5F0',
+                        borderRadius: previewViewMode === 'mobile' ? '0 0 24px 24px' : 8,
+                      }}
+                    />
+                  ) : (
+                    <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Spin />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="preview-actions">
+                <Button type="primary" disabled={radarLoading || !radar?.html} onClick={applyPaidUgcRadar}>
                   Use This Template
                 </Button>
               </div>
