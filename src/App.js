@@ -94,6 +94,7 @@ import NotFound from './cra-pages/NotFound';
 const BrandPRHome = lazy(() => import('./cra-pages/BrandPRHome'));
 const Polly = lazy(() => import('./creator-portal/Polly'));
 const Timeline = lazy(() => import('./creator-portal/Timeline'));
+const PaidGigs = lazy(() => import('./creator-portal/PaidGigs'));
 const BrandPRRoster = lazy(() => import('./cra-pages/BrandPRRoster'));
 const BrandLaunch = lazy(() => import('./cra-pages/BrandLaunch'));
 const Pool = lazy(() => import('./cra-pages/Pool'));
@@ -554,6 +555,7 @@ function AppContent() {
                 <Route path='dashboard/profile' element={<Profile />} />
                 <Route path='dashboard/pr-brands' element={<LazyRoute skeleton={<ForYouSkeleton />}><BrandPRHome /></LazyRoute>} />
                 <Route path='dashboard/pr-pipeline' element={<LazyRoute><PRPipeline /></LazyRoute>} />
+                <Route path='dashboard/paid-gigs' element={<LazyRoute skeleton={<ForYouSkeleton />}><PaidGigs /></LazyRoute>} />
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
                 <Route path='dashboard/for-you' element={<LazyRoute skeleton={<ForYouSkeleton />}><Polly /></LazyRoute>} />
                 <Route path='dashboard/polly' element={<Navigate to="/creator/dashboard/for-you" replace />} />

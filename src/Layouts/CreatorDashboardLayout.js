@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Sparkles, Bell, FileText, Calendar } from 'lucide-react';
+import { Search, Sparkles, Bell, FileText, Calendar, DollarSign } from 'lucide-react';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
@@ -86,6 +86,9 @@ const NavTabs = styled.div`
     grid-row: 2;
     justify-self: stretch;
     width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
   }
 `;
 
@@ -115,6 +118,11 @@ const NavTab = styled(Link)`
     padding: 8px 10px;
     font-size: 13px;
     svg { display: none; }
+  }
+
+  @media (max-width: 420px) {
+    padding: 8px 6px;
+    font-size: 12px;
   }
 `;
 
@@ -521,6 +529,7 @@ const EmptyNotifications = styled.div`
 const navItems = [
   { label: 'Polly', icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Directory', icon: Search, path: '/creator/dashboard/pr-brands' },
+  { label: 'Paid UGC', icon: DollarSign, path: '/creator/dashboard/paid-gigs' },
   { label: 'Timeline', icon: Calendar, path: '/creator/dashboard/timeline' },
   { label: 'My Kit', icon: FileText, path: '/creator/dashboard/my-kit' },
 ];
