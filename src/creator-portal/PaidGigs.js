@@ -203,10 +203,20 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
     setBusy(true);
     setError('');
     const mode = detail.apply_mode || 'url';
-    const tab = mode === 'url' ? window.open('', '_blank') : null;
+    // Copy while this page still has focus; a background page triggers Chrome's clipboard prompt.
+    let copying = null;
     if (mode === 'url') {
-      try { await navigator.clipboard.writeText(fullText()); } catch (_) { /* clipboard blocked */ }
+      try { copying = navigator.clipboard.writeText(fullText()).catch(() => {}); } catch (_) { /* clipboard blocked */ }
     }
+    const tab = mode === 'url' ? window.open('', '_blank') : null;
+    if (tab) {
+      try {
+        tab.document.title = 'Opening gig…';
+        tab.document.body.style.cssText = 'font-family:system-ui,sans-serif;display:grid;place-items:center;height:100vh;margin:0;color:#555';
+        tab.document.body.textContent = 'Opening the gig… your application is copied.';
+      } catch (_) { /* tab not writable */ }
+    }
+    await copying;
     let data = {};
     try {
       const res = await apiClient.post(`/api/opportunities/${gig.id}/apply`, {}, { timeout: 30000 });
