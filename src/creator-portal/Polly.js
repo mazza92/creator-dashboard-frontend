@@ -1684,6 +1684,7 @@ export default function Polly() {
         gigs_has_more: typeof data.gigs_has_more === 'boolean'
           ? data.gigs_has_more
           : gigs.length >= 3,
+        gigs_locked: Number(data.gigs_locked) || 0,
         pitch: data.pitch || null,
         pitch_batch: data.pitch_batch?.items?.length ? data.pitch_batch : null,
         kit_actions: kitActionsFrom(data, rawMessage),
@@ -2149,7 +2150,14 @@ export default function Polly() {
                           />
                         ))}
                       </GigList>
-                      {idx === lastGigIdx && msg.gigs_has_more !== false && (
+                      {msg.gigs_locked > 0 && (
+                        <GigMoreRow>
+                          <ShowMoreBtn type="button" onClick={() => setShowUpgrade(true)}>
+                            🔒 {msg.gigs_locked} more paid gigs · Unlock with Pro
+                          </ShowMoreBtn>
+                        </GigMoreRow>
+                      )}
+                      {idx === lastGigIdx && !msg.gigs_locked && msg.gigs_has_more !== false && (
                         <GigMoreRow>
                           <ShowMoreBtn
                             type="button"
