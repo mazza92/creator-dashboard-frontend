@@ -258,6 +258,7 @@ function normalizeBrand(raw, appliedMap) {
     replySignal: raw.reply_signal || raw.replySignal || null,
     applyStatus: applied?.apply_status || raw.apply_status || null,
     applied: Boolean(applied || raw.apply_status),
+    applyStale: Boolean(applied?.stale ?? raw.stale),
     social: parseSocial(raw.social || raw.pr_social_profile),
     rosterHunger: Number(raw.roster_hunger || raw.rosterHunger) || 0,
     rosterFillCount: Number(raw.roster_fill_count || raw.rosterFillCount) || 0,
@@ -1038,6 +1039,16 @@ export default function BrandPRHome() {
     return () => io.disconnect();
   }, [tab, hasMoreDir, dirPage, loadDirectory]);
 
+  function pitchDirectly(brand) {
+    trackApplyEvent('stale_pitch_direct', { source: 'stale_application', brand_id: brand.id });
+    const params = new URLSearchParams({
+      chip: 'pitch_brand',
+      brand_id: String(brand.id),
+      brand_name: brand.name || '',
+    });
+    navigate(`/creator/dashboard/for-you?${params.toString()}`);
+  }
+
   function renderCard(brand, variant) {
     const stats = cardStats(brand);
     const cat = brand.category || '';
@@ -1104,7 +1115,7 @@ export default function BrandPRHome() {
               {brand.matchScore != null && Number(brand.matchScore) > 0 && (
                 <Score><b>{Math.round(brand.matchScore)}%</b> fit</Score>
               )}
-              {brand.applied && <AppliedBadge>Applied</AppliedBadge>}
+              {brand.applied && <AppliedBadge>{brand.applyStale ? 'No pick yet' : 'Applied'}</AppliedBadge>}
             </Badges>
           </Row1>
           <Offer>
@@ -1127,7 +1138,17 @@ export default function BrandPRHome() {
               ))}
             </StatGrid>
           )}
-          {brand.applied ? (
+          {brand.applied && brand.applyStale ? (
+            <StaleNote>
+              <p>
+                No pick from {brand.name} after 2 weeks. Lists that go quiet this long rarely pick, so
+                {brand.hasEmail || brand.hasForm ? ' pitch them directly instead.' : ' try a brand with an open list.'}
+              </p>
+              {(brand.hasEmail || brand.hasForm) && (
+                <Cta type="button" onClick={() => pitchDirectly(brand)}>Pitch them directly</Cta>
+              )}
+            </StaleNote>
+          ) : brand.applied ? (
             <Tracker stage={statusToStage(brand.applyStatus)} compact />
           ) : noCredits ? (
             <Cta type="button" onClick={() => showPaywall('card_credits')}>{PRO_OFFER.ctaShort}</Cta>
@@ -1390,7 +1411,7 @@ export default function BrandPRHome() {
               <ApplyExamplesSkeleton />
             ) : (
             <Block>
-              <h2>What their last PR looked like</h2>
+              <h2>Their latest posts</h2>
               {examples.length ? (
                 <EmbedRow>
                   {examples.map((ex) => {
@@ -1416,7 +1437,7 @@ export default function BrandPRHome() {
                   })}
                 </EmbedRow>
               ) : (
-                <EmptyNote>No recent PR campaigns yet</EmptyNote>
+                <EmptyNote>No recent posts yet</EmptyNote>
               )}
             </Block>
             )}
@@ -3464,6 +3485,24 @@ const trackPulse = keyframes`
   0% { box-shadow: 0 0 0 0 rgba(13, 122, 95, 0.35); }
   70% { box-shadow: 0 0 0 8px rgba(13, 122, 95, 0); }
   100% { box-shadow: 0 0 0 0 rgba(13, 122, 95, 0); }
+`;
+const StaleNote = styled.div`
+  margin: 18px 0 0;
+  background: #fbf8f2;
+  border: 1px solid ${tokens.border};
+  border-radius: 18px;
+  padding: 14px;
+
+  p {
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: ${INK};
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
 `;
 const TrackerBox = styled.div`
   margin: ${(p) => (p.$compact ? '18px 0 0' : '18px 0 8px')};
