@@ -77,43 +77,78 @@ function listText(line) {
   return line.replace(/^\s*(?:[-*]\s+|\d+[.)]\s+)/, '');
 }
 
-function splitBlocks(text) {
-  return String(text || '').replace(/\r\n/g, '\n').split(/\n{2,}/);
+function listStart(line) {
+  const m = line.match(/^\s*(\d+)[.)]\s+/);
+  return m ? parseInt(m[1], 10) : 1;
+}
+
+// Blank lines between items of the same kind keep one list, so "1.\n\n2." never renders as "1. 1.".
+export function parseBlocks(text) {
+  const lines = String(text || '').replace(/\r\n/g, '\n').split('\n').map((l) => l.trimEnd());
+  const blocks = [];
+  let cur = null;
+  let gap = false;
+  lines.forEach((line) => {
+    if (!line.trim()) {
+      gap = true;
+      return;
+    }
+    const heading = isHeading(line);
+    const kind = listKind(line);
+    if (heading) {
+      blocks.push({ type: 'heading', ...heading });
+      cur = null;
+    } else if (kind) {
+      const text = listText(line);
+      if (!text.trim()) return;
+      if (cur && cur.type === kind) {
+        cur.items.push([text]);
+      } else {
+        cur = { type: kind, start: kind === 'ol' ? listStart(line) : 1, items: [[text]] };
+        blocks.push(cur);
+      }
+    } else if (cur && (cur.type === 'ol' || cur.type === 'ul') && !gap) {
+      cur.items[cur.items.length - 1].push(line.trim());
+    } else if (cur && cur.type === 'p' && !gap) {
+      cur.lines.push(line);
+    } else {
+      cur = { type: 'p', lines: [line] };
+      blocks.push(cur);
+    }
+    gap = false;
+  });
+  return blocks;
+}
+
+function renderLines(lines, keyBase) {
+  return lines.map((line, li) => (
+    <React.Fragment key={`${keyBase}-${li}`}>
+      {li > 0 ? <br /> : null}
+      {renderInline(line, `${keyBase}${li}`)}
+    </React.Fragment>
+  ));
 }
 
 export default function PollyRichText({ text }) {
-  const blocks = splitBlocks(text);
+  const blocks = parseBlocks(text);
   return (
     <>
       {blocks.map((block, bi) => {
-        const lines = block.split('\n').map((l) => l.trimEnd()).filter((l, idx, arr) => !(l === '' && idx === arr.length - 1));
-        if (!lines.length) return null;
-        const heading = lines.length === 1 ? isHeading(lines[0]) : null;
-        if (heading) {
-          const Tag = heading.level === 1 ? 'h3' : 'h4';
-          return <Tag key={`h-${bi}`}>{renderInline(heading.text, `h${bi}`)}</Tag>;
+        if (block.type === 'heading') {
+          const Tag = block.level === 1 ? 'h3' : 'h4';
+          return <Tag key={`h-${bi}`}>{renderInline(block.text, `h${bi}`)}</Tag>;
         }
-        const kinds = lines.map(listKind);
-        if (kinds.every(Boolean) && new Set(kinds).size === 1) {
-          const Tag = kinds[0] === 'ol' ? 'ol' : 'ul';
+        if (block.type === 'ol' || block.type === 'ul') {
+          const Tag = block.type;
           return (
-            <Tag key={`l-${bi}`}>
-              {lines.map((line, li) => (
-                <li key={`l-${bi}-${li}`}>{renderInline(listText(line), `l${bi}${li}`)}</li>
+            <Tag key={`l-${bi}`} {...(block.type === 'ol' && block.start > 1 ? { start: block.start } : {})}>
+              {block.items.map((item, li) => (
+                <li key={`l-${bi}-${li}`}>{renderLines(item, `l${bi}-${li}`)}</li>
               ))}
             </Tag>
           );
         }
-        return (
-          <p key={`p-${bi}`}>
-            {lines.map((line, li) => (
-              <React.Fragment key={`p-${bi}-${li}`}>
-                {li > 0 ? <br /> : null}
-                {renderInline(line, `p${bi}${li}`)}
-              </React.Fragment>
-            ))}
-          </p>
-        );
+        return <p key={`p-${bi}`}>{renderLines(block.lines, `p${bi}`)}</p>;
       })}
     </>
   );

@@ -118,10 +118,59 @@ function VideoTile({ video }) {
   );
 }
 
+const DmBox = styled.div`
+  margin-top: 10px;
+  border: 1px solid ${t.line};
+  border-radius: 14px;
+  padding: 12px;
+  background: ${t.cream || '#faf8f4'};
+  .how { font-size: 12.5px; color: ${t.inkSoft}; line-height: 1.45; }
+  .dm {
+    margin-top: 8px; padding: 10px 12px; background: ${t.white}; border-radius: 10px; border: 1px solid ${t.line};
+    font-size: 13px; line-height: 1.5; white-space: pre-wrap; color: ${t.ink};
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+`;
+
+const Note = styled.div`
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: ${t.muted};
+`;
+
+function ContactResult({ contact, onCopy }) {
+  if (!contact) return null;
+  if (contact.state === 'email') {
+    return <Note>Found {contact.email}. Writing your pitch below.</Note>;
+  }
+  if (contact.state === 'none') {
+    return <Note>I couldn't find a way to reach {contact.brand_name} yet. Try another brand for now.</Note>;
+  }
+  if (contact.state === 'error') {
+    return <Note>I couldn't check right now. Tap the button again in a moment.</Note>;
+  }
+  if (contact.state !== 'dm') return null;
+  return (
+    <DmBox>
+      <div className="how">
+        {contact.brand_name} doesn't list an email, so DM them on TikTok. Copy this message, open their profile, tap
+        Message and paste it.
+      </div>
+      <div className="dm">{contact.dm}</div>
+      <div className="row">
+        <Btn type="button" $primary onClick={() => onCopy(contact.dm)}>{contact.copied ? 'Copied' : 'Copy DM'}</Btn>
+        <Btn type="button" as="a" href={contact.profile_url} target="_blank" rel="noopener noreferrer">
+          Open @{contact.handle} on TikTok
+        </Btn>
+      </div>
+    </DmBox>
+  );
+}
+
 /** Gifting Radar result: polls while the TikTok search runs, then brand sections with example videos. */
-export default function GiftingRadar({ radar: initial, busy, onChip }) {
+export default function GiftingRadar({ radar: initial, busy, onChip, onSettled }) {
   const [radar, setRadar] = useState(initial);
-  const [asked, setAsked] = useState({});
+  const [contacts, setContacts] = useState({});
   const polls = useRef(0);
 
   useEffect(() => { setRadar(initial); }, [initial]);
@@ -139,7 +188,11 @@ export default function GiftingRadar({ radar: initial, busy, onChip }) {
         .then((res) => {
           if (cancelled || !res.data?.radar) return;
           setRadar(res.data.radar);
-          if (res.data.radar.status === 'searching' && polls.current < MAX_POLLS) timer = setTimeout(tick, POLL_MS);
+          if (res.data.radar.status === 'searching') {
+            if (polls.current < MAX_POLLS) timer = setTimeout(tick, POLL_MS);
+          } else if (onSettled) {
+            onSettled(res.data.radar);
+          }
         })
         .catch(() => { if (!cancelled && polls.current < MAX_POLLS) timer = setTimeout(tick, POLL_MS * 2); });
     };
@@ -150,20 +203,33 @@ export default function GiftingRadar({ radar: initial, busy, onChip }) {
 
   if (!radar) return null;
 
-  const findContact = (brand) => {
-    setAsked((a) => ({ ...a, [brand.discovered_brand_id]: true }));
-    apiClient.post('/api/polly/radar/contact', { discovered_brand_id: brand.discovered_brand_id }).catch(() => {});
-  };
-
-  const pitch = (brand) => onChip({
+  const pitch = (brand, toEmail) => onChip({
     id: 'radar_pitch',
     label: `Pitch ${brand.name}`,
     action: 'generate_pitch',
     skip_discovery: true,
-    brand_id: brand.brand_id,
+    brand_id: toEmail ? undefined : brand.brand_id,
     brand_name: brand.name,
+    to_email: toEmail || undefined,
     radar: { niche: radar.niche, evidence: brand.evidence_data },
   });
+
+  const findContact = (brand) => {
+    const key = brand.discovered_brand_id;
+    setContacts((c) => ({ ...c, [key]: { state: 'loading' } }));
+    apiClient.post('/api/polly/radar/contact', { discovered_brand_id: key, niche: radar.niche })
+      .then((res) => {
+        const data = res.data || {};
+        setContacts((c) => ({ ...c, [key]: { state: data.kind || 'none', ...data } }));
+        if (data.kind === 'email' && data.email) pitch(brand, data.email);
+      })
+      .catch(() => setContacts((c) => ({ ...c, [key]: { state: 'error' } })));
+  };
+
+  const copyDm = (key, text) => {
+    const done = () => setContacts((c) => ({ ...c, [key]: { ...c[key], copied: true } }));
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(() => {});
+  };
 
   return (
     <Card>
@@ -209,11 +275,20 @@ export default function GiftingRadar({ radar: initial, busy, onChip }) {
               </Btn>
             ) : null}
             {brand.contact === 'find_contact' ? (
-              <Btn type="button" disabled={asked[brand.discovered_brand_id]} onClick={() => findContact(brand)}>
-                {asked[brand.discovered_brand_id] ? "On it, I'll add their contact" : 'Ask Polly to find their contact'}
+              <Btn
+                type="button"
+                $primary
+                disabled={busy || ['loading', 'dm', 'none'].includes(contacts[brand.discovered_brand_id]?.state)}
+                onClick={() => findContact(brand)}
+              >
+                {contacts[brand.discovered_brand_id]?.state === 'loading' ? 'Finding their contact…' : 'Find contact & pitch brand'}
               </Btn>
             ) : null}
           </Actions>
+          <ContactResult
+            contact={contacts[brand.discovered_brand_id]}
+            onCopy={(text) => copyDm(brand.discovered_brand_id, text)}
+          />
         </Brand>
       ))}
       {!searching && (

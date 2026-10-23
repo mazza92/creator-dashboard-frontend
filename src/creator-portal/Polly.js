@@ -1125,6 +1125,29 @@ const ChipRow = styled(Chips)`
   margin: 0 auto 10px;
   max-width: 720px;
   padding: 0 4px;
+
+  @media (max-width: 840px) {
+    display: ${p => (p.$hidden ? 'none' : 'flex')};
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 -12px 8px;
+    padding: 0 12px;
+    gap: 6px;
+    mask-image: linear-gradient(90deg, #000 85%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
+    &::-webkit-scrollbar { display: none; }
+    & > button {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      scroll-snap-align: start;
+      padding: 7px 12px;
+      font-size: 13px;
+    }
+  }
 `;
 
 const Composer = styled.form`
@@ -1357,6 +1380,7 @@ export default function Polly() {
   const turnInFlightRef = useRef(false);
   const [suggested, setSuggested] = useState([]);
   const [draft, setDraft] = useState('');
+  const [composerFocused, setComposerFocused] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busyKind, setBusyKind] = useState('chat');
   const [streamId, setStreamId] = useState(null);
@@ -1557,6 +1581,21 @@ export default function Polly() {
       suggested_brands: nextSuggested,
     }).catch(() => {});
   }, []);
+
+  const settleRadar = useCallback((radar) => {
+    if (!radar?.run_id) return;
+    setMessages((prev) => {
+      let changed = false;
+      const next = prev.map((msg) => {
+        if (msg.radar?.run_id !== radar.run_id || msg.radar.status === radar.status) return msg;
+        changed = true;
+        return { ...msg, radar };
+      });
+      if (!changed) return prev;
+      persistThread(next, suggestedRef.current);
+      return next;
+    });
+  }, [persistThread]);
 
   const [sendingBatch, setSendingBatch] = useState(false);
 
@@ -1778,7 +1817,7 @@ export default function Polly() {
       setLiveText('');
       setBusy(false);
       setContactingId(null);
-      inputRef.current?.focus();
+      if (!window.matchMedia?.('(pointer: coarse)').matches) inputRef.current?.focus();
     }
   }, [persistThread]);
 
@@ -1826,6 +1865,7 @@ export default function Polly() {
       radar: chip.radar,
       signal_type: chip.signal_type,
       niche: chip.niche,
+      to_email: chip.to_email,
       is_followup: Boolean(chip.is_followup) || chip.id === 'draft_followup' || /follow-?up/i.test(chip.label || ''),
     });
   };
@@ -2065,6 +2105,7 @@ export default function Polly() {
     || (!autopilot.state && credits?.is_unlimited ? { label: '⚡ Autopilot', attention: false } : null);
   const closeAutopilot = () => { setAutopilotOpen(false); setAutopilotNotice(''); };
   const dockStarters = messages.length > 0 ? composerStarters(starters, messages) : [];
+  const radarStarter = dockStarters.find((s) => s.action === 'gifting_radar') || null;
 
   return (
     <Shell>
@@ -2152,7 +2193,9 @@ export default function Polly() {
                       onChip={sendStarter}
                     />
                   ) : null}
-                  {msg.radar ? <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} /> : null}
+                  {msg.radar ? (
+                    <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} onSettled={settleRadar} />
+                  ) : null}
                   {msg.task_chips?.length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.map((s) => (
@@ -2348,8 +2391,13 @@ export default function Polly() {
         )}
       </Thread>
       <ComposerWrap>
-        {(dockStarters.length > 0 || ((apChip || credits?.is_unlimited) && messages.length > 0)) && (
-          <ChipRow>
+        {(dockStarters.length > 0 || ((apChip || credits?.is_unlimited) && messages.length > 0)) && !draft.trim() && (
+          <ChipRow $hidden={composerFocused}>
+            {radarStarter ? (
+              <Chip type="button" onClick={() => sendStarter(radarStarter)} disabled={busy || loadingMore}>
+                {radarStarter.label}
+              </Chip>
+            ) : null}
             {credits?.is_unlimited && messages.length > 0 ? (
               <Chip type="button" onClick={() => sendStarter(BOARD_STARTER)} disabled={busy || loadingMore}>
                 📋 Monday board
@@ -2365,7 +2413,7 @@ export default function Polly() {
                 {apChip.label}
               </Chip>
             ) : null}
-            {dockStarters.map((s) => (
+            {dockStarters.filter((s) => s !== radarStarter).map((s) => (
               <Chip
                 key={s.id || s.label}
                 type="button"
@@ -2385,6 +2433,8 @@ export default function Polly() {
             placeholder="Ask anything"
             value={draft}
             disabled={busy}
+            onFocus={() => setComposerFocused(true)}
+            onBlur={() => setComposerFocused(false)}
             onChange={(e) => {
               setDraft(e.target.value);
               resizeInput(e.target);
