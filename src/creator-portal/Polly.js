@@ -922,6 +922,25 @@ const PitchLabel = styled.div`
   margin-bottom: 8px;
 `;
 
+const PitchEdited = styled.span`
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #ECFDF5;
+  color: #047857;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+`;
+
+function pitchEditedLabel(iso) {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return 'Updated';
+  const mins = (Date.now() - at.getTime()) / 60000;
+  if (mins < 5) return 'Updated just now';
+  return `Updated ${at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+}
+
 const PitchSubject = styled.div`
   font-weight: 600;
   font-size: 14px;
@@ -2224,6 +2243,7 @@ export default function Polly() {
                       <PitchLabel>
                         {msg.pitch.is_reply ? 'Reply to' : msg.pitch.is_followup ? 'Follow-up for' : 'Pitch for'}{' '}
                         {msg.pitch.brand_name || 'this brand'}
+                        {msg.pitch.edited_at ? <PitchEdited>{pitchEditedLabel(msg.pitch.edited_at)}</PitchEdited> : null}
                       </PitchLabel>
                       {msg.pitch.email ? <PitchTo>To: {msg.pitch.email}</PitchTo> : null}
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>
