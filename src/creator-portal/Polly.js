@@ -2206,7 +2206,8 @@ export default function Polly() {
                           <BrandMeta>
                             <div className="name">{brand.name}</div>
                             <div className="cat">
-                              {[brand.category, brand.match_score ? `${brand.match_score}% match` : null]
+                              {[brand.category, brand.match_score ? `${brand.match_score}% match` : null,
+                                brand.ships_to_you ? 'Ships to you' : brand.shipping_note || null]
                                 .filter(Boolean)
                                 .join(' · ')}
                             </div>
@@ -2253,6 +2254,7 @@ export default function Polly() {
                       </PitchLabel>
                       {msg.pitch.email ? <PitchTo>To: {msg.pitch.email}</PitchTo> : null}
                       {msg.pitch.prefs_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.prefs_line}</PitchPrefsLine> : null}
+                      {msg.pitch.stats_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.stats_line}</PitchPrefsLine> : null}
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>
                       {pitchHasPlaceholder(msg.pitch) ? (
                         <PitchCoach>
