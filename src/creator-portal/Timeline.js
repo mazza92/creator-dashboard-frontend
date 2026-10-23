@@ -6,10 +6,11 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
-  { id: 'applied', label: 'Applied' },
+  { id: 'your_move', label: 'Your move' },
   { id: 'active', label: 'Active' },
   { id: 'won', label: 'Won' },
   { id: 'dropped', label: 'Dropped' },
+  { id: 'applied', label: 'PR campaigns' },
 ];
 
 const STATUS_DOT = {
@@ -103,6 +104,27 @@ const Meta = styled.div`
   .name { font-weight: 600; font-size: 15px; color: ${t.ink}; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .stage { font-size: 13px; color: ${t.inkSoft}; margin-top: 3px; }
   .last { font-size: 12px; color: ${t.muted}; margin-top: 2px; }
+  .signals { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+`;
+
+const Signal = styled.span`
+  font-size: 11px;
+  color: ${t.inkSoft};
+  background: ${t.subtle};
+  border-radius: 100px;
+  padding: 2px 8px;
+`;
+
+const StatusBox = styled.div`
+  background: ${t.white};
+  border: 1px solid ${t.line};
+  border-radius: 14px;
+  padding: 14px;
+  margin: 4px 0 12px;
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .who { font-size: 12px; color: ${t.muted}; }
+  .copy { font-size: 14px; color: ${t.ink}; margin-top: 8px; }
+  .timing { font-size: 12px; color: ${t.muted}; margin-top: 4px; }
 `;
 
 const Pill = styled.span`
@@ -181,6 +203,13 @@ const Cta = styled.button`
   font-family: inherit;
 `;
 
+function whoLabel(who) {
+  if (!who || who === 'Nobody') return '';
+  if (who === 'You') return 'Your move';
+  if (who === 'Brand') return 'Waiting on the brand';
+  return who;
+}
+
 function whenLabel(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -221,6 +250,19 @@ export default function Timeline() {
         <Title>{brand.name || 'Brand'}</Title>
         <Sub>{[brand.category, brand.slug].filter(Boolean).join(' · ')}</Sub>
         {busy && <Sub>Loading…</Sub>}
+        {detail?.tracker && (
+          <StatusBox>
+            <div className="row">
+              <Pill $tone="apply">{detail.tracker.label}</Pill>
+              {whoLabel(detail.tracker.who_next) ? <span className="who">{whoLabel(detail.tracker.who_next)}</span> : null}
+            </div>
+            <div className="copy">{detail.tracker.copy}</div>
+            {detail.tracker.timing ? <div className="timing">{detail.tracker.timing}</div> : null}
+            {(detail.tracker.signals || []).length ? (
+              <Meta><div className="signals">{detail.tracker.signals.map((s) => <Signal key={s}>{s}</Signal>)}</div></Meta>
+            ) : null}
+          </StatusBox>
+        )}
         {(detail?.events || []).map((ev) => (
           <Event key={ev.id}>
             <div className="icon">{ev.event_icon}</div>
@@ -255,7 +297,7 @@ export default function Timeline() {
   return (
     <Shell>
       <Title>Timeline</Title>
-      <Sub>Pitches, gifted PR applications, replies, and boxes — one trail per brand.</Sub>
+      <Sub>Every pitch, reply and PR box — one status per brand, and who moves next.</Sub>
       <Filters>
         {FILTERS.map((f) => (
           <Filter key={f.id} type="button" $on={status === f.id} onClick={() => setStatus(f.id)}>
@@ -281,15 +323,16 @@ export default function Timeline() {
             <div className="name">
               <Dot $c={STATUS_DOT[row.status] || STATUS_DOT.dropped} />
               {row.name}
-              {row.source === 'apply' || row.source === 'both' ? (
-                <Pill $tone="apply">{row.apply_status === 'ships' ? 'Selected' : row.apply_status === 'posted' ? 'Posted' : row.apply_status === 'declined' || row.apply_status === 'skipped' ? 'Passed' : 'Applied'}</Pill>
-              ) : (
-                <Pill>Pitched</Pill>
-              )}
+              <Pill $tone={row.tracker?.who_next === 'You' ? 'apply' : undefined}>
+                {row.tracker?.label || row.stage_label || 'Pitched'}
+              </Pill>
             </div>
-            <div className="stage">{row.stage_label}</div>
+            {whoLabel(row.tracker?.who_next) ? <div className="stage">{whoLabel(row.tracker.who_next)}</div> : null}
             {row.last_event ? (
               <div className="last">{row.last_icon} {row.last_event}{row.last_event_at ? ` · ${whenLabel(row.last_event_at)}` : ''}</div>
+            ) : null}
+            {(row.tracker?.signals || []).length ? (
+              <div className="signals">{row.tracker.signals.map((s) => <Signal key={s}>{s}</Signal>)}</div>
             ) : null}
           </Meta>
         </Card>

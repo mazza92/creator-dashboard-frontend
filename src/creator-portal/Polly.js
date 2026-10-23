@@ -941,6 +941,12 @@ function pitchEditedLabel(iso) {
   return `Updated ${at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 }
 
+const PitchPrefsLine = styled.div`
+  font-size: 11.5px;
+  color: ${t.muted};
+  margin: 2px 0 6px;
+`;
+
 const PitchSubject = styled.div`
   font-weight: 600;
   font-size: 14px;
@@ -2246,6 +2252,7 @@ export default function Polly() {
                         {msg.pitch.edited_at ? <PitchEdited>{pitchEditedLabel(msg.pitch.edited_at)}</PitchEdited> : null}
                       </PitchLabel>
                       {msg.pitch.email ? <PitchTo>To: {msg.pitch.email}</PitchTo> : null}
+                      {msg.pitch.prefs_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.prefs_line}</PitchPrefsLine> : null}
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>
                       {pitchHasPlaceholder(msg.pitch) ? (
                         <PitchCoach>

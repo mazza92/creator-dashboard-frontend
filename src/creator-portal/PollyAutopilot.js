@@ -343,6 +343,152 @@ const FOLLOWUPS = [
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
+const LEAD_METRICS = [
+  { id: 'followers', name: 'Followers' },
+  { id: 'views', name: 'Views' },
+  { id: 'engagement', name: 'Engagement' },
+  { id: 'none', name: 'No stats' },
+];
+
+const OFFERS = [
+  { id: 'gifted_post', name: 'Gifted post', hint: 'Product for a post' },
+  { id: 'gifted_ugc', name: 'Gifted + UGC', hint: 'Post + videos they can use' },
+  { id: 'gifted_ugc_photos', name: 'Gifted + UGC + photos', hint: 'Everything' },
+  { id: 'paid_only', name: 'Paid only', hint: 'No gifted asks' },
+];
+
+const PLATFORM_OPTIONS = [
+  { id: 'tiktok', name: 'TikTok' },
+  { id: 'instagram', name: 'Instagram' },
+  { id: 'youtube', name: 'YouTube' },
+  { id: 'pinterest', name: 'Pinterest' },
+];
+
+const USAGE_OPTIONS = [0, 1, 3, 6];
+
+const PrefInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  border: 1px solid ${t.line};
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-family: inherit;
+  font-size: 13px;
+`;
+
+const PrefArea = styled.textarea`
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  border: 1px solid ${t.line};
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  min-height: 120px;
+  resize: vertical;
+`;
+
+function PitchPrefs({ prefs, save, busy }) {
+  const p = prefs || {};
+  const [deliverables, setDeliverables] = useState(p.deliverables || '');
+  const [template, setTemplate] = useState(p.custom_template || '');
+  useEffect(() => { setDeliverables(p.deliverables || ''); }, [p.deliverables]);
+  useEffect(() => { setTemplate(p.custom_template || ''); }, [p.custom_template]);
+  const set = (patch) => save({ pitch_prefs: patch });
+  const pick = (key, value) => set({ [key]: p[key] === value ? null : value });
+  const platforms = p.platforms || [];
+
+  return (
+    <Setting>
+      <div className="label">Pitch preferences</div>
+      <div className="hint">
+        Every pitch I write follows these, in chat and on Autopilot.
+        {p.summary ? ` Now: ${p.summary}.` : ' Tap to change; tap again to go back to my default.'}
+      </div>
+      <div className="label" style={{ marginTop: 12 }}>Lead with</div>
+      <Segments $cols={4}>
+        {LEAD_METRICS.map((m) => (
+          <Segment key={m.id} type="button" $on={p.lead_metric === m.id} onClick={() => pick('lead_metric', m.id)} disabled={busy}>
+            <strong>{m.name}</strong>
+          </Segment>
+        ))}
+      </Segments>
+      <div className="line" style={{ marginTop: 12 }}>
+        <div className="label">Show engagement rate</div>
+        <Switch
+          type="button"
+          $on={p.show_engagement_rate !== false}
+          aria-label="Show engagement rate in pitches"
+          onClick={() => set({ show_engagement_rate: p.show_engagement_rate === false })}
+          disabled={busy}
+        />
+      </div>
+      <div className="label" style={{ marginTop: 12 }}>Platforms to mention</div>
+      <Chips>
+        {PLATFORM_OPTIONS.map((o) => (
+          <Chip
+            key={o.id}
+            type="button"
+            $on={platforms.includes(o.id)}
+            onClick={() => set({ platforms: toggle(platforms, o.id) })}
+            disabled={busy}
+          >
+            {o.name}
+          </Chip>
+        ))}
+      </Chips>
+      <div className="label" style={{ marginTop: 12 }}>What I offer</div>
+      <Segments $cols={2}>
+        {OFFERS.map((o) => (
+          <Segment key={o.id} type="button" $on={p.offer_type === o.id} onClick={() => pick('offer_type', o.id)} disabled={busy}>
+            <strong>{o.name}</strong>
+            {o.hint}
+          </Segment>
+        ))}
+      </Segments>
+      <div className="label" style={{ marginTop: 12 }}>Deliverables</div>
+      <PrefInput
+        value={deliverables}
+        placeholder="e.g. 1 organic TikTok + 2 UGC videos"
+        maxLength={200}
+        onChange={(e) => setDeliverables(e.target.value)}
+        onBlur={() => { if (deliverables !== (p.deliverables || '')) set({ deliverables: deliverables.trim() || null }); }}
+        disabled={busy}
+      />
+      <div className="label" style={{ marginTop: 12 }}>Usage rights</div>
+      <Segments $cols={4}>
+        {USAGE_OPTIONS.map((n) => (
+          <Segment key={n} type="button" $on={p.usage_rights_months === n} onClick={() => pick('usage_rights_months', n)} disabled={busy}>
+            <strong>{n === 0 ? 'None' : `${n} mo`}</strong>
+          </Segment>
+        ))}
+      </Segments>
+      <div className="label" style={{ marginTop: 12 }}>Tone</div>
+      <Segments $cols={2}>
+        {['friendly', 'professional'].map((tone) => (
+          <Segment key={tone} type="button" $on={p.tone === tone} onClick={() => pick('tone', tone)} disabled={busy}>
+            <strong>{tone === 'friendly' ? 'Friendly' : 'Professional'}</strong>
+          </Segment>
+        ))}
+      </Segments>
+      <div className="label" style={{ marginTop: 12 }}>Your own template</div>
+      <div className="hint">
+        Optional. I send it word for word and fill {'{{brand}}'}, {'{{product}}'}, {'{{first_name}}'}, {'{{handle}}'}, {'{{city}}'} and {'{{kit_url}}'}.
+      </div>
+      <PrefArea
+        value={template}
+        placeholder={'Hi {{brand}} team, ...'}
+        maxLength={3000}
+        onChange={(e) => setTemplate(e.target.value)}
+        onBlur={() => { if (template !== (p.custom_template || '')) set({ custom_template: template.trim() || null }); }}
+        disabled={busy}
+      />
+    </Setting>
+  );
+}
+
 const CATEGORY_LABELS = {
   haircare: 'Hair care',
   pets: 'Pets',
@@ -961,6 +1107,7 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
             ))}
           </Segments>
         </Setting>
+        {state.pitch_prefs ? <PitchPrefs prefs={state.pitch_prefs} save={save} busy={busy} /> : null}
         {targeting ? (
           <Setting>
             <div className="label">Brands to target</div>
