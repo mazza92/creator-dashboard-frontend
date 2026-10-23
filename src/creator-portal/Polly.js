@@ -6,6 +6,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from './PollyAutopilot';
 import MondayBoard from './PollyBoard';
+import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -1716,6 +1717,7 @@ export default function Polly() {
         task_chips: data.task_chips || [],
         locked_pitch: lockedPitchFrom(data),
         ...(data.board ? { kind: 'board', board: data.board } : {}),
+        ...(data.radar ? { radar: data.radar } : {}),
       };
       const next = [...thread, assistant];
       setStreamId(liveTextRef.current ? null : assistant.id);
@@ -1821,6 +1823,9 @@ export default function Polly() {
       task_id: chip.task_id,
       chip_id: chip.id,
       sample_posts: chip.sample_posts,
+      radar: chip.radar,
+      signal_type: chip.signal_type,
+      niche: chip.niche,
       is_followup: Boolean(chip.is_followup) || chip.id === 'draft_followup' || /follow-?up/i.test(chip.label || ''),
     });
   };
@@ -2147,6 +2152,7 @@ export default function Polly() {
                       onChip={sendStarter}
                     />
                   ) : null}
+                  {msg.radar ? <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} /> : null}
                   {msg.task_chips?.length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.map((s) => (
