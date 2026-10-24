@@ -9,6 +9,7 @@ import UpgradeModal from './UpgradeModal';
 import CancelRetentionModal from './CancelRetentionModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PRO_OFFER } from '../config/proOffer';
+import { CATEGORY_ALIASES } from '../constants/brandCategories';
 import { consumeUpgradeDeeplink, stripUpgradeQuery, dismissUpgradeDeeplink } from '../utils/upgradeDeeplink';
 
 // Niche options - must match onboarding for consistency
@@ -33,6 +34,15 @@ const NICHE_OPTIONS = [
   { id: 'sustainable', label: '♻️ Sustainable' },
   { id: 'luxury', label: '✨ Luxury' },
 ];
+
+const NICHE_IDS = NICHE_OPTIONS.map(n => n.id);
+const MAX_NICHES = 3;
+
+// Stored niches -> chip ids ('makeup' -> 'beauty'); anything with no chip is dropped so the count matches.
+const toNicheIds = (raw) => [...new Set((raw || [])
+  .map(n => (typeof n === 'string' ? n.toLowerCase().trim() : ''))
+  .map(n => CATEGORY_ALIASES[n] || n)
+  .filter(n => NICHE_IDS.includes(n)))];
 
 const AccountSettings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -163,9 +173,7 @@ const AccountSettings = () => {
       ]);
       if (forYouResponse.data.success && forYouResponse.data.profile) {
         const rawNiches = forYouResponse.data.profile.niches || [];
-        const normalizedNiches = rawNiches.map(n =>
-          typeof n === 'string' ? n.toLowerCase().trim() : ''
-        ).filter(Boolean);
+        const normalizedNiches = toNicheIds(rawNiches);
         setSelectedNiches(normalizedNiches);
         setFollowerCount(forYouResponse.data.profile.followers?.toString() || '');
       }
@@ -227,6 +235,10 @@ const AccountSettings = () => {
       message.warning('Please select at least one niche');
       return;
     }
+    if (selectedNiches.length > MAX_NICHES) {
+      message.warning(`Keep your top ${MAX_NICHES} niches to save`);
+      return;
+    }
     setSavingNiches(true);
     try {
       const response = await api.patch('/api/pr-crm/creator-profile', {
@@ -237,7 +249,7 @@ const AccountSettings = () => {
         setNichesDirty(false);
         // Update local state with server response to confirm sync
         if (response.data.profile?.niches) {
-          setSelectedNiches(response.data.profile.niches);
+          setSelectedNiches(toNicheIds(response.data.profile.niches));
         }
       } else {
         message.error(response.data.error || 'Failed to save niches');
@@ -619,7 +631,7 @@ const AccountSettings = () => {
                 key={niche.id}
                 $selected={selectedNiches.includes(niche.id)}
                 onClick={() => toggleNiche(niche.id)}
-                disabled={!selectedNiches.includes(niche.id) && selectedNiches.length >= 3}
+                disabled={!selectedNiches.includes(niche.id) && selectedNiches.length >= MAX_NICHES}
               >
                 {niche.label}
               </NicheChip>
@@ -629,7 +641,7 @@ const AccountSettings = () => {
           {nichesDirty && (
             <SaveNichesButton
               onClick={saveNiches}
-              disabled={savingNiches || selectedNiches.length === 0}
+              disabled={savingNiches || selectedNiches.length === 0 || selectedNiches.length > MAX_NICHES}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -638,7 +650,9 @@ const AccountSettings = () => {
           )}
 
           <NicheHelpText>
-            {selectedNiches.length}/3 niches selected · Changes affect your brand matches
+            {selectedNiches.length > MAX_NICHES
+              ? `You have ${selectedNiches.length} niches. Remove ${selectedNiches.length - MAX_NICHES} to keep your top ${MAX_NICHES}, then save. Polly, Autopilot and your matches use these.`
+              : `${selectedNiches.length}/${MAX_NICHES} niches selected · Changes affect your brand matches`}
           </NicheHelpText>
         </NicheCard>
       </Section>

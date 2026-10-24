@@ -496,6 +496,8 @@ const CATEGORY_LABELS = {
   home: 'Home',
 };
 
+const MAX_NICHES = 3;
+
 function label(key) {
   return CATEGORY_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1);
 }
@@ -1111,7 +1113,11 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
         {targeting ? (
           <Setting>
             <div className="label">Brands to target</div>
-            <div className="hint">I pick brands in these categories. Leave all off and I match from your content.</div>
+            <div className="hint">
+              {targeting.niches.length > MAX_NICHES
+                ? `You have ${targeting.niches.length} niches. Keep your top ${MAX_NICHES} in Account Settings so I pitch the right brands.`
+                : 'I pick brands in these categories (up to 3). Same niches as your Account Settings, so changing one changes both.'}
+            </div>
             <Chips>
               {targeting.niche_options.map((n) => (
                 <Chip
@@ -1119,7 +1125,9 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
                   type="button"
                   $on={targeting.niches.includes(n)}
                   onClick={() => save({ niches: toggle(targeting.niches, n) })}
-                  disabled={busy}
+                  disabled={busy || targeting.niches.length > MAX_NICHES
+                    || (!targeting.niches.includes(n) && targeting.niches.length >= MAX_NICHES)
+                    || (targeting.niches.length === 1 && targeting.niches.includes(n))}
                 >
                   {label(n)}
                 </Chip>

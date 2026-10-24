@@ -369,8 +369,16 @@ const NicheChip = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
+  opacity: ${props => props.$disabled ? 0.4 : 1};
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
 
   &:hover { border-color: ${props => props.$selected ? colors.black : '#bbb'}; }
+`;
+
+const NicheCount = styled.p`
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: ${colors.text2};
 `;
 
 const Textarea = styled.textarea`
@@ -663,6 +671,7 @@ const PLATFORMS = [
 ];
 
 // Keep in sync with CANONICAL_CATEGORIES in constants/brandCategories.js
+const MAX_NICHES = 3;
 const NICHES = [
   { id: 'beauty', label: '💄 Beauty' },
   { id: 'skincare', label: '🧴 Skincare' },
@@ -987,10 +996,12 @@ export default function CreatorOnboarding() {
     }
   }, [searchParams]);
 
+  // Same cap as Account Settings: the creator record holds at most 3 niches.
   const toggleNiche = (id) => {
-    setNiches(prev =>
-      prev.includes(id) ? prev.filter(n => n !== id) : [...prev, id]
-    );
+    setNiches(prev => {
+      if (prev.includes(id)) return prev.filter(n => n !== id);
+      return prev.length >= MAX_NICHES ? prev : [...prev, id];
+    });
     setError('');
   };
 
@@ -1628,7 +1639,7 @@ export default function CreatorOnboarding() {
             </ProgressWrap>
 
             <Headline>What kind of content do you make?</Headline>
-            <Subline>Pick your niches and we'll show you brands actively looking for your type of content.</Subline>
+            <Subline>Pick up to 3 niches and we'll show you brands actively looking for your type of content.</Subline>
 
             <Teaser>
               Creators who select a niche see <strong>3× more relevant brands</strong> in their feed — and get replies faster.
@@ -1639,12 +1650,14 @@ export default function CreatorOnboarding() {
                 <NicheChip
                   key={n.id}
                   $selected={niches.includes(n.id)}
+                  $disabled={!niches.includes(n.id) && niches.length >= MAX_NICHES}
                   onClick={() => toggleNiche(n.id)}
                 >
                   {n.label}
                 </NicheChip>
               ))}
             </NicheGrid>
+            <NicheCount>{niches.length}/{MAX_NICHES} niches selected</NicheCount>
 
             {error && <ErrorMsg>{error}</ErrorMsg>}
 
