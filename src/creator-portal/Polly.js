@@ -59,7 +59,17 @@ const AUTOPILOT_STARTER = {
 
 const BOARD_STARTER = { id: 'open_board', label: 'Open my Monday board', action: 'board' };
 
+// Same chip the server leads every row with (polly_discovery.RADAR_CHIP), so it shows before bootstrap returns.
+const RADAR_STARTER = {
+  id: 'gifting_radar',
+  label: '🔎 Find brands gifting on TikTok',
+  hint: 'Real posts from the last 60 days · beta',
+  action: 'gifting_radar',
+  skip_discovery: true,
+};
+
 const STARTERS = [
+  RADAR_STARTER,
   { id: 'line_up', label: 'Pitch 3 gifted brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true, deal: 'gifted' },
   { id: 'gifted_lists', label: 'Find gifted brands to pitch', hint: STARTER_HINTS.gifted_lists, action: 'suggest_brands', deal: 'gifted', skip_discovery: true },
   { id: 'name_a_brand', label: 'Write a pitch for a brand I name', hint: STARTER_HINTS.name_a_brand, action: 'ask_brand' },
@@ -204,7 +214,7 @@ function usableThreadMessages(msgs) {
 }
 
 function normalizeStarters(list) {
-  return (list || []).map((s) => {
+  const out = (list || []).map((s) => {
     let next = { ...s, hint: s.hint || STARTER_HINTS[s.id] };
     if (s?.id === 'paid_ugc') next.label = STARTER_LABELS.paid_ugc;
     if (s?.id === 'name_a_brand') next.label = STARTER_LABELS.name_a_brand;
@@ -215,6 +225,8 @@ function normalizeStarters(list) {
     }
     return next;
   }).filter((s) => s.id !== 'more_gigs');
+  // Radar leads every row exactly once, like with_radar_chip on the server.
+  return [RADAR_STARTER, ...out.filter((s) => s.action !== 'gifting_radar')];
 }
 
 function composerStarters(list, messages) {
