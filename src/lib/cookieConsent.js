@@ -250,6 +250,46 @@ function loadTikTokPixel() {
   ttq.load(TIKTOK_PIXEL_ID);
   if (typeof ttq.grantConsent === 'function') ttq.grantConsent();
   ttq.page();
+  storeTikTokClickId();
+}
+
+// Keep the TikTok click id (?ttclid=) from the ad landing so the server-side
+// purchase event can be attributed to the ad, even days later at checkout.
+// Only runs once marketing consent is granted (called from loadTikTokPixel).
+const TTCLID_COOKIE = 'nc_ttclid';
+function storeTikTokClickId() {
+  try {
+    const ttclid = new URLSearchParams(window.location.search).get('ttclid');
+    if (!ttclid) return;
+    document.cookie = `${TTCLID_COOKIE}=${encodeURIComponent(ttclid)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax${cookieDomainAttr()}`;
+  } catch { /* noop */ }
+}
+
+// Match data for the server-side TikTok event. Empty when marketing consent
+// was not granted, so the server skips the event.
+export function getTikTokMatchData() {
+  const consent = readConsent();
+  if (!consent || !consent.marketing) return { marketing_consent: false };
+  return {
+    marketing_consent: true,
+    ttclid: readCookie(TTCLID_COOKIE) || null,
+    ttp: readCookie('_ttp') || null,
+    page_url: window.location.href.split('?')[0],
+  };
+}
+
+// The pixel is loaded by CookieSettings after the page's own effects run, so
+// a page that tracks on mount must wait for it.
+export function whenTikTokReady(timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const check = () => {
+      if (window.ttq && window.__ncTikTokLoaded) return resolve(window.ttq);
+      if (Date.now() - start > timeoutMs) return resolve(null);
+      setTimeout(check, 200);
+    };
+    check();
+  });
 }
 
 function revokeLoadedPixels({ analytics, marketing }) {

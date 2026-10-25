@@ -5,6 +5,7 @@ import { FiCheckCircle, FiArrowRight } from 'react-icons/fi';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { trackProPurchase } from '../utils/subscriptionAnalytics';
+import { getTikTokMatchData, whenTikTokReady } from '../lib/cookieConsent';
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
@@ -36,19 +37,22 @@ const SubscriptionSuccess = () => {
     if (sessionId) {
       trackProPurchase({ sessionId, tier: 'pro' });
 
+      // The pixel loads after this effect (CookieSettings mounts higher up),
+      // so wait for it instead of silently dropping the event.
       const ttqKey = `ttq_purchase_${sessionId}`;
-      try {
-        if (!window.sessionStorage.getItem(ttqKey) && window.ttq) {
-          window.ttq.track('CompletePayment', {
+      whenTikTokReady().then((ttq) => {
+        try {
+          if (!ttq || window.sessionStorage.getItem(ttqKey)) return;
+          ttq.track('CompletePayment', {
             content_type: 'product',
-            content_id: 'pro_subscription',
+            content_id: 'subscription_pro_monthly',
             content_name: 'NewCollab Pro',
             value: 19,
             currency: 'USD'
-          });
+          }, { event_id: sessionId }); // same id as the server event => counted once
           window.sessionStorage.setItem(ttqKey, '1');
-        }
-      } catch (_) { /* ignore */ }
+        } catch (_) { /* ignore */ }
+      });
     }
 
     const confirmAndFetchStatus = async () => {
@@ -56,7 +60,7 @@ const SubscriptionSuccess = () => {
         if (sessionId) {
           await api.post(
             '/api/subscription/confirm-checkout',
-            { session_id: sessionId }
+            { session_id: sessionId, ...getTikTokMatchData() }
           );
         }
 
