@@ -39,6 +39,7 @@ const FLAG_COPY = {
   incomplete_profile: { tone: 'warn', label: 'Incomplete' },
   missing_bio: { tone: 'muted', label: 'No bio' },
   missing_niche: { tone: 'warn', label: 'No niche' },
+  no_recent_posts: { tone: 'warn', label: 'No post in 30+ days' },
   missing_handle: { tone: 'warn', label: 'No handle' },
   missing_platform: { tone: 'muted', label: 'No platform' },
   low_followers: { tone: 'muted', label: 'Under 500 followers' },

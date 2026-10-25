@@ -6,6 +6,7 @@ import { UserContext } from '../contexts/UserContext';
 import UpgradeModal from './UpgradeModal';
 import { PRO_OFFER } from '../config/proOffer';
 import { message } from 'antd';
+import { POLLY_AVATAR_URL } from '../config/pollyAvatar';
 
 export default function Waitlist() {
   const [status, setStatus] = useState(null);
@@ -109,6 +110,22 @@ export default function Waitlist() {
             </EstimatedWait>
           )}
         </QueueCard>
+
+        {status.post_nudge && (
+          <PollyNudge>
+            <PollyFace src={POLLY_AVATAR_URL} alt="Polly" />
+            <div>
+              <PollyName>Polly</PollyName>
+              <PollyText>
+                {status.post_nudge.latest_post_days_ago
+                  ? `Your last post was ${status.post_nudge.latest_post_days_ago} days ago. `
+                  : "I couldn't spot a recent post on your profile. "}
+                Post this week to get approved faster. We approve creators who are active, because
+                brands check your page before they send product.
+              </PollyText>
+            </div>
+          </PollyNudge>
+        )}
 
         {status.can_skip_with_pro && (
           <ProSection>
@@ -342,6 +359,40 @@ const EstimatedWait = styled.p`
     color: #111827;
     font-weight: 600;
   }
+`;
+
+const PollyNudge = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff8ec;
+  border: 1px solid #f5d9a8;
+`;
+
+const PollyFace = styled.img`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+`;
+
+const PollyName = styled.p`
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+`;
+
+const PollyText = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #3a3a3a;
 `;
 
 const ProSection = styled.div`

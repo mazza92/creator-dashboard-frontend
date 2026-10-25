@@ -1,0 +1,2 @@
+// Polly's avatar, shared by the chat and the waitlist nudge.
+export const POLLY_AVATAR_URL = 'https://kyawgtojxoglvlhzsotm.supabase.co/storage/v1/object/sign/newcollab/polly_ai_influencer_manager.jpg?token=eyJraWQiOiI3MmM4MjFmNC03NzYxLTRlYWUtYTYzOS0zN2NlNmRkNzIzNGMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJuZXdjb2xsYWIvcG9sbHlfYWlfaW5mbHVlbmNlcl9tYW5hZ2VyLmpwZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODk2NTUxNDksImV4cCI6MTgyMTE5MTE0OX0.XgvysSRJ4o0-zs0CLqvUhsTQe0NWEQIucYdhbzJD07U';
