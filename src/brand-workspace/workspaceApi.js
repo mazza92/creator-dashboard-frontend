@@ -20,10 +20,11 @@ export const startScan = (brand) =>
   unwrap(api.post('/api/public/brand-scan', { brand, ref: 'workspace' }, { timeout: 60000 }), 'scan');
 export const pollScan = (scanId) => unwrap(api.get(`/api/public/brand-scan/${scanId}`, { timeout: 60000 }), 'scan');
 
-export const startCheckout = (token) =>
-  unwrap(api.post(`/api/brand-billing/r/${token}/checkout`, { source: 'workspace' }, { timeout: 30000 }), 'checkout_url');
-export const openPortal = (token) =>
-  unwrap(api.post(`/api/brand-billing/r/${token}/portal`, {}, { timeout: 30000 }), 'portal_url');
+// Session-based, so a brand can subscribe before its first campaign exists.
+export const startCheckout = () =>
+  unwrap(api.post('/api/brand-workspace/billing/checkout', {}, { timeout: 30000 }), 'checkout_url');
+export const openPortal = () =>
+  unwrap(api.post('/api/brand-workspace/billing/portal', {}, { timeout: 30000 }), 'portal_url');
 
 export const startInsight = (kind) =>
   unwrap(api.post('/api/brand-workspace/insight', { kind }, { timeout: 60000 }), 'scan');
