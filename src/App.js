@@ -60,7 +60,7 @@ import PaymentsPage from './creator-portal/PaymentsPage';
 import CampaignInvites from './creator-portal/CampaignInvites';
 import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
-import BrandSubmitPage from './cra-pages/BrandSubmitPage';
+import BrandSignup from './brand-workspace/BrandSignup';
 import PRReady from './creator-portal/PRReady';
 import PublicMediaKit from './cra-pages/PublicMediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
@@ -433,7 +433,7 @@ function AppContent() {
             <Route path='/register/creator' element={<CreatorSignup />} />
             {/* About, Contact, Privacy, Terms - Still on CRA (Next.js has placeholders) */}
             <Route path='/about' element={<AboutPage />} />
-            <Route path='/for-brands' element={<BrandSubmitPage />} />
+            <Route path='/for-brands' element={<BrandSignup />} />
             <Route path='/contact' element={<ContactPage />} />
             <Route path='/privacy-policy' element={<LandingPageLayout><PrivacyPolicy /></LandingPageLayout>} />
             <Route path='/terms-of-service' element={<LandingPageLayout><TermsOfService /></LandingPageLayout>} />

@@ -24,3 +24,19 @@ export const startCheckout = (token) =>
   unwrap(api.post(`/api/brand-billing/r/${token}/checkout`, { source: 'workspace' }, { timeout: 30000 }), 'checkout_url');
 export const openPortal = (token) =>
   unwrap(api.post(`/api/brand-billing/r/${token}/portal`, {}, { timeout: 30000 }), 'portal_url');
+
+export const startInsight = (kind) =>
+  unwrap(api.post('/api/brand-workspace/insight', { kind }, { timeout: 60000 }), 'scan');
+export const pollInsight = (runId, kind) =>
+  unwrap(api.get(`/api/brand-workspace/insight/${runId}`, { params: { kind }, timeout: 60000 }), 'scan');
+
+export const getCampaigns = () => unwrap(api.get('/api/brand-workspace/campaigns'));
+export const createCampaign = (payload) =>
+  api.post('/api/brand-workspace/campaigns', payload, { timeout: 30000 })
+    .then(({ data }) => data)
+    .catch((err) => {
+      const e = new Error(err?.response?.data?.error || 'Could not create the campaign. Try again.');
+      e.code = err?.response?.data?.code;
+      e.reason = err?.response?.data?.reason;
+      throw e;
+    });

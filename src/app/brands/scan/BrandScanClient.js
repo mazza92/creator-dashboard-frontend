@@ -116,12 +116,22 @@ const Dock = styled.div`
 // PAGE
 // ============================================================================
 
+// The visitor's free scan follows them into signup (app.newcollab.co reads this cookie) so the workspace
+// opens on the same report with the full creators list.
+function rememberFreeScan(turn, result) {
+  if (!result || !result.locked || !result.brand || typeof document === 'undefined') return;
+  const host = window.location.hostname;
+  const domain = host.endsWith('newcollab.co') ? '; domain=.newcollab.co' : '';
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `nc_free_scan=${encodeURIComponent(result.brand.name)}; path=/; max-age=2592000; SameSite=Lax${domain}${secure}`;
+}
+
 export default function BrandScanClient() {
   const params = useSearchParams();
   const ref = useRef(params.get('ref') || params.get('utm_source') || 'scan_page');
   const started = useRef(false);
   const start = useCallback((brand) => startScan(brand, ref.current), []);
-  const { turns, run, busy } = useScanTurns({ start, poll: pollScan, source: ref.current });
+  const { turns, run, busy } = useScanTurns({ start, poll: pollScan, source: ref.current, onDone: rememberFreeScan });
 
   useEffect(() => {
     const b = params.get('b');

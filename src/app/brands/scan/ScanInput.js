@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { ArrowUp } from 'lucide-react';
 import { EXAMPLE_BRANDS } from './scanApi';
@@ -28,6 +28,12 @@ const Field = styled.input`
   outline: 0;
   background: transparent;
   font-size: ${(p) => (p.$large ? '18px' : '16px')};
+  min-width: 0;
+  text-overflow: ellipsis;
+
+  @media (max-width: 560px) {
+    font-size: 16px;
+  }
   line-height: 1.5;
   color: ${scan.ink};
   padding: 6px 0 14px;
@@ -112,9 +118,25 @@ const Chip = styled.button`
   }
 `;
 
+// Phones get a placeholder that fits the input instead of one cut mid-word.
+function useNarrow(maxWidth = 560) {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    if (mq.addEventListener) mq.addEventListener('change', sync); else mq.addListener(sync);
+    return () => { if (mq.removeEventListener) mq.removeEventListener('change', sync); else mq.removeListener(sync); };
+  }, [maxWidth]);
+  return narrow;
+}
+
 export default function ScanInput({ onSubmit, busy = false, large = false, chips = true, autoFocus = false,
-  placeholder = 'Type a brand, e.g. Glow Recipe or @glowrecipe', hint = 'Live TikTok data · free · no login' }) {
+  placeholder = 'Type a brand, e.g. Glow Recipe or @glowrecipe', shortPlaceholder = 'Type any brand…',
+  hint = 'Live TikTok data · free · no login' }) {
   const [value, setValue] = useState('');
+  const narrow = useNarrow();
   const inputRef = React.useRef(null);
   const go = (brand) => {
     const clean = String(brand || '').trim();
@@ -136,7 +158,7 @@ export default function ScanInput({ onSubmit, busy = false, large = false, chips
           $large={large}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={placeholder}
+          placeholder={narrow ? shortPlaceholder : placeholder}
           aria-label="Brand to scan"
           autoFocus={autoFocus}
           maxLength={80}
