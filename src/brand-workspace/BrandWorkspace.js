@@ -21,8 +21,15 @@ import {
   removeCreator, saveCreator, startCheckout, startInsight, startScan,
 } from './workspaceApi';
 
-// One runner for both: a brand name is a Brand Scan, {kind} is a prompt-library insight.
-const startAny = (input) => (typeof input === 'string' ? startScan(input) : startInsight(input.kind));
+// One runner for both: a brand name is a Brand Scan, {kind} is a prompt-library insight or a question.
+const startAny = (input) => (typeof input === 'string' ? startScan(input) : startInsight(input.kind, input.question));
+
+// "Glow Recipe" is a brand to scan; "which skincare creators film routines in Texas?" is a question.
+const QUESTION_START = /^(who|what|which|where|when|why|how|find|show|give|list|compare|analy[sz]e|rate|are|is|do|does|can|should|best|top)\b/i;
+export function isQuestion(text) {
+  const t = String(text || '').trim();
+  return t.includes('?') || QUESTION_START.test(t) || t.split(/\s+/).length >= 5;
+}
 const pollAny = (id, input) => (typeof input === 'string' ? pollScan(id) : pollInsight(id, input.kind));
 
 const SIDEBAR = 260;
@@ -521,10 +528,10 @@ function prompts(ws) {
       text: `Which brands are gifting small ${nicheLabel} creators right now, and how many.`, kind: 'gifting_brands',
       needsNiche: true },
     { id: 'hooks', icon: Sparkles, bg: '#fff8eb', fg: '#d97706', title: `Hooks that work in ${nicheLabel}`,
-      text: 'The opening lines several creators reuse, with the videos behind them.', kind: 'niche_hooks',
+      text: 'Opening lines and formats that win in your niche, with the videos behind them.', kind: 'niche_hooks',
       needsNiche: true },
     { id: 'creators', icon: Users, bg: '#fef2f4', fg: '#e8395f', title: `Find ${nicheLabel} creators`,
-      text: 'Small creators posting gifted content in your niche, plus vetted Newcollab matches.', kind: 'niche_creators',
+      text: 'Small creators who fit a gifted campaign, and what each one is good at.', kind: 'niche_creators',
       needsNiche: true },
     { id: 'own', icon: Megaphone, bg: '#f1f5f9', fg: '#334155', title: 'Scan your own brand',
       text: 'The creators already talking about you, gifted or not.', own: true },
@@ -592,6 +599,9 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
     return '';
   };
 
+  const ask = (question) => run({ kind: 'ask', question, label: question });
+  const submit = (text) => (ws.approved && isQuestion(text) ? ask(text) : run(text));
+
   const pick = (p) => {
     if (p.action === 'focus') return focus();
     if (p.own) return run(ws.brand.name);
@@ -606,8 +616,10 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
           <>
             <H1>Whose creators do you want to see?</H1>
             <div ref={dockRef}>
-              <ScanInput onSubmit={run} busy={busy || (!ws.approved && !pendingLeft)} chips={false} large autoFocus
-                hint="Live TikTok data" placeholder="Type a brand, e.g. Glow Recipe or @glowrecipe" />
+              <ScanInput onSubmit={submit} busy={busy || (!ws.approved && !pendingLeft)} chips={false} large autoFocus
+                hint="Live TikTok data" maxLength={300} label="Brand to scan or question"
+                placeholder={ws.approved ? 'Scan a brand or ask, e.g. which tech creators film desk setups?' : 'Type a brand, e.g. Glow Recipe or @glowrecipe'}
+                shortPlaceholder={ws.approved ? 'Scan a brand or ask…' : 'Type any brand…'} />
             </div>
             <Meter><span>{meter}</span><b>{scans.subscribed ? 'Pro' : ws.approved ? 'Free plan' : ''}</b></Meter>
             {!ws.approved && ws.free_scan && (
@@ -633,6 +645,7 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
           turns.map((turn) => (
             <ScanTurn key={turn.id} turn={turn} savedRefs={savedRefs} onSave={ws.approved ? onSave : undefined}
               onScan={ws.approved ? (name) => run(name) : undefined}
+              onAsk={ws.approved ? ask : undefined}
               cta={turn.scan && turn.scan.gate === 'daily_limit'
                 ? { label: 'See plans', onClick: () => navigate('/brand/workspace/billing') }
                 : campaignCta} />
@@ -641,7 +654,8 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
       </Pane>
       {turns.length > 0 && (
         <Dock ref={dockRef}>
-          <div><ScanInput onSubmit={run} busy={busy} chips={false} hint="Live TikTok data" placeholder="Scan another brand…" shortPlaceholder="Scan a brand…" /></div>
+          <div><ScanInput onSubmit={submit} busy={busy} chips={false} hint="Live TikTok data" maxLength={300} label="Brand to scan or question"
+            placeholder={ws.approved ? 'Ask a follow-up or scan another brand…' : 'Scan another brand…'} shortPlaceholder={ws.approved ? 'Ask or scan…' : 'Scan a brand…'} /></div>
         </Dock>
       )}
     </>
