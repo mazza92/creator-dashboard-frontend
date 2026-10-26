@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styled, { keyframes } from 'styled-components';
-import { ArrowRight, Check, Eye, Lock, Play, Sparkles, Users, Gift, TrendingUp } from 'lucide-react';
+import { ArrowRight, Check, Eye, Lock, Play, Sparkles, Users, TrendingUp } from 'lucide-react';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { trackBrandCtaClick } from '../_cluster/catalog';
 import ScanInput from './ScanInput';
@@ -741,33 +741,6 @@ const Gate = styled.form`
   }
 `;
 
-const Follow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  button,
-  a {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid ${scan.line};
-    background: #fff;
-    color: ${scan.inkSoft};
-    border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 13px;
-    cursor: pointer;
-    text-decoration: none;
-  }
-
-  button:hover,
-  a:hover {
-    border-color: ${scan.ink};
-    color: ${scan.ink};
-  }
-`;
-
 const Sent = styled.p`
   display: flex;
   align-items: center;
@@ -1009,14 +982,6 @@ function Report({ turn, onUnlock }) {
       {turn.sentTo && (
         <Sent><Check size={14} /> Full report sent to {turn.sentTo}</Sent>
       )}
-
-      <Follow>
-        {r.matches && r.matches.cta_url && (
-          <a href={r.matches.cta_url} onClick={() => trackBrandCtaClick('brand_scan', 'scan_followup')}>
-            <Gift size={14} /> Try your first campaign free
-          </a>
-        )}
-      </Follow>
     </Answer>
   );
 }
