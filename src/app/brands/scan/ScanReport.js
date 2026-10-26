@@ -419,16 +419,23 @@ const Bridge = styled.div`
     color: ${scan.inkSoft};
     margin-bottom: 16px;
   }
+
+  @media (max-width: 560px) {
+    padding: 16px 14px;
+
+    h3 { font-size: 16px; }
+  }
 `;
 
 const MatchGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 18px;
 
   @media (max-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 `;
 
@@ -439,10 +446,13 @@ const Match = styled.a`
   border: 1px solid #f6dbe2;
   border-radius: 12px;
   padding: 10px;
+  min-width: 0;
   text-decoration: none;
   color: ${scan.ink};
 
   .top {
+    min-width: 0;
+    padding-right: 30px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -637,46 +647,13 @@ function Md({ text }) {
   return parts.map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : <React.Fragment key={i}>{part}</React.Fragment>));
 }
 
-// TikTok's signed cover links expire, and TikTok blocks most server-side refreshes. The visitor's browser can
-// still ask TikTok's public oEmbed for a fresh cover, so covers we haven't stored get one from there.
-const oembedCache = new Map();
-let oembedActive = 0;
-const oembedQueue = [];
-
-function nextOembed() {
-  while (oembedActive < 4 && oembedQueue.length) {
-    const job = oembedQueue.shift();
-    oembedActive += 1;
-    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(job.url)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => job.resolve((d && d.thumbnail_url) || ''))
-      .catch(() => job.resolve(''))
-      .finally(() => { oembedActive -= 1; nextOembed(); });
-  }
-}
-
-function freshTikTokCover(postUrl) {
-  if (!/^https:\/\/(www\.)?tiktok\.com\//.test(postUrl || '')) return Promise.resolve('');
-  if (!oembedCache.has(postUrl)) {
-    oembedCache.set(postUrl, new Promise((resolve) => { oembedQueue.push({ url: postUrl, resolve }); nextOembed(); }));
-  }
-  return oembedCache.get(postUrl);
-}
-
-const isStored = (src) => /\/storage\/v1\/object\/public\//.test(src || '');
-
-export function Thumb({ src, alt, post }) {
-  const [url, setUrl] = useState(isStored(src) ? src : '');
+// Stored covers (Supabase) load directly. Others are TikTok/IG links that can expire; the backend re-fetches
+// dead ones and stores them, so a broken one is simply hidden and the card shows its placeholder.
+export function Thumb({ src, alt }) {
   const [broken, setBroken] = useState(false);
-  useEffect(() => {
-    if (isStored(src)) { setUrl(src); return undefined; }
-    let live = true;
-    setUrl(src || '');
-    freshTikTokCover(post).then((fresh) => { if (live && fresh) { setUrl(fresh); setBroken(false); } });
-    return () => { live = false; };
-  }, [src, post]);
-  if (!url || broken) return null;
-  return <img src={url} alt={alt || ''} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />;
+  useEffect(() => { setBroken(false); }, [src]);
+  if (!src || broken) return null;
+  return <img src={src} alt={alt || ''} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />;
 }
 
 function VideoCard({ v }) {
