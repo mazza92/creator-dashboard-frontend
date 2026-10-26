@@ -581,7 +581,7 @@ const CreatorDashboardLayout = () => {
         const image_profile = data.image_profile || data.avatar_url || null;
 
         if (user_role === 'brand') {
-          navigate('/brand/dashboard/overview', { replace: true });
+          navigate('/brand/workspace', { replace: true });
           return;
         }
 

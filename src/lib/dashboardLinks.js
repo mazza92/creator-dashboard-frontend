@@ -20,7 +20,7 @@ export function signupHref() {
 
 export function dashboardHomeHref(role) {
   const origin = appOrigin();
-  if (role === 'brand') return `${origin}/brand/dashboard/overview`;
+  if (role === 'brand') return `${origin}/brand/workspace`;
   return `${origin}/creator/dashboard/for-you`;
 }
 

@@ -119,8 +119,10 @@ function formatRegions(regions) {
   return '';
 }
 
-export default function BrandPRRoster() {
-  const { token } = useParams();
+// token prop: the brand workspace embeds the roster for the signed-in brand; /r/:token uses the URL.
+export default function BrandPRRoster({ token: tokenProp } = {}) {
+  const params = useParams();
+  const token = tokenProp || params.token;
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

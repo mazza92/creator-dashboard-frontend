@@ -113,7 +113,7 @@ const Chip = styled.button`
 `;
 
 export default function ScanInput({ onSubmit, busy = false, large = false, chips = true, autoFocus = false,
-  placeholder = 'Type a brand, e.g. Glow Recipe or @glowrecipe' }) {
+  placeholder = 'Type a brand, e.g. Glow Recipe or @glowrecipe', hint = 'Live TikTok data · free · no login' }) {
   const [value, setValue] = useState('');
   const inputRef = React.useRef(null);
   const go = (brand) => {
@@ -142,7 +142,7 @@ export default function ScanInput({ onSubmit, busy = false, large = false, chips
           maxLength={80}
         />
         <Row>
-          <Hint><i /> Live TikTok data · free · no login</Hint>
+          <Hint><i /> {hint}</Hint>
           <Send type="submit" disabled={!value.trim() || busy} aria-label="Scan brand">
             <ArrowUp size={18} strokeWidth={2.5} />
           </Send>

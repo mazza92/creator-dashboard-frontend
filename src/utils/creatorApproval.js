@@ -72,6 +72,6 @@ export function creatorNeedsOnboarding(user) {
 export function creatorHomePath(user) {
   if (creatorNeedsOnboarding(user)) return '/onboarding';
   if (user?.role === 'creator' && needsWaitlistGate(user.approval_status)) return WAITLIST_PATH;
-  if (user?.role === 'brand') return '/brand/dashboard/overview';
+  if (user?.role === 'brand') return '/brand/workspace';
   return '/creator/dashboard/for-you';
 }

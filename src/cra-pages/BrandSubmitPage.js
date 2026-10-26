@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import styled from 'styled-components';
 import axios from 'axios';
 import { DatePicker, message } from 'antd';
 import { Check, Lock, Clock, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { tokens } from '../theme/tokens';
+import api from '../config/api';
+import { auth, firebaseConfigured } from '../components/firebase';
+import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
+import {
+  consumeGoogleRedirectResult,
+  googleRedirectPending,
+  googleSignInErrorMessage,
+  inAppBrowserName,
+  inAppGoogleMessage,
+  startGoogleSignIn,
+} from '../utils/googleSignIn';
 import { CATEGORY_LABELS, CANONICAL_CATEGORIES } from '../constants/brandCategories';
 
 const getApiBase = () => {
@@ -83,11 +95,49 @@ const CREATOR_COUNTS = [
   { value: '10-20', label: '10 - 20', sub: 'Wide reach' }
 ];
 
+const DRAFT_KEY = 'nc_brand_signup_draft';
+const STEP_LABELS = ['Your brand', 'Campaign', 'Creators', 'Review', 'Account'];
+
+function saveDraft(formData, account) {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+      formData: {
+        ...formData,
+        application_deadline: formData.application_deadline ? formData.application_deadline.format('YYYY-MM-DD') : null,
+      },
+      account: { first_name: account.first_name, last_name: account.last_name },
+    }));
+  } catch {
+    // sessionStorage blocked: the Google popup flow still works.
+  }
+}
+
+function readDraft() {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    const fd = draft.formData || {};
+    return { ...draft, formData: { ...fd, application_deadline: fd.application_deadline ? dayjs(fd.application_deadline) : null } };
+  } catch {
+    return null;
+  }
+}
+
 const BrandSubmitPage = () => {
   const navigate = useNavigate();
+  const { user, setUser } = useContext(UserContext) || {};
+  const signedInBrand = user && user.role === 'brand';
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [account, setAccount] = useState({ first_name: '', last_name: '', password: '' });
+  const [accountReady, setAccountReady] = useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const googleEnabled = Boolean(firebaseConfigured && auth);
+  // Read once on load: later redirects can drop the query string before the last step.
+  const entryParams = useRef(new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''));
 
   const [formData, setFormData] = useState({
     brand_name: '',
@@ -107,6 +157,13 @@ const BrandSubmitPage = () => {
     spots_total: 10
   });
 
+  useEffect(() => {
+    const niche = entryParams.current.get('niche');
+    if (niche && CATEGORIES.some((c) => c.value === niche)) {
+      setFormData((prev) => ({ ...prev, brand_category: niche }));
+    }
+  }, []);
+
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -121,31 +178,126 @@ const BrandSubmitPage = () => {
     });
   };
 
+  const ref = () => entryParams.current.get('ref') || undefined;
+
+  // Posts the campaign exactly as before; returns the opportunity id.
+  const submitCampaign = async (data = formData) => {
+    const countMap = { '3-5': 5, '5-10': 10, '10-20': 20 };
+    const payload = {
+      ...data,
+      pr_value_usd: parseInt(data.pr_value_usd, 10) || null,
+      application_deadline: data.application_deadline
+        ? data.application_deadline.format('YYYY-MM-DD')
+        : null,
+      spots_total: countMap[data.creator_count_range] || 10,
+      ref: ref(),
+    };
+    const { data: out } = await axios.post(`${API_BASE}/api/opportunities/public/submit`, payload);
+    return out;
+  };
+
+  const brandFields = (data = formData, acc = account) => ({
+    brand_name: data.brand_name,
+    website: data.brand_website,
+    category: data.brand_category,
+    niche: entryParams.current.get('niche') || data.brand_category,
+    first_name: acc.first_name,
+    last_name: acc.last_name,
+    ref: ref() || 'for-brands',
+  });
+
+  // Account exists (or the brand is already signed in): post the campaign, link it, open the workspace.
+  const finish = useCallback(async (data) => {
+    const out = await submitCampaign(data);
+    if (out?.id) {
+      try {
+        await api.post('/api/brand-workspace/link-opportunity', { opportunity_id: out.id });
+      } catch {
+        // The workspace still works; the campaign links by email when it's published.
+      }
+    }
+    try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    if (window.ttq) window.ttq.track('CompleteRegistration');
+    navigate('/brand/workspace?welcome=1', { replace: true });
+  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fail = (err) => {
+    const msg = err?.response?.data?.error || err?.message || 'Something went wrong. Please try again.';
+    setAccountError(msg);
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
+    setAccountError('');
     try {
-      const countMap = { '3-5': 5, '5-10': 10, '10-20': 20 };
-      const payload = {
-        ...formData,
-        pr_value_usd: parseInt(formData.pr_value_usd) || null,
-        application_deadline: formData.application_deadline
-          ? formData.application_deadline.format('YYYY-MM-DD')
-          : null,
-        spots_total: countMap[formData.creator_count_range] || 10,
-        ref: new URLSearchParams(window.location.search).get('ref') || undefined
-      };
-
-      const { data } = await axios.post(`${API_BASE}/api/opportunities/public/submit`, payload);
-      if (data?.roster_token) {
-        navigate(`/r/${data.roster_token}?new=1`);
-        return;
+      if (!signedInBrand && !accountReady) {
+        const { data } = await api.post('/api/brand-workspace/signup', {
+          ...brandFields(),
+          email: formData.brand_email,
+          password: account.password,
+        });
+        persistLoggedInUser(setUser, data);
+        setAccountReady(true);
       }
-      setSubmitted(true);
-    } catch (error) {
-      console.error('Error submitting:', error);
-      message.error('Failed to submit. Please try again.');
+      await finish(formData);
+    } catch (err) {
+      fail(err);
+      message.error('Could not finish your signup. Please try again.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const finishGoogle = useCallback(async (googleUser, data, acc) => {
+    const idToken = await googleUser.getIdToken();
+    const { data: out } = await api.post('/api/brand-workspace/google', { idToken, ...brandFields(data, acc) });
+    persistLoggedInUser(setUser, out);
+    setAccountReady(true);
+    await finish(data);
+  }, [finish, setUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Mobile Google sign-in leaves the page: restore the draft and finish when it comes back.
+  useEffect(() => {
+    if (!googleEnabled || !googleRedirectPending()) return undefined;
+    const draft = readDraft();
+    let cancelled = false;
+    (async () => {
+      setGoogleLoading(true);
+      try {
+        const googleUser = await consumeGoogleRedirectResult(auth, () => cancelled);
+        if (cancelled || !googleUser || !draft) return;
+        setFormData(draft.formData);
+        setAccount((prev) => ({ ...prev, ...draft.account }));
+        setStep(5);
+        await finishGoogle(googleUser, draft.formData, { ...account, ...draft.account });
+      } catch (err) {
+        if (!cancelled) fail({ message: googleSignInErrorMessage(err) || err?.response?.data?.error });
+      } finally {
+        if (!cancelled) setGoogleLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [googleEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleGoogle = async () => {
+    setAccountError('');
+    const inApp = inAppBrowserName();
+    if (inApp) {
+      setAccountError(inAppGoogleMessage(inApp));
+      return;
+    }
+    setGoogleLoading(true);
+    saveDraft(formData, account);
+    let redirected = false;
+    try {
+      const result = await startGoogleSignIn(auth);
+      redirected = result.redirected;
+      if (redirected || !result.user) return;
+      await finishGoogle(result.user, formData, account);
+    } catch (err) {
+      fail(err?.response ? err : { message: googleSignInErrorMessage(err) });
+    } finally {
+      if (!redirected) setGoogleLoading(false);
     }
   };
 
@@ -252,12 +404,12 @@ const BrandSubmitPage = () => {
         {/* Progress */}
         <ProgressCard>
           <ProgressSteps>
-            {[1, 2, 3, 4].map(s => (
+            {[1, 2, 3, 4, 5].map(s => (
               <ProgressStep key={s} $done={s < step} $active={s === step}>
                 <StepNum $done={s < step} $active={s === step}>
                   {s < step ? <Check size={12} /> : s}
                 </StepNum>
-                <StepLabel>{['Your brand', 'Campaign', 'Creators', 'Review'][s - 1]}</StepLabel>
+                <StepLabel>{STEP_LABELS[s - 1]}</StepLabel>
               </ProgressStep>
             ))}
           </ProgressSteps>
@@ -588,8 +740,95 @@ const BrandSubmitPage = () => {
 
               <FormNav>
                 <BackBtn onClick={() => goTo(3)}><ChevronLeft size={16} /> Back</BackBtn>
-                <SubmitBtn onClick={handleSubmit} disabled={submitting}>
-                  {submitting ? 'Submitting...' : 'Submit for review'}
+                {signedInBrand ? (
+                  <SubmitBtn onClick={handleSubmit} disabled={submitting}>
+                    {submitting ? 'Submitting...' : 'Submit and open my workspace'}
+                  </SubmitBtn>
+                ) : (
+                  <NavBtn onClick={() => goTo(5)}>
+                    Continue <ChevronRight size={16} />
+                  </NavBtn>
+                )}
+              </FormNav>
+              {signedInBrand && accountError && <AccountError>{accountError}</AccountError>}
+            </StepContent>
+          )}
+
+          {/* Step 5: Account */}
+          {step === 5 && (
+            <StepContent>
+              <StepTitle>Create your brand workspace</StepTitle>
+              <StepSub>
+                Scan any brand's creators, manage your roster and run your first campaign free.
+                We review new brands within 24h.
+              </StepSub>
+
+              {googleEnabled && (
+                <>
+                  <GoogleBtn type="button" onClick={handleGoogle} disabled={googleLoading || submitting}>
+                    <GoogleIcon />
+                    {googleLoading ? 'Connecting…' : 'Continue with Google'}
+                  </GoogleBtn>
+                  <OrDivider><span>or with email</span></OrDivider>
+                </>
+              )}
+
+              <FieldGroup>
+                <FieldRow>
+                  <Field>
+                    <FieldLabel>First name</FieldLabel>
+                    <Input
+                      type="text"
+                      autoComplete="given-name"
+                      value={account.first_name}
+                      onChange={(e) => setAccount((prev) => ({ ...prev, first_name: e.target.value }))}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Last name</FieldLabel>
+                    <Input
+                      type="text"
+                      autoComplete="family-name"
+                      value={account.last_name}
+                      onChange={(e) => setAccount((prev) => ({ ...prev, last_name: e.target.value }))}
+                    />
+                  </Field>
+                </FieldRow>
+                <Field>
+                  <FieldLabel>Work email</FieldLabel>
+                  <Input
+                    type="email"
+                    autoComplete="email"
+                    value={formData.brand_email}
+                    onChange={(e) => updateField('brand_email', e.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel>Password</FieldLabel>
+                  <Input
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="At least 8 characters"
+                    value={account.password}
+                    onChange={(e) => setAccount((prev) => ({ ...prev, password: e.target.value }))}
+                  />
+                </Field>
+              </FieldGroup>
+
+              {accountError && (
+                <AccountError>
+                  {accountError}{' '}
+                  {/log in/i.test(accountError) && <a href="/login?returnTo=%2Fbrand%2Fworkspace">Log in</a>}
+                </AccountError>
+              )}
+
+              <FormNav>
+                <BackBtn onClick={() => goTo(4)}><ChevronLeft size={16} /> Back</BackBtn>
+                <SubmitBtn
+                  onClick={handleSubmit}
+                  disabled={submitting || googleLoading || (!accountReady && (account.password.length < 8 || !formData.brand_email))}
+                >
+                  {submitting ? 'Creating your workspace…' : 'Create workspace'}
                 </SubmitBtn>
               </FormNav>
             </StepContent>
@@ -600,7 +839,72 @@ const BrandSubmitPage = () => {
   );
 };
 
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.6 44 33 44 24c0-1.3-.1-2.4-.4-3.5z" />
+  </svg>
+);
+
 // Styled Components
+const GoogleBtn = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid #d9dbe0;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  color: ${tokens.textPrimary};
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: ${tokens.textPrimary};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+
+const OrDivider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-size: 12px;
+  color: #9ca0a8;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+`;
+
+const AccountError = styled.div`
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f4;
+  color: #c92549;
+  font-size: 14px;
+
+  a {
+    color: #c92549;
+    font-weight: 600;
+  }
+`;
+
 const PageWrap = styled.div`
   background: #F5F5F7;
   min-height: 100vh;
