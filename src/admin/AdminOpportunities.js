@@ -6,6 +6,7 @@ import axios from 'axios';
 import { tokens } from '../theme/tokens';
 import AdminContentSubmissions from './AdminContentSubmissions';
 import AdminBrandPRRosters from './AdminBrandPRRosters';
+import AdminBrandAccounts from './AdminBrandAccounts';
 import { adminHeaders, adminLogin, hasAdminToken } from './adminAuth';
 
 const ADMIN_EMAIL = 'team@newcollab.co';
@@ -38,6 +39,7 @@ const AdminOpportunities = () => {
     const tab = new URLSearchParams(window.location.search).get('tab');
     if (tab === 'submissions') return 'submissions';
     if (tab === 'rosters') return 'rosters';
+    if (tab === 'brand-accounts') return 'brand-accounts';
     return 'opportunities';
   });
 
@@ -405,6 +407,7 @@ const AdminOpportunities = () => {
     <FilterRow style={{ marginBottom: 20 }}>
       <FilterBtn $active={pageTab === 'opportunities'} onClick={() => setTab('opportunities')}>Opportunities</FilterBtn>
       <FilterBtn $active={pageTab === 'rosters'} onClick={() => setTab('rosters')}>Brand PR Rosters</FilterBtn>
+      <FilterBtn $active={pageTab === 'brand-accounts'} onClick={() => setTab('brand-accounts')}>Brand accounts</FilterBtn>
       <FilterBtn $active={pageTab === 'submissions'} onClick={() => setTab('submissions')}>Content Submissions</FilterBtn>
     </FilterRow>
   );
@@ -417,6 +420,18 @@ const AdminOpportunities = () => {
         </Header>
         {tabNav}
         <AdminContentSubmissions />
+      </PageWrap>
+    );
+  }
+
+  if (pageTab === 'brand-accounts') {
+    return (
+      <PageWrap>
+        <Header>
+          <h1>Brand accounts</h1>
+        </Header>
+        {tabNav}
+        <AdminBrandAccounts />
       </PageWrap>
     );
   }

@@ -97,6 +97,7 @@ const Timeline = lazy(() => import('./creator-portal/Timeline'));
 const PaidGigs = lazy(() => import('./creator-portal/PaidGigs'));
 const BrandPRRoster = lazy(() => import('./cra-pages/BrandPRRoster'));
 const BrandLaunch = lazy(() => import('./cra-pages/BrandLaunch'));
+const BrandWorkspace = lazy(() => import('./brand-workspace/BrandWorkspace'));
 const Pool = lazy(() => import('./cra-pages/Pool'));
 const CreatorOverview = lazy(() => import('./creator-portal/CreatorOverview'));
 const BrandOverview = lazy(() => import('./components/BrandOverview'));
@@ -146,7 +147,7 @@ function OnboardingRouter() {
     // If user is a brand with a brand_id, they've completed onboarding
     // Redirect them to their dashboard
     if (user?.role === 'brand' && user?.brand_id) {
-        return <Navigate to="/brand/dashboard/overview" replace />;
+        return <Navigate to="/brand/workspace" replace />;
     }
 
     // If brand user but no brand_id, show brand onboarding form
@@ -310,7 +311,7 @@ function AppContent() {
                 const onWaitlist = user.role === 'creator' && needsWaitlistGate(user.approval_status);
                 const correctBasePath = user.role === 'creator' || user.role === 'brand'
                     ? creatorHomePath(user)
-                    : '/brand/dashboard/overview';
+                    : '/brand/workspace';
                 
                 // A brand user is allowed to visit a creator's profile page.
                 const isViewingCreatorProfileAsBrand = user.role === 'brand' && location.pathname.startsWith('/creator/profile/');
@@ -514,7 +515,7 @@ function AppContent() {
                         : user
                             ? <Navigate to={
                                 user.role === 'brand'
-                                  ? '/brand/dashboard/overview'
+                                  ? '/brand/workspace'
                                   : creatorHomePath(user)
                               } replace />
                             : <Navigate to={loginUrlWithReturn(location)} replace />
@@ -524,12 +525,18 @@ function AppContent() {
             {/* Homepage - Next.js handles in production, but keep CRA route for dev/fallback */}
             <Route path='/' element={<LandingPageLayout hideFooter><LandingPage /></LandingPageLayout>} />
 
+            {/* Brand workspace: Brand Scan, roster, saved creators, billing (own layout) */}
+            <Route
+                path='/brand/workspace/*'
+                element={user ? <LazyRoute><BrandWorkspace /></LazyRoute> : <Navigate to={loginUrlWithReturn(location)} replace />}
+            />
+
             {/* Brand dashboard routes with layout */}
             <Route
                 path='/brand'
                 element={user ? <DashboardLayout /> : <Navigate to={loginUrlWithReturn(location)} replace />}
             >
-            <Route index element={<Navigate to='/brand/dashboard/overview' replace />} />
+            <Route index element={<Navigate to='/brand/workspace' replace />} />
             <Route path='dashboard' element={<Navigate to='/brand/dashboard/overview' replace />} />
             <Route path='dashboard/overview' element={<LazyRoute skeleton={<DashboardOverviewSkeleton />}><BrandOverview /></LazyRoute>} />
             <Route path='dashboard/marketplace' element={<BrandMarketplace />} />

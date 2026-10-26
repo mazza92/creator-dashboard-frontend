@@ -15,6 +15,7 @@ export function scanUrl(brand, ref) {
 
 async function call(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
+    credentials: 'include', // a signed-in brand gets its full creators list and scan limits
     ...options,
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
   });

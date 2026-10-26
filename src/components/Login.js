@@ -546,7 +546,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
     return (
       safeInternalPath(searchParams.get('redirect')) ||
       safeInternalPath(data?.redirect_url) ||
-      '/brand/dashboard/overview'
+      '/brand/workspace'
     );
   };
 
