@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styled, { keyframes } from 'styled-components';
-import { ArrowRight, Check, Eye, Lock, Play, Sparkles, Users, Video, Gift, TrendingUp } from 'lucide-react';
+import { ArrowRight, Check, Eye, Lock, Play, Sparkles, Users, Gift, TrendingUp } from 'lucide-react';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { trackBrandCtaClick } from '../_cluster/catalog';
 import ScanInput from './ScanInput';
@@ -938,7 +938,7 @@ function UnlockGate({ report, onUnlock }) {
   );
 }
 
-function Report({ turn, onUnlock, onScan }) {
+function Report({ turn, onUnlock }) {
   const r = turn.scan;
   const st = r.stats || {};
   const name = (r.brand && r.brand.name) || turn.brand;
@@ -1011,7 +1011,6 @@ function Report({ turn, onUnlock, onScan }) {
       )}
 
       <Follow>
-        <button type="button" onClick={() => onScan(null)}><Video size={14} /> Scan another brand</button>
         {r.matches && r.matches.cta_url && (
           <a href={r.matches.cta_url} onClick={() => trackBrandCtaClick('brand_scan', 'scan_followup')}>
             <Gift size={14} /> Try your first campaign free
@@ -1092,10 +1091,6 @@ export default function BrandScanClient() {
   }, [turns.length]);
 
   const busy = turns.some((t) => t.status === 'searching');
-  const focusDock = () => {
-    const input = dockRef.current && dockRef.current.querySelector('input');
-    if (input) input.focus();
-  };
 
   return (
     <LandingPageLayoutNext canonicalUrl={PAGE_URL}>
@@ -1123,7 +1118,6 @@ export default function BrandScanClient() {
                   <Report
                     turn={t}
                     onUnlock={(email) => unlock(t.id, t.brand, email)}
-                    onScan={(b) => (b ? run(b) : focusDock())}
                   />
                 )}
               </Turn>

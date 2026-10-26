@@ -612,6 +612,9 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
     document.body.style.overflow = 'auto';
   };
 
+  // Brand Scan pins its own input to the bottom-right; the button would sit on its send arrow.
+  const scrollTopVisible = showScrollTop && !pathname.startsWith('/brands/scan');
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -655,7 +658,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
         </ContentWrapper>
       </ContentContainer>
       <ScrollToTopButton
-        $visible={showScrollTop}
+        $visible={scrollTopVisible}
         onClick={scrollToTop}
         aria-label="Scroll to top"
       >
