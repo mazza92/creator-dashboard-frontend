@@ -898,12 +898,15 @@ export function useScanTurns({ start, poll, onDone, source = 'scan_page' }) {
     setTurns((all) => all.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }, []);
 
-  const run = useCallback(async (brand) => {
+  // input: a brand name (scan), or {kind, label} for a prompt-library insight. start/poll get the same input.
+  const run = useCallback(async (input) => {
     const id = ++turnSeq;
-    setTurns((all) => [...all, { id, brand, status: 'searching', step: 1, line: '' }]);
-    trackScan('brand_scan_run', { brand, ref: source });
+    const brand = typeof input === 'string' ? input : (input.brand || input.label);
+    const label = typeof input === 'string' ? `Scan ${input}` : input.label;
+    setTurns((all) => [...all, { id, brand, label, status: 'searching', step: 1, line: '' }]);
+    trackScan('brand_scan_run', { brand, kind: typeof input === 'string' ? 'scan' : input.kind, ref: source });
     try {
-      let result = await start(brand);
+      let result = await start(input);
       const began = Date.now();
       while (result.status === 'searching') {
         update(id, { step: result.step || 1, line: result.line || '' });
@@ -911,13 +914,13 @@ export function useScanTurns({ start, poll, onDone, source = 'scan_page' }) {
           throw new Error('This one is taking longer than usual. Try again in a minute.');
         }
         await new Promise((r) => setTimeout(r, POLL_MS));
-        result = await poll(result.scan_id);
+        result = await poll(result.scan_id, input);
       }
       const status = result.status === 'gated' ? 'gated' : 'done';
       update(id, { status, scan: result });
       trackScan(status === 'gated' ? 'brand_scan_gated' : 'brand_scan_ready',
         { brand, status: result.status, gate: result.gate, videos: (result.stats || {}).videos || 0 });
-      if (doneRef.current) doneRef.current({ id, brand }, result);
+      if (doneRef.current) doneRef.current({ id, brand, input }, result);
     } catch (err) {
       update(id, { status: 'error', error: err.message });
     }
@@ -926,21 +929,191 @@ export function useScanTurns({ start, poll, onDone, source = 'scan_page' }) {
   const reset = useCallback(() => setTurns([]), []);
   const show = useCallback((brand, result) => {
     const id = ++turnSeq;
-    setTurns([{ id, brand, status: result.status === 'gated' ? 'gated' : 'done', scan: result }]);
+    setTurns([{ id, brand, label: `Scan ${brand}`, status: result.status === 'gated' ? 'gated' : 'done', scan: result }]);
   }, []);
 
   return { turns, run, reset, show, busy: turns.some((t) => t.status === 'searching') };
 }
 
 /** One conversation turn: the ask bubble, then thinking / report / gate / error. */
-export function ScanTurn({ turn, cta, savedRefs, onSave }) {
+export function ScanTurn({ turn, cta, savedRefs, onSave, onScan }) {
+  const insight = turn.scan && turn.scan.insight;
   return (
     <Turn id={`turn-${turn.id}`}>
-      <Ask><span>Scan {turn.brand}</span></Ask>
+      <Ask><span>{turn.label || `Scan ${turn.brand}`}</span></Ask>
       {turn.status === 'searching' && <Thinking step={turn.step} line={turn.line} />}
       {turn.status === 'error' && <ErrorBox>{turn.error}</ErrorBox>}
       {turn.status === 'gated' && <GateCard gate={turn.scan} cta={cta} />}
-      {turn.status === 'done' && <Report turn={turn} cta={cta} savedRefs={savedRefs} onSave={onSave} />}
+      {turn.status === 'done' && (insight
+        ? <InsightReport report={turn.scan} cta={cta} savedRefs={savedRefs} onSave={onSave} onScan={onScan} />
+        : <Report turn={turn} cta={cta} savedRefs={savedRefs} onSave={onSave} />)}
     </Turn>
+  );
+}
+
+// ============================================================================
+// PROMPT-LIBRARY INSIGHTS
+// ============================================================================
+
+const BrandRows = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+const BrandRow = styled.div`
+  border: 1px solid ${scan.line};
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+
+  .who b {
+    display: block;
+    font-size: 15px;
+    font-weight: 650 !important;
+    color: ${scan.ink};
+    text-transform: capitalize;
+  }
+
+  .who small {
+    font-size: 12px;
+    color: ${scan.muted};
+  }
+
+  .tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+
+  .tags span {
+    font-size: 11px;
+    font-weight: 600 !important;
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: ${scan.lineSoft};
+    color: ${scan.inkSoft};
+  }
+
+  .side { display: flex; align-items: center; gap: 10px; }
+
+  .thumbs { display: flex; gap: 4px; }
+
+  .thumbs a {
+    width: 34px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: linear-gradient(160deg, #2b2d33 0%, #111214 100%);
+  }
+
+  .thumbs img { width: 100%; height: 100%; object-fit: cover; }
+
+  button {
+    border: 1px solid ${scan.line};
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600 !important;
+    color: ${scan.ink};
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  button:hover { border-color: ${scan.ink}; }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+
+    .side { justify-content: space-between; }
+  }
+`;
+
+const TYPE_TAG = { gifted: 'Gifting', paid: 'Paid', affiliate: 'Affiliate' };
+
+export function InsightReport({ report, cta, savedRefs, onSave, onScan }) {
+  const r = report;
+  return (
+    <Answer>
+      <Summary><Md text={r.summary} /></Summary>
+
+      {(r.brands || []).length > 0 && (
+        <Block>
+          <BlockTitle><Users size={16} /> {r.title}</BlockTitle>
+          <BrandRows>
+            {r.brands.map((b) => (
+              <BrandRow key={b.key}>
+                <div className="who">
+                  <b>{b.name}</b>
+                  <small>
+                    {b.creators_30d ? `${b.creators_30d} creators in 30 days` : `${b.creators_60d} creators in 60 days`}
+                    {' · '}median {b.median_followers_label} followers{b.last_post ? ` · last post ${b.last_post}` : ''}
+                  </small>
+                  {(b.types || []).length > 0 && (
+                    <div className="tags">{b.types.map((t) => <span key={t}>{TYPE_TAG[t] || t}</span>)}</div>
+                  )}
+                </div>
+                <div className="side">
+                  <div className="thumbs">
+                    {(b.examples || []).map((v) => (
+                      <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" /></a>
+                    ))}
+                  </div>
+                  {onScan && <button type="button" onClick={() => onScan(b.name)}>Scan</button>}
+                </div>
+              </BrandRow>
+            ))}
+          </BrandRows>
+        </Block>
+      )}
+
+      {(r.hooks || []).length > 0 && (
+        <Block>
+          <BlockTitle><Sparkles size={16} /> {r.title}</BlockTitle>
+          <HookList>
+            {r.hooks.map((h) => (
+              <HookRow key={h.hook}>
+                <div className="text">
+                  <q>{h.hook}</q>
+                  <small>{h.videos} videos · {h.creators} creators · {h.views_label} views</small>
+                </div>
+                <div className="thumbs">
+                  {(h.examples || []).map((v) => (
+                    <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" /></a>
+                  ))}
+                </div>
+              </HookRow>
+            ))}
+          </HookList>
+        </Block>
+      )}
+
+      {(r.top_videos || []).length > 0 && (
+        <Block>
+          <BlockTitle><TrendingUp size={16} /> Top videos <small>by views</small></BlockTitle>
+          <Strip>{r.top_videos.map((v) => <VideoCard key={v.id} v={v} />)}</Strip>
+        </Block>
+      )}
+
+      {(r.creators || []).length > 0 && (
+        <Block>
+          <BlockTitle><Users size={16} /> {r.title}</BlockTitle>
+          <CreatorTable>
+            <CreatorLine as="div" className="head">
+              <span>Creator</span><span className="n">Followers</span><span className="n hide-sm">Posts</span><span className="n">Best views</span>
+            </CreatorLine>
+            {r.creators.map((c) => (
+              <CreatorLine key={c.handle} href={c.url} target="_blank" rel="noopener noreferrer">
+                <span className="h">{c.handle}</span>
+                <span className="n">{c.followers_label}</span>
+                <span className="n hide-sm">{c.videos}</span>
+                <span className="n">{c.best_views_label}</span>
+              </CreatorLine>
+            ))}
+          </CreatorTable>
+        </Block>
+      )}
+
+      {r.matches && <BridgeCard report={r} brand="the brands in your niche" cta={cta} savedRefs={savedRefs} onSave={onSave} />}
+    </Answer>
   );
 }

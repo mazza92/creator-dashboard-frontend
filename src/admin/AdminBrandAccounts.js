@@ -40,13 +40,20 @@ export default function AdminBrandAccounts() {
 
   useEffect(() => { load(); }, [load]);
 
-  const decide = async (id, action, body = {}) => {
+  const decide = async (id, action, body = {}, publishOppId = null) => {
     try {
       await axios.post(`${API_BASE}/api/admin/brand-accounts/${id}/${action}`, body, { headers: adminHeaders() });
-      message.success(action === 'approve' ? 'Approved. Welcome email sent.' : 'Rejected.');
+      if (publishOppId) {
+        const { data } = await axios.patch(`${API_BASE}/api/opportunities/admin/${publishOppId}/publish`, { days_open: 14 },
+          { headers: adminHeaders() });
+        message.success(data?.roster_url ? 'Approved and campaign live. Roster created.' : 'Approved and campaign published.');
+      } else {
+        message.success(action === 'approve' ? 'Approved. Welcome email sent.' : 'Rejected.');
+      }
       load();
     } catch (err) {
       message.error(err?.response?.data?.error || `Could not ${action}`);
+      load();
     }
   };
 
@@ -64,36 +71,75 @@ export default function AdminBrandAccounts() {
 
       {accounts.length === 0 && !loading ? (
         <Empty description={`No ${status} brand accounts`} />
-      ) : accounts.map((a) => (
-        <Row key={a.id}>
-          <div className="main">
-            <div className="name">
-              <b>{a.name}</b> <Tag color={STATUS_COLOR[a.approval_status]}>{a.approval_status}</Tag>
-              {a.signup_source && <Tag>{a.signup_source}</Tag>}
+      ) : accounts.map((a) => {
+        const canPublish = a.opportunity_id && a.opportunity_status === 'pending';
+        return (
+          <Row key={a.id}>
+            <div className="main">
+              <div className="name">
+                <b>{a.name}</b> <Tag color={STATUS_COLOR[a.approval_status]}>{a.approval_status}</Tag>
+                {!a.profile_completed_at && <Tag color="orange">brand details missing</Tag>}
+                {a.signup_method && <Tag>{a.signup_method === 'google' ? 'Google' : 'Email'}</Tag>}
+                {a.signup_source && <Tag>{a.signup_source}</Tag>}
+              </div>
+              <dl>
+                <dt>Contact</dt>
+                <dd>
+                  {[a.first_name, a.last_name].filter(Boolean).join(' ') || '—'} · <a href={`mailto:${a.email}`}>{a.email}</a>
+                  {a.workspace_created_at && <> · signed up {when(a.workspace_created_at)}</>}
+                  {a.last_login && <> · last seen {when(a.last_login)}</>}
+                </dd>
+                <dt>Brand</dt>
+                <dd>
+                  {a.website ? <a href={a.website} target="_blank" rel="noopener noreferrer">{a.website.replace(/^https?:\/\//, '')}</a> : null}
+                  {a.app_url ? <>{a.website ? ' · ' : ''}<a href={a.app_url} target="_blank" rel="noopener noreferrer">App store link</a></> : null}
+                  {!a.website && !a.app_url && '—'}
+                  {a.category && <> · {a.category}</>}
+                </dd>
+                <dt>Scans</dt>
+                <dd>
+                  {a.free_scan_brand ? <>Free landing scan: <b>{a.free_scan_brand}</b> · </> : null}
+                  {(a.scanned_brands || []).length ? `Scanned: ${a.scanned_brands.join(', ')}` : 'No scans yet'}
+                </dd>
+                <dt>Campaign</dt>
+                <dd>
+                  {a.product_name ? (
+                    <>
+                      <b>{a.product_name}</b> ({a.opportunity_status}){a.pr_value_usd ? ` · $${a.pr_value_usd} value` : ''}
+                      {a.creator_count_range ? ` · ${a.creator_count_range} creators` : ''}
+                      {(a.shipping_regions || []).length ? ` · ships to ${a.shipping_regions.join(', ')}` : ''}
+                      {(a.follower_ranges || []).length ? ` · ${a.follower_ranges.join(', ')}` : ''}
+                      {(a.content_types || []).length ? ` · ${a.content_types.join(', ')}` : ''}
+                      {a.campaign_description && <div className="desc">{a.campaign_description}</div>}
+                      {a.additional_notes && <div className="desc">Notes: {a.additional_notes}</div>}
+                    </>
+                  ) : 'No campaign submitted yet'}
+                </dd>
+                {a.rejection_reason && (<><dt>Reason</dt><dd>{a.rejection_reason}</dd></>)}
+              </dl>
             </div>
-            <div className="meta">
-              {[a.first_name, a.last_name].filter(Boolean).join(' ')} · <a href={`mailto:${a.email}`}>{a.email}</a>
-              {a.website && <> · <a href={a.website} target="_blank" rel="noopener noreferrer">{a.website.replace(/^https?:\/\//, '')}</a></>}
+            <div className="actions">
+              {a.approval_status !== 'approved' && canPublish && (
+                <Popconfirm title={`Approve ${a.name} and publish their campaign?`}
+                  description="Creates their roster and emails them." onConfirm={() => decide(a.id, 'approve', {}, a.opportunity_id)}>
+                  <Button type="primary" icon={<CheckOutlined />}>Approve & publish campaign</Button>
+                </Popconfirm>
+              )}
+              {a.approval_status !== 'approved' && (
+                <Popconfirm title={`Approve ${a.name}?`} description="They get a welcome email." onConfirm={() => decide(a.id, 'approve')}>
+                  <Button type={canPublish ? 'default' : 'primary'} icon={<CheckOutlined />}>Approve account</Button>
+                </Popconfirm>
+              )}
+              {a.approval_status === 'approved' && canPublish && (
+                <Button onClick={() => decide(a.id, 'approve', { send_email: false }, a.opportunity_id)}>Publish campaign</Button>
+              )}
+              {a.approval_status !== 'rejected' && (
+                <Button danger icon={<CloseOutlined />} onClick={() => { setRejecting(a); setReason(''); }}>Reject</Button>
+              )}
             </div>
-            <div className="meta">
-              {a.signup_niche && <>Niche: {a.signup_niche} · </>}
-              {a.product_name ? <>Campaign: {a.product_name} ({a.opportunity_status})</> : 'No campaign submitted'}
-              {a.workspace_created_at && <> · Signed up {when(a.workspace_created_at)}</>}
-              {a.rejection_reason && <> · Reason: {a.rejection_reason}</>}
-            </div>
-          </div>
-          <div className="actions">
-            {a.approval_status !== 'approved' && (
-              <Popconfirm title={`Approve ${a.name}?`} description="They get a welcome email." onConfirm={() => decide(a.id, 'approve')}>
-                <Button type="primary" icon={<CheckOutlined />}>Approve</Button>
-              </Popconfirm>
-            )}
-            {a.approval_status !== 'rejected' && (
-              <Button danger icon={<CloseOutlined />} onClick={() => { setRejecting(a); setReason(''); }}>Reject</Button>
-            )}
-          </div>
-        </Row>
-      ))}
+          </Row>
+        );
+      })}
 
       <Modal
         open={Boolean(rejecting)}
@@ -131,10 +177,24 @@ const Row = styled.div`
   border-radius: 12px;
   padding: 14px 16px;
 
-  .main { min-width: 0; }
-  .name { font-size: 15px; margin-bottom: 4px; }
-  .meta { font-size: 13px; color: #6b6f78; line-height: 1.6; }
-  .actions { display: flex; gap: 8px; flex-shrink: 0; }
+  align-items: flex-start;
+
+  .main { min-width: 0; flex: 1; }
+  .name { font-size: 15px; margin-bottom: 8px; }
+
+  dl {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 4px 12px;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  dt { color: #9ca0a8; }
+  dd { margin: 0; color: #3f424a; min-width: 0; overflow-wrap: anywhere; }
+  .desc { color: #6b6f78; margin-top: 2px; }
+  .actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 
   @media (max-width: 720px) {
     flex-direction: column;

@@ -4,16 +4,24 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
-  Bookmark, Clock, CreditCard, LogOut, Menu, Plus, Radar, Search, Sparkles, TrendingUp, Users, X,
+  ArrowLeft, Bookmark, CheckCircle2, Clock, CreditCard, Gift, Lock, LogOut, Megaphone, Menu, Plus, Radar, Search,
+  Sparkles, Users, X,
 } from 'lucide-react';
+import { CATEGORY_LABELS } from '../constants/brandCategories';
+import CampaignForm, { EMPTY_CAMPAIGN, campaignPayload, campaignReady } from './CampaignForm';
 import { UserContext } from '../contexts/UserContext';
 import ScanInput from '../app/brands/scan/ScanInput';
 import { ScanTurn, useScanTurns } from '../app/brands/scan/ScanReport';
 import { scan as t } from '../app/brands/scan/theme';
 import BrandPRRoster from '../cra-pages/BrandPRRoster';
 import {
-  getSaved, getScanHistory, getWorkspace, openPortal, pollScan, removeCreator, saveCreator, startCheckout, startScan,
+  createCampaign, getCampaigns, getSaved, getScanHistory, getWorkspace, openPortal, pollInsight, pollScan,
+  removeCreator, saveCreator, startCheckout, startInsight, startScan,
 } from './workspaceApi';
+
+// One runner for both: a brand name is a Brand Scan, {kind} is a prompt-library insight.
+const startAny = (input) => (typeof input === 'string' ? startScan(input) : startInsight(input.kind));
+const pollAny = (id, input) => (typeof input === 'string' ? pollScan(id) : pollInsight(id, input.kind));
 
 const SIDEBAR = 260;
 
@@ -23,7 +31,9 @@ const SIDEBAR = 260;
 
 const Shell = styled.div`
   display: flex;
+  width: 100%;
   min-height: 100vh;
+  overflow-x: clip;
   background: ${t.bg};
   color: ${t.ink};
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -287,6 +297,10 @@ const H1 = styled.h1`
   letter-spacing: -0.02em;
   text-align: ${(p) => (p.$left ? 'left' : 'center')};
   margin: ${(p) => (p.$left ? '0 0 6px' : '12vh 0 24px')};
+
+  @media (max-width: 560px) {
+    margin: ${(p) => (p.$left ? '0 0 6px' : '32px 0 20px')};
+  }
 `;
 
 const Sub = styled.p`
@@ -356,6 +370,15 @@ const Prompt = styled.button`
   }
 
   &:hover .go { border-color: ${t.ink}; }
+
+  &:disabled { cursor: default; }
+  &:disabled .ic { filter: grayscale(1); opacity: 0.55; }
+  &:disabled .tx b { color: ${t.muted}; }
+  &:disabled .go { border-color: ${t.lineSoft}; color: ${t.muted2}; display: inline-flex; align-items: center; gap: 4px; }
+
+  @media (max-width: 560px) {
+    .go { display: none; }
+  }
 `;
 
 const Dock = styled.div`
@@ -474,30 +497,132 @@ const RosterFrame = styled.div`
   }
 `;
 
+const PlainLink = styled.button`
+  border: 0;
+  background: none;
+  padding: 0;
+  color: ${t.ink};
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+`;
+
+const HeadRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  > a, > button { flex-shrink: 0; white-space: nowrap; }
+
+  @media (max-width: 560px) {
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 16px;
+  }
+`;
+
+const CampaignList = styled.ul`
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid ${t.line};
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+
+  .main { min-width: 0; display: grid; gap: 4px; justify-items: start; }
+  .main b { font-size: 15px; }
+  .main small { font-size: 12px; color: ${t.muted}; }
+
+  .badge {
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+
+  button {
+    border: 1px solid ${t.ink};
+    background: ${t.ink};
+    color: #fff;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .wait {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: ${t.muted};
+    white-space: nowrap;
+  }
+
+  @media (max-width: 560px) {
+    li { flex-direction: column; align-items: stretch; }
+    button { width: 100%; }
+  }
+`;
+
 // ============================================================================
 // VIEWS
 // ============================================================================
 
-const PROMPTS = [
-  { icon: Search, bg: '#e8f7ed', fg: '#0f9d58', title: 'Scan a competitor', text: 'See every TikTok creator posting about them, the hooks they reuse and their top videos.', action: 'focus' },
-  { icon: TrendingUp, bg: '#eef2ff', fg: '#4f46e5', title: 'Scan a category leader', text: 'Learn the creator playbook of the biggest brand in your niche.', brand: 'Glow Recipe' },
-  { icon: Users, bg: '#fef2f4', fg: '#e8395f', title: 'Scan your own brand', text: 'Find the creators already talking about you, gifted or not.', own: true },
-  { icon: Sparkles, bg: '#fff8eb', fg: '#d97706', title: 'Find the next hook', text: 'Scan a fast-growing brand to spot the scripted hooks creators are repeating right now.', brand: 'Bubble Skincare' },
-];
+function prompts(ws) {
+  const cat = ws.brand.category;
+  const niche = (CATEGORY_LABELS[cat] || '').toLowerCase();
+  const hasNiche = Boolean(niche) && cat !== 'other';
+  const nicheLabel = hasNiche ? niche : 'your category';
+  return [
+    { id: 'competitor', icon: Search, bg: '#e8f7ed', fg: '#0f9d58', title: 'Scan a competitor',
+      text: 'Every TikTok creator posting about them, the hooks they reuse and their top videos.', action: 'focus' },
+    { id: 'gifting', icon: Gift, bg: '#eef2ff', fg: '#4f46e5', title: `Brands seeding ${nicheLabel} creators`,
+      text: `Which brands are gifting small ${nicheLabel} creators right now, and how many.`, kind: 'gifting_brands',
+      needsNiche: true },
+    { id: 'hooks', icon: Sparkles, bg: '#fff8eb', fg: '#d97706', title: `Hooks that work in ${nicheLabel}`,
+      text: 'The opening lines several creators reuse, with the videos behind them.', kind: 'niche_hooks',
+      needsNiche: true },
+    { id: 'creators', icon: Users, bg: '#fef2f4', fg: '#e8395f', title: `Find ${nicheLabel} creators`,
+      text: 'Small creators posting gifted content in your niche, plus vetted Newcollab matches.', kind: 'niche_creators',
+      needsNiche: true },
+    { id: 'own', icon: Megaphone, bg: '#f1f5f9', fg: '#334155', title: 'Scan your own brand',
+      text: 'The creators already talking about you, gifted or not.', own: true },
+  ].map((p) => ({ ...p, hasNiche }));
+}
 
 function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { turns, run, busy, reset } = useScanTurns({
-    start: startScan, poll: pollScan, source: 'workspace', onDone: onScanned,
+    start: startAny, poll: pollAny, source: 'workspace', onDone: onScanned,
   });
   const dockRef = useRef(null);
   const handled = useRef('');
+  const pendingLeft = !ws.approved ? (ws.scans || {}).pending_left || 0 : null;
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const b = params.get('b');
     const fresh = params.get('new');
+    const welcome = params.get('welcome');
     if (fresh && handled.current !== `new:${fresh}`) {
       handled.current = `new:${fresh}`;
       reset();
@@ -506,8 +631,13 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
       handled.current = `b:${b}:${params.get('t') || ''}`;
       run(b);
       navigate('/brand/workspace', { replace: true });
+    } else if (welcome && ws.free_scan && handled.current !== 'welcome') {
+      // Their landing-page scan, now with the full creators list (served from cache, not re-charged).
+      handled.current = 'welcome';
+      run(ws.free_scan);
+      navigate('/brand/workspace', { replace: true });
     }
-  }, [location.search, navigate, reset, run]);
+  }, [location.search, navigate, reset, run, ws.free_scan]);
 
   useEffect(() => {
     if (turns.length) {
@@ -523,15 +653,29 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
 
   const scans = ws.scans || {};
   const left = scans.limit == null ? null : Math.max(0, scans.limit - scans.used_today);
-  const meter = !ws.approved
-    ? 'Free scan · creator lists unlock when your account is approved'
-    : left == null ? 'Unlimited scans' : `${left} of ${scans.limit} new brand scans left today`;
+  let meter;
+  if (!ws.approved) {
+    meter = pendingLeft ? 'Your free competitor scan · full results' : 'Free scan used · more scans unlock once you’re approved';
+  } else {
+    meter = left == null ? 'Unlimited scans' : `${left} of ${scans.limit} scans left today`;
+  }
+
+  const locked = (p) => {
+    if (!ws.approved) {
+      if (p.action === 'focus' || p.own) return !pendingLeft ? 'After approval' : '';
+      return 'After approval';
+    }
+    if (p.needsNiche && !p.hasNiche) return 'Pick a category';
+    return '';
+  };
 
   const pick = (p) => {
     if (p.action === 'focus') return focus();
-    return run(p.own ? ws.brand.name : p.brand);
+    if (p.own) return run(ws.brand.name);
+    return run({ kind: p.kind, label: p.title });
   };
 
+  const list = prompts(ws);
   return (
     <>
       <Pane>
@@ -539,24 +683,33 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
           <>
             <H1>Whose creators do you want to see?</H1>
             <div ref={dockRef}>
-              <ScanInput onSubmit={run} busy={busy} chips={false} large autoFocus hint="Live TikTok data"
-                placeholder="Type a brand, e.g. Glow Recipe or @glowrecipe" />
+              <ScanInput onSubmit={run} busy={busy || (!ws.approved && !pendingLeft)} chips={false} large autoFocus
+                hint="Live TikTok data" placeholder="Type a brand, e.g. Glow Recipe or @glowrecipe" />
             </div>
             <Meter><span>{meter}</span><b>{scans.subscribed ? 'Pro' : ws.approved ? 'Free plan' : ''}</b></Meter>
+            {!ws.approved && ws.free_scan && (
+              <Meter style={{ marginTop: 14 }}>
+                <span>Your free scan: <PlainLink type="button" onClick={() => run(ws.free_scan)}>{ws.free_scan} →</PlainLink></span>
+              </Meter>
+            )}
             <Library>
               <h2><Bookmark size={15} /> Prompt library</h2>
-              {PROMPTS.map((p) => (
-                <Prompt key={p.title} type="button" $bg={p.bg} $fg={p.fg} onClick={() => pick(p)}>
-                  <span className="ic"><p.icon size={18} /></span>
-                  <span className="tx"><b>{p.title}</b><span>{p.text}</span></span>
-                  <span className="go">Use prompt →</span>
-                </Prompt>
-              ))}
+              {list.map((p) => {
+                const why = locked(p);
+                return (
+                  <Prompt key={p.id} type="button" $bg={p.bg} $fg={p.fg} onClick={() => pick(p)} disabled={Boolean(why)}>
+                    <span className="ic"><p.icon size={18} /></span>
+                    <span className="tx"><b>{p.title}</b><span>{p.text}</span></span>
+                    <span className="go">{why ? <><Lock size={12} /> {why}</> : 'Use prompt →'}</span>
+                  </Prompt>
+                );
+              })}
             </Library>
           </>
         ) : (
           turns.map((turn) => (
             <ScanTurn key={turn.id} turn={turn} savedRefs={savedRefs} onSave={ws.approved ? onSave : undefined}
+              onScan={ws.approved ? (name) => run(name) : undefined}
               cta={turn.scan && turn.scan.gate === 'daily_limit'
                 ? { label: 'See plans', onClick: () => navigate('/brand/workspace/billing') }
                 : campaignCta} />
@@ -565,37 +718,196 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
       </Pane>
       {turns.length > 0 && (
         <Dock ref={dockRef}>
-          <div><ScanInput onSubmit={run} busy={busy} chips={false} hint="Live TikTok data" placeholder="Scan another brand…" /></div>
+          <div><ScanInput onSubmit={run} busy={busy} chips={false} hint="Live TikTok data" placeholder="Scan another brand…" shortPlaceholder="Scan a brand…" /></div>
         </Dock>
       )}
     </>
   );
 }
 
-function RosterView({ ws }) {
-  if (ws.roster && ws.roster.token) {
-    return <RosterFrame><BrandPRRoster token={ws.roster.token} /></RosterFrame>;
+const STATUS = {
+  in_review: { label: 'In review', tone: '#d97706', bg: '#fff8eb' },
+  active: { label: 'Live · picking creators', tone: '#0f9d58', bg: '#e8f7ed' },
+  locked: { label: 'Creators locked · shipping', tone: '#2563eb', bg: '#eff4ff' },
+  shipped: { label: 'Shipped', tone: '#7c3aed', bg: '#f4effe' },
+  closed: { label: 'Closed', tone: '#6b6f78', bg: '#f0f1f3' },
+  rejected: { label: 'Not approved', tone: '#c92549', bg: '#fef2f4' },
+};
+
+function CampaignsView({ ws, onChanged }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  const [openToken, setOpenToken] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_CAMPAIGN);
+  const [busy, setBusy] = useState(false);
+  const [paywall, setPaywall] = useState(false);
+
+  const load = useCallback(() => {
+    getCampaigns().then(setData).catch((err) => setError(err.message));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('new') && data) {
+      startNew();
+      navigate('/brand/workspace/roster', { replace: true });
+    }
+  }, [data, location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const items = (data && data.campaigns) || [];
+  const liveToken = (items.find((c) => c.roster_token) || {}).roster_token;
+
+  const startNew = () => {
+    if (!data) return;
+    if (data.can_create) { setCreating(true); setPaywall(false); return; }
+    setPaywall(true);
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      const out = await createCampaign(campaignPayload(draft));
+      setData((d) => ({ ...d, campaigns: out.campaigns || d.campaigns }));
+      setCreating(false);
+      setDraft(EMPTY_CAMPAIGN);
+      load();
+      if (onChanged) onChanged();
+    } catch (err) {
+      if (err.code === 'PAYWALL') { setCreating(false); setPaywall(true); } else setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const checkout = async () => {
+    setBusy(true);
+    try {
+      const url = await startCheckout(liveToken);
+      if (url) window.location.href = url;
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Waiting for approval: show where things stand, nothing to buy or start.
+  if (!ws.approved) {
+    const first = items[0];
+    return (
+      <Pane>
+        <H1 $left>Campaigns</H1>
+        <Sub>Your gifted campaigns and the creators applying to them.</Sub>
+        <Empty>
+          <Clock size={28} />
+          <b>Pending review</b>
+          {first
+            ? <>Your campaign for <strong>{first.product_name}</strong> is saved. It goes live to vetted creators as soon as your account is approved (usually within 24h).</>
+            : 'Your account is being reviewed (usually within 24h). You can set up your first campaign once it’s approved.'}
+        </Empty>
+      </Pane>
+    );
   }
-  const campaign = ws.campaign;
+
+  if (openToken) {
+    return (
+      <>
+        <Pane style={{ paddingBottom: 8 }}>
+          <PlainLink type="button" onClick={() => setOpenToken('')}><ArrowLeft size={14} /> All campaigns</PlainLink>
+        </Pane>
+        <RosterFrame><BrandPRRoster token={openToken} /></RosterFrame>
+      </>
+    );
+  }
+
   return (
     <Pane>
-      <H1 $left>Roster</H1>
-      <Sub>The creators applying to your gifted campaign, ready to pick, lock and ship.</Sub>
-      <Empty>
-        <Users size={28} />
-        {campaign ? (
-          <>
-            <b>Your campaign for {campaign.product_name || 'your product'} is being set up</b>
-            We&apos;re reviewing it now. Once it&apos;s live, creators who apply show up here and you pick who to gift.
-          </>
-        ) : (
-          <>
-            <b>No campaign yet</b>
-            Tell us what you want to gift and we&apos;ll fill your roster with vetted creators. Your first campaign is free.
-            <div><Primary href="/for-brands?ref=workspace">Try your first campaign free</Primary></div>
-          </>
+      <HeadRow>
+        <div>
+          <H1 $left>Campaigns</H1>
+          <Sub>Pick creators, lock your list and ship. Each campaign gets 5–10 ad-ready videos.</Sub>
+        </div>
+        {!creating && data && (
+          <Primary as="button" type="button" onClick={startNew} style={{ marginTop: 0 }}>
+            <Plus size={16} /> New campaign
+          </Primary>
         )}
-      </Empty>
+      </HeadRow>
+
+      {error && <Banner>{error}</Banner>}
+
+      {paywall && data && (
+        <Plan>
+          <h3>{data.reason === 'first_in_review' ? 'Your first campaign is in review' : 'Your free campaign is used'}</h3>
+          {data.reason === 'first_in_review' ? (
+            <p>You can add more campaigns with Pro once your first one is live.</p>
+          ) : (
+            <>
+              <p>Run more gifted campaigns, side by side, with Newcollab Pro.</p>
+              <div className="price">$299 <span>/ month</span></div>
+              <ul>
+                <li>A new campaign every month, up to 10 creators each</li>
+                <li>Unlimited Brand Scans and full creator lists</li>
+                <li>5–10 ad-ready videos per campaign, 6-month ad rights</li>
+              </ul>
+              <Primary as="button" type="button" aria-disabled={busy || !liveToken} onClick={checkout}>
+                <CreditCard size={16} /> Upgrade · $299/mo
+              </Primary>
+            </>
+          )}
+          <PlainLink type="button" style={{ marginLeft: 14 }} onClick={() => setPaywall(false)}>Not now</PlainLink>
+        </Plan>
+      )}
+
+      {creating && (
+        <Plan as="form" onSubmit={submit}>
+          <h3>{items.length ? 'New campaign' : 'Your first campaign · free'}</h3>
+          <p style={{ marginBottom: 18 }}>We review it, then it goes live to vetted creators in your niche.</p>
+          <CampaignForm value={draft} onChange={setDraft} />
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Primary as="button" type="submit" aria-disabled={busy || !campaignReady(draft)} style={{ marginTop: 0 }}>
+              Start my campaign
+            </Primary>
+            <PlainLink type="button" onClick={() => setCreating(false)}>Cancel</PlainLink>
+          </div>
+        </Plan>
+      )}
+
+      {data && items.length === 0 && !creating && (
+        <Empty>
+          <Users size={28} />
+          <b>No campaign yet</b>
+          Tell us what you want to gift and we&apos;ll fill your roster with vetted creators. Your first campaign is free.
+          <div><Primary as="button" type="button" onClick={startNew}>Try your first campaign free</Primary></div>
+        </Empty>
+      )}
+
+      <CampaignList>
+        {items.map((c) => {
+          const st = STATUS[c.status] || STATUS.in_review;
+          return (
+            <li key={c.id}>
+              <div className="main">
+                <b>{c.product_name}</b>
+                <span className="badge" style={{ color: st.tone, background: st.bg }}>{st.label}</span>
+                <small>
+                  {c.creator_count_range ? `${c.creator_count_range} creators` : ''}
+                  {c.created_at ? ` · started ${new Date(c.created_at).toLocaleDateString()}` : ''}
+                </small>
+              </div>
+              {c.roster_token ? (
+                <button type="button" onClick={() => setOpenToken(c.roster_token)}>Open roster</button>
+              ) : (
+                <span className="wait"><CheckCircle2 size={14} /> We&apos;re reviewing it</span>
+              )}
+            </li>
+          );
+        })}
+      </CampaignList>
     </Pane>
   );
 }
@@ -734,8 +1046,8 @@ export default function BrandWorkspace() {
   const campaignCta = useMemo(() => {
     if (!ws) return undefined;
     if (ws.roster && ws.roster.token) return { label: 'Pick creators for your campaign', onClick: () => navigate('/brand/workspace/roster') };
-    if (ws.campaign) return { label: 'View my campaign', onClick: () => navigate('/brand/workspace/roster') };
-    return { label: 'Try your first campaign free', href: '/for-brands?ref=workspace' };
+    if (ws.campaign || !ws.approved) return { label: 'View my campaign', onClick: () => navigate('/brand/workspace/roster') };
+    return { label: 'Try your first campaign free', onClick: () => navigate('/brand/workspace/roster?new=1') };
   }, [navigate, ws]);
 
   if (error) {
@@ -764,7 +1076,7 @@ export default function BrandWorkspace() {
         </NewScan>
         <Nav>
           <NavLink to="/brand/workspace" end><Radar size={16} /> Brand Scan</NavLink>
-          <NavLink to="/brand/workspace/roster"><Users size={16} /> Roster</NavLink>
+          <NavLink to="/brand/workspace/roster"><Users size={16} /> Campaigns & roster</NavLink>
           <NavLink to="/brand/workspace/saved"><Bookmark size={16} /> Saved creators</NavLink>
           <NavLink to="/brand/workspace/billing"><CreditCard size={16} /> Plan & billing</NavLink>
         </Nav>
@@ -796,7 +1108,7 @@ export default function BrandWorkspace() {
           <Pane style={{ paddingBottom: 0 }}>
             <Banner $tone="warn">
               <Clock size={16} />
-              <span><b>Your account is being reviewed</b> (usually within 24h). You can run one free scan meanwhile. Full creator lists, saving creators and daily scans unlock once you&apos;re approved.</span>
+              <span><b>Your account is being reviewed</b> (usually within 24h). Meanwhile you get one full competitor scan. Daily scans, the prompt library and saving creators unlock once you&apos;re approved.</span>
             </Banner>
           </Pane>
         )}
@@ -810,7 +1122,7 @@ export default function BrandWorkspace() {
         )}
         <Routes>
           <Route index element={<ScanView ws={ws} onScanned={onScanned} savedRefs={savedRefs} onSave={onSave} campaignCta={campaignCta} />} />
-          <Route path="roster" element={<RosterView ws={ws} />} />
+          <Route path="roster" element={<CampaignsView ws={ws} onChanged={onScanned} />} />
           <Route path="saved" element={<SavedView saved={saved} approved={ws.approved} onRemove={async (ref) => setSaved(await removeCreator(ref))} />} />
           <Route path="billing" element={<BillingView ws={ws} />} />
           <Route path="*" element={<ScanView ws={ws} onScanned={onScanned} savedRefs={savedRefs} onSave={onSave} campaignCta={campaignCta} />} />

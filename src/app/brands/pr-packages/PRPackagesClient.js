@@ -2,7 +2,6 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { useRouter } from 'next/navigation';
 import { Sparkles, TrendingUp, Users } from 'lucide-react';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { FAQ_ITEMS, HOW_STEPS, PAGE_URL, SIGNUP_URL } from './content';
@@ -1134,10 +1133,10 @@ const ArrowIcon = () => (
 export default function PRPackagesClient() {
   const signupUrl = SIGNUP_URL;
   const onCta = (location) => () => trackBrandCtaClick('pr-packages', location);
-  const router = useRouter();
+  // Full navigation: a client-side push from this page left the URL changed but the page stuck rendering.
   const onScan = (brand) => {
     trackBrandCtaClick('pr-packages', 'hero_scan');
-    router.push(scanUrl(brand, 'landing'));
+    window.location.assign(scanUrl(brand, 'landing'));
   };
 
   return (
