@@ -768,6 +768,15 @@ const Follow = styled.div`
   }
 `;
 
+const Sent = styled.p`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: ${scan.green};
+  margin: -12px 0 18px;
+`;
+
 const ErrorBox = styled.div`
   border: 1px solid #fbd5de;
   background: ${scan.accentSoft};
@@ -997,6 +1006,10 @@ function Report({ turn, onUnlock, onScan }) {
       <BridgeCard report={r} brand={name} />
       <UnlockGate report={r} onUnlock={onUnlock} />
 
+      {turn.sentTo && (
+        <Sent><Check size={14} /> Full report sent to {turn.sentTo}</Sent>
+      )}
+
       <Follow>
         <button type="button" onClick={() => onScan(null)}><Video size={14} /> Scan another brand</button>
         {r.matches && r.matches.cta_url && (
@@ -1030,7 +1043,7 @@ export default function BrandScanClient() {
     const full = await unlockScan({ brand, email, ref: ref.current });
     rememberEmail(email);
     trackScan('brand_scan_unlock', { brand });
-    update(id, { scan: full });
+    update(id, { scan: full, sentTo: email });
   }, [update]);
 
   const finish = useCallback((id, brand, result) => {
