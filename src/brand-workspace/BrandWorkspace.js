@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { CATEGORY_LABELS } from '../constants/brandCategories';
 import CampaignForm, { EMPTY_CAMPAIGN, campaignPayload, campaignReady } from './CampaignForm';
+import WorkspaceSkeleton, { ListSkeleton } from './WorkspaceSkeleton';
 import { UserContext } from '../contexts/UserContext';
 import ScanInput from '../app/brands/scan/ScanInput';
 import { ScanTurn, useScanTurns } from '../app/brands/scan/ScanReport';
@@ -279,8 +280,8 @@ const Banner = styled.div`
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  border: 1px solid ${(p) => (p.$tone === 'warn' ? '#fde2b3' : '#fbd5de')};
-  background: ${(p) => (p.$tone === 'warn' ? '#fff8eb' : t.accentSoft)};
+  border: 1px solid ${(p) => ({ warn: '#fde2b3', ok: '#c9ecd6' }[p.$tone] || '#fbd5de')};
+  background: ${(p) => ({ warn: '#fff8eb', ok: t.greenSoft }[p.$tone] || t.accentSoft)};
   border-radius: 14px;
   padding: 12px 14px;
   font-size: 14px;
@@ -288,7 +289,7 @@ const Banner = styled.div`
   color: ${t.ink2};
   margin-bottom: 24px;
 
-  svg { flex: 0 0 auto; margin-top: 2px; color: ${(p) => (p.$tone === 'warn' ? '#d97706' : t.accent)}; }
+  svg { flex: 0 0 auto; margin-top: 2px; color: ${(p) => ({ warn: '#d97706', ok: t.green }[p.$tone] || t.accent)}; }
 `;
 
 const H1 = styled.h1`
@@ -877,6 +878,8 @@ function CampaignsView({ ws, onChanged }) {
         </Plan>
       )}
 
+      {!data && !error && <ListSkeleton rows={2} />}
+
       {data && items.length === 0 && !creating && (
         <Empty>
           <Users size={28} />
@@ -1024,6 +1027,32 @@ export default function BrandWorkspace() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
+
+  // Waiting for approval: re-check when the tab comes back into view and every minute, so an approval shows
+  // up without a reload.
+  const [justApproved, setJustApproved] = useState(false);
+  const pending = Boolean(ws && !ws.approved);
+  useEffect(() => {
+    if (!pending) return undefined;
+    const recheck = () => {
+      if (document.visibilityState === 'hidden') return;
+      getWorkspace().then((fresh) => {
+        if (fresh.approved) {
+          setJustApproved(true);
+          getScanHistory().then(setHistory).catch(() => {});
+        }
+        setWs(fresh);
+      }).catch(() => {});
+    };
+    const timer = setInterval(recheck, 60000);
+    window.addEventListener('focus', recheck);
+    document.addEventListener('visibilitychange', recheck);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', recheck);
+      document.removeEventListener('visibilitychange', recheck);
+    };
+  }, [pending]);
   useEffect(() => {
     const prev = document.title;
     document.title = 'Brand workspace · Newcollab';
@@ -1057,7 +1086,7 @@ export default function BrandWorkspace() {
     );
   }
   if (!ws) {
-    return <Shell><Main><Pane><Meter><span>Loading your workspace…</span></Meter></Pane></Main></Shell>;
+    return <WorkspaceSkeleton />;
   }
 
   const name = ws.brand.name || 'Your brand';
@@ -1108,7 +1137,18 @@ export default function BrandWorkspace() {
           <Pane style={{ paddingBottom: 0 }}>
             <Banner $tone="warn">
               <Clock size={16} />
-              <span><b>Your account is being reviewed</b> (usually within 24h). Meanwhile you get one full competitor scan. Daily scans, the prompt library and saving creators unlock once you&apos;re approved.</span>
+              <span>
+                <b>Your account is being reviewed</b> (usually within 24h). Meanwhile you get one full competitor scan. Daily scans, the prompt library and saving creators unlock once you&apos;re approved.
+                <small style={{ display: 'block', marginTop: 4, color: t.muted }}>Signed in as {ws.user.email}</small>
+              </span>
+            </Banner>
+          </Pane>
+        )}
+        {justApproved && status !== 'pending' && (
+          <Pane style={{ paddingBottom: 0 }}>
+            <Banner $tone="ok">
+              <CheckCircle2 size={16} />
+              <span><b>You&apos;re approved.</b> Daily scans, the prompt library and your campaigns are unlocked.</span>
             </Banner>
           </Pane>
         )}

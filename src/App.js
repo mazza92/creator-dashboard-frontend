@@ -61,6 +61,7 @@ import CampaignInvites from './creator-portal/CampaignInvites';
 import FirstAdSlot from './creator-portal/FirstAdSlot';
 import PROffers from './creator-portal/PROffers';
 import BrandSignup from './brand-workspace/BrandSignup';
+import WorkspaceSkeleton from './brand-workspace/WorkspaceSkeleton';
 import PRReady from './creator-portal/PRReady';
 import PublicMediaKit from './cra-pages/PublicMediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
@@ -411,7 +412,9 @@ function AppContent() {
                             location.pathname.startsWith('/creator/profile') ||
                             location.pathname.startsWith('/brand/profile');
 
-    if (loading && isProtectedRoute) return <LoadingSpinner fullScreen />;
+    if (loading && isProtectedRoute) {
+        return location.pathname.startsWith('/brand/workspace') ? <WorkspaceSkeleton /> : <LoadingSpinner fullScreen />;
+    }
 
     const isPayPalFlow = location.pathname === '/payment-success' && location.search.includes('paymentId');
 
@@ -528,7 +531,7 @@ function AppContent() {
             {/* Brand workspace: Brand Scan, roster, saved creators, billing (own layout) */}
             <Route
                 path='/brand/workspace/*'
-                element={user ? <LazyRoute><BrandWorkspace /></LazyRoute> : <Navigate to={loginUrlWithReturn(location)} replace />}
+                element={user ? <LazyRoute skeleton={<WorkspaceSkeleton />}><BrandWorkspace /></LazyRoute> : <Navigate to={loginUrlWithReturn(location)} replace />}
             />
 
             {/* Brand dashboard routes with layout */}
