@@ -2,11 +2,15 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import { useRouter } from 'next/navigation';
+import { Sparkles, TrendingUp, Users } from 'lucide-react';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { FAQ_ITEMS, HOW_STEPS, PAGE_URL, SIGNUP_URL } from './content';
 import { relatedLinks, trackBrandCtaClick } from '../_cluster/catalog';
 import CitationCompareTable from '../../components/CitationCompareTable';
 import { CITATION_LAST_UPDATED } from '../../../lib/citationFacts';
+import ScanInput from '../scan/ScanInput';
+import { scanUrl } from '../scan/scanApi';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -215,6 +219,176 @@ const HeroTrust = styled.div`
   svg {
     color: ${colors.green};
     flex-shrink: 0;
+  }
+`;
+
+// Centered, Lightreel-style hero with the Brand Scan input
+const HeroCenter = styled.div`
+  text-align: center;
+
+  h1, p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  > div {
+    justify-content: center;
+  }
+`;
+
+const ScanWrap = styled.div`
+  max-width: 680px;
+  margin: 0 auto 26px;
+`;
+
+const ScanLabel = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${colors.muted};
+  margin-bottom: 10px;
+`;
+
+// "What a scan shows you": static product preview, no screenshot
+const PreviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 28px;
+  align-items: center;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PreviewPoints = styled.div`
+  display: grid;
+  gap: 14px;
+
+  div {
+    border: 1px solid ${colors.line};
+    border-radius: 14px;
+    padding: 16px 18px;
+    background: #fff;
+  }
+
+  strong {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    color: ${colors.ink};
+    margin-bottom: 4px;
+  }
+
+  svg {
+    color: ${colors.pink};
+  }
+
+  span {
+    font-size: 14px;
+    line-height: 1.5;
+    color: ${colors.muted};
+  }
+`;
+
+const PreviewCard = styled.div`
+  border: 1px solid ${colors.line};
+  border-radius: 20px;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 18px 48px rgba(15, 17, 20, 0.08);
+
+  .ask {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+  }
+
+  .ask .ex {
+    margin-right: auto;
+    align-self: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: ${colors.muted2};
+  }
+
+  .ask span {
+    background: ${colors.bgSoft};
+    border-radius: 16px 16px 4px 16px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: ${colors.ink};
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: ${colors.inkSoft};
+    margin: 0 0 12px;
+  }
+
+  p b {
+    color: ${colors.ink};
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .chips span {
+    border: 1px solid ${colors.line};
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: ${colors.muted};
+  }
+
+  .chips b {
+    color: ${colors.ink};
+    margin-right: 4px;
+  }
+
+  .vids {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .vids div {
+    aspect-ratio: 9 / 16;
+    border-radius: 10px;
+    background: linear-gradient(160deg, #3a3d45 0%, #15161a 100%);
+    position: relative;
+  }
+
+  .vids div::after {
+    content: attr(data-views);
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .hook {
+    border: 1px solid ${colors.lineSoft};
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: ${colors.ink};
+  }
+
+  .hook small {
+    display: block;
+    color: ${colors.muted};
+    margin-top: 2px;
   }
 `;
 
@@ -960,39 +1134,50 @@ const ArrowIcon = () => (
 export default function PRPackagesClient() {
   const signupUrl = SIGNUP_URL;
   const onCta = (location) => () => trackBrandCtaClick('pr-packages', location);
+  const router = useRouter();
+  const onScan = (brand) => {
+    trackBrandCtaClick('pr-packages', 'hero_scan');
+    router.push(scanUrl(brand, 'landing'));
+  };
 
   return (
     <LandingPageLayoutNext canonicalUrl={PAGE_URL}>
       {/* HERO */}
       <HeroSection>
         <Wrap>
-          <HeroTag>
-            <span className="pulse"></span>
-            <span><strong>DTC brands</strong> running gifted UGC campaigns this quarter</span>
-          </HeroTag>
-          <H1>Find vetted UGC creators for <span>your brand.</span></H1>
-          <HeroSub>
-            Gift a PR package, lock shipping, and get ad-ready videos back with <strong>6-month commercial usage</strong>. First campaign free — then $299/month only if you opt in.
-          </HeroSub>
-          <CTARow>
-            <BtnPrimary href={signupUrl} onClick={onCta('hero')}>
-              Start free campaign
-              <ArrowIcon />
-            </BtnPrimary>
-            <BtnSecondary href="#how">See how it works</BtnSecondary>
-          </CTARow>
-          <FounderNote>
-            Prefer a 10-minute setup?{' '}
-            <a href="mailto:team@newcollab.co?subject=Free%20gifted%20UGC%20campaign" onClick={onCta('hero_email')}>
-              Email Mazza — I'll open the roster for you.
-            </a>
-          </FounderNote>
-          <HeroTrust>
-            <span><CheckIcon /> First campaign free</span>
-            <span><CheckIcon /> Branded roster, auto-filled</span>
-            <span><CheckIcon /> Select → lock → ship</span>
-            <span><CheckIcon /> Reuse in ads for 6 months</span>
-          </HeroTrust>
+          <HeroCenter>
+            <HeroTag>
+              <span className="pulse"></span>
+              <span><strong>New:</strong> Brand Scan, free TikTok creator lookup</span>
+            </HeroTag>
+            <H1>See who&apos;s posting for your competitors. <span>Get them posting for you.</span></H1>
+            <HeroSub>
+              Scan any brand to see the TikTok creators, hooks and videos behind its growth. Then gift vetted creators who make the same content for you, with <strong>6-month ad rights</strong>. First campaign free.
+            </HeroSub>
+            <ScanWrap>
+              <ScanLabel>Scan a competitor</ScanLabel>
+              <ScanInput onSubmit={onScan} placeholder="Type a brand, e.g. Glow Recipe or @glowrecipe" />
+            </ScanWrap>
+            <CTARow>
+              <BtnPrimary href={signupUrl} onClick={onCta('hero')}>
+                Try your first campaign free
+                <ArrowIcon />
+              </BtnPrimary>
+              <BtnSecondary href="#how">See how it works</BtnSecondary>
+            </CTARow>
+            <FounderNote>
+              Prefer a 10-minute setup?{' '}
+              <a href="mailto:team@newcollab.co?subject=Free%20gifted%20UGC%20campaign" onClick={onCta('hero_email')}>
+                Email Mazza and I&apos;ll open the roster for you.
+              </a>
+            </FounderNote>
+            <HeroTrust>
+              <span><CheckIcon /> First campaign free</span>
+              <span><CheckIcon /> Vetted creators, auto-filled</span>
+              <span><CheckIcon /> Select, lock, ship</span>
+              <span><CheckIcon /> Reuse in ads for 6 months</span>
+            </HeroTrust>
+          </HeroCenter>
         </Wrap>
       </HeroSection>
 
@@ -1012,6 +1197,47 @@ export default function PRPackagesClient() {
           </ProofLogos>
         </Wrap>
       </ProofBand>
+
+      {/* BRAND SCAN */}
+      <Section id="scan">
+        <Wrap>
+          <SecLabel>Brand Scan</SecLabel>
+          <SecTitle>Your competitor&apos;s creator playbook, <span>in one search.</span></SecTitle>
+          <SecSub>
+            Type any brand and get a report built from live TikTok posts: who is posting, what they say in the first second, and which videos get the views. Free, no login.
+          </SecSub>
+          <PreviewGrid>
+            <PreviewPoints>
+              <div><strong><Users size={17} /> Every creator posting</strong><span>Handles, follower counts, and whether each post was gifted, paid or affiliate.</span></div>
+              <div><strong><Sparkles size={17} /> Hooks that repeat</strong><span>The opening lines several creators reuse. That is the brand&apos;s creator script, ready to brief your own creators on.</span></div>
+              <div><strong><TrendingUp size={17} /> Videos that win</strong><span>Top posts by views, with the creator and the hook behind each one.</span></div>
+              <div><strong>→ Creators ready for you</strong><span>Vetted Newcollab creators who fit the same profile and are open to gifting your brand.</span></div>
+            </PreviewPoints>
+            <PreviewCard aria-label="Example Brand Scan result">
+              <div className="ask"><small className="ex">Example report</small><span>Scan Dewy Labs</span></div>
+              <p><b>Dewy Labs</b> has <b>41 creators</b> posting about it on TikTok in the last 6 months, across <b>63 videos</b>. Most are small creators and the top hook ran on <b>9 videos</b>.</p>
+              <div className="chips">
+                <span><b>41</b>creators</span>
+                <span><b>63</b>videos</span>
+                <span><b>8.2K</b>median followers</span>
+              </div>
+              <div className="vids">
+                <div data-views="444K" />
+                <div data-views="356K" />
+                <div data-views="142K" />
+                <div data-views="36K" />
+              </div>
+              <div className="hook">“when i say my skin is basically clear but i…”<small>9 videos · 7 creators</small></div>
+            </PreviewCard>
+          </PreviewGrid>
+          <CTARow style={{ marginTop: 28 }}>
+            <BtnPrimary href="/brands/scan" onClick={onCta('scan_section')}>
+              Scan a brand free
+              <ArrowIcon />
+            </BtnPrimary>
+          </CTARow>
+        </Wrap>
+      </Section>
 
       {/* WHAT YOU GET */}
       <Section>
@@ -1163,7 +1389,7 @@ export default function PRPackagesClient() {
               </PricingFeatures>
 
               <PricingCTA href={signupUrl} onClick={onCta('pricing')}>
-                Start free campaign
+                Try your first campaign free
                 <ArrowIcon />
               </PricingCTA>
               <PricingFine>Your only cost for the trial: PR package + shipping</PricingFine>
@@ -1245,10 +1471,10 @@ export default function PRPackagesClient() {
       <FinalCTA>
         <Wrap>
           <FinalInner>
-            <h2>Start your <span>free campaign</span> today.</h2>
+            <h2>Try your <span>first campaign free.</span></h2>
             <p>Open your branded roster, pick who to gift, lock, and ship. Ad-ready UGC with 6-month commercial usage. Pay $299/mo only if it works.</p>
             <BtnPrimary href={signupUrl} onClick={onCta('footer')}>
-              Start free campaign
+              Try your first campaign free
               <ArrowIcon />
             </BtnPrimary>
             <FinalTrust>

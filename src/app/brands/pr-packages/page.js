@@ -11,9 +11,9 @@ import {
 export const metadata = {
   title: 'Gifted UGC creators for DTC brands | $299, first campaign free',
   description:
-    'Find vetted UGC creators for your DTC brand. Gift product, lock shipping, get 5–10 ad-ready videos with 6-month commercial use. First campaign free, then $299/mo if you opt in.',
+    'Scan any brand to see the TikTok creators and hooks behind it, then gift vetted UGC creators who make the same content for you. 5–10 ad-ready videos with 6-month commercial use. First campaign free, then $299/mo if you opt in.',
   keywords:
-    'find ugc creators, ugc creators for brands, gifted ugc, gifted ugc platform, pr packages for brands, product seeding, ugc for ads, ugc for meta ads, dtc ugc creators, brand ugc content',
+    'find ugc creators, ugc creators for brands, gifted ugc, gifted ugc platform, pr packages for brands, product seeding, ugc for ads, ugc for meta ads, dtc ugc creators, brand ugc content, tiktok creator lookup, competitor influencer analysis, brand scan',
   alternates: {
     canonical: PAGE_URL,
   },
@@ -33,7 +33,7 @@ export const metadata = {
     creator: '@newcollab',
   },
   other: {
-    'article:modified_time': '2026-09-16',
+    'article:modified_time': '2026-10-26',
   },
 };
 
