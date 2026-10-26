@@ -1,6 +1,6 @@
 // Brand Scan conversation + report UI, shared by the public /brands/scan page (Next) and the brand
 // workspace (CRA). No framework imports: callers pass their own start/poll functions to useScanTurns.
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { ArrowRight, Bookmark, BookmarkCheck, Check, Eye, Lock, Play, Sparkles, Users, TrendingUp } from 'lucide-react';
 import { trackBrandCtaClick } from '../_cluster/catalog';
@@ -635,10 +635,46 @@ function Md({ text }) {
   return parts.map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : <React.Fragment key={i}>{part}</React.Fragment>));
 }
 
-function Thumb({ src, alt }) {
+// TikTok's signed cover links expire, and TikTok blocks most server-side refreshes. The visitor's browser can
+// still ask TikTok's public oEmbed for a fresh cover, so covers we haven't stored get one from there.
+const oembedCache = new Map();
+let oembedActive = 0;
+const oembedQueue = [];
+
+function nextOembed() {
+  while (oembedActive < 4 && oembedQueue.length) {
+    const job = oembedQueue.shift();
+    oembedActive += 1;
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(job.url)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => job.resolve((d && d.thumbnail_url) || ''))
+      .catch(() => job.resolve(''))
+      .finally(() => { oembedActive -= 1; nextOembed(); });
+  }
+}
+
+function freshTikTokCover(postUrl) {
+  if (!/^https:\/\/(www\.)?tiktok\.com\//.test(postUrl || '')) return Promise.resolve('');
+  if (!oembedCache.has(postUrl)) {
+    oembedCache.set(postUrl, new Promise((resolve) => { oembedQueue.push({ url: postUrl, resolve }); nextOembed(); }));
+  }
+  return oembedCache.get(postUrl);
+}
+
+const isStored = (src) => /\/storage\/v1\/object\/public\//.test(src || '');
+
+export function Thumb({ src, alt, post }) {
+  const [url, setUrl] = useState(isStored(src) ? src : '');
   const [broken, setBroken] = useState(false);
-  if (!src || broken) return null;
-  return <img src={src} alt={alt || ''} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />;
+  useEffect(() => {
+    if (isStored(src)) { setUrl(src); return undefined; }
+    let live = true;
+    setUrl(src || '');
+    freshTikTokCover(post).then((fresh) => { if (live && fresh) { setUrl(fresh); setBroken(false); } });
+    return () => { live = false; };
+  }, [src, post]);
+  if (!url || broken) return null;
+  return <img src={url} alt={alt || ''} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />;
 }
 
 function VideoCard({ v }) {
@@ -646,7 +682,7 @@ function VideoCard({ v }) {
     <VCard href={v.url} target="_blank" rel="noopener noreferrer">
       <Cover className="cover">
         <div className="play"><Play size={28} fill="currentColor" /></div>
-        <Thumb src={v.thumb} alt={v.hook} />
+        <Thumb src={v.thumb} alt={v.hook} post={v.url} />
         {v.type && v.type !== 'organic' && <TypeTag $type={v.type}>{TYPE_LABEL[v.type]}</TypeTag>}
         <span className="views"><Eye size={13} /> {v.views_label}</span>
       </Cover>
@@ -842,7 +878,7 @@ export function Report({ turn, cta, savedRefs, onSave }) {
                 </div>
                 <div className="thumbs">
                   {(h.examples || []).map((v) => (
-                    <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" /></a>
+                    <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" post={v.url} /></a>
                   ))}
                 </div>
               </HookRow>
@@ -1055,7 +1091,7 @@ export function InsightReport({ report, cta, savedRefs, onSave, onScan }) {
                 <div className="side">
                   <div className="thumbs">
                     {(b.examples || []).map((v) => (
-                      <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" /></a>
+                      <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" post={v.url} /></a>
                     ))}
                   </div>
                   {onScan && <button type="button" onClick={() => onScan(b.name)}>Scan</button>}
@@ -1078,7 +1114,7 @@ export function InsightReport({ report, cta, savedRefs, onSave, onScan }) {
                 </div>
                 <div className="thumbs">
                   {(h.examples || []).map((v) => (
-                    <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" /></a>
+                    <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" post={v.url} /></a>
                   ))}
                 </div>
               </HookRow>

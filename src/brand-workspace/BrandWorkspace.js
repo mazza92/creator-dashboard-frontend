@@ -4,17 +4,18 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
-  ArrowLeft, Bookmark, CheckCircle2, Clock, CreditCard, Gift, Lock, LogOut, Megaphone, Menu, Plus, Radar, Search,
+  Bookmark, CheckCircle2, Clock, CreditCard, Gift, Lock, LogOut, Megaphone, Menu, Plus, Radar, Search,
   Sparkles, Users, X,
 } from 'lucide-react';
 import { CATEGORY_LABELS } from '../constants/brandCategories';
 import CampaignForm, { EMPTY_CAMPAIGN, campaignPayload, campaignReady } from './CampaignForm';
 import WorkspaceSkeleton, { ListSkeleton } from './WorkspaceSkeleton';
+import { Banner, Empty, H1, Pane, PlainLink, Plan, Primary, Sub } from './ui';
 import { UserContext } from '../contexts/UserContext';
 import ScanInput from '../app/brands/scan/ScanInput';
 import { ScanTurn, useScanTurns } from '../app/brands/scan/ScanReport';
 import { scan as t } from '../app/brands/scan/theme';
-import BrandPRRoster from '../cra-pages/BrandPRRoster';
+import WorkspaceRoster from './WorkspaceRoster';
 import {
   createCampaign, getCampaigns, getSaved, getScanHistory, getWorkspace, openPortal, pollInsight, pollScan,
   removeCreator, saveCreator, startCheckout, startInsight, startScan,
@@ -185,6 +186,30 @@ const History = styled.div`
   }
 `;
 
+const UpgradeCard = styled.button`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 11px 12px;
+  border: 1px solid ${t.accentRing};
+  border-radius: 12px;
+  background: ${t.accentSoft};
+  color: ${t.accent};
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+
+  svg { flex: 0 0 auto; margin-top: 2px; }
+
+  span { font-size: 12px; color: ${t.muted}; line-height: 1.4; }
+
+  b { display: block; font-size: 13px; color: ${t.ink}; }
+
+  &:hover { border-color: ${t.accent}; }
+`;
+
 const Account = styled.div`
   border-top: 1px solid ${t.lineSoft};
   padding: 12px 8px 2px;
@@ -266,49 +291,9 @@ const TopBar = styled.div`
   }
 `;
 
-const Pane = styled.div`
-  max-width: ${(p) => (p.$wide ? '1100px' : '780px')};
-  margin: 0 auto;
-  padding: 32px 20px 180px;
 
-  @media (max-width: 900px) {
-    padding: 20px 16px 180px;
-  }
-`;
 
-const Banner = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  border: 1px solid ${(p) => ({ warn: '#fde2b3', ok: '#c9ecd6' }[p.$tone] || '#fbd5de')};
-  background: ${(p) => ({ warn: '#fff8eb', ok: t.greenSoft }[p.$tone] || t.accentSoft)};
-  border-radius: 14px;
-  padding: 12px 14px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: ${t.ink2};
-  margin-bottom: 24px;
 
-  svg { flex: 0 0 auto; margin-top: 2px; color: ${(p) => ({ warn: '#d97706', ok: t.green }[p.$tone] || t.accent)}; }
-`;
-
-const H1 = styled.h1`
-  font-size: clamp(24px, 3.4vw, 32px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  text-align: ${(p) => (p.$left ? 'left' : 'center')};
-  margin: ${(p) => (p.$left ? '0 0 6px' : '12vh 0 24px')};
-
-  @media (max-width: 560px) {
-    margin: ${(p) => (p.$left ? '0 0 6px' : '32px 0 20px')};
-  }
-`;
-
-const Sub = styled.p`
-  font-size: 15px;
-  color: ${t.muted};
-  margin: 0 0 24px;
-`;
 
 const Meter = styled.div`
   display: flex;
@@ -445,73 +430,10 @@ const Card = styled.div`
   }
 `;
 
-const Empty = styled.div`
-  border: 1px dashed ${t.line};
-  border-radius: 18px;
-  padding: 32px 24px;
-  text-align: center;
-  color: ${t.muted};
-  font-size: 15px;
-  line-height: 1.6;
 
-  svg { color: ${t.muted2}; margin-bottom: 8px; }
-  b { display: block; color: ${t.ink}; font-size: 17px; margin-bottom: 6px; }
-`;
 
-const Primary = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  background: ${t.accent};
-  color: #fff !important;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 12px 18px;
-  border-radius: 12px;
-  text-decoration: none;
-  border: 0;
-  cursor: pointer;
 
-  &:hover { background: ${t.accentHover}; }
-  &[aria-disabled='true'] { opacity: 0.6; pointer-events: none; }
-`;
 
-const Plan = styled.div`
-  border: 1px solid ${t.line};
-  border-radius: 18px;
-  padding: 22px;
-  margin-bottom: 16px;
-
-  h3 { font-size: 16px; margin: 0 0 4px; }
-  p { color: ${t.muted}; font-size: 14px; line-height: 1.6; margin: 0; }
-  .price { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 12px 0 4px; }
-  .price span { font-size: 14px; font-weight: 500; color: ${t.muted}; }
-  ul { margin: 12px 0 0; padding-left: 18px; color: ${t.ink2}; font-size: 14px; line-height: 1.8; }
-`;
-
-const RosterFrame = styled.div`
-  margin: 0 -20px;
-
-  @media (max-width: 900px) {
-    margin: 0 -16px;
-  }
-`;
-
-const PlainLink = styled.button`
-  border: 0;
-  background: none;
-  padding: 0;
-  color: ${t.ink};
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-`;
 
 const HeadRow = styled.div`
   display: flex;
@@ -758,7 +680,6 @@ function CampaignsView({ ws, onChanged }) {
   }, [data, location.search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = (data && data.campaigns) || [];
-  const liveToken = (items.find((c) => c.roster_token) || {}).roster_token;
 
   const startNew = () => {
     if (!data) return;
@@ -787,7 +708,7 @@ function CampaignsView({ ws, onChanged }) {
   const checkout = async () => {
     setBusy(true);
     try {
-      const url = await startCheckout(liveToken);
+      const url = await startCheckout();
       if (url) window.location.href = url;
     } catch (err) {
       setError(err.message);
@@ -815,14 +736,7 @@ function CampaignsView({ ws, onChanged }) {
   }
 
   if (openToken) {
-    return (
-      <>
-        <Pane style={{ paddingBottom: 8 }}>
-          <PlainLink type="button" onClick={() => setOpenToken('')}><ArrowLeft size={14} /> All campaigns</PlainLink>
-        </Pane>
-        <RosterFrame><BrandPRRoster token={openToken} /></RosterFrame>
-      </>
-    );
+    return <WorkspaceRoster token={openToken} onBack={() => setOpenToken('')} />;
   }
 
   return (
@@ -843,23 +757,17 @@ function CampaignsView({ ws, onChanged }) {
 
       {paywall && data && (
         <Plan>
-          <h3>{data.reason === 'first_in_review' ? 'Your first campaign is in review' : 'Your free campaign is used'}</h3>
-          {data.reason === 'first_in_review' ? (
-            <p>You can add more campaigns with Pro once your first one is live.</p>
-          ) : (
-            <>
-              <p>Run more gifted campaigns, side by side, with Newcollab Pro.</p>
-              <div className="price">$299 <span>/ month</span></div>
-              <ul>
-                <li>A new campaign every month, up to 10 creators each</li>
-                <li>Unlimited Brand Scans and full creator lists</li>
-                <li>5–10 ad-ready videos per campaign, 6-month ad rights</li>
-              </ul>
-              <Primary as="button" type="button" aria-disabled={busy || !liveToken} onClick={checkout}>
-                <CreditCard size={16} /> Upgrade · $299/mo
-              </Primary>
-            </>
-          )}
+          <h3>{data.reason === 'first_in_review' ? 'Your free campaign is in review' : 'Your free campaign is used'}</h3>
+          <p>Run more gifted campaigns, side by side, with Newcollab Pro.</p>
+          <div className="price">$299 <span>/ month</span></div>
+          <ul>
+            <li>A new campaign every month, up to 10 creators each</li>
+            <li>Unlimited Brand Scans and full creator lists</li>
+            <li>5–10 ad-ready videos per campaign, 6-month ad rights</li>
+          </ul>
+          <Primary as="button" type="button" aria-disabled={busy} onClick={checkout}>
+            <CreditCard size={16} /> Upgrade · $299/mo
+          </Primary>
           <PlainLink type="button" style={{ marginLeft: 14 }} onClick={() => setPaywall(false)}>Not now</PlainLink>
         </Plan>
       )}
@@ -952,16 +860,25 @@ function SavedView({ saved, onRemove, approved }) {
   );
 }
 
-function BillingView({ ws }) {
+function BillingView({ ws, onRefresh }) {
+  const location = useLocation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const token = ws.roster && ws.roster.token;
   const subscribed = ws.scans && ws.scans.subscribed;
+  const returned = new URLSearchParams(location.search).get('billing');
+  const activating = returned === 'success' && !subscribed;
+  // Stripe sends them back before its webhook lands; re-check for a little while until Pro shows up.
+  useEffect(() => {
+    if (!activating || !onRefresh) return undefined;
+    let n = 0;
+    const timer = setInterval(() => { n += 1; onRefresh(); if (n >= 10) clearInterval(timer); }, 3000);
+    return () => clearInterval(timer);
+  }, [activating, onRefresh]);
   const go = async (fn) => {
     setBusy(true);
     setError('');
     try {
-      const url = await fn(token);
+      const url = await fn();
       if (url) window.location.href = url;
     } catch (err) {
       setError(err.message);
@@ -972,7 +889,13 @@ function BillingView({ ws }) {
   return (
     <Pane>
       <H1 $left>Plan & billing</H1>
-      <Sub>Your first campaign is free. Subscribe when you want more.</Sub>
+      <Sub>Your first campaign is free. Upgrade anytime.</Sub>
+      {activating && (
+        <Banner $tone="ok"><CheckCircle2 size={16} /><span><b>Payment received.</b> Pro turns on in a few seconds.</span></Banner>
+      )}
+      {returned === 'success' && subscribed && (
+        <Banner $tone="ok"><CheckCircle2 size={16} /><span><b>You&apos;re on Pro.</b> Unlimited scans and more campaigns are on.</span></Banner>
+      )}
       <Plan>
         <h3>{subscribed ? 'Newcollab Pro · active' : 'Free plan'}</h3>
         <p>{subscribed ? 'Unlimited Brand Scans and a new gifted campaign every month.' : 'One free gifted campaign and 3 new Brand Scans a day.'}</p>
@@ -987,13 +910,9 @@ function BillingView({ ws }) {
             </ul>
           </>
         )}
-        {token ? (
-          <Primary as="button" type="button" aria-disabled={busy} onClick={() => go(subscribed ? openPortal : startCheckout)}>
-            <CreditCard size={16} /> {subscribed ? 'Manage billing' : 'Subscribe · $299/mo'}
-          </Primary>
-        ) : (
-          <p style={{ marginTop: 14 }}>Billing opens once your first campaign is live.</p>
-        )}
+        <Primary as="button" type="button" aria-disabled={busy || activating} onClick={() => go(subscribed ? openPortal : startCheckout)}>
+          <CreditCard size={16} /> {subscribed ? 'Manage billing' : 'Upgrade · $299/mo'}
+        </Primary>
         {error && <p style={{ color: t.accent, marginTop: 10 }}>{error}</p>}
       </Plan>
     </Pane>
@@ -1119,6 +1038,12 @@ export default function BrandWorkspace() {
             </button>
           ))}
         </History>
+        {!(ws.scans && ws.scans.subscribed) && (
+          <UpgradeCard type="button" onClick={() => { setOpen(false); navigate('/brand/workspace/billing'); }}>
+            <Sparkles size={15} />
+            <span><b>Upgrade to Pro</b>Unlimited scans and campaigns</span>
+          </UpgradeCard>
+        )}
         <Account>
           <div className="av">{ws.brand.logo ? <img src={ws.brand.logo} alt="" /> : name.slice(0, 1).toUpperCase()}</div>
           <div className="who"><b>{name}</b><span>{ws.user.email}</span></div>
@@ -1164,7 +1089,7 @@ export default function BrandWorkspace() {
           <Route index element={<ScanView ws={ws} onScanned={onScanned} savedRefs={savedRefs} onSave={onSave} campaignCta={campaignCta} />} />
           <Route path="roster" element={<CampaignsView ws={ws} onChanged={onScanned} />} />
           <Route path="saved" element={<SavedView saved={saved} approved={ws.approved} onRemove={async (ref) => setSaved(await removeCreator(ref))} />} />
-          <Route path="billing" element={<BillingView ws={ws} />} />
+          <Route path="billing" element={<BillingView ws={ws} onRefresh={onScanned} />} />
           <Route path="*" element={<ScanView ws={ws} onScanned={onScanned} savedRefs={savedRefs} onSave={onSave} campaignCta={campaignCta} />} />
         </Routes>
       </Main>
