@@ -134,7 +134,7 @@ function useNarrow(maxWidth = 560) {
 
 export default function ScanInput({ onSubmit, busy = false, large = false, chips = true, autoFocus = false,
   placeholder = 'Type a brand, e.g. Glow Recipe or @glowrecipe', shortPlaceholder = 'Type any brand…',
-  hint = 'Live TikTok data · free · no login' }) {
+  hint = 'Live TikTok data · free · no login', maxLength = 80, label = 'Brand to scan' }) {
   const [value, setValue] = useState('');
   const narrow = useNarrow();
   const inputRef = React.useRef(null);
@@ -159,9 +159,9 @@ export default function ScanInput({ onSubmit, busy = false, large = false, chips
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={narrow ? shortPlaceholder : placeholder}
-          aria-label="Brand to scan"
+          aria-label={label}
           autoFocus={autoFocus}
-          maxLength={80}
+          maxLength={maxLength}
         />
         <Row>
           <Hint><i /> {hint}</Hint>

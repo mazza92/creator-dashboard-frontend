@@ -26,8 +26,8 @@ export const startCheckout = () =>
 export const openPortal = () =>
   unwrap(api.post('/api/brand-workspace/billing/portal', {}, { timeout: 30000 }), 'portal_url');
 
-export const startInsight = (kind) =>
-  unwrap(api.post('/api/brand-workspace/insight', { kind }, { timeout: 60000 }), 'scan');
+export const startInsight = (kind, question) =>
+  unwrap(api.post('/api/brand-workspace/insight', { kind, question }, { timeout: 60000 }), 'scan');
 export const pollInsight = (runId, kind) =>
   unwrap(api.get(`/api/brand-workspace/insight/${runId}`, { params: { kind }, timeout: 60000 }), 'scan');
 

@@ -2,7 +2,9 @@
 // workspace (CRA). No framework imports: callers pass their own start/poll functions to useScanTurns.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { ArrowRight, Bookmark, BookmarkCheck, Check, Eye, Lock, Play, Sparkles, Users, TrendingUp } from 'lucide-react';
+import {
+  ArrowRight, Bookmark, BookmarkCheck, Check, Eye, Film, Lightbulb, Lock, MapPin, Play, Search, Sparkles, Star, Users, TrendingUp,
+} from 'lucide-react';
 import { trackBrandCtaClick } from '../_cluster/catalog';
 import { POLL_MS, POLL_TIMEOUT_MS, trackScan } from './scanApi';
 import { TYPE_LABEL, scan } from './theme';
@@ -695,12 +697,14 @@ function VideoCard({ v }) {
 }
 
 const STEPS = ['Searching TikTok for creator posts', 'Pulling the best videos', 'Grouping hooks and matching creators'];
+const DEEP_STEPS = ['Searching TikTok', 'Checking creators and their recent posts', 'Writing your answer'];
 
-export function Thinking({ step, line }) {
+export function Thinking({ step, line, deep, queries }) {
+  const steps = deep ? DEEP_STEPS : STEPS;
   return (
     <>
       <Steps>
-        {STEPS.map((label, i) => {
+        {steps.map((label, i) => {
           const n = i + 1;
           const cls = n < step ? 'done' : n === step ? 'now' : '';
           return (
@@ -710,6 +714,11 @@ export function Thinking({ step, line }) {
             </li>
           );
         })}
+        {(queries || []).length > 0 && (
+          <QueryChips>
+            {queries.map((q) => <span key={q}><Search size={11} /> {q}</span>)}
+          </QueryChips>
+        )}
       </Steps>
       <Skeleton $w="92%" />
       <Skeleton $w="78%" />
@@ -938,14 +947,15 @@ export function useScanTurns({ start, poll, onDone, source = 'scan_page' }) {
   const run = useCallback(async (input) => {
     const id = ++turnSeq;
     const brand = typeof input === 'string' ? input : (input.brand || input.label);
-    const label = typeof input === 'string' ? `Scan ${input}` : input.label;
+    const label = typeof input === 'string' ? `Scan ${input}` : (input.label || input.question);
     setTurns((all) => [...all, { id, brand, label, status: 'searching', step: 1, line: '' }]);
     trackScan('brand_scan_run', { brand, kind: typeof input === 'string' ? 'scan' : input.kind, ref: source });
     try {
       let result = await start(input);
       const began = Date.now();
       while (result.status === 'searching') {
-        update(id, { step: result.step || 1, line: result.line || '' });
+        update(id, { step: result.step || 1, line: result.line || '', deep: Boolean(result.deep),
+          queries: result.queries || undefined });
         if (Date.now() - began > POLL_TIMEOUT_MS) {
           throw new Error('This one is taking longer than usual. Try again in a minute.');
         }
@@ -972,15 +982,19 @@ export function useScanTurns({ start, poll, onDone, source = 'scan_page' }) {
 }
 
 /** One conversation turn: the ask bubble, then thinking / report / gate / error. */
-export function ScanTurn({ turn, cta, savedRefs, onSave, onScan }) {
+export function ScanTurn({ turn, cta, savedRefs, onSave, onScan, onAsk }) {
   const insight = turn.scan && turn.scan.insight;
+  const deep = insight && turn.scan.deep && (turn.scan.sections || []).length > 0;
   return (
     <Turn id={`turn-${turn.id}`}>
       <Ask><span>{turn.label || `Scan ${turn.brand}`}</span></Ask>
-      {turn.status === 'searching' && <Thinking step={turn.step} line={turn.line} />}
+      {turn.status === 'searching' && <Thinking step={turn.step} line={turn.line} deep={turn.deep} queries={turn.queries} />}
       {turn.status === 'error' && <ErrorBox>{turn.error}</ErrorBox>}
       {turn.status === 'gated' && <GateCard gate={turn.scan} cta={cta} />}
-      {turn.status === 'done' && (insight
+      {turn.status === 'done' && deep && (
+        <DeepAnswer report={turn.scan} cta={cta} savedRefs={savedRefs} onSave={onSave} onScan={onScan} onAsk={onAsk} />
+      )}
+      {turn.status === 'done' && !deep && (insight
         ? <InsightReport report={turn.scan} cta={cta} savedRefs={savedRefs} onSave={onSave} onScan={onScan} />
         : <Report turn={turn} cta={cta} savedRefs={savedRefs} onSave={onSave} />)}
     </Turn>
@@ -1147,6 +1161,330 @@ export function InsightReport({ report, cta, savedRefs, onSave, onScan }) {
             ))}
           </CreatorTable>
         </Block>
+      )}
+
+      {r.matches && <BridgeCard report={r} brand="the brands in your niche" cta={cta} savedRefs={savedRefs} onSave={onSave} />}
+    </Answer>
+  );
+}
+
+// ============================================================================
+// DEEP ANSWERS (planned searches + written answer)
+// ============================================================================
+
+const QueryChips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 2px 28px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: ${scan.inkSoft};
+    background: ${scan.bgSoft};
+    border: 1px solid ${scan.lineSoft};
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+`;
+
+const Sources = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 13px;
+  color: ${scan.muted};
+  margin: -4px 0 22px;
+
+  span { display: inline-flex; align-items: center; gap: 5px; }
+`;
+
+const Section = styled.section`
+  margin-bottom: 30px;
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 17px;
+    font-weight: 700 !important;
+    color: ${scan.ink};
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  > p { font-size: 14px; color: ${scan.muted}; margin: 0 0 14px; line-height: 1.55; }
+`;
+
+const Points = styled.ol`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+`;
+
+const Point = styled.li`
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  border: 1px solid ${scan.line};
+  border-radius: 16px;
+  padding: 14px 16px;
+
+  .n {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: ${scan.accentSoft};
+    color: ${scan.accent};
+    font-size: 13px;
+    font-weight: 700 !important;
+    display: grid;
+    place-items: center;
+  }
+
+  .t b { display: block; font-size: 15px; color: ${scan.ink}; font-weight: 650 !important; line-height: 1.4; }
+  .t p { font-size: 14px; color: ${scan.inkSoft}; line-height: 1.55; margin: 4px 0 0; }
+  .tag { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600 !important; color: ${scan.inkSoft};
+    background: ${scan.lineSoft}; border-radius: 999px; padding: 2px 9px; }
+
+  .thumbs { display: flex; gap: 6px; }
+
+  .thumbs a {
+    position: relative;
+    width: 54px;
+    height: 96px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(160deg, #2b2d33 0%, #111214 100%);
+  }
+
+  .thumbs img { width: 100%; height: 100%; object-fit: cover; }
+  .thumbs em { position: absolute; left: 4px; bottom: 3px; font-style: normal; font-size: 10px; font-weight: 700 !important;
+    color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 28px minmax(0, 1fr);
+
+    .thumbs { grid-column: 2; }
+  }
+`;
+
+const People = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+`;
+
+const Person = styled.div`
+  position: relative;
+  border: 1px solid ${scan.line};
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .top { display: flex; gap: 10px; align-items: center; min-width: 0; padding-right: 34px; }
+
+  .av {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 50%;
+    background: ${scan.accentSoft};
+    color: ${scan.accent};
+    display: grid;
+    place-items: center;
+    font-weight: 700 !important;
+  }
+
+  .top a { display: block; font-size: 15px; font-weight: 650 !important; color: ${scan.ink}; text-decoration: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top a:hover { text-decoration: underline; }
+  .top small { font-size: 12px; color: ${scan.muted}; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600 !important; color: ${scan.inkSoft};
+    background: ${scan.lineSoft}; border-radius: 999px; padding: 1px 7px; }
+  p { font-size: 14px; color: ${scan.inkSoft}; line-height: 1.5; margin: 0; }
+  .bio { font-size: 12px; color: ${scan.muted}; }
+
+  .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+
+  .thumbs a {
+    aspect-ratio: 9 / 14;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(160deg, #2b2d33 0%, #111214 100%);
+  }
+
+  .thumbs img { width: 100%; height: 100%; object-fit: cover; }
+
+  .save { position: absolute; top: 12px; right: 12px; }
+`;
+
+const Shortlist = styled.div`
+  border: 1px solid ${scan.accentRing};
+  background: ${scan.accentSoft};
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 28px;
+
+  h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; margin: 0 0 6px; color: ${scan.ink}; }
+  p { font-size: 14px; line-height: 1.6; color: ${scan.ink2}; margin: 0; }
+`;
+
+const Followups = styled.div`
+  display: grid;
+  gap: 8px;
+  margin-bottom: 30px;
+
+  h4 { font-size: 13px; color: ${scan.muted}; font-weight: 600 !important; margin: 0 0 2px; }
+
+  button {
+    text-align: left;
+    border: 1px solid ${scan.line};
+    background: #fff;
+    border-radius: 12px;
+    padding: 11px 14px;
+    font: inherit;
+    font-size: 14px;
+    color: ${scan.ink};
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+  }
+
+  button:hover { border-color: ${scan.ink}; }
+  button svg { flex: 0 0 auto; color: ${scan.muted}; }
+`;
+
+const SECTION_ICON = { hooks: Sparkles, formats: Film, creators: Users, brands: Star, takeaways: Lightbulb };
+
+function Thumbs({ videos }) {
+  if (!(videos || []).length) return null;
+  return (
+    <div className="thumbs">
+      {videos.map((v) => (
+        <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer" title={v.hook || ''}>
+          <Thumb src={v.thumb} alt="" post={v.url} />
+          {v.views_label && <em>{v.views_label}</em>}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function PersonCard({ item, savedRefs, onSave }) {
+  const c = item.creator || {};
+  const handle = c.handle || `@${item.handle}`;
+  const ref = handle.toLowerCase();
+  const saved = savedRefs && savedRefs.has(ref);
+  const card = { handle, preview_url: c.url, followers: c.followers_label, thumbnails: (c.examples || []).map((v) => v.thumb).filter(Boolean),
+    platform: 'tiktok', country: c.region || undefined };
+  const examples = (item.videos || []).length ? item.videos : c.examples || [];
+  return (
+    <Person>
+      {onSave && (
+        <SaveBtn className="save" type="button" $on={saved} aria-label={saved ? 'Remove from saved creators' : 'Save creator'}
+          onClick={() => onSave(card, !saved)}>
+          {saved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
+        </SaveBtn>
+      )}
+      <div className="top">
+        <span className="av">{handle.replace('@', '').slice(0, 1).toUpperCase()}</span>
+        <div style={{ minWidth: 0 }}>
+          <a href={c.url || `https://www.tiktok.com/${handle}`} target="_blank" rel="noopener noreferrer">{handle}</a>
+          <small>
+            {c.followers_label && <>{c.followers_label} followers</>}
+            {item.tag && <span className="tag"><MapPin size={10} /> {item.tag}</span>}
+          </small>
+        </div>
+      </div>
+      {item.text && <p>{item.text}</p>}
+      {c.bio && <p className="bio">{c.bio}</p>}
+      {examples.length > 0 && (
+        <div className="thumbs">
+          {examples.slice(0, 3).map((v) => (
+            <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer"><Thumb src={v.thumb} alt="" post={v.url} /></a>
+          ))}
+        </div>
+      )}
+    </Person>
+  );
+}
+
+export function DeepAnswer({ report, cta, savedRefs, onSave, onAsk }) {
+  const r = report;
+  const st = r.stats || {};
+  return (
+    <Answer>
+      <Summary><Md text={r.summary} /></Summary>
+      <Sources>
+        {st.searches ? <span><Search size={13} /> {st.searches} TikTok searches</span> : null}
+        {st.videos ? <span><Film size={13} /> {st.videos} posts read</span> : null}
+        {st.creators ? <span><Users size={13} /> {st.creators} creators</span> : null}
+      </Sources>
+
+      {r.sections.map((s) => {
+        const Icon = SECTION_ICON[s.kind] || Lightbulb;
+        const people = s.kind === 'creators' && s.items.every((it) => it.handle);
+        return (
+          <Section key={s.title}>
+            <h3><Icon size={17} /> {s.title}</h3>
+            {s.intro && <p>{s.intro}</p>}
+            {people ? (
+              <People>
+                {s.items.map((it) => <PersonCard key={it.handle} item={it} savedRefs={savedRefs} onSave={onSave} />)}
+              </People>
+            ) : (
+              <Points>
+                {s.items.map((it, i) => (
+                  <Point key={`${it.title}-${i}`}>
+                    <span className="n">{i + 1}</span>
+                    <div className="t">
+                      <b>{it.title}</b>
+                      {it.text && <p>{it.text}</p>}
+                      {it.tag && <span className="tag">{it.tag}</span>}
+                    </div>
+                    <Thumbs videos={it.videos} />
+                  </Point>
+                ))}
+              </Points>
+            )}
+          </Section>
+        );
+      })}
+
+      {r.shortlist && (
+        <Shortlist>
+          <h3><Star size={16} /> Where to start</h3>
+          <p><Md text={r.shortlist} /></p>
+        </Shortlist>
+      )}
+
+      {(r.top_videos || []).length > 0 && (
+        <Block>
+          <BlockTitle><TrendingUp size={16} /> Top videos <small>by views</small></BlockTitle>
+          <Strip>{r.top_videos.map((v) => <VideoCard key={v.id} v={v} />)}</Strip>
+        </Block>
+      )}
+
+      {onAsk && (r.followups || []).length > 0 && (
+        <Followups>
+          <h4>Ask next</h4>
+          {r.followups.map((f) => (
+            <button key={f.prompt} type="button" onClick={() => onAsk(f.prompt, f.label)}>
+              <span>{f.label || f.prompt}</span><ArrowRight size={15} />
+            </button>
+          ))}
+        </Followups>
       )}
 
       {r.matches && <BridgeCard report={r} brand="the brands in your niche" cta={cta} savedRefs={savedRefs} onSave={onSave} />}
