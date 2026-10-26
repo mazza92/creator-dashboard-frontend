@@ -29,6 +29,7 @@ const STATIC_PAGES = [
   { url: '/directory/uk',              priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/directory/canada',          priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/brands/pr-packages',        priority: 0.9, changeFrequency: 'weekly'  },
+  { url: '/brands/scan',               priority: 0.9, changeFrequency: 'weekly'  },
   { url: '/brands/ugc-creators',       priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/brands/product-seeding',    priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/brands/ugc-for-ads',        priority: 0.8, changeFrequency: 'weekly'  },
