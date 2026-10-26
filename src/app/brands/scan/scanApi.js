@@ -38,13 +38,6 @@ export function pollScan(scanId) {
   return call(`/api/public/brand-scan/${scanId}`);
 }
 
-export function unlockScan({ brand, email, website, ref }) {
-  return call('/api/public/brand-scan/unlock', {
-    method: 'POST',
-    body: JSON.stringify({ brand, email, website, ref }),
-  });
-}
-
 export function trackScan(event, params = {}) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
   window.gtag('event', event, { event_category: 'brand_acquisition', ...params });
