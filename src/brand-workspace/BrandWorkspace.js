@@ -26,6 +26,14 @@ const startAny = (input) => (typeof input === 'string' ? startScan(input) : star
 
 // "Glow Recipe" is a brand to scan; "which skincare creators film routines in Texas?" is a question.
 const QUESTION_START = /^(who|what|which|where|when|why|how|find|show|give|list|compare|analy[sz]e|rate|are|is|do|does|can|should|best|top)\b/i;
+// History keys: "insight:ask:<niche>:<hash>", "insight:<kind>:<niche>", or a scanned brand key.
+function historyInput(key, name) {
+  const parts = String(key || '').split(':');
+  if (parts[0] !== 'insight') return name;
+  if (parts[1] === 'ask') return { kind: 'ask', question: name, label: name };
+  return { kind: parts[1], label: name };
+}
+
 export function isQuestion(text) {
   const t = String(text || '').trim();
   return t.includes('?') || QUESTION_START.test(t) || t.split(/\s+/).length >= 5;
@@ -558,8 +566,10 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
       reset();
       navigate('/brand/workspace', { replace: true });
     } else if (b && handled.current !== `b:${b}:${params.get('t') || ''}`) {
+      // A recent scan or question opens as its own chat, not appended to the current one.
       handled.current = `b:${b}:${params.get('t') || ''}`;
-      run(b);
+      reset();
+      run(historyInput(params.get('h') || '', b));
       navigate('/brand/workspace', { replace: true });
     } else if (welcome && ws.free_scan && handled.current !== 'welcome') {
       // Their landing-page scan, now with the full creators list (served from cache, not re-charged).
@@ -664,6 +674,7 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
 
 const STATUS = {
   in_review: { label: 'In review', tone: '#d97706', bg: '#fff8eb' },
+  live: { label: 'Live · roster opening', tone: '#0f9d58', bg: '#e8f7ed' },
   active: { label: 'Live · picking creators', tone: '#0f9d58', bg: '#e8f7ed' },
   locked: { label: 'Creators locked · shipping', tone: '#2563eb', bg: '#eff4ff' },
   shipped: { label: 'Shipped', tone: '#7c3aed', bg: '#f4effe' },
@@ -1047,7 +1058,10 @@ export default function BrandWorkspace() {
           {history.length === 0 && <p>No scans yet</p>}
           {history.map((h) => (
             <button key={h.key} type="button" title={h.name}
-              onClick={() => navigate(`/brand/workspace?b=${encodeURIComponent(h.name)}&t=${Date.now()}`)}>
+              onClick={() => {
+                setOpen(false);
+                navigate(`/brand/workspace?b=${encodeURIComponent(h.name)}&h=${encodeURIComponent(h.key || '')}&t=${Date.now()}`);
+              }}>
               {h.name}
             </button>
           ))}

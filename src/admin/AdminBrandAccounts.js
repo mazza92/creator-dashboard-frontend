@@ -48,7 +48,8 @@ export default function AdminBrandAccounts() {
           { headers: adminHeaders() });
         message.success(data?.roster_url ? 'Approved and campaign live. Roster created.' : 'Approved and campaign published.');
       } else {
-        message.success(action === 'approve' ? 'Approved. Welcome email sent.' : 'Rejected.');
+        message.success({ approve: 'Approved. Welcome email sent.', reject: 'Rejected.', pro: 'Now on Pro (comp).',
+          free: 'Back on the free plan.' }[action]);
       }
       load();
     } catch (err) {
@@ -81,11 +82,13 @@ export default function AdminBrandAccounts() {
                 {!a.profile_completed_at && <Tag color="orange">brand details missing</Tag>}
                 {a.signup_method && <Tag>{a.signup_method === 'google' ? 'Google' : 'Email'}</Tag>}
                 {a.signup_source && <Tag>{a.signup_source}</Tag>}
+                <Tag color={a.plan === 'pro' ? 'magenta' : undefined}>{a.plan === 'pro' ? 'Pro' : 'Free plan'}</Tag>
               </div>
               <dl>
                 <dt>Contact</dt>
                 <dd>
                   {[a.first_name, a.last_name].filter(Boolean).join(' ') || '—'} · <a href={`mailto:${a.email}`}>{a.email}</a>
+                  {a.user_id && <> · user {a.user_id}</>}
                   {a.workspace_created_at && <> · signed up {when(a.workspace_created_at)}</>}
                   {a.last_login && <> · last seen {when(a.last_login)}</>}
                 </dd>
@@ -133,6 +136,16 @@ export default function AdminBrandAccounts() {
               )}
               {a.approval_status === 'approved' && canPublish && (
                 <Button onClick={() => decide(a.id, 'approve', { send_email: false }, a.opportunity_id)}>Publish campaign</Button>
+              )}
+              {a.plan === 'pro' ? (
+                <Popconfirm title={`Move ${a.name} back to the free plan?`} onConfirm={() => decide(a.id, 'free')}>
+                  <Button>Back to free</Button>
+                </Popconfirm>
+              ) : (
+                <Popconfirm title={`Give ${a.name} Pro for free?`} description="No Stripe charge. Unlimited scans and campaigns."
+                  onConfirm={() => decide(a.id, 'pro')}>
+                  <Button>Give Pro</Button>
+                </Popconfirm>
               )}
               {a.approval_status !== 'rejected' && (
                 <Button danger icon={<CloseOutlined />} onClick={() => { setRejecting(a); setReason(''); }}>Reject</Button>
