@@ -3,31 +3,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styled, { keyframes } from 'styled-components';
-import { ArrowRight, Check, Eye, Lock, Play, Sparkles, Users, TrendingUp } from 'lucide-react';
+import { ArrowRight, Check, Eye, Play, Sparkles, Users, TrendingUp } from 'lucide-react';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
 import { trackBrandCtaClick } from '../_cluster/catalog';
 import ScanInput from './ScanInput';
-import { POLL_MS, POLL_TIMEOUT_MS, pollScan, startScan, trackScan, unlockScan } from './scanApi';
+import { POLL_MS, POLL_TIMEOUT_MS, pollScan, startScan, trackScan } from './scanApi';
 import { TYPE_LABEL, scan } from './theme';
 
 const PAGE_URL = 'https://newcollab.co/brands/scan';
-const EMAIL_KEY = 'nc_brand_scan_email';
-
-function savedEmail() {
-  try {
-    return window.localStorage.getItem(EMAIL_KEY) || '';
-  } catch (e) {
-    return '';
-  }
-}
-
-function rememberEmail(email) {
-  try {
-    window.localStorage.setItem(EMAIL_KEY, email);
-  } catch (e) {
-    // private mode: the user just types it again next time
-  }
-}
 
 // ============================================================================
 // LAYOUT
@@ -656,100 +639,6 @@ const Fine = styled.div`
   }
 `;
 
-const Gate = styled.form`
-  position: relative;
-  border: 1px solid ${scan.line};
-  border-radius: 18px;
-  padding: 22px;
-  margin-bottom: 28px;
-  overflow: hidden;
-
-  .fade {
-    margin: -6px 0 16px;
-    filter: blur(5px);
-    opacity: 0.5;
-    pointer-events: none;
-    user-select: none;
-  }
-
-  h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    font-weight: 650 !important;
-    color: ${scan.ink};
-    margin-bottom: 4px;
-  }
-
-  p {
-    font-size: 14px;
-    color: ${scan.muted};
-    margin-bottom: 14px;
-  }
-
-  .row {
-    display: flex;
-    gap: 8px;
-  }
-
-  input {
-    flex: 1;
-    min-width: 0;
-    border: 1px solid ${scan.line};
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 15px;
-    outline: 0;
-  }
-
-  input:focus {
-    border-color: ${scan.accent};
-    box-shadow: 0 0 0 4px ${scan.accentRing};
-  }
-
-  button {
-    border: 0;
-    border-radius: 12px;
-    padding: 0 18px;
-    background: ${scan.ink};
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600 !important;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  button:disabled {
-    opacity: 0.5;
-  }
-
-  .err {
-    font-size: 13px;
-    color: ${scan.accent};
-    margin: 8px 0 0;
-  }
-
-  @media (max-width: 520px) {
-    .row {
-      flex-direction: column;
-    }
-
-    button {
-      padding: 12px;
-    }
-  }
-`;
-
-const Sent = styled.p`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: ${scan.green};
-  margin: -12px 0 18px;
-`;
-
 const ErrorBox = styled.div`
   border: 1px solid #fbd5de;
   background: ${scan.accentSoft};
@@ -870,48 +759,7 @@ function BridgeCard({ report, brand }) {
   );
 }
 
-function UnlockGate({ report, onUnlock }) {
-  const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const u = report.unlock || {};
-  if (!report.locked || (!u.videos && !u.hooks && !u.creators)) return null;
-  const more = (n, word) => (n ? `${n} more ${word}${n === 1 ? '' : 's'}` : null);
-  const extra = [more(u.creators, 'creator'), more(u.videos, 'video'), more(u.hooks, 'hook')]
-    .filter(Boolean).join(', ');
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError('');
-    try {
-      await onUnlock(email.trim());
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Gate onSubmit={submit}>
-      <div className="fade" aria-hidden="true">
-        <Skeleton $w="70%" />
-        <Skeleton $w="85%" />
-        <Skeleton $w="60%" />
-      </div>
-      <h3><Lock size={16} /> See the full report</h3>
-      <p>{extra}. Free, sent to your inbox too.</p>
-      <div className="row">
-        <input type="email" required placeholder="you@brand.com" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Work email" />
-        <button type="submit" disabled={busy || !email.trim()}>{busy ? 'Unlocking…' : 'Unlock full report'}</button>
-      </div>
-      {error && <p className="err">{error}</p>}
-    </Gate>
-  );
-}
-
-function Report({ turn, onUnlock }) {
+function Report({ turn }) {
   const r = turn.scan;
   const st = r.stats || {};
   const name = (r.brand && r.brand.name) || turn.brand;
@@ -977,11 +825,6 @@ function Report({ turn, onUnlock }) {
       )}
 
       <BridgeCard report={r} brand={name} />
-      <UnlockGate report={r} onUnlock={onUnlock} />
-
-      {turn.sentTo && (
-        <Sent><Check size={14} /> Full report sent to {turn.sentTo}</Sent>
-      )}
     </Answer>
   );
 }
@@ -1003,21 +846,10 @@ export default function BrandScanClient() {
     setTurns((all) => all.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }, []);
 
-  const unlock = useCallback(async (id, brand, email) => {
-    const full = await unlockScan({ brand, email, ref: ref.current });
-    rememberEmail(email);
-    trackScan('brand_scan_unlock', { brand });
-    update(id, { scan: full, sentTo: email });
-  }, [update]);
-
   const finish = useCallback((id, brand, result) => {
     update(id, { status: 'done', scan: result });
     trackScan('brand_scan_ready', { brand, status: result.status, videos: (result.stats || {}).videos || 0 });
-    const email = savedEmail();
-    if (email && result.locked) {
-      unlock(id, brand, email).catch(() => {});
-    }
-  }, [unlock, update]);
+  }, [update]);
 
   const run = useCallback(async (brand) => {
     const id = ++turnSeq;
@@ -1080,10 +912,7 @@ export default function BrandScanClient() {
                 {t.status === 'searching' && <Thinking step={t.step} line={t.line} />}
                 {t.status === 'error' && <ErrorBox>{t.error}</ErrorBox>}
                 {t.status === 'done' && (
-                  <Report
-                    turn={t}
-                    onUnlock={(email) => unlock(t.id, t.brand, email)}
-                  />
+                  <Report turn={t} />
                 )}
               </Turn>
             ))
