@@ -121,7 +121,8 @@ export default function AdminBrandAccounts() {
             <div className="actions">
               {a.approval_status !== 'approved' && canPublish && (
                 <Popconfirm title={`Approve ${a.name} and publish their campaign?`}
-                  description="Creates their roster and emails them." onConfirm={() => decide(a.id, 'approve', {}, a.opportunity_id)}>
+                  description="Creates their roster and sends one email: campaign live, with their workspace link."
+                  onConfirm={() => decide(a.id, 'approve', { send_email: false }, a.opportunity_id)}>
                   <Button type="primary" icon={<CheckOutlined />}>Approve & publish campaign</Button>
                 </Popconfirm>
               )}
