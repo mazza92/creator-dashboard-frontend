@@ -313,7 +313,8 @@ const PreviewCard = styled.div`
     color: ${colors.muted2};
   }
 
-  .ask span {
+  .ask span, .ask a {
+    text-decoration: none;
     background: ${colors.bgSoft};
     border-radius: 16px 16px 4px 16px;
     padding: 8px 14px;
@@ -359,14 +360,29 @@ const PreviewCard = styled.div`
     margin-bottom: 14px;
   }
 
-  .vids div {
+  .vids div, .vids a {
+    display: block;
     aspect-ratio: 9 / 16;
     border-radius: 10px;
     background: linear-gradient(160deg, #3a3d45 0%, #15161a 100%);
     position: relative;
+    overflow: hidden;
   }
 
-  .vids div::after {
+  .vids img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .vids a::before {
+    content: '';
+    position: absolute;
+    inset: 55% 0 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%);
+  }
+
+  .vids div::after, .vids a::after {
     content: attr(data-views);
     position: absolute;
     left: 6px;
@@ -1130,7 +1146,54 @@ const ArrowIcon = () => (
 // ============================================================================
 // COMPONENT
 // ============================================================================
-export default function PRPackagesClient() {
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDate = (iso) => {
+  const [, m, d] = String(iso || '').split('-').map(Number);
+  return m && d ? `${MONTHS[m - 1]} ${d}` : '';
+};
+
+function ScanExample({ ex, onOpen }) {
+  if (!ex) {
+    return (
+      <PreviewCard aria-label="Brand Scan">
+        <div className="ask"><small className="ex">Brand Scan</small><span>Scan any brand</span></div>
+        <p>Type a brand and see the creators posting about it, the hooks they reuse and the videos getting the views, from live TikTok data.</p>
+        <div className="vids">{[0, 1, 2, 3].map((i) => <div key={i} />)}</div>
+      </PreviewCard>
+    );
+  }
+  const s = ex.stats;
+  const h = ex.hook;
+  return (
+    <PreviewCard aria-label={`Example Brand Scan: ${ex.brand.name}`}>
+      <div className="ask">
+        <small className="ex">Real example{shortDate(ex.as_of) ? ` · updated ${shortDate(ex.as_of)}` : ''}</small>
+        <a href={scanUrl(ex.brand.name, 'landing_example')} onClick={onOpen}>Scan {ex.brand.name}</a>
+      </div>
+      <p>
+        <b>{ex.brand.name}</b> has <b>{s.creators} creators</b> posting about it on TikTok in the {ex.window}, across{' '}
+        <b>{s.videos} videos</b> and <b>{s.views_label} views</b>.
+        {s.small_creators ? ' Most are small creators.' : ''} The top hook ran on <b>{h.videos} videos</b>.
+      </p>
+      <div className="chips">
+        <span><b>{s.creators}</b>creators</span>
+        <span><b>{s.videos}</b>videos</span>
+        <span><b>{s.median_followers_label}</b>median followers</span>
+      </div>
+      <div className="vids">
+        {ex.videos.map((v) => (
+          <a key={v.url} href={v.url} target="_blank" rel="noopener noreferrer" data-views={v.views_label}
+            aria-label={`${v.creator} video, ${v.views_label} views`}>
+            {v.thumb && <img src={v.thumb} alt="" loading="lazy" referrerPolicy="no-referrer" />}
+          </a>
+        ))}
+      </div>
+      <div className="hook">“{h.text}…”<small>{h.videos} videos · {h.creators} creators</small></div>
+    </PreviewCard>
+  );
+}
+
+export default function PRPackagesClient({ scanExample = null }) {
   const signupUrl = SIGNUP_URL;
   const onCta = (location) => () => trackBrandCtaClick('pr-packages', location);
   // Full navigation: a client-side push from this page left the URL changed but the page stuck rendering.
@@ -1212,22 +1275,7 @@ export default function PRPackagesClient() {
               <div><strong><TrendingUp size={17} /> Videos that win</strong><span>Top posts by views, with the creator and the hook behind each one.</span></div>
               <div><strong>→ Creators ready for you</strong><span>Vetted Newcollab creators who fit the same profile and are open to gifting your brand.</span></div>
             </PreviewPoints>
-            <PreviewCard aria-label="Example Brand Scan result">
-              <div className="ask"><small className="ex">Example report</small><span>Scan Dewy Labs</span></div>
-              <p><b>Dewy Labs</b> has <b>41 creators</b> posting about it on TikTok in the last 6 months, across <b>63 videos</b>. Most are small creators and the top hook ran on <b>9 videos</b>.</p>
-              <div className="chips">
-                <span><b>41</b>creators</span>
-                <span><b>63</b>videos</span>
-                <span><b>8.2K</b>median followers</span>
-              </div>
-              <div className="vids">
-                <div data-views="444K" />
-                <div data-views="356K" />
-                <div data-views="142K" />
-                <div data-views="36K" />
-              </div>
-              <div className="hook">“when i say my skin is basically clear but i…”<small>9 videos · 7 creators</small></div>
-            </PreviewCard>
+            <ScanExample ex={scanExample} onOpen={onCta('scan_example')} />
           </PreviewGrid>
           <CTARow style={{ marginTop: 28 }}>
             <BtnPrimary href="/brands/scan" onClick={onCta('scan_section')}>

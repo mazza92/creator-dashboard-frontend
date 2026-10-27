@@ -37,6 +37,20 @@ export const metadata = {
   },
 };
 
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co').replace(/\/+$/, '');
+
+// A real Brand Scan for the example card, refreshed every 6 hours. null keeps the card number-free.
+async function getScanExample() {
+  try {
+    const res = await fetch(`${API_BASE}/api/public/brand-scan/example`, { next: { revalidate: 21600 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.success ? data.example : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function JsonLd({ data }) {
   return (
     <script
@@ -46,7 +60,8 @@ function JsonLd({ data }) {
   );
 }
 
-export default function PRPackagesPage() {
+export default async function PRPackagesPage() {
+  const scanExample = await getScanExample();
   return (
     <>
       <JsonLd data={buildWebPageSchema()} />
@@ -54,7 +69,7 @@ export default function PRPackagesPage() {
       <JsonLd data={buildServiceSchema()} />
       <JsonLd data={buildHowToSchema()} />
       <JsonLd data={buildBreadcrumbSchema()} />
-      <PRPackagesClient />
+      <PRPackagesClient scanExample={scanExample} />
     </>
   );
 }
