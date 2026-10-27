@@ -330,6 +330,7 @@ const AccountSettings = () => {
   }
 
   const tier = subscriptionInfo?.tier || 'free';
+  const pausedNow = subscriptionInfo?.pause?.state === 'active';
   const status = subscriptionInfo?.status || 'inactive';
 
   return (
@@ -352,18 +353,18 @@ const AccountSettings = () => {
           transition={{ duration: 0.3 }}
         >
           <PlanHeader>
-            <PlanBadge tier={tier}>
+            <PlanBadge tier={pausedNow ? 'pro' : tier}>
               <FiZap />
-              <span>{getPlanName(tier)}</span>
+              <span>{pausedNow ? 'Pro · paused' : getPlanName(tier)}</span>
             </PlanBadge>
             <PlanPrice>
-              {getPlanPrice(tier)}
-              <PlanPeriod>/month</PlanPeriod>
+              {pausedNow ? '$0' : getPlanPrice(tier)}
+              <PlanPeriod>{pausedNow ? ' this month' : '/month'}</PlanPeriod>
             </PlanPrice>
           </PlanHeader>
 
           <PlanFeatures>
-            {tier === 'free' && (
+            {tier === 'free' && !pausedNow && (
               <>
                 <Feature>
                   <FiCheck /> Unlimited brand saves
@@ -472,12 +473,16 @@ const AccountSettings = () => {
               )}
 
               <HelpText>
-                Update your card or view invoices. Canceling asks why first — we can assign a talent manager or drop you to $12/month for 3 months.
+                Update your card or view invoices. Canceling shows what Polly did for you first, and you can pause for a month instead.
               </HelpText>
             </>
           )}
 
-          {tier === 'free' && (
+          {subscriptionInfo?.pause && (
+            <PauseNotice pause={subscriptionInfo.pause} onResumed={fetchSubscriptionStatus} />
+          )}
+
+          {tier === 'free' && !subscriptionInfo?.pause && (
             <>
               <Divider />
               <UpgradeButton
@@ -1287,5 +1292,39 @@ function PitchFactsSection() {
       </SectionHeader>
       <PitchFactsCard facts={facts} onSaved={setFacts} compact />
     </Section>
+  );
+}
+
+
+const fmtDay = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+function PauseNotice({ pause, onResumed }) {
+  const [busy, setBusy] = useState(false);
+  const active = pause.state === 'active';
+  const resume = async () => {
+    setBusy(true);
+    try {
+      const res = await api.post('/api/subscription/pause/resume', {});
+      message.success(res.data?.message || 'Pro is back on');
+      onResumed?.();
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Could not resume Pro');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <Divider />
+      <HelpText>
+        {active
+          ? `Pro is paused until ${fmtDay(pause.resumes_at)}. No charge until then, and Polly isn't sending. Billing and Autopilot restart on ${fmtDay(pause.resumes_at)}.`
+          : `Pro pauses on ${fmtDay(pause.starts_at)} and comes back on ${fmtDay(pause.resumes_at)}. No charge in between.`}
+      </HelpText>
+      <ManageButton onClick={resume} disabled={busy} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        {busy ? 'Resuming…' : active ? 'Resume Pro now' : 'Cancel the pause'}
+      </ManageButton>
+      {active && <HelpText>Resuming now starts a new paid month today.</HelpText>}
+    </>
   );
 }

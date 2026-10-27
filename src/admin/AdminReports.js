@@ -249,6 +249,7 @@ const AdminReports = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [polly, setPolly] = useState(null);
+  const [churn, setChurn] = useState(null);
   const [nudgeSent, setNudgeSent] = useState({});
   const [trafficRefreshing, setTrafficRefreshing] = useState(false);
   const [lastFetched, setLastFetched] = useState(null);
@@ -287,12 +288,14 @@ const AdminReports = () => {
       params.append('period', selectedPeriod);
       const url = `/api/admin/reports/founder-dashboard?${params.toString()}`;
       const pollyUrl = `/api/admin/reports/polly?period=${selectedPeriod}`;
-      const [{ data: dashboardData }, pollyRes] = await Promise.all([
+      const [{ data: dashboardData }, pollyRes, churnRes] = await Promise.all([
         api.get(url, getApiConfig()),
         api.get(pollyUrl, getApiConfig()).catch(() => ({ data: null })),
+        api.get('/api/subscription/admin/retention-report?days=90', getApiConfig()).catch(() => ({ data: null })),
       ]);
       setData(dashboardData);
       setPolly(pollyRes?.data || null);
+      setChurn(churnRes?.data?.success ? churnRes.data : null);
       setLastFetched(new Date());
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -589,6 +592,36 @@ const AdminReports = () => {
             </Milestone>
           </MilestoneRow>
         </GoalCard>
+
+        {churn && (
+          <>
+            <SectionLabel>Pro cancels, last {churn.days} days</SectionLabel>
+            <TrafficGrid>
+              <HealthCard>
+                <HcLabel>Never sent</HcLabel>
+                <HcValue>{churn.cancels.never_sent}</HcValue>
+                <HcRate>No Gmail, or no pitch went out in their last 30 days</HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Sent, no replies</HcLabel>
+                <HcValue>{churn.cancels.sent_no_replies}</HcValue>
+                <HcRate>Polly delivered, brands didn&apos;t answer</HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Had replies</HcLabel>
+                <HcValue>{churn.cancels.had_replies}</HcValue>
+                <HcRate>{churn.cancels.unknown ? `${churn.cancels.unknown} older cancels have no numbers` : 'Left after brands replied'}</HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Saved</HcLabel>
+                <HcValue $color="green">{Object.values(churn.saves || {}).reduce((a, b) => a + b, 0)}</HcValue>
+                <HcRate>
+                  {Object.entries(churn.saves || {}).map(([k, v]) => `${v} ${k.replace(/_/g, ' ')}`).join(' · ') || 'None yet'}
+                </HcRate>
+              </HealthCard>
+            </TrafficGrid>
+          </>
+        )}
 
         {trials && (
           <>

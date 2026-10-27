@@ -9,7 +9,7 @@ const REASONS = [
   {
     id: 'no_replies',
     label: 'Brands have not replied',
-    hint: 'You applied and heard nothing back',
+    hint: 'Pitches went out, no replies yet',
   },
   {
     id: 'too_expensive',
@@ -19,7 +19,7 @@ const REASONS = [
   {
     id: 'unused',
     label: 'I am not using it',
-    hint: 'Pro is on but you are not applying',
+    hint: 'You rarely open Newcollab',
   },
   {
     id: 'other',
@@ -28,16 +28,32 @@ const REASONS = [
   },
 ];
 
+// Save offers, built server-side from the creator's own 30-day numbers. None of them is a credit or free days.
+const OFFERS = {
+  connect_gmail: { label: 'Connect Gmail now', note: 'One tap. Your first pitches go out within the hour.' },
+  outreach_review: { label: 'Have a person review my outreach', note: 'Your kit, pitch facts and brand list, this week.' },
+  price_hold: { label: 'Switch me to $12 / month', note: 'The next 3 invoices are $12, then $19.' },
+  autopilot_on: { label: 'Turn Autopilot on', note: 'Polly sends every weekday from your Gmail.' },
+  pause: { label: 'Pause for a month instead', note: 'Starts when this period ends. No charge, and Polly stops, until it comes back.' },
+};
+
+const STATS = [
+  ['pitches_sent_30d', 'pitches sent'],
+  ['followups_30d', 'follow-ups'],
+  ['kit_opens_30d', 'kit opens'],
+  ['replies_30d', 'replies'],
+];
+
 const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
   const [step, setStep] = useState('reason');
   const [reason, setReason] = useState(null);
-  const [offer, setOffer] = useState(null);
+  const [screen, setScreen] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const resetAndClose = () => {
     setStep('reason');
     setReason(null);
-    setOffer(null);
+    setScreen(null);
     onClose();
   };
 
@@ -46,8 +62,8 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
     try {
       const res = await api.post('/api/subscription/cancel-flow/reason', { reason: id });
       setReason(id);
-      setOffer(res.data?.offer || null);
-      setStep(res.data?.offer ? 'offer' : 'confirm');
+      setScreen(res.data || null);
+      setStep(res.data?.headline ? 'offer' : 'confirm');
     } catch (error) {
       message.error(error.response?.data?.error || 'Could not start cancel flow');
     } finally {
@@ -55,10 +71,14 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
     }
   };
 
-  const acceptOffer = async () => {
+  const acceptOffer = async (offer) => {
     setBusy(true);
     try {
       const res = await api.post('/api/subscription/cancel-flow/accept', { reason, offer });
+      if (res.data?.redirect) {
+        window.location.href = res.data.redirect;
+        return;
+      }
       message.success(res.data?.message || 'You are staying on Pro');
       onChanged?.();
       resetAndClose();
@@ -130,35 +150,34 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
             </>
           )}
 
-          {step === 'offer' && offer === 'talent_manager' && (
+          {step === 'offer' && screen && (
             <>
-              <Eyebrow>Stay on Pro</Eyebrow>
-              <Title>A person reviews your outreach this week</Title>
-              <Body>
-                Brands usually take 2 to 4 weeks to reply. If you stay, someone on our team checks
-                your kit, your pitch facts and the brands Polly pitches, so they&apos;re brands that gift
-                creators your size. Polly keeps pitching every weekday in the meantime.
-              </Body>
-              <Primary type="button" disabled={busy} onClick={acceptOffer}>
-                {busy ? 'Booking…' : 'Yes, review my outreach'}
-              </Primary>
-              <Ghost type="button" disabled={busy} onClick={() => setStep('confirm')}>
-                No thanks, cancel anyway
-              </Ghost>
-            </>
-          )}
-
-          {step === 'offer' && offer === 'price_hold' && (
-            <>
-              <Eyebrow>Stay on Pro</Eyebrow>
-              <Title>$12 a month for the next 3 months</Title>
-              <Body>
-                Keep Polly pitching 3 brands for you every weekday from your Gmail, with follow-ups. The next
-                three invoices are $12 instead of $19, then it returns to $19.
-              </Body>
-              <Primary type="button" disabled={busy} onClick={acceptOffer}>
-                {busy ? 'Updating…' : 'Switch me to $12 / month'}
-              </Primary>
+              <Eyebrow>Your last 30 days on Pro</Eyebrow>
+              <Title>{screen.headline}</Title>
+              {screen.context ? (
+                <Stats>
+                  {STATS.map(([key, label]) => (
+                    <div key={key}>
+                      <b>{screen.context[key] ?? 0}</b>
+                      <span>{label}</span>
+                    </div>
+                  ))}
+                </Stats>
+              ) : null}
+              <Body>{screen.body}</Body>
+              {(screen.offers || []).map((id, i) => {
+                const item = OFFERS[id];
+                if (!item) return null;
+                const Btn = i === 0 ? Primary : Secondary;
+                return (
+                  <OfferWrap key={id}>
+                    <Btn type="button" disabled={busy} onClick={() => acceptOffer(id)}>
+                      {busy ? 'One moment…' : item.label}
+                    </Btn>
+                    <OfferNote>{item.note}</OfferNote>
+                  </OfferWrap>
+                );
+              })}
               <Ghost type="button" disabled={busy} onClick={() => setStep('confirm')}>
                 No thanks, cancel anyway
               </Ghost>
@@ -307,6 +326,40 @@ const Primary = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
   }
+`;
+
+const Secondary = styled(Primary)`
+  background: #fff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+`;
+
+const OfferWrap = styled.div`
+  margin-bottom: 10px;
+  button { margin-bottom: 4px; }
+`;
+
+const OfferNote = styled.div`
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+`;
+
+const Stats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 4px 0 14px;
+
+  div {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  b { display: block; font-size: 20px; color: #111827; }
+  span { font-size: 11px; color: #6b7280; }
 `;
 
 const Danger = styled(Primary)`
