@@ -714,8 +714,10 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         <div>
           <div className="t">I send every weekday and follow up</div>
           <div className="d">
-            About {state?.per_day || perWeekday(target)} a day from your own Gmail, so brands see you, not a
+            {state?.per_day || perWeekday(target)} a day from your own Gmail, so brands see you, not a
             platform. Follow-ups on day 4 and day 10.
+            {state?.sending_per_day && state.per_day && state.sending_per_day < state.per_day
+              ? ` Your Gmail is new, so I start at ${state.sending_per_day} a day for the first 3 days.` : ''}
           </div>
         </div>
       </li>
