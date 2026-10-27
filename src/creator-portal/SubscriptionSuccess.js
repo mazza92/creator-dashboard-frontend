@@ -87,15 +87,15 @@ const SubscriptionSuccess = () => {
         <Title>Welcome to Pro! 🎉</Title>
 
         <Message>
-          Pro is on. One last step: connect Gmail and Polly starts pitching brands for you.
+          Pro is on. Connect Gmail and your first pitches go out within the hour.
         </Message>
 
         {!loading && subscriptionInfo && (
           <Features>
-            <Feature>✅ Polly picks matched brands every week</Feature>
-            <Feature>✅ She writes and sends the pitches from your Gmail, with nothing to approve</Feature>
-            <Feature>✅ She follows up on day 4 and 10 and keeps you posted</Feature>
-            <Feature>✅ When a brand says yes, she writes the reply with your rate</Feature>
+            <Feature>✅ Every weekday Polly picks 3 brands that fit you</Feature>
+            <Feature>✅ She writes and sends each pitch from your Gmail, with nothing to approve</Feature>
+            <Feature>✅ She follows up on day 4 and day 10 and shows you who opened your kit</Feature>
+            <Feature>✅ When a brand replies, she writes your answer with your rate</Feature>
             <Feature>✅ Unlimited roster applications</Feature>
           </Features>
         )}
@@ -114,10 +114,11 @@ const SubscriptionSuccess = () => {
           <LaterLink type="button" onClick={openPolly}>
             I&apos;ll do it later
           </LaterLink>
+          <Reassure>Nothing can be sent until Gmail is connected.</Reassure>
         </ButtonGroup>
 
         <Footer>
-          Keep Pro through the first month. That is when most first replies land.
+          Brands usually take 2 to 4 weeks to reply, so give Polly a few weeks of daily pitches.
         </Footer>
       </SuccessCard>
     </Container>
