@@ -87,7 +87,7 @@ function plural(n, word, many) {
   return `${n} ${n === 1 ? word : (many || `${word}s`)}`;
 }
 
-/** Pro's week as a checklist. The latest board in the thread refreshes itself from the server. */
+/** Pro's weekly report checklist (last week's numbers are in the message above). The latest one refreshes from the server. */
 export default function MondayBoard({ board: initial, live, busy, onChip }) {
   const [board, setBoard] = useState(initial);
 
@@ -112,7 +112,7 @@ export default function MondayBoard({ board: initial, live, busy, onChip }) {
   return (
     <Card>
       <Head>
-        <span className="kicker">Monday board · week of {board.week_label}</span>
+        <span className="kicker">For you this week · {board.week_label}</span>
         <span className="count">{done} of {tasks.length} done</span>
       </Head>
       <Track><div style={{ width: `${Math.round((100 * done) / tasks.length)}%` }} /></Track>
@@ -138,9 +138,9 @@ export default function MondayBoard({ board: initial, live, busy, onChip }) {
         </Row>
       ))}
       <Foot>
-        This week: {plural(stats.pitched || 0, 'brand')} pitched · {plural(stats.kit_views || 0, 'kit view')} ·{' '}
+        This week so far: {plural(stats.pitched || 0, 'pitch', 'pitches')} sent ·{' '}
+        {plural(stats.followups || 0, 'follow-up')} · {plural(stats.kit_views || 0, 'kit open')} ·{' '}
         {plural(stats.replies || 0, 'reply', 'replies')}
-        {stats.month_target ? <> · {stats.month_sent || 0}/{stats.month_target} this month</> : null}
       </Foot>
     </Card>
   );
