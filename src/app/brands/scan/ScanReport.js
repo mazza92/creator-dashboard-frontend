@@ -1342,6 +1342,22 @@ const Followups = styled.div`
   button svg { flex: 0 0 auto; color: ${scan.muted}; }
 `;
 
+const PitchBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0 8px;
+  border: 1px solid ${scan.ink};
+  background: ${scan.ink};
+  color: #fff;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
 const SECTION_ICON = { hooks: Sparkles, formats: Film, creators: Users, brands: Star, takeaways: Lightbulb };
 
 function Thumbs({ videos }) {
@@ -1397,7 +1413,8 @@ function PersonCard({ item, savedRefs, onSave }) {
   );
 }
 
-export function DeepAnswer({ report, cta, savedRefs, onSave, onAsk }) {
+/** onBrand (creator side, Polly): brand items listed in the directory get a "Pitch" button. */
+export function DeepAnswer({ report, cta, savedRefs, onSave, onAsk, onBrand }) {
   const r = report;
   const st = r.stats || {};
   return (
@@ -1429,6 +1446,11 @@ export function DeepAnswer({ report, cta, savedRefs, onSave, onAsk }) {
                       <b>{it.title}</b>
                       {it.text && <p>{it.text}</p>}
                       {it.tag && <span className="tag">{it.tag}</span>}
+                      {onBrand && it.brand && it.brand.pitch_id ? (
+                        <PitchBtn type="button" onClick={() => onBrand(it.brand)}>
+                          Pitch {it.brand.name} <ArrowRight size={13} />
+                        </PitchBtn>
+                      ) : null}
                     </div>
                     <Thumbs videos={it.videos} />
                   </Point>

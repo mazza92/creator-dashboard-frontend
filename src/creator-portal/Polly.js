@@ -7,6 +7,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from './PollyAutopilot';
 import MondayBoard from './PollyBoard';
+import CreatorHooks from './PollyHooks';
 import { PitchFactsCard, usePitchFacts } from './PollyPitchFacts';
 import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
@@ -67,6 +68,9 @@ const RADAR_STARTER = {
   action: 'gifting_radar',
   skip_discovery: true,
 };
+
+// Same deep answer brands get ("Hooks creators reuse in…"), read from creators this creator's size. 1 free, 4/mo on Pro.
+const HOOKS_STARTER = { id: 'creator_hooks', label: '🎣 Hooks that work in my niche', action: 'creator_hooks' };
 
 const STARTERS = [
   RADAR_STARTER,
@@ -1409,6 +1413,7 @@ export default function Polly() {
   const autopilotAutoOpenedRef = useRef(false);
   const [starters, setStarters] = useState(STARTERS);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hooksBusy, setHooksBusy] = useState(false);
   const [brief, setBrief] = useState(null);
   const threadRef = useRef(null);
   const stickToBottomRef = useRef(true);
@@ -1856,6 +1861,10 @@ export default function Polly() {
       openAutopilot();
       return;
     }
+    if (chip.action === 'creator_hooks') {
+      runHooks();
+      return;
+    }
     send(chip.label, {
       action: chip.action,
       brand_id: chip.brand_id,
@@ -2008,6 +2017,30 @@ export default function Polly() {
     } catch (_) { /* keep the list; user can retry */ }
     finally {
       setLoadingMore(false);
+    }
+  };
+
+  const runHooks = async () => {
+    if (busy || hooksBusy) return;
+    setHooksBusy(true);
+    try {
+      const { data } = await apiClient.post('/api/polly/hooks', {}, { timeout: 60000 });
+      if (data?.gated) {
+        setMessages((prev) => [...prev,
+          { id: newId(), role: 'user', content: HOOKS_STARTER.label.replace(/^\S+\s/, '') },
+          { id: newId(), role: 'assistant', content: data.message,
+            task_chips: data.allowance?.pro ? [] : [{ id: 'unlock_pro', label: 'Get 4 scans a month · Pro', action: 'unlock_pro' }] }]);
+        return;
+      }
+      const [ask, card] = data?.messages || [];
+      if (!card) throw new Error(data?.error || 'Could not scan your niche.');
+      setMessages((prev) => [...prev, { ...ask, id: newId() }, { ...card, id: newId(), hooks: { ...card.hooks, scan: data.scan } }]);
+    } catch (err) {
+      setMessages((prev) => [...prev, {
+        id: newId(), role: 'assistant', content: err?.response?.data?.error || err.message || 'Could not scan your niche. Try again.',
+      }]);
+    } finally {
+      setHooksBusy(false);
     }
   };
 
@@ -2207,6 +2240,9 @@ export default function Polly() {
                   {msg.kind === 'autopilot' ? <PitchLabel>Autopilot</PitchLabel> : null}
                   {msg.kind === 'nudge' ? <PitchLabel>Polly nudge</PitchLabel> : null}
                   <KitMessage msg={msg} onOpen={navigate} stream={msg.id === streamId} />
+                  {msg.hooks ? (
+                    <CreatorHooks hooks={msg.hooks} onBrand={(b) => contactBrand({ id: b.pitch_id, name: b.name })} />
+                  ) : null}
                   {msg.board ? (
                     <MondayBoard
                       board={msg.board}
@@ -2417,6 +2453,9 @@ export default function Polly() {
           <ChipRow $hidden={composerFocused}>
             <Chip type="button" onClick={() => sendStarter(radarStarter)} disabled={busy || loadingMore}>
               {radarStarter.label}
+            </Chip>
+            <Chip type="button" onClick={() => sendStarter(HOOKS_STARTER)} disabled={busy || loadingMore || hooksBusy}>
+              {hooksBusy ? 'Scanning your niche…' : HOOKS_STARTER.label}
             </Chip>
             {apChip ? (
               <Chip
