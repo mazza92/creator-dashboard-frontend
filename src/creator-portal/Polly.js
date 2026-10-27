@@ -59,8 +59,6 @@ const AUTOPILOT_STARTER = {
   action: 'autopilot',
 };
 
-const BOARD_STARTER = { id: 'open_board', label: 'Open my weekly report', action: 'board' };
-
 // Same chip the server leads every row with (polly_discovery.RADAR_CHIP), so it shows before bootstrap returns.
 const RADAR_STARTER = {
   id: 'gifting_radar',
@@ -229,15 +227,6 @@ function normalizeStarters(list) {
   }).filter((s) => s.id !== 'more_gigs');
   // Radar leads every row exactly once, like with_radar_chip on the server.
   return [RADAR_STARTER, ...out.filter((s) => s.action !== 'gifting_radar')];
-}
-
-function composerStarters(list, messages) {
-  const hasGigs = (messages || []).some((msg) => (msg.gigs || []).length);
-  return (list || []).filter((s) => {
-    if (s.id === 'more_gigs') return false;
-    if (hasGigs && s.id === 'paid_ugc') return false;
-    return true;
-  });
 }
 
 function isUnlockChip(s) {
@@ -2121,8 +2110,9 @@ export default function Polly() {
   const apChip = autopilotChip(autopilot.state)
     || (!autopilot.state && credits?.is_unlimited ? { label: '⚡ Autopilot', attention: false } : null);
   const closeAutopilot = () => { setAutopilotOpen(false); setAutopilotNotice(''); };
-  const dockStarters = messages.length > 0 ? composerStarters(starters, messages) : [];
-  const radarStarter = dockStarters.find((s) => s.action === 'gifting_radar') || null;
+  // The composer row is fixed: Radar, Autopilot, gifted brands. Everything else is a chip on a message.
+  const radarStarter = (starters || []).find((s) => s.action === 'gifting_radar') || RADAR_STARTER;
+  const giftedStarter = STARTERS.find((s) => s.id === 'gifted_lists');
 
   return (
     <Shell>
@@ -2423,19 +2413,12 @@ export default function Polly() {
         )}
       </Thread>
       <ComposerWrap>
-        {(dockStarters.length > 0 || ((apChip || credits?.is_unlimited) && messages.length > 0)) && !draft.trim() && (
+        {messages.length > 0 && !draft.trim() && (
           <ChipRow $hidden={composerFocused}>
-            {radarStarter ? (
-              <Chip type="button" onClick={() => sendStarter(radarStarter)} disabled={busy || loadingMore}>
-                {radarStarter.label}
-              </Chip>
-            ) : null}
-            {credits?.is_unlimited && messages.length > 0 ? (
-              <Chip type="button" onClick={() => sendStarter(BOARD_STARTER)} disabled={busy || loadingMore}>
-                📋 Weekly report
-              </Chip>
-            ) : null}
-            {apChip && messages.length > 0 ? (
+            <Chip type="button" onClick={() => sendStarter(radarStarter)} disabled={busy || loadingMore}>
+              {radarStarter.label}
+            </Chip>
+            {apChip ? (
               <Chip
                 type="button"
                 $emphasis={apChip.attention}
@@ -2445,17 +2428,9 @@ export default function Polly() {
                 {apChip.label}
               </Chip>
             ) : null}
-            {dockStarters.filter((s) => s !== radarStarter).map((s) => (
-              <Chip
-                key={s.id || s.label}
-                type="button"
-                $emphasis={isUnlockChip(s)}
-                onClick={() => sendStarter(s)}
-                disabled={busy || loadingMore}
-              >
-                {s.label}
-              </Chip>
-            ))}
+            <Chip type="button" onClick={() => sendStarter(giftedStarter)} disabled={busy || loadingMore}>
+              {giftedStarter.label}
+            </Chip>
           </ChipRow>
         )}
         <Composer onSubmit={onSubmit}>

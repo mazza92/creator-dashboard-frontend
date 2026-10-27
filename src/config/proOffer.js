@@ -24,8 +24,8 @@ export const PRO_OFFER = {
 
 // Free vs Pro rows for the paywall. `true` renders a check, `false` a lock, strings render as-is.
 export const PRO_COMPARE = [
-  { label: 'Brand matches from Polly', free: true, pro: true },
-  { label: 'Brands pitched for you', free: 'You send them', pro: `${DAILY_PITCHES} a day` },
+  { label: 'New pool of brands daily', free: true, pro: true },
+  { label: 'Automate your brand outreach', free: 'Manual send', pro: 'Up to 100 emails' },
   { label: 'Sent from your Gmail', free: false, pro: true },
   { label: 'Daily follow-ups', free: false, pro: true },
   { label: 'Who opened your kit', free: false, pro: true },

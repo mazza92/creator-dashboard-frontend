@@ -399,7 +399,7 @@ const MatchedNote = styled.p`
   }
 `;
 
-const COLS = '1fr 64px 92px';
+const COLS = '1fr 72px 92px';
 
 const Compare = styled.div`
   position: relative;
@@ -479,7 +479,9 @@ const CellText = styled.span`
   font-size: 13px;
   font-weight: 700;
   color: ${(p) => (p.$pro ? '#e8395f' : '#2b2d33')};
-  white-space: nowrap;
+  line-height: 1.2;
+  text-align: center;
+  padding: 2px 4px;
 `;
 
 const Plans = styled.div`
