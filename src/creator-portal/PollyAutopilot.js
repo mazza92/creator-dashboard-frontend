@@ -735,7 +735,7 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
   } else if (!state.is_pro) {
     body = (
       <>
-        <p className="say">On Pro I pitch <strong>{target} brands a month</strong> for you, every weekday. Here&apos;s how it works:</p>
+        <p className="say">On Pro I pitch <strong>{state?.per_day || perWeekday(target)} new brands for you every weekday</strong> ({target} a month). Here&apos;s how it works:</p>
         {steps}
         <Actions>
           <Btn $primary type="button" onClick={onUpgrade}>

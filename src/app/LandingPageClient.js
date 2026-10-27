@@ -2431,7 +2431,7 @@ const LandingPage = () => {
                 <PricingPrice className="gradient"><sup>$</sup>19</PricingPrice>
                 <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
                 <PricingFeatures>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Polly on autopilot</strong>: 60 matched brands pitched for you every month (up to 150), from your Gmail, with follow-ups and nothing to approve</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Polly on autopilot</strong>: 3 new matched brands pitched for you every weekday (up to 150 a month), from your Gmail, with follow-ups and nothing to approve</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Unlimited roster applications</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong>: 10 brands at once</PricingFeatureItem>
@@ -2518,7 +2518,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  Yes, the free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) makes Polly your manager: she pitches 60 matched brands a month for you, sent from your Gmail and followed up on day 4 and day 10, and when a brand says yes, the reply that turns it into a paid usage deal. Plus unlimited roster applications, batch send, full For You feed, and the $PR Value dashboard on top.
+                  Yes, the free plan includes full brand directory access, a <a href="/media-kit">free UGC portfolio builder</a>, auto media kit, PR pipeline, and 3 AI pitches per month. Pro ($19/month) puts your outreach on autopilot: Polly pitches 3 new matched brands for you every weekday, sent from your Gmail and followed up on day 4 and day 10, and when a brand replies, she writes your answer with your paid usage rate. Plus unlimited roster applications, batch send, full For You feed, and the $PR Value dashboard on top.
                 </FAQAnswer>
               </FAQItem>
             </FAQList>
