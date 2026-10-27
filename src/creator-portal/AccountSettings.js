@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PitchFactsCard, usePitchFacts } from './PollyPitchFacts';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -494,6 +495,8 @@ const AccountSettings = () => {
           )}
         </PlanCard>
       </Section>
+
+      <PitchFactsSection />
 
       <Section>
         <SectionHeader>
@@ -1271,3 +1274,18 @@ const DeleteCancel = styled.button`
 `;
 
 export default AccountSettings;
+
+
+function PitchFactsSection() {
+  const { facts, setFacts } = usePitchFacts();
+  if (!facts) return null;
+  return (
+    <Section>
+      <SectionHeader>
+        <SectionTitle>Pitch facts</SectionTitle>
+        <SectionSubtitle>What every pitch says about you: followers, engagement, niche, what you offer and where to ship.</SectionSubtitle>
+      </SectionHeader>
+      <PitchFactsCard facts={facts} onSaved={setFacts} compact />
+    </Section>
+  );
+}

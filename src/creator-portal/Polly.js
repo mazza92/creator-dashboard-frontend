@@ -7,6 +7,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from './PollyAutopilot';
 import MondayBoard from './PollyBoard';
+import { PitchFactsCard, usePitchFacts } from './PollyPitchFacts';
 import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
 import { UserContext } from '../contexts/UserContext';
@@ -1410,6 +1411,10 @@ export default function Polly() {
   const [autopilotOpen, setAutopilotOpen] = useState(false);
   const [autopilotSettingsOpen, setAutopilotSettingsOpen] = useState(false);
   const [autopilotNotice, setAutopilotNotice] = useState('');
+  const pitchFacts = usePitchFacts();
+  const [factsLater, setFactsLater] = useState(() => {
+    try { return sessionStorage.getItem('polly_facts_later') === '1'; } catch (_) { return false; }
+  });
   const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
   const autopilotAutoOpenedRef = useRef(false);
@@ -2155,6 +2160,21 @@ export default function Polly() {
             </SuggestGrid>
           </Empty>
         ) : null}
+        {pitchFacts.facts?.needs_confirm && !factsLater && ready && (
+          <Turn>
+            <AssistantRow>
+              <PollyFace src={POLLY_AVATAR_URL} alt="" />
+              <PitchFactsCard
+                facts={pitchFacts.facts}
+                onSaved={(f) => setTimeout(() => pitchFacts.setFacts(f), 2500)}
+                onDismiss={() => {
+                  setFactsLater(true);
+                  try { sessionStorage.setItem('polly_facts_later', '1'); } catch (_) { /* ignore */ }
+                }}
+              />
+            </AssistantRow>
+          </Turn>
+        )}
         {brief && messages.length > 0 && (
           <BriefCard>
             <div className="kicker">Polly brief</div>
