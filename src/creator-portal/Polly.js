@@ -59,7 +59,7 @@ const AUTOPILOT_STARTER = {
   action: 'autopilot',
 };
 
-const BOARD_STARTER = { id: 'open_board', label: 'Open my Monday board', action: 'board' };
+const BOARD_STARTER = { id: 'open_board', label: 'Open my weekly report', action: 'board' };
 
 // Same chip the server leads every row with (polly_discovery.RADAR_CHIP), so it shows before bootstrap returns.
 const RADAR_STARTER = {
@@ -90,7 +90,7 @@ const DEEP_LINK_CHIPS = {
   help_reply: { label: 'Help me reply', action: 'chat' },
   paid_reply: { label: 'Write my reply', action: 'paid_reply' },
   ad_usage: { label: 'Ask them to run it as an ad', action: 'ad_usage' },
-  open_board: { label: 'Open my Monday board', action: 'board' },
+  open_board: { label: 'Open my weekly report', action: 'board' },
   need_idea: { label: 'Need a content idea', action: 'chat' },
   line_up: { label: 'Line up brands for me', action: 'suggest_brands', deal: 'gifted' },
   send_draft: { label: 'Show my pitch', action: 'generate_pitch' },
@@ -2432,7 +2432,7 @@ export default function Polly() {
             ) : null}
             {credits?.is_unlimited && messages.length > 0 ? (
               <Chip type="button" onClick={() => sendStarter(BOARD_STARTER)} disabled={busy || loadingMore}>
-                📋 Monday board
+                📋 Weekly report
               </Chip>
             ) : null}
             {apChip && messages.length > 0 ? (
