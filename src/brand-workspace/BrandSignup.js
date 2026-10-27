@@ -351,6 +351,7 @@ function AccountStep({ onDone, entry }) {
     ref: entry.get('ref') || 'for-brands',
     niche: entry.get('niche') || '',
     free_scan: readCookie('nc_free_scan'),
+    oref: entry.get('oref') || readCookie('nc_oref') || undefined,
   }), [entry]);
 
   const signedIn = useCallback((data) => {

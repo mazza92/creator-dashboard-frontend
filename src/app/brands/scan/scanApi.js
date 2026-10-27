@@ -31,8 +31,8 @@ async function call(path, options = {}) {
   return data.scan;
 }
 
-export function startScan(brand, ref) {
-  return call('/api/public/brand-scan', { method: 'POST', body: JSON.stringify({ brand, ref }) });
+export function startScan(brand, ref, oref) {
+  return call('/api/public/brand-scan', { method: 'POST', body: JSON.stringify({ brand, ref, oref: oref || undefined }) });
 }
 
 export function pollScan(scanId) {

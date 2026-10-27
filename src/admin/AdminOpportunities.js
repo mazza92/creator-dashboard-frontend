@@ -7,6 +7,7 @@ import { tokens } from '../theme/tokens';
 import AdminContentSubmissions from './AdminContentSubmissions';
 import AdminBrandPRRosters from './AdminBrandPRRosters';
 import AdminBrandAccounts from './AdminBrandAccounts';
+import AdminOutreachV3 from './AdminOutreachV3';
 import { adminHeaders, adminLogin, hasAdminToken } from './adminAuth';
 
 const ADMIN_EMAIL = 'team@newcollab.co';
@@ -40,6 +41,7 @@ const AdminOpportunities = () => {
     if (tab === 'submissions') return 'submissions';
     if (tab === 'rosters') return 'rosters';
     if (tab === 'brand-accounts') return 'brand-accounts';
+    if (tab === 'outreach') return 'outreach';
     return 'opportunities';
   });
 
@@ -408,6 +410,7 @@ const AdminOpportunities = () => {
       <FilterBtn $active={pageTab === 'opportunities'} onClick={() => setTab('opportunities')}>Opportunities</FilterBtn>
       <FilterBtn $active={pageTab === 'rosters'} onClick={() => setTab('rosters')}>Brand PR Rosters</FilterBtn>
       <FilterBtn $active={pageTab === 'brand-accounts'} onClick={() => setTab('brand-accounts')}>Brand accounts</FilterBtn>
+      <FilterBtn $active={pageTab === 'outreach'} onClick={() => setTab('outreach')}>Outreach v3</FilterBtn>
       <FilterBtn $active={pageTab === 'submissions'} onClick={() => setTab('submissions')}>Content Submissions</FilterBtn>
     </FilterRow>
   );
@@ -420,6 +423,18 @@ const AdminOpportunities = () => {
         </Header>
         {tabNav}
         <AdminContentSubmissions />
+      </PageWrap>
+    );
+  }
+
+  if (pageTab === 'outreach') {
+    return (
+      <PageWrap>
+        <Header>
+          <h1>Outreach v3</h1>
+        </Header>
+        {tabNav}
+        <AdminOutreachV3 />
       </PageWrap>
     );
   }
