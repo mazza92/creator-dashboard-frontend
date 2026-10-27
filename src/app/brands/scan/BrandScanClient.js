@@ -126,11 +126,22 @@ function rememberFreeScan(turn, result) {
   document.cookie = `nc_free_scan=${encodeURIComponent(result.brand.name)}; path=/; max-age=2592000; SameSite=Lax${domain}${secure}`;
 }
 
+// A cold email's ref code (?oref=) is kept for 30 days so the signup and first campaign are credited to it.
+function rememberOutreach(oref) {
+  if (!oref || typeof document === 'undefined') return;
+  const host = window.location.hostname;
+  const domain = host.endsWith('newcollab.co') ? '; domain=.newcollab.co' : '';
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `nc_oref=${encodeURIComponent(oref.slice(0, 40))}; path=/; max-age=2592000; SameSite=Lax${domain}${secure}`;
+}
+
 export default function BrandScanClient() {
   const params = useSearchParams();
   const ref = useRef(params.get('ref') || params.get('utm_source') || 'scan_page');
+  const oref = useRef(params.get('oref') || '');
   const started = useRef(false);
-  const start = useCallback((brand) => startScan(brand, ref.current), []);
+  useEffect(() => { rememberOutreach(oref.current); }, []);
+  const start = useCallback((brand) => startScan(brand, ref.current, oref.current), []);
   const { turns, run, busy } = useScanTurns({ start, poll: pollScan, source: ref.current, onDone: rememberFreeScan });
 
   useEffect(() => {
