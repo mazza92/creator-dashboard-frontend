@@ -141,7 +141,7 @@ export default function Waitlist() {
             <ProBenefits>
               <Benefit>
                 <BenefitIcon>✓</BenefitIcon>
-                <BenefitText><strong>60 brands a month pitched for you</strong> — from your Gmail, with follow-ups, and the paid usage ask when a brand says yes</BenefitText>
+                <BenefitText><strong>3 brands pitched for you every weekday</strong>, from your Gmail, with follow-ups and the paid usage ask when a brand replies</BenefitText>
               </Benefit>
               <Benefit>
                 <BenefitIcon>✓</BenefitIcon>

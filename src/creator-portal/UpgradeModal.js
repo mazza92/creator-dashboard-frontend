@@ -112,14 +112,14 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
         : null;
 
   const headline = isWinback ? (
-    <>Your brand manager<br />is back for <PinkSpan>$12/mo</PinkSpan></>
+    <>Daily pitching<br />is back for <PinkSpan>$12/mo</PinkSpan></>
   ) : (
-    <>Get your own<br /><PinkSpan>personal brand manager</PinkSpan></>
+    <>New brands pitched<br /><PinkSpan>for you, every day</PinkSpan></>
   );
 
   const subline = isWinback
     ? 'For your next 3 invoices, then $19. Cancel anytime.'
-    : 'Polly finds brands that fit you, pitches them from your Gmail every weekday and follows up, so you can just create.';
+    : 'Every weekday Polly picks 3 brands that fit you, pitches them from your Gmail and follows up, so you can just create.';
 
   const ctaLabel = loading
     ? 'Processing...'

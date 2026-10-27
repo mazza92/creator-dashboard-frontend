@@ -133,14 +133,14 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
           {step === 'offer' && offer === 'talent_manager' && (
             <>
               <Eyebrow>Stay on Pro</Eyebrow>
-              <Title>We will assign you a talent manager</Title>
+              <Title>A person reviews your outreach this week</Title>
               <Body>
-                Brand silence is the usual reason people leave. If you stay, a person on our team
-                reviews your kit this week, picks brands that gift your size, and follows those
-                applications until you get a yes or a clear no.
+                Brands usually take 2 to 4 weeks to reply. If you stay, someone on our team checks
+                your kit, your pitch facts and the brands Polly pitches, so they&apos;re brands that gift
+                creators your size. Polly keeps pitching every weekday in the meantime.
               </Body>
               <Primary type="button" disabled={busy} onClick={acceptOffer}>
-                {busy ? 'Assigning…' : 'Yes — help me get the first collab'}
+                {busy ? 'Booking…' : 'Yes, review my outreach'}
               </Primary>
               <Ghost type="button" disabled={busy} onClick={() => setStep('confirm')}>
                 No thanks, cancel anyway
@@ -153,7 +153,7 @@ const CancelRetentionModal = ({ isOpen, onClose, onChanged, endsAt }) => {
               <Eyebrow>Stay on Pro</Eyebrow>
               <Title>$12 a month for the next 3 months</Title>
               <Body>
-                Keep Polly pitching 60 brands a month for you from your Gmail, and the paid usage reply when a brand says yes. The next
+                Keep Polly pitching 3 brands for you every weekday from your Gmail, with follow-ups. The next
                 three invoices are $12 instead of $19, then it returns to $19.
               </Body>
               <Primary type="button" disabled={busy} onClick={acceptOffer}>

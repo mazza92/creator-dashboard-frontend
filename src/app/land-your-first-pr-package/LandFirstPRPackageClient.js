@@ -1283,7 +1283,7 @@ function LandFirstPRPackageClient() {
               <PriceNum>$19<small> /month</small></PriceNum>
               <PriceDesc>Polly runs your week and turns a yes into a paid usage deal. Cancel anytime.</PriceDesc>
               <PriceList>
-                <PriceItem><Check>✓</Check><span><b>60 brands a month pitched for you</b> — from your Gmail, with follow-ups, and the paid usage ask when a brand says yes</span></PriceItem>
+                <PriceItem><Check>✓</Check><span><b>3 brands pitched for you every weekday</b>, from your Gmail, with follow-ups and the paid usage ask when a brand replies</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Unlimited roster applications</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Weekly personalized coaching plan</span></PriceItem>
                 <PriceItem><Check>✓</Check><span>Auto follow-ups sent for you</span></PriceItem>
