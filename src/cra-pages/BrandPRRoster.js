@@ -228,7 +228,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     const params = new URLSearchParams(window.location.search);
     const billingFlag = params.get('billing');
     if (billingFlag === 'success') {
-      setToast('Gifted UGC is on. Every applicant is unlocked and you can gift up to 10.');
+      setToast('Gifted UGC is on. You can gift up to 10 creators a month.');
       params.delete('billing');
       params.delete('session_id');
       const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
