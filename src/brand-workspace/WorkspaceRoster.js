@@ -141,6 +141,9 @@ export default function WorkspaceRoster({ token, onBack }) {
   const selected = selectedIds.map((id) => creators.find((c) => c.application_id === id)).filter(Boolean);
   const locked = campaign.status === 'locked' || campaign.status === 'shipped';
   const shipped = campaign.status === 'shipped';
+  // Seats still free after the lock (locked 1 of 5 leaves 4): the brand can keep adding up to its limit.
+  const seatsLeft = locked ? Math.max(0, Number(campaign.picks_left) || 0) : 0;
+  const seatsLabel = plural(seatsLeft, '1 gift seat', `${seatsLeft} gift seats`);
   const shippedCount = selected.filter(isOut).length;
   const contentOpen = shipped || shippedCount > 0;
   const open = creators.filter((c) => !c.skipped);
@@ -166,10 +169,29 @@ export default function WorkspaceRoster({ token, onBack }) {
   }
 
   const steps = [
-    { key: 'pick', label: 'Pick', hint: locked ? 'Done' : `${selectedIds.length}/${slotLimit}`, done: locked, enabled: true },
+    { key: 'pick', label: 'Pick', hint: locked ? (seatsLeft ? `${seatsLeft} left` : 'Done') : `${selectedIds.length}/${slotLimit}`, done: locked, enabled: true },
     { key: 'ship', label: 'Ship', hint: shipped ? 'Done' : locked ? `${shippedCount}/${selected.length} sent` : 'After lock', done: shipped, enabled: locked },
     { key: 'content', label: 'Content', hint: contentOpen ? `${selected.filter((c) => c.delivered).length} in` : 'After ship', done: false, enabled: contentOpen },
   ];
+
+  const addPick = async (c) => {
+    markViewed(c.application_id);
+    if (!window.confirm(`Add ${c.name} to your gift list? Their shipping address unlocks and we email them that you picked them.`)) return;
+    if (await mutate('add-pick', { application_id: c.application_id })) setToast(`${c.name} added. Their address is in the Ship step.`);
+  };
+  const seatsBox = (
+    <Quick>
+      <div>
+        <b>You have {seatsLabel} left</b>
+        <span>Your plan gifts up to {slotLimit} creators and you picked {selected.length}. Add more from the creators who applied.</span>
+      </div>
+      {step !== 'pick' && (
+        <div className="act">
+          <Primary as="button" type="button" style={{ marginTop: 0 }} onClick={() => setStep('pick')}>Add creators</Primary>
+        </div>
+      )}
+    </Quick>
+  );
 
   const upgradeBox = (title, text) => (
     <Upsell>
@@ -281,6 +303,7 @@ export default function WorkspaceRoster({ token, onBack }) {
               </Quick>
             )}
 
+            {seatsLeft > 0 && seatsBox}
             {!locked && creators.length > 0 && (
               <Tabs>
                 <button type="button" aria-pressed={tab === 'open'} onClick={() => setTab('open')}>Applicants <i>{open.length}</i></button>
@@ -298,11 +321,13 @@ export default function WorkspaceRoster({ token, onBack }) {
               </Empty>
             ) : (
               <Grid>
-                {(locked ? selected : tab === 'skipped' ? skipped : ordered).map((c) => (
+                {(locked
+                  ? [...selected, ...(seatsLeft ? ordered.filter((c) => c.status === 'review' && !selectedIds.includes(c.application_id)) : [])]
+                  : tab === 'skipped' ? skipped : ordered).map((c) => (
                   <CreatorCard key={c.application_id} c={c} picked={selectedIds.includes(c.application_id)}
-                    locked={locked} busy={busy} full={selectedIds.length >= slotLimit}
+                    locked={locked} canAdd={seatsLeft > 0} busy={busy} full={selectedIds.length >= slotLimit}
                     onView={() => markViewed(c.application_id)}
-                    onAdd={async () => { markViewed(c.application_id); if (await mutate('select', { application_id: c.application_id })) setToast('Added to your gift list'); }}
+                    onAdd={locked ? () => addPick(c) : async () => { markViewed(c.application_id); if (await mutate('select', { application_id: c.application_id })) setToast('Added to your gift list'); }}
                     onRemove={() => mutate('deselect', { application_id: c.application_id })}
                     onSkip={() => mutate(c.skipped ? 'unskip' : 'skip', { application_id: c.application_id })} />
                 ))}
@@ -374,6 +399,7 @@ export default function WorkspaceRoster({ token, onBack }) {
 
       {step === 'ship' && (
         <>
+          {seatsLeft > 0 && seatsBox}
           <ShipBar>
             <div>
               <b>Ship the way you already do</b>
@@ -475,7 +501,7 @@ function Back({ onBack }) {
   return <PlainLink type="button" onClick={onBack} style={{ marginBottom: 18 }}><ArrowLeft size={14} /> All campaigns</PlainLink>;
 }
 
-function CreatorCard({ c, picked, locked, busy, full, onAdd, onRemove, onSkip, onView }) {
+function CreatorCard({ c, picked, locked, canAdd, busy, full, onAdd, onRemove, onSkip, onView }) {
   const posts = (c.posts || []).slice(0, 3);
   const meta = [c.followers_label && `${c.followers_label} followers`, c.engagement_label && `${c.engagement_label} eng.`].filter(Boolean);
   return (
@@ -508,6 +534,11 @@ function CreatorCard({ c, picked, locked, busy, full, onAdd, onRemove, onSkip, o
           <div className="chips">{c.fit_reasons.slice(0, 3).map((r) => <i key={r}><Check size={11} /> {r}</i>)}</div>
         ) : c.niche ? <div className="chips"><i>{c.niche}</i></div> : null}
         {c.kit_url && <a className="kit" href={c.kit_url} target="_blank" rel="noopener noreferrer" onClick={onView}>Media kit <ExternalLink size={12} /></a>}
+        {locked && canAdd && !picked && (
+          <div className="act">
+            <AddBtn type="button" disabled={busy} onClick={onAdd}><Check size={14} /> Add to gift list</AddBtn>
+          </div>
+        )}
         {!locked && (
           <div className="act">
             {c.skipped ? (
