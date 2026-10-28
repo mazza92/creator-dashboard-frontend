@@ -154,7 +154,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     viewedIds.current = new Set();
   }, [token]);
 
-  const applyPayload = useCallback((data) => {
+  const applyPayload = useCallback((data, stayOnPick = false) => {
     if (!data?.success) throw new Error(data?.error || 'Request failed');
     setCampaign(data.campaign);
     setCreators(data.creators || []);
@@ -168,6 +168,8 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     }
     setError('');
     const status = data.campaign?.status;
+    // Adding to a locked list: stay on Pick while seats are left, then go ship.
+    if (stayOnPick && status === 'locked' && Number(data.campaign?.picks_left) > 0) return data;
     if (status === 'shipped') setStep(3);
     else if (status === 'locked') setStep(2);
     else setStep(1);
@@ -259,6 +261,9 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
   const remaining = Math.max(0, slotLimit - selectedIds.length);
   const locked = campaign?.status === 'locked' || campaign?.status === 'shipped';
   const shipped = campaign?.status === 'shipped';
+  // Seats still free after the lock (locked 1 of 5 leaves 4): the brand can keep adding up to its limit.
+  const seatsLeft = locked ? Math.max(0, Number(campaign?.picks_left) || 0) : 0;
+  const seatsLabel = plural(seatsLeft, '1 gift seat', `${seatsLeft} gift seats`);
   const isOut = (c) => Boolean(c.shipped_at) || c.status === 'posted';
   const shippedCount = selectedCreators.filter(isOut).length;
 
@@ -323,12 +328,12 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     });
   }, [token]);
 
-  async function mutate(path, body) {
+  async function mutate(path, body, stayOnPick = false) {
     setBusy(true);
     setError('');
     try {
       const { data } = await api.post(`/api/brand-pr/r/${token}/${path}`, body || {});
-      applyPayload(data);
+      applyPayload(data, stayOnPick);
       return data;
     } catch (err) {
       const msg = err.response?.data?.error || err.message || 'Action failed';
@@ -349,6 +354,18 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     try {
       await mutate('select', { application_id: id });
       setToast('Added to your gift list');
+    } catch {
+      /* toast set */
+    }
+  }
+
+  async function onAddPick(id) {
+    const c = creators.find((x) => x.application_id === id);
+    const name = c?.name || 'this creator';
+    if (!window.confirm(`Add ${name} to your gift list? Their shipping address unlocks and we email them that you picked them.`)) return;
+    try {
+      await mutate('add-pick', { application_id: id }, true);
+      setToast(`${name} added. Their address is in the Ship step.`);
     } catch {
       /* toast set */
     }
@@ -539,7 +556,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     {
       n: 1,
       label: 'Pick',
-      hint: locked ? 'Done' : selectedIds.length ? `${selectedIds.length}/${slotLimit}` : `Up to ${slotLimit}`,
+      hint: locked ? (seatsLeft ? `${seatsLeft} left` : 'Done') : selectedIds.length ? `${selectedIds.length}/${slotLimit}` : `Up to ${slotLimit}`,
       done: locked,
     },
     {
@@ -670,7 +687,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                 <Head>
                   <h1>
                     {locked
-                      ? 'Gift list locked'
+                      ? seatsLeft ? `${seatsLeft} of ${slotLimit} gift seats left` : 'Gift list locked'
                       : !selectedIds.length
                         ? topCreators.length
                           ? `Polly picked your ${plural(topCreators.length, 'best fit', `${topCreators.length} best fits`)}`
@@ -680,7 +697,9 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                           : `Lock ${slotLimit} to reveal addresses`}
                   </h1>
                   <p>
-                    {topCreators.length && !locked
+                    {locked && seatsLeft
+                      ? `You locked ${plural(selectedIds.length, '1 creator', `${selectedIds.length} creators`)}. Add up to ${seatsLeft} more below, included in your plan. Their address unlocks right away.`
+                      : topCreators.length && !locked
                       ? `Matched on niche${targetRegions ? `, ${targetRegions}` : ''}, followers and real sample posts. Approve them in one click, or swap anyone.`
                       : `Gift 1 to ${slotLimit}. Skip anyone who isn’t a fit. Addresses stay hidden until you lock.`}
                   </p>
@@ -739,8 +758,10 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                           c={c}
                           selected={selectedIds.includes(c.application_id)}
                           locked={locked}
+                          canAdd={seatsLeft > 0}
                           busy={busy}
                           onApprove={onApprove}
+                          onAddPick={onAddPick}
                           onSkip={onSkip}
                           onOpen={openDrawer}
                         />
@@ -756,8 +777,10 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                           c={c}
                           selected={selectedIds.includes(c.application_id)}
                           locked={locked}
+                          canAdd={seatsLeft > 0}
                           busy={busy}
                           onApprove={onApprove}
+                          onAddPick={onAddPick}
                           onSkip={onSkip}
                           onOpen={openDrawer}
                         />
@@ -848,9 +871,9 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                   );
                 })}
                 </TraySeats>
-                <Go type="button" disabled={busy || !canLock} onClick={onLock}>
+                <Go type="button" disabled={busy || (!canLock && !seatsLeft)} onClick={locked ? () => setStep(2) : onLock}>
                   {locked
-                    ? 'List locked'
+                    ? seatsLeft ? `Done · go to shipping` : 'List locked'
                     : canLock
                       ? `Lock ${selectedIds.length} & export`
                       : 'Pick at least 1'}
@@ -868,6 +891,15 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                 <h1>Ship from Shopify or ShipStation</h1>
                 <p>Download the CSV and ship the way you already do. Mark each creator as their box goes out, or all at once.</p>
               </Head>
+              {seatsLeft > 0 && (
+                <Paywall>
+                  <div>
+                    <PaywallTitle>You have {seatsLabel} left</PaywallTitle>
+                    <PaywallSub>Your plan gifts up to {slotLimit} creators and you picked {selectedIds.length}. Add more from the creators who applied.</PaywallSub>
+                  </div>
+                  <BtnPrimary type="button" onClick={() => setStep(1)}>Add creators</BtnPrimary>
+                </Paywall>
+              )}
               {briefCard}
               <ShipBar>
                 <BtnPrimary type="button" onClick={downloadCsv}>Download shipping CSV</BtnPrimary>
@@ -1145,7 +1177,7 @@ function Cover({ src, color }) {
   return <i style={{ background: color }} />;
 }
 
-function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
+function CreatorCard({ c, selected, locked, canAdd, busy, onApprove, onAddPick, onSkip, onOpen }) {
   const color = hueFromName(c.name);
   const thumbs = (c.posts || []).map((p) => stillUrl(p.thumbnail_url)).filter(Boolean);
   const avatarStill = stillUrl(c.avatar_url) || mediaUrl(c.avatar_url);
@@ -1208,6 +1240,11 @@ function CreatorCard({ c, selected, locked, busy, onApprove, onSkip, onOpen }) {
           </Actions>
         )}
         {locked && selected && <StatusLine>On your gift list</StatusLine>}
+        {locked && !selected && canAdd && c.status === 'review' && !c.skipped && (
+          <Actions>
+            <BtnYes type="button" disabled={busy} onClick={() => onAddPick(c.application_id)}>Add to gift list</BtnYes>
+          </Actions>
+        )}
       </CardBody>
     </Card>
   );
