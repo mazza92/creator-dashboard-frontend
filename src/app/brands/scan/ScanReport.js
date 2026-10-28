@@ -233,6 +233,7 @@ const Cover = styled.div`
 
   .views {
     position: absolute;
+    z-index: 3;
     left: 8px;
     bottom: 8px;
     display: inline-flex;
@@ -656,12 +657,112 @@ export function Thumb({ src, alt }) {
   return <img src={src} alt={alt || ''} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />;
 }
 
-function VideoCard({ v }) {
+// ============================================================================
+// HOVER PREVIEW: play the TikTok in place (muted, looping) so brands preview without leaving for TikTok
+// ============================================================================
+
+const HOVER_DELAY_MS = 220;
+
+function tiktokId(v) {
+  const id = String((v && v.id) || '');
+  return /^\d{8,25}$/.test(id) && /tiktok\.com/.test(String((v && v.url) || '')) ? id : '';
+}
+
+function playerUrl(id) {
+  const opts = 'autoplay=1&mute=1&loop=1&controls=0&progress_bar=0&play_button=0&volume_control=0'
+    + '&fullscreen_button=0&timestamp=0&music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0';
+  return `https://www.tiktok.com/player/v1/${id}?${opts}`;
+}
+
+const canHover = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: hover)').matches;
+
+/** Hover (desktop) or first tap (touch) starts the preview; a second tap follows the link to TikTok. */
+function usePreview(v) {
+  const id = tiktokId(v);
+  const [on, setOn] = useState(false);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  if (!id) return { on: false, id: '', handlers: {} };
+  return {
+    on,
+    id,
+    handlers: {
+      onMouseEnter: () => { if (canHover()) timer.current = setTimeout(() => setOn(true), HOVER_DELAY_MS); },
+      onMouseLeave: () => { clearTimeout(timer.current); if (canHover()) setOn(false); },  // touch: a tap fires leave
+      onClick: (e) => { if (!canHover() && !on) { e.preventDefault(); setOn(true); } },
+    },
+  };
+}
+
+function Player({ id, title }) {
   return (
-    <VCard href={v.url} target="_blank" rel="noopener noreferrer">
+    <PlayerFrame>
+      <iframe src={playerUrl(id)} title={title || 'TikTok preview'} allow="autoplay; encrypted-media"
+        loading="eager" referrerPolicy="strict-origin-when-cross-origin" tabIndex={-1} />
+    </PlayerFrame>
+  );
+}
+
+const PlayerFrame = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #000;
+  pointer-events: none;
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+`;
+
+const Float = styled.div`
+  position: fixed;
+  z-index: 60;
+  width: 180px;
+  aspect-ratio: 9 / 16;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(16, 17, 20, 0.28);
+  background: #000;
+  pointer-events: none;
+`;
+
+/** Small thumbnails: the preview opens beside the thumb, larger, while the pointer is on it. */
+function ThumbLink({ v, children, className }) {
+  const id = tiktokId(v);
+  const [pos, setPos] = useState(null);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const open = (el) => {
+    const r = el.getBoundingClientRect();
+    const w = 180, h = 320;
+    const left = r.left - w - 12 > 8 ? r.left - w - 12 : Math.min(window.innerWidth - w - 8, r.right + 12);
+    const top = Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2));
+    setPos({ left, top });
+  };
+  const handlers = id ? {
+    onMouseEnter: (e) => { const el = e.currentTarget; if (canHover()) timer.current = setTimeout(() => open(el), HOVER_DELAY_MS); },
+    onMouseLeave: () => { clearTimeout(timer.current); setPos(null); },
+  } : {};
+  return (
+    <a href={v.url} target="_blank" rel="noopener noreferrer" title={v.hook || ''} className={className} {...handlers}>
+      {children}
+      {pos && <Float style={pos}><Player id={id} title={v.hook} /></Float>}
+    </a>
+  );
+}
+
+function VideoCard({ v }) {
+  const preview = usePreview(v);
+  return (
+    <VCard href={v.url} target="_blank" rel="noopener noreferrer" {...preview.handlers}>
       <Cover className="cover">
         <div className="play"><Play size={28} fill="currentColor" /></div>
         <Thumb src={v.thumb} alt={v.hook} post={v.url} />
+        {preview.on && <Player id={preview.id} title={v.hook} />}
         {v.type && v.type !== 'organic' && <TypeTag $type={v.type}>{TYPE_LABEL[v.type]}</TypeTag>}
         <span className="views"><Eye size={13} /> {v.views_label}</span>
       </Cover>
@@ -1365,10 +1466,10 @@ function Thumbs({ videos }) {
   return (
     <div className="thumbs">
       {videos.map((v) => (
-        <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer" title={v.hook || ''}>
+        <ThumbLink key={v.id} v={v}>
           <Thumb src={v.thumb} alt="" post={v.url} />
           {v.views_label && <em>{v.views_label}</em>}
-        </a>
+        </ThumbLink>
       ))}
     </div>
   );

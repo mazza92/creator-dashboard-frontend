@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, X } from 'lucide-react';
 import { EXAMPLE_BRANDS } from './scanApi';
 import { scan } from './theme';
 
@@ -118,6 +118,118 @@ const Chip = styled.button`
   }
 `;
 
+// Pre-typed prompt (prompt library): the sentence is written for the user, with blanks to fill in.
+// parts: strings and {key, placeholder, value?, optional?}. Tab moves between blanks, Enter runs it.
+const Fill = styled.div`
+  font-size: ${(p) => (p.$large ? '18px' : '16px')};
+  line-height: 1.9;
+  color: ${scan.ink};
+  padding: 2px 0 12px;
+
+  @media (max-width: 560px) {
+    font-size: 16px;
+  }
+
+  input {
+    font: inherit;
+    color: ${scan.ink};
+    background: ${scan.bgSoft};
+    border: 1px solid ${scan.lineSoft};
+    border-radius: 8px;
+    padding: 1px 8px;
+    margin: 0 2px;
+    max-width: 100%;
+    outline: 0;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  input::placeholder { color: ${scan.muted2}; }
+  input:focus { border-color: ${scan.accent}; background: ${scan.bg}; }
+`;
+
+const FillTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: ${scan.muted};
+  margin-bottom: 2px;
+
+  kbd {
+    font: inherit;
+    font-size: 11px;
+    border: 1px solid ${scan.line};
+    border-radius: 5px;
+    padding: 0 5px;
+    background: ${scan.bgSoft};
+  }
+
+  button {
+    border: 0;
+    background: none;
+    color: ${scan.muted};
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: inherit;
+    font-size: 12px;
+    padding: 2px 0;
+  }
+`;
+
+function slotWidth(slot, value) {
+  const text = value || slot.placeholder || '';
+  return `${Math.min(Math.max(text.length, 6), 46) + 1}ch`;
+}
+
+function TemplateFill({ template, values, setValues, large, onClear }) {
+  const refs = React.useRef([]);
+  const narrow = useNarrow();
+  const slots = template.parts.filter((p) => typeof p !== 'string');
+  useEffect(() => {
+    const first = slots.findIndex((s) => !values[s.key]);
+    const el = refs.current[first < 0 ? 0 : first];
+    if (el) el.focus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [template]);
+  const move = (i, back) => {
+    const next = refs.current[(i + (back ? -1 : 1) + slots.length) % slots.length];
+    if (next) next.focus();
+  };
+  let n = -1;
+  return (
+    <>
+      <FillTop>
+        <span>{slots.length > 1 && !narrow ? <>Press <kbd>Tab</kbd> for the next blank</> : 'Fill in the blank'}</span>
+        <button type="button" onClick={onClear} aria-label="Clear prompt"><X size={13} /> Clear</button>
+      </FillTop>
+      <Fill $large={large}>
+        {template.parts.map((part, i) => {
+          if (typeof part === 'string') return <React.Fragment key={i}>{part}</React.Fragment>;
+          n += 1;
+          const idx = n;
+          return (
+            <input key={part.key} ref={(el) => { refs.current[idx] = el; }} value={values[part.key] || ''}
+              placeholder={part.placeholder} aria-label={part.placeholder} maxLength={part.maxLength || 80}
+              style={{ width: slotWidth(part, values[part.key]) }}
+              onChange={(e) => setValues({ ...values, [part.key]: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === 'Tab' && slots.length > 1) { e.preventDefault(); move(idx, e.shiftKey); }
+                if (e.key === 'Escape') onClear();
+              }} />
+          );
+        })}
+      </Fill>
+    </>
+  );
+}
+
+function templateReady(template, values) {
+  return template.parts.every((p) => typeof p === 'string' || p.optional || String(values[p.key] || '').trim());
+}
+
 // Phones get a placeholder that fits the input instead of one cut mid-word.
 function useNarrow(maxWidth = 560) {
   const [narrow, setNarrow] = useState(false);
@@ -134,8 +246,16 @@ function useNarrow(maxWidth = 560) {
 
 export default function ScanInput({ onSubmit, busy = false, large = false, chips = true, autoFocus = false,
   placeholder = 'Type a brand, e.g. Glow Recipe or @glowrecipe', shortPlaceholder = 'Type any brand…',
-  hint = 'Live TikTok data · free · no login', maxLength = 80, label = 'Brand to scan' }) {
+  hint = 'Live TikTok data · free · no login', maxLength = 80, label = 'Brand to scan',
+  template = null, onTemplateSubmit, onClearTemplate }) {
   const [value, setValue] = useState('');
+  const [values, setValues] = useState({});
+  useEffect(() => {
+    const start = {};
+    ((template && template.parts) || []).forEach((p) => { if (typeof p !== 'string' && p.value) start[p.key] = p.value; });
+    setValues(start);
+  }, [template]);
+  const filled = template ? templateReady(template, values) : Boolean(value.trim());
   const narrow = useNarrow();
   const inputRef = React.useRef(null);
   const go = (brand) => {
@@ -150,9 +270,19 @@ export default function ScanInput({ onSubmit, busy = false, large = false, chips
       <Box
         onSubmit={(e) => {
           e.preventDefault();
+          if (template) {
+            if (!filled || busy) return;
+            const clean = {};
+            Object.keys(values).forEach((k) => { clean[k] = String(values[k] || '').trim(); });
+            onTemplateSubmit(clean);
+            return;
+          }
           go(value);
         }}
       >
+        {template ? (
+          <TemplateFill template={template} values={values} setValues={setValues} large={large} onClear={onClearTemplate} />
+        ) : (
         <Field
           ref={inputRef}
           $large={large}
@@ -163,9 +293,10 @@ export default function ScanInput({ onSubmit, busy = false, large = false, chips
           autoFocus={autoFocus}
           maxLength={maxLength}
         />
+        )}
         <Row>
           <Hint><i /> {hint}</Hint>
-          <Send type="submit" disabled={!value.trim() || busy} aria-label="Scan brand">
+          <Send type="submit" disabled={!filled || busy} aria-label={template ? 'Run prompt' : 'Scan brand'}>
             <ArrowUp size={18} strokeWidth={2.5} />
           </Send>
         </Row>

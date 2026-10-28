@@ -531,16 +531,24 @@ function prompts(ws) {
   const nicheLabel = hasNiche ? niche : 'your category';
   return [
     { id: 'competitor', icon: Search, bg: '#e8f7ed', fg: '#0f9d58', title: 'Scan a competitor',
-      text: 'Every TikTok creator posting about them, the hooks they reuse and their top videos.', action: 'focus' },
+      text: 'Every TikTok creator posting about them, the hooks they reuse and their top videos.', action: 'focus',
+      template: { parts: ['Scan ', { key: 'brand', placeholder: 'a competitor, e.g. Glow Recipe' },
+        ' and show every TikTok creator posting about it, the hooks they reuse and their top videos.'] } },
     { id: 'gifting', icon: Gift, bg: '#eef2ff', fg: '#4f46e5', title: `Brands seeding ${nicheLabel} creators`,
       text: `Which brands are gifting small ${nicheLabel} creators right now, and how many.`, kind: 'gifting_brands',
       needsNiche: true },
     { id: 'hooks', icon: Sparkles, bg: '#fff8eb', fg: '#d97706', title: `Hooks that work in ${nicheLabel}`,
       text: 'Opening lines and formats that win in your niche, with the videos behind them.', kind: 'niche_hooks',
-      needsNiche: true },
+      needsApproval: true, defaultNiche: hasNiche ? niche : '',
+      template: { parts: ['Show the hooks and video formats working right now for ',
+        { key: 'niche', placeholder: 'your niche, e.g. skincare', value: hasNiche ? niche : '' },
+        ' creators who post about ', { key: 'detail', placeholder: 'a product or format (optional)', optional: true }, '.'] } },
     { id: 'creators', icon: Users, bg: '#fef2f4', fg: '#e8395f', title: `Find ${nicheLabel} creators`,
       text: 'Small creators who fit a gifted campaign, and what each one is good at.', kind: 'niche_creators',
-      needsNiche: true },
+      needsApproval: true, defaultNiche: hasNiche ? niche : '',
+      template: { parts: ['Find small ', { key: 'niche', placeholder: 'your niche, e.g. skincare', value: hasNiche ? niche : '' },
+        ' creators who ', { key: 'detail', placeholder: 'film a specific kind of video (optional)', optional: true },
+        ` and would fit a gifted campaign from ${ws.brand.name || 'my brand'}.`] } },
     { id: 'own', icon: Megaphone, bg: '#f1f5f9', fg: '#334155', title: 'Scan your own brand',
       text: 'The creators already talking about you, gifted or not.', own: true },
   ].map((p) => ({ ...p, hasNiche }));
@@ -608,14 +616,33 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
     if (p.needsNiche && !p.hasNiche) return 'Pick a category';
     return '';
   };
+  const [tpl, setTpl] = useState(null);
 
   const ask = (question) => run({ kind: 'ask', question, label: question });
   const submit = (text) => (ws.approved && isQuestion(text) ? ask(text) : run(text));
 
   const pick = (p) => {
+    if (p.template) {
+      setTpl(p);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return undefined;
+    }
     if (p.action === 'focus') return focus();
     if (p.own) return run(ws.brand.name);
     return run({ kind: p.kind, label: p.title });
+  };
+
+  // A filled prompt runs the stored analysis when left as written (cheap, cached), or a custom question.
+  const runTemplate = (p, v) => {
+    setTpl(null);
+    if (p.id === 'competitor') return run(v.brand);
+    const niche = v.niche || p.defaultNiche;
+    const same = !v.detail && niche.toLowerCase() === String(p.defaultNiche || '').toLowerCase();
+    if (same) return run({ kind: p.kind, label: p.title });
+    const question = p.id === 'hooks'
+      ? `Which hooks, opening lines and video formats are working best right now for ${niche} creators on TikTok${v.detail ? ` who post about ${v.detail}` : ''}, and why?`
+      : `Find small ${niche} creators on TikTok (under 100K followers)${v.detail ? ` who ${v.detail}` : ''} who would be a great fit for a gifted product campaign from ${ws.brand.name || 'my brand'}, and say what each one is good at.`;
+    return ask(question);
   };
 
   const list = prompts(ws);
@@ -627,6 +654,7 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
             <H1>Whose creators do you want to see?</H1>
             <div ref={dockRef}>
               <ScanInput onSubmit={submit} busy={busy || (!ws.approved && !pendingLeft)} chips={false} large autoFocus
+                template={tpl ? tpl.template : null} onTemplateSubmit={(v) => runTemplate(tpl, v)} onClearTemplate={() => setTpl(null)}
                 hint="Live TikTok data" maxLength={300} label="Brand to scan or question"
                 placeholder={ws.approved ? 'Scan a brand or ask, e.g. which tech creators film desk setups?' : 'Type a brand, e.g. Glow Recipe or @glowrecipe'}
                 shortPlaceholder={ws.approved ? 'Scan a brand or ask…' : 'Type any brand…'} />
