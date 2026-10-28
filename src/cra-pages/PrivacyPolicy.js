@@ -96,7 +96,7 @@ const PrivacyPolicy = () => {
           </Paragraph>
           <ul>
             <li>Brands you apply to: kit, selected posts, and the shipping details you submitted so they can decide and ship a PR package.</li>
-            <li>Creators on a brand roster: the brand sees applicants they unlocked on their roster page.</li>
+            <li>Creators on a brand roster: the brand sees the creators who applied on their roster page.</li>
             <li>
               Creator search for brands, including our ChatGPT app, Claude connector, Gemini app and the brand launch page:
               creators with a published kit can appear with their public handle, niches, follower range, country,
