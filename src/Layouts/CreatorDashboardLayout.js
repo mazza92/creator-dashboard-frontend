@@ -528,7 +528,7 @@ const EmptyNotifications = styled.div`
 
 const navItems = [
   { label: 'Polly', icon: Sparkles, path: '/creator/dashboard/for-you' },
-  { label: 'Directory', icon: Search, path: '/creator/dashboard/pr-brands' },
+  { label: 'Brands', icon: Search, path: '/creator/dashboard/pr-brands' },
   { label: 'Paid UGC', icon: DollarSign, path: '/creator/dashboard/paid-gigs' },
   { label: 'Timeline', icon: Calendar, path: '/creator/dashboard/timeline' },
   { label: 'My Kit', icon: FileText, path: '/creator/dashboard/my-kit' },

@@ -1154,7 +1154,7 @@ export default function BrandPRHome() {
             <Cta type="button" onClick={() => showPaywall('card_credits')}>{PRO_OFFER.ctaShort}</Cta>
           ) : (
             <Cta type="button" onClick={() => openApply(brand)}>
-              {isRecruiting || live ? 'Join the list' : 'Pitch the brand'}
+              {isRecruiting || live ? 'Join the list' : 'Email brand'}
             </Cta>
           )}
         </CardBody>
@@ -1442,7 +1442,7 @@ export default function BrandPRHome() {
             </Block>
             )}
             <Foot>
-              <Cta type="button" onClick={() => setStep(2)}>{pitchMode ? 'Pitch the brand' : 'Apply for Brand PR'}</Cta>
+              <Cta type="button" onClick={() => setStep(2)}>{pitchMode ? 'Email brand' : 'Apply for Brand PR'}</Cta>
             </Foot>
           </>
         )}
