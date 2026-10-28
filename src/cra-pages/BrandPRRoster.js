@@ -379,7 +379,26 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     }
   }
 
+  // Marking shipped emails each creator that their box is on its way, so ask first.
+  function confirmShip(list) {
+    const variantQ = campaign?.brief?.variant_question;
+    const waiting = variantQ ? list.filter((c) => !c.variant_answer).map((c) => c.name) : [];
+    const who = list.length === 1 ? list[0].name : `${list.length} creators`;
+    const warn = waiting.length ? `${waiting.join(', ')} ${waiting.length === 1 ? 'hasn’t' : 'haven’t'} answered “${variantQ}” yet.\n\n` : '';
+    return window.confirm(`${warn}Mark ${who} as shipped? We’ll email ${list.length === 1 ? 'them' : 'each one'} that the box is on its way. You can undo this for 24 hours.`);
+  }
+
+  async function onUnship(c) {
+    try {
+      await mutate('unship', { application_id: c.application_id });
+      setToast(`Undone. ${c.name} isn’t marked shipped, and we let them know it hasn’t left yet.`);
+    } catch {
+      /* toast set */
+    }
+  }
+
   async function onMarkShipped() {
+    if (!confirmShip(selectedCreators.filter((c) => !isOut(c)))) return;
     try {
       await mutate('mark-shipped');
       setStep(3);
@@ -397,6 +416,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
   }
 
   async function onShipOne(c) {
+    if (!confirmShip([c])) return;
     try {
       const data = await mutate('mark-shipped', { application_id: c.application_id });
       setToast(
@@ -842,12 +862,26 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                           <Muted>{c.handle}</Muted>
                         </td>
                         <td style={{ whiteSpace: 'pre-line' }}>{formatShipBlock(c.shipping_address)}</td>
-                        <td>{sku || heroProduct}</td>
+                        <td>
+                          {sku || heroProduct}
+                          {campaign?.brief?.variant_question ? (
+                            <>
+                              <br />
+                              {c.variant_answer ? <b>{c.variant_answer}</b> : <Muted>Waiting for their answer</Muted>}
+                            </>
+                          ) : null}
+                        </td>
                         <td>
                           {isOut(c) ? (
                             <Ok>
                               {c.status === 'posted' ? 'Content in' : 'Shipped'}
                               {c.shipped_at ? ` · ${new Date(c.shipped_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+                              {c.can_unship && (
+                                <>
+                                  {' · '}
+                                  <UndoLink type="button" disabled={busy} onClick={() => onUnship(c)}>Undo</UndoLink>
+                                </>
+                              )}
                             </Ok>
                           ) : (
                             <RowShip type="button" disabled={busy} onClick={() => onShipOne(c)}>
@@ -1914,6 +1948,17 @@ const Meta = styled.div`
   b { display: block; font-size: 14px; color: ${INK}; margin-bottom: 4px; }
 `;
 const Ok = styled.span` color: ${GREEN_DEEP}; font-weight: 700; `;
+const UndoLink = styled.button`
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: ${MUTE};
+  text-decoration: underline;
+  cursor: pointer;
+  &:disabled { opacity: 0.5; cursor: default; }
+`;
 const BriefWrap = styled.div`
   position: relative;
   margin: 0 0 16px;

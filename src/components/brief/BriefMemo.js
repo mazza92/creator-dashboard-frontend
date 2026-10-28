@@ -9,7 +9,8 @@ export const BRIEF_SECTIONS = [
 ];
 
 export function hasBrief(brief) {
-  return Boolean(brief && (brief.message || brief.must_include || brief.avoid || brief.tags || brief.reference_url));
+  return Boolean(brief && (brief.message || brief.must_include || brief.avoid || brief.tags || brief.reference_url
+    || brief.variant_question));
 }
 
 function updatedLabel(iso) {
