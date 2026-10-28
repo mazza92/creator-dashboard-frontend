@@ -34,6 +34,14 @@ const FIELDS = [
     max: 160,
   },
   {
+    key: 'variant_question',
+    label: 'Size, shade or variant to ask',
+    optional: true,
+    hint: 'Picked creators answer it on Newcollab before you ship.',
+    placeholder: 'e.g. Which bedsheet size do you need? Twin, Full, Queen or King',
+    max: 160,
+  },
+  {
     key: 'reference_url',
     label: 'Reference video',
     optional: true,

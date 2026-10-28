@@ -17,6 +17,7 @@ const BRIEF_FIELDS = [
   { key: 'must_include', label: 'Must show or say', placeholder: 'e.g. Show the texture on skin. Mention it’s fragrance free.', max: 500, rows: 3 },
   { key: 'avoid', label: 'Please avoid', placeholder: 'e.g. Medical claims, other brands in frame.', max: 300, rows: 2 },
   { key: 'tags', label: 'Tags and hashtags', placeholder: '@yourbrand #gifted', max: 160 },
+  { key: 'variant_question', label: 'Size, shade or variant to ask (optional)', placeholder: 'e.g. Which bedsheet size do you need? Twin, Full, Queen or King', max: 160 },
   { key: 'reference_url', label: 'Reference video (optional)', placeholder: 'https://www.tiktok.com/@…', max: 600 },
 ];
 
@@ -121,6 +122,14 @@ export default function WorkspaceRoster({ token, onBack }) {
   };
 
   const campaign = (data && data.campaign) || {};
+  // Marking shipped emails creators that their box is on its way, so ask first.
+  const confirmShip = (list) => {
+    const variantQ = campaign.brief && campaign.brief.variant_question;
+    const waiting = variantQ ? list.filter((c) => !c.variant_answer).map((c) => c.name) : [];
+    const who = list.length === 1 ? list[0].name : `${list.length} creators`;
+    const warn = waiting.length ? `${waiting.join(', ')} ${waiting.length === 1 ? 'hasn’t' : 'haven’t'} answered “${variantQ}” yet.\n\n` : '';
+    return window.confirm(`${warn}Mark ${who} as shipped? We’ll email ${list.length === 1 ? 'them' : 'each one'} that the box is on its way. You can undo this for 24 hours.`);
+  };
   const creators = useMemo(() => (data && data.creators) || [], [data]);
   const billing = (data && data.billing) || {};
   const subscribed = Boolean(billing.subscribed);
@@ -347,6 +356,7 @@ export default function WorkspaceRoster({ token, onBack }) {
                 <Download size={15} /> Shipping CSV
               </Primary>
               <Ghost type="button" disabled={busy || shipped} onClick={async () => {
+                if (!confirmShip(selected.filter((c) => !isOut(c)))) return;
                 if (await mutate('mark-shipped', null, { keepStep: false })) setToast('Shipped. Content lands here.');
               }}>
                 {shipped ? 'All shipped' : shippedCount ? `Mark the other ${selected.length - shippedCount} shipped` : 'Mark all shipped'}
@@ -359,12 +369,22 @@ export default function WorkspaceRoster({ token, onBack }) {
               <li key={c.application_id}>
                 <Avatar $bg={hue(c.name)}>{c.avatar_url ? <img src={c.avatar_url} alt="" /> : initials(c.name)}</Avatar>
                 <div className="who"><b>{c.name}</b><span>{c.handle}</span></div>
-                <pre className="addr">{address(c.shipping_address)}</pre>
+                <pre className="addr">{address(c.shipping_address)}
+                  {campaign.brief && campaign.brief.variant_question
+                    ? `\n${c.variant_answer ? `Needs: ${c.variant_answer}` : 'Waiting for their size / variant answer'}` : ''}</pre>
                 <div className="st">
                   {isOut(c) ? (
-                    <Done><CheckCircle2 size={14} /> {c.status === 'posted' ? 'Content in' : 'Shipped'}{c.shipped_at ? ` · ${shortDate(c.shipped_at)}` : ''}</Done>
+                    <Done>
+                      <CheckCircle2 size={14} /> {c.status === 'posted' ? 'Content in' : 'Shipped'}{c.shipped_at ? ` · ${shortDate(c.shipped_at)}` : ''}
+                      {c.can_unship && (
+                        <UndoBtn type="button" disabled={busy} onClick={async () => {
+                          if (await mutate('unship', { application_id: c.application_id })) setToast(`Undone. We told ${c.name} it hasn’t shipped yet.`);
+                        }}>Undo</UndoBtn>
+                      )}
+                    </Done>
                   ) : (
                     <Ghost type="button" disabled={busy} onClick={async () => {
+                      if (!confirmShip([c])) return;
                       if (await mutate('mark-shipped', { application_id: c.application_id })) setToast(`${c.name} marked shipped. We told them it’s on the way.`);
                     }}>
                       <Truck size={14} /> Mark shipped
@@ -1001,6 +1021,17 @@ const Done = styled.span`
   color: ${t.green};
   font-size: 13px;
   font-weight: 600;
+`;
+
+const UndoBtn = styled.button`
+  border: 0;
+  background: none;
+  padding: 0 0 0 6px;
+  font: inherit;
+  color: ${t.muted};
+  text-decoration: underline;
+  cursor: pointer;
+  &:disabled { opacity: 0.5; cursor: default; }
 `;
 
 const ContentGrid = styled.ul`

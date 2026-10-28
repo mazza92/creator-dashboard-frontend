@@ -18,6 +18,57 @@ function statusLine(app) {
   return `${app.name} picked you and is preparing your box.`;
 }
 
+// The brand's size / shade / variant question from the brief, answered before they ship.
+function VariantAsk({ app }) {
+  const pick = app.pick || {};
+  const [answer, setAnswer] = useState(pick.variant_answer || '');
+  const [saved, setSaved] = useState(pick.variant_answer || '');
+  const [editing, setEditing] = useState(!pick.variant_answer);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  if (!pick.variant_question) return null;
+
+  async function save(e) {
+    e.preventDefault();
+    if (!answer.trim()) {
+      setError('Add your answer.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const { data } = await api.post(`/api/pr-crm/applications/${app.application_id}/variant`, { answer: answer.trim() });
+      if (!data?.success) throw new Error(data?.error || 'Could not save');
+      setSaved(data.variant_answer);
+      setAnswer(data.variant_answer);
+      setEditing(false);
+    } catch (err) {
+      setError(err.response?.data?.error || err.message || 'Could not save your answer');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Ask $done={!editing}>
+      <b>{app.name} asks:</b> {pick.variant_question}
+      {editing ? (
+        <form onSubmit={save}>
+          <input type="text" maxLength={120} value={answer} placeholder="Your answer, e.g. Queen"
+            aria-label={pick.variant_question} onChange={(e) => setAnswer(e.target.value)} />
+          <button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Send answer'}</button>
+        </form>
+      ) : (
+        <p>
+          Your answer: <b>{saved}</b>{' '}
+          {!pick.shipped && <button type="button" onClick={() => setEditing(true)}>Change</button>}
+        </p>
+      )}
+      {error && <Err role="alert">{error}</Err>}
+    </Ask>
+  );
+}
+
 function PickedCard({ app, focused, onDelivered }) {
   const pick = app.pick || {};
   const delivered = pick.delivered;
@@ -67,6 +118,7 @@ function PickedCard({ app, focused, onDelivered }) {
         </div>
       </Top>
       {pick.product && <Product>Sending you: <b>{pick.product}</b></Product>}
+      <VariantAsk app={app} />
       <Brief>
         <li><b>1 organic post</b> on TikTok or Instagram tagging {brandTag(app)}</li>
         <li><b>1 raw UGC video</b>, no music or captions, they can reuse in ads for 6 months</li>
@@ -272,6 +324,58 @@ const Done = styled.div`
     color: ${tokens.muted};
     text-decoration: underline;
     font: inherit;
+    cursor: pointer;
+  }
+`;
+
+const Ask = styled.div`
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: ${(p) => (p.$done ? '#f5f5f7' : '#fff7ed')};
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${tokens.ink};
+
+  form {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  input {
+    flex: 1 1 180px;
+    min-width: 0;
+    border: 1px solid ${tokens.line};
+    border-radius: 10px;
+    padding: 9px 11px;
+    font: inherit;
+    background: #fff;
+  }
+
+  form button {
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: ${tokens.ink};
+    cursor: pointer;
+  }
+
+  form button:disabled { opacity: 0.6; }
+
+  p { margin: 6px 0 0; }
+
+  p button {
+    border: 0;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: ${tokens.muted};
+    text-decoration: underline;
     cursor: pointer;
   }
 `;
