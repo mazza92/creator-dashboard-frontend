@@ -11,6 +11,7 @@ import { scan as t } from '../app/brands/scan/theme';
 import { ListSkeleton } from './WorkspaceSkeleton';
 import { Banner, Empty, PlainLink, Primary } from './ui';
 import { startCheckout } from './workspaceApi';
+import RosterChat, { MessageButton } from '../components/chat/RosterChat';
 
 const BRIEF_FIELDS = [
   { key: 'message', label: 'The one thing to get across', placeholder: 'e.g. Our serum fades dark spots in 2 weeks.', max: 280, rows: 2 },
@@ -57,6 +58,8 @@ export default function WorkspaceRoster({ token, onBack }) {
   const [briefOpen, setBriefOpen] = useState(false);
   const [quickDismissed, setQuickDismissed] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
+  const [chatId, setChatId] = useState(null);
+  const [readIds, setReadIds] = useState(() => new Set());
   const viewed = useRef(new Set());
 
   const apply = useCallback((payload, keepStep) => {
@@ -181,6 +184,31 @@ export default function WorkspaceRoster({ token, onBack }) {
     </Upsell>
   );
 
+  const markRead = useCallback(() => {
+    if (chatId) setReadIds((prev) => (prev.has(chatId) ? prev : new Set(prev).add(chatId)));
+  }, [chatId]);
+  const chatWith = chatId ? creators.find((c) => c.application_id === chatId) : null;
+  const unreadFor = (c) => (readIds.has(c.application_id) ? 0 : Number(c.unread_messages) || 0);
+  const openChat = (c) => {
+    setReadIds((prev) => { const next = new Set(prev); next.delete(c.application_id); return next; });
+    setChatId(c.application_id);
+  };
+  const chat = (
+    <RosterChat
+      open={Boolean(chatWith)}
+      onClose={() => setChatId(null)}
+      title={chatWith ? chatWith.name : ''}
+      subtitle={product}
+      avatarUrl={chatWith ? chatWith.avatar_url : ''}
+      loadUrl={chatWith ? `/api/brand-pr/r/${token}/messages?application_id=${chatWith.application_id}` : ''}
+      sendUrl={`/api/brand-pr/r/${token}/messages`}
+      extraBody={chatWith ? { application_id: chatWith.application_id } : null}
+      onRead={markRead}
+      quickReplies={['Which size do you need?', 'Is your shipping address still correct?', 'Your box ships this week!', 'When do you plan to post?']}
+      emptyHint={`Ask about sizes, shipping or timing. ${(chatWith ? chatWith.name : 'They').split(' ')[0]} gets an email when you write, and replies land here.`}
+    />
+  );
+
   const briefPanel = (
     <BriefCard>
       <div className="row">
@@ -198,6 +226,7 @@ export default function WorkspaceRoster({ token, onBack }) {
   return (
     <Wrap>
       {toast && <Toast role="status">{toast}</Toast>}
+      {chat}
       {briefOpen && (
         <BriefEditor brief={campaign.brief} onClose={() => setBriefOpen(false)}
           onSave={async (draft) => {
@@ -368,7 +397,10 @@ export default function WorkspaceRoster({ token, onBack }) {
             {selected.map((c) => (
               <li key={c.application_id}>
                 <Avatar $bg={hue(c.name)}>{c.avatar_url ? <img src={c.avatar_url} alt="" /> : initials(c.name)}</Avatar>
-                <div className="who"><b>{c.name}</b><span>{c.handle}</span></div>
+                <div className="who">
+                  <b>{c.name}</b><span>{c.handle}</span>
+                  <MessageButton unread={unreadFor(c)} onClick={() => openChat(c)} className="msg" />
+                </div>
                 <pre className="addr">{address(c.shipping_address)}
                   {campaign.brief && campaign.brief.variant_question
                     ? `\n${c.variant_answer ? `Needs: ${c.variant_answer}` : 'Waiting for their size / variant answer'}` : ''}</pre>
@@ -413,6 +445,7 @@ export default function WorkspaceRoster({ token, onBack }) {
                   </div>
                   <div className="meta">
                     <b>{c.name}</b>
+                    <MessageButton unread={unreadFor(c)} onClick={() => openChat(c)} className="msg" />
                     {got ? (
                       <div className="links">
                         {got.organic_url && <a href={got.organic_url} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} /> Organic post</a>}

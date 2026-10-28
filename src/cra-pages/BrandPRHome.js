@@ -1759,6 +1759,7 @@ export default function BrandPRHome() {
       <PickedBrands
         apps={pickedApps}
         focusId={searchParams.get('picked')}
+        openChat={searchParams.get('chat') === '1'}
         onDelivered={onPickDelivered}
       />
 
