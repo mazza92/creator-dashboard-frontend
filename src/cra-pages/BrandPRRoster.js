@@ -6,6 +6,7 @@ import { creatorTokens as tokens } from '../theme/creatorTokens';
 import RosterSplash, { readRosterPreview, writeRosterPreview } from './RosterSplash';
 import BriefMemo from '../components/brief/BriefMemo';
 import RosterBriefModal from '../components/brief/RosterBriefModal';
+import RosterChat, { MessageButton } from '../components/chat/RosterChat';
 
 const INK = tokens.ink;
 const MUTE = tokens.muted;
@@ -260,6 +261,28 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
   const shipped = campaign?.status === 'shipped';
   const isOut = (c) => Boolean(c.shipped_at) || c.status === 'posted';
   const shippedCount = selectedCreators.filter(isOut).length;
+
+  // Messages: one thread per picked creator, opened from a row or from the email's Reply link (?chat=<id>).
+  const [chatId, setChatId] = useState(null);
+  const [readIds, setReadIds] = useState(() => new Set());
+  const chatWith = chatId ? creators.find((c) => c.application_id === chatId) : null;
+  const chatOpened = useRef(false);
+  useEffect(() => {
+    if (chatOpened.current || !locked || !creators.length) return;
+    const wanted = Number(new URLSearchParams(window.location.search).get('chat'));
+    if (wanted && creators.some((c) => c.application_id === wanted)) {
+      chatOpened.current = true;
+      setChatId(wanted);
+    }
+  }, [locked, creators]);
+  const unreadFor = (c) => (readIds.has(c.application_id) ? 0 : Number(c.unread_messages) || 0);
+  const markRead = useCallback(() => {
+    if (chatId) setReadIds((prev) => (prev.has(chatId) ? prev : new Set(prev).add(chatId)));
+  }, [chatId]);
+  const openChat = (c) => {
+    setReadIds((prev) => { const next = new Set(prev); next.delete(c.application_id); return next; });
+    setChatId(c.application_id);
+  };
   const contentOpen = shipped || shippedCount > 0;
   const drawer = creators.find((c) => c.application_id === drawerId) || null;
   const openCreators = creators.filter((c) => !c.skipped);
@@ -555,6 +578,19 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
   return (
     <Shell>
       {toast && <Toast role="status">{toast}</Toast>}
+      <RosterChat
+        open={Boolean(chatWith)}
+        onClose={() => setChatId(null)}
+        title={chatWith?.name || ''}
+        subtitle={[brandName, sku || heroProduct].filter(Boolean).join(' · ')}
+        avatarUrl={chatWith?.avatar_url}
+        loadUrl={chatWith ? `/api/brand-pr/r/${token}/messages?application_id=${chatWith.application_id}` : ''}
+        sendUrl={`/api/brand-pr/r/${token}/messages`}
+        extraBody={chatWith ? { application_id: chatWith.application_id } : null}
+        onRead={markRead}
+        quickReplies={['Which size do you need?', 'Is your shipping address still correct?', 'Your box ships this week!', 'When do you plan to post?']}
+        emptyHint={`Ask about sizes, shipping or timing. ${(chatWith?.name || 'They').split(' ')[0]} gets an email when you write, and replies land here.`}
+      />
       <RosterBriefModal
         open={briefOpen}
         brief={campaign?.brief}
@@ -860,6 +896,9 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                           <b>{c.name}</b>
                           <br />
                           <Muted>{c.handle}</Muted>
+                          <div style={{ marginTop: 8 }}>
+                            <MessageButton unread={unreadFor(c)} onClick={() => openChat(c)} />
+                          </div>
                         </td>
                         <td style={{ whiteSpace: 'pre-line' }}>{formatShipBlock(c.shipping_address)}</td>
                         <td>
@@ -956,6 +995,9 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                             ? `Overdue since ${shortDate(c.content_due_at)}, Polly is chasing them`
                             : `Due ${shortDate(c.content_due_at)} · ${daysUntil(c.content_due_at)}`
                         ) : isOut(c) ? 'Usually 5–10 days after delivery' : 'Not shipped yet'}
+                        <div style={{ marginTop: 8 }}>
+                          <MessageButton unread={unreadFor(c)} onClick={() => openChat(c)} />
+                        </div>
                       </Meta>
                     </Piece>
                   );

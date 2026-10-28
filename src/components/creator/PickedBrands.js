@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import api from '../../config/api';
 import { creatorTokens as tokens } from '../../theme/creatorTokens';
 import BriefMemo from '../brief/BriefMemo';
+import RosterChat, { MessageButton } from '../chat/RosterChat';
 
 const DUE_DAYS = 10;
 
@@ -69,7 +70,7 @@ function VariantAsk({ app }) {
   );
 }
 
-function PickedCard({ app, focused, onDelivered }) {
+function PickedCard({ app, focused, openChat, onDelivered }) {
   const pick = app.pick || {};
   const delivered = pick.delivered;
   const [editing, setEditing] = useState(!delivered);
@@ -79,6 +80,8 @@ function PickedCard({ app, focused, onDelivered }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const ref = useRef(null);
+  const [chatOpen, setChatOpen] = useState(Boolean(focused && openChat));
+  const [unread, setUnread] = useState(Number(pick.unread_messages) || 0);
 
   useEffect(() => {
     if (focused && ref.current) ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -116,7 +119,20 @@ function PickedCard({ app, focused, onDelivered }) {
           <h3>{app.name}</h3>
           <Status $done={!!delivered}>{statusLine(app)}</Status>
         </div>
+        <MessageButton className="msg" unread={unread} label={`Message ${app.name}`} onClick={() => setChatOpen(true)} />
       </Top>
+      <RosterChat
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        title={app.name}
+        subtitle={pick.product || 'PR box'}
+        avatarUrl={app.logo}
+        loadUrl={`/api/pr-crm/applications/${app.application_id}/messages`}
+        sendUrl={`/api/pr-crm/applications/${app.application_id}/messages`}
+        onRead={() => setUnread(0)}
+        quickReplies={['Thank you so much! 🙏', 'My box arrived 🎉', 'Any update on shipping?', 'Posting this week!']}
+        emptyHint={`Questions about your size, shipping or timing? Ask ${app.name} here. They get an email when you write.`}
+      />
       {pick.product && <Product>Sending you: <b>{pick.product}</b></Product>}
       <VariantAsk app={app} />
       <Brief>
@@ -166,7 +182,7 @@ function PickedCard({ app, focused, onDelivered }) {
   );
 }
 
-export default function PickedBrands({ apps, focusId, onDelivered }) {
+export default function PickedBrands({ apps, focusId, openChat = false, onDelivered }) {
   if (!apps?.length) return null;
   const open = apps.filter((a) => !a.pick?.delivered).length;
   return (
@@ -180,6 +196,7 @@ export default function PickedBrands({ apps, focusId, onDelivered }) {
           key={app.application_id}
           app={app}
           focused={Number(focusId) === Number(app.application_id)}
+          openChat={openChat}
           onDelivered={onDelivered}
         />
       ))}
@@ -226,6 +243,12 @@ const Top = styled.div`
   gap: 12px;
   align-items: center;
   h3 { margin: 0; font-size: 17px; }
+  > div { flex: 1; min-width: 0; }
+  .msg { flex-shrink: 0; }
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    .msg { width: 100%; justify-content: center; }
+  }
 `;
 
 const Logo = styled.img`
