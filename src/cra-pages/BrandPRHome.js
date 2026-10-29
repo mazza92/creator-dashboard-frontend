@@ -304,13 +304,14 @@ function listStatus(brand) {
   if (viewed) return { tone: 'open', label: 'Brand viewed list', line: `Opened ${viewed}, no picks yet` };
   const emailed = daysAgoText(brand?.brandEmailedAt);
   if (emailed) return { tone: 'mid', label: 'Sent to brand', line: `Emailed ${emailed}, no reply yet` };
-  return { tone: 'open', label: 'Open list', line: 'We send it once 3 creators join' };
+  const joined = Number(brand?.rosterFillCount) || 0;
+  return { tone: 'open', label: 'Open list', line: joined >= 3 ? '' : 'We send it once 3 creators join' };
 }
 
+// No cap on applicants: show how many creators already applied.
 function listFill(brand) {
-  const target = Number(brand?.rosterFillTarget) || 15;
-  const fill = Math.min(Number(brand?.rosterFillCount) || 0, target);
-  return { fill, target, pct: Math.round((fill / target) * 100) };
+  const n = Number(brand?.rosterFillCount) || 0;
+  return n ? `${n} ${n === 1 ? 'creator' : 'creators'} applied` : 'Be the first to apply';
 }
 
 function creditCopy(quota) {
@@ -1178,13 +1179,13 @@ export default function BrandPRHome() {
           </CampaignLive>
           <h2>Open gift lists</h2>
           <p>
-            We send the brand your profile with up to 15 creators in your niche. They pick who gets a box. One credit.
+            We send the brand your profile with the other creators who applied. They pick who gets a box. One credit.
           </p>
         </CampaignHead>
         <CampaignRail $count={brands.length}>
           {brands.map((brand) => {
             const status = listStatus(brand);
-            const { fill, target, pct } = listFill(brand);
+            const applied = listFill(brand);
             const catName = categoryLabel(brand.category || '');
             return (
               <CampaignCard key={brand.id} $heat={status.tone} $solo={brands.length === 1} $recruit={recruit}>
@@ -1210,8 +1211,7 @@ export default function BrandPRHome() {
                   <strong>{brand.heroProduct || 'A gifted product they choose'}</strong>
                 </CampaignOffer>
                 <ListFill $recruit={recruit}>
-                  <div aria-hidden="true"><i style={{ width: `${pct}%` }} /></div>
-                  <span>{fill} of {target} on the list</span>
+                  <span>{applied}</span>
                 </ListFill>
                 {noCredits ? (
                   <Cta type="button" onClick={() => showPaywall(recruit ? 'recruit_credits' : 'campaign_credits')}>{PRO_OFFER.ctaShort}</Cta>
