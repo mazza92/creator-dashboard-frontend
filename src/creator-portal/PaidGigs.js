@@ -474,6 +474,12 @@ export default function PaidGigs() {
         )}
       </Hero>
 
+      <PromoteBanner href="/creator/dashboard/promote">
+        <span className="tag">New · Newcollab pays you</span>
+        <b>Post about Newcollab, earn $5 per 1,000 views</b>
+        <span>Up to $50 a video. Apply in a minute <ArrowUpRight size={14} /></span>
+      </PromoteBanner>
+
       <Tabs role="tablist" aria-label="Filter paid gigs">
         {VIEWS.map(({ id, label }) => {
           const n = tabCount(id);
@@ -574,6 +580,21 @@ const Page = styled.div`
   box-sizing: border-box;
   font-family: ${t.fontSans};
   color: ${t.ink};
+`;
+
+const PromoteBanner = styled.a`
+  display: grid;
+  gap: 2px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid ${t.accentBorder};
+  background: ${t.accentSoft};
+  color: ${t.ink};
+  text-decoration: none;
+  b { font-size: 16px; }
+  span { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; color: ${t.accentDeep}; }
+  .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
 `;
 
 const Hero = styled.header`
