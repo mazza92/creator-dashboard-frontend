@@ -23,6 +23,11 @@ import { FaTiktok } from 'react-icons/fa6';
 // V4 SIGNUP FLOW - Registration with first/last name, Google SSO
 // ============================================================================
 
+// Promote Newcollab: QueryParamRedirect saves ?promo= on any page, so the code survives a click to signup.
+const readPromo = () => {
+  try { return localStorage.getItem('nc_promo') || null; } catch { return null; }
+};
+
 const colors = {
   rose: '#E11D48',
   black: '#0F0F0F',
@@ -445,6 +450,7 @@ export default function CreatorSignup() {
       brand_query: params.get('brand_query') || null,  // unmatched brand search
       source_page: params.get('source_page') || null,  // blog post slug
       intent: params.get('intent') || null,  // e.g. "brand_specific"
+      promo: params.get('promo') || readPromo(),  // Promote Newcollab referral code
     };
   }, [location.search]);
 
@@ -476,6 +482,7 @@ export default function CreatorSignup() {
         terms_accepted: true,
         // Signup context from URL params (blog widget, landing pages)
         ...(signupContext.ref && { signup_ref: signupContext.ref }),
+        ...(signupContext.promo && { promo_code: signupContext.promo }),
         ...(signupContext.brand && { first_unlock_intent: signupContext.brand }),
         ...(signupContext.brand_query && { brand_query: signupContext.brand_query }),
         ...(signupContext.source_page && { signup_source_page: signupContext.source_page }),
@@ -532,6 +539,7 @@ export default function CreatorSignup() {
       email: user.email,
       name: user.displayName,
       ...(signupContext.ref && { signup_ref: signupContext.ref }),
+      ...(signupContext.promo && { promo_code: signupContext.promo }),
       ...(signupContext.brand && { first_unlock_intent: signupContext.brand }),
       ...(signupContext.brand_query && { brand_query: signupContext.brand_query }),
       ...(signupContext.source_page && { signup_source_page: signupContext.source_page }),

@@ -14,6 +14,10 @@ const QueryParamRedirect = () => {
     const searchParams = new URLSearchParams(location.search);
     captureUpgradeDeeplink(searchParams);
     captureEmailCampaign(searchParams);
+    const promo = searchParams.get('promo');
+    if (promo && /^[a-z0-9]{4,16}$/i.test(promo)) {
+      try { localStorage.setItem('nc_promo', promo.toLowerCase()); } catch { /* storage blocked */ }
+    }
     // Leave email upgrade deeplinks intact until the destination page opens the modal.
     if (searchParams.get('upgrade')) {
       return;
