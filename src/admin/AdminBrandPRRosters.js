@@ -44,6 +44,9 @@ async function copyText(text) {
   }
 }
 
+// Open rosters, and locked ones with seats left (rolling roster), can be pushed to Live now.
+const canPush = (row) => ['active', 'locked', 'shipped'].includes(row.status);
+
 export default function AdminBrandPRRosters() {
   const [loading, setLoading] = useState(false);
   const [campaigns, setCampaigns] = useState([]);
@@ -98,7 +101,7 @@ export default function AdminBrandPRRosters() {
       filling: all.filter((c) => c.in_focus).length,
       warming: all.filter((c) => c.status === 'active' && (c.fill_count || 0) > 0 && !c.in_focus && !c.fill_ready).length,
       ready: all.filter((c) => c.fill_ready).length,
-      spotlighted: all.filter((c) => c.spotlighted && c.status === 'active').length,
+      spotlighted: all.filter((c) => c.spotlighted && canPush(c)).length,
       active: all.filter((c) => c.status === 'active').length,
       locked: all.filter((c) => c.status === 'locked').length,
       shipped: all.filter((c) => c.status === 'shipped').length,
@@ -283,7 +286,7 @@ export default function AdminBrandPRRosters() {
   }
 
   async function pushSpotlight(on) {
-    const ids = checkedRows.filter((row) => row.status === 'active').map((row) => row.id);
+    const ids = checkedRows.filter(canPush).map((row) => row.id);
     if (!ids.length) {
       message.warning('Select at least one active roster');
       return;
@@ -312,7 +315,7 @@ export default function AdminBrandPRRosters() {
   function composeFillEmail() {
     const rows = checkedRows.length
       ? checkedRows
-      : campaigns.filter((row) => row.spotlighted && row.status === 'active');
+      : campaigns.filter((row) => row.spotlighted && canPush(row));
     if (!rows.length) {
       message.warning('Select rosters, or push some to For You first');
       return;
@@ -483,7 +486,7 @@ export default function AdminBrandPRRosters() {
             <tr key={row.id} className={row.spotlighted ? 'spot' : row.in_focus ? 'hot' : row.fill_ready ? 'ready' : ''}>
               <td>
                 <Checkbox
-                  disabled={row.status !== 'active'}
+                  disabled={!canPush(row)}
                   checked={checkedIds.has(row.id)}
                   onChange={(e) => toggleChecked(row.id, e.target.checked)}
                 />

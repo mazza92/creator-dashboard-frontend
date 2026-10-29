@@ -804,7 +804,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                         </BtnPrimary>
                       </Paywall>
                     )}
-                    {skippedCreators.length > 0 && !locked && (
+                    {skippedCreators.length > 0 && (!locked || seatsLeft > 0) && (
                       <SkippedWrap>
                         <SkippedLabel>Skipped</SkippedLabel>
                         {skippedCreators.map((c) => (
@@ -1244,6 +1244,7 @@ function CreatorCard({ c, selected, locked, canAdd, busy, onApprove, onAddPick, 
         {locked && !selected && canAdd && c.status === 'review' && !c.skipped && (
           <Actions>
             <BtnYes type="button" disabled={busy} onClick={() => onAddPick(c.application_id)}>Add to gift list</BtnYes>
+            <BtnNo type="button" disabled={busy} onClick={() => onSkip(c.application_id)}>Skip</BtnNo>
           </Actions>
         )}
       </CardBody>

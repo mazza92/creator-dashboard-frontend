@@ -304,7 +304,7 @@ export default function WorkspaceRoster({ token, onBack }) {
             )}
 
             {seatsLeft > 0 && seatsBox}
-            {!locked && creators.length > 0 && (
+            {(!locked || seatsLeft > 0) && creators.length > 0 && (
               <Tabs>
                 <button type="button" aria-pressed={tab === 'open'} onClick={() => setTab('open')}>Applicants <i>{open.length}</i></button>
                 <button type="button" aria-pressed={tab === 'skipped'} onClick={() => setTab('skipped')} disabled={!skipped.length}>
@@ -321,7 +321,7 @@ export default function WorkspaceRoster({ token, onBack }) {
               </Empty>
             ) : (
               <Grid>
-                {(locked
+                {(locked && tab === 'skipped' && seatsLeft > 0 ? skipped : locked
                   ? [...selected, ...(seatsLeft ? ordered.filter((c) => c.status === 'review' && !selectedIds.includes(c.application_id)) : [])]
                   : tab === 'skipped' ? skipped : ordered).map((c) => (
                   <CreatorCard key={c.application_id} c={c} picked={selectedIds.includes(c.application_id)}
@@ -536,7 +536,14 @@ function CreatorCard({ c, picked, locked, canAdd, busy, full, onAdd, onRemove, o
         {c.kit_url && <a className="kit" href={c.kit_url} target="_blank" rel="noopener noreferrer" onClick={onView}>Media kit <ExternalLink size={12} /></a>}
         {locked && canAdd && !picked && (
           <div className="act">
-            <AddBtn type="button" disabled={busy} onClick={onAdd}><Check size={14} /> Add to gift list</AddBtn>
+            {c.skipped ? (
+              <Ghost type="button" disabled={busy} onClick={onSkip}><Undo2 size={14} /> Undo skip</Ghost>
+            ) : (
+              <>
+                <AddBtn type="button" disabled={busy} onClick={onAdd}><Check size={14} /> Add to gift list</AddBtn>
+                <Ghost type="button" disabled={busy} onClick={onSkip}>Skip</Ghost>
+              </>
+            )}
           </div>
         )}
         {c.status === 'confirm' && <div className="stats">Applied on your listing · confirming their address</div>}
