@@ -539,7 +539,8 @@ function CreatorCard({ c, picked, locked, canAdd, busy, full, onAdd, onRemove, o
             <AddBtn type="button" disabled={busy} onClick={onAdd}><Check size={14} /> Add to gift list</AddBtn>
           </div>
         )}
-        {!locked && (
+        {c.status === 'confirm' && <div className="stats">Applied on your listing · confirming their address</div>}
+        {!locked && c.status !== 'confirm' && (
           <div className="act">
             {c.skipped ? (
               <Ghost type="button" disabled={busy} onClick={onSkip}><Undo2 size={14} /> Undo skip</Ghost>

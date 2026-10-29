@@ -257,7 +257,9 @@ function normalizeBrand(raw, appliedMap) {
     responseRate: observedRate(raw.reply_signal || raw.replySignal) ?? raw.response_rate ?? raw.responseRate,
     replySignal: raw.reply_signal || raw.replySignal || null,
     applyStatus: applied?.apply_status || raw.apply_status || null,
-    applied: Boolean(applied || raw.apply_status),
+    // 'confirm': applied on an old listing; applying again confirms it (posts, address, terms), no credit used.
+    needsConfirm: (applied?.apply_status || raw.apply_status) === 'confirm',
+    applied: Boolean(applied || raw.apply_status) && (applied?.apply_status || raw.apply_status) !== 'confirm',
     applyStale: Boolean(applied?.stale ?? raw.stale),
     social: parseSocial(raw.social || raw.pr_social_profile),
     rosterHunger: Number(raw.roster_hunger || raw.rosterHunger) || 0,
@@ -717,7 +719,7 @@ export default function BrandPRHome() {
     const req = ++applyReqRef.current;
     applySourceRef.current = source || (tab === 'dir' ? 'directory' : 'foryou');
     const remaining = quota?.is_unlimited ? 99 : Number(quota?.remaining);
-    if (Number.isFinite(remaining) && remaining <= 0) {
+    if (Number.isFinite(remaining) && remaining <= 0 && !brand.needsConfirm) {
       trackApplyEvent('apply_paywall', {
         source: applySourceRef.current,
         brand_id: brand.id,
@@ -1116,6 +1118,7 @@ export default function BrandPRHome() {
                 <Score><b>{Math.round(brand.matchScore)}%</b> fit</Score>
               )}
               {brand.applied && <AppliedBadge>{brand.applyStale ? 'No pick yet' : 'Applied'}</AppliedBadge>}
+              {brand.needsConfirm && <AppliedBadge>Confirm your spot</AppliedBadge>}
             </Badges>
           </Row1>
           <Offer>
@@ -1150,6 +1153,8 @@ export default function BrandPRHome() {
             </StaleNote>
           ) : brand.applied ? (
             <Tracker stage={statusToStage(brand.applyStatus)} compact />
+          ) : brand.needsConfirm ? (
+            <Cta type="button" onClick={() => openApply(brand)}>Confirm my spot</Cta>
           ) : noCredits ? (
             <Cta type="button" onClick={() => showPaywall('card_credits')}>{PRO_OFFER.ctaShort}</Cta>
           ) : (
