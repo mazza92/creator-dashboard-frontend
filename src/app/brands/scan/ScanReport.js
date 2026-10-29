@@ -915,7 +915,7 @@ export function GateCard({ gate, cta }) {
             if (cta && cta.onClick) { e.preventDefault(); cta.onClick(); }
           }}
         >
-          {(cta && cta.label) || 'Try your first campaign free'} <ArrowRight size={16} />
+          {(cta && cta.label) || (gate.gate === 'account' ? 'Create a free account' : 'Try your first campaign free')} <ArrowRight size={16} />
         </Cta>
       )}
     </GateBox>
