@@ -546,7 +546,7 @@ function CreatorCard({ c, picked, locked, canAdd, busy, full, onAdd, onRemove, o
             )}
           </div>
         )}
-        {c.status === 'confirm' && <div className="stats">Applied on your listing · confirming their address</div>}
+        {c.status === 'confirm' && <div className="stats">Confirming their address</div>}
         {!locked && c.status !== 'confirm' && (
           <div className="act">
             {c.skipped ? (
