@@ -1240,7 +1240,7 @@ function CreatorCard({ c, selected, locked, canAdd, busy, onApprove, onAddPick, 
           </Actions>
         )}
         {locked && selected && <StatusLine>On your gift list</StatusLine>}
-        {c.status === 'confirm' && <StatusLine>Applied on your listing · confirming their address</StatusLine>}
+        {c.status === 'confirm' && <StatusLine>Confirming their address</StatusLine>}
         {locked && !selected && canAdd && c.status === 'review' && !c.skipped && (
           <Actions>
             <BtnYes type="button" disabled={busy} onClick={() => onAddPick(c.application_id)}>Add to gift list</BtnYes>
