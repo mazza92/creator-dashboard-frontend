@@ -2,7 +2,8 @@
 // API: GET /api/promote, POST /api/promote/apply | /videos | /payout (services/ugc_program on the backend).
 import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { ArrowUpRight, Check, ChevronDown, Copy, Eye, Link2, Megaphone } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, Copy, Eye, Link2, Megaphone, Send, Smartphone, Wallet } from 'lucide-react';
+import { AutoTikTok, EXAMPLES, EarningsSlider, HeroStack, VideoWall } from './PromoteVisuals';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
@@ -15,19 +16,19 @@ const shortDate = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { 
 
 const HOOKS = [
   {
-    title: 'The free PR box',
+    title: 'The free PR box', example: EXAMPLES[0],
     hook: '"I get free PR boxes with under 5K followers. Here\'s the app I use."',
     show: 'Open Newcollab, scroll the open gift lists, tap Join the list. Cut to a box you received (any brand).',
     close: '"It\'s free to start. Link in my bio."',
   },
   {
-    title: 'Stop waiting for brands',
+    title: 'Stop waiting for brands', example: EXAMPLES[2],
     hook: '"Stop waiting for brands to DM you. Do this instead."',
     show: 'Show Polly writing a pitch to a brand in your niche and sending it from your Gmail. Keep it under 10 seconds.',
     close: '"Polly pitches brands for me every weekday. Link in bio."',
   },
   {
-    title: 'Paid UGC, one place',
+    title: 'Paid UGC, one place', example: EXAMPLES[4],
     hook: '"Where I find paid UGC gigs without scrolling 10 sites."',
     show: 'Screen-record the Paid UGC board. Tap a gig, show Polly writing the application.',
     close: '"New gigs every day. It\'s called Newcollab, link in bio."',
@@ -98,23 +99,50 @@ export default function PromoteNewcollab() {
   return (
     <Page>
       {toast && <Toast role="status">{toast}</Toast>}
-      <Hero>
-        <Eyebrow><Megaphone size={14} /> Promote Newcollab</Eyebrow>
-        <h1>Get paid to post about <em>Newcollab</em></h1>
-        <p>
-          Post a TikTok or Reel about Newcollab and earn <b>{money(p.cpm_cents)} per 1,000 views</b>. Views update
-          every day on your dashboard, and you get paid 30 days after posting.
-        </p>
-        <Stats>
-          <Stat><b>{money(p.cpm_cents)}</b><span>per 1,000 views</span></Stat>
-          <Stat><b>{money(p.video_cap_cents)}</b><span>max per video</span></Stat>
-          <Stat><b>{money(p.creator_month_cap_cents)}</b><span>max per month</span></Stat>
-          <Stat><b>{money(p.budget_left_cents)}</b><span>left this round</span></Stat>
-        </Stats>
-        {!p.open && <Closed>This round's budget is used up. We'll email you when the next one opens.</Closed>}
-      </Hero>
+      {approved ? (
+        <Hero>
+          <Eyebrow><Megaphone size={14} /> Promote Newcollab</Eyebrow>
+          <h1>Your <em>earnings</em></h1>
+          <p>{money(p.cpm_cents)} per 1,000 views, up to {money(p.video_cap_cents)} a video. Views update every day.</p>
+          {!p.open && <Closed>This round's budget is used up. We'll email you when the next one opens.</Closed>}
+        </Hero>
+      ) : (
+        <>
+          <Splash>
+            <div className="copy">
+              <Pill><span className="dot" /> New · Newcollab pays creators</Pill>
+              <h1>Post about Newcollab. <em>Get paid per view.</em></h1>
+              <p>
+                <b>{money(p.cpm_cents)} for every 1,000 views</b> on your TikTok or Reel. No follower minimum, no
+                brand to wait on. Post, paste the link, watch it add up.
+              </p>
+              <div className="ctas">
+                <Primary as="a" href="#apply">{m ? 'See my application' : 'Start earning'} <ArrowRight size={16} /></Primary>
+                <span className="left">{money(p.budget_left_cents)} left this round</span>
+              </div>
+              {!p.open && <Closed>This round's budget is used up. We'll email you when the next one opens.</Closed>}
+            </div>
+            <HeroStack />
+          </Splash>
+
+          <Duo>
+            <EarningsSlider cpmCents={p.cpm_cents} capCents={p.video_cap_cents} minViews={p.min_views} />
+            <Steps>
+              <li><span className="ic"><Send size={18} /></span><div><b>Apply in 30 seconds</b><span>Your TikTok and where to send your money.</span></div></li>
+              <li><span className="ic"><Smartphone size={18} /></span><div><b>Post one video</b><span>Use a hook from the brief. Screen-record the app, add your link.</span></div></li>
+              <li><span className="ic"><Wallet size={18} /></span><div><b>Get paid</b><span>Views lock after 30 days, then we pay you by PayPal or Wise.</span></div></li>
+            </Steps>
+          </Duo>
+        </>
+      )}
 
       {!m && <ApplyCard program={p} busy={busy} onApply={(body) => post('apply', body, 'Application sent. We review within 48 hours.')} />}
+      {!approved && (
+        <section>
+          <SectionHead><h2>Videos that work</h2><span>Talk to camera, show your phone, keep it real.</span></SectionHead>
+          <VideoWall />
+        </section>
+      )}
       {m && m.status === 'applied' && (
         <Card>
           <h2>Application received</h2>
@@ -139,33 +167,36 @@ export default function PromoteNewcollab() {
 
 function ApplyCard({ program, member, busy, onApply }) {
   const [form, setForm] = useState({
-    tiktok_handle: member?.tiktok_handle || '', instagram_handle: member?.instagram_handle || '', why: '',
+    tiktok_handle: member?.tiktok_handle || '', instagram_handle: member?.instagram_handle || '',
     payout_method: member?.payout_method || 'paypal', payout_handle: member?.payout_handle || '',
   });
+  const [ig, setIg] = useState(Boolean(member?.instagram_handle));
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   return (
-    <Card as="form" onSubmit={(e) => { e.preventDefault(); onApply(form); }}>
-      <h2>Apply</h2>
-      <p className="muted">We approve a small group each round. Tell us where you post.</p>
+    <Card as="form" id="apply" className="apply" onSubmit={(e) => { e.preventDefault(); onApply(form); }}>
+      <div className="head">
+        <h2>Apply in 30 seconds</h2>
+        <span className="muted">We review within 48 hours.</span>
+      </div>
       <Grid2>
-        <label>TikTok<input value={form.tiktok_handle} onChange={set('tiktok_handle')} placeholder="@yourhandle" /></label>
-        <label>Instagram<input value={form.instagram_handle} onChange={set('instagram_handle')} placeholder="@yourhandle" /></label>
-      </Grid2>
-      <label>What would you post? <em>(optional)</em>
-        <textarea rows={3} maxLength={600} value={form.why} onChange={set('why')} placeholder="e.g. A get-ready-with-me where I show the PR boxes I got through Newcollab" />
-      </label>
-      <Grid2>
-        <label>Get paid with
-          <select value={form.payout_method} onChange={set('payout_method')}>
-            <option value="paypal">PayPal</option>
-            <option value="wise">Wise</option>
-          </select>
-        </label>
-        <label>{form.payout_method === 'wise' ? 'Wise email' : 'PayPal email'}
+        <label>Your TikTok<input value={form.tiktok_handle} onChange={set('tiktok_handle')} placeholder="@yourhandle" autoComplete="off" /></label>
+        <label>
+          <span className="payrow">
+            Pay me by
+            <select value={form.payout_method} onChange={set('payout_method')} aria-label="Payout method">
+              <option value="paypal">PayPal</option>
+              <option value="wise">Wise</option>
+            </select>
+          </span>
           <input type="email" value={form.payout_handle} onChange={set('payout_handle')} placeholder="you@email.com" />
         </label>
       </Grid2>
-      <Primary type="submit" disabled={busy || !program.open}>{busy ? 'Sending…' : 'Apply'}</Primary>
+      {ig ? (
+        <label>Instagram <em>(optional, for Reels)</em><input value={form.instagram_handle} onChange={set('instagram_handle')} placeholder="@yourhandle" /></label>
+      ) : (
+        <button type="button" className="link" onClick={() => setIg(true)}>+ I post Reels too</button>
+      )}
+      <Primary type="submit" disabled={busy || !program.open}>{busy ? 'Sending…' : 'Apply now'} {!busy && <ArrowRight size={16} />}</Primary>
     </Card>
   );
 }
@@ -303,13 +334,17 @@ function Brief({ program, preview }) {
           <p>Creators of any size who want free products, brand deals or paid UGC, especially if brands don't DM them yet.</p>
 
           <h3>3 hooks that work</h3>
+          <p className="muted">The videos show the style (talk to camera, phone in hand). Your video is about Newcollab.</p>
           <Hooks>
             {HOOKS.map((h) => (
               <li key={h.title}>
-                <b>{h.title}</b>
-                <p><span>Hook</span>{h.hook}</p>
-                <p><span>Show</span>{h.show}</p>
-                <p><span>Close</span>{h.close}</p>
+                <div className="txt">
+                  <b>{h.title}</b>
+                  <p><span>Hook</span>{h.hook}</p>
+                  <p><span>Show</span>{h.show}</p>
+                  <p><span>Close</span>{h.close}</p>
+                </div>
+                {h.example && <AutoTikTok {...h.example} tag="Style example" radius={14} className="vid" />}
               </li>
             ))}
           </Hooks>
@@ -340,12 +375,14 @@ function Brief({ program, preview }) {
 }
 
 const Page = styled.div`
-  max-width: 820px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 24px 16px 64px;
   color: ${t.ink};
   display: grid;
+  grid-template-columns: minmax(0, 1fr);  /* the video wall is wider than the page: never let it widen the grid */
   gap: 16px;
+  > * { min-width: 0; }
 `;
 const Note = styled.p`color: ${t.muted};`;
 const Hero = styled.section`
@@ -372,8 +409,13 @@ const Closed = styled.div`
 `;
 const Card = styled.section`
   background: ${t.white}; border: 1px solid ${t.line}; border-radius: 18px; padding: 20px;
-  display: grid; gap: 12px; min-width: 0;
+  display: grid; gap: 12px; min-width: 0; scroll-margin-top: 90px;
   h2 { margin: 0; font-size: 18px; }
+  &.apply { border: 2px solid ${t.ink}; box-shadow: 0 16px 40px rgba(18, 20, 26, 0.08); }
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .payrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .payrow select { width: auto; padding: 2px 6px; font-size: 13px; background: none; border: 0; font-weight: 700; }
+  .link { justify-self: start; border: 0; background: none; padding: 0; font: inherit; font-size: 14px; color: ${t.inkSoft}; text-decoration: underline; cursor: pointer; }
   .muted { margin: 0; color: ${t.muted}; font-size: 14.5px; line-height: 1.5; }
   label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: ${t.inkSoft}; }
   label em { font-weight: 400; color: ${t.muted}; font-style: normal; }
@@ -446,8 +488,13 @@ const BriefBody = styled.div`
   ul.plain { margin: 0; padding-left: 18px; color: ${t.inkSoft}; display: grid; gap: 4px; }
 `;
 const Hooks = styled.ol`
-  list-style: none; margin: 0; padding: 0; display: grid; gap: 8px;
-  li { background: ${t.paper}; border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; }
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+  li {
+    background: ${t.paper}; border-radius: 14px; padding: 12px; display: grid; gap: 14px;
+    grid-template-columns: minmax(0, 1fr) 128px; align-items: center;
+  }
+  .txt { display: grid; gap: 4px; min-width: 0; }
+  @media (max-width: 480px) { li { grid-template-columns: minmax(0, 1fr) 96px; gap: 10px; } }
   li b { font-size: 14.5px; }
   li p { font-size: 14px; }
   li p span {
@@ -465,4 +512,42 @@ const Rules = styled.div`
 const Toast = styled.div`
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50; max-width: calc(100% - 32px);
   background: ${t.ink}; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px;
+`;
+
+const Splash = styled.section`
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: center;
+  padding: 8px 0 4px;
+  .copy { display: grid; gap: 14px; min-width: 0; }
+  h1 { margin: 0; font-size: clamp(32px, 5.6vw, 52px); line-height: 1.02; letter-spacing: -0.03em; font-weight: 800; }
+  h1 em { font-style: normal; color: ${t.accent}; }
+  p { margin: 0; color: ${t.muted}; font-size: 16.5px; line-height: 1.55; }
+  p b { color: ${t.ink}; }
+  .ctas { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .ctas a { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; padding: 14px 22px; font-size: 16px; }
+  .left { font-size: 13.5px; color: ${t.muted}; }
+  @media (max-width: 760px) { grid-template-columns: 1fr; }
+`;
+const Pill = styled.span`
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  background: ${t.accentSoft}; color: ${t.accentDeep}; font-size: 12.5px; font-weight: 700;
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: ${t.accent}; }
+`;
+const Duo = styled.section`
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px;
+  @media (max-width: 760px) { grid-template-columns: 1fr; }
+`;
+const Steps = styled.ol`
+  list-style: none; margin: 0; padding: 18px; display: grid; gap: 14px; align-content: center;
+  background: ${t.white}; border: 1px solid ${t.line}; border-radius: 22px;
+  li { display: flex; gap: 12px; align-items: flex-start; }
+  .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0;
+    background: ${t.accentSoft}; color: ${t.accentDeep}; }
+  div { display: grid; gap: 2px; }
+  b { font-size: 15.5px; }
+  div span { font-size: 13.5px; color: ${t.muted}; line-height: 1.45; }
+`;
+const SectionHead = styled.div`
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px;
+  h2 { margin: 0; font-size: 20px; }
+  span { font-size: 14px; color: ${t.muted}; }
 `;
