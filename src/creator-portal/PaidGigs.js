@@ -6,7 +6,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import { PRO_PRICE_MONTHLY } from '../config/proOffer';
 import UpgradeModal from './UpgradeModal';
 import { brandMarkEmoji } from './brandMarkEmoji';
-import { AutoTikTok, EXAMPLES } from './PromoteVisuals';
+import { AutoTikTok, BrandMark, EXAMPLES } from './PromoteVisuals';
 
 const VIEWS = [
   { id: 'all', label: 'All gigs' },
@@ -477,14 +477,14 @@ export default function PaidGigs() {
 
       <PromoteBanner href="/creator/dashboard/promote">
         <div className="copy">
-          <span className="tag"><i /> New · Newcollab pays you</span>
+          <span className="tag"><BrandMark size={18} /> Newcollab Creator Program · New</span>
           <b>Post about Newcollab. Earn <em>$2.50 per 1,000 views.</em></b>
           <span className="sub">No follower minimum. Up to $40 a video, paid by PayPal or Wise.</span>
           <span className="go">Start earning <ArrowUpRight size={15} /></span>
         </div>
         <div className="vids" aria-hidden="true">
-          <AutoTikTok {...EXAMPLES[0]} radius={12} link={false} />
-          <AutoTikTok {...EXAMPLES[3]} radius={12} link={false} />
+          <AutoTikTok {...EXAMPLES[0]} radius={12} link={false} branded={false} />
+          <AutoTikTok {...EXAMPLES[3]} radius={12} link={false} branded={false} />
         </div>
       </PromoteBanner>
 

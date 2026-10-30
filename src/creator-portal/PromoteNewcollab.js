@@ -2,8 +2,8 @@
 // API: GET /api/promote, POST /api/promote/apply | /videos | /payout (services/ugc_program on the backend).
 import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { ArrowRight, ArrowUpRight, Check, ChevronDown, Copy, Eye, Link2, Megaphone, Send, Smartphone, Wallet } from 'lucide-react';
-import { AutoTikTok, EXAMPLES, EarningsSlider, HeroStack, VideoWall } from './PromoteVisuals';
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, Copy, Eye, Link2, Send, Smartphone, Wallet } from 'lucide-react';
+import { AutoTikTok, BRAND_ICON, BRAND_LOGO_DARK, BRAND_LOGO_LIGHT, BrandMark, EXAMPLES, EarningsSlider, HeroStack, VideoWall } from './PromoteVisuals';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
@@ -101,7 +101,7 @@ export default function PromoteNewcollab() {
       {toast && <Toast role="status">{toast}</Toast>}
       {approved ? (
         <Hero>
-          <Eyebrow><Megaphone size={14} /> Promote Newcollab</Eyebrow>
+          <Eyebrow><BrandMark size={18} /> Newcollab Creator Program</Eyebrow>
           <h1>Your <em>earnings</em></h1>
           <p>{money(p.cpm_cents)} per 1,000 views, up to {money(p.video_cap_cents)} a video. Views update every day.</p>
           {!p.open && <Closed>This round's budget is used up. We'll email you when the next one opens.</Closed>}
@@ -110,7 +110,7 @@ export default function PromoteNewcollab() {
         <>
           <Splash>
             <div className="copy">
-              <Pill><span className="dot" /> New · Newcollab pays creators</Pill>
+              <Pill><BrandMark size={20} /> Newcollab Creator Program · New</Pill>
               <h1>Post about Newcollab. <em>Get paid per view.</em></h1>
               <p>
                 <b>{money(p.cpm_cents)} for every 1,000 views</b> on your TikTok or Reel. No follower minimum, no
@@ -175,7 +175,7 @@ function ApplyCard({ program, member, busy, onApply }) {
   return (
     <Card as="form" id="apply" className="apply" onSubmit={(e) => { e.preventDefault(); onApply(form); }}>
       <div className="head">
-        <h2>Apply in 30 seconds</h2>
+        <h2><BrandMark size={24} /> Apply in 30 seconds</h2>
         <span className="muted">We review within 48 hours.</span>
       </div>
       <Grid2>
@@ -324,6 +324,10 @@ function Brief({ program, preview }) {
       </BriefHead>
       {open && (
         <BriefBody>
+          <BrandBlock>
+            <img src={BRAND_LOGO_DARK} alt="Newcollab" />
+            <span>The brand you're promoting</span>
+          </BrandBlock>
           <h3>What Newcollab is</h3>
           <p>
             Newcollab helps small creators get gifted PR boxes and paid UGC work. Creators join brands' open gift
@@ -359,6 +363,14 @@ function Brief({ program, preview }) {
               <ul>{RULES_DONT.map((r) => <li key={r}>✕ {r}</li>)}</ul>
             </div>
           </Rules>
+
+          <h3>Your brand kit</h3>
+          <p className="muted">Drop the logo in your video or on screen. Always spell it <b>Newcollab</b>, one word.</p>
+          <Kit>
+            <a href={BRAND_LOGO_DARK} download="newcollab-logo-dark.png" className="light"><img src={BRAND_LOGO_DARK} alt="" /><span>Logo, dark</span></a>
+            <a href={BRAND_LOGO_LIGHT} download="newcollab-logo-light.png" className="dark"><img src={BRAND_LOGO_LIGHT} alt="" /><span>Logo, light</span></a>
+            <a href={BRAND_ICON} download="newcollab-icon.png" className="light icon"><img src={BRAND_ICON} alt="" /><span>App icon</span></a>
+          </Kit>
 
           <h3>How pay works</h3>
           <ul className="plain">
@@ -410,7 +422,7 @@ const Closed = styled.div`
 const Card = styled.section`
   background: ${t.white}; border: 1px solid ${t.line}; border-radius: 18px; padding: 20px;
   display: grid; gap: 12px; min-width: 0; scroll-margin-top: 90px;
-  h2 { margin: 0; font-size: 18px; }
+  h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
   &.apply { border: 2px solid ${t.ink}; box-shadow: 0 16px 40px rgba(18, 20, 26, 0.08); }
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .payrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -528,7 +540,7 @@ const Splash = styled.section`
   @media (max-width: 760px) { grid-template-columns: 1fr; }
 `;
 const Pill = styled.span`
-  justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border-radius: 999px;
   background: ${t.accentSoft}; color: ${t.accentDeep}; font-size: 12.5px; font-weight: 700;
   .dot { width: 7px; height: 7px; border-radius: 50%; background: ${t.accent}; }
 `;
@@ -550,4 +562,21 @@ const SectionHead = styled.div`
   display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px;
   h2 { margin: 0; font-size: 20px; }
   span { font-size: 14px; color: ${t.muted}; }
+`;
+
+const BrandBlock = styled.div`
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 14px 16px; border-radius: 14px; background: ${t.paper};
+  img { height: 26px; width: auto; display: block; }
+  span { font-size: 12.5px; color: ${t.muted}; }
+`;
+const Kit = styled.div`
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  a { display: grid; gap: 6px; justify-items: center; padding: 14px 10px; border-radius: 14px; text-decoration: none;
+    border: 1px solid ${t.line}; font-size: 12.5px; font-weight: 600; }
+  a.light { background: #fff; color: ${t.ink}; }
+  a.dark { background: #12141a; color: #fff; border-color: #12141a; }
+  img { height: 22px; width: auto; max-width: 100%; object-fit: contain; }
+  a.icon img { height: 34px; border-radius: 9px; }
+  @media (max-width: 480px) { grid-template-columns: 1fr 1fr; }
 `;
