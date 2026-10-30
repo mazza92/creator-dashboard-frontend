@@ -31,7 +31,17 @@ function useOnScreen(ref, rootMargin = '120px') {
 }
 
 /** A 9:16 TikTok that plays muted while visible. Tapping opens it on TikTok. */
-export function AutoTikTok({ id, handle, tag, radius = 18, className, style, link = true }) {
+export const BRAND_ICON = '/apple-touch-icon.png';
+export const BRAND_LOGO_DARK = '/newcollab-logo-dark.png';
+export const BRAND_LOGO_LIGHT = '/newcollab-logo.png';
+
+/** The teal N app icon. */
+export function BrandMark({ size = 22, radius }) {
+  return <Mark src={BRAND_ICON} alt="Newcollab" width={size} height={size} style={{ borderRadius: radius ?? Math.round(size * 0.24) }} />;
+}
+const Mark = styled.img`display: inline-block; flex-shrink: 0; object-fit: cover;`;
+
+export function AutoTikTok({ id, handle, tag, radius = 18, className, style, link = true, branded = true }) {
   const ref = useRef(null);
   const visible = useOnScreen(ref);
   const linkProps = link
@@ -46,6 +56,7 @@ export function AutoTikTok({ id, handle, tag, radius = 18, className, style, lin
           allow="autoplay; encrypted-media" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" tabIndex={-1} />
       )}
       <Shade aria-hidden="true" />
+      {branded && <Sticker aria-hidden="true"><BrandMark size={16} /> newcollab</Sticker>}
       <Meta>
         {tag && <span className="tag">{tag}</span>}
         <span className="who">@{handle}</span>
@@ -72,6 +83,12 @@ const Shade = styled.div`
   position: absolute; inset: auto 0 0 0; height: 38%; pointer-events: none;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
 `;
+const Sticker = styled.span`
+  position: absolute; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 8px 4px 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.92); color: #12141a;
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.01em; pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+`;
 const Meta = styled.div`
   position: absolute; left: 10px; right: 10px; bottom: 10px; display: grid; gap: 4px; pointer-events: none;
   .tag {
@@ -89,6 +106,7 @@ export function HeroStack({ cpmCents = 250 }) {
       <AutoTikTok {...b} className="side left" radius={22} />
       <AutoTikTok {...c} className="side right" radius={22} />
       <AutoTikTok {...a} className="front" radius={24} />
+      <AppPeek />
       <Chip className="c1"><b>${(cpmCents / 100).toFixed(cpmCents % 100 ? 2 : 0)}</b> per 1K views</Chip>
       <Chip className="c2"><span className="dot" /> Views update daily</Chip>
       <Chip className="c3">Paid by <b>PayPal</b> or <b>Wise</b></Chip>
@@ -115,13 +133,45 @@ const Chip = styled.div`
   box-shadow: 0 10px 26px rgba(18, 20, 26, 0.16); animation: ${float} 4s ease-in-out infinite;
   b { font-weight: 800; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #0d7a5f; }
-  &.c1 { left: -6px; top: 40px; background: #0d7a5f; color: #fff; }
+  &.c1 { left: -6px; top: 118px; background: #0d7a5f; color: #fff; }
   &.c2 { right: -8px; top: 190px; animation-delay: 1.2s; }
-  &.c3 { left: 10px; bottom: 18px; animation-delay: 2.1s; }
+  &.c3 { right: 6px; bottom: 18px; animation-delay: 2.1s; }
   @media (max-width: 560px) {
     font-size: 12px; padding: 7px 10px;
-    &.c1 { left: 0; } &.c2 { right: 0; } &.c3 { left: 6px; bottom: 6px; }
+    &.c1 { left: 0; } &.c2 { right: 0; } &.c3 { right: 4px; bottom: 6px; }
   }
+`;
+
+/** A small mock of the Newcollab app: what creators screen-record in their video. */
+export function AppPeek({ className }) {
+  return (
+    <Peek className={className || 'peek'} aria-label="The Newcollab app">
+      <div className="bar"><img src={BRAND_LOGO_DARK} alt="Newcollab" /></div>
+      <div className="lbl">Open gift lists</div>
+      {[['Glow brand', 'Vitamin C serum', '#f4c7c3'], ['Home brand', 'Organic cotton bedding', '#c3e0f4']].map(([b, prod, c]) => (
+        <div className="row" key={b}>
+          <span className="av" style={{ background: c }} />
+          <span className="tx"><b>{b}</b><em>{prod}</em></span>
+          <span className="btn">Join</span>
+        </div>
+      ))}
+    </Peek>
+  );
+}
+
+const Peek = styled.div`
+  position: absolute; z-index: 5; left: -18px; bottom: 64px; width: 190px; padding: 10px; border-radius: 16px;
+  background: #fff; box-shadow: 0 18px 40px rgba(18, 20, 26, 0.22); display: grid; gap: 7px;
+  transform: rotate(-3deg);
+  .bar img { height: 15px; width: auto; display: block; }
+  .lbl { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #0d7a5f; }
+  .row { display: flex; align-items: center; gap: 7px; }
+  .av { width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0; }
+  .tx { display: grid; min-width: 0; flex: 1; }
+  .tx b { font-size: 11.5px; }
+  .tx em { font-style: normal; font-size: 10.5px; color: #6b6f78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn { font-size: 10.5px; font-weight: 800; color: #fff; background: #12141a; padding: 4px 8px; border-radius: 999px; }
+  @media (max-width: 560px) { left: -4px; bottom: 54px; width: 160px; }
 `;
 
 /** "Drag your views, see your earnings": the quick-win hook. */
@@ -134,6 +184,7 @@ export function EarningsSlider({ cpmCents = 250, capCents = 4000, minViews = 200
   const capped = raw > capCents;
   return (
     <Calc>
+      <img className="wm" src={BRAND_ICON} alt="" aria-hidden="true" />
       <div className="top">
         <span>If your video gets</span>
         <b>{views.toLocaleString()} views</b>
@@ -150,7 +201,10 @@ export function EarningsSlider({ cpmCents = 250, capCents = 4000, minViews = 200
 }
 
 const Calc = styled.div`
+  position: relative; overflow: hidden;
   background: #12141a; color: #fff; border-radius: 22px; padding: 22px; display: grid; gap: 12px;
+  .wm { position: absolute; right: -26px; bottom: -26px; width: 120px; opacity: 0.12; transform: rotate(-12deg); pointer-events: none; }
+  > *:not(.wm) { position: relative; }
   .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .top span, .out span { color: rgba(255, 255, 255, 0.65); font-size: 14px; }
   .top b { font-size: 20px; }
