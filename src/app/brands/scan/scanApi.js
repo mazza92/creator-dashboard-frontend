@@ -3,7 +3,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co';
 
 export const SCAN_PATH = '/brands/scan';
 export const POLL_MS = 3000;
-export const POLL_TIMEOUT_MS = 4 * 60 * 1000;
+export const POLL_TIMEOUT_MS = 10 * 60 * 1000;  // the backend waits up to 8 min for a queued TikTok run
 
 export const EXAMPLE_BRANDS = ['Glow Recipe', 'Summer Fridays', 'Bubble Skincare', 'Olipop', 'Ghost Energy'];
 
