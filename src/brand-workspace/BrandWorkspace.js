@@ -536,7 +536,10 @@ function prompts(ws) {
         ' and show every TikTok creator posting about it, the hooks they reuse and their top videos.'] } },
     { id: 'gifting', icon: Gift, bg: '#eef2ff', fg: '#4f46e5', title: `Brands seeding ${nicheLabel} creators`,
       text: `Which brands are gifting small ${nicheLabel} creators right now, and how many.`, kind: 'gifting_brands',
-      needsNiche: true },
+      needsApproval: true, defaultNiche: hasNiche ? niche : '',
+      template: { parts: ['Show which brands are gifting small ',
+        { key: 'niche', placeholder: 'your niche, e.g. skincare', value: hasNiche ? niche : '' },
+        ' creators on TikTok right now', { key: 'detail', placeholder: ' (optional: a product type or region)', optional: true }, '.'] } },
     { id: 'hooks', icon: Sparkles, bg: '#fff8eb', fg: '#d97706', title: `Hooks that work in ${nicheLabel}`,
       text: 'Opening lines and formats that win in your niche, with the videos behind them.', kind: 'niche_hooks',
       needsApproval: true, defaultNiche: hasNiche ? niche : '',
@@ -550,7 +553,9 @@ function prompts(ws) {
         ' creators who ', { key: 'detail', placeholder: 'film a specific kind of video (optional)', optional: true },
         ` and would fit a gifted campaign from ${ws.brand.name || 'my brand'}.`] } },
     { id: 'own', icon: Megaphone, bg: '#f1f5f9', fg: '#334155', title: 'Scan your own brand',
-      text: 'The creators already talking about you, gifted or not.', own: true },
+      text: 'The creators already talking about you, gifted or not.', own: true,
+      template: { parts: ['Scan ', { key: 'brand', placeholder: 'your brand or @handle', value: ws.brand.name || '' },
+        ' and show the TikTok creators already posting about it, gifted or not.'] } },
   ].map((p) => ({ ...p, hasNiche }));
 }
 
@@ -635,7 +640,12 @@ function ScanView({ ws, onScanned, savedRefs, onSave, campaignCta }) {
   // A filled prompt runs the stored analysis when left as written (cheap, cached), or a custom question.
   const runTemplate = (p, v) => {
     setTpl(null);
-    if (p.id === 'competitor') return run(v.brand);
+    if (p.id === 'competitor' || p.id === 'own') return run(v.brand);
+    if (p.id === 'gifting') {
+      const n = (v.niche || p.defaultNiche || '').trim();
+      if (!v.detail && n.toLowerCase() === String(p.defaultNiche || '').toLowerCase()) return run({ kind: p.kind, label: p.title });
+      return ask(`Which brands are gifting small ${n} creators on TikTok right now${v.detail ? ` (${v.detail.trim()})` : ''}, and how many creators each?`);
+    }
     const niche = v.niche || p.defaultNiche;
     const same = !v.detail && niche.toLowerCase() === String(p.defaultNiche || '').toLowerCase();
     if (same) return run({ kind: p.kind, label: p.title });
