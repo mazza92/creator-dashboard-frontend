@@ -478,8 +478,8 @@ export default function PaidGigs() {
       <PromoteBanner href="/creator/dashboard/promote">
         <div className="copy">
           <span className="tag"><i /> New · Newcollab pays you</span>
-          <b>Post about Newcollab. Earn <em>$5 per 1,000 views.</em></b>
-          <span className="sub">No follower minimum. Up to $50 a video, paid by PayPal or Wise.</span>
+          <b>Post about Newcollab. Earn <em>$2.50 per 1,000 views.</em></b>
+          <span className="sub">No follower minimum. Up to $40 a video, paid by PayPal or Wise.</span>
           <span className="go">Start earning <ArrowUpRight size={15} /></span>
         </div>
         <div className="vids" aria-hidden="true">

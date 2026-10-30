@@ -82,14 +82,14 @@ const Meta = styled.div`
 `;
 
 /** Hero visual: three fanned phones with earning chips. */
-export function HeroStack() {
+export function HeroStack({ cpmCents = 250 }) {
   const [a, b, c] = EXAMPLES;
   return (
     <Stack aria-hidden="false">
       <AutoTikTok {...b} className="side left" radius={22} />
       <AutoTikTok {...c} className="side right" radius={22} />
       <AutoTikTok {...a} className="front" radius={24} />
-      <Chip className="c1"><b>$5</b> per 1K views</Chip>
+      <Chip className="c1"><b>${(cpmCents / 100).toFixed(cpmCents % 100 ? 2 : 0)}</b> per 1K views</Chip>
       <Chip className="c2"><span className="dot" /> Views update daily</Chip>
       <Chip className="c3">Paid by <b>PayPal</b> or <b>Wise</b></Chip>
     </Stack>
@@ -125,9 +125,9 @@ const Chip = styled.div`
 `;
 
 /** "Drag your views, see your earnings": the quick-win hook. */
-export function EarningsSlider({ cpmCents = 500, capCents = 5000, minViews = 1000 }) {
-  const steps = [1000, 2000, 3000, 5000, 7500, 10000, 15000, 25000];
-  const [i, setI] = useState(3);
+export function EarningsSlider({ cpmCents = 250, capCents = 4000, minViews = 2000 }) {
+  const steps = [2000, 3000, 5000, 7500, 10000, 12500, 16000, 25000];
+  const [i, setI] = useState(4);
   const views = steps[i];
   const raw = views < minViews ? 0 : Math.floor((views * cpmCents) / 1000);
   const cents = Math.min(raw, capCents);
@@ -144,7 +144,7 @@ export function EarningsSlider({ cpmCents = 500, capCents = 5000, minViews = 100
         <span>you earn</span>
         <strong>${(cents / 100).toFixed(cents % 100 ? 2 : 0)}</strong>
       </div>
-      <small>{capped ? `Max $${capCents / 100} per video. Post another one to keep earning.` : 'Pays from 1,000 views. Most creators post 2 to 3 a month.'}</small>
+      <small>{capped ? `Max $${capCents / 100} per video. Post another one to keep earning.` : `Pays from ${minViews.toLocaleString()} views. Post 2 or 3 a month to stack it up.`}</small>
     </Calc>
   );
 }
