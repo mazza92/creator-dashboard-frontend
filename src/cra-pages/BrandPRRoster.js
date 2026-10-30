@@ -7,6 +7,7 @@ import RosterSplash, { readRosterPreview, writeRosterPreview } from './RosterSpl
 import BriefMemo from '../components/brief/BriefMemo';
 import RosterBriefModal from '../components/brief/RosterBriefModal';
 import RosterChat, { MessageButton } from '../components/chat/RosterChat';
+import FindMoreCreators from '../components/roster/FindMoreCreators';
 
 const INK = tokens.ink;
 const MUTE = tokens.muted;
@@ -817,6 +818,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
                     )}
                   </>
                 )}
+                <FindMoreCreators brandName={brandName} niche={(brand.category || '').replace(/[_-]+/g, ' ')} />
                 {proof.length > 0 && !locked && (
                   <ProofWrap>
                     <SectionLabel>Recently delivered on Newcollab</SectionLabel>
