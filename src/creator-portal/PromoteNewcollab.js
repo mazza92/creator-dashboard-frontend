@@ -122,7 +122,7 @@ export default function PromoteNewcollab() {
               </div>
               {!p.open && <Closed>This round's budget is used up. We'll email you when the next one opens.</Closed>}
             </div>
-            <HeroStack />
+            <HeroStack cpmCents={p.cpm_cents} />
           </Splash>
 
           <Duo>
@@ -210,10 +210,10 @@ function statusChip(v) {
 }
 
 const CAP_NOTE = {
-  video: 'Hit the $50 video max',
+  video: 'Hit the per-video max',
   month: 'Hit your $150 monthly max',
   budget: 'Round budget used up',
-  min_views: 'Pays from 1,000 views',
+  min_views: 'Pays from 2,000 views',
 };
 
 function Dashboard({ data, busy, post }) {
@@ -362,7 +362,7 @@ function Brief({ program, preview }) {
 
           <h3>How pay works</h3>
           <ul className="plain">
-            <li>{money(program.cpm_cents)} per 1,000 views, from your first 1,000 views.</li>
+            <li>{money(program.cpm_cents)} per 1,000 views, once a video passes {(program.min_views || 2000).toLocaleString()} views.</li>
             <li>Up to {money(program.video_cap_cents)} per video and {money(program.creator_month_cap_cents)} per month.</li>
             <li>Views count for 30 days after you post, then lock. We pay within a week of that by PayPal or Wise.</li>
             <li>{money(program.pro_bonus_cents)} extra for every creator who signs up with your link and stays on Pro past their first month.</li>
