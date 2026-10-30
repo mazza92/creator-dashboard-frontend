@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { ArrowUp, X } from 'lucide-react';
+import { ArrowUp, PenLine, X } from 'lucide-react';
 import { EXAMPLE_BRANDS } from './scanApi';
 import { scan } from './theme';
 
@@ -22,7 +22,11 @@ const Box = styled.form`
   }
 `;
 
-const Field = styled.input`
+const Field = styled.textarea`
+  display: block;
+  resize: none;
+  overflow: hidden;
+  font-family: inherit;
   width: 100%;
   border: 0;
   outline: 0;
@@ -148,6 +152,7 @@ const Fill = styled.div`
 `;
 
 const FillTop = styled.div`
+  .acts { display: inline-flex; gap: 12px; }
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -184,7 +189,18 @@ function slotWidth(slot, value) {
   return `${Math.min(Math.max(text.length, 6), 46) + 1}ch`;
 }
 
-function TemplateFill({ template, values, setValues, large, onClear }) {
+// The sentence the brand sees, blanks filled in (empty optional blanks dropped).
+export function fillTemplate(template, values) {
+  // An optional blank's lead-in words ("who post about") only count when it's filled.
+  return template.parts.map((p) => {
+    if (typeof p === 'string') return p;
+    const v = String(values[p.key] || '').trim();
+    return v ? `${p.lead || ''}${v}` : '';
+  })
+    .join('').replace(/\s+/g, ' ').replace(/\s+([.,?!])/g, '$1').trim();
+}
+
+function TemplateFill({ template, values, setValues, large, onClear, onEditFree }) {
   const refs = React.useRef([]);
   const narrow = useNarrow();
   const slots = template.parts.filter((p) => typeof p !== 'string');
@@ -203,7 +219,10 @@ function TemplateFill({ template, values, setValues, large, onClear }) {
     <>
       <FillTop>
         <span>{slots.length > 1 && !narrow ? <>Press <kbd>Tab</kbd> for the next blank</> : 'Fill in the blank'}</span>
-        <button type="button" onClick={onClear} aria-label="Clear prompt"><X size={13} /> Clear</button>
+        <span className="acts">
+          {onEditFree && <button type="button" onClick={onEditFree}><PenLine size={13} /> Edit whole prompt</button>}
+          <button type="button" onClick={onClear} aria-label="Clear prompt"><X size={13} /> Clear</button>
+        </span>
       </FillTop>
       <Fill $large={large}>
         {template.parts.map((part, i) => {
@@ -211,7 +230,8 @@ function TemplateFill({ template, values, setValues, large, onClear }) {
           n += 1;
           const idx = n;
           return (
-            <input key={part.key} ref={(el) => { refs.current[idx] = el; }} value={values[part.key] || ''}
+            <React.Fragment key={part.key}>{part.lead || ''}
+            <input ref={(el) => { refs.current[idx] = el; }} value={values[part.key] || ''}
               placeholder={part.placeholder} aria-label={part.placeholder} maxLength={part.maxLength || 80}
               style={{ width: slotWidth(part, values[part.key]) }}
               onChange={(e) => setValues({ ...values, [part.key]: e.target.value })}
@@ -219,6 +239,7 @@ function TemplateFill({ template, values, setValues, large, onClear }) {
                 if (e.key === 'Tab' && slots.length > 1) { e.preventDefault(); move(idx, e.shiftKey); }
                 if (e.key === 'Escape') onClear();
               }} />
+            </React.Fragment>
           );
         })}
       </Fill>
@@ -247,7 +268,7 @@ function useNarrow(maxWidth = 560) {
 export default function ScanInput({ onSubmit, busy = false, large = false, chips = true, autoFocus = false,
   placeholder = 'Type a brand, e.g. Glow Recipe or @glowrecipe', shortPlaceholder = 'Type any brand…',
   hint = 'Live TikTok data · free · no login', maxLength = 80, label = 'Brand to scan',
-  template = null, onTemplateSubmit, onClearTemplate }) {
+  template = null, onTemplateSubmit, onClearTemplate, freeEdit = true }) {
   const [value, setValue] = useState('');
   const [values, setValues] = useState({});
   useEffect(() => {
@@ -258,6 +279,12 @@ export default function ScanInput({ onSubmit, busy = false, large = false, chips
   const filled = template ? templateReady(template, values) : Boolean(value.trim());
   const narrow = useNarrow();
   const inputRef = React.useRef(null);
+  useEffect(() => {  // grow with the text, so a long prompt stays readable
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value, template]);
   const go = (brand) => {
     const clean = String(brand || '').trim();
     if (!clean || busy) return;
@@ -274,20 +301,30 @@ export default function ScanInput({ onSubmit, busy = false, large = false, chips
             if (!filled || busy) return;
             const clean = {};
             Object.keys(values).forEach((k) => { clean[k] = String(values[k] || '').trim(); });
-            onTemplateSubmit(clean);
+            onTemplateSubmit(clean, fillTemplate(template, clean));
             return;
           }
           go(value);
         }}
       >
         {template ? (
-          <TemplateFill template={template} values={values} setValues={setValues} large={large} onClear={onClearTemplate} />
+          <TemplateFill template={template} values={values} setValues={setValues} large={large} onClear={onClearTemplate}
+            onEditFree={freeEdit ? () => {
+              // Hand the whole sentence over as free text: the brand can rewrite anything, and it runs as their own question.
+              setValue(fillTemplate(template, values));
+              onClearTemplate();
+              setTimeout(() => { const el = inputRef.current; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+            } : null} />
         ) : (
         <Field
           ref={inputRef}
           $large={large}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          rows={1}
+          onChange={(e) => setValue(e.target.value.replace(/\n/g, ' '))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(value); }
+          }}
           placeholder={narrow ? shortPlaceholder : placeholder}
           aria-label={label}
           autoFocus={autoFocus}
