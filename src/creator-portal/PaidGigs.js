@@ -6,6 +6,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import { PRO_PRICE_MONTHLY } from '../config/proOffer';
 import UpgradeModal from './UpgradeModal';
 import { brandMarkEmoji } from './brandMarkEmoji';
+import { AutoTikTok, EXAMPLES } from './PromoteVisuals';
 
 const VIEWS = [
   { id: 'all', label: 'All gigs' },
@@ -475,9 +476,16 @@ export default function PaidGigs() {
       </Hero>
 
       <PromoteBanner href="/creator/dashboard/promote">
-        <span className="tag">New · Newcollab pays you</span>
-        <b>Post about Newcollab, earn $5 per 1,000 views</b>
-        <span>Up to $50 a video. Apply in a minute <ArrowUpRight size={14} /></span>
+        <div className="copy">
+          <span className="tag"><i /> New · Newcollab pays you</span>
+          <b>Post about Newcollab. Earn <em>$5 per 1,000 views.</em></b>
+          <span className="sub">No follower minimum. Up to $50 a video, paid by PayPal or Wise.</span>
+          <span className="go">Start earning <ArrowUpRight size={15} /></span>
+        </div>
+        <div className="vids" aria-hidden="true">
+          <AutoTikTok {...EXAMPLES[0]} radius={12} link={false} />
+          <AutoTikTok {...EXAMPLES[3]} radius={12} link={false} />
+        </div>
       </PromoteBanner>
 
       <Tabs role="tablist" aria-label="Filter paid gigs">
@@ -584,17 +592,35 @@ const Page = styled.div`
 
 const PromoteBanner = styled.a`
   display: grid;
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
   margin: 0 0 16px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid ${t.accentBorder};
-  background: ${t.accentSoft};
-  color: ${t.ink};
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: #12141a;
+  color: #fff;
   text-decoration: none;
-  b { font-size: 16px; }
-  span { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; color: ${t.accentDeep}; }
-  .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+  overflow: hidden;
+  .copy { display: grid; gap: 6px; min-width: 0; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; color: #7ce0b8;
+  }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: #7ce0b8; }
+  b { font-size: 19px; line-height: 1.25; }
+  b em { font-style: normal; color: #7ce0b8; }
+  .sub { font-size: 13.5px; color: rgba(255, 255, 255, 0.7); }
+  .go {
+    justify-self: start; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 8px 14px;
+    border-radius: 999px; background: #fff; color: #12141a; font-size: 13.5px; font-weight: 700;
+  }
+  .vids { display: flex; gap: 8px; }
+  .vids > div { width: 92px; }
+  @media (max-width: 560px) {
+    .vids > div { width: 70px; }
+    .vids > div:last-child { display: none; }
+  }
 `;
 
 const Hero = styled.header`
