@@ -15,6 +15,20 @@ import { HOME_FAQ } from './homeFaq';
 
 const SIGNUP = '/register/creator';
 
+// Top answers from our 2026 creator survey ("What's painful"), each paired with the part of Newcollab that fixes it.
+const PAINS = [
+  { pct: '56%', pain: "Don't know which brands to reach out to", Icon: Search,
+    fix: 'Brands matched to your niche', how: 'Gift lists, paid gigs and 2,700+ brands with open PR forms. Polly picks the ones that fit you.' },
+  { pct: '34%', pain: 'Brands never reply to my pitches', Icon: Mail,
+    fix: 'Pitches that get answered', how: 'Polly writes short, personal pitches and follows up for you, from your own Gmail.' },
+  { pct: '32%', pain: "Don't have a portfolio yet", Icon: LayoutTemplate,
+    fix: 'A free portfolio in minutes', how: 'Your best videos, niches and rates on one link. No Canva and no past collabs needed.' },
+  { pct: '27%', pain: "Don't know how to price my work", Icon: BadgeDollarSign,
+    fix: 'A rate to quote, every time', how: 'When a brand says yes, Polly drafts your reply with a paid usage rate sized to your audience.' },
+  { pct: '24%', pain: "Don't know what to say in a pitch", Icon: Sparkles,
+    fix: 'Never a blank email again', how: 'Polly writes every pitch from your profile and the brand, and you can edit before it goes.' },
+];
+
 const t = {
   ink: '#12141a', inkSoft: '#2a2e38', muted: '#5c6470', line: '#e4e2dc', paper: '#f7f5f0', white: '#fff',
   accent: '#0d7a5f', accentDeep: '#095a46', accentSoft: '#eef6f3', mint: '#7ce0b8', hot: '#e85d3b',
@@ -37,12 +51,12 @@ export default function HomeClient({ brands = [], stats }) {
       <Page>
         <Hero>
           <div className="copy">
-            <Pill><span className="dot" /> For aspiring UGC creators · No follower minimum</Pill>
+            <Pill><span className="dot" /> For new and working UGC creators · No follower minimum</Pill>
             <h1><span>Get gifted.</span> <span>Get <em>paid</em>.</span> <span>Get seen.</span></h1>
             <p className="kw">Grow your brand deals on autopilot.</p>
             <p>
-              <b>Polly</b>, your AI agent, finds brands that fit you, pitches them and follows up, while you join
-              gift lists for PR packages and paid UGC gigs in one tap. Built for aspiring UGC creators, not big accounts.
+              Landing your first PR package or growing your UGC business? <b>Polly</b>, your AI agent, shows you which
+              brands to pitch, writes the pitch and follows up, so brand deals keep coming without hours of outreach.
             </p>
             <div className="ctas">
               <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
@@ -60,31 +74,63 @@ export default function HomeClient({ brands = [], stats }) {
           <div><b>{s.creators}</b><span>creators on Newcollab</span></div>
         </Stats>
 
+        <Section id="problems">
+          <Head>
+            <Eyebrow>Sound familiar?</Eyebrow>
+            <h2>What creators told us is holding them back</h2>
+            <p className="lead">We asked the creators on Newcollab what gets in the way of brand deals. Here is what they said, and how we fix it.</p>
+          </Head>
+          <Pains>
+            {PAINS.map((x) => (
+              <li key={x.pain}>
+                <div className="q">
+                  <b>{x.pct}</b>
+                  <span>{x.pain}</span>
+                </div>
+                <div className="a">
+                  <span className="ic"><x.Icon size={18} /></span>
+                  <div>
+                    <strong>{x.fix}</strong>
+                    <p>{x.how}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </Pains>
+          <small className="src">Survey of creators on Newcollab, 2026. Creators could pick more than one answer.</small>
+        </Section>
+
         <Section id="features">
           <Head>
-            <Eyebrow>One app, three ways in</Eyebrow>
-            <h2>Everything an aspiring UGC creator needs to land brand deals</h2>
+            <Eyebrow>Wherever you are</Eyebrow>
+            <h2>From your first PR package to a steady flow of paid deals</h2>
           </Head>
-          <Ways>
-            <Way>
-              <span className="ic"><Gift size={20} /></span>
-              <h3>Get gifted</h3>
-              <p>Brands open gift lists for the products they want to send. Apply in one tap with your portfolio. When a brand picks you, the PR package ships to your door.</p>
-              <Link href="/directory">Find PR packages <ArrowRight size={15} /></Link>
-            </Way>
-            <Way>
-              <span className="ic"><BadgeDollarSign size={20} /></span>
-              <h3>Get paid</h3>
-              <p>Every paid UGC gig from SideShift, Upwork and more, in one feed. Polly writes your application, so your first paid video can come before your first big following.</p>
-              <a href="#paid-ugc">See paid UGC <ArrowRight size={15} /></a>
-            </Way>
-            <Way>
-              <span className="ic"><Eye size={20} /></span>
-              <h3>Get seen</h3>
-              <p>Publish a free portfolio brands can open from your bio, and let Polly put it in front of matched brands with pitches that sound like you.</p>
-              <Link href="/media-kit">Make your free portfolio <ArrowRight size={15} /></Link>
-            </Way>
-          </Ways>
+          <Paths>
+            <Path>
+              <span className="tag">Just starting</span>
+              <h3>Unlock your first brand deals</h3>
+              <p>Never worked with a brand, or only a few gifted boxes? Start here.</p>
+              <ul>
+                <li><Gift size={17} /> Gift lists from brands that send PR packages to small creators</li>
+                <li><LayoutTemplate size={17} /> A free portfolio, even before your first collab</li>
+                <li><Search size={17} /> 2,700+ brands with open PR forms, filtered to your niche</li>
+                <li><Mail size={17} /> Polly writes your first pitches, so you are never stuck on what to say</li>
+              </ul>
+              <Primary href={SIGNUP}>Land my first deal <ArrowRight size={18} /></Primary>
+            </Path>
+            <Path className="dark">
+              <span className="tag">Already doing UGC</span>
+              <h3>Grow your deals, not your workload</h3>
+              <p>Doing gifted or paid UGC and want more, more often? Let Newcollab run the outreach.</p>
+              <ul>
+                <li><Bot size={17} /> Polly pitches 3 matched brands every weekday from your Gmail, with follow-ups</li>
+                <li><BadgeDollarSign size={17} /> Every paid UGC gig from SideShift, Upwork and more in one feed</li>
+                <li><Sparkles size={17} /> Reply drafts with a fair paid usage rate when a brand says yes</li>
+                <li><Eye size={17} /> A portfolio brands open from your bio and every pitch</li>
+              </ul>
+              <Primary href={`${SIGNUP}?plan=pro`} className="light">Put my outreach on autopilot <ArrowRight size={18} /></Primary>
+            </Path>
+          </Paths>
         </Section>
 
         <Dark id="paid-ugc">
@@ -158,7 +204,7 @@ export default function HomeClient({ brands = [], stats }) {
             <div className="copy">
               <Eyebrow>Meet Polly</Eyebrow>
               <h2>Brand deals on autopilot</h2>
-              <p>Polly is your AI agent. She runs your outreach so you can spend your time making content.</p>
+              <p>Outreach takes hours and it is hard to stay consistent. Polly is your AI agent: she runs it every day so you can spend your time making content.</p>
               <Ticks>
                 <li><Search size={17} /> Finds brands that fit your niche and are open to creators</li>
                 <li><Sparkles size={17} /> Shows the hooks and formats working for a brand on TikTok</li>
@@ -374,10 +420,14 @@ const Stats = styled.section`
   span { font-size: 13.5px; color: ${t.muted}; }
   @media (max-width: 760px) { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: -20px; div { padding: 14px; } }
 `;
-const Section = styled.section`scroll-margin-top: 100px; display: grid; gap: 24px; min-width: 0;`;
+const Section = styled.section`
+  scroll-margin-top: 100px; display: grid; gap: 24px; min-width: 0;
+  .src { color: ${t.muted}; font-size: 12.5px; margin-top: -12px; }
+`;
 const Head = styled.div`
   display: grid; gap: 10px; max-width: 720px;
   &.row { max-width: none; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .lead { margin: 0; color: ${t.muted}; font-size: 16px; line-height: 1.55; }
   .all { display: inline-flex; align-items: center; gap: 6px; color: ${t.ink}; font-weight: 700; text-decoration: none; }
   .all:hover { color: ${t.accent}; }
 `;
@@ -385,18 +435,45 @@ const Eyebrow = styled.div`
   font-size: 12.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: ${t.accent};
   &.light { color: ${t.mint}; }
 `;
-const Ways = styled.div`
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+const Pains = styled.ol`
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+  li {
+    display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 14px; align-items: center;
+    background: ${t.white}; border: 1px solid ${t.line}; border-radius: 20px; padding: 16px 18px;
+  }
+  .q { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .q b { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: ${t.hot}; min-width: 64px; }
+  .q span { font-size: 16px; font-weight: 600; font-style: italic; color: ${t.inkSoft}; }
+  .q span::before { content: '“'; } .q span::after { content: '”'; }
+  .a { display: flex; gap: 12px; align-items: flex-start; padding-left: 14px; border-left: 2px solid ${t.accentSoft}; min-width: 0; }
+  .a .ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; background: ${t.accentSoft}; color: ${t.accentDeep}; }
+  .a div { display: grid; gap: 2px; }
+  .a strong { font-size: 15.5px; }
+  .a p { margin: 0; color: ${t.muted}; font-size: 14.5px; line-height: 1.5; }
+  @media (max-width: 760px) {
+    li { grid-template-columns: 1fr; padding: 14px; }
+    .q b { font-size: 24px; min-width: 54px; }
+    .a { padding-left: 0; border-left: 0; padding-top: 12px; border-top: 1px solid ${t.line}; }
+  }
+`;
+const Paths = styled.div`
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;
   @media (max-width: 860px) { grid-template-columns: 1fr; }
 `;
-const Way = styled.article`
-  background: ${t.white}; border: 1px solid ${t.line}; border-radius: 22px; padding: 24px; display: grid; gap: 10px;
-  align-content: start;
-  .ic { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: ${t.accentSoft}; color: ${t.accentDeep}; }
-  h3 { margin: 6px 0 0; font-size: 21px; letter-spacing: -0.01em; }
-  p { margin: 0; color: ${t.muted}; font-size: 15px; line-height: 1.55; }
-  a { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; color: ${t.ink}; font-weight: 700; text-decoration: none; }
-  a:hover { color: ${t.accent}; }
+const Path = styled.article`
+  background: ${t.white}; border: 1px solid ${t.line}; border-radius: 24px; padding: 26px; display: grid; gap: 12px; align-content: start;
+  .tag { justify-self: start; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: ${t.accentSoft}; color: ${t.accentDeep}; }
+  h3 { margin: 4px 0 0; font-size: 24px; letter-spacing: -0.015em; line-height: 1.15; }
+  p { margin: 0; color: ${t.muted}; font-size: 15px; line-height: 1.5; }
+  ul { list-style: none; margin: 4px 0 6px; padding: 0; display: grid; gap: 10px; }
+  li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.45; }
+  li svg { flex-shrink: 0; margin-top: 2px; color: ${t.accent}; }
+  a { justify-self: start; white-space: normal; }
+  &.dark { background: ${t.ink}; color: #fff; border-color: ${t.ink}; }
+  &.dark .tag { background: rgba(124, 224, 184, 0.18); color: ${t.mint}; }
+  &.dark p { color: rgba(255, 255, 255, 0.7); }
+  &.dark li svg { color: ${t.mint}; }
+  @media (max-width: 480px) { padding: 20px; a { justify-self: stretch; justify-content: center; } }
 `;
 const Dark = styled.section`
   position: relative; overflow: hidden; scroll-margin-top: 100px;
