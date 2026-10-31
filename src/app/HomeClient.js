@@ -1,16 +1,16 @@
 'use client';
 
-// newcollab.co homepage for creators, in the same look as Promote Newcollab: one clear H1, real numbers,
+// newcollab.co homepage for creators, in the same look as the in-app Promote page: one clear H1, real numbers,
 // autoplaying UGC and three ways in (gifted, paid, seen). The hero renders with no fade-in so the H1 paints
 // straight away (LCP). Brand cards come from the server (page.js), so crawlers get real links.
 import React from 'react';
 import Link from 'next/link';
 import styled, { keyframes } from 'styled-components';
 import {
-  ArrowRight, BadgeDollarSign, Bot, Check, ChevronDown, Eye, Gift, LayoutTemplate, Mail, Search, Sparkles, Store,
+  ArrowRight, BadgeDollarSign, Bot, Check, ChevronDown, Eye, Gift, LayoutTemplate, Mail, Radar, Search, Sparkles, Store,
 } from 'lucide-react';
 import LandingPageLayoutNext from './components/LandingPageLayoutNext';
-import { AutoTikTok, BrandMark, EarningsSlider, EXAMPLES, VideoWall } from '../creator-portal/PromoteVisuals';
+import { AutoTikTok, EXAMPLES, VideoWall } from '../creator-portal/PromoteVisuals';
 import { HOME_FAQ } from './homeFaq';
 
 const SIGNUP = '/register/creator';
@@ -37,12 +37,12 @@ export default function HomeClient({ brands = [], stats }) {
       <Page>
         <Hero>
           <div className="copy">
-            <Pill><span className="dot" /> Free for creators · No follower minimum</Pill>
+            <Pill><span className="dot" /> For aspiring UGC creators · No follower minimum</Pill>
             <h1><span>Get gifted.</span> <span>Get <em>paid</em>.</span> <span>Get seen.</span></h1>
-            <p className="kw">PR packages, paid UGC gigs and brand deals for creators.</p>
+            <p className="kw">Grow your brand deals on autopilot.</p>
             <p>
-              Join brand gift lists in one tap, pick up paid UGC gigs and let <b>Polly</b>, your AI agent, pitch
-              brands for you. Built for UGC creators and new creators, not just big accounts.
+              <b>Polly</b>, your AI agent, finds brands that fit you, pitches them and follows up, while you join
+              gift lists for PR packages and paid UGC gigs in one tap. Built for aspiring UGC creators, not big accounts.
             </p>
             <div className="ctas">
               <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
@@ -63,7 +63,7 @@ export default function HomeClient({ brands = [], stats }) {
         <Section id="features">
           <Head>
             <Eyebrow>One app, three ways in</Eyebrow>
-            <h2>Everything a creator needs to land brand deals</h2>
+            <h2>Everything an aspiring UGC creator needs to land brand deals</h2>
           </Head>
           <Ways>
             <Way>
@@ -75,7 +75,7 @@ export default function HomeClient({ brands = [], stats }) {
             <Way>
               <span className="ic"><BadgeDollarSign size={20} /></span>
               <h3>Get paid</h3>
-              <p>Apply to paid UGC gigs from brands, or earn per view with Promote Newcollab. Your first paid video can come before your first big following.</p>
+              <p>Every paid UGC gig from SideShift, Upwork and more, in one feed. Polly writes your application, so your first paid video can come before your first big following.</p>
               <a href="#paid-ugc">See paid UGC <ArrowRight size={15} /></a>
             </Way>
             <Way>
@@ -90,24 +90,42 @@ export default function HomeClient({ brands = [], stats }) {
         <Dark id="paid-ugc">
           <div className="copy">
             <Eyebrow className="light">Paid UGC</Eyebrow>
-            <h2>Post videos. <em>Get paid</em> for the views.</h2>
+            <h2>Every paid UGC gig. <em>One feed.</em></h2>
             <ul>
               <li>
-                <Store size={18} />
-                <div><b>Paid gigs from brands</b><span>{s.gigs} live gigs right now. Brands post the brief and the budget, you apply with your portfolio.</span></div>
+                <Radar size={18} />
+                <div><b>Scanned daily</b><span>{s.gigs} live gigs right now. We pull paid UGC gigs from SideShift, Upwork, Craigslist and more, so you never miss one.</span></div>
               </li>
               <li>
-                <BrandMark size={18} radius={5} />
-                <div><b>Promote Newcollab</b><span>$2.50 per 1,000 views on TikTok or Reels about Newcollab, from 2,000 views and up to $40 a video. Paid by PayPal or Wise.</span></div>
+                <Store size={18} />
+                <div><b>Matched to your niche</b><span>Filter by niche, new gigs and higher pay. No follower minimum on most UGC gigs.</span></div>
+              </li>
+              <li>
+                <Sparkles size={18} />
+                <div><b>Polly writes your application</b><span>Apply on the brand's site in a couple of minutes, with your portfolio attached.</span></div>
               </li>
             </ul>
-            <Primary href={SIGNUP} className="light">Start earning <ArrowRight size={18} /></Primary>
+            <Primary href={SIGNUP} className="light">See paid gigs <ArrowRight size={18} /></Primary>
           </div>
-          <EarningsSlider cpmCents={250} capCents={4000} minViews={2000} />
+          <Gigs aria-hidden="true">
+            <div className="head"><span><Radar size={14} /> Paid UGC radar</span><b>Live</b></div>
+            {[
+              ['Skincare brand', '3 TikToks · product shipped', '$150', '#f4c7c3'],
+              ['Pet food brand', '2 Reels · voiceover', '$220', '#d8f4c3'],
+              ['Home fragrance', '1 unboxing video', '$90', '#c3e0f4'],
+            ].map(([n, d, pay, c]) => (
+              <div className="gig" key={n}>
+                <span className="av" style={{ background: c }} />
+                <span className="tx"><b>{n}</b><em>{d}</em></span>
+                <span className="pay">{pay}</span>
+              </div>
+            ))}
+            <div className="foot"><Sparkles size={14} /> Polly drafted your application</div>
+          </Gigs>
         </Dark>
         <Wall>
           <VideoWall />
-          <small>Real videos by creators on Newcollab. Tap one to watch it on TikTok.</small>
+          <small>UGC by creators on Newcollab. Tap one to watch it on TikTok.</small>
         </Wall>
 
         <Section id="brands">
@@ -139,8 +157,8 @@ export default function HomeClient({ brands = [], stats }) {
           <Split>
             <div className="copy">
               <Eyebrow>Meet Polly</Eyebrow>
-              <h2>Your AI agent for brand deals</h2>
-              <p>Polly does the boring part of outreach so you can make content.</p>
+              <h2>Brand deals on autopilot</h2>
+              <p>Polly is your AI agent. She runs your outreach so you can spend your time making content.</p>
               <Ticks>
                 <li><Search size={17} /> Finds brands that fit your niche and are open to creators</li>
                 <li><Sparkles size={17} /> Shows the hooks and formats working for a brand on TikTok</li>
@@ -201,7 +219,7 @@ export default function HomeClient({ brands = [], stats }) {
               <div className="price">$0<span> forever</span></div>
               <ul>
                 <li><Check size={16} /> Brand directory and gift lists</li>
-                <li><Check size={16} /> Paid UGC gigs and Promote Newcollab</li>
+                <li><Check size={16} /> A preview of paid UGC gigs</li>
                 <li><Check size={16} /> Free portfolio and media kit</li>
                 <li><Check size={16} /> 3 brand applications a month</li>
                 <li><Check size={16} /> Polly writes your pitches</li>
@@ -216,7 +234,7 @@ export default function HomeClient({ brands = [], stats }) {
                 <li><Check size={16} /> Unlimited brand and gift list applications</li>
                 <li><Check size={16} /> Polly pitches 3 matched brands every weekday from your Gmail</li>
                 <li><Check size={16} /> Automatic follow-ups and reply drafts</li>
-                <li><Check size={16} /> Full For You feed and priority brand alerts</li>
+                <li><Check size={16} /> Every paid UGC gig, plus priority brand alerts</li>
               </ul>
               <Primary href={`${SIGNUP}?plan=pro`} className="light">Put Polly to work <ArrowRight size={18} /></Primary>
               <small>Cancel anytime</small>
@@ -249,8 +267,8 @@ export default function HomeClient({ brands = [], stats }) {
 
         <Final>
           <img src="/apple-touch-icon.png" alt="" className="wm" aria-hidden="true" />
-          <h2>Your next PR package is one tap away.</h2>
-          <p>Join {s.creators} creators getting gifted, paid and seen.</p>
+          <h2>Put your brand deals on autopilot.</h2>
+          <p>Join {s.creators} UGC creators getting gifted, paid and seen.</p>
           <Primary href={SIGNUP} className="light">Start free <ArrowRight size={18} /></Primary>
         </Final>
       </Page>
@@ -286,7 +304,7 @@ const Page = styled.div`
   h3 { font-weight: 800; }
   h1 *, h2 *, h3 > :not(.tag) { font-weight: inherit; }
   h2 { margin: 0; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; letter-spacing: -0.025em; font-weight: 800; }
-  h2 em { font-style: normal; color: ${t.accent}; }
+  h2 em { font-style: normal; color: ${t.accent}; white-space: nowrap; }
   @media (max-width: 768px) { padding: 100px 16px 56px; gap: 56px; }
 `;
 const Hero = styled.section`
@@ -393,6 +411,21 @@ const Dark = styled.section`
   li b { font-size: 16px; }
   li span { color: rgba(255, 255, 255, 0.7); font-size: 14.5px; line-height: 1.5; }
   @media (max-width: 860px) { grid-template-columns: 1fr; padding: 26px 18px; border-radius: 22px; }
+`;
+const Gigs = styled.div`
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 14px;
+  display: grid; gap: 8px; min-width: 0;
+  .head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: rgba(255, 255, 255, 0.7); }
+  .head span { display: inline-flex; align-items: center; gap: 6px; }
+  .head b { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(124, 224, 184, 0.18); color: ${t.mint}; }
+  .gig { display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 12px; }
+  .av { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; }
+  .tx { display: grid; min-width: 0; flex: 1; }
+  .tx b { font-size: 14.5px; }
+  .tx em { font-style: normal; font-size: 12.5px; color: rgba(255, 255, 255, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pay { font-weight: 800; font-size: 17px; color: ${t.mint}; }
+  .foot { display: flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255, 255, 255, 0.75); padding: 2px 2px 0; }
+  .foot svg { color: ${t.mint}; }
 `;
 const Wall = styled.div`
   margin-top: -48px; display: grid; gap: 8px; min-width: 0;

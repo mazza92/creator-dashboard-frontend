@@ -1,17 +1,17 @@
 import HomeClient from './HomeClient';
 import HomeFaqSchemaScript from './HomeFaqSchemaScript';
 
-const TITLE = 'Newcollab: PR Packages, Brand Deals & Paid UGC for Creators';
+const TITLE = 'Newcollab: PR Packages, Paid UGC & Brand Deals for UGC Creators';
 const DESCRIPTION =
-  'Get gifted, get paid, get seen. Apply to brand gift lists for PR packages, find paid UGC gigs, browse 2,700+ brands with open PR forms and build a free UGC portfolio. No follower minimum.';
+  'Grow your brand deals on autopilot. Newcollab helps aspiring UGC creators get PR packages, find paid UGC gigs and pitch 2,700+ brands with Polly, an AI agent. Free UGC portfolio. No follower minimum.';
 
 export const metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  keywords: 'PR packages for creators, how to get PR packages, paid UGC jobs, UGC creator jobs, brand deals for small creators, PR forms for brands, brands with open PR forms, gifted collaborations, free UGC portfolio, media kit for creators, micro influencer brand deals, get paid to post on TikTok',
+  keywords: 'UGC creator brand deals, PR packages for creators, how to get PR packages, paid UGC jobs, UGC creator jobs, brand deals for small creators, PR forms for brands, brands with open PR forms, gifted collaborations, free UGC portfolio, media kit for creators, micro influencer brand deals, get paid to post on TikTok',
   openGraph: {
     title: TITLE,
-    description: 'Gift lists, paid UGC gigs and 2,700+ brands with open PR forms. Free UGC portfolio. No follower minimum.',
+    description: 'Grow your brand deals on autopilot: PR packages, paid UGC gigs and an AI agent that pitches brands for you. No follower minimum.',
     type: 'website',
     url: 'https://newcollab.co',
     siteName: 'Newcollab',
@@ -20,7 +20,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: TITLE,
-    description: 'Get gifted, get paid, get seen. PR packages, paid UGC gigs and brand deals for creators.',
+    description: 'Get gifted, get paid, get seen. Grow your brand deals on autopilot.',
     site: '@newcollab_',
   },
   alternates: {
@@ -35,7 +35,7 @@ export const revalidate = 3600;
 const STATS = { brands: 2788, gigs: 323, lists: 276, creators: 3690 };
 
 const ABOUT =
-  'Newcollab helps creators get gifted, get paid and get seen: brand gift lists for PR packages, paid UGC gigs, a directory of brands with open PR forms, a free UGC portfolio builder and Polly, an AI agent that pitches brands. Brands use Newcollab to run gifted UGC rosters.';
+  'Newcollab helps aspiring UGC creators grow their brand deals on autopilot: Polly, an AI agent that finds and pitches brands, brand gift lists for PR packages, a feed of paid UGC gigs, a directory of brands with open PR forms and a free UGC portfolio builder. Brands use Newcollab to run gifted UGC rosters.';
 
 const websiteSchema = {
   '@context': 'https://schema.org',

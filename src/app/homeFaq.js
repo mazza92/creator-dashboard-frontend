@@ -15,7 +15,7 @@ export const HOME_FAQ = [
   {
     question: 'How do I get paid for UGC on Newcollab?',
     answer:
-      'Two ways. Brands post paid UGC gigs you can apply to from your dashboard. And with Promote Newcollab you earn $2.50 per 1,000 views for TikTok or Reels you post about Newcollab, from 2,000 views and up to $40 per video, paid by PayPal or Wise.',
+      "Newcollab scans paid UGC gigs from SideShift, Upwork, Craigslist and more every day and puts them in one feed you can filter by niche. Polly writes your application and you apply on the brand's site. Free accounts see a preview of the feed; Pro shows every gig.",
   },
   {
     question: 'What is a PR package?',
@@ -35,6 +35,6 @@ export const HOME_FAQ = [
   {
     question: 'Is Newcollab free?',
     answer:
-      'Yes. The free plan includes the brand directory, gift lists, paid UGC gigs, Promote Newcollab, a free portfolio and 3 brand applications a month. Pro is $19 a month for unlimited applications and Polly pitching brands for you. Cancel anytime.',
+      'Yes. The free plan includes the brand directory, gift lists, a preview of paid UGC gigs, a free portfolio and 3 brand applications a month. Pro is $19 a month for unlimited applications, every paid UGC gig and Polly pitching brands for you. Cancel anytime.',
   },
 ];
