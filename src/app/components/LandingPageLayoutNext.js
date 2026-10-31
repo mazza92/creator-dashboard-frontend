@@ -3,14 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from 'antd';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { MenuOutlined, CloseOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import styled, { createGlobalStyle } from 'styled-components';
 import { FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
-import FreePortfolioBanner from '../../components/FreePortfolioBanner';
 import AuthNavButtons from '../../components/AuthNavButtons';
-import { shouldShowFreePortfolioBanner } from '../../lib/freePortfolioBanner';
 import { openCookieSettings } from '../../lib/cookieConsent';
 import { tokens } from '../../theme/tokens';
 
@@ -167,10 +165,10 @@ const LogoImg = styled.img`
 const NavLinks = styled.div`
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 4px;
   background: transparent;
   margin-left: auto;
-  margin-right: 32px;
+  margin-right: 20px;
 
   @media (max-width: 1024px) {
     display: none;
@@ -187,40 +185,6 @@ const NavLink = styled(Link)`
   border-radius: ${tokens.radiusBtn};
   background: transparent;
   position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    width: 0;
-    height: 2px;
-    background: ${tokens.primary};
-    transition: all 0.2s ease;
-    transform: translateX(-50%);
-    border-radius: 1px;
-  }
-
-  &:hover {
-    color: ${props => props.$isSignupPage ? '#ffffff' : tokens.primary};
-
-    &::after {
-      width: 60%;
-    }
-  }
-`;
-
-const HashNavLink = styled.a`
-  color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  padding: 8px 16px;
-  border-radius: ${tokens.radiusBtn};
-  background: transparent;
-  position: relative;
-  cursor: pointer;
 
   &::after {
     content: '';
@@ -391,22 +355,6 @@ const MobileNavLink = styled(Link)`
   }
 `;
 
-const MobileHashNavLink = styled.a`
-  color: ${tokens.textPrimary};
-  font-size: 18px;
-  font-weight: 600;
-  text-decoration: none;
-  padding: 14px 0;
-  border-bottom: 1px solid ${tokens.border};
-  background: transparent;
-  cursor: pointer;
-  display: block;
-
-  &:hover {
-    color: ${tokens.primary};
-  }
-`;
-
 const MobileAuthButtons = styled.div`
   display: flex;
   flex-direction: column;
@@ -516,18 +464,25 @@ const SocialIcon = styled.div`
   }
 `;
 
+// Slim header: the four places creators go. Features, pricing and company pages live in the footer.
+const NAV = [
+  ['Brands', '/directory'],
+  ['Paid UGC', '/#paid-ugc'],
+  ['Free portfolio', '/media-kit'],
+  ['For brands', '/brands/pr-packages'],
+];
+const MOBILE_EXTRA = [['Pricing', '/#pricing'], ['Blog', '/blog'], ['About', '/about']];
+
 export default function LandingPageLayoutNext({ hideHeader, hideFooter, children, canonicalUrl: customCanonicalUrl }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname() || '/';
-  const router = useRouter();
 
   const isSignupPage = pathname === '/register';
   const isLoginPage = pathname === '/login';
   const isTransparentHeader = isSignupPage || isLoginPage;
-  const showPortfolioBanner = !hideHeader && shouldShowFreePortfolioBanner(pathname);
 
   const canonicalUrl =
     customCanonicalUrl || `https://newcollab.co${pathname === '/' ? '' : pathname}`;
@@ -596,17 +551,6 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleNavClick = (hash) => {
-    if (pathname !== '/') {
-      router.push('/');
-      setTimeout(() => {
-        window.location.hash = hash;
-      }, 100);
-    } else {
-      window.location.hash = hash;
-    }
-  };
-
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
     document.body.style.overflow = 'auto';
@@ -624,7 +568,6 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
       <GlobalStyle />
       {!hideHeader && (
         <HeaderWrapper $isMobile={isMobile} $isScrolled={isScrolled}>
-          {showPortfolioBanner && <FreePortfolioBanner />}
           <HeaderBar>
             <Link href="/" prefetch={false} style={{ textDecoration: 'none' }}>
               <LogoContainer>
@@ -632,13 +575,9 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
               </LogoContainer>
             </Link>
             <NavLinks>
-              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('features')}>Features</HashNavLink>
-              <NavLink href="/media-kit" prefetch={false} $isSignupPage={isTransparentHeader}>Free portfolio</NavLink>
-              <NavLink href="/directory" prefetch={false} $isSignupPage={isTransparentHeader}>Brands</NavLink>
-              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('how-it-works')}>How It Works</HashNavLink>
-              <HashNavLink $isSignupPage={isTransparentHeader} onClick={() => handleNavClick('pricing')}>Pricing</HashNavLink>
-              <NavLink href="/brands/pr-packages" prefetch={false} $isSignupPage={isTransparentHeader}>For Brands</NavLink>
-              <NavLink href="/about" prefetch={false} $isSignupPage={isTransparentHeader}>About</NavLink>
+              {NAV.map(([label, href]) => (
+                <NavLink key={href} href={href} prefetch={false} $isSignupPage={isTransparentHeader}>{label}</NavLink>
+              ))}
             </NavLinks>
             <AuthButtons>
               <AuthNavButtons isSignupPage={isTransparentHeader} />
@@ -678,30 +617,9 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
           />
         </MobileMenuHeader>
         <MobileNavLinks>
-          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('features'); }}>
-            Features
-          </MobileHashNavLink>
-          <MobileNavLink href="/media-kit" prefetch={false} onClick={closeMobileMenu}>
-            Free portfolio
-          </MobileNavLink>
-          <MobileNavLink href="/directory" prefetch={false} onClick={closeMobileMenu}>
-            Brands
-          </MobileNavLink>
-          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('how-it-works'); }}>
-            How It Works
-          </MobileHashNavLink>
-          <MobileHashNavLink onClick={() => { closeMobileMenu(); handleNavClick('pricing'); }}>
-            Pricing
-          </MobileHashNavLink>
-          <MobileNavLink href="/brands/pr-packages" prefetch={false} onClick={closeMobileMenu}>
-            For Brands
-          </MobileNavLink>
-          <MobileNavLink href="/about" prefetch={false} onClick={closeMobileMenu}>
-            About
-          </MobileNavLink>
-          <MobileNavLink href="/contact" prefetch={false} onClick={closeMobileMenu}>
-            Contact
-          </MobileNavLink>
+          {[...NAV, ...MOBILE_EXTRA].map(([label, href]) => (
+            <MobileNavLink key={href} href={href} prefetch={false} onClick={closeMobileMenu}>{label}</MobileNavLink>
+          ))}
         </MobileNavLinks>
         <MobileAuthButtons>
           <AuthNavButtons variant="mobile-menu" onNavigate={closeMobileMenu} />
@@ -723,9 +641,14 @@ export function SiteFooter() {
   return (
     <Footer>
       <FooterLinks>
-        <FooterLink href="/about">About us</FooterLink>
-        <FooterLink href="/brands/pr-packages">For Brands</FooterLink>
+        <FooterLink href="/directory">Brand directory</FooterLink>
+        <FooterLink href="/#paid-ugc">Paid UGC</FooterLink>
+        <FooterLink href="/media-kit">Free portfolio</FooterLink>
+        <FooterLink href="/#features">Features</FooterLink>
+        <FooterLink href="/#pricing">Pricing</FooterLink>
+        <FooterLink href="/brands/pr-packages">For brands</FooterLink>
         <FooterLink href="/blog">Blog</FooterLink>
+        <FooterLink href="/about">About us</FooterLink>
         <FooterLink href="/contact">Contact</FooterLink>
         <FooterLink href="/privacy-policy">Privacy</FooterLink>
         <FooterLink href="/terms-of-service">Terms</FooterLink>
@@ -753,7 +676,7 @@ export function SiteFooter() {
           </a>
         </SocialIcon>
       </div>
-      <p style={{ opacity: 0.7 }}>© 2025 Newcollab. All rights reserved.</p>
+      <p style={{ opacity: 0.7 }}>© {new Date().getFullYear()} Newcollab. All rights reserved.</p>
     </Footer>
   );
 }
