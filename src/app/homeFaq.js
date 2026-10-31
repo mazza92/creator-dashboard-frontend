@@ -18,6 +18,16 @@ export const HOME_FAQ = [
       "Newcollab scans paid UGC gigs from SideShift, Upwork, Craigslist and more every day and puts them in one feed you can filter by niche. Polly writes your application and you apply on the brand's site. Free accounts see a preview of the feed; Pro shows every gig.",
   },
   {
+    question: 'Why do brands not reply to my pitches?',
+    answer:
+      'Most pitches go to the wrong brands, say too little about what you would make, or never get a follow-up. On Newcollab, Polly picks brands that fit your niche, writes a short personal pitch with your portfolio link and follows up for you, so far fewer pitches go unanswered.',
+  },
+  {
+    question: 'How should I price my UGC?',
+    answer:
+      'A common first ask is a fee for paid usage: the brand running your video as an ad, for example for 30 days. When a brand says yes to a pitch, Polly drafts your reply with a usage rate sized to your audience, so you never have to guess on the spot. You can also show your rates on your free portfolio.',
+  },
+  {
     question: 'What is a PR package?',
     answer:
       'A PR package is a product a brand sends you for free, usually in exchange for content such as a TikTok, Reel or story. On Newcollab, gift lists spell out what the brand sends and what content it asks for before you apply.',
