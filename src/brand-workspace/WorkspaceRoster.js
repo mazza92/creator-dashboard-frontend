@@ -60,6 +60,10 @@ export default function WorkspaceRoster({ token, onBack }) {
   const [upgrading, setUpgrading] = useState(false);
   const [chatId, setChatId] = useState(null);
   const [readIds, setReadIds] = useState(() => new Set());
+  // Hooks stay above the loading/empty early returns below (React needs the same hooks every render).
+  const markRead = useCallback(() => {
+    if (chatId) setReadIds((prev) => (prev.has(chatId) ? prev : new Set(prev).add(chatId)));
+  }, [chatId]);
   const viewed = useRef(new Set());
 
   const apply = useCallback((payload, keepStep) => {
@@ -206,9 +210,6 @@ export default function WorkspaceRoster({ token, onBack }) {
     </Upsell>
   );
 
-  const markRead = useCallback(() => {
-    if (chatId) setReadIds((prev) => (prev.has(chatId) ? prev : new Set(prev).add(chatId)));
-  }, [chatId]);
   const chatWith = chatId ? creators.find((c) => c.application_id === chatId) : null;
   const unreadFor = (c) => (readIds.has(c.application_id) ? 0 : Number(c.unread_messages) || 0);
   const openChat = (c) => {
