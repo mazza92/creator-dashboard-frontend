@@ -3,7 +3,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { ArrowRight, Check, ChevronLeft, Loader2, Lock, Mail } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, Globe, Loader2, Lock, Mail, Sparkles } from 'lucide-react';
 import api from '../config/api';
 import { auth, firebaseConfigured } from '../components/firebase';
 import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
@@ -212,6 +212,24 @@ const Legal = styled.p`
   a { color: #6b6f78; }
 `;
 
+const CreatorNote = styled.a`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: #fff4e5;
+  border: 1px solid #f6d7a8;
+  color: #6b3d00;
+  font-size: 14px;
+  line-height: 1.4;
+  text-decoration: none;
+  span { flex: 1; }
+  b { color: #3d2400; }
+  svg { flex-shrink: 0; }
+`;
+
 const ErrorBox = styled.div`
   margin: 0 0 14px;
   padding: 11px 14px;
@@ -338,9 +356,23 @@ const GoogleIcon = () => (
 // STEPS
 // ============================================================================
 
+// Brand accounts are for brands: a work email (not Gmail, iCloud...) and the brand's website. The backend checks
+// the same (services/brand_workspace.new_brand_signup_error); this just says so before they submit.
+const FREE_MAIL = ['gmail', 'googlemail', 'yahoo', 'ymail', 'rocketmail', 'hotmail', 'outlook', 'live', 'msn', 'icloud',
+  'me', 'mac', 'aol', 'proton', 'protonmail', 'pm', 'gmx', 'mail', 'yandex', 'zoho', 'qq', '163', 'naver', 'hey',
+  'tutanota', 'fastmail', 'mailinator', 'comcast', 'att', 'verizon'];
+const isFreeMail = (email) => {
+  const domain = String(email || '').split('@')[1] || '';
+  return Boolean(domain) && FREE_MAIL.includes(domain.toLowerCase().split('.')[0]);
+};
+const siteOk = (site) => /^(https?:\/\/)?[^\s/]+\.[a-z]{2,}(\/.*)?$/i.test(String(site || '').trim());
+const SITE_KEY = 'nc_brand_signup_site';  // survives the Google redirect
+const readSite = () => { try { return sessionStorage.getItem(SITE_KEY) || ''; } catch { return ''; } };
+
 function AccountStep({ onDone, entry }) {
   const { setUser } = useContext(UserContext) || {};
   const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState(readSite);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState('');
@@ -352,7 +384,17 @@ function AccountStep({ onDone, entry }) {
     niche: entry.get('niche') || '',
     free_scan: readCookie('nc_free_scan'),
     oref: entry.get('oref') || readCookie('nc_oref') || undefined,
-  }), [entry]);
+    website: website.trim() || readSite(),
+  }), [entry, website]);
+
+  // What's wrong before we even call the server ('' when fine). Google signups bring their own email.
+  const gateError = (forGoogle) => {
+    if (!siteOk(website)) return "Add your brand's website first, like yourbrand.com.";
+    if (!forGoogle && isFreeMail(email)) {
+      return "Use your brand's work email (like you@yourbrand.com). Personal emails like Gmail or iCloud can't open a brand account.";
+    }
+    return '';
+  };
 
   const signedIn = useCallback((data) => {
     persistLoggedInUser(setUser, data);
@@ -385,6 +427,9 @@ function AccountStep({ onDone, entry }) {
 
   const google = async () => {
     setError('');
+    const gate = gateError(true);
+    if (gate) { setError(gate); return; }
+    try { sessionStorage.setItem(SITE_KEY, website.trim()); } catch { /* storage blocked */ }
     const inApp = inAppBrowserName();
     if (inApp) {
       setError(inAppGoogleMessage(inApp));
@@ -406,6 +451,8 @@ function AccountStep({ onDone, entry }) {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+    const gate = gateError(false);
+    if (gate) { setError(gate); return; }
     if (!showPassword) {
       setShowPassword(true);
       return;
@@ -424,6 +471,11 @@ function AccountStep({ onDone, entry }) {
   const loginHint = /log in/i.test(error);
   return (
     <Body>
+      <CreatorNote href="/register/creator">
+        <Sparkles size={16} />
+        <span><b>Are you a creator?</b> This page is for brands. Sign up as a creator here</span>
+        <ArrowRight size={16} />
+      </CreatorNote>
       <H1>Create your free brand account</H1>
       <Sub>Scan any competitor&apos;s creators, then run your first gifted campaign free.</Sub>
       {error && (
@@ -431,6 +483,11 @@ function AccountStep({ onDone, entry }) {
           {error} {loginHint && <a href="/login?returnTo=%2Fbrand%2Fworkspace">Log in</a>}
         </ErrorBox>
       )}
+      <IconInput>
+        <Globe size={18} />
+        <TextInput type="url" inputMode="url" autoComplete="url" placeholder="Your brand's website (yourbrand.com)"
+          value={website} onChange={(e) => setWebsite(e.target.value)} aria-label="Brand website" />
+      </IconInput>
       {googleEnabled && (
         <>
           <Pill type="button" onClick={google} disabled={Boolean(busy)}>
@@ -443,7 +500,7 @@ function AccountStep({ onDone, entry }) {
       <form onSubmit={submit}>
         <IconInput>
           <Mail size={18} />
-          <TextInput type="email" autoComplete="email" required placeholder="Work email address" value={email}
+          <TextInput type="email" autoComplete="email" required placeholder="Work email (you@yourbrand.com)" value={email}
             onChange={(e) => setEmail(e.target.value)} aria-label="Work email" />
         </IconInput>
         {showPassword && (
@@ -460,7 +517,6 @@ function AccountStep({ onDone, entry }) {
       </form>
       <Fine><Check size={14} color="#0f9d58" style={{ verticalAlign: '-2px' }} /> <b>$0 today</b> · first campaign free · cancel anytime</Fine>
       <Fine style={{ marginTop: 22 }}>Already have an account? <a href="/login?returnTo=%2Fbrand%2Fworkspace">Log in</a></Fine>
-      <Fine style={{ marginTop: 6 }}>Are you a creator? <a href="/register/creator">Sign up as a creator</a></Fine>
       <Legal>
         By continuing, you agree to the <a href="https://newcollab.co/terms-of-service">Terms of Service</a> and
         acknowledge the <a href="https://newcollab.co/privacy-policy">Privacy Policy</a>.
