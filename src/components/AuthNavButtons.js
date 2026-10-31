@@ -3,14 +3,13 @@
 import React from 'react';
 import styled from 'styled-components';
 import useDashboardSession from '../hooks/useDashboardSession';
-import { dashboardHomeHref, editProfileHref, loginHref, signupHref } from '../lib/dashboardLinks';
+import { dashboardHomeHref, loginHref, signupHref } from '../lib/dashboardLinks';
 import { tokens } from '../theme/tokens';
 
 export default function AuthNavButtons({ isSignupPage = false, variant = 'desktop', onNavigate }) {
   const session = useDashboardSession();
   const signedIn = session.status === 'in';
   const dashboard = dashboardHomeHref(session.role);
-  const profile = editProfileHref(session.role);
 
   const handleClick = () => {
     if (onNavigate) onNavigate();
@@ -22,7 +21,7 @@ export default function AuthNavButtons({ isSignupPage = false, variant = 'deskto
         href={signedIn ? dashboard : signupHref()}
         onClick={handleClick}
       >
-        {signedIn ? 'Dashboard' : 'Sign up free'}
+        {signedIn ? 'Dashboard' : 'Start free'}
       </MobileCta>
     );
   }
@@ -30,7 +29,6 @@ export default function AuthNavButtons({ isSignupPage = false, variant = 'deskto
   if (signedIn) {
     return (
       <Row $stack={variant === 'mobile-menu'}>
-        <Ghost href={profile} $light={isSignupPage} onClick={handleClick}>Edit profile</Ghost>
         <Solid href={dashboard} onClick={handleClick}>Dashboard</Solid>
       </Row>
     );
@@ -39,7 +37,7 @@ export default function AuthNavButtons({ isSignupPage = false, variant = 'deskto
   return (
     <Row $stack={variant === 'mobile-menu'}>
       <Ghost href={loginHref()} $light={isSignupPage} onClick={handleClick}>Log in</Ghost>
-      <Solid href={signupHref()} onClick={handleClick}>Sign up</Solid>
+      <Solid href={signupHref()} onClick={handleClick}>Start free</Solid>
     </Row>
   );
 }
@@ -102,7 +100,8 @@ const MobileCta = styled.a`
   text-decoration: none;
   padding: 8px 16px;
   border-radius: ${tokens.radiusBtn};
-  margin-right: 16px;
+  margin-left: auto;
+  margin-right: 8px;
   white-space: nowrap;
 
   &:hover {
