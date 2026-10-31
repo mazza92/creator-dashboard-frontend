@@ -28,16 +28,6 @@ export const HOME_FAQ = [
       'A common first ask is a fee for paid usage: the brand running your video as an ad, for example for 30 days. When a brand says yes to a pitch, Polly drafts your reply with a usage rate sized to your audience, so you never have to guess on the spot. You can also show your rates on your free portfolio.',
   },
   {
-    question: 'What is a PR package?',
-    answer:
-      'A PR package is a product a brand sends you for free, usually in exchange for content such as a TikTok, Reel or story. On Newcollab, gift lists spell out what the brand sends and what content it asks for before you apply.',
-  },
-  {
-    question: 'Do I need a media kit or portfolio?',
-    answer:
-      'It helps a lot. Brands want to see your content before they send anything. Build a free UGC portfolio in minutes at https://newcollab.co/media-kit, no account needed, and use the link in your bio and your pitches.',
-  },
-  {
     question: 'Who is Polly?',
     answer:
       'Polly is your AI agent on Newcollab. She finds brands that fit your niche, shows you the hooks and formats working for them, and writes your pitches. On Pro she pitches 3 new matched brands for you every weekday from your own Gmail, with follow-ups.',

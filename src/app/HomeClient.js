@@ -1,13 +1,13 @@
 'use client';
 
 // newcollab.co homepage for creators, in the same look as the in-app Promote page: one clear H1, real numbers,
-// autoplaying UGC and three ways in (gifted, paid, seen). The hero renders with no fade-in so the H1 paints
+// autoplaying UGC. Structure: hero, proof, problem (top survey pains), how it works, features, pricing, FAQ, CTA. The hero renders with no fade-in so the H1 paints
 // straight away (LCP). Brand cards come from the server (page.js), so crawlers get real links.
 import React from 'react';
 import Link from 'next/link';
 import styled, { keyframes } from 'styled-components';
 import {
-  ArrowRight, BadgeDollarSign, Bot, Check, ChevronDown, Eye, Gift, LayoutTemplate, Mail, Radar, Search, Sparkles, Store,
+  ArrowRight, BadgeDollarSign, Bot, Check, ChevronDown, Eye, Gift, LayoutTemplate, Radar, Sparkles,
 } from 'lucide-react';
 import LandingPageLayoutNext from './components/LandingPageLayoutNext';
 import { AutoTikTok, EXAMPLES, VideoWall } from '../creator-portal/PromoteVisuals';
@@ -15,19 +15,6 @@ import { HOME_FAQ } from './homeFaq';
 
 const SIGNUP = '/register/creator';
 
-// Top answers from our 2026 creator survey ("What's painful"), each paired with the part of Newcollab that fixes it.
-const PAINS = [
-  { pct: '56%', pain: "Don't know which brands to reach out to", Icon: Search,
-    fix: 'Brands matched to your niche', how: 'Gift lists, paid gigs and 2,700+ brands with open PR forms. Polly picks the ones that fit you.' },
-  { pct: '34%', pain: 'Brands never reply to my pitches', Icon: Mail,
-    fix: 'Pitches that get answered', how: 'Polly writes short, personal pitches and follows up for you, from your own Gmail.' },
-  { pct: '32%', pain: "Don't have a portfolio yet", Icon: LayoutTemplate,
-    fix: 'A free portfolio in minutes', how: 'Your best videos, niches and rates on one link. No Canva and no past collabs needed.' },
-  { pct: '27%', pain: "Don't know how to price my work", Icon: BadgeDollarSign,
-    fix: 'A rate to quote, every time', how: 'When a brand says yes, Polly drafts your reply with a paid usage rate sized to your audience.' },
-  { pct: '24%', pain: "Don't know what to say in a pitch", Icon: Sparkles,
-    fix: 'Never a blank email again', how: 'Polly writes every pitch from your profile and the brand, and you can edit before it goes.' },
-];
 
 const t = {
   ink: '#12141a', inkSoft: '#2a2e38', muted: '#5c6470', line: '#e4e2dc', paper: '#f7f5f0', white: '#fff',
@@ -49,107 +36,88 @@ export default function HomeClient({ brands = [], stats }) {
   return (
     <LandingPageLayoutNext>
       <Page>
+        {/* 1. Hero: who it's for, the outcome, one action */}
         <Hero>
           <div className="copy">
-            <Pill><span className="dot" /> For new and working UGC creators · No follower minimum</Pill>
+            <Pill><span className="dot" /> For new and working UGC creators</Pill>
             <h1><span>Get gifted.</span> <span>Get <em>paid</em>.</span> <span>Get seen.</span></h1>
             <p className="kw">Grow your brand deals on autopilot.</p>
             <p>
-              Landing your first PR package or growing your UGC business? <b>Polly</b>, your AI agent, shows you which
-              brands to pitch, writes the pitch and follows up, so brand deals keep coming without hours of outreach.
+              Newcollab finds the brands that fit you, pitches them for you and follows up. You land PR packages and
+              paid UGC without hours of outreach.
             </p>
             <div className="ctas">
               <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
               <Ghost href="/directory">Browse {s.brands} brands</Ghost>
             </div>
-            <small>Free forever plan · No card needed</small>
+            <small>Free plan · No card needed · No follower minimum</small>
           </div>
           <HeroVisual />
         </Hero>
 
+        {/* 2. Proof: real numbers */}
         <Stats aria-label="Newcollab in numbers">
+          <div><b>{s.creators}</b><span>creators on Newcollab</span></div>
           <div><b>{s.brands}</b><span>brands with open PR forms</span></div>
           <div><b>{s.lists}</b><span>open gift lists</span></div>
           <div><b>{s.gigs}</b><span>live paid UGC gigs</span></div>
-          <div><b>{s.creators}</b><span>creators on Newcollab</span></div>
         </Stats>
 
-        <Section id="problems">
-          <Head>
+        {/* 3. Problem: the top three survey pains, nothing else */}
+        <Section id="problem">
+          <Head className="center">
             <Eyebrow>Sound familiar?</Eyebrow>
-            <h2>What creators told us is holding them back</h2>
-            <p className="lead">We asked the creators on Newcollab what gets in the way of brand deals. Here is what they said, and how we fix it.</p>
+            <h2>Brand deals shouldn't feel like guesswork</h2>
           </Head>
-          <Pains>
-            {PAINS.map((x) => (
-              <li key={x.pain}>
-                <div className="q">
-                  <b>{x.pct}</b>
-                  <span>{x.pain}</span>
-                </div>
-                <div className="a">
-                  <span className="ic"><x.Icon size={18} /></span>
-                  <div>
-                    <strong>{x.fix}</strong>
-                    <p>{x.how}</p>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </Pains>
-          <small className="src">Survey of creators on Newcollab, 2026. Creators could pick more than one answer.</small>
+          <Problems>
+            <li><b>56%</b><span>don't know which brands to reach out to</span></li>
+            <li><b>34%</b><span>pitch brands and never hear back</span></li>
+            <li><b>32%</b><span>don't have a portfolio to show yet</span></li>
+          </Problems>
+          <small className="src">From our 2026 survey of creators on Newcollab.</small>
         </Section>
 
-        <Section id="features">
-          <Head>
-            <Eyebrow>Wherever you are</Eyebrow>
-            <h2>From your first PR package to a steady flow of paid deals</h2>
-          </Head>
-          <Paths>
-            <Path>
-              <span className="tag">Just starting</span>
-              <h3>Unlock your first brand deals</h3>
-              <p>Never worked with a brand, or only a few gifted boxes? Start here.</p>
-              <ul>
-                <li><Gift size={17} /> Gift lists from brands that send PR packages to small creators</li>
-                <li><LayoutTemplate size={17} /> A free portfolio, even before your first collab</li>
-                <li><Search size={17} /> 2,700+ brands with open PR forms, filtered to your niche</li>
-                <li><Mail size={17} /> Polly writes your first pitches, so you are never stuck on what to say</li>
-              </ul>
-              <Primary href={SIGNUP}>Land my first deal <ArrowRight size={18} /></Primary>
-            </Path>
-            <Path className="dark">
-              <span className="tag">Already doing UGC</span>
-              <h3>Grow your deals, not your workload</h3>
-              <p>Doing gifted or paid UGC and want more, more often? Let Newcollab run the outreach.</p>
-              <ul>
-                <li><Bot size={17} /> Polly pitches 3 matched brands every weekday from your Gmail, with follow-ups</li>
-                <li><BadgeDollarSign size={17} /> Every paid UGC gig from SideShift, Upwork and more in one feed</li>
-                <li><Sparkles size={17} /> Reply drafts with a fair paid usage rate when a brand says yes</li>
-                <li><Eye size={17} /> A portfolio brands open from your bio and every pitch</li>
-              </ul>
-              <Primary href={`${SIGNUP}?plan=pro`} className="light">Put my outreach on autopilot <ArrowRight size={18} /></Primary>
-            </Path>
-          </Paths>
+        {/* 4. Solution: how it works, each step answers one pain */}
+        <Section id="how-it-works">
+          <Split>
+            <div className="copy">
+              <Eyebrow>How it works</Eyebrow>
+              <h2>Newcollab fixes all three. <em>On autopilot.</em></h2>
+              <Flow>
+                <li>
+                  <span className="n">1</span>
+                  <div><b>Get matched with brands</b><p>See gift lists, paid gigs and brands that work with creators your size, picked for your niche.</p></div>
+                </li>
+                <li>
+                  <span className="n">2</span>
+                  <div><b>Polly pitches for you</b><p>Your AI agent writes short, personal pitches, sends them from your Gmail and follows up. No more silence.</p></div>
+                </li>
+                <li>
+                  <span className="n">3</span>
+                  <div><b>Get gifted and paid</b><p>Your free portfolio shows brands your best work, and Polly drafts your reply with a fair rate when they say yes.</p></div>
+                </li>
+              </Flow>
+              <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
+            </div>
+            <Chat aria-hidden="true">
+              <div className="bar"><span className="av"><Bot size={15} /></span> Polly</div>
+              <p className="me">Find skincare brands that gift small creators</p>
+              <p className="bot">Found 12 that fit you. 4 have open gift lists, so start there. Want me to pitch the rest?</p>
+              <p className="me">Yes, keep it short</p>
+              <p className="bot">On it. 3 go out from your Gmail today, the rest this week. I'll follow up on day 4.</p>
+            </Chat>
+          </Split>
         </Section>
 
+        {/* 5. Feature: paid UGC (the #2 want) with real UGC as proof */}
         <Dark id="paid-ugc">
           <div className="copy">
             <Eyebrow className="light">Paid UGC</Eyebrow>
             <h2>Every paid UGC gig. <em>One feed.</em></h2>
+            <p className="sub">We scan SideShift, Upwork, Craigslist and more every day, so you never miss a paid gig. {s.gigs} live right now.</p>
             <ul>
-              <li>
-                <Radar size={18} />
-                <div><b>Scanned daily</b><span>{s.gigs} live gigs right now. We pull paid UGC gigs from SideShift, Upwork, Craigslist and more, so you never miss one.</span></div>
-              </li>
-              <li>
-                <Store size={18} />
-                <div><b>Matched to your niche</b><span>Filter by niche, new gigs and higher pay. No follower minimum on most UGC gigs.</span></div>
-              </li>
-              <li>
-                <Sparkles size={18} />
-                <div><b>Polly writes your application</b><span>Apply on the brand's site in a couple of minutes, with your portfolio attached.</span></div>
-              </li>
+              <li><Check size={18} /><span>Filtered to your niche, new gigs first</span></li>
+              <li><Check size={18} /><span>Polly writes your application in seconds</span></li>
             </ul>
             <Primary href={SIGNUP} className="light">See paid gigs <ArrowRight size={18} /></Primary>
           </div>
@@ -174,6 +142,29 @@ export default function HomeClient({ brands = [], stats }) {
           <small>UGC by creators on Newcollab. Tap one to watch it on TikTok.</small>
         </Wall>
 
+        {/* 6. Feature: portfolio (the #3 pain) */}
+        <Section id="portfolio">
+          <Split className="flip">
+            <Folio aria-hidden="true">
+              <div className="top">
+                <span className="av" />
+                <div><b>@yourname</b><span>UGC creator · Skincare & home</span></div>
+              </div>
+              <div className="clips">
+                {EXAMPLES.slice(3, 6).map((v) => <AutoTikTok key={v.id} {...v} link={false} branded={false} radius={12} />)}
+              </div>
+              <div className="cta">Work with me</div>
+            </Folio>
+            <div className="copy">
+              <Eyebrow>Free portfolio</Eyebrow>
+              <h2>No collabs yet? You can still look the part.</h2>
+              <p>Your best videos, niches and rates on one link brands actually open. Ready in minutes, free forever.</p>
+              <Primary href="/media-kit"><LayoutTemplate size={18} /> Build my free portfolio</Primary>
+            </div>
+          </Split>
+        </Section>
+
+        {/* 7. Brands: proof of supply + crawlable links */}
         <Section id="brands">
           <Head className="row">
             <div>
@@ -199,97 +190,44 @@ export default function HomeClient({ brands = [], stats }) {
           )}
         </Section>
 
-        <Section id="polly">
-          <Split>
-            <div className="copy">
-              <Eyebrow>Meet Polly</Eyebrow>
-              <h2>Brand deals on autopilot</h2>
-              <p>Outreach takes hours and it is hard to stay consistent. Polly is your AI agent: she runs it every day so you can spend your time making content.</p>
-              <Ticks>
-                <li><Search size={17} /> Finds brands that fit your niche and are open to creators</li>
-                <li><Sparkles size={17} /> Shows the hooks and formats working for a brand on TikTok</li>
-                <li><Mail size={17} /> Writes your pitch, and on Pro sends 3 a weekday from your Gmail with follow-ups</li>
-              </Ticks>
-            </div>
-            <Chat aria-hidden="true">
-              <div className="bar"><span className="av"><Bot size={15} /></span> Polly</div>
-              <p className="me">Find skincare brands that gift small creators</p>
-              <p className="bot">Found 12 that fit you. 4 have open gift lists, so start there. Want me to write the pitches?</p>
-              <p className="me">Yes, keep it short</p>
-              <p className="bot typing"><span /><span /><span /></p>
-            </Chat>
-          </Split>
-        </Section>
-
-        <Section id="portfolio">
-          <Split className="flip">
-            <Folio aria-hidden="true">
-              <div className="top">
-                <span className="av" />
-                <div><b>@yourname</b><span>UGC creator · Skincare & home</span></div>
-              </div>
-              <div className="clips">
-                {EXAMPLES.slice(3, 6).map((v) => <AutoTikTok key={v.id} {...v} link={false} branded={false} radius={12} />)}
-              </div>
-              <div className="cta">Work with me</div>
-            </Folio>
-            <div className="copy">
-              <Eyebrow>Free portfolio</Eyebrow>
-              <h2>A UGC portfolio brands actually open</h2>
-              <p>Put your best videos, niches and rates on one link. Use it in your bio, your pitches and every gift list you apply to. No Canva, no account to start.</p>
-              <Primary href="/media-kit"><LayoutTemplate size={18} /> Build my portfolio free</Primary>
-            </div>
-          </Split>
-        </Section>
-
-        <Section id="how-it-works">
-          <Head>
-            <Eyebrow>How it works</Eyebrow>
-            <h2>From sign-up to your first collab</h2>
-          </Head>
-          <Steps>
-            <li><span>1</span><b>Make your profile</b><p>Add your socials and niches. Your portfolio is built from it in minutes.</p></li>
-            <li><span>2</span><b>Apply or let Polly pitch</b><p>Join gift lists and paid gigs in one tap, or let Polly reach out to brands for you.</p></li>
-            <li><span>3</span><b>Post and get rewarded</b><p>Get your PR package or payment, post your content and build the portfolio for the next deal.</p></li>
-          </Steps>
-        </Section>
-
+        {/* 8. Pricing: one plan per audience */}
         <Section id="pricing">
-          <Head>
+          <Head className="center">
             <Eyebrow>Pricing</Eyebrow>
-            <h2>Free to start. Pro when you want Polly on autopilot.</h2>
+            <h2>Start free. Upgrade when you're ready to grow.</h2>
           </Head>
           <Plans>
             <Plan>
+              <span className="for">For your first brand deals</span>
               <h3>Free</h3>
               <div className="price">$0<span> forever</span></div>
               <ul>
-                <li><Check size={16} /> Brand directory and gift lists</li>
-                <li><Check size={16} /> A preview of paid UGC gigs</li>
+                <li><Check size={16} /> Gift lists and {s.brands} brands</li>
                 <li><Check size={16} /> Free portfolio and media kit</li>
-                <li><Check size={16} /> 3 brand applications a month</li>
                 <li><Check size={16} /> Polly writes your pitches</li>
+                <li><Check size={16} /> 3 brand applications a month</li>
               </ul>
               <Ghost href={SIGNUP}>Start free</Ghost>
             </Plan>
             <Plan className="pro">
-              <h3>Pro <span className="tag">For busy creators</span></h3>
+              <span className="for">For working UGC creators</span>
+              <h3>Pro</h3>
               <div className="price">$19<span> / month</span></div>
               <ul>
-                <li><Check size={16} /> Everything in Free</li>
-                <li><Check size={16} /> Unlimited brand and gift list applications</li>
-                <li><Check size={16} /> Polly pitches 3 matched brands every weekday from your Gmail</li>
-                <li><Check size={16} /> Automatic follow-ups and reply drafts</li>
-                <li><Check size={16} /> Every paid UGC gig, plus priority brand alerts</li>
+                <li><Check size={16} /> Polly pitches 3 brands every weekday, with follow-ups</li>
+                <li><Check size={16} /> Every paid UGC gig</li>
+                <li><Check size={16} /> Unlimited applications</li>
+                <li><Check size={16} /> Reply drafts with a fair rate when brands say yes</li>
               </ul>
-              <Primary href={`${SIGNUP}?plan=pro`} className="light">Put Polly to work <ArrowRight size={18} /></Primary>
+              <Primary href={`${SIGNUP}?plan=pro`} className="light">Put my deals on autopilot <ArrowRight size={18} /></Primary>
               <small>Cancel anytime</small>
             </Plan>
           </Plans>
         </Section>
 
+        {/* 9. Objections */}
         <Section id="faq">
-          <Head>
+          <Head className="center">
             <Eyebrow>FAQ</Eyebrow>
             <h2>Questions creators ask</h2>
           </Head>
@@ -303,19 +241,13 @@ export default function HomeClient({ brands = [], stats }) {
           </Faq>
         </Section>
 
-        <ForBrands>
-          <div>
-            <b>Are you a brand?</b>
-            <span>Open a gift list and get UGC from {s.creators} creators.</span>
-          </div>
-          <Link href="/brands/pr-packages">Newcollab for brands <ArrowRight size={15} /></Link>
-        </ForBrands>
-
+        {/* 10. Final CTA */}
         <Final>
           <img src="/apple-touch-icon.png" alt="" className="wm" aria-hidden="true" />
-          <h2>Put your brand deals on autopilot.</h2>
-          <p>Join {s.creators} UGC creators getting gifted, paid and seen.</p>
+          <h2>Your next brand deal starts today.</h2>
+          <p>Join {s.creators} creators getting gifted, paid and seen.</p>
           <Primary href={SIGNUP} className="light">Start free <ArrowRight size={18} /></Primary>
+          <Link href="/brands/pr-packages" className="brands">Are you a brand? Get UGC from our creators <ArrowRight size={14} /></Link>
         </Final>
       </Page>
     </LandingPageLayoutNext>
@@ -422,10 +354,11 @@ const Stats = styled.section`
 `;
 const Section = styled.section`
   scroll-margin-top: 100px; display: grid; gap: 24px; min-width: 0;
-  .src { color: ${t.muted}; font-size: 12.5px; margin-top: -12px; }
+  .src { color: ${t.muted}; font-size: 12.5px; margin-top: -12px; text-align: center; }
 `;
 const Head = styled.div`
   display: grid; gap: 10px; max-width: 720px;
+  &.center { justify-self: center; text-align: center; justify-items: center; }
   &.row { max-width: none; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
   .lead { margin: 0; color: ${t.muted}; font-size: 16px; line-height: 1.55; }
   .all { display: inline-flex; align-items: center; gap: 6px; color: ${t.ink}; font-weight: 700; text-decoration: none; }
@@ -435,45 +368,24 @@ const Eyebrow = styled.div`
   font-size: 12.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: ${t.accent};
   &.light { color: ${t.mint}; }
 `;
-const Pains = styled.ol`
-  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
-  li {
-    display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 14px; align-items: center;
-    background: ${t.white}; border: 1px solid ${t.line}; border-radius: 20px; padding: 16px 18px;
-  }
-  .q { display: flex; align-items: center; gap: 14px; min-width: 0; }
-  .q b { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: ${t.hot}; min-width: 64px; }
-  .q span { font-size: 16px; font-weight: 600; font-style: italic; color: ${t.inkSoft}; }
-  .q span::before { content: '“'; } .q span::after { content: '”'; }
-  .a { display: flex; gap: 12px; align-items: flex-start; padding-left: 14px; border-left: 2px solid ${t.accentSoft}; min-width: 0; }
-  .a .ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; background: ${t.accentSoft}; color: ${t.accentDeep}; }
-  .a div { display: grid; gap: 2px; }
-  .a strong { font-size: 15.5px; }
-  .a p { margin: 0; color: ${t.muted}; font-size: 14.5px; line-height: 1.5; }
+const Problems = styled.ul`
+  list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+  li { background: ${t.white}; border: 1px solid ${t.line}; border-radius: 22px; padding: 24px; display: grid; gap: 6px; text-align: center; }
+  b { font-size: clamp(40px, 5vw, 52px); font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: ${t.hot}; }
+  span { font-size: 16.5px; color: ${t.inkSoft}; line-height: 1.4; }
   @media (max-width: 760px) {
-    li { grid-template-columns: 1fr; padding: 14px; }
-    .q b { font-size: 24px; min-width: 54px; }
-    .a { padding-left: 0; border-left: 0; padding-top: 12px; border-top: 1px solid ${t.line}; }
+    grid-template-columns: 1fr; gap: 8px;
+    li { grid-template-columns: 86px 1fr; text-align: left; align-items: center; padding: 16px 18px; }
+    b { font-size: 34px; }
   }
 `;
-const Paths = styled.div`
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;
-  @media (max-width: 860px) { grid-template-columns: 1fr; }
-`;
-const Path = styled.article`
-  background: ${t.white}; border: 1px solid ${t.line}; border-radius: 24px; padding: 26px; display: grid; gap: 12px; align-content: start;
-  .tag { justify-self: start; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: ${t.accentSoft}; color: ${t.accentDeep}; }
-  h3 { margin: 4px 0 0; font-size: 24px; letter-spacing: -0.015em; line-height: 1.15; }
+const Flow = styled.ol`
+  list-style: none; margin: 6px 0 8px; padding: 0; display: grid; gap: 18px;
+  li { display: flex; gap: 14px; align-items: flex-start; }
+  .n { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: ${t.ink}; color: #fff; font-weight: 800; }
+  div { display: grid; gap: 3px; }
+  b { font-size: 17px; }
   p { margin: 0; color: ${t.muted}; font-size: 15px; line-height: 1.5; }
-  ul { list-style: none; margin: 4px 0 6px; padding: 0; display: grid; gap: 10px; }
-  li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.45; }
-  li svg { flex-shrink: 0; margin-top: 2px; color: ${t.accent}; }
-  a { justify-self: start; white-space: normal; }
-  &.dark { background: ${t.ink}; color: #fff; border-color: ${t.ink}; }
-  &.dark .tag { background: rgba(124, 224, 184, 0.18); color: ${t.mint}; }
-  &.dark p { color: rgba(255, 255, 255, 0.7); }
-  &.dark li svg { color: ${t.mint}; }
-  @media (max-width: 480px) { padding: 20px; a { justify-self: stretch; justify-content: center; } }
 `;
 const Dark = styled.section`
   position: relative; overflow: hidden; scroll-margin-top: 100px;
@@ -485,8 +397,8 @@ const Dark = styled.section`
   li { display: flex; gap: 12px; align-items: flex-start; }
   li > svg, li > img { flex-shrink: 0; margin-top: 3px; color: ${t.mint}; }
   li div { display: grid; gap: 3px; }
-  li b { font-size: 16px; }
-  li span { color: rgba(255, 255, 255, 0.7); font-size: 14.5px; line-height: 1.5; }
+  li span { color: rgba(255, 255, 255, 0.85); font-size: 15.5px; line-height: 1.5; }
+  .sub { margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 16px; line-height: 1.55; }
   @media (max-width: 860px) { grid-template-columns: 1fr; padding: 26px 18px; border-radius: 22px; }
 `;
 const Gigs = styled.div`
@@ -538,11 +450,6 @@ const Split = styled.div`
     &.flip > :first-child { order: 2; }
   }
 `;
-const Ticks = styled.ul`
-  list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 12px;
-  li { display: flex; gap: 10px; align-items: flex-start; font-size: 15.5px; line-height: 1.45; }
-  svg { flex-shrink: 0; margin-top: 2px; color: ${t.accent}; }
-`;
 const Chat = styled.div`
   background: ${t.white}; border: 1px solid ${t.line}; border-radius: 24px; padding: 18px; display: grid; gap: 10px;
   box-shadow: 0 24px 50px rgba(18, 20, 26, 0.08); max-width: 440px; width: 100%; justify-self: center;
@@ -565,21 +472,15 @@ const Folio = styled.div`
   .clips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .cta { text-align: center; padding: 12px; border-radius: 12px; background: ${t.ink}; color: #fff; font-weight: 700; }
 `;
-const Steps = styled.ol`
-  list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
-  li { background: ${t.paper}; border-radius: 22px; padding: 22px; display: grid; gap: 8px; align-content: start; }
-  li span { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: ${t.ink}; color: #fff; font-weight: 800; }
-  li b { font-size: 17px; margin-top: 4px; }
-  li p { margin: 0; color: ${t.muted}; font-size: 15px; line-height: 1.5; }
-  @media (max-width: 760px) { grid-template-columns: 1fr; }
-`;
 const Plans = styled.div`
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-width: 860px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-width: 860px; width: 100%; justify-self: center;
   @media (max-width: 760px) { grid-template-columns: 1fr; }
 `;
 const Plan = styled.article`
   background: ${t.white}; border: 1px solid ${t.line}; border-radius: 24px; padding: 26px; display: grid; gap: 14px;
   align-content: start;
+  .for { font-size: 12.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: ${t.accent}; }
+  &.pro .for { color: ${t.mint}; }
   h3 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .tag { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: rgba(124, 224, 184, 0.18); color: ${t.mint}; }
   .price { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
@@ -594,7 +495,7 @@ const Plan = styled.article`
   &.pro li svg { color: ${t.mint}; }
 `;
 const Faq = styled.div`
-  display: grid; gap: 10px; max-width: 860px;
+  display: grid; gap: 10px; max-width: 860px; width: 100%; justify-self: center;
   details { background: ${t.white}; border: 1px solid ${t.line}; border-radius: 16px; padding: 4px 18px; }
   summary {
     list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px;
@@ -605,15 +506,6 @@ const Faq = styled.div`
   details[open] summary svg { transform: rotate(180deg); }
   p { margin: 0 0 16px; color: ${t.muted}; font-size: 15px; line-height: 1.6; }
 `;
-const ForBrands = styled.section`
-  display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 20px 24px; border-radius: 20px; background: ${t.paper}; border: 1px solid ${t.line};
-  div { display: grid; gap: 2px; }
-  b { font-size: 17px; }
-  span { color: ${t.muted}; font-size: 14.5px; }
-  a { display: inline-flex; align-items: center; gap: 6px; color: ${t.ink}; font-weight: 700; text-decoration: none; }
-  a:hover { color: ${t.accent}; }
-`;
 const Final = styled.section`
   position: relative; overflow: hidden; text-align: center; display: grid; gap: 14px; justify-items: center;
   background: ${t.accent}; color: #fff; border-radius: 28px; padding: 56px 24px;
@@ -621,5 +513,6 @@ const Final = styled.section`
   > *:not(.wm) { position: relative; }
   p { margin: 0; color: rgba(255, 255, 255, 0.82); font-size: 17px; }
   a { justify-self: center; }
+  a.brands { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; color: rgba(255, 255, 255, 0.85); font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
   @media (max-width: 768px) { padding: 40px 18px; border-radius: 22px; }
 `;
