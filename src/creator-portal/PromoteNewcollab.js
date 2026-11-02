@@ -275,7 +275,7 @@ function Dashboard({ data, busy, post }) {
         <h2>Submit a video</h2>
         <p className="muted">Post first, then paste the link. Only videos posted after you were approved count.</p>
         <Row as="form" onSubmit={async (e) => { e.preventDefault(); if (await post('videos', { url }, 'Video added. Views show up within a day.')) setUrl(''); }}>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://www.tiktok.com/@you/video/… or instagram.com/reel/…" aria-label="Video link" />
+          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="tiktok.com/@you/video/… (or /photo/…) or instagram.com/reel/…" aria-label="Video link" />
           <Primary type="submit" disabled={busy || !url.trim() || member.status !== 'approved' || !program.open}>{busy ? 'Adding…' : 'Add video'}</Primary>
         </Row>
         {member.status === 'paused' && <Small>Your account is paused. Reach out to team@newcollab.co.</Small>}
