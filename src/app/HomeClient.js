@@ -254,13 +254,20 @@ export default function HomeClient({ brands = [], stats }) {
   );
 }
 
+// Hero examples: product UGC by creators (not posts about Newcollab, so no newcollab sticker).
+const HERO_UGC = [
+  { id: '7697236927891705110', handle: 'ugcbyanna.uk' },
+  { id: '7698825988888726806', handle: 'ugcbyanna.uk' },
+  { id: '7683925529241701654', handle: 'simpleexplorerugc' },
+];
+
 function HeroVisual() {
-  const [a, b, c] = EXAMPLES;
+  const [a, b, c] = HERO_UGC;
   return (
     <Stack>
-      <AutoTikTok {...b} className="side left" radius={22} />
-      <AutoTikTok {...c} className="side right" radius={22} />
-      <AutoTikTok {...a} className="front" radius={24} />
+      <AutoTikTok {...b} className="side left" radius={22} branded={false} />
+      <AutoTikTok {...c} className="side right" radius={22} branded={false} />
+      <AutoTikTok {...a} className="front" radius={24} branded={false} />
       <Bubble className="b1"><Gift size={15} /> <span><b>Gifted</b> PR package shipped</span></Bubble>
       <Bubble className="b2"><BadgeDollarSign size={15} /> <span><b>Paid</b> UGC gig approved</span></Bubble>
       <Bubble className="b3"><Eye size={15} /> <span><b>Seen</b> a brand opened your portfolio</span></Bubble>
