@@ -8,6 +8,7 @@ import {
   ArrowRight, BadgeDollarSign, Check, ChevronDown, Eye, Megaphone, ShieldCheck, SlidersHorizontal, Sparkles, Users, X,
 } from 'lucide-react';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
+import DropPreview from './DropPreview';
 import { AutoTikTok, VideoWall } from '../../creator-portal/PromoteVisuals';
 
 const SIGNUP = 'https://app.newcollab.co/for-brands';
@@ -133,6 +134,14 @@ export default function UgcBrandsClient() {
               <p>Views are counted daily for 30 days. You pay for what each post actually reached, then turn the top performers into Spark Ads or Partnership Ads.</p>
             </li>
           </Steps>
+        </Section>
+
+        <Section id="dashboard">
+          <Head className="center">
+            <Eyebrow>Your dashboard</Eyebrow>
+            <h2>Every post, view and dollar in one place</h2>
+          </Head>
+          <DropPreview />
         </Section>
 
         <Dark id="calculator">
