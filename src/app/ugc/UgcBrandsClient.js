@@ -8,9 +8,15 @@ import {
   ArrowRight, BadgeDollarSign, Check, ChevronDown, Eye, Megaphone, ShieldCheck, SlidersHorizontal, Sparkles, Users, X,
 } from 'lucide-react';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
-import { AutoTikTok, EXAMPLES, VideoWall } from '../../creator-portal/PromoteVisuals';
+import { AutoTikTok, VideoWall } from '../../creator-portal/PromoteVisuals';
 
 const SIGNUP = 'https://app.newcollab.co/for-brands';
+// Hero: real product UGC by creators.
+const HERO_UGC = [
+  { id: '7697236927891705110', handle: 'ugcbyanna.uk' },
+  { id: '7698825988888726806', handle: 'ugcbyanna.uk' },
+  { id: '7683925529241701654', handle: 'simpleexplorerugc' },
+];
 const CPM = 2.5; // example pay per 1,000 views used in the calculator
 const FEE = 0.2;
 
@@ -81,9 +87,9 @@ export default function UgcBrandsClient() {
             <small>Start from $300 · Pause anytime · Unspent budget refunded</small>
           </div>
           <Stack aria-hidden="true">
-            <AutoTikTok {...EXAMPLES[1]} className="side left" radius={22} link={false} branded={false} />
-            <AutoTikTok {...EXAMPLES[2]} className="side right" radius={22} link={false} branded={false} />
-            <AutoTikTok {...EXAMPLES[0]} className="front" radius={24} link={false} branded={false} />
+            <AutoTikTok {...HERO_UGC[1]} className="side left" radius={22} link={false} branded={false} />
+            <AutoTikTok {...HERO_UGC[2]} className="side right" radius={22} link={false} branded={false} />
+            <AutoTikTok {...HERO_UGC[0]} className="front" radius={24} link={false} branded={false} />
             <Bubble className="b1"><Eye size={15} /> <span><b>48,200</b> views</span></Bubble>
             <Bubble className="b2"><BadgeDollarSign size={15} /> <span><b>$2.50</b> per 1K views</span></Bubble>
             <Bubble className="b3"><Megaphone size={15} /> <span><b>Boosted</b> as a Spark Ad</span></Bubble>
