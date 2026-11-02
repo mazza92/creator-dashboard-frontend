@@ -18,5 +18,10 @@
       "source": "/api/:path*",
       "destination": "https://api.newcollab.co/:path*"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "claude/*": false
+    }
+  }
 }
