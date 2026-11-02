@@ -379,5 +379,6 @@ const Final = styled.section`
   background: ${t.accent}; color: #fff; border-radius: 28px; padding: 56px 24px;
   p { margin: 0; color: rgba(255, 255, 255, 0.85); font-size: 17px; }
   small { color: rgba(255, 255, 255, 0.75); font-size: 13px; }
+  a { justify-self: center; }
   @media (max-width: 768px) { padding: 40px 18px; border-radius: 22px; }
 `;
