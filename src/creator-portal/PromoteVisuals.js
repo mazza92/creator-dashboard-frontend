@@ -215,12 +215,12 @@ const Calc = styled.div`
 `;
 
 /** SideShift-style auto-scrolling row of example videos (pauses on hover). */
-export function VideoWall({ items = EXAMPLES }) {
+export function VideoWall({ items = EXAMPLES, branded = true }) {
   const loop = [...items, ...items];
   return (
     <Wall>
       <div className="track">
-        {loop.map((v, i) => <AutoTikTok key={`${v.id}-${i}`} {...v} className="card" radius={16} />)}
+        {loop.map((v, i) => <AutoTikTok key={`${v.id}-${i}`} {...v} className="card" radius={16} branded={branded} />)}
       </div>
     </Wall>
   );
