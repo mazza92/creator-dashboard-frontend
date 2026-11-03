@@ -27,3 +27,10 @@ test('still hands over when saving fails', async () => {
   fireEvent.click(screen.getByRole('button', { name: /Find my brands/ }));
   await waitFor(() => expect(onDone).toHaveBeenCalled());
 });
+
+test('invited creators see their free week on the welcome card', () => {
+  const { rerender } = render(<PollyWelcome facts={facts} onDone={jest.fn()} trialDays={7} />);
+  expect(screen.getByText(/Your free week of Pro is ready/)).toBeInTheDocument();
+  rerender(<PollyWelcome facts={facts} onDone={jest.fn()} trialDays={0} />);
+  expect(screen.queryByText(/free week of Pro/)).not.toBeInTheDocument();
+});
