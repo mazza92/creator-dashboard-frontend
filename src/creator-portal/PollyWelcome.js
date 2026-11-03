@@ -17,7 +17,7 @@ function fmt(n) {
   return String(v);
 }
 
-export default function PollyWelcome({ facts, firstName, avatar, onDone }) {
+export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDays = 0 }) {
   const [niches, setNiches] = useState(() => (facts?.niches || []).slice(0, MAX));
   const [saving, setSaving] = useState(false);
   const options = Array.from(new Set([...(facts?.niches || []), ...(facts?.niche_options || [])]));
@@ -48,6 +48,15 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone }) {
           </p>
         </div>
       </Top>
+      {trialDays > 0 && (
+        <Gift>
+          <span aria-hidden="true">🎁</span>
+          <div>
+            <b>Your free {trialDays === 7 ? 'week' : `${trialDays} days`} of Pro is ready.</b>
+            <span>Pick your niches, I'll show your first brands, then you can switch it on: I pitch 3 brands a day for you.</span>
+          </div>
+        </Gift>
+      )}
       <Q>What do you post about?</Q>
       <Hint>Pick up to {MAX}. I match brands on these.</Hint>
       <Chips role="group" aria-label="Your niches">
@@ -93,6 +102,20 @@ const Top = styled.div`
   h2 { margin: 2px 0 6px; font-size: 21px; line-height: 1.2; color: ${t.ink}; }
   p { margin: 0; color: ${t.muted}; font-size: 15px; line-height: 1.5; }
   p b { color: ${t.ink}; }
+`;
+const Gift = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: ${t.accentSoft};
+  color: ${t.accentDeep};
+  font-size: 14px;
+  line-height: 1.45;
+  > span { font-size: 20px; line-height: 1; }
+  div { display: grid; gap: 2px; }
+  b { color: ${t.ink}; }
 `;
 const Q = styled.div`
   margin-top: 6px;

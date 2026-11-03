@@ -10,6 +10,7 @@ import MondayBoard from './PollyBoard';
 import CreatorHooks from './PollyHooks';
 import { PitchFactsCard, usePitchFacts } from './PollyPitchFacts';
 import PollyWelcome from './PollyWelcome';
+import { useTrialOffer } from '../utils/trialOffer';
 import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
 import { UserContext } from '../contexts/UserContext';
@@ -1580,25 +1581,38 @@ export default function Polly() {
     reloadAutopilot();
   }, [reloadAutopilot]);
 
-  // Trial-offer signups (?ref=polly_trial7, creator cold email): open Autopilot once, where the free week shows.
+  // Free-week signups (?ref=polly_trial7 from the creator cold email). The server remembers the offer, so it
+  // survives approval delays and new devices; the stored ref is a fallback for the first load.
+  const trialOffer = useTrialOffer(Boolean(serverReady && creatorId));
+  const invitedTrial = Boolean(trialOffer?.invited && trialOffer?.days);
   useEffect(() => {
     if (!serverReady || !creatorId) return;
     let offer = null;
     try { offer = localStorage.getItem('nc_offer'); } catch (_) { /* storage blocked */ }
-    if (offer !== 'polly_trial7') return;
-    try { localStorage.removeItem('nc_offer'); } catch (_) { /* storage blocked */ }
-    // Show the free week once they've seen what I do (a drafted pitch or a second reply), not on arrival.
-    pendingTrialRef.current = true;
-  }, [serverReady, creatorId]);
-
-  useEffect(() => {
-    if (!pendingTrialRef.current || autopilotOpen) return;
-    const replies = messages.filter((m) => m.role === 'assistant');
-    if (messages.some((m) => m.pitch) || replies.length >= 2) {
-      pendingTrialRef.current = false;
-      openAutopilot();
+    if (offer === 'polly_trial7') {
+      try { localStorage.removeItem('nc_offer'); } catch (_) { /* storage blocked */ }
+      pendingTrialRef.current = true;
     }
-  }, [messages, autopilotOpen, openAutopilot]);
+  }, [serverReady, creatorId]);
+  useEffect(() => {
+    if (!invitedTrial) return;
+    let shown = false;
+    try { shown = sessionStorage.getItem('polly_trial_shown') === '1'; } catch (_) { /* ignore */ }
+    if (!shown) pendingTrialRef.current = true;
+  }, [invitedTrial]);
+
+  // The free week opens right after the first brands land (value first, then the offer), or straight away on a
+  // returning visit. Once per session.
+  useEffect(() => {
+    if (!pendingTrialRef.current || autopilotOpen || busy) return;
+    if (messages.length === 0) return;
+    const brandsShown = messages.some((m) => m.role === 'assistant' && (m.brands?.length || m.pitch));
+    // New this session (welcome or first matches running): wait for the brands. Returning: show it now.
+    if (!brandsShown && (welcomeDone || autoFiredRef.current)) return;
+    pendingTrialRef.current = false;
+    try { sessionStorage.setItem('polly_trial_shown', '1'); } catch (_) { /* ignore */ }
+    openAutopilot();
+  }, [messages, autopilotOpen, busy, openAutopilot, welcomeDone]);
 
   useEffect(() => {
     const ap = autopilot.state;
@@ -2194,6 +2208,7 @@ export default function Polly() {
           <PollyWelcome
             facts={pitchFacts.facts}
             firstName={user?.first_name || ''}
+            trialDays={invitedTrial || pendingTrialRef.current ? (trialOffer?.days || 7) : 0}
             avatar={POLLY_AVATAR_URL}
             onDone={finishWelcome}
           />
