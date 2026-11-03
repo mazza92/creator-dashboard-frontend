@@ -9,6 +9,7 @@ import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from '.
 import MondayBoard from './PollyBoard';
 import CreatorHooks from './PollyHooks';
 import { PitchFactsCard, usePitchFacts } from './PollyPitchFacts';
+import PollyWelcome from './PollyWelcome';
 import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
 import { UserContext } from '../contexts/UserContext';
@@ -1405,6 +1406,8 @@ export default function Polly() {
   const [autopilotSettingsOpen, setAutopilotSettingsOpen] = useState(false);
   const [autopilotNotice, setAutopilotNotice] = useState('');
   const pitchFacts = usePitchFacts();
+  const [welcomeDone, setWelcomeDone] = useState(false);
+  const pendingTrialRef = useRef(false);
   const [factsLater, setFactsLater] = useState(() => {
     try { return sessionStorage.getItem('polly_facts_later') === '1'; } catch (_) { return false; }
   });
@@ -1584,8 +1587,18 @@ export default function Polly() {
     try { offer = localStorage.getItem('nc_offer'); } catch (_) { /* storage blocked */ }
     if (offer !== 'polly_trial7') return;
     try { localStorage.removeItem('nc_offer'); } catch (_) { /* storage blocked */ }
-    openAutopilot();
-  }, [serverReady, creatorId, openAutopilot]);
+    // Show the free week once they've seen what I do (a drafted pitch or a second reply), not on arrival.
+    pendingTrialRef.current = true;
+  }, [serverReady, creatorId]);
+
+  useEffect(() => {
+    if (!pendingTrialRef.current || autopilotOpen) return;
+    const replies = messages.filter((m) => m.role === 'assistant');
+    if (messages.some((m) => m.pitch) || replies.length >= 2) {
+      pendingTrialRef.current = false;
+      openAutopilot();
+    }
+  }, [messages, autopilotOpen, openAutopilot]);
 
   useEffect(() => {
     const ap = autopilot.state;
@@ -1842,14 +1855,31 @@ export default function Polly() {
     }
   }, [persistThread]);
 
+  const firstVisit = ready && !welcomeDone && messages.length === 0
+    && !(creatorId && readPollyLocal(creatorId)?.messages?.length);
+  const welcomeMode = firstVisit && Boolean(pitchFacts.facts?.needs_confirm);
+
+  const finishWelcome = useCallback((niches) => {
+    setWelcomeDone(true);
+    if (pitchFacts.facts) pitchFacts.setFacts({ ...pitchFacts.facts, niches, needs_confirm: false });
+    if (!autoAction && !autoFiredRef.current && !messagesRef.current.length) {
+      autoFiredRef.current = true;
+      send('', { action: 'suggest_brands', starter: 'first_matches', chip_id: 'first_matches', deal: 'gifted',
+        skip_discovery: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAction, pitchFacts.facts, send]);
+
   useEffect(() => {
     if (!autoAction || !ready || busy || autoFiredRef.current) return;
+    // First visit: the welcome card asks one question first; brands load when they tap "Find my brands".
+    if (firstVisit && (!pitchFacts.loaded || welcomeMode)) return;
     autoFiredRef.current = true;
     const action = autoAction;
     setAutoAction(null);
     if (messagesRef.current.length) return;
     send('', action);
-  }, [autoAction, ready, busy, send]);
+  }, [autoAction, ready, busy, send, firstVisit, welcomeMode, pitchFacts.loaded]);
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -2160,7 +2190,14 @@ export default function Polly() {
   return (
     <Shell>
       <Thread ref={threadRef}>
-        {pendingLinkKind && messages.length === 0 ? null : !ready && messages.length === 0 && !hasLocalThread ? (
+        {welcomeMode ? (
+          <PollyWelcome
+            facts={pitchFacts.facts}
+            firstName={user?.first_name || ''}
+            avatar={POLLY_AVATAR_URL}
+            onDone={finishWelcome}
+          />
+        ) : pendingLinkKind && messages.length === 0 ? null : !ready && messages.length === 0 && !hasLocalThread ? (
           <Turn>
             <AssistantRow>
               <PollyFace src={POLLY_AVATAR_URL} alt="" />
@@ -2193,7 +2230,7 @@ export default function Polly() {
             </SuggestGrid>
           </Empty>
         ) : null}
-        {pitchFacts.facts?.needs_confirm && !factsLater && ready && (
+        {pitchFacts.facts?.needs_confirm && !factsLater && ready && !welcomeMode && !firstVisit && (
           <Turn>
             <AssistantRow>
               <PollyFace src={POLLY_AVATAR_URL} alt="" />
@@ -2426,7 +2463,7 @@ export default function Polly() {
             )}
           </Turn>
         ))}
-        {autopilotOpen && (
+        {autopilotOpen && !welcomeMode && (
           <Turn>
             <AssistantRow>
               <PollyFace src={POLLY_AVATAR_URL} alt="" />
