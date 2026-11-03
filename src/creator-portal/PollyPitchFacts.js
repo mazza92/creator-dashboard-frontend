@@ -10,14 +10,16 @@ const NICHE_LABEL = (id) => String(id || '').replace(/_/g, ' ').replace(/\b\w/g,
 
 export function usePitchFacts() {
   const [facts, setFacts] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   const reload = useCallback(async () => {
     try {
       const { data } = await apiClient.get('/api/polly/pitch-facts');
       if (data?.success) setFacts(data.facts);
     } catch (_) { /* card just stays hidden */ }
+    setLoaded(true);
   }, []);
   useEffect(() => { reload(); }, [reload]);
-  return { facts, setFacts, reload };
+  return { facts, setFacts, reload, loaded };
 }
 
 export function PitchFactsCard({ facts, onSaved, onDismiss, compact = false }) {
