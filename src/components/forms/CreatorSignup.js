@@ -28,6 +28,11 @@ const readPromo = () => {
   try { return localStorage.getItem('nc_promo') || null; } catch { return null; }
 };
 
+// Link offers (?ref=polly_trial7): QueryParamRedirect strips ref from the URL but keeps the offer here.
+const readOffer = () => {
+  try { return localStorage.getItem('nc_offer') || null; } catch { return null; }
+};
+
 const colors = {
   rose: '#E11D48',
   black: '#0F0F0F',
@@ -445,7 +450,7 @@ export default function CreatorSignup() {
   const signupContext = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return {
-      ref: params.get('ref') || null,  // e.g. "blog_widget"
+      ref: params.get('ref') || readOffer(),  // e.g. "blog_widget", or a kept offer like "polly_trial7"
       brand: params.get('brand') || null,  // matched brand slug
       brand_query: params.get('brand_query') || null,  // unmatched brand search
       source_page: params.get('source_page') || null,  // blog post slug

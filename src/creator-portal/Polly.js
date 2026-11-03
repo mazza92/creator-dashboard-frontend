@@ -1577,6 +1577,16 @@ export default function Polly() {
     reloadAutopilot();
   }, [reloadAutopilot]);
 
+  // Trial-offer signups (?ref=polly_trial7, creator cold email): open Autopilot once, where the free week shows.
+  useEffect(() => {
+    if (!serverReady || !creatorId) return;
+    let offer = null;
+    try { offer = localStorage.getItem('nc_offer'); } catch (_) { /* storage blocked */ }
+    if (offer !== 'polly_trial7') return;
+    try { localStorage.removeItem('nc_offer'); } catch (_) { /* storage blocked */ }
+    openAutopilot();
+  }, [serverReady, creatorId, openAutopilot]);
+
   useEffect(() => {
     const ap = autopilot.state;
     if (!ap || autopilotAutoOpenedRef.current) return;

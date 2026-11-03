@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { captureEmailCampaign, captureUpgradeDeeplink } from '../utils/upgradeDeeplink';
 
+export const SIGNUP_OFFERS = ['polly_trial7'];
+
 /**
  * Component to handle query parameter redirects for SEO
  * Removes query parameters that shouldn't be indexed
@@ -17,6 +19,12 @@ const QueryParamRedirect = () => {
     const promo = searchParams.get('promo');
     if (promo && /^[a-z0-9]{4,16}$/i.test(promo)) {
       try { localStorage.setItem('nc_promo', promo.toLowerCase()); } catch { /* storage blocked */ }
+    }
+    // Signup offers (?ref=polly_trial7 from the creator cold email) must outlive the ref strip below,
+    // email verification and Google sign-in, so signup and Polly can still read them.
+    const ref = searchParams.get('ref');
+    if (ref && SIGNUP_OFFERS.includes(ref)) {
+      try { localStorage.setItem('nc_offer', ref); } catch { /* storage blocked */ }
     }
     // Leave email upgrade deeplinks intact until the destination page opens the modal.
     if (searchParams.get('upgrade')) {
