@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import api from '../config/api';
+import api, { getProxiedMediaUrl } from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import SegmentTabs from '../components/creator/SegmentTabs';
@@ -18,6 +18,28 @@ import { CANONICAL_CATEGORIES, categoryEmoji, categoryLabel } from '../constants
 import { SERVED_COUNTRY_GROUPS, normalizeServedCountry } from '../constants/servedCountries';
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
+
+/** A post the creator pasted: full TikTok or Instagram post link, cleaned, with a preview still. */
+export function ownPostFromLink(raw) {
+  const text = String(raw || '').trim();
+  let url;
+  try {
+    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+  } catch (_) {
+    return null;
+  }
+  const host = url.hostname.toLowerCase().replace(/^m\./, 'www.');
+  let clean = '';
+  const tt = url.pathname.match(/^\/@([\w.]+)\/(video|photo)\/(\d+)/i);
+  const ig = url.pathname.match(/^\/(p|reel|reels|tv)\/([\w-]+)/i);
+  if ((host === 'www.tiktok.com' || host === 'tiktok.com') && tt) {
+    clean = `https://www.tiktok.com/@${tt[1].toLowerCase()}/${tt[2].toLowerCase()}/${tt[3]}`;
+  } else if ((host === 'www.instagram.com' || host === 'instagram.com') && ig) {
+    clean = `https://www.instagram.com/${ig[1].toLowerCase() === 'reels' ? 'reel' : ig[1].toLowerCase()}/${ig[2]}/`;
+  }
+  if (!clean) return null;
+  return { post_url: clean, thumbnail_url: getProxiedMediaUrl(`/api/media-proxy?post=${encodeURIComponent(clean)}`), added: true };
+}
 import { PRO_OFFER } from '../config/proOffer';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 
@@ -432,6 +454,9 @@ export default function BrandPRHome() {
   const [coldWarn, setColdWarn] = useState(null);
   const [pack, setPack] = useState(null);
   const [packLoading, setPackLoading] = useState(false);
+  const [extraPosts, setExtraPosts] = useState([]);
+  const [postLink, setPostLink] = useState('');
+  const [postLinkError, setPostLinkError] = useState('');
   const [mediaLoading, setMediaLoading] = useState(false);
   const [picked, setPicked] = useState([]);
   const [ship, setShip] = useState({
@@ -746,6 +771,9 @@ export default function BrandPRHome() {
     setView('apply');
     setStep(1);
     setPicked([]);
+    setExtraPosts([]);
+    setPostLink('');
+    setPostLinkError('');
     setAgreed(false);
     setSubmitError('');
     setPack(null);
@@ -829,6 +857,20 @@ export default function BrandPRHome() {
     } finally {
       if (applyReqRef.current === req) setPackLoading(false);
     }
+  }
+
+  function addPostLink(e) {
+    e.preventDefault();
+    const post = ownPostFromLink(postLink);
+    if (!post) {
+      setPostLinkError('Paste the full link to one of your TikTok or Instagram posts, like tiktok.com/@you/video/123.');
+      return;
+    }
+    const all = [...extraPosts, ...(pack?.posts || [])];
+    if (!all.some((p) => p.post_url === post.post_url)) setExtraPosts((prev) => [post, ...prev]);
+    setPicked((prev) => (prev.some((p) => p.post_url === post.post_url) || prev.length >= 3 ? prev : [...prev, post]));
+    setPostLink('');
+    setPostLinkError('');
   }
 
   function togglePost(post) {
@@ -1329,7 +1371,7 @@ export default function BrandPRHome() {
   }
 
   if (view === 'apply' && current) {
-    const posts = pack?.posts || [];
+    const posts = [...extraPosts, ...(pack?.posts || []).filter((p) => !extraPosts.some((x) => x.post_url === p.post_url))];
     const examples = pack?.examples || [];
     return (
       <Page $narrow>
@@ -1460,6 +1502,7 @@ export default function BrandPRHome() {
                 {pitchMode
                   ? 'Polly puts these 3 in your pitch so the brand sees your style. Lead with your strongest.'
                   : 'This is what the brand sees when they review your request. Lead with posts that show your style — you can pick different ones next time.'}
+                {' '}Pick from your recent posts below, or add any post from your profile with its link.
               </Sub>
               {packLoading ? (
                 <EmptyNote>Loading your posts…</EmptyNote>
@@ -1481,8 +1524,25 @@ export default function BrandPRHome() {
                   })}
                 </Picker>
               ) : (
-                <EmptyNote>We could not load posts from your connected account yet. Reconnect TikTok or Instagram, then try again.</EmptyNote>
+                <EmptyNote>We could not load posts from your connected account yet. Paste links to your posts below, or reconnect TikTok or Instagram.</EmptyNote>
               )}
+              <LinkAdd onSubmit={addPostLink}>
+                <Lab htmlFor="post-link">Want a different post? Paste its link</Lab>
+                <div className="row">
+                  <Input
+                    id="post-link"
+                    type="url"
+                    inputMode="url"
+                    value={postLink}
+                    onChange={(e) => { setPostLink(e.target.value); setPostLinkError(''); }}
+                    placeholder="https://www.tiktok.com/@you/video/…"
+                  />
+                  <button type="submit" disabled={!postLink.trim()}>Add</button>
+                </div>
+                {postLinkError ? <FieldHint role="alert">{postLinkError}</FieldHint> : (
+                  <FieldHint>Any TikTok or Instagram post from your own profile.</FieldHint>
+                )}
+              </LinkAdd>
             </Block>
             <Foot>
               <Cta type="button" disabled={picked.length !== 3} onClick={() => setStep(3)}>Continue</Cta>
@@ -3216,6 +3276,21 @@ const Post = styled.button`
     display: grid;
     place-items: center;
   }
+`;
+const LinkAdd = styled.form`
+  margin-top: 14px;
+  .row { display: flex; gap: 8px; }
+  .row button {
+    border: 0;
+    border-radius: 10px;
+    padding: 0 16px;
+    background: ${INK};
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .row button:disabled { opacity: 0.4; cursor: default; }
 `;
 const Lab = styled.label`
   display: block;
