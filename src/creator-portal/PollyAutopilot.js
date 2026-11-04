@@ -822,8 +822,9 @@ export function AutopilotCard({
     body = (
       <>
         <p className="say">
-          I wrote <strong>{drafts.length} pitch{drafts.length > 1 ? 'es' : ''}</strong> for this week.
-          I&apos;ll schedule them on your next run from {gmail.email}. Skip any you don&apos;t want.
+          I wrote <strong>{drafts.length} pitch{drafts.length > 1 ? 'es' : ''}</strong> for you.
+          {drafts.length > 1 ? 'They go' : 'It goes'} out automatically from {gmail.email} within the hour,
+          no need to approve. Read or skip any you don&apos;t want.
         </p>
         <List>
           {drafts.map((item) => {
@@ -863,10 +864,10 @@ export function AutopilotCard({
           })}
         </List>
         <Actions>
-          <Btn $primary type="button" onClick={approveAll} disabled={busy}>
-            Looks good, schedule {drafts.length > 1 ? 'them' : 'it'} now
-          </Btn>
-          <span className="muted">US morning, EU afternoon.</span>
+          {Object.keys(edits).length ? (
+            <Btn $primary type="button" onClick={approveAll} disabled={busy}>Save my edits</Btn>
+          ) : null}
+          <span className="muted">Sent at the hours brands read email, US morning and EU afternoon.</span>
         </Actions>
       </>
     );
