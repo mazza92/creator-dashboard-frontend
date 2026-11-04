@@ -308,25 +308,6 @@ const Segment = styled.button`
   &:disabled { opacity: 0.5; cursor: default; }
 `;
 
-const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-`;
-
-const Chip = styled.button`
-  border: 1px solid ${(p) => (p.$on ? t.ink : t.line)};
-  background: ${(p) => (p.$on ? t.ink : t.white)};
-  color: ${(p) => (p.$on ? t.white : t.ink)};
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-family: inherit;
-  font-size: 12.5px;
-  cursor: pointer;
-  &:disabled { opacity: 0.5; cursor: default; }
-`;
-
 const Funnel = styled.div`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -379,9 +360,9 @@ const PickRow = styled.label`
 `;
 
 const FOCUS = [
-  { id: 'auto', name: 'Let Polly pick', hint: 'From your goals' },
-  { id: 'gifted', name: 'Gifted PR', hint: 'Product + shipping' },
-  { id: 'paid', name: 'Paid deals', hint: 'Quotes your rate' },
+  { id: 'gifted', name: 'Gifted only' },
+  { id: 'auto', name: 'Gifted first, paid when they pay' },
+  { id: 'paid', name: 'Paid only' },
 ];
 
 const FOLLOWUPS = [
@@ -390,41 +371,12 @@ const FOLLOWUPS = [
   { n: 2, name: 'Twice', hint: 'Day 4 and day 10' },
 ];
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-
-const LEAD_METRICS = [
-  { id: 'followers', name: 'Followers' },
-  { id: 'views', name: 'Views' },
-  { id: 'engagement', name: 'Engagement' },
-  { id: 'none', name: 'No stats' },
-];
-
 const OFFERS = [
   { id: 'gifted_post', name: 'Gifted post', hint: 'Product for a post' },
   { id: 'gifted_ugc', name: 'Gifted + UGC', hint: 'Post + videos they can use' },
   { id: 'gifted_ugc_photos', name: 'Gifted + UGC + photos', hint: 'Everything' },
   { id: 'paid_only', name: 'Paid only', hint: 'No gifted asks' },
 ];
-
-const PLATFORM_OPTIONS = [
-  { id: 'tiktok', name: 'TikTok' },
-  { id: 'instagram', name: 'Instagram' },
-  { id: 'youtube', name: 'YouTube' },
-  { id: 'pinterest', name: 'Pinterest' },
-];
-
-const USAGE_OPTIONS = [0, 1, 3, 6];
-
-const PrefInput = styled.input`
-  width: 100%;
-  box-sizing: border-box;
-  margin-top: 8px;
-  border: 1px solid ${t.line};
-  border-radius: 10px;
-  padding: 9px 10px;
-  font-family: inherit;
-  font-size: 13px;
-`;
 
 const PrefArea = styled.textarea`
   width: 100%;
@@ -439,101 +391,81 @@ const PrefArea = styled.textarea`
   resize: vertical;
 `;
 
-function PitchPrefs({ prefs, save, busy }) {
-  const p = prefs || {};
-  const [deliverables, setDeliverables] = useState(p.deliverables || '');
-  const [template, setTemplate] = useState(p.custom_template || '');
-  useEffect(() => { setDeliverables(p.deliverables || ''); }, [p.deliverables]);
-  useEffect(() => { setTemplate(p.custom_template || ''); }, [p.custom_template]);
-  const set = (patch) => save({ pitch_prefs: patch });
-  const pick = (key, value) => set({ [key]: p[key] === value ? null : value });
-  const platforms = p.platforms || [];
+const StyleRows = styled.div`
+  display: grid;
+  margin-top: 8px;
+  border: 1px solid ${t.line};
+  border-radius: 14px;
+  overflow: hidden;
+`;
 
+const StyleItem = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  & + & { border-top: 1px solid ${t.line}; }
+  .k { font-size: 12px; color: ${t.muted}; }
+  .v { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+`;
+
+/** The same four parts as the Pro setup, each opening that part of it to edit. */
+function PitchStyle({ state, save, busy, onOpenSetup }) {
+  const setup = state.setup || {};
+  const prefs = state.pitch_prefs || {};
+  const [template, setTemplate] = useState(prefs.custom_template || '');
+  useEffect(() => { setTemplate(prefs.custom_template || ''); }, [prefs.custom_template]);
+  const deal = FOCUS.find((f) => f.id === state.deal_focus)?.name || FOCUS[1].name;
+  const offer = OFFERS.find((o) => o.id === prefs.offer_type)?.name;
+  const niches = state.targeting?.niches || [];
+  const rows = [
+    { id: 'voice', k: 'Voice', v: setup.style || 'Brief & direct' },
+    { id: 'offer', k: 'Offer', v: offer ? `${deal} · ${offer}` : deal },
+    { id: 'work', k: 'Best work', v: setup.posts ? `${setup.posts} post${setup.posts > 1 ? 's' : ''} + your stats` : 'Picked by Polly' },
+    { id: 'brands', k: 'Brands', v: `${niches.length ? niches.map(label).join(', ') : 'Your niches'} · ${state.monthly_target || DEFAULT_TARGET} a month` },
+  ];
   return (
     <Setting>
-      <div className="label">Pitch preferences</div>
-      <div className="hint">
-        Every pitch I write follows these, in chat and on Autopilot.
-        {p.summary ? ` Now: ${p.summary}.` : ' Tap to change; tap again to go back to my default.'}
+      <div className="line">
+        <div className="label">Your pitch style</div>
+        {!setup.done && onOpenSetup ? (
+          <LinkBtn type="button" onClick={() => onOpenSetup(null)}>Finish setup</LinkBtn>
+        ) : null}
       </div>
-      <div className="label" style={{ marginTop: 12 }}>Lead with</div>
-      <Segments $cols={4}>
-        {LEAD_METRICS.map((m) => (
-          <Segment key={m.id} type="button" $on={p.lead_metric === m.id} onClick={() => pick('lead_metric', m.id)} disabled={busy}>
-            <strong>{m.name}</strong>
-          </Segment>
+      <div className="hint">Every pitch follows this, on Autopilot and when you ask me in chat.</div>
+      <StyleRows>
+        {rows.map((r) => (
+          <StyleItem key={r.id}>
+            <div style={{ minWidth: 0 }}>
+              <div className="k">{r.k}</div>
+              <div className="v">{r.v}</div>
+            </div>
+            {onOpenSetup ? (
+              <LinkBtn type="button" onClick={() => onOpenSetup(r.id)} aria-label={`Edit ${r.k.toLowerCase()}`}>Edit</LinkBtn>
+            ) : null}
+          </StyleItem>
         ))}
-      </Segments>
-      <div className="line" style={{ marginTop: 12 }}>
-        <div className="label">Show engagement rate</div>
-        <Switch
-          type="button"
-          $on={p.show_engagement_rate !== false}
-          aria-label="Show engagement rate in pitches"
-          onClick={() => set({ show_engagement_rate: p.show_engagement_rate === false })}
-          disabled={busy}
-        />
-      </div>
-      <div className="label" style={{ marginTop: 12 }}>Platforms to mention</div>
-      <Chips>
-        {PLATFORM_OPTIONS.map((o) => (
-          <Chip
-            key={o.id}
-            type="button"
-            $on={platforms.includes(o.id)}
-            onClick={() => set({ platforms: toggle(platforms, o.id) })}
+      </StyleRows>
+      {prefs.custom_template ? (
+        <>
+          <div className="label" style={{ marginTop: 14 }}>Your own template</div>
+          <div className="hint">
+            I send this word for word instead of writing each pitch, so it skips my send-ready checks. Clear it to
+            get a pitch written for each brand.
+          </div>
+          <PrefArea
+            value={template}
+            maxLength={3000}
+            onChange={(e) => setTemplate(e.target.value)}
+            onBlur={() => { if (template !== (prefs.custom_template || '')) save({ pitch_prefs: { custom_template: template.trim() || null } }); }}
             disabled={busy}
-          >
-            {o.name}
-          </Chip>
-        ))}
-      </Chips>
-      <div className="label" style={{ marginTop: 12 }}>What I offer</div>
-      <Segments $cols={2}>
-        {OFFERS.map((o) => (
-          <Segment key={o.id} type="button" $on={p.offer_type === o.id} onClick={() => pick('offer_type', o.id)} disabled={busy}>
-            <strong>{o.name}</strong>
-            {o.hint}
-          </Segment>
-        ))}
-      </Segments>
-      <div className="label" style={{ marginTop: 12 }}>Deliverables</div>
-      <PrefInput
-        value={deliverables}
-        placeholder="e.g. 1 organic TikTok + 2 UGC videos"
-        maxLength={200}
-        onChange={(e) => setDeliverables(e.target.value)}
-        onBlur={() => { if (deliverables !== (p.deliverables || '')) set({ deliverables: deliverables.trim() || null }); }}
-        disabled={busy}
-      />
-      <div className="label" style={{ marginTop: 12 }}>Usage rights</div>
-      <Segments $cols={4}>
-        {USAGE_OPTIONS.map((n) => (
-          <Segment key={n} type="button" $on={p.usage_rights_months === n} onClick={() => pick('usage_rights_months', n)} disabled={busy}>
-            <strong>{n === 0 ? 'None' : `${n} mo`}</strong>
-          </Segment>
-        ))}
-      </Segments>
-      <div className="label" style={{ marginTop: 12 }}>Tone</div>
-      <Segments $cols={2}>
-        {['friendly', 'professional'].map((tone) => (
-          <Segment key={tone} type="button" $on={p.tone === tone} onClick={() => pick('tone', tone)} disabled={busy}>
-            <strong>{tone === 'friendly' ? 'Friendly' : 'Professional'}</strong>
-          </Segment>
-        ))}
-      </Segments>
-      <div className="label" style={{ marginTop: 12 }}>Your own template</div>
-      <div className="hint">
-        Optional. I send it word for word and fill {'{{brand}}'}, {'{{product}}'}, {'{{first_name}}'}, {'{{handle}}'}, {'{{city}}'} and {'{{kit_url}}'}.
-      </div>
-      <PrefArea
-        value={template}
-        placeholder={'Hi {{brand}} team, ...'}
-        maxLength={3000}
-        onChange={(e) => setTemplate(e.target.value)}
-        onBlur={() => { if (template !== (p.custom_template || '')) set({ custom_template: template.trim() || null }); }}
-        disabled={busy}
-      />
+          />
+          <LinkBtn type="button" onClick={() => save({ pitch_prefs: { custom_template: null } })} disabled={busy}>
+            Use Polly&apos;s pitches instead
+          </LinkBtn>
+        </>
+      ) : null}
     </Setting>
   );
 }
@@ -544,8 +476,6 @@ const CATEGORY_LABELS = {
   baby: 'Baby & parenting',
   home: 'Home',
 };
-
-const MAX_NICHES = 3;
 
 function label(key) {
   return CATEGORY_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1);
@@ -566,7 +496,6 @@ function when(iso) {
 }
 
 const DEFAULT_TARGET = 60;
-const TARGET_OPTIONS = [30, 60, 100, 150];
 
 function perWeek(target) {
   return Math.max(1, Math.ceil((target || DEFAULT_TARGET) / 4));
@@ -1072,7 +1001,7 @@ export function AutopilotCard({
   );
 }
 
-export function AutopilotSettings({ isOpen, state, setState, onClose }) {
+export function AutopilotSettings({ isOpen, state, setState, onClose, onOpenSetup }) {
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -1094,9 +1023,6 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
 
   const month = state.month || {};
   const target = state.monthly_target || DEFAULT_TARGET;
-  const options = state.target_options || TARGET_OPTIONS;
-  const days = state.send_days || [0, 1, 2, 3, 4];
-  const targeting = state.targeting;
 
   const disconnect = async () => {
     setBusy(true);
@@ -1122,7 +1048,7 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
               <div className="label">{state.enabled ? 'On' : 'Paused'}</div>
               <div className="hint">
                 {state.enabled
-                  ? 'I pick brands from these settings, write and send the pitches from your Gmail on your send days, follow up, and keep you posted until you hit your target. Nothing to approve.'
+                  ? 'I pick brands, write each pitch in your style and send it from your Gmail every weekday, follow up, and keep you posted until you hit your target. Nothing to approve.'
                   : 'Nothing sends and no follow-ups go out until you turn it back on.'}
               </div>
             </div>
@@ -1151,105 +1077,7 @@ export function AutopilotSettings({ isOpen, state, setState, onClose }) {
             </div>
           </Progress>
         </Setting>
-        <Setting>
-          <div className="label">Brands a month</div>
-          <div className="hint">
-            How many new brands I pitch for you each month. Right now that&apos;s about {state.per_week} a week,
-            {' '}{state.per_day} per send day, and about {hoursSaved(target)} hours of outreach off your plate.
-          </div>
-          <Segments $cols={4}>
-            {options.map((opt) => (
-              <Segment
-                key={opt}
-                type="button"
-                $on={target === opt}
-                onClick={() => save({ monthly_target: opt })}
-                disabled={busy}
-              >
-                <strong>{opt}</strong>
-                {opt === DEFAULT_TARGET ? 'Recommended' : `~${perWeekday(opt)} a day`}
-              </Segment>
-            ))}
-          </Segments>
-        </Setting>
-        <Setting>
-          <div className="label">What to pitch for</div>
-          <Segments $cols={3}>
-            {FOCUS.map((f) => (
-              <Segment
-                key={f.id}
-                type="button"
-                $on={state.deal_focus === f.id}
-                onClick={() => save({ deal_focus: f.id })}
-                disabled={busy}
-              >
-                <strong>{f.name}</strong>
-                {f.hint}
-              </Segment>
-            ))}
-          </Segments>
-        </Setting>
-        {state.pitch_prefs ? <PitchPrefs prefs={state.pitch_prefs} save={save} busy={busy} /> : null}
-        {targeting ? (
-          <Setting>
-            <div className="label">Brands to target</div>
-            <div className="hint">
-              {targeting.niches.length > MAX_NICHES
-                ? `You have ${targeting.niches.length} niches. Keep your top ${MAX_NICHES} in Account Settings so I pitch the right brands.`
-                : 'I pick brands in these categories (up to 3). Same niches as your Account Settings, so changing one changes both.'}
-            </div>
-            <Chips>
-              {targeting.niche_options.map((n) => (
-                <Chip
-                  key={n}
-                  type="button"
-                  $on={targeting.niches.includes(n)}
-                  onClick={() => save({ niches: toggle(targeting.niches, n) })}
-                  disabled={busy || targeting.niches.length > MAX_NICHES
-                    || (!targeting.niches.includes(n) && targeting.niches.length >= MAX_NICHES)
-                    || (targeting.niches.length === 1 && targeting.niches.includes(n))}
-                >
-                  {label(n)}
-                </Chip>
-              ))}
-            </Chips>
-            <div className="label" style={{ marginTop: 14 }}>Never pitch</div>
-            <Chips>
-              {targeting.avoid_options.map((c) => (
-                <Chip
-                  key={c}
-                  type="button"
-                  $on={targeting.avoid_categories.includes(c)}
-                  onClick={() => save({ avoid_categories: toggle(targeting.avoid_categories, c) })}
-                  disabled={busy}
-                >
-                  {label(c)}
-                </Chip>
-              ))}
-            </Chips>
-          </Setting>
-        ) : null}
-        <Setting>
-          <div className="label">Send days</div>
-          <div className="hint">Pitches go out in the US morning, EU afternoon.</div>
-          <Chips>
-            {DAYS.map((d, i) => {
-              const on = days.includes(i);
-              return (
-                <Chip
-                  key={d}
-                  type="button"
-                  $on={on}
-                  aria-pressed={on}
-                  onClick={() => save({ send_days: toggle(days, i).sort() })}
-                  disabled={busy || (on && days.length === 1)}
-                >
-                  {d}
-                </Chip>
-              );
-            })}
-          </Chips>
-        </Setting>
+        <PitchStyle state={state} save={save} busy={busy} onOpenSetup={onOpenSetup} />
         <Setting>
           <div className="label">Follow-ups</div>
           <div className="hint">Sent in the same Gmail thread. I stop as soon as you tell me a brand replied.</div>
