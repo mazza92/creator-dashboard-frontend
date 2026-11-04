@@ -18,7 +18,7 @@ const DEALS = [
   { id: 'auto', label: 'Gifted first, paid when they pay' },
   { id: 'paid', label: 'Paid only' },
 ];
-const TARGETS = [30, 60, 100];
+const TARGETS = [30, 60, 100, 150];
 const MAX_NICHES = 3;
 const MAX_POSTS = 2;
 const NICHE_LABEL = (id) => String(id || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -214,7 +214,7 @@ export default function PollyProSetup({
               <ArrowLeft size={18} /> <span>Back</span>
             </IconBtn>
           ) : <span className="title">{single ? SECTION_TITLES[section] || 'Preferences' : ''}</span>}
-          {!single && (
+          {single ? <span aria-hidden="true" /> : (
             <Bars aria-label={step ? `Step ${step} of ${LAST}` : undefined}>
               {Array.from({ length: LAST }, (_, i) => <i key={i} className={i < step ? 'on' : ''} />)}
             </Bars>

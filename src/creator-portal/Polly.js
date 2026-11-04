@@ -2616,6 +2616,7 @@ export default function Polly() {
         state={autopilot.state}
         setState={autopilot.setState}
         onClose={() => setAutopilotSettingsOpen(false)}
+        onOpenSetup={(section) => { setAutopilotSettingsOpen(false); openSetup(section); }}
       />
     </Shell>
   );
