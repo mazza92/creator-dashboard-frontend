@@ -109,6 +109,43 @@ const GEMINI_SOURCE_LABELS = {
   brand_depth: 'Brand depth',
 };
 
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Monthly churn rate as bars (one series), the target as a dashed line, hover for the counts. */
+function ChurnTrend({ months, target }) {
+  const rates = months.map((m) => m.rate || 0);
+  const top = Math.max(target * 1.5, ...rates, 10);
+  const lastFull = [...months].reverse().find((m) => !m.partial && m.rate != null);
+  return (
+    <ChurnChart role="img" aria-label={`Monthly churn: ${months.map((m) => `${m.month} ${m.rate ?? 0}%`).join(', ')}`}>
+      <ChurnPlot>
+        <ChurnTarget style={{ bottom: `${(target / top) * 100}%` }}><span>Target {target}%</span></ChurnTarget>
+        {months.map((m) => {
+          const [y, mo] = m.month.split('-');
+          const label = `${MONTH_NAMES[Number(mo) - 1]}${mo === '01' ? ` ${y}` : ''}`;
+          return (
+            <ChurnCol key={m.month} tabIndex={0}>
+              {m === lastFull ? <ChurnValue>{m.rate}%</ChurnValue> : null}
+              <ChurnBar $partial={m.partial} style={{ height: `${Math.max(((m.rate || 0) / top) * 100, m.churned ? 2 : 0)}%` }} />
+              <ChurnTip>
+                <b>{label}{m.partial ? ' so far' : ''}: {m.rate ?? 0}%</b>
+                <span>{m.churned} cancelled of {m.start + m.new} paying</span>
+                <span>{m.start} at start · {m.new} new</span>
+                {m.churned ? <span>{m.first_month} in their first month</span> : null}
+              </ChurnTip>
+              <ChurnMonth>{label}{m.partial ? '*' : ''}</ChurnMonth>
+            </ChurnCol>
+          );
+        })}
+      </ChurnPlot>
+      <ChurnFoot>
+        Cancels ÷ paying customers that month (at the start + new). Trial-only cancels excluded.
+        {months.some((m) => m.partial) ? ' * Month in progress.' : ''}
+      </ChurnFoot>
+    </ChurnChart>
+  );
+}
+
 function PollyConversion({ funnel, cost, calls }) {
   const opened = funnel.steps?.find((s) => s.key === 'opened')?.creators || 0;
   const sawMatches = funnel.steps?.find((s) => s.key === 'matches_shown')?.creators || 0;
@@ -470,7 +507,7 @@ const AdminReports = () => {
     );
   }
 
-  const { mrr, at_limit_users, at_limit_count, at_limit_last_month = 0, at_limit_change = 0, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, onboarding_survey: survey, pace, trials } = data;
+  const { mrr, at_limit_users, at_limit_count, at_limit_last_month = 0, at_limit_change = 0, near_limit_count, health, traffic, funnel, this_month, top_brands = [], brands_by_category = [], ai_manager, onboarding_survey: survey, pace, trials, churn: churnKpi } = data;
   const ms = data.milestones || { goal: mrr.goal, scale: [0, 0.25, 0.5, 0.75, 1].map(q => Math.round(mrr.goal * q)), ladder: [] };
   const money = (n) => `$${Math.round(n || 0).toLocaleString()}`;
   const months = (m) => (m === null || m === undefined ? null : m < 1 ? '<1 mo' : `~${m} mo`);
@@ -592,6 +629,47 @@ const AdminReports = () => {
             </Milestone>
           </MilestoneRow>
         </GoalCard>
+
+        {churnKpi && (
+          <>
+            <SectionLabel>Churn</SectionLabel>
+            <TrafficGrid>
+              <HealthCard>
+                <HcLabel>Churn rate (30 days)</HcLabel>
+                <HcValue $color={churnKpi.rate_30d != null && churnKpi.rate_30d > churnKpi.target_pct ? 'rose' : 'green'}>
+                  {churnKpi.rate_30d != null ? `${churnKpi.rate_30d}%` : '—'}
+                </HcValue>
+                {churnKpi.change_pts != null ? (
+                  <HcDelta $up={churnKpi.change_pts <= 0}>
+                    {churnKpi.change_pts <= 0 ? '↓' : '↑'} {Math.abs(churnKpi.change_pts)} pts vs prior 30 days ({churnKpi.rate_prev_30d}%)
+                  </HcDelta>
+                ) : null}
+                <HcRate>Target under {churnKpi.target_pct}% a month</HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>MRR lost (30 days)</HcLabel>
+                <HcValue $color={churnKpi.mrr_lost_30d ? 'rose' : undefined}>-{money(churnKpi.mrr_lost_30d)}</HcValue>
+                <HcRate>{churnKpi.churned_30d} Pro cancel{churnKpi.churned_30d === 1 ? '' : 's'}</HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Left in first month</HcLabel>
+                <HcValue>{churnKpi.first_month_share != null ? `${churnKpi.first_month_share}%` : '—'}</HcValue>
+                <HcRate>Of the last 30 days&apos; cancels: the first-month experience is the lever</HcRate>
+              </HealthCard>
+              <HealthCard>
+                <HcLabel>Retention (30 days)</HcLabel>
+                <HcValue>{churnKpi.retention_30d != null ? `${churnKpi.retention_30d}%` : '—'}</HcValue>
+                <HcRate>Paying customers who stayed</HcRate>
+              </HealthCard>
+            </TrafficGrid>
+            {churnKpi.months?.length ? (
+              <HealthCard style={{ marginBottom: 20 }}>
+                <HcLabel>Monthly churn, last {churnKpi.months.length} months</HcLabel>
+                <ChurnTrend months={churnKpi.months} target={churnKpi.target_pct} />
+              </HealthCard>
+            ) : null}
+          </>
+        )}
 
         {churn && (
           <>
@@ -2463,3 +2541,96 @@ const LoadingContainer = styled.div`
 `;
 
 export default AdminReports;
+
+// Churn trend
+const ChurnChart = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+const ChurnPlot = styled.div`
+  position: relative;
+  height: 170px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+  padding-top: 22px;
+  border-bottom: 1px solid ${colors.border};
+`;
+const ChurnTarget = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed ${colors.text3};
+  pointer-events: none;
+  span {
+    position: absolute;
+    right: 0;
+    top: -18px;
+    font-size: 11px;
+    font-weight: 600;
+    color: ${colors.text2};
+    background: ${colors.surface};
+    padding-left: 4px;
+  }
+`;
+const ChurnCol = styled.div`
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  outline: none;
+  cursor: default;
+  &:hover > div:nth-last-child(2), &:focus > div:nth-last-child(2) { opacity: 1; transform: translate(-50%, 0); }
+`;
+const ChurnBar = styled.div`
+  width: min(44px, 70%);
+  border-radius: 4px 4px 0 0;
+  background: ${(p) => (p.$partial
+    ? `repeating-linear-gradient(135deg, ${colors.rose}55 0 4px, ${colors.rose}22 4px 8px)`
+    : colors.rose)};
+  ${(p) => (p.$partial ? `box-shadow: inset 0 0 0 1.5px ${colors.rose};` : '')}
+`;
+const ChurnValue = styled.div`
+  font-size: 12px;
+  font-weight: 800;
+  color: ${colors.text};
+  margin-bottom: 4px;
+`;
+const ChurnTip = styled.div`
+  position: absolute;
+  bottom: calc(100% - 12px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  opacity: 0;
+  transition: opacity 0.12s, transform 0.12s;
+  pointer-events: none;
+  z-index: 2;
+  min-width: 170px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: ${colors.black};
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 8px 20px rgba(0,0,0,.18);
+  span { color: rgba(255,255,255,.75); }
+`;
+const ChurnMonth = styled.div`
+  position: absolute;
+  bottom: -22px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: ${colors.text2};
+  white-space: nowrap;
+`;
+const ChurnFoot = styled.div`
+  margin-top: 22px;
+  font-size: 12px;
+  color: ${colors.text3};
+`;
