@@ -314,7 +314,9 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
               </Space>
               <Space>
                 <CalendarOutlined />
-                {formatDate(post.date, 'long')}
+                {post.dateModified && post.dateModified > post.date
+                  ? <time dateTime={post.dateModified}>Updated {formatDate(post.dateModified, 'long')}</time>
+                  : <time dateTime={post.date}>{formatDate(post.date, 'long')}</time>}
               </Space>
               <Space>
                 <ClockCircleOutlined />
