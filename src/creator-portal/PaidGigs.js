@@ -83,6 +83,7 @@ function GigTags({ gig }) {
   const src = sourceName(gig);
   return (
     <Tags>
+      {gig.direct_contact && <Tag $tone="direct">Direct contact</Tag>}
       {gig.is_new && <Tag $tone="new">New</Tag>}
       {gig.is_match && <Tag $tone="fit">Your niche</Tag>}
       {gig.deliverable && <Tag>{gig.deliverable}</Tag>}
@@ -159,6 +160,8 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [detail, setDetail] = useState(gig);
+  // 'direct' = emailed the brand's own inbox we found; 'source' = applied on the platform the gig came from.
+  const [lastVia, setLastVia] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -199,11 +202,13 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
     window.setTimeout(() => setCopied(false), 1800);
   };
 
-  const apply = async () => {
+  const apply = async (via) => {
     if (busy) return;
     setBusy(true);
     setError('');
-    const mode = detail.apply_mode || 'url';
+    const direct = via === 'direct' || (via !== 'source' && lastVia === 'direct');
+    setLastVia(direct ? 'direct' : 'source');
+    const mode = direct ? 'email' : (detail.apply_mode || 'url');
     // Copy while this page still has focus; a background page triggers Chrome's clipboard prompt.
     let copying = null;
     if (mode === 'url') {
@@ -220,7 +225,8 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
     await copying;
     let data = {};
     try {
-      const res = await apiClient.post(`/api/opportunities/${gig.id}/apply`, {}, { timeout: 30000 });
+      const res = await apiClient.post(`/api/opportunities/${gig.id}/apply`, direct ? { via: 'direct' } : {},
+        { timeout: 30000 });
       data = res.data || {};
       window.dispatchEvent(new CustomEvent('nc-credits-changed'));
     } catch (err) {
@@ -295,7 +301,7 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
         <Section>
           <SectionHead>
             <div>
-              <h3>Your application</h3>
+              <h3>{detail.direct_contact ? 'Your pitch' : 'Your application'}</h3>
               <p>Polly wrote this from your kit. Edit anything before you send it.</p>
             </div>
             {!loading && text && (
@@ -314,11 +320,11 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
         <SheetFoot>
           {stage === 'confirm' && (
             <Confirm>
-              <strong>{src ? `Finished applying on ${src}?` : 'Finished applying?'}</strong>
+              <strong>{lastVia === 'direct' ? 'Sent your pitch to the brand?' : (src ? `Finished applying on ${src}?` : 'Finished applying?')}</strong>
               <span>We'll keep it in your Applied list so nothing slips.</span>
               <ConfirmRow>
                 <PrimaryBtn type="button" onClick={() => confirm(true)}><Check size={16} /> Yes, I applied</PrimaryBtn>
-                <GhostBtn type="button" onClick={apply} disabled={busy}>
+                <GhostBtn type="button" onClick={() => apply()} disabled={busy}>
                   {busy ? 'Opening…' : <>Open again <ArrowUpRight size={14} /></>}
                 </GhostBtn>
               </ConfirmRow>
@@ -333,9 +339,20 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
               </div>
             </Done>
           )}
-          {stage === 'ready' && (
+          {stage === 'ready' && detail.direct_contact && (
             <>
-              <PrimaryBtn type="button" onClick={apply} disabled={busy || loading || !!error}>
+              <PrimaryBtn type="button" onClick={() => apply('direct')} disabled={busy || loading || !!error}>
+                {busy ? 'Opening…' : <><Mail size={16} /> Email the brand directly</>}
+              </PrimaryBtn>
+              <GhostBtn type="button" onClick={() => apply('source')} disabled={busy || loading || !!error}>
+                {src ? `Or apply on ${src}` : 'Or apply on their site'} <ArrowUpRight size={14} />
+              </GhostBtn>
+              <FootNote>We found the brand's own inbox. Polly's pitch opens in your email app, addressed to them.</FootNote>
+            </>
+          )}
+          {stage === 'ready' && !detail.direct_contact && (
+            <>
+              <PrimaryBtn type="button" onClick={() => apply()} disabled={busy || loading || !!error}>
                 {busy ? 'Opening…' : (
                   <>
                     {detail.apply_mode === 'email' ? <Mail size={16} /> : null}
@@ -840,6 +857,9 @@ const Tag = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
 
+  ${(p) => p.$tone === 'direct' && css`
+    background: ${t.ink}; color: #fff; border-color: ${t.ink};
+  `}
   ${(p) => p.$tone === 'new' && css`
     background: #fff1ec; color: ${t.hot}; border-color: #f8cfc2;
   `}
