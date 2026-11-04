@@ -6,6 +6,7 @@ import { apiClient, API_URL } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from './PollyAutopilot';
+import PollyProSetup from './PollyProSetup';
 import MondayBoard from './PollyBoard';
 import CreatorHooks from './PollyHooks';
 import { PitchFactsCard, usePitchFacts } from './PollyPitchFacts';
@@ -48,7 +49,7 @@ const STICK_THRESHOLD_PX = 80;
 const AUTOPILOT_NOTICES = {
   gmail_connected: "Gmail connected. Your first pitches go out within the hour, then new ones every weekday. Nothing to approve.",
   review: "Here's what I lined up. Change brands or target any time in settings.",
-  pro_started: "You're on Pro. Connect Gmail and your first pitches go out within the hour.",
+  pro_started: "You're on Pro. Set your pitch style, connect Gmail, and your first pitches go out within the hour.",
   connect_gmail: "Connect Gmail and I'll send your waiting pitches on your next send day.",
   resume: "Autopilot is paused. Switch it back on and I'll pick up on your next send day.",
   gmail_denied: 'Gmail was not connected. You can try again any time.',
@@ -1415,6 +1416,8 @@ export default function Polly() {
   const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
   const autopilotAutoOpenedRef = useRef(false);
+  const [setup, setSetup] = useState({ open: false, section: null });
+  const setupAutoOpenedRef = useRef(false);
   const [starters, setStarters] = useState(STARTERS);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hooksBusy, setHooksBusy] = useState(false);
@@ -1622,6 +1625,20 @@ export default function Polly() {
       setAutopilotOpen(true);
     }
   }, [autopilot.state]);
+
+  const openSetup = useCallback((section) => setSetup({ open: true, section: section || null }), []);
+  const closeSetup = useCallback(() => {
+    setSetup({ open: false, section: null });
+    reloadAutopilot();
+    setAutopilotOpen(true);
+  }, [reloadAutopilot]);
+  const finishSetup = useCallback(() => {
+    setSetup({ open: false, section: null });
+    setAutopilotReturn('');
+    setAutopilotNotice("Autopilot is on. Your first pitches go out within the hour, then new ones every weekday.");
+    reloadAutopilot();
+    setAutopilotOpen(true);
+  }, [reloadAutopilot]);
 
   const persistThread = useCallback((nextMessages, nextSuggested) => {
     apiClient.put('/api/polly/thread', {
@@ -1872,6 +1889,22 @@ export default function Polly() {
   const firstVisit = ready && !welcomeDone && messages.length === 0
     && !(creatorId && readPollyLocal(creatorId)?.messages?.length);
   const welcomeMode = firstVisit && Boolean(pitchFacts.facts?.needs_confirm);
+
+  // Pro setup journey: right after checkout or Gmail, and once a session for Pro creators who haven't finished
+  // it (pre-filled, resumes where they left off). Free creators never see it.
+  useEffect(() => {
+    const ap = autopilot.state;
+    if (!ap?.is_pro || !ap.available || !ap.setup || ap.setup.done || setupAutoOpenedRef.current) return;
+    if (welcomeMode) return;
+    const fromCheckout = ['pro_started', 'gmail_connected', 'gmail_scope'].includes(autopilotReturn);
+    let shown = false;
+    try { shown = sessionStorage.getItem('pro_setup_shown') === '1'; } catch (_) { /* ignore */ }
+    if (!fromCheckout && shown) return;
+    setupAutoOpenedRef.current = true;
+    try { sessionStorage.setItem('pro_setup_shown', '1'); } catch (_) { /* ignore */ }
+    setSetup({ open: true, section: null });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autopilot.state, autopilotReturn]);
 
   const finishWelcome = useCallback((niches) => {
     setWelcomeDone(true);
@@ -2490,6 +2523,7 @@ export default function Polly() {
                 returnReason={autopilotReturn}
                 onClose={closeAutopilot}
                 onOpenSettings={() => setAutopilotSettingsOpen(true)}
+                onOpenSetup={openSetup}
                 onUpgrade={() => setShowUpgrade(true)}
               />
             </AssistantRow>
@@ -2565,6 +2599,17 @@ export default function Polly() {
         unlockRemaining={credits?.remaining ?? 0}
         feature={Number(credits?.remaining) <= 0 ? 'unlock_paywall' : 'credits'}
         source="polly"
+      />
+      <PollyProSetup
+        open={setup.open}
+        section={setup.section}
+        firstName={user?.first_name || ''}
+        trialDays={invitedTrial ? trialOffer.days : 0}
+        gmail={autopilot.state?.gmail}
+        returnReason={setup.section ? '' : autopilotReturn}
+        onClose={closeSetup}
+        onDone={finishSetup}
+        onSaved={reloadAutopilot}
       />
       <AutopilotSettings
         isOpen={autopilotSettingsOpen}

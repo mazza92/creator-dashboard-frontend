@@ -140,6 +140,55 @@ const Row = styled.div`
   textarea { min-height: 180px; resize: vertical; line-height: 1.5; }
 `;
 
+const SetupNudge = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: center;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  border-radius: 14px;
+  background: ${t.ink};
+  color: #fff;
+  b { display: block; font-size: 14.5px; }
+  span { font-size: 13px; color: rgba(255, 255, 255, 0.78); line-height: 1.4; }
+  button {
+    font: inherit; font-weight: 700; font-size: 14px; border: 0; border-radius: 12px; padding: 10px 14px;
+    background: #7ce0b8; color: ${t.ink}; cursor: pointer; white-space: nowrap;
+  }
+  button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  @media (max-width: 420px) { grid-template-columns: 1fr; button { width: 100%; } }
+`;
+
+const Stats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+  div { background: ${t.paper}; border-radius: 12px; padding: 9px 11px; display: grid; gap: 2px; min-width: 0; }
+  span { font-size: 11.5px; color: ${t.muted}; line-height: 1.2; }
+  b { font-size: 20px; line-height: 1.1; }
+  @media (max-width: 480px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+`;
+
+const StyleRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid ${t.line};
+  font-size: 13px;
+  .lbl { color: ${t.muted}; margin-right: 2px; }
+  button {
+    font: inherit; font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid ${t.line}; background: ${t.white}; color: ${t.ink}; cursor: pointer;
+  }
+  button:hover { border-color: ${t.accentBorder}; }
+  button:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
+`;
+
 const Notice = styled.div`
   background: ${t.cream};
   border: 1px solid ${t.line};
@@ -589,7 +638,9 @@ export function autopilotChip(state) {
   return { label: `⚡ Autopilot · ${state.month?.sent || 0}/${state.monthly_target || DEFAULT_TARGET}`, attention: false };
 }
 
-export function AutopilotCard({ state, setState, reload, notice, returnReason, onUpgrade, onClose, onOpenSettings }) {
+export function AutopilotCard({
+  state, setState, reload, notice, returnReason, onUpgrade, onClose, onOpenSettings, onOpenSetup,
+}) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(null);
   const [plan, setPlan] = useState(null);
@@ -917,10 +968,17 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
           </p>
         )}
         {!fresh ? (
+          <Stats aria-label="This month">
+            <div><span>Pitched</span><b>{month.sent || 0}</b></div>
+            <div><span>Follow-ups</span><b>{month.followups || 0}</b></div>
+            <div><span>Replied</span><b>{month.replied || 0}</b></div>
+            <div><span>Left this month</span><b>{Math.max(0, target - (month.sent || 0))}</b></div>
+          </Stats>
+        ) : null}
+        {!fresh ? (
           <Progress>
             <div className="label">
               <span><strong>{month.sent || 0}</strong> of {target} brands pitched this month</span>
-              {month.followups ? <span>{month.followups} follow-up{month.followups > 1 ? 's' : ''}</span> : null}
             </div>
             <div className="track"><div className="fill" style={{ width: `${pct}%` }} /></div>
           </Progress>
@@ -971,6 +1029,15 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
             ))}
           </List>
         ) : null}
+        {state.setup?.done && onOpenSetup ? (
+          <StyleRow aria-label="Your pitch preferences">
+            <span className="lbl">Pitch style: <strong>{state.setup.style}</strong></span>
+            <button type="button" onClick={() => onOpenSetup('voice')}>Voice</button>
+            <button type="button" onClick={() => onOpenSetup('offer')}>Offer</button>
+            <button type="button" onClick={() => onOpenSetup('work')}>Best work</button>
+            <button type="button" onClick={() => onOpenSetup('brands')}>Brands</button>
+          </StyleRow>
+        ) : null}
       </>
     );
   }
@@ -988,8 +1055,19 @@ export function AutopilotCard({ state, setState, reload, notice, returnReason, o
         </span>
       </Head>
       {notice ? <Notice>{notice}</Notice> : null}
+      {state?.is_pro && state.available && state.setup && !state.setup.done && onOpenSetup ? (
+        <SetupNudge>
+          <div>
+            <b>{state.setup.step ? 'Finish your pitch style' : 'Set up your pitch style'}</b>
+            <span>2 minutes. Brands reply more to pitches that sound like you and lead with your best work.</span>
+          </div>
+          <button type="button" onClick={() => onOpenSetup(null)}>{state.setup.step ? 'Continue' : 'Start'}</button>
+        </SetupNudge>
+      ) : null}
       {error ? <p className="err">{error}</p> : null}
-      {body}
+      {/* The setup journey connects Gmail itself, so the nudge replaces the old connect explainer. */}
+      {state?.is_pro && state.setup && !state.setup.done && !gmail.connected && onOpenSetup && returnReason !== 'gmail_scope'
+        ? null : body}
     </Card>
   );
 }
