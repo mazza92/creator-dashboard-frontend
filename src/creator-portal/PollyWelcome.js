@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { ArrowRight } from 'lucide-react';
 import { apiClient } from '../config/api';
@@ -20,6 +20,12 @@ function fmt(n) {
 export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDays = 0 }) {
   const [niches, setNiches] = useState(() => (facts?.niches || []).slice(0, MAX));
   const [saving, setSaving] = useState(false);
+  const cardRef = useRef(null);
+  // The chat scrolls to its bottom; on a phone that hid the greeting. Start the welcome at its top.
+  useEffect(() => {
+    const id = setTimeout(() => cardRef.current?.scrollIntoView?.({ block: 'start' }), 50);
+    return () => clearTimeout(id);
+  }, []);
   const options = Array.from(new Set([...(facts?.niches || []), ...(facts?.niche_options || [])]));
 
   const toggle = (id) => setNiches((cur) => (
@@ -37,7 +43,7 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDa
   };
 
   return (
-    <Card aria-labelledby="polly-welcome-title">
+    <Card ref={cardRef} aria-labelledby="polly-welcome-title">
       <Top>
         {avatar ? <img src={avatar} alt="" /> : null}
         <div>
@@ -80,7 +86,10 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDa
 const rise = keyframes`from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; }`;
 
 const Card = styled.section`
+  box-sizing: border-box;
+  *, *::before, *::after { box-sizing: border-box; }
   width: 100%;
+  min-width: 0;
   max-width: 560px;
   margin: 24px auto 0;
   background: ${t.white};
@@ -92,12 +101,18 @@ const Card = styled.section`
   box-shadow: 0 18px 40px rgba(18, 20, 26, 0.06);
   animation: ${rise} 0.35s ease both;
   @media (prefers-reduced-motion: reduce) { animation: none; }
-  @media (max-width: 480px) { padding: 18px; border-radius: 18px; margin-top: 12px; }
+  @media (max-width: 480px) {
+    padding: 18px; border-radius: 18px; margin-top: 12px;
+    h2 { font-size: 19px; }
+    p { font-size: 14.5px; }
+  }
 `;
 const Top = styled.div`
   display: flex;
   gap: 14px;
   align-items: flex-start;
+  min-width: 0;
+  > div { min-width: 0; overflow-wrap: anywhere; }
   img { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
   h2 { margin: 2px 0 6px; font-size: 21px; line-height: 1.2; color: ${t.ink}; }
   p { margin: 0; color: ${t.muted}; font-size: 15px; line-height: 1.5; }
@@ -148,6 +163,7 @@ const Chips = styled.div`
   button:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
 `;
 const Go = styled.button`
+  width: 100%;
   margin-top: 6px;
   display: inline-flex;
   align-items: center;
