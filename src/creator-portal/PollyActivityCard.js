@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Clock, CornerUpRight, ExternalLink, Eye, MessageCircle, PenLine, Send } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
+import { openInGmail } from './openInGmail';
 
 // "While you were away": what Polly did and what brands did, newest proof first. Rows that need the creator
 // carry their own one-tap action; everything else is proof the outreach ran without them.
@@ -52,7 +53,7 @@ export default function PollyActivityCard({ activity, onChip, disabled }) {
           <Meta>
             {item.at && item.type !== 'next' ? <span>{ago(item.at)}</span> : null}
             {item.gmail_url ? (
-              <a href={item.gmail_url} target="_blank" rel="noopener noreferrer">
+              <a href={item.gmail_url} target="_blank" rel="noopener noreferrer" onClick={(e) => openInGmail(e, item.gmail_url)}>
                 View in Gmail <ExternalLink size={12} aria-hidden="true" />
               </a>
             ) : null}

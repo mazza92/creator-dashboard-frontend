@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
+import { openInGmail } from './openInGmail';
 
 // The pitches Polly wrote, ready to go. One tap sends them all from the creator's Gmail (replies land in their own
 // inbox, Polly follows up). Not on Gmail? "Send them myself" opens each one in their mail app, as before.
@@ -98,7 +99,7 @@ export default function PitchBatchCard({
                   <span>
                     Delivered {timeLabel(item.sent_at)}{item.to ? ` to ${item.to}` : ''}
                     {item.gmail_url ? (
-                      <> · <a href={item.gmail_url} target="_blank" rel="noopener noreferrer">
+                      <> · <a href={item.gmail_url} target="_blank" rel="noopener noreferrer" onClick={(e) => openInGmail(e, item.gmail_url)}>
                         View in Gmail <ExternalLink size={12} aria-hidden="true" />
                       </a></>
                     ) : null}
