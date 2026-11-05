@@ -734,6 +734,7 @@ export default function CreatorOnboarding() {
   const [username, setUsername] = useState('');
   const [platform, setPlatform] = useState('');
   const [verificationStatus, setVerificationStatus] = useState(null); // null | 'verifying' | 'verified' | 'failed'
+  const [takenInfo, setTakenInfo] = useState(null); // handle already on another Newcollab account
   const [verificationError, setVerificationError] = useState(null);
   const [igHandleFallback, setIgHandleFallback] = useState(false);
   const [instagramOauthOn, setInstagramOauthOn] = useState(false);
@@ -943,6 +944,14 @@ export default function CreatorOnboarding() {
           });
           setProfileStep(2);
         } catch (err) {
+          const data = err?.response?.data || {};
+          if (err?.response?.status === 409 && data.error === 'handle_taken') {
+            // Not a failed check: they already have an account with this handle. Say so, and offer the way back in.
+            setTakenInfo({ handle, message: data.message, hint: data.account_hint });
+            setVerificationStatus('taken');
+            setError('');
+            return;
+          }
           console.error('Error saving profile after OAuth:', err);
           setError('Failed to complete verification. Please try again.');
           setVerificationStatus('failed');
@@ -1482,6 +1491,33 @@ export default function CreatorOnboarding() {
                           <>⏳ Connecting to {platform === 'instagram' ? 'Instagram' : 'TikTok'}...</>
                         ) : verificationStatus === 'verified' ? (
                           <>✓ Verified: {verifiedProfile?.follower_count?.toLocaleString()} followers</>
+                        ) : verificationStatus === 'taken' && takenInfo ? (
+                          <span style={{ display: 'grid', gap: 10 }}>
+                            <span>
+                              <b>{takenInfo.message || `@${takenInfo.handle} is already linked to another Newcollab account.`}</b>
+                              {takenInfo.hint ? <> It was created with <b>{takenInfo.hint}</b>.</> : null}
+                              {' '}Log in to that account to pick up where you left off, or connect a different account.
+                            </span>
+                            <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try { await apiClient.post('/logout', {}, { withCredentials: true }); } catch (_) { /* still go */ }
+                                  window.location.href = '/login';
+                                }}
+                                style={{ minHeight: 40, padding: '8px 14px', borderRadius: 10, border: 0, background: '#12141a', color: '#fff', font: 'inherit', fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                Log in to that account
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setTakenInfo(null); setVerificationStatus(null); setError(''); }}
+                                style={{ minHeight: 40, padding: '8px 14px', borderRadius: 10, border: '1px solid #e4e2dc', background: '#fff', color: '#12141a', font: 'inherit', fontWeight: 600, cursor: 'pointer' }}
+                              >
+                                Use a different account
+                              </button>
+                            </span>
+                          </span>
                         ) : verificationStatus === 'failed' ? (
                           <>❌ Verification failed. Please try again.</>
                         ) : (
