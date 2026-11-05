@@ -1,5 +1,6 @@
 import HomeClient from './HomeClient';
 import HomeFaqSchemaScript from './HomeFaqSchemaScript';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 const TITLE = 'Newcollab: PR Packages, Paid UGC & Brand Deals for UGC Creators';
 const DESCRIPTION =
@@ -86,8 +87,8 @@ export default async function HomePage() {
   return (
     <>
       {/* JSON-LD rendered server-side so it appears in the initial HTML response */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(websiteSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(organizationSchema) }} />
       <HomeFaqSchemaScript />
       <HomeClient brands={brands} stats={stats} />
     </>

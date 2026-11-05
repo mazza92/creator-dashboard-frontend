@@ -7,6 +7,7 @@ import {
   buildServiceSchema,
   buildWebPageSchema,
 } from './content';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
   title: 'Gifted UGC creators for DTC brands | $299, first campaign free',
@@ -55,7 +56,7 @@ function JsonLd({ data }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(data) }}
     />
   );
 }

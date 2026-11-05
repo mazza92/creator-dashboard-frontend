@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import BrandScanClient from './BrandScanClient';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 const PAGE_URL = 'https://newcollab.co/brands/scan';
 const TITLE = 'Brand Scan: see the TikTok creators behind any brand | Newcollab';
@@ -42,7 +43,7 @@ const APP_SCHEMA = {
 export default function BrandScanPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(APP_SCHEMA) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(APP_SCHEMA) }} />
       <Suspense fallback={null}>
         <BrandScanClient />
       </Suspense>

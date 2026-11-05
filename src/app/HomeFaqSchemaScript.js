@@ -7,6 +7,7 @@
  */
 
 import { HOME_FAQ as FAQ_ITEMS } from './homeFaq';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export default function HomeFaqSchemaScript() {
   const schema = {
@@ -25,7 +26,7 @@ export default function HomeFaqSchemaScript() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

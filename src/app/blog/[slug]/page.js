@@ -3,6 +3,7 @@ import { getPostBySlug, getAllPostSlugs, getRelatedPosts, getPostCanonicalUrl } 
 import { buildBlogPostingSchema, buildBlogBreadcrumbSchema, buildHowToSchema, buildItemListSchema } from '../../../lib/blogStructuredData';
 import BlogFaqSchemaScript from './BlogFaqSchemaScript';
 import BlogPostClient from './BlogPostClient';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 // Generate static params for all blog posts at build time (SSG)
 export async function generateStaticParams() {
@@ -90,24 +91,24 @@ export default async function BlogPostPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(blogPostingSchema) }}
       />
       <BlogFaqSchemaScript faq={post.faq} slug={post.slug} />
       {howToSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(howToSchema) }}
         />
       )}
       {itemListSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(itemListSchema) }}
         />
       )}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }}
       />
       {/* Server-rendered h1 for SEO - visually hidden, client component renders visible title */}
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>

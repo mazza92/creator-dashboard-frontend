@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import MediaKitClient from './MediaKitClient';
 import KitViewTracker from './KitViewTracker';
 import { kitApiOrigin, mergeKitWithPublicProfile, publicPortfolioName } from '../../../lib/kitBrandCta';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 function portfolioApiBase() {
   if (process.env.NODE_ENV !== 'production') return 'http://localhost:5000';
@@ -221,11 +222,11 @@ export default async function MediaKitPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }}
       />
       <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
         {handle} UGC portfolio

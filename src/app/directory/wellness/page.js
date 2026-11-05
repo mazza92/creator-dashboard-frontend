@@ -3,6 +3,7 @@ import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import WellnessDirectoryClient from './WellnessDirectoryClient';
 import ForBrandsSeoLine from '../ForBrandsSeoLine';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
   title: 'Wellness Brand PR Application Forms - Health & Fitness Brands (2026) | NewCollab',
@@ -60,7 +61,7 @@ function FaqSchema({ faqs }) {
       acceptedAnswer: { '@type': 'Answer', text: faq.answer },
     })),
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />;
 }
 
 function BreadcrumbSchema() {
@@ -72,7 +73,7 @@ function BreadcrumbSchema() {
       { '@type': 'ListItem', position: 2, name: 'Wellness', item: 'https://newcollab.co/directory/wellness' },
     ],
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />;
 }
 
 const WELLNESS_FAQS = [

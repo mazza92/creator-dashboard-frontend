@@ -1,4 +1,5 @@
 import MediaKitStudioClient from './MediaKitStudioClient';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
   title: 'Free UGC portfolio builder | Publish a UGC portfolio | newcollab',
@@ -97,8 +98,8 @@ const faqSchema = {
 export default function MediaKitPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(webAppSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }} />
       <MediaKitStudioClient />
     </>
   );

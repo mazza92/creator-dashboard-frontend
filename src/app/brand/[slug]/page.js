@@ -4,6 +4,7 @@ import BrandUnlockClient from './BrandUnlockClient';
 import BrandPageLayout from './BrandPageLayout';
 import AreYouThisBrand from '../../../components/AreYouThisBrand';
 import { resolveBrandStats } from '../../../utils/brandStats';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.newcollab.co';
 
@@ -239,10 +240,10 @@ function JsonLd({ brand, faqs }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(orgSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }} />
       {faqSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }} />
       )}
     </>
   );

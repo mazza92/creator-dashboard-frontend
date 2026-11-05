@@ -105,10 +105,19 @@ export const NotificationProvider = ({ children }) => {
     try {
       pusherInstance = new Pusher(process.env.REACT_APP_PUSHER_KEY, {
         cluster: process.env.REACT_APP_PUSHER_CLUSTER,
-        authEndpoint: `${API_URL}/pusher/auth`,
-        auth: {
-          params: { user_id: userId, user_role: userRole },
-          withCredentials: true,
+        // The API checks the signed-in session owns the channel, so the auth call must carry the cookie.
+        channelAuthorization: {
+          customHandler: ({ socketId, channelName }, callback) => {
+            fetch(`${API_URL}/pusher/auth`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({ socket_id: socketId, channel_name: channelName }).toString(),
+            })
+              .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`pusher auth ${res.status}`))))
+              .then((data) => callback(null, data))
+              .catch((err) => callback(err, null));
+          },
         },
         enabledTransports: ['ws', 'wss'],
         disabledTransports: ['xhr_streaming', 'xhr_polling'],
