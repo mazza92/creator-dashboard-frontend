@@ -3,6 +3,7 @@ import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import BeautyDirectoryClient from './BeautyDirectoryClient';
 import ForBrandsSeoLine from '../ForBrandsSeoLine';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
   title: 'Beauty Brand PR Application Forms - 100+ Beauty Brands (2026) | NewCollab',
@@ -89,7 +90,7 @@ function FaqSchema({ faqs }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }
@@ -107,7 +108,7 @@ function BreadcrumbSchema() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
     />
   );
 }

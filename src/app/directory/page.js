@@ -3,6 +3,7 @@ import { SiteFooter } from '../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from './DirectoryBrandLinks';
 import DirectoryClient from './DirectoryClient';
 import { CITATION_LAST_UPDATED_ISO, DIRECTORY_FACTS } from '../../lib/citationFacts';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
   title: '2,000+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
@@ -72,7 +73,7 @@ export default async function DirectoryPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(datasetSchema) }}
       />
       <h1 style={srOnly}>2,000+ PR Forms for Brands: Direct Application Links</h1>
       <Suspense fallback={null}>

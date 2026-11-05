@@ -10,6 +10,7 @@ import {
   clusterSlugs,
   getClusterPage,
 } from '../_cluster/catalog';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export function generateStaticParams() {
   return clusterSlugs().map((slug) => ({ slug }));
@@ -48,7 +49,7 @@ function JsonLd({ data }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(data) }}
     />
   );
 }

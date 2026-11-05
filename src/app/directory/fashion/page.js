@@ -3,6 +3,7 @@ import { SiteFooter } from '../../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from '../DirectoryBrandLinks';
 import FashionDirectoryClient from './FashionDirectoryClient';
 import ForBrandsSeoLine from '../ForBrandsSeoLine';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
   title: 'Fashion Brand PR Application Forms - Apply to Fashion Brand PR Lists (2026) | NewCollab',
@@ -82,7 +83,7 @@ function FaqSchema({ faqs }) {
       acceptedAnswer: { '@type': 'Answer', text: faq.answer },
     })),
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />;
 }
 
 function BreadcrumbSchema() {
@@ -94,7 +95,7 @@ function BreadcrumbSchema() {
       { '@type': 'ListItem', position: 2, name: 'Fashion', item: 'https://newcollab.co/directory/fashion' },
     ],
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />;
 }
 
 const FASHION_FAQS = [

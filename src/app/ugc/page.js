@@ -1,4 +1,5 @@
 import UgcBrandsClient from './UgcBrandsClient';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 const TITLE = 'Performance UGC for DTC Brands: Pay Per View | Newcollab';
 const DESCRIPTION =
@@ -39,7 +40,7 @@ const serviceSchema = {
 export default function UgcPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(serviceSchema) }} />
       <UgcBrandsClient />
     </>
   );

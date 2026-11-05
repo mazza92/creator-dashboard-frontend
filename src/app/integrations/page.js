@@ -1,5 +1,6 @@
 import IntegrationsHubClient from './IntegrationsHubClient';
 import { API, LAST_UPDATED_ISO, SITE, allAssistants } from './_catalog';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 const TITLE = 'Find UGC Creators in ChatGPT, Claude, Gemini and Any AI Assistant | Newcollab';
 const DESCRIPTION =
@@ -28,7 +29,7 @@ function JsonLd({ data }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(data) }}
     />
   );
 }

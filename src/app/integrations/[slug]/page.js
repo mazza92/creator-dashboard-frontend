@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import IntegrationClient from '../IntegrationClient';
 import { SITE, assistantSlugs, buildSchemas, getAssistant, otherAssistants } from '../_catalog';
+import { jsonLd } from '@/src/lib/jsonLd';
 
 export function generateStaticParams() {
   return assistantSlugs().map((slug) => ({ slug }));
@@ -39,7 +40,7 @@ function JsonLd({ data }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: jsonLd(data) }}
     />
   );
 }
