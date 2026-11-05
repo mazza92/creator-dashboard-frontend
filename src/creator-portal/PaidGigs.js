@@ -1202,3 +1202,6 @@ const Done = styled.div`
   strong { font-size: 15px; }
   span { font-size: 13px; color: ${t.muted}; }
 `;
+
+// Reused by the Brands For you feed (same gig card data, same apply sheet).
+export { GigSheet, payText, gigTitles };

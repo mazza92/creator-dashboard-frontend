@@ -4,6 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import api, { getProxiedMediaUrl } from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
+import BrandFeed from '../creator-portal/BrandFeed';
 import SegmentTabs from '../components/creator/SegmentTabs';
 import PickedBrands from '../components/creator/PickedBrands';
 import BrandSocialHeader, { parseSocial } from '../components/creator/BrandSocialHeader';
@@ -448,6 +449,14 @@ export default function BrandPRHome() {
   };
 
   const [view, setView] = useState('list');
+  // Brands opens on the For you feed; Directory is the classic search. The choice sticks per device.
+  const [mode, setModeState] = useState(() => {
+    try { return localStorage.getItem('nc_brands_mode') === 'dir' ? 'dir' : 'feed'; } catch (_) { return 'feed'; }
+  });
+  const setMode = useCallback((next) => {
+    setModeState(next);
+    try { localStorage.setItem('nc_brands_mode', next); } catch (_) { /* private mode */ }
+  }, []);
   const [step, setStep] = useState(1);
   const [current, setCurrent] = useState(null);
   const [pitchMode, setPitchMode] = useState(false);
@@ -1791,8 +1800,24 @@ export default function BrandPRHome() {
     );
   }
 
+  if (mode === 'feed' && !searchParams.get('brand')) {
+    return (
+      <Page>
+        <BrandFeed
+          onDirectory={() => setMode('dir')}
+          onOpenBrand={(raw) => openApply(normalizeBrand(raw, appliedMap), 'feed')}
+        />
+        <Paywall quota={quota} isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+      </Page>
+    );
+  }
+
   return (
     <Page>
+      <ModeBar role="tablist" aria-label="Brands view">
+        <button type="button" role="tab" aria-selected="false" onClick={() => setMode('feed')}>For you</button>
+        <button type="button" role="tab" aria-selected="true" className="on">Directory</button>
+      </ModeBar>
       <ListHead>
         <Hero $compact={tab === 'dir'}>
           <div>
@@ -2161,6 +2186,29 @@ function Tracker({ stage = 0, compact = false }) {
     </TrackerBox>
   );
 }
+
+const ModeBar = styled.div`
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: #ece9e2;
+  button {
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 16px;
+    min-height: 36px;
+    background: transparent;
+    color: ${tokens.ink};
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.on { background: ${tokens.ink}; color: #fff; font-weight: 700; }
+  button:focus-visible { outline: 2px solid ${tokens.accent}; outline-offset: 2px; }
+`;
 
 const Page = styled.div`
   --page-pad-x: ${(p) => (p.$narrow ? '16px' : 'clamp(16px, 4vw, 32px)')};
