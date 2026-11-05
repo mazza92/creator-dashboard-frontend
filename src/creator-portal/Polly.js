@@ -15,6 +15,7 @@ import { useTrialOffer } from '../utils/trialOffer';
 import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
 import PollyActivityCard from './PollyActivityCard';
+import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
 import { ReplySignalChip } from '../components/ReplySignal';
@@ -1775,8 +1776,16 @@ export default function Polly() {
       role: 'assistant',
       content: scrubPollyVoice(reply.message || 'Done.'),
       task_chips: reply.task_chips || [],
+      sent_summary: reply.sent_summary || null,
     }];
     setMessages(next);
+    if (reply.sent_summary) {
+      // Land on the win, not on an older card: after the Gmail redirect the thread may not be at the bottom.
+      setTimeout(() => {
+        const el = threadRef.current;
+        if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      }, 80);
+    }
     persistThread(next, suggestedRef.current);
     if (reply.sent) {
       try { window.dispatchEvent(new Event('savedBrandCountChanged')); } catch (_) { /* ignore */ }
@@ -2584,6 +2593,9 @@ export default function Polly() {
                         </PitchHint>
                       ) : null}
                     </PitchCard>
+                  )}
+                  {msg.sent_summary?.sent?.length > 0 && (
+                    <PollySentCard summary={msg.sent_summary} onChip={sendStarter} disabled={busy} />
                   )}
                   {msg.activity?.items?.length > 0 && (
                     <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
