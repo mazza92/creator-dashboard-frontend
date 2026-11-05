@@ -1274,12 +1274,15 @@ function GigCard({ gig, busy, applying, onApply }) {
 const WORKING_STEPS = {
   brands: ['Reading your profile…', 'Checking who’s picking creators this week…', 'Picking your best 3…'],
   pitch: ['Reading the brand…', 'Matching it to your content…', 'Writing your pitch…'],
+  first_batch: ['Reading your profile…', 'Finding the brands most likely to answer you…', 'Writing your pitches…',
+    'Tailoring each one to that brand…'],
   gigs: ['Scanning paid boards…', 'Filtering for your size…'],
   chat: ['Thinking…'],
 };
 
 function workingKind(extras, text) {
   const action = extras?.action;
+  if (extras?.then_batch) return 'first_batch';
   if (action === 'suggest_brands') return 'brands';
   if (action === 'generate_pitch' || extras?.brand_id) return 'pitch';
   if (action === 'suggest_gigs') return 'gigs';
@@ -1911,8 +1914,9 @@ export default function Polly() {
     if (pitchFacts.facts) pitchFacts.setFacts({ ...pitchFacts.facts, niches, needs_confirm: false });
     if (!autoAction && !autoFiredRef.current && !messagesRef.current.length) {
       autoFiredRef.current = true;
+      // One tap from the welcome card: Polly finds the best matches and writes the pitches in the same turn.
       send('', { action: 'suggest_brands', starter: 'first_matches', chip_id: 'first_matches', deal: 'gifted',
-        skip_discovery: true });
+        skip_discovery: true, then_batch: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAction, pitchFacts.facts, send]);
@@ -2216,6 +2220,24 @@ export default function Polly() {
     window.location.href = pitch.mailto;
   };
 
+  // "Send them myself": the same hand-off as a single pitch, from the batch card.
+  const openBatchMail = (item) => {
+    if (pitchHasPlaceholder(item)) {
+      setMailHold(true);
+      return Promise.resolve(false);
+    }
+    if (!item?.mailto) return Promise.resolve(false);
+    const logged = logPitchHandoff(item, 'open_email').then((res) => Boolean(res?.logged_sent));
+    window.location.href = item.mailto;
+    return logged;
+  };
+
+  const copyBatchPitch = async (item) => {
+    const text = item?.subject ? `Subject: ${item.subject}\n\n${item.body || ''}` : (item?.body || '');
+    try { await navigator.clipboard.writeText(text); } catch (_) { /* ignore */ }
+    logPitchHandoff(item, 'copy_pitch');
+  };
+
   const resizeInput = (el) => {
     if (!el) return;
     el.style.height = 'auto';
@@ -2504,6 +2526,9 @@ export default function Polly() {
                       disabled={busy}
                       onSend={sendBatch}
                       onConnect={connectGmailForBatch}
+                      onOpenMail={openBatchMail}
+                      onCopy={copyBatchPitch}
+                      free={!credits?.is_unlimited}
                     />
                   )}
                 </div>

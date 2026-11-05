@@ -49,7 +49,8 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDa
         <div>
           <h2 id="polly-welcome-title">{firstName ? `Hi ${firstName}, I'm Polly` : "Hi, I'm Polly"} 👋</h2>
           <p>
-            I find brands that send PR and pay creators like you, write your pitches and follow up.
+            I handle your brand outreach: I find brands that gift and pay creators like you, write the pitches
+            and follow up. You just answer the brands who reply.
             {facts?.followers ? <> I see <b>{fmt(facts.followers)} followers</b> on your profile.</> : null}
           </p>
         </div>
@@ -76,9 +77,9 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDa
         })}
       </Chips>
       <Go type="button" onClick={go} disabled={saving || niches.length === 0}>
-        {saving ? 'Finding your brands…' : 'Find my brands'} <ArrowRight size={18} />
+        {saving ? 'Finding your brands…' : 'Find brands & write my pitches'} <ArrowRight size={18} />
       </Go>
-      <Fine>You can change this any time in Settings.</Fine>
+      <Fine>Nothing is sent until you say so. You can change your niches any time in Settings.</Fine>
     </Card>
   );
 }
