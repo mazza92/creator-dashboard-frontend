@@ -414,6 +414,10 @@ function contactLineFor(brand) {
 
 const LOCATION_GAP = /\[\s*CITY\s*,\s*COUNTRY\s*\]/i;
 
+function canSendForMe(pitch) {
+  return Boolean(pitch?.email && pitch?.brand_id && !pitch?.is_reply && !pitch?.is_followup && !pitch?.sent_via_gmail);
+}
+
 function pitchHasPlaceholder(pitch) {
   return LOCATION_GAP.test(String(pitch?.body || '')) || Boolean(pitch?.needs_location);
 }
@@ -737,6 +741,38 @@ const BatchCta = styled.div`
   button:disabled { opacity: 0.6; cursor: default; }
   button:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
   span { text-align: center; font-size: 12.5px; color: ${t.muted}; }
+  button.alt {
+    min-height: 40px;
+    background: none;
+    color: ${t.ink};
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+`;
+
+const SendForMe = styled.button`
+  border: 0;
+  border-radius: ${t.radiusBtn};
+  background: ${t.ink};
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  &:disabled { opacity: 0.55; cursor: default; }
+`;
+
+const PitchSentNote = styled.div`
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #e7f3ee;
+  color: #165c3f;
+  font-size: 13.5px;
 `;
 
 const BrandList = styled.div`
@@ -1745,9 +1781,9 @@ export default function Polly() {
     return () => { stopped = true; clearInterval(id); clearTimeout(hideTimer); };
   }, [ready, creatorId]);
 
-  const connectGmailForBatch = useCallback(async () => {
+  const connectGmailForBatch = useCallback(async (pending = '1') => {
     try {
-      sessionStorage.setItem(BATCH_AFTER_CONNECT_KEY, '1');
+      sessionStorage.setItem(BATCH_AFTER_CONNECT_KEY, typeof pending === 'string' ? pending : '1');
       const res = await apiClient.get('/api/polly/autopilot/gmail/connect');
       if (res.data?.url) {
         window.location.href = res.data.url;
@@ -1813,6 +1849,43 @@ export default function Polly() {
     }
     setSendingBatch(false);
   }, [sendingBatch, connectGmailForBatch, persistThread]);
+
+  // 'Send for me' on a single pitch card: the pitch Polly stored for that brand goes out from their Gmail.
+  const [sendingPitchId, setSendingPitchId] = useState(null);
+  const sendSingle = useCallback(async (brandId) => {
+    if (!brandId || sendingPitchId) return;
+    setSendingPitchId(brandId);
+    let reply;
+    try {
+      const res = await apiClient.post('/api/polly/pitch/send', { brand_id: brandId }, { timeout: 45000 });
+      reply = res.data || {};
+    } catch (err) {
+      const data = err.response?.data || {};
+      if (err.response?.status === 409 && data.error === 'gmail_not_connected') {
+        setSendingPitchId(null);
+        connectGmailForBatch(`brand:${brandId}`);
+        return;
+      }
+      reply = { message: data.message || "The send didn't go through. Try again, or tap Open email." };
+    }
+    const sentOk = (reply.results || []).some((r) => r.status === 'sent');
+    const current = messagesRef.current.map((m) => (
+      sentOk && m.pitch && String(m.pitch.brand_id) === String(brandId) ? { ...m, pitch: { ...m.pitch, sent_via_gmail: true } } : m
+    ));
+    const next = [...current, {
+      id: newId(), role: 'assistant', content: scrubPollyVoice(reply.message || 'Done.'),
+      task_chips: reply.task_chips || [], sent_summary: reply.sent_summary || null,
+    }];
+    setMessages(next);
+    persistThread(next, suggestedRef.current);
+    if (reply.sent_summary) {
+      setTimeout(() => {
+        const el = threadRef.current;
+        if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      }, 80);
+    }
+    setSendingPitchId(null);
+  }, [sendingPitchId, connectGmailForBatch, persistThread]);
 
   const send = useCallback(async (text, extras = {}) => {
     const content = (text || '').trim();
@@ -2101,15 +2174,17 @@ export default function Polly() {
   useEffect(() => {
     const result = searchParams.get('autopilot');
     if (!result) return;
-    let batchPending = false;
-    try { batchPending = sessionStorage.getItem(BATCH_AFTER_CONNECT_KEY) === '1'; } catch (_) { /* ignore */ }
+    let pendingSend = null;
+    try { pendingSend = sessionStorage.getItem(BATCH_AFTER_CONNECT_KEY); } catch (_) { /* ignore */ }
+    const batchPending = Boolean(pendingSend);
     if (batchPending) {
       if (!serverReady) return;
       sessionStorage.removeItem(BATCH_AFTER_CONNECT_KEY);
       navigate('/creator/dashboard/for-you', { replace: true });
       if (result === 'gmail_connected') {
         autopilot.reload();
-        sendBatch();
+        if (pendingSend && pendingSend.startsWith('brand:')) sendSingle(pendingSend.slice(6));
+        else sendBatch();
       } else {
         setMessages((prev) => [...prev, {
           id: newId(), role: 'assistant', content: `${AUTOPILOT_NOTICES[result] || "Gmail didn't connect."} Your pitches are still here.`,
@@ -2561,6 +2636,10 @@ export default function Polly() {
                           <span>
                             {free ? `Uses your ${n} free pitches. ` : ''}You check each one before anything is sent.
                           </span>
+                          <button type="button" className="alt" disabled={busy}
+                            onClick={() => sendStarter({ id: 'more_brands', label: 'Show me other brands', action: 'suggest_brands' })}>
+                            Not a fit? Show me 3 other brands
+                          </button>
                         </BatchCta>
                       );
                     })()}
@@ -2601,11 +2680,30 @@ export default function Polly() {
                         </PitchCoach>
                       ) : null}
                       <PitchBodyText body={msg.pitch.body} />
+                      {msg.pitch.sent_via_gmail ? (
+                        <PitchSentNote>✓ Sent from your Gmail. I follow up on day 4 and day 10 if they&apos;re quiet.</PitchSentNote>
+                      ) : null}
                       <PitchActions>
-                        {msg.pitch.mailto && (
-                          <Primary href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch, msg.id); }}>
-                            Open email
-                          </Primary>
+                        {canSendForMe(msg.pitch) && (
+                          <SendForMe
+                            type="button"
+                            disabled={busy || Boolean(sendingPitchId) || pitchHasPlaceholder(msg.pitch)}
+                            onClick={() => sendSingle(msg.pitch.brand_id)}
+                          >
+                            {String(sendingPitchId) === String(msg.pitch.brand_id) ? 'Sending…'
+                              : autopilot.state?.gmail?.connected ? 'Send from my Gmail' : 'Send for me'}
+                          </SendForMe>
+                        )}
+                        {msg.pitch.mailto && !msg.pitch.sent_via_gmail && (
+                          canSendForMe(msg.pitch) ? (
+                            <Ghost as="a" href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch, msg.id); }}>
+                              Open email
+                            </Ghost>
+                          ) : (
+                            <Primary href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch, msg.id); }}>
+                              Open email
+                            </Primary>
+                          )
                         )}
                         {msg.pitch.email && (
                           <Ghost type="button" onClick={() => copyEmail(msg.pitch, msg.id)}>
