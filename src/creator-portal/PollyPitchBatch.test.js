@@ -50,3 +50,17 @@ test('without Gmail sending available it is send-it-myself only', () => {
   expect(screen.queryByRole('button', { name: /Gmail/ })).toBeNull();
   expect(screen.getAllByRole('button', { name: 'Open email' })).toHaveLength(2);
 });
+
+test('sent pitches show a delivery receipt with a Gmail link', () => {
+  const sent = items.map((i) => ({ ...i, status: 'sent', sent_at: '2026-11-10T10:42:00Z', to: i.email,
+    gmail_url: `https://mail.google.com/mail/#all/${i.brand_id}` }));
+  setup({ batch: { items: sent }, gmailConnected: true });
+  expect(screen.getAllByText(/Delivered/)).toHaveLength(2);
+  expect(screen.getAllByRole('link', { name: /View in Gmail/ })[0]).toHaveAttribute('href', 'https://mail.google.com/mail/#all/1');
+  expect(screen.getByText(/All sent/)).toBeInTheDocument();
+});
+
+test('while sending, each row says Sending', () => {
+  setup({ gmailConnected: true, sending: true });
+  expect(screen.getAllByText('Sending…')).toHaveLength(3); // two rows + the button
+});

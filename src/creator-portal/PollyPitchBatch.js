@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
 // The pitches Polly wrote, ready to go. One tap sends them all from the creator's Gmail (replies land in their own
@@ -26,6 +27,12 @@ function itemNote(item) {
   if (STATUS_NOTE[item.status]) return STATUS_NOTE[item.status];
   if (batchItemReady(item)) return '';
   return item.email ? STATUS_NOTE.needs_location : STATUS_NOTE.no_inbox;
+}
+
+function timeLabel(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function Check() {
@@ -80,9 +87,24 @@ export default function PitchBatchCard({
                 <span className="name">{item.brand_name || 'Brand'}</span>
                 <span className="subject">{item.subject}</span>
                 <span className={`state ${done ? 'sent' : ''}`}>
-                  {done ? <><Check /> Sent</> : open === idx ? 'Hide' : 'Read'}
+                  {done ? <><Check /> Sent</>
+                    : sending && batchItemReady(item) && !byHand ? <><Spin size={14} aria-hidden="true" /> Sending…</>
+                      : open === idx ? 'Hide' : 'Read'}
                 </span>
               </RowHead>
+              {isSent(item) && item.sent_at ? (
+                <Receipt style={{ animationDelay: `${idx * 0.35}s` }}>
+                  <Check />
+                  <span>
+                    Delivered {timeLabel(item.sent_at)}{item.to ? ` to ${item.to}` : ''}
+                    {item.gmail_url ? (
+                      <> · <a href={item.gmail_url} target="_blank" rel="noopener noreferrer">
+                        View in Gmail <ExternalLink size={12} aria-hidden="true" />
+                      </a></>
+                    ) : null}
+                  </span>
+                </Receipt>
+              ) : null}
               {open === idx ? (
                 <>
                   {item.email ? <To>To: {item.email}</To> : null}
@@ -300,6 +322,31 @@ const SwitchLink = styled.button`
   text-underline-offset: 3px;
   cursor: pointer;
   &:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; border-radius: 6px; }
+`;
+
+const spin = keyframes`to { transform: rotate(360deg); }`;
+const rise = keyframes`from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; }`;
+
+const Spin = styled(Loader2)`
+  animation: ${spin} 0.9s linear infinite;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+`;
+
+const Receipt = styled.div`
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #165c3f;
+  word-break: break-word;
+  opacity: 0;
+  animation: ${rise} 0.35s ease forwards;
+  svg { flex-shrink: 0; margin-top: 2px; }
+  a { color: ${t.accent}; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+  a:hover { text-decoration: underline; }
+  @media (prefers-reduced-motion: reduce) { animation: none; opacity: 1; }
 `;
 
 const Done = styled.div`
