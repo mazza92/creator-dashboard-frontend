@@ -718,6 +718,27 @@ const AssistantText = styled.div`
   a { color: ${t.action}; font-weight: 600; }
 `;
 
+const BatchCta = styled.div`
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  button {
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: 14px;
+    background: ${t.ink};
+    color: #fff;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  button:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
+  span { text-align: center; font-size: 12.5px; color: ${t.muted}; }
+`;
+
 const BrandList = styled.div`
   display: grid;
   gap: 8px;
@@ -2448,9 +2469,9 @@ export default function Polly() {
                   {msg.radar ? (
                     <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} onSettled={settleRadar} />
                   ) : null}
-                  {msg.task_chips?.length > 0 && (
+                  {msg.task_chips?.filter((c) => !(msg.brands?.length && c.action === 'pitch_batch')).length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
-                      {msg.task_chips.map((s) => (
+                      {msg.task_chips.filter((c) => !(msg.brands?.length && c.action === 'pitch_batch')).map((s) => (
                         <Chip
                           key={s.id || s.label}
                           type="button"
@@ -2514,7 +2535,7 @@ export default function Polly() {
                             </div>
                             {brandBlurb(brand) ? <div className="why">{brandBlurb(brand)}</div> : null}
                             {brand.reply_signal ? (
-                              <div style={{ marginTop: 6 }}><ReplySignalChip signal={brand.reply_signal} showDetail /></div>
+                              <div style={{ marginTop: 6 }}><ReplySignalChip signal={brand.reply_signal} /></div>
                             ) : null}
                           </BrandMeta>
                           <ContactBtn
@@ -2527,6 +2548,22 @@ export default function Polly() {
                         </BrandCard>
                       ))}
                     </BrandList>
+                    {(() => {
+                      const batch = (msg.task_chips || []).find((c) => c.action === 'pitch_batch');
+                      if (!batch) return null;
+                      const n = (batch.brand_ids || []).length || 3;
+                      const free = !credits?.is_unlimited;
+                      return (
+                        <BatchCta>
+                          <button type="button" disabled={busy} onClick={() => sendStarter(batch)}>
+                            {free ? `Write my ${n} free pitches` : `Write all ${n} pitches`} →
+                          </button>
+                          <span>
+                            {free ? `Uses your ${n} free pitches. ` : ''}You check each one before anything is sent.
+                          </span>
+                        </BatchCta>
+                      );
+                    })()}
                     </RevealIn>
                   )}
                   {msg.locked_pitch?.lines?.length > 0 && !msg.pitch && (
