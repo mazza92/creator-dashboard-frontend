@@ -667,7 +667,9 @@ const UserBubble = styled.div`
 
 const AssistantRow = styled.div`
   display: grid;
-  grid-template-columns: 32px 1fr;
+  /* minmax(0, 1fr): a long link in a pitch must wrap, not widen the whole column past the screen */
+  grid-template-columns: 32px minmax(0, 1fr);
+  > * { min-width: 0; }
   gap: 12px;
   align-items: start;
 `;
@@ -1034,6 +1036,8 @@ const UnlockBtn = styled.button`
 
 const PitchBody = styled.pre`
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font-family: inherit;
   font-size: 13.5px;
   line-height: 1.5;

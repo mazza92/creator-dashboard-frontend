@@ -212,8 +212,9 @@ const RowHead = styled.button`
   cursor: pointer;
   font-family: inherit;
   .name { grid-area: name; font-weight: 700; font-size: 14px; color: ${t.ink}; }
+  .name { overflow-wrap: anywhere; }
   .subject {
-    grid-area: subject; font-size: 13px; color: ${t.muted};
+    grid-area: subject; font-size: 13px; color: ${t.muted}; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .state {
@@ -233,6 +234,9 @@ const To = styled.div`
 
 const Body = styled.pre`
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
   font-family: inherit;
   font-size: 13.5px;
   line-height: 1.5;
