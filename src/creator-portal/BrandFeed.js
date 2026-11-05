@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Check, ChevronDown, ChevronRight, Play, Plus } from 'lucide-react';
+import { Check, ChevronRight, Play, Plus } from 'lucide-react';
 import api from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { GigSheet, gigTitles, payText } from './PaidGigs';
@@ -12,11 +12,6 @@ import { mixFeed } from './brandFeedMix';
 // card and two actions (Pitch for me, + Target). Paid UGC gigs and directory brands are mixed in so the
 // feed is never short. "Directory" switches back to the classic search.
 
-const NICHE_LABEL = {
-  '': 'All niches', skincare: 'Skincare', makeup: 'Makeup', haircare: 'Haircare', nails: 'Nails',
-  fragrance: 'Fragrance', fashion: 'Fashion', fitness: 'Fitness', food: 'Food', wellness: 'Wellness',
-  home: 'Home', pet: 'Pet', baby: 'Baby', tech: 'Tech',
-};
 function kFollowers(n) {
   const v = Number(n) || 0;
   if (v >= 1e6) return `${(v / 1e6).toFixed(1).replace(/\.0$/, '')}M`;
@@ -189,8 +184,6 @@ function GigSlide({ item, onOpenGig }) {
 export default function BrandFeed({ onDirectory, onOpenBrand }) {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [niche, setNiche] = useState(null);
-  const [niches, setNiches] = useState([]);
   const [targets, setTargets] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -212,13 +205,13 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
     return () => window.removeEventListener('resize', fit);
   }, []);
 
-  const load = useCallback(async (pick) => {
+  const load = useCallback(async () => {
     const id = ++req.current;
     setLoading(true);
     setError('');
     try {
       const [feedRes, gigRes] = await Promise.allSettled([
-        api.get('/api/pr-crm/feed', { params: pick != null ? { niche: pick || 'all' } : {}, timeout: 30000 }),
+        api.get('/api/pr-crm/feed', { timeout: 30000 }),
         api.get('/api/opportunities/paid-gigs', { params: { view: 'for_you', limit: 12 }, timeout: 30000 }),
       ]);
       if (id !== req.current) return;
@@ -226,8 +219,6 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
       const data = feedRes.value.data;
       const gigs = gigRes.status === 'fulfilled' ? (gigRes.value.data?.gigs || []) : [];
       setItems(mixFeed(data.items || [], gigs));
-      setNiche(data.niche || '');
-      setNiches(data.niches || []);
       setTargets(Number(data.targets) || 0);
       if (boxRef.current) boxRef.current.scrollTo({ top: 0 });
     } catch (_) {
@@ -237,7 +228,7 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
     }
   }, []);
 
-  useEffect(() => { load(null); }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -289,14 +280,6 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
           <button type="button" role="tab" aria-selected="true" className="on">For you</button>
           <button type="button" role="tab" aria-selected="false" onClick={onDirectory}>Directory</button>
         </ModeSwitch>
-        <NicheSelect>
-          <label htmlFor="feed-niche" className="sr">Niche</label>
-          <select id="feed-niche" value={niche ?? ''} onChange={(e) => load(e.target.value)}>
-            <option value="">{NICHE_LABEL['']}</option>
-            {niches.map((n) => <option key={n} value={n}>{NICHE_LABEL[n] || n}</option>)}
-          </select>
-          <ChevronDown size={14} aria-hidden="true" />
-        </NicheSelect>
         {targets ? (
           <TargetCount aria-label={`${targets} brands on your targets`}>
             <Check size={13} strokeWidth={3} aria-hidden="true" />{targets}
@@ -310,7 +293,7 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
           <Slide $plain>
             <Center>
               <span>{error}</span>
-              <GhostBtn type="button" onClick={() => load(niche)}>Try again</GhostBtn>
+              <GhostBtn type="button" onClick={() => load()}>Try again</GhostBtn>
             </Center>
           </Slide>
         ) : null}
@@ -392,33 +375,6 @@ const ModeSwitch = styled.div`
   button:focus-visible { outline: 2px solid #7ce0b8; outline-offset: 2px; }
 `;
 
-const NicheSelect = styled.div`
-  position: relative;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  border-radius: 999px;
-  background: rgba(15, 17, 21, 0.55);
-  backdrop-filter: blur(8px);
-  color: #fff;
-  select {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    color: #fff;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 10px 28px 10px 12px;
-    max-width: 112px;
-    width: 100%;
-    text-overflow: ellipsis;
-    min-height: 36px;
-    cursor: pointer;
-  }
-  select option { color: ${t.ink}; }
-  svg { position: absolute; right: 11px; pointer-events: none; }
-`;
 
 const TargetCount = styled.span`
   margin-left: auto;
