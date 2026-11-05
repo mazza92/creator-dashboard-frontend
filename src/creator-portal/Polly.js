@@ -2614,9 +2614,9 @@ export default function Polly() {
                         <BrandCard key={brand.id}>
                           <Logo
                             as={brand.slug ? 'a' : 'div'}
-                            href={brand.slug ? `/creator/dashboard/brand/${brand.slug}` : undefined}
+                            href={brand.slug ? `/creator/dashboard/pr-brands?brand=${encodeURIComponent(brand.slug)}` : undefined}
                             aria-label={brand.slug ? `See ${brand.name}` : undefined}
-                            onClick={brand.slug ? (e) => { e.preventDefault(); navigate(`/creator/dashboard/brand/${brand.slug}`); } : undefined}
+                            onClick={brand.slug ? (e) => { e.preventDefault(); navigate(`/creator/dashboard/pr-brands?brand=${encodeURIComponent(brand.slug)}`); } : undefined}
                           >
                             <BrandLogoMark brand={brand} />
                           </Logo>
@@ -2624,8 +2624,8 @@ export default function Polly() {
                             {brand.slug ? (
                               <a
                                 className="name name-link"
-                                href={`/creator/dashboard/brand/${brand.slug}`}
-                                onClick={(e) => { e.preventDefault(); navigate(`/creator/dashboard/brand/${brand.slug}`); }}
+                                href={`/creator/dashboard/pr-brands?brand=${encodeURIComponent(brand.slug)}`}
+                                onClick={(e) => { e.preventDefault(); navigate(`/creator/dashboard/pr-brands?brand=${encodeURIComponent(brand.slug)}`); }}
                               >
                                 {brand.name} <span aria-hidden="true">›</span>
                               </a>
