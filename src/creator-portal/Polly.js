@@ -14,6 +14,7 @@ import PollyWelcome from './PollyWelcome';
 import { useTrialOffer } from '../utils/trialOffer';
 import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
+import PollyActivityCard from './PollyActivityCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
 import { ReplySignalChip } from '../components/ReplySignal';
@@ -470,6 +471,30 @@ function newId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+
+const LiveToast = styled.div`
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  top: 76px;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 24px));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #12141a;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 12px 30px rgba(18, 20, 26, 0.25);
+  @media (max-width: 768px) { top: 116px; }
+  > span:nth-child(2) { flex: 1; min-width: 0; }
+  b { font-weight: 700; }
+  button { background: none; border: 0; color: #c9ccd3; font-size: 20px; line-height: 1; min-width: 32px; min-height: 32px; cursor: pointer; }
+`;
 
 const Shell = styled.div`
   display: flex;
@@ -1667,6 +1692,31 @@ export default function Polly() {
 
   const [sendingBatch, setSendingBatch] = useState(false);
 
+  // Live proof while Polly is open: a brand opening the creator's media kit (or a logged reply) pops up here.
+  // In-app only, no email. Checks every 45s while the tab is visible.
+  const [liveToast, setLiveToast] = useState(null);
+  useEffect(() => {
+    if (!ready || !creatorId) return undefined;
+    let since = new Date().toISOString();
+    let stopped = false;
+    let hideTimer = null;
+    const check = async () => {
+      if (stopped || document.visibilityState !== 'visible') return;
+      try {
+        const { data } = await apiClient.get('/api/polly/activity/live', { params: { since } });
+        if (data?.now) since = data.now;
+        const ev = (data?.events || [])[0];
+        if (ev && !stopped) {
+          setLiveToast(ev);
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => setLiveToast(null), 8000);
+        }
+      } catch (_) { /* quiet: it's a bonus, never an error */ }
+    };
+    const id = setInterval(check, 45000);
+    return () => { stopped = true; clearInterval(id); clearTimeout(hideTimer); };
+  }, [ready, creatorId]);
+
   const connectGmailForBatch = useCallback(async () => {
     try {
       sessionStorage.setItem(BATCH_AFTER_CONNECT_KEY, '1');
@@ -1699,14 +1749,18 @@ export default function Polly() {
       reply = { message: data.message || data.error || "The send didn't go through. Try again." };
     }
     const results = Array.isArray(reply.results) ? reply.results : [];
-    const byBrand = new Map(results.map((r) => [String(r.brand_id), r.status]));
+    const byBrand = new Map(results.map((r) => [String(r.brand_id), r]));
     const current = messagesRef.current;
     let batchIdx = -1;
     current.forEach((m, i) => { if (m.pitch_batch?.items?.length) batchIdx = i; });
     const patched = current.map((m, i) => {
       if (i !== batchIdx || !byBrand.size) return m;
       const items = m.pitch_batch.items.map((item) => (
-        byBrand.has(String(item.brand_id)) ? { ...item, status: byBrand.get(String(item.brand_id)) } : item
+        byBrand.has(String(item.brand_id)) ? (() => {
+          const r = byBrand.get(String(item.brand_id));
+          return { ...item, status: r.status, sent_at: r.sent_at || item.sent_at, to: r.to || item.to,
+            gmail_url: r.gmail_url || item.gmail_url };
+        })() : item
       ));
       return { ...m, pitch_batch: { ...m.pitch_batch, items, status: reply.sent ? 'sent' : m.pitch_batch.status } };
     });
@@ -2258,6 +2312,13 @@ export default function Polly() {
 
   return (
     <Shell>
+      {liveToast ? (
+        <LiveToast role="status" aria-live="polite">
+          <span aria-hidden="true">{liveToast.type === 'reply' ? '🎉' : '👀'}</span>
+          <span><b>{liveToast.brand_name}</b> {liveToast.type === 'reply' ? 'replied to your pitch' : 'just opened your media kit'}</span>
+          <button type="button" aria-label="Dismiss" onClick={() => setLiveToast(null)}>×</button>
+        </LiveToast>
+      ) : null}
       <Thread ref={threadRef}>
         {welcomeMode ? (
           <PollyWelcome
@@ -2516,6 +2577,9 @@ export default function Polly() {
                         </PitchHint>
                       ) : null}
                     </PitchCard>
+                  )}
+                  {msg.activity?.items?.length > 0 && (
+                    <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
                   )}
                   {msg.pitch_batch?.items?.length > 0 && (
                     <PitchBatchCard
