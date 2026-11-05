@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Check, ExternalLink } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
+import { openInGmail } from './openInGmail';
 
 // The moment the pitches go out: proof (each email, a link to it in their Gmail), what Polly does next with
 // real dates, the one thing to know when a brand answers, and (free) one offer to keep going.
@@ -36,7 +37,7 @@ export default function PollySentCard({ summary, onChip, disabled }) {
               {s.to ? <span>{s.to}</span> : null}
             </div>
             {s.gmail_url ? (
-              <a href={s.gmail_url} target="_blank" rel="noopener noreferrer">
+              <a href={s.gmail_url} target="_blank" rel="noopener noreferrer" onClick={(e) => openInGmail(e, s.gmail_url)}>
                 View <ExternalLink size={12} aria-hidden="true" />
               </a>
             ) : null}
@@ -63,6 +64,13 @@ export default function PollySentCard({ summary, onChip, disabled }) {
             </button>
           ) : null}
         </Tip>
+      ) : null}
+
+      {!summary.pro_offer && summary.credits_left > 0 ? (
+        <More type="button" disabled={disabled}
+          onClick={() => onChip && onChip({ id: 'more_brands', label: 'Find my next brands', action: 'suggest_brands' })}>
+          Pitch {summary.credits_left} more brand{summary.credits_left > 1 ? 's' : ''} · {summary.credits_left} free left →
+        </More>
       ) : null}
 
       {summary.pro_offer ? (
@@ -188,6 +196,20 @@ const Tip = styled.div`
     color: ${t.ink};
     cursor: pointer;
   }
+`;
+
+const More = styled.button`
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: ${t.ink};
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  &:disabled { opacity: 0.6; }
 `;
 
 const Pro = styled.div`

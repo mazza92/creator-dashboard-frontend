@@ -1783,14 +1783,14 @@ export default function Polly() {
 
   const connectGmailForBatch = useCallback(async (pending = '1') => {
     try {
-      sessionStorage.setItem(BATCH_AFTER_CONNECT_KEY, typeof pending === 'string' ? pending : '1');
+      localStorage.setItem(BATCH_AFTER_CONNECT_KEY, typeof pending === 'string' ? pending : '1');
       const res = await apiClient.get('/api/polly/autopilot/gmail/connect');
       if (res.data?.url) {
         window.location.href = res.data.url;
         return;
       }
     } catch (_) { /* fall through */ }
-    sessionStorage.removeItem(BATCH_AFTER_CONNECT_KEY);
+    try { localStorage.removeItem(BATCH_AFTER_CONNECT_KEY); } catch (_) { /* ignore */ }
     setMessages((prev) => [...prev, {
       id: newId(), role: 'assistant', content: "Gmail didn't open. Try again in a moment.",
     }]);
@@ -2175,11 +2175,14 @@ export default function Polly() {
     const result = searchParams.get('autopilot');
     if (!result) return;
     let pendingSend = null;
-    try { pendingSend = sessionStorage.getItem(BATCH_AFTER_CONNECT_KEY); } catch (_) { /* ignore */ }
+    try {
+      // localStorage: Google may hand back to a new tab, where sessionStorage is empty.
+      pendingSend = localStorage.getItem(BATCH_AFTER_CONNECT_KEY) || sessionStorage.getItem(BATCH_AFTER_CONNECT_KEY);
+    } catch (_) { /* ignore */ }
     const batchPending = Boolean(pendingSend);
     if (batchPending) {
       if (!serverReady) return;
-      sessionStorage.removeItem(BATCH_AFTER_CONNECT_KEY);
+      try { localStorage.removeItem(BATCH_AFTER_CONNECT_KEY); sessionStorage.removeItem(BATCH_AFTER_CONNECT_KEY); } catch (_) { /* ignore */ }
       navigate('/creator/dashboard/for-you', { replace: true });
       if (result === 'gmail_connected') {
         autopilot.reload();
@@ -2191,6 +2194,18 @@ export default function Polly() {
         }]);
       }
       return;
+    }
+    if (result === 'gmail_connected') {
+      if (!serverReady) return;
+      if (!credits?.is_unlimited) {
+        // Free creators still on their free pitches: no Autopilot pitch here, just the confirmation.
+        navigate('/creator/dashboard/for-you', { replace: true });
+        setMessages((prev) => [...prev, {
+          id: newId(), role: 'assistant',
+          content: "Gmail connected ✓ Tap **Send for me** on any pitch and it goes out from your own address.",
+        }]);
+        return;
+      }
     }
     setAutopilotNotice(AUTOPILOT_NOTICES[result] || '');
     setAutopilotReturn(result);
@@ -2710,11 +2725,11 @@ export default function Polly() {
                             {copiedKey === `${msg.id}:email` ? 'Copied' : 'Copy email'}
                           </Ghost>
                         )}
-                        <Ghost type="button" onClick={() => copyPitch(msg.pitch, msg.id)}>
-                          {copiedKey === `${msg.id}:pitch`
-                            ? 'Copied'
-                            : (msg.pitch.is_reply ? 'Copy reply' : msg.pitch.is_followup ? 'Copy follow-up' : 'Copy pitch')}
-                        </Ghost>
+                        {msg.pitch.is_reply || msg.pitch.is_followup || !msg.pitch.email ? (
+                          <Ghost type="button" onClick={() => copyPitch(msg.pitch, msg.id)}>
+                            {copiedKey === `${msg.id}:pitch` ? 'Copied' : (msg.pitch.is_reply ? 'Copy reply' : msg.pitch.is_followup ? 'Copy follow-up' : 'Copy pitch')}
+                          </Ghost>
+                        ) : null}
                       </PitchActions>
                       {msg.pitch.is_reply ? null : mailTriedId === msg.id && loggedSentId === msg.id ? (
                         <PitchHint>

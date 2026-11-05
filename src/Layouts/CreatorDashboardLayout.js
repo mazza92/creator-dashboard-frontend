@@ -392,12 +392,14 @@ const Content = styled.main`
 
   ${p => p.$polly ? `
     height: calc(100vh - 64px);
+    height: calc(100dvh - 64px); /* visible viewport on phones */
     padding: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     @media (max-width: 840px) {
       height: calc(100vh - 108px);
+      height: calc(100dvh - 108px); /* visible viewport on phones */
     }
     > * {
       flex: 1;
@@ -407,9 +409,11 @@ const Content = styled.main`
     }
   ` : `
     min-height: calc(100vh - 64px);
+    min-height: calc(100dvh - 64px); /* visible viewport on phones */
     padding-top: 8px;
     @media (max-width: 840px) {
       min-height: calc(100vh - 108px);
+      min-height: calc(100dvh - 108px); /* visible viewport on phones */
       padding-top: 4px;
     }
   `}
