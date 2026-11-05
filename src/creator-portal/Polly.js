@@ -414,12 +414,32 @@ function contactLineFor(brand) {
 
 const LOCATION_GAP = /\[\s*CITY\s*,\s*COUNTRY\s*\]/i;
 
-function canSendForMe(pitch) {
-  return Boolean(pitch?.email && pitch?.brand_id && !pitch?.is_reply && !pitch?.is_followup && !pitch?.sent_via_gmail);
+// Pitches never wait on a city: older drafts may still carry the placeholder, shown (and sent) without it.
+function dropLocationPlaceholder(text) {
+  const ph = /\[\s*city\s*,\s*country\s*\]/i;
+  if (!text || !ph.test(text)) return text;
+  return text
+    .replace(/\s+(?:to|in|from|out of)\s+\[\s*city\s*,\s*country\s*\]/gi, '')
+    .replace(/\[\s*city\s*,\s*country\s*\]/gi, '')
+    .replace(/[ \t]+([.,!?;:])/g, '$1');
 }
 
-function pitchHasPlaceholder(pitch) {
-  return LOCATION_GAP.test(String(pitch?.body || '')) || Boolean(pitch?.needs_location);
+function cleanMailto(mailto) {
+  if (!mailto || !/city/i.test(decodeURIComponentSafe(mailto))) return mailto;
+  const [head, query = ''] = mailto.split('?');
+  const parts = query.split('&').map((kv) => {
+    const [k, v = ''] = kv.split('=');
+    return `${k}=${encodeURIComponent(dropLocationPlaceholder(decodeURIComponentSafe(v)))}`;
+  });
+  return `${head}?${parts.join('&')}`;
+}
+
+function decodeURIComponentSafe(v) {
+  try { return decodeURIComponent(v); } catch (_) { return v; }
+}
+
+function canSendForMe(pitch) {
+  return Boolean(pitch?.email && pitch?.brand_id && !pitch?.is_reply && !pitch?.is_followup && !pitch?.sent_via_gmail);
 }
 
 function patchLastPitch(msgs, update) {
@@ -962,6 +982,9 @@ const BrandMeta = styled.div`
   min-width: 0;
   overflow: hidden;
   .name { font-weight: 600; font-size: 14px; color: ${t.ink}; }
+  .name-link { display: inline-block; text-decoration: none; }
+  .name-link span { color: ${t.muted}; font-weight: 500; }
+  .name-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .cat { font-size: 12px; color: ${t.muted}; margin-top: 2px; }
   .why {
     font-size: 13px;
@@ -1109,17 +1132,6 @@ const PitchGap = styled.mark`
   font-weight: 700;
   padding: 0 3px;
   border-radius: 4px;
-`;
-
-const PitchCoach = styled.div`
-  background: #fff6e8;
-  border: 1px solid #f0d9b0;
-  color: #6b4a12;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.4;
-  margin: 0 0 12px;
 `;
 
 const PitchActions = styled.div`
@@ -1489,7 +1501,6 @@ export default function Polly() {
   const liveTextRef = useRef('');
   const [contactingId, setContactingId] = useState(null);
   const [applyingGigId, setApplyingGigId] = useState(null);
-  const [mailHold, setMailHold] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
   const [mailTriedId, setMailTriedId] = useState(null);
   const [loggedSentId, setLoggedSentId] = useState(null);
@@ -1965,7 +1976,6 @@ export default function Polly() {
       let thread = history;
       if (data.pitch_update) {
         thread = patchLastPitch(history, data.pitch_update);
-        setMailHold(false);
       }
       if (data.pitch_batch?.items?.length) {
         thread = thread.map((m) => (m.pitch_batch ? { ...m, pitch_batch: null } : m));
@@ -2371,11 +2381,8 @@ export default function Polly() {
   };
 
   const copyPitch = async (pitch, msgId) => {
-    if (pitchHasPlaceholder(pitch)) {
-      setMailHold(true);
-      return;
-    }
-    const text = pitch.subject ? `Subject: ${pitch.subject}\n\n${pitch.body || ''}` : (pitch.body || '');
+    const body = dropLocationPlaceholder(pitch.body || '');
+    const text = pitch.subject ? `Subject: ${pitch.subject}\n\n${body}` : body;
     try { await navigator.clipboard.writeText(text); } catch (_) { /* ignore */ }
     flashCopied(`${msgId}:pitch`);
     logPitchHandoff(pitch, 'copy_pitch');
@@ -2389,32 +2396,25 @@ export default function Polly() {
   };
 
   const openMail = (pitch, msgId) => {
-    if (pitchHasPlaceholder(pitch)) {
-      setMailHold(true);
-      return;
-    }
     if (!pitch?.mailto) return;
     setMailTriedId(msgId);
     logPitchHandoff(pitch, 'open_email').then((res) => {
       if (res?.logged_sent) setLoggedSentId(msgId);
     });
-    window.location.href = pitch.mailto;
+    window.location.href = cleanMailto(pitch.mailto);
   };
 
   // "Send them myself": the same hand-off as a single pitch, from the batch card.
   const openBatchMail = (item) => {
-    if (pitchHasPlaceholder(item)) {
-      setMailHold(true);
-      return Promise.resolve(false);
-    }
     if (!item?.mailto) return Promise.resolve(false);
     const logged = logPitchHandoff(item, 'open_email').then((res) => Boolean(res?.logged_sent));
-    window.location.href = item.mailto;
+    window.location.href = cleanMailto(item.mailto);
     return logged;
   };
 
   const copyBatchPitch = async (item) => {
-    const text = item?.subject ? `Subject: ${item.subject}\n\n${item.body || ''}` : (item?.body || '');
+    const body = dropLocationPlaceholder(item?.body || '');
+    const text = item?.subject ? `Subject: ${item.subject}\n\n${body}` : body;
     try { await navigator.clipboard.writeText(text); } catch (_) { /* ignore */ }
     logPitchHandoff(item, 'copy_pitch');
   };
@@ -2612,11 +2612,24 @@ export default function Polly() {
                     <BrandList style={{ marginTop: 12 }}>
                       {msg.brands.map((brand) => (
                         <BrandCard key={brand.id}>
-                          <Logo>
+                          <Logo
+                            as={brand.slug ? 'a' : 'div'}
+                            href={brand.slug ? `/creator/dashboard/brand/${brand.slug}` : undefined}
+                            aria-label={brand.slug ? `See ${brand.name}` : undefined}
+                            onClick={brand.slug ? (e) => { e.preventDefault(); navigate(`/creator/dashboard/brand/${brand.slug}`); } : undefined}
+                          >
                             <BrandLogoMark brand={brand} />
                           </Logo>
                           <BrandMeta>
-                            <div className="name">{brand.name}</div>
+                            {brand.slug ? (
+                              <a
+                                className="name name-link"
+                                href={`/creator/dashboard/brand/${brand.slug}`}
+                                onClick={(e) => { e.preventDefault(); navigate(`/creator/dashboard/brand/${brand.slug}`); }}
+                              >
+                                {brand.name} <span aria-hidden="true">›</span>
+                              </a>
+                            ) : <div className="name">{brand.name}</div>}
                             <div className="cat">
                               {[brand.category, brand.match_score ? `${brand.match_score}% match` : null,
                                 brand.ships_to_you ? 'Ships to you' : brand.shipping_note || null]
@@ -2688,13 +2701,7 @@ export default function Polly() {
                       {msg.pitch.prefs_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.prefs_line}</PitchPrefsLine> : null}
                       {msg.pitch.stats_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.stats_line}</PitchPrefsLine> : null}
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>
-                      {pitchHasPlaceholder(msg.pitch) ? (
-                        <PitchCoach>
-                          Don&apos;t send this yet. Tell Polly your city and country
-                          {mailHold ? ' — brands clock leftover [CITY, COUNTRY] instantly.' : ' so the shipping line looks professional.'}
-                        </PitchCoach>
-                      ) : null}
-                      <PitchBodyText body={msg.pitch.body} />
+                      <PitchBodyText body={dropLocationPlaceholder(msg.pitch.body)} />
                       {msg.pitch.sent_via_gmail ? (
                         <PitchSentNote>✓ Sent from your Gmail. I follow up on day 4 and day 10 if they&apos;re quiet.</PitchSentNote>
                       ) : null}
@@ -2702,7 +2709,7 @@ export default function Polly() {
                         {canSendForMe(msg.pitch) && (
                           <SendForMe
                             type="button"
-                            disabled={busy || Boolean(sendingPitchId) || pitchHasPlaceholder(msg.pitch)}
+                            disabled={busy || Boolean(sendingPitchId)}
                             onClick={() => sendSingle(msg.pitch.brand_id)}
                           >
                             {String(sendingPitchId) === String(msg.pitch.brand_id) ? 'Sending…'

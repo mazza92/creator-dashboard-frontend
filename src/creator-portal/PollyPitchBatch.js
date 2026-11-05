@@ -109,7 +109,7 @@ export default function PitchBatchCard({
               {open === idx ? (
                 <>
                   {item.email ? <To>To: {item.email}</To> : null}
-                  <Body>{item.body}</Body>
+                  <Body>{String(item.body || '').replace(/\s+(?:to|in|from|out of)\s+\[\s*city\s*,\s*country\s*\]/gi, '').replace(/\[\s*city\s*,\s*country\s*\]/gi, '')}</Body>
                 </>
               ) : null}
               {itemNote(item) ? <Note>{itemNote(item)}</Note> : null}
