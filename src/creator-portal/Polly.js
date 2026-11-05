@@ -65,20 +65,20 @@ const AUTOPILOT_STARTER = {
   action: 'autopilot',
 };
 
-// Same chip the server leads every row with (polly_discovery.RADAR_CHIP), so it shows before bootstrap returns.
-const RADAR_STARTER = {
-  id: 'gifting_radar',
-  label: '🔎 Find brands gifting on TikTok',
-  hint: 'Real posts from the last 60 days · beta',
-  action: 'gifting_radar',
-  skip_discovery: true,
+// Same chip the server leads every row with (polly_discovery.TARGETS_CHIP), so it shows before bootstrap returns.
+// The brands the creator saved with + Target in the Brands feed.
+const TARGETS_STARTER = {
+  id: 'pitch_targets',
+  label: '🎯 Pitch my target brands',
+  hint: 'The brands you saved in Brands',
+  action: 'pitch_targets',
 };
 
 // Same deep answer brands get ("Hooks creators reuse in…"), read from creators this creator's size. 1 free, 4/mo on Pro.
 const HOOKS_STARTER = { id: 'creator_hooks', label: '🎣 Hooks that work in my niche', action: 'creator_hooks' };
 
 const STARTERS = [
-  RADAR_STARTER,
+  TARGETS_STARTER,
   { id: 'line_up', label: 'Pitch 3 gifted brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true, deal: 'gifted' },
   { id: 'gifted_lists', label: 'Find gifted brands to pitch', hint: STARTER_HINTS.gifted_lists, action: 'suggest_brands', deal: 'gifted', skip_discovery: true },
   { id: 'name_a_brand', label: 'Write a pitch for a brand I name', hint: STARTER_HINTS.name_a_brand, action: 'ask_brand' },
@@ -94,6 +94,7 @@ const DEEP_LINK_CHIPS = {
   pr_not_yet: { label: 'Not yet', action: 'task_act' },
   move_on: { label: 'Move on to next brand', action: 'task_act' },
   draft_followup: { label: 'Draft a follow-up', action: 'generate_pitch', is_followup: true },
+  pitch_targets: { label: 'Pitch my target brands', action: 'pitch_targets' },
   help_reply: { label: 'Help me reply', action: 'chat' },
   paid_reply: { label: 'Write my reply', action: 'paid_reply' },
   ad_usage: { label: 'Ask them to run it as an ad', action: 'ad_usage' },
@@ -236,8 +237,8 @@ function normalizeStarters(list) {
     }
     return next;
   }).filter((s) => s.id !== 'more_gigs');
-  // Radar leads every row exactly once, like with_radar_chip on the server.
-  return [RADAR_STARTER, ...out.filter((s) => s.action !== 'gifting_radar')];
+  // Targets lead every row exactly once, like with_radar_chip on the server. The TikTok radar chip is retired.
+  return [TARGETS_STARTER, ...out.filter((s) => s.action !== 'gifting_radar' && s.action !== 'pitch_targets')];
 }
 
 function isUnlockChip(s) {
@@ -2434,7 +2435,7 @@ export default function Polly() {
     || (!autopilot.state && credits?.is_unlimited ? { label: '⚡ Autopilot', attention: false } : null);
   const closeAutopilot = () => { setAutopilotOpen(false); setAutopilotNotice(''); };
   // The composer row is fixed: Radar, Autopilot, gifted brands. Everything else is a chip on a message.
-  const radarStarter = (starters || []).find((s) => s.action === 'gifting_radar') || RADAR_STARTER;
+  const targetsStarter = (starters || []).find((s) => s.action === 'pitch_targets') || TARGETS_STARTER;
   const giftedStarter = STARTERS.find((s) => s.id === 'gifted_lists');
 
   return (
@@ -2812,8 +2813,8 @@ export default function Polly() {
       <ComposerWrap>
         {messages.length > 0 && !draft.trim() && (
           <ChipRow $hidden={composerFocused}>
-            <Chip type="button" onClick={() => sendStarter(radarStarter)} disabled={busy || loadingMore}>
-              {radarStarter.label}
+            <Chip type="button" onClick={() => sendStarter(targetsStarter)} disabled={busy || loadingMore}>
+              {targetsStarter.label}
             </Chip>
             <Chip type="button" onClick={() => sendStarter(HOOKS_STARTER)} disabled={busy || loadingMore || hooksBusy}>
               {hooksBusy ? 'Scanning your niche…' : HOOKS_STARTER.label}

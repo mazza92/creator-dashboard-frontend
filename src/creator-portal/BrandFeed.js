@@ -241,6 +241,10 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
     navigate(`/creator/dashboard/for-you?${params.toString()}`);
   }, [navigate]);
 
+  const pitchTargets = useCallback(() => {
+    navigate('/creator/dashboard/for-you?chip=pitch_targets');
+  }, [navigate]);
+
   const target = useCallback(async (brand) => {
     const on = !brand.targeted;
     setBusyId(brand.id);
@@ -251,7 +255,7 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
       const n = Number(data?.targets) || 0;
       setTargets(n);
       setToast(on
-        ? { text: `${brand.name} added to your targets · ${n}`, sub: 'Polly pitches your targets first', undo: brand }
+        ? { text: `${brand.name} added to your targets · ${n}`, sub: 'Tap Pitch my targets when you\'re ready', undo: brand }
         : { text: `${brand.name} removed from your targets` });
     } catch (_) {
       mark(!on);
@@ -281,8 +285,8 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
           <button type="button" role="tab" aria-selected="false" onClick={onDirectory}>Directory</button>
         </ModeSwitch>
         {targets ? (
-          <TargetCount aria-label={`${targets} brands on your targets`}>
-            <Check size={13} strokeWidth={3} aria-hidden="true" />{targets}
+          <TargetCount type="button" onClick={pitchTargets}>
+            Pitch my {targets} target{targets > 1 ? 's' : ''} →
           </TargetCount>
         ) : null}
       </TopBar>
@@ -376,7 +380,11 @@ const ModeSwitch = styled.div`
 `;
 
 
-const TargetCount = styled.span`
+const TargetCount = styled.button`
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+  min-height: 36px;
   margin-left: auto;
   flex-shrink: 0;
   white-space: nowrap;
