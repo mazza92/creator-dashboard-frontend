@@ -79,7 +79,7 @@ function scrollPageTop() {
 }
 
 const TRACK_STEPS = [
-  { label: 'Review', emoji: '👀' },
+  { label: 'Applied', emoji: '✅' },
   { label: 'Ships', emoji: '📦' },
   { label: 'Content', emoji: '📸' },
 ];
@@ -980,6 +980,13 @@ export default function BrandPRHome() {
         setQuota(nextQuota);
         emitCredits(nextQuota);
         showPaywall('submit_402', applySourceRef.current);
+        return;
+      }
+      if (status === 409 && payload.needs_pitch) {
+        // The brand doesn't run a list with us, so nobody would read a request: pitch them instead.
+        setPitchMode(true);
+        setCurrent((prev) => (prev ? { ...prev, rosterLive: false } : prev));
+        setSubmitError('');
         return;
       }
       if (status === 409) {

@@ -407,7 +407,7 @@ export default async function BrandPage({ params }) {
   const responsesReceived = resolvedStats.totalResponses;
   const hasDirectLink = Boolean(brand?.gated?.hasDirectLink);
   const hasEmail = Boolean(brand?.gated?.hasEmailContact);
-  const isAcceptingPR = brand.acceptingPr ?? brand.is_accepting_pr ?? brand.accepting_pr ?? true;
+  const isAcceptingPR = Boolean(brand.acceptingPr);
   const collabType = collabLabel(brand.collaborationType || brand.collab_type || brand.collaboration_type);
   const applicationMethod = normalizeApplicationMethod(brand.applicationMethod);
   const contentTip = toneTip(brand.tone);
@@ -1218,10 +1218,12 @@ export default async function BrandPage({ params }) {
               </div>
             </div>
             <div className="bp-header-right">
-              <div className={`bp-status-pill ${isAcceptingPR ? 'bp-status-open' : 'bp-status-closed'}`}>
-                <span className="bp-status-dot" style={{ animation: isAcceptingPR ? undefined : 'none' }}></span>
-                {isAcceptingPR ? 'Accepting PR' : 'Not Accepting PR'}
-              </div>
+              {isAcceptingPR ? (
+                <div className="bp-status-pill bp-status-open">
+                  <span className="bp-status-dot"></span>
+                  Accepting PR
+                </div>
+              ) : null}
             </div>
           </header>
 
@@ -1548,7 +1550,7 @@ export default async function BrandPage({ params }) {
                           <polyline points="20 6 9 17 4 12"/>
                         </svg>
                       </div>
-                      Actively Reviewing Applications
+                      Seen gifting creators recently
                     </div>
                   )}
                   <div className="bp-trust-row">

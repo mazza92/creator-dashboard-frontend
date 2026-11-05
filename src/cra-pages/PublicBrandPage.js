@@ -66,7 +66,7 @@ const PublicBrandPage = () => {
         ...data,
         brand_name: data.name || data.brand_name,
         domain: data.domain || extractDomain(data.website),
-        is_accepting_pr: data.accepting_pr ?? data.is_accepting_pr ?? true,
+        is_accepting_pr: Boolean(data.acceptingPr),
         ...(() => {
           const s = resolveBrandStats({
             slug: data.slug,
@@ -328,10 +328,12 @@ const PublicBrandPage = () => {
               </BrandMeta>
             </BrandHeaderInfo>
             <BrandHeaderRight>
-              <PRStatusPill $open={brand.is_accepting_pr}>
-                <StatusDot $open={brand.is_accepting_pr} />
-                {brand.is_accepting_pr ? 'Accepting PR' : 'Not Accepting PR'}
-              </PRStatusPill>
+              {brand.is_accepting_pr ? (
+                <PRStatusPill $open>
+                  <StatusDot $open />
+                  Accepting PR
+                </PRStatusPill>
+              ) : null}
             </BrandHeaderRight>
           </BrandHeader>
 
@@ -546,7 +548,7 @@ const PublicBrandPage = () => {
                     <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Verified Brand</TrustRow>
                   )}
                   {brand.is_accepting_pr && (
-                    <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Actively Reviewing Applications</TrustRow>
+                    <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Seen gifting creators recently</TrustRow>
                   )}
                   {brand.is_free_to_apply && (
                     <TrustRow><TrustCheck><Check size={11} /></TrustCheck> Free to Apply</TrustRow>
