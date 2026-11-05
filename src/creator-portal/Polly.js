@@ -1971,9 +1971,9 @@ export default function Polly() {
     if (pitchFacts.facts) pitchFacts.setFacts({ ...pitchFacts.facts, niches, needs_confirm: false });
     if (!autoAction && !autoFiredRef.current && !messagesRef.current.length) {
       autoFiredRef.current = true;
-      // One tap from the welcome card: Polly finds the best matches and writes the pitches in the same turn.
+      // Brands first, in under a second. Pitches (and credits) only when the creator taps "Write all 3 pitches".
       send('', { action: 'suggest_brands', starter: 'first_matches', chip_id: 'first_matches', deal: 'gifted',
-        skip_discovery: true, then_batch: true });
+        skip_discovery: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAction, pitchFacts.facts, send]);

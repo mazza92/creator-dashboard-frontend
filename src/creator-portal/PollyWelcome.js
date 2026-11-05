@@ -77,9 +77,9 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDa
         })}
       </Chips>
       <Go type="button" onClick={go} disabled={saving || niches.length === 0}>
-        {saving ? 'Finding your brands…' : 'Find brands & write my pitches'} <ArrowRight size={18} />
+        {saving ? 'Finding your brands…' : 'Find my brands'} <ArrowRight size={18} />
       </Go>
-      <Fine>Nothing is sent until you say so. You can change your niches any time in Settings.</Fine>
+      <Fine>You can change this any time in Settings.</Fine>
     </Card>
   );
 }
