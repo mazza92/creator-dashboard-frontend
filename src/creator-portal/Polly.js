@@ -142,6 +142,8 @@ const BATCH_AFTER_CONNECT_KEY = 'pollySendBatchAfterConnect';
 
 // Past this, a turn is treated as stuck: the skeleton gives way to a retry chip.
 const TURN_TIMEOUT_MS = 40000;
+// The first turn finds brands and writes every pitch in one go: give it longer before offering a retry.
+const FIRST_BATCH_TIMEOUT_MS = 90000;
 
 const INTENT_KIND = {
   suggest_brands: 'brands',
@@ -1791,7 +1793,8 @@ export default function Polly() {
     setBusy(true);
     turnInFlightRef.current = true;
     const abort = typeof AbortController === 'function' ? new AbortController() : null;
-    const abortTimer = abort ? setTimeout(() => abort.abort(), TURN_TIMEOUT_MS) : null;
+    const turnTimeout = extras?.then_batch ? FIRST_BATCH_TIMEOUT_MS : TURN_TIMEOUT_MS;
+    const abortTimer = abort ? setTimeout(() => abort.abort(), turnTimeout) : null;
     try {
       const payload = {
         messages: history.map(({ role, content: c, brands, gigs, pitch, id }) => ({
@@ -1824,7 +1827,7 @@ export default function Polly() {
       }
       if (!result) {
         const res = await apiClient.post('/api/polly/chat', payload, {
-          timeout: TURN_TIMEOUT_MS,
+          timeout: turnTimeout,
           signal: abort?.signal,
         });
         result = { status: res.status || 200, data: res.data || {} };
