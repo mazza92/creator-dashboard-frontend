@@ -15,7 +15,7 @@ test('one question, prefilled niches, saves and hands over', async () => {
   expect(screen.getByRole('button', { name: /Skincare/ })).toHaveAttribute('aria-pressed', 'true');
   fireEvent.click(screen.getByRole('button', { name: 'Pet' }));
   expect(screen.getByRole('button', { name: 'Fashion' })).toBeDisabled(); // max 3
-  fireEvent.click(screen.getByRole('button', { name: /Find brands & write my pitches/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Find my brands/ }));
   await waitFor(() => expect(onDone).toHaveBeenCalledWith(['skincare', 'wellness', 'pet']));
   expect(apiClient.post).toHaveBeenCalledWith('/api/polly/pitch-facts', { niches: ['skincare', 'wellness', 'pet'], confirm: true });
 });
@@ -24,7 +24,7 @@ test('still hands over when saving fails', async () => {
   apiClient.post.mockImplementationOnce(() => Promise.reject(new Error('down')));
   const onDone = jest.fn();
   render(<PollyWelcome facts={facts} onDone={onDone} />);
-  fireEvent.click(screen.getByRole('button', { name: /Find brands & write my pitches/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Find my brands/ }));
   await waitFor(() => expect(onDone).toHaveBeenCalled());
 });
 

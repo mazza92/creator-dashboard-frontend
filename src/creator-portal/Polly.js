@@ -667,7 +667,9 @@ const UserBubble = styled.div`
 
 const AssistantRow = styled.div`
   display: grid;
-  grid-template-columns: 32px 1fr;
+  /* minmax(0, 1fr): a long link in a pitch must wrap, not widen the whole column past the screen */
+  grid-template-columns: 32px minmax(0, 1fr);
+  > * { min-width: 0; }
   gap: 12px;
   align-items: start;
 `;
@@ -1034,6 +1036,8 @@ const UnlockBtn = styled.button`
 
 const PitchBody = styled.pre`
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font-family: inherit;
   font-size: 13.5px;
   line-height: 1.5;
@@ -1971,9 +1975,9 @@ export default function Polly() {
     if (pitchFacts.facts) pitchFacts.setFacts({ ...pitchFacts.facts, niches, needs_confirm: false });
     if (!autoAction && !autoFiredRef.current && !messagesRef.current.length) {
       autoFiredRef.current = true;
-      // One tap from the welcome card: Polly finds the best matches and writes the pitches in the same turn.
+      // Brands first, in under a second. Pitches (and credits) only when the creator taps "Write all 3 pitches".
       send('', { action: 'suggest_brands', starter: 'first_matches', chip_id: 'first_matches', deal: 'gifted',
-        skip_discovery: true, then_batch: true });
+        skip_discovery: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAction, pitchFacts.facts, send]);
