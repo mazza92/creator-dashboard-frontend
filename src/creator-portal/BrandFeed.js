@@ -97,7 +97,7 @@ function Actions({ brand, busy, onPitch, onTarget }) {
       <TargetBtn type="button" $on={brand.targeted} disabled={busy} onClick={() => onTarget(brand)}
         aria-pressed={brand.targeted}>
         {brand.targeted ? <Check size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
-        {brand.targeted ? 'Targeted' : 'Target'}
+        {brand.targeted ? 'Saved' : 'Save'}
       </TargetBtn>
     </ActionRow>
   );
@@ -255,8 +255,8 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
       const n = Number(data?.targets) || 0;
       setTargets(n);
       setToast(on
-        ? { text: `${brand.name} added to your targets · ${n}`, sub: 'Tap Pitch my targets when you\'re ready', undo: brand }
-        : { text: `${brand.name} removed from your targets` });
+        ? { text: `${brand.name} saved · ${n}`, sub: 'Tap Pitch my saved brands when you\'re ready', undo: brand }
+        : { text: `${brand.name} removed from your saved brands` });
     } catch (_) {
       mark(!on);
       setToast({ text: 'Could not save that. Try again.' });
@@ -286,7 +286,7 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
         </ModeSwitch>
         {targets ? (
           <TargetCount type="button" onClick={pitchTargets}>
-            Pitch my {targets} target{targets > 1 ? 's' : ''} →
+            Pitch my {targets} saved →
           </TargetCount>
         ) : null}
       </TopBar>

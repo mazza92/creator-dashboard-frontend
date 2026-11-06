@@ -69,7 +69,7 @@ const AUTOPILOT_STARTER = {
 // The brands the creator saved with + Target in the Brands feed.
 const TARGETS_STARTER = {
   id: 'pitch_targets',
-  label: '🎯 Pitch my target brands',
+  label: 'Pitch my saved brands',
   hint: 'The brands you saved in Brands',
   action: 'pitch_targets',
 };
@@ -80,7 +80,7 @@ const HOOKS_STARTER = { id: 'creator_hooks', label: '🎣 Hooks that work in my 
 const STARTERS = [
   TARGETS_STARTER,
   { id: 'line_up', label: 'Pitch 3 gifted brands for me today', hint: STARTER_HINTS.line_up, action: 'suggest_brands', skip_discovery: true, deal: 'gifted' },
-  { id: 'gifted_lists', label: 'Find gifted brands to pitch', hint: STARTER_HINTS.gifted_lists, action: 'suggest_brands', deal: 'gifted', skip_discovery: true },
+  { id: 'gifted_lists', label: 'Find brands to contact', hint: STARTER_HINTS.gifted_lists, action: 'suggest_brands', deal: 'gifted', skip_discovery: true },
   { id: 'name_a_brand', label: 'Write a pitch for a brand I name', hint: STARTER_HINTS.name_a_brand, action: 'ask_brand' },
   { id: 'more_replies', label: 'Make my kit get more replies', hint: STARTER_HINTS.more_replies, action: 'coach_profile' },
   { id: 'paid_ugc', label: 'Show paid UGC I can apply to now', hint: STARTER_HINTS.paid_ugc, action: 'suggest_gigs', skip_discovery: true },
@@ -94,7 +94,7 @@ const DEEP_LINK_CHIPS = {
   pr_not_yet: { label: 'Not yet', action: 'task_act' },
   move_on: { label: 'Move on to next brand', action: 'task_act' },
   draft_followup: { label: 'Draft a follow-up', action: 'generate_pitch', is_followup: true },
-  pitch_targets: { label: 'Pitch my target brands', action: 'pitch_targets' },
+  pitch_targets: { label: 'Pitch my saved brands', action: 'pitch_targets' },
   help_reply: { label: 'Help me reply', action: 'chat' },
   paid_reply: { label: 'Write my reply', action: 'paid_reply' },
   ad_usage: { label: 'Ask them to run it as an ad', action: 'ad_usage' },
@@ -2560,9 +2560,9 @@ export default function Polly() {
                   {msg.radar ? (
                     <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} onSettled={settleRadar} />
                   ) : null}
-                  {msg.task_chips?.filter((c) => !(msg.brands?.length && c.action === 'pitch_batch')).length > 0 && (
+                  {msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
-                      {msg.task_chips.filter((c) => !(msg.brands?.length && c.action === 'pitch_batch')).map((s) => (
+                      {msg.task_chips.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).map((s) => (
                         <Chip
                           key={s.id || s.label}
                           type="button"
@@ -2652,6 +2652,16 @@ export default function Polly() {
                         </BrandCard>
                       ))}
                     </BrandList>
+                    {(() => {
+                      // An offer under a brand list goes after the cards, as the one big button.
+                      const unlock = (msg.task_chips || []).find((c) => isUnlockChip(c));
+                      if (!unlock || (msg.task_chips || []).some((c) => c.action === 'pitch_batch')) return null;
+                      return (
+                        <BatchCta>
+                          <button type="button" disabled={busy} onClick={() => sendStarter(unlock)}>{unlock.label} →</button>
+                        </BatchCta>
+                      );
+                    })()}
                     {(() => {
                       const batch = (msg.task_chips || []).find((c) => c.action === 'pitch_batch');
                       if (!batch) return null;
@@ -2813,11 +2823,11 @@ export default function Polly() {
       <ComposerWrap>
         {messages.length > 0 && !draft.trim() && (
           <ChipRow $hidden={composerFocused}>
+            <Chip type="button" onClick={() => sendStarter(giftedStarter)} disabled={busy || loadingMore}>
+              {giftedStarter.label}
+            </Chip>
             <Chip type="button" onClick={() => sendStarter(targetsStarter)} disabled={busy || loadingMore}>
               {targetsStarter.label}
-            </Chip>
-            <Chip type="button" onClick={() => sendStarter(HOOKS_STARTER)} disabled={busy || loadingMore || hooksBusy}>
-              {hooksBusy ? 'Scanning your niche…' : HOOKS_STARTER.label}
             </Chip>
             {apChip ? (
               <Chip
@@ -2829,9 +2839,6 @@ export default function Polly() {
                 {apChip.label}
               </Chip>
             ) : null}
-            <Chip type="button" onClick={() => sendStarter(giftedStarter)} disabled={busy || loadingMore}>
-              {giftedStarter.label}
-            </Chip>
           </ChipRow>
         )}
         <Composer onSubmit={onSubmit}>
