@@ -20,6 +20,10 @@ export default function Waitlist() {
       try {
         const { data } = await api.get('/api/user/approval-status');
         setStatus(data);
+        // Waitlist emails link here with ?skip=1: open the skip-the-line checkout straight away.
+        if (data.can_skip_with_pro && new URLSearchParams(window.location.search).get('skip') === '1') {
+          setShowUpgrade(true);
+        }
 
         // Track waitlist view on first load only
         if (!hasTrackedView) {
