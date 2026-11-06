@@ -513,11 +513,25 @@ const BrandAdmin = () => {
 
   const bulkAiEnrich = async () => {
     const ids = selectedRows.map((r) => r.id);
-    const brandsWithoutWebsite = selectedRows.filter((r) => !r.website);
-    if (brandsWithoutWebsite.length > 0) {
-      message.warning(`${brandsWithoutWebsite.length} brand(s) have no website and will be skipped`);
-    }
     await runBatchedEnrich(ids, { mode: 'full', label: 'selected brands' });
+  };
+
+  // Meta ads + TikTok radar brands whose category was never checked against their real site/products
+  const fixScrapedCategories = async () => {
+    const key = 'bulk-enrich';
+    message.loading({ content: 'Finding scraped brands to check…', key, duration: 0 });
+    try {
+      const { data } = await api.get('/api/admin/brands/needs-profile?limit=5000', getApiConfig());
+      if (!data?.success) throw new Error(data?.error || 'Could not load brands');
+      const ids = data.ids || [];
+      if (!ids.length) {
+        message.success({ content: 'Every Meta ads and radar brand has been checked', key });
+        return;
+      }
+      await runBatchedEnrich(ids, { mode: 'full', label: 'scraped brands' });
+    } catch (error) {
+      message.error({ content: error.response?.data?.error || error.message || 'Failed to start', key });
+    }
   };
 
   const fillMissingSocial = async () => {
@@ -714,11 +728,6 @@ const BrandAdmin = () => {
 
   // AI Enrich brand data (hero_product, target_audience, tone, etc.)
   const aiEnrichBrand = async (brand, refreshRow) => {
-    if (!brand.website) {
-      message.warning('No website URL to enrich from');
-      return;
-    }
-
     try {
       message.loading({ content: 'AI enriching brand data...', key: 'enrich', duration: 0 });
       const { data } = await api.post(
@@ -747,12 +756,14 @@ const BrandAdmin = () => {
           response_rate: data.data.response_rate || brand.response_rate,
           avg_response_time_days: data.data.avg_response_time_days || brand.avg_response_time_days
         });
-        if (data.data.description && !brand.description) {
-          brand.description = data.data.description;
-        }
+        if (data.data.description) brand.description = data.data.description;
+        const before = brand.category;
+        if (data.data.category) brand.category = data.data.category;
         refreshRow();
-        const fieldsEnriched = Object.keys(data.data).filter(k => data.data[k]).length;
-        message.success({ content: `Enriched ${fieldsEnriched} fields: ${data.data.hero_product || 'done'}`, key: 'enrich' });
+        const catNote = data.data.category && data.data.category !== before
+          ? `Category ${before || 'none'} → ${data.data.category}`
+          : `Category ${data.data.category || before || 'unchanged'} (${data.data.category_confidence || '?'})`;
+        message.success({ content: `${catNote} · ${data.data.hero_product || 'profile updated'}`, key: 'enrich', duration: 5 });
       } else {
         message.warning({ content: data.error || 'Enrichment failed', key: 'enrich' });
       }
@@ -808,7 +819,7 @@ const BrandAdmin = () => {
 
     return (
       <Space size="small">
-        <Tooltip title="AI Enrich (hero product, audience, tone)">
+        <Tooltip title="AI Enrich (category, hero product, audience, tone)">
           <Button
             size="small"
             type={params.data.enriched_at ? 'default' : 'primary'}
@@ -1553,6 +1564,15 @@ const BrandAdmin = () => {
           >
             Fill Missing Social
           </Button>
+          <Tooltip title="AI reads the site, products and TikTok posts of Meta ads + radar brands and fixes category and details">
+            <Button
+              loading={bulkEnriching}
+              disabled={bulkEnriching}
+              onClick={fixScrapedCategories}
+            >
+              Fix Scraped Categories
+            </Button>
+          </Tooltip>
           <Button icon={<ReloadOutlined />} onClick={fetchBrands}>
             Refresh
           </Button>
