@@ -40,6 +40,12 @@ const REGION_OPTIONS = ['USA', 'UK', 'Canada', 'Australia', 'Europe', 'Worldwide
 // Bulk Edit config — every field here can be set on many selected brands at
 // once (mirrors /api/admin/brands/bulk-update's allowed_fields on the backend)
 // ============================================================================
+// Evidence-based AI enrich verdict: Ready = category confirmed (high/medium), Review = low confidence.
+const aiCheckStatus = (b) => {
+  if (!b?.ai_checked_at) return 'Not checked';
+  return ['high', 'medium'].includes(b.ai_confidence) ? 'Ready' : 'Review';
+};
+
 const BULK_EDIT_FIELDS = [
   { group: 'Flags', key: 'micro_friendly', label: 'Micro-friendly', type: 'boolean' },
   { group: 'Flags', key: 'accepting_pr', label: 'Accepting PR', type: 'boolean' },
@@ -476,6 +482,9 @@ const BrandAdmin = () => {
         if (!data?.success) {
           throw new Error(data?.error || 'Bulk enrichment failed');
         }
+        if (data.ai_error) {
+          throw new Error(data.ai_error);
+        }
 
         enrichedTotal += Number(data.enriched) || 0;
         processedTotal += Number(data.processed) || 0;
@@ -514,6 +523,22 @@ const BrandAdmin = () => {
   const bulkAiEnrich = async () => {
     const ids = selectedRows.map((r) => r.id);
     await runBatchedEnrich(ids, { mode: 'full', label: 'selected brands' });
+  };
+
+  // Select drafts the AI enrich confirmed, ready for Bulk Edit -> Status: published
+  const selectAiReadyDrafts = () => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    let n = 0;
+    api.deselectAll();
+    api.forEachNode((node) => {
+      if (node.data?.status === 'draft' && aiCheckStatus(node.data) === 'Ready') {
+        node.setSelected(true);
+        n += 1;
+      }
+    });
+    if (n) message.success(`Selected ${n} AI-ready drafts. Use Bulk Edit → Status → published to publish them.`);
+    else message.info('No AI-ready drafts yet. Run "Fix Scraped Categories" first.');
   };
 
   // Meta ads + TikTok radar brands whose category was never checked against their real site/products
@@ -895,6 +920,19 @@ const BrandAdmin = () => {
       width: 130,
       cellEditor: 'agSelectCellEditor',
       cellEditorParams: { values: CATEGORY_OPTION_VALUES }
+    },
+    {
+      colId: 'ai_check',
+      headerName: 'AI check',
+      width: 120,
+      editable: false,
+      filter: true,
+      valueGetter: (params) => aiCheckStatus(params.data),
+      tooltipValueGetter: (params) => params.data?.ai_reason || '',
+      cellRenderer: (params) => {
+        const color = { Ready: 'green', Review: 'orange', 'Not checked': 'default' }[params.value];
+        return <Tag color={color} style={{ fontSize: 10 }}>{params.value === 'Ready' ? '✓ Ready' : params.value}</Tag>;
+      }
     },
     {
       field: 'website',
@@ -1572,6 +1610,9 @@ const BrandAdmin = () => {
             >
               Fix Scraped Categories
             </Button>
+          </Tooltip>
+          <Tooltip title="Select drafts whose category and details the AI confirmed">
+            <Button onClick={selectAiReadyDrafts}>Select AI-ready drafts</Button>
           </Tooltip>
           <Button icon={<ReloadOutlined />} onClick={fetchBrands}>
             Refresh
