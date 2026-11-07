@@ -4,6 +4,36 @@ const KEY = 'nc_first_touch';
 const SENT_KEY = 'nc_first_touch_sent';
 const PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_id', 'utm_content', 'utm_term', 'ttclid', 'gclid'];
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+// newcollab.co (marketing, Next) and app.newcollab.co (signup, CRA) don't share localStorage:
+// a cookie on .newcollab.co carries the first touch from the homepage/ads landing to signup.
+const COOKIE = 'nc_ft';
+
+function cookieDomain() {
+  try {
+    const host = window.location.hostname || '';
+    return host === 'newcollab.co' || host.endsWith('.newcollab.co') ? '; domain=.newcollab.co' : '';
+  } catch {
+    return '';
+  }
+}
+
+function writeCookie(touch) {
+  try {
+    const value = encodeURIComponent(JSON.stringify(touch));
+    document.cookie = `${COOKIE}=${value}; max-age=${MAX_AGE_MS / 1000}; path=/; SameSite=Lax${cookieDomain()}`;
+  } catch {
+    /* cookies blocked */
+  }
+}
+
+function readCookie() {
+  try {
+    const hit = document.cookie.split('; ').find((c) => c.startsWith(`${COOKIE}=`));
+    return hit ? JSON.parse(decodeURIComponent(hit.slice(COOKIE.length + 1))) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function captureAttribution(search, pathname = '') {
   try {
@@ -17,7 +47,8 @@ export function captureAttribution(search, pathname = '') {
     const existing = readAttribution();
     if (existing && Date.now() - (existing.ts || 0) < MAX_AGE_MS) return existing; // first touch wins
     const touch = { ...found, landing: pathname.slice(0, 200), ts: Date.now() };
-    localStorage.setItem(KEY, JSON.stringify(touch));
+    try { localStorage.setItem(KEY, JSON.stringify(touch)); } catch { /* storage blocked */ }
+    writeCookie(touch);
     return touch;
   } catch {
     return null;
@@ -25,12 +56,16 @@ export function captureAttribution(search, pathname = '') {
 }
 
 export function readAttribution() {
+  let local = null;
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : null;
+    local = raw ? JSON.parse(raw) : null;
   } catch {
-    return null;
+    local = null;
   }
+  const shared = readCookie();
+  if (local && shared) return (shared.ts || 0) < (local.ts || 0) ? shared : local; // earliest touch wins
+  return local || shared;
 }
 
 // Called on navigation: once a user is logged in, post the first touch one time.

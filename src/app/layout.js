@@ -4,6 +4,7 @@ import './globals.css';
 import StyledComponentsRegistry from './registry';
 import { AnalyticsProviderNext } from './components/AnalyticsProviderNext';
 import CookieSettings from '../components/CookieSettings';
+import AttributionCapture from './components/AttributionCapture';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
           {/* AnalyticsProviderNext handles its own internal Suspense for
               useSearchParams — children are NOT inside a Suspense boundary,
               so Next.js fully SSRs every page. */}
+          <AttributionCapture />
           <AnalyticsProviderNext>{children}</AnalyticsProviderNext>
         </StyledComponentsRegistry>
       </body>

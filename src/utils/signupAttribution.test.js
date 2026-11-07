@@ -1,6 +1,9 @@
 import { captureAttribution, readAttribution, sendAttributionOnce } from './signupAttribution';
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  document.cookie = 'nc_ft=; max-age=0; path=/';
+});
 
 test('captures utm and ttclid, first touch wins', () => {
   captureAttribution('?utm_source=tiktok&utm_id=123&ttclid=abc', '/land-your-first-pr-package');
@@ -25,4 +28,10 @@ test('sends once, only when logged in', async () => {
   expect(await sendAttributionOnce(post)).toBe(false);
   expect(post).toHaveBeenCalledTimes(1);
   expect(post.mock.calls[0][1].utm_source).toBe('tiktok');
+});
+
+test('cookie carries the touch to another subdomain (no localStorage there)', () => {
+  captureAttribution('?utm_source=tiktok&utm_id=77', '/');
+  localStorage.clear();
+  expect(readAttribution().utm_id).toBe('77');
 });
