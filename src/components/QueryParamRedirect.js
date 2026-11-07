@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { captureEmailCampaign, captureUpgradeDeeplink } from '../utils/upgradeDeeplink';
+import { captureAttribution, sendAttributionOnce } from '../utils/signupAttribution';
 
 export const SIGNUP_OFFERS = ['polly_trial7'];
 
@@ -16,6 +17,11 @@ const QueryParamRedirect = () => {
     const searchParams = new URLSearchParams(location.search);
     captureUpgradeDeeplink(searchParams);
     captureEmailCampaign(searchParams);
+    // Before the utm strip below: remember the first touch, send it once the visitor has signed up.
+    captureAttribution(searchParams, location.pathname);
+    import('../utils/api')
+      .then(({ apiClient }) => sendAttributionOnce((url, body) => apiClient.post(url, body)))
+      .catch(() => {});
     const promo = searchParams.get('promo');
     if (promo && /^[a-z0-9]{4,16}$/i.test(promo)) {
       try { localStorage.setItem('nc_promo', promo.toLowerCase()); } catch { /* storage blocked */ }

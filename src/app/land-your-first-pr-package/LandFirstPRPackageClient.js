@@ -995,6 +995,11 @@ function LandFirstPRPackageClient() {
     if (utm_source) params.set('utm_source', utm_source);
     if (utm_medium) params.set('utm_medium', utm_medium);
     if (utm_campaign) params.set('utm_campaign', utm_campaign);
+    // Ad id / creative id / TikTok click id, for cost per approved creator by campaign and ad.
+    ['utm_id', 'utm_content', 'ttclid'].forEach((k) => {
+      const v = searchParams.get(k);
+      if (v) params.set(k, v);
+    });
     params.set('ref', 'lp-pr-package');
 
     const paramString = params.toString();
