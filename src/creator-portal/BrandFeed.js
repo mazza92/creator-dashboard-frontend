@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { Check, ChevronRight, Play, Plus } from 'lucide-react';
+import styled, { keyframes } from 'styled-components';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Play, Plus } from 'lucide-react';
 import api from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { GigSheet, gigTitles, payText } from './PaidGigs';
@@ -181,6 +181,22 @@ function GigSlide({ item, onOpenGig }) {
   );
 }
 
+// Scroll discovery (TikTok / Reels pattern): a swipe-up coachmark on the first card until the creator scrolls once,
+// a one-time "peek" nudge that lifts the feed to show the next card, and up/down controls + arrow keys on desktop.
+const SCROLLED_KEY = 'nc_feed_scrolled';
+
+function readFlag(key) {
+  try { return window.localStorage.getItem(key) === '1'; } catch (_) { return false; }
+}
+
+function writeFlag(key) {
+  try { window.localStorage.setItem(key, '1'); } catch (_) { /* storage blocked */ }
+}
+
+function prefersReducedMotion() {
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; }
+}
+
 export default function BrandFeed({ onDirectory, onOpenBrand }) {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
@@ -194,6 +210,9 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
   const [height, setHeight] = useState(null);
   const boxRef = useRef(null);
   const req = useRef(0);
+  const [index, setIndex] = useState(0);
+  const [scrolled, setScrolled] = useState(() => readFlag(SCROLLED_KEY));
+  const nudged = useRef(false);
 
   useLayoutEffect(() => {
     const fit = () => {
@@ -235,6 +254,57 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
     const timer = window.setTimeout(() => setToast(null), 2600);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  const onScroll = useCallback(() => {
+    const box = boxRef.current;
+    if (!box || !box.clientHeight) return;
+    const i = Math.round(box.scrollTop / box.clientHeight);
+    setIndex(i);
+    if (i > 0 && !scrolled) {
+      setScrolled(true);
+      writeFlag(SCROLLED_KEY);
+    }
+  }, [scrolled]);
+
+  const goTo = useCallback((i) => {
+    const box = boxRef.current;
+    if (!box) return;
+    const total = box.children.length;
+    const next = Math.max(0, Math.min(total - 1, i));
+    box.scrollTo({ top: next * box.clientHeight, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  }, []);
+
+  // Peek nudge: first visit, still on card 1 after a moment -> lift the feed to reveal the next card, then settle.
+  useEffect(() => {
+    if (scrolled || loading || items.length < 2 || nudged.current || prefersReducedMotion()) return undefined;
+    const box = boxRef.current;
+    if (!box) return undefined;
+    let back;
+    const timer = window.setTimeout(() => {
+      if (box.scrollTop > 4) return;
+      nudged.current = true;
+      box.style.scrollSnapType = 'none';
+      box.scrollTo({ top: Math.round(box.clientHeight * 0.16), behavior: 'smooth' });
+      back = window.setTimeout(() => {
+        box.scrollTo({ top: 0, behavior: 'smooth' });
+        window.setTimeout(() => { box.style.scrollSnapType = ''; }, 450);
+      }, 650);
+    }, 1800);
+    return () => { window.clearTimeout(timer); if (back) window.clearTimeout(back); };
+  }, [scrolled, loading, items.length]);
+
+  // Arrow keys / j k move one card on desktop (ignored while typing).
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (openGig || showUpgrade) return;
+      if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); goTo(index + 1); }
+      if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); goTo(index - 1); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [goTo, index, openGig, showUpgrade]);
 
   const pitch = useCallback((brand) => {
     const params = new URLSearchParams({ chip: 'pitch_brand', brand_id: String(brand.id), brand_name: brand.name || '' });
@@ -291,7 +361,8 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
         ) : null}
       </TopBar>
 
-      <Scroller ref={boxRef} style={height ? { height: `${height}px` } : undefined} aria-busy={loading}>
+      <Scroller ref={boxRef} style={height ? { height: `${height}px` } : undefined} aria-busy={loading}
+        onScroll={onScroll} tabIndex={-1} aria-label="Creators who got PR and brand deals. Scroll for more.">
         {loading && !items.length ? <Slide $plain><Center>Finding brands gifting creators like you…</Center></Slide> : null}
         {error ? (
           <Slide $plain>
@@ -313,6 +384,26 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
         ) : null}
       </Scroller>
 
+      {!scrolled && !loading && !error && items.length > 1 && index === 0 ? (
+        <SwipeHint aria-hidden="true">
+          <span className="arrows"><ChevronUp size={22} strokeWidth={2.6} /><ChevronUp size={22} strokeWidth={2.6} /></span>
+          <b>Swipe up</b>
+          <small>More creators who just got PR</small>
+        </SwipeHint>
+      ) : null}
+
+      {!loading && !error && items.length > 1 ? (
+        <SideNav aria-label="Feed navigation">
+          <NavBtn type="button" onClick={() => goTo(index - 1)} disabled={index === 0} aria-label="Previous">
+            <ChevronUp size={20} />
+          </NavBtn>
+          <Pos>{Math.min(index + 1, items.length)} / {items.length}</Pos>
+          <NavBtn type="button" $primary={!scrolled} onClick={() => goTo(index + 1)} disabled={index >= slides.length + 1 - 1} aria-label="Next">
+            <ChevronDown size={20} />
+          </NavBtn>
+        </SideNav>
+      ) : null}
+
       {toast ? (
         <Toast role="status">
           <span><b>{toast.text}</b>{toast.sub ? <small>{toast.sub}</small> : null}</span>
@@ -332,6 +423,92 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
     </Wrap>
   );
 }
+
+const rise = keyframes`
+  0% { transform: translateY(8px); opacity: 0; }
+  35% { opacity: 1; }
+  70% { transform: translateY(-6px); opacity: 1; }
+  100% { transform: translateY(-12px); opacity: 0; }
+`;
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+`;
+
+const SwipeHint = styled.div`
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 46%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 16px 11px;
+  border-radius: 16px;
+  background: rgba(15, 17, 21, 0.55);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  text-align: center;
+  pointer-events: none;
+  animation: ${fadeIn} 0.35s ease-out 0.6s both;
+  .arrows { display: flex; flex-direction: column; align-items: center; line-height: 0; height: 30px; }
+  .arrows svg { margin-top: -10px; animation: ${rise} 1.4s ease-in-out infinite; }
+  .arrows svg:last-child { animation-delay: 0.18s; }
+  b { font-size: 15px; font-weight: 800; letter-spacing: 0.01em; }
+  small { font-size: 12px; opacity: 0.85; white-space: nowrap; }
+  @media (max-width: 560px) {
+    top: 40%;
+    padding: 8px 14px 9px;
+    small { font-size: 11.5px; }
+  }
+  @media (max-width: 560px) and (max-height: 780px) { top: 31%; }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    .arrows svg { animation: none; }
+  }
+`;
+
+const SideNav = styled.div`
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  right: -64px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  @media (max-width: 700px) { display: none; }
+`;
+
+const NavBtn = styled.button`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid ${(p) => (p.$primary ? 'transparent' : 'rgba(15, 17, 21, 0.12)')};
+  background: ${(p) => (p.$primary ? '#7ce0b8' : '#fff')};
+  color: ${t.ink};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 17, 21, 0.08);
+  transition: transform 0.15s ease, background 0.15s ease;
+  &:hover:not(:disabled) { transform: scale(1.06); }
+  &:disabled { opacity: 0.35; cursor: default; }
+  &:focus-visible { outline: 2px solid #7ce0b8; outline-offset: 2px; }
+`;
+
+const Pos = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: ${t.ink};
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+`;
 
 const Wrap = styled.div`
   position: relative;
