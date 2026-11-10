@@ -38,6 +38,7 @@ import {
 import { categoryLabel, normalizeCategory, NICHE_OPTIONS } from '../constants/brandCategories';
 import { getCategoryColors } from '../utils/categoryColors';
 import CreatorApprovalQueue from './CreatorApprovalQueue';
+import { SERVED_COUNTRIES, countryLabel } from '../utils/countries';
 
 const { Option } = Select;
 const { Text, Paragraph } = Typography;
@@ -57,16 +58,11 @@ const NICHE_FILTER_OPTIONS = NICHE_OPTIONS.map((n) => ({
   label: n.label.replace(/^[^\w]+/, '').trim() || n.label,
 }));
 
-const REGION_FILTER_OPTIONS = [
-  { value: 'US', label: 'United States' },
-  { value: 'UK', label: 'United Kingdom' },
-  { value: 'Canada', label: 'Canada' },
-  { value: 'AU', label: 'Australia' },
-  { value: 'Europe', label: 'Europe' },
-  { value: 'LATAM', label: 'Latin America' },
-  { value: 'MENA', label: 'Middle East & Africa' },
-  { value: 'Asia', label: 'Asia Pacific' },
-  { value: 'Global', label: 'Global' },
+// Country the creator picked at signup (regions are legacy and no longer filtered on).
+const COUNTRY_FILTER_OPTIONS = [
+  ...SERVED_COUNTRIES.map((c) => ({ value: c.code, label: `${c.flag} ${c.name}` })),
+  { value: 'OTHER', label: '🌐 Not listed (waitlist)' },
+  { value: 'NONE', label: 'Not set yet' },
 ];
 
 const FOLLOWER_BUCKETS = [
@@ -216,7 +212,7 @@ const CreatorsAdmin = () => {
   const [searchInput, setSearchInput] = useState(() => searchParams.get('q') || '');
   const [searchQ, setSearchQ] = useState(() => (searchParams.get('q') || '').trim());
   const [niches, setNiches] = useState(() => csvList(searchParams.get('niche')));
-  const [regions, setRegions] = useState(() => csvList(searchParams.get('region')));
+  const [countries, setCountries] = useState(() => csvList(searchParams.get('country')));
   const [followers, setFollowers] = useState(() => searchParams.get('followers') || '');
   const [platform, setPlatform] = useState(() => searchParams.get('platform') || '');
   const [tier, setTier] = useState(() => searchParams.get('tier') || '');
@@ -269,7 +265,7 @@ const CreatorsAdmin = () => {
 
       if (searchQ) params.set('q', searchQ);
       if (niches.length) params.set('niche', niches.join(','));
-      if (regions.length) params.set('region', regions.join(','));
+      if (countries.length) params.set('country', countries.join(','));
       if (tier) params.set('tier', tier);
       if (platform) params.set('platform', platform);
       if (verified) params.set('verified', verified);
@@ -290,7 +286,7 @@ const CreatorsAdmin = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, page, pageSize, searchQ, niches, regions, followers, platform, tier, verified, kit, unsubscribed, approvalStatus, sortField, sortOrder]);
+  }, [isAuthenticated, page, pageSize, searchQ, niches, countries, followers, platform, tier, verified, kit, unsubscribed, approvalStatus, sortField, sortOrder]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -310,7 +306,7 @@ const CreatorsAdmin = () => {
     if (tab === 'directory') {
       if (searchQ) next.set('q', searchQ);
       if (niches.length) next.set('niche', niches.join(','));
-      if (regions.length) next.set('region', regions.join(','));
+      if (countries.length) next.set('country', countries.join(','));
       if (followers) next.set('followers', followers);
       if (platform) next.set('platform', platform);
       if (tier) next.set('tier', tier);
@@ -323,7 +319,7 @@ const CreatorsAdmin = () => {
     const desired = next.toString();
     if (current !== desired) setSearchParams(next, { replace: true });
   }, [
-    tab, searchQ, niches, regions, followers, platform, tier, verified, kit,
+    tab, searchQ, niches, countries, followers, platform, tier, verified, kit,
     unsubscribed, approvalStatus, searchParams, setSearchParams,
   ]);
 
@@ -581,28 +577,11 @@ const CreatorsAdmin = () => {
       render: (val) => <Tag color={tierTagColor(val)} style={{ margin: 0 }}>{val || 'free'}</Tag>,
     },
     {
-      title: 'Regions',
-      key: 'regions',
-      dataIndex: 'regions',
-      width: 120,
-      render: (val) => {
-        const regions = Array.isArray(val) ? val : [];
-        if (!regions.length) return <span style={{ color: '#9ca3af', fontSize: 12 }}>—</span>;
-        const shown = regions.slice(0, 2);
-        const extra = regions.length - shown.length;
-        return (
-          <RegionCell>
-            {shown.map((r) => (
-              <RegionTag key={r}>{r}</RegionTag>
-            ))}
-            {extra > 0 && (
-              <Tooltip title={regions.slice(2).join(', ')}>
-                <RegionTag $muted>+{extra}</RegionTag>
-              </Tooltip>
-            )}
-          </RegionCell>
-        );
-      },
+      title: 'Country',
+      key: 'country_code',
+      dataIndex: 'country_code',
+      width: 130,
+      render: (_, row) => countryLabel(row) || <span style={{ color: '#9ca3af', fontSize: 12 }}>—</span>,
     },
     {
       title: 'Credits',
@@ -675,7 +654,7 @@ const CreatorsAdmin = () => {
     setSearchInput('');
     setSearchQ('');
     setNiches([]);
-    setRegions([]);
+    setCountries([]);
     setFollowers('');
     setPlatform('');
     setTier('');
@@ -700,9 +679,9 @@ const CreatorsAdmin = () => {
       const opt = NICHE_FILTER_OPTIONS.find((n) => n.value === id);
       chips.push({ key: `niche-${id}`, label: opt?.label || id, onClose: () => { setNiches((prev) => prev.filter((n) => n !== id)); setPage(1); } });
     });
-    regions.forEach((id) => {
-      const opt = REGION_FILTER_OPTIONS.find((n) => n.value === id);
-      chips.push({ key: `region-${id}`, label: opt?.label || id, onClose: () => { setRegions((prev) => prev.filter((n) => n !== id)); setPage(1); } });
+    countries.forEach((id) => {
+      const opt = COUNTRY_FILTER_OPTIONS.find((n) => n.value === id);
+      chips.push({ key: `country-${id}`, label: opt?.label || id, onClose: () => { setCountries((prev) => prev.filter((n) => n !== id)); setPage(1); } });
     });
     if (followers) {
       const opt = FOLLOWER_BUCKETS.find((n) => n.value === followers);
@@ -721,7 +700,7 @@ const CreatorsAdmin = () => {
     if (kit) chips.push({ key: 'kit', label: kit === 'true' ? 'Has kit' : 'No kit', onClose: () => { setKit(''); setPage(1); } });
     if (unsubscribed) chips.push({ key: 'sub', label: unsubscribed === 'true' ? 'Unsubscribed' : 'Active only', onClose: () => { setUnsubscribed(''); setPage(1); } });
     return chips;
-  }, [niches, regions, followers, approvalStatus, platform, tier, verified, kit, unsubscribed]);
+  }, [niches, countries, followers, approvalStatus, platform, tier, verified, kit, unsubscribed]);
 
   if (!isAuthenticated) {
     return (
@@ -829,14 +808,14 @@ const CreatorsAdmin = () => {
           />
           <Select
             mode="multiple"
-            value={regions}
-            onChange={(v) => { setRegions(v); setPage(1); }}
+            value={countries}
+            onChange={(v) => { setCountries(v); setPage(1); }}
             allowClear
             showSearch
             optionFilterProp="label"
-            placeholder="Region"
-            aria-label="Region"
-            options={REGION_FILTER_OPTIONS}
+            placeholder="Country"
+            aria-label="Country"
+            options={COUNTRY_FILTER_OPTIONS}
             maxTagCount="responsive"
             style={{ minWidth: 150, flex: '1 1 150px' }}
           />
@@ -1034,11 +1013,7 @@ const CreatorsAdmin = () => {
 
             <SectionTitle>Audience</SectionTitle>
             <DetailGrid>
-              <DetailItem label="Regions" value={
-                Array.isArray(selectedCreator.regions) && selectedCreator.regions.length
-                  ? selectedCreator.regions.join(', ')
-                  : '—'
-              } full />
+              <DetailItem label="Country" value={countryLabel(selectedCreator) || 'Not set yet'} full />
               <DetailItem label="Age range" value={selectedCreator.primary_age_range || '—'} />
               <DetailItem label="Top locations" value={
                 Array.isArray(selectedCreator.top_locations) && selectedCreator.top_locations.length
@@ -1404,25 +1379,7 @@ const DateCell = styled.div`
   white-space: nowrap;
 `;
 
-const RegionCell = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  align-items: center;
-`;
 
-const RegionTag = styled.span`
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  background: ${(p) => p.$muted ? '#f3f4f6' : '#eff6ff'};
-  color: ${(p) => p.$muted ? '#6b7280' : '#1d4ed8'};
-  border: 1px solid ${(p) => p.$muted ? '#e5e7eb' : '#bfdbfe'};
-  white-space: nowrap;
-  cursor: ${(p) => p.$muted ? 'default' : 'auto'};
-`;
 
 const PitchCell = styled.div`
   display: flex;

@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import api, { getProxiedMediaUrl } from '../config/api';
 import { categoryLabel, normalizeCategory } from '../constants/brandCategories';
+import { countryLabel } from '../utils/countries';
 
 const { Text } = Typography;
 
@@ -477,12 +478,8 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
                   <MetaValue>{selected.primary_age_range || '—'}</MetaValue>
                 </Meta>
                 <Meta>
-                  <MetaLabel>Regions</MetaLabel>
-                  <MetaValue>
-                    {Array.isArray(selected.regions) && selected.regions.length
-                      ? selected.regions.join(', ')
-                      : '—'}
-                  </MetaValue>
+                  <MetaLabel>Country</MetaLabel>
+                  <MetaValue>{countryLabel(selected) || 'Not set yet'}</MetaValue>
                 </Meta>
                 <Meta $full>
                   <MetaLabel>Niches</MetaLabel>
