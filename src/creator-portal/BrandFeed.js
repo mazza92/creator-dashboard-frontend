@@ -6,7 +6,7 @@ import api from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { GigSheet, gigTitles, payText } from './PaidGigs';
 import UpgradeModal from './UpgradeModal';
-import { mixFeed } from './brandFeedMix';
+import { GIG_EVERY, mixFeed } from './brandFeedMix';
 
 // Brands tab "For you": full-screen TikTok posts of creators a brand gifted or paid, each with the brand's
 // card and two actions (Pitch for me, + Target). Paid UGC gigs and directory brands are mixed in so the
@@ -224,20 +224,38 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
     return () => window.removeEventListener('resize', fit);
   }, []);
 
+  // Fresh, endless feed: the server ranks what this creator hasn't seen first and in a new order every visit;
+  // we ask for the next page near the end and tell it which cards were actually viewed.
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const gigsLeft = useRef([]);
+  const pendingSeen = useRef(new Set());
+  const sentSeen = useRef(new Set());
+
+  const feedKeys = (list) => list.filter((it) => it.type !== 'gig').map((it) => it.key);
+  const withGigs = (pageItems, more) => {
+    const n = more ? Math.floor(pageItems.length / GIG_EVERY) : gigsLeft.current.length;
+    const take = gigsLeft.current.slice(0, n);
+    gigsLeft.current = gigsLeft.current.slice(n);
+    return mixFeed(pageItems, take);
+  };
+
   const load = useCallback(async () => {
     const id = ++req.current;
     setLoading(true);
     setError('');
     try {
       const [feedRes, gigRes] = await Promise.allSettled([
-        api.get('/api/pr-crm/feed', { timeout: 30000 }),
+        api.get('/api/pr-crm/feed', { params: { v: 2, size: 12 }, timeout: 30000 }),
         api.get('/api/opportunities/paid-gigs', { params: { view: 'for_you', limit: 12 }, timeout: 30000 }),
       ]);
       if (id !== req.current) return;
       if (feedRes.status !== 'fulfilled' || !feedRes.value.data?.success) throw new Error('feed');
       const data = feedRes.value.data;
-      const gigs = gigRes.status === 'fulfilled' ? (gigRes.value.data?.gigs || []) : [];
-      setItems(mixFeed(data.items || [], gigs));
+      gigsLeft.current = gigRes.status === 'fulfilled' ? (gigRes.value.data?.gigs || []) : [];
+      const more = Boolean(data.has_more);
+      setItems(withGigs(data.items || [], more));
+      setHasMore(more);
       setTargets(Number(data.targets) || 0);
       if (boxRef.current) boxRef.current.scrollTo({ top: 0 });
     } catch (_) {
@@ -246,6 +264,54 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
       if (id === req.current) setLoading(false);
     }
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+    const id = req.current;
+    setLoadingMore(true);
+    try {
+      const exclude = feedKeys(items).slice(-240).join(',');
+      const { data } = await api.get('/api/pr-crm/feed', { params: { v: 2, size: 12, exclude }, timeout: 30000 });
+      if (id !== req.current || !data?.success) return;
+      const known = new Set(items.map((it) => it.key));
+      const fresh = (data.items || []).filter((it) => !known.has(it.key));
+      const more = Boolean(data.has_more) && fresh.length > 0;
+      setItems((prev) => [...prev, ...withGigs(fresh, more)]);
+      setHasMore(more);
+    } catch (_) {
+      // Keep what's on screen; the next scroll tries again.
+    } finally {
+      setLoadingMore(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loadingMore, items]);
+
+  const flushSeen = useCallback(() => {
+    const keys = [...pendingSeen.current];
+    if (!keys.length) return;
+    pendingSeen.current = new Set();
+    keys.forEach((k) => sentSeen.current.add(k));
+    api.post('/api/pr-crm/feed/seen', { keys }).catch(() => {});
+  }, []);
+
+  // A card counts as seen once it is the one on screen.
+  useEffect(() => {
+    const it = items[index];
+    if (!it || it.type === 'gig' || sentSeen.current.has(it.key)) return;
+    pendingSeen.current.add(it.key);
+    if (pendingSeen.current.size >= 4) flushSeen();
+  }, [index, items, flushSeen]);
+
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === 'hidden') flushSeen(); };
+    document.addEventListener('visibilitychange', onHide);
+    return () => { document.removeEventListener('visibilitychange', onHide); flushSeen(); };
+  }, [flushSeen]);
+
+  // Next page when the creator is 4 cards from the end.
+  useEffect(() => {
+    if (!loading && hasMore && items.length && index >= items.length - 4) loadMore();
+  }, [index, items.length, hasMore, loading, loadMore]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -373,7 +439,10 @@ export default function BrandFeed({ onDirectory, onOpenBrand }) {
           </Slide>
         ) : null}
         {!error ? slides : null}
-        {!loading && !error ? (
+        {!loading && !error && hasMore ? (
+          <Slide $plain><Center>Loading more creators who got PR…</Center></Slide>
+        ) : null}
+        {!loading && !error && !hasMore ? (
           <Slide $plain>
             <Center>
               <b>You&apos;re all caught up</b>
