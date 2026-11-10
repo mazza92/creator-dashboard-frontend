@@ -1,13 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Typography, Breadcrumb, Space, Tag, Avatar, Divider, Collapse } from 'antd';
 import { HomeOutlined, CalendarOutlined, ClockCircleOutlined, QuestionCircleOutlined, StarOutlined, LinkOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../../components/LandingPageLayoutNext';
-import { getPostContentHtml, isBlogWidgetEnabled, getFaqAnswerHtml } from '../../../lib/blogContent';
+import { getPostContentHtml, isBlogWidgetEnabled, getFaqAnswerHtml, isBrandListPost } from '../../../lib/blogContent';
 import BlogBrandSearchWidget from '../../../components/BlogBrandSearchWidget';
+import useDashboardSession from '../../../hooks/useDashboardSession';
+import BlogConversion from '../../components/seo/BlogConversion';
+import StickyCtaBar from '../../components/seo/StickyCtaBar';
+import { ExitIntentCard, WeeklyBrandsCard } from '../../components/seo/LeadCapture';
 
 const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -287,6 +291,13 @@ const RelatedPostMeta = styled.div`
 export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
   const resolvedCanonical =
     canonicalUrl || post.canonicalUrl || `https://newcollab.co/blog/${post.slug}`;
+  const contentRef = useRef(null);
+  const signedIn = useDashboardSession().status === 'in';
+  const contentHtml = getPostContentHtml(post, { seoCtas: true });
+  const ctaCtx = { ref: 'blog', slug: post.slug, page: `/blog/${post.slug}` };
+  const stickyText = isBrandListPost(contentHtml)
+    ? 'Let Polly pitch the brands on this list for you'
+    : 'Get PR packages from brands that fit your niche';
 
   return (
     <LandingPageLayoutNext canonicalUrl={resolvedCanonical}>
@@ -332,7 +343,9 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
             </div>
           )}
 
-          <BlogContent dangerouslySetInnerHTML={{ __html: getPostContentHtml(post) }} />
+          <BlogContent ref={contentRef} dangerouslySetInnerHTML={{ __html: contentHtml }} />
+          <BlogConversion contentRef={contentRef} slug={post.slug} signedIn={signedIn} />
+          <WeeklyBrandsCard ctx={ctaCtx} signedIn={signedIn} />
 
           {/* Testimonials Section */}
           {post.testimonials && post.testimonials.length > 0 && (
@@ -473,6 +486,18 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
           )}
         </Section>
       </PageContainer>
+      {!signedIn && (
+        <>
+          <StickyCtaBar
+            ctx={ctaCtx}
+            text={stickyText}
+            button="Start free"
+            location="sticky_bar"
+            hideOnPhone={isBlogWidgetEnabled(post.slug)}
+          />
+          <ExitIntentCard ctx={ctaCtx} />
+        </>
+      )}
     </LandingPageLayoutNext>
   );
 }
