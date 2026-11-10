@@ -19,8 +19,7 @@ function dismissedRecently() {
  * transform only, so it never shifts the layout. Dismissal is remembered for a week.
  * Hidden while an inline unlock / lead card is on screen.
  */
-// hideOnPhone: the page already pins its own bar to the bottom on phones (blog brand-search widget).
-export default function StickyCtaBar({ ctx, text, button = 'Start free', location = 'sticky_bar', threshold = 0.3, hideOnPhone = false }) {
+export default function StickyCtaBar({ ctx, text, button = 'Start free', location = 'sticky_bar', threshold = 0.3 }) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(true);
   const [cardOnScreen, setCardOnScreen] = useState(false);
@@ -79,7 +78,7 @@ export default function StickyCtaBar({ ctx, text, button = 'Start free', locatio
   return (
     <>
     <LiftScrollTop />
-    <Bar role="region" aria-label="Sign up" $shown={shown} $hideOnPhone={hideOnPhone} aria-hidden={!shown}>
+    <Bar role="region" aria-label="Sign up" $shown={shown} aria-hidden={!shown}>
       <Inner>
         <Text>{text}</Text>
         <Cta
@@ -133,10 +132,6 @@ const Bar = styled.div`
     box-shadow: 0 -4px 20px rgba(15, 15, 15, 0.08);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     transform: translateY(${(p) => (p.$shown ? '0' : '100%')});
-  }
-
-  @media (max-width: 640px) {
-    ${(p) => (p.$hideOnPhone ? 'display: none;' : '')}
   }
 `;
 

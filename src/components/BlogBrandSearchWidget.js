@@ -491,63 +491,6 @@ const NotifySuccess = styled.div`
   text-align: center;
 `;
 
-// ─── MOBILE STICKY BAR ─────────────────────────────
-const StickyMobile = styled.div`
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
-  padding: 12px 16px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
-  z-index: 40;
-  display: none;
-
-  @media (max-width: 640px) {
-    display: block;
-  }
-`;
-
-const StickyForm = styled.form`
-  display: flex;
-  gap: 8px;
-  max-width: 600px;
-  margin: 0 auto;
-`;
-
-const StickyInput = styled.input`
-  flex: 1;
-  padding: 11px 14px;
-  font-size: 14px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
-  outline: none;
-  font-family: inherit;
-  min-width: 0;
-
-  &:focus {
-    border-color: #e8395f;
-    box-shadow: 0 0 0 3px rgba(232, 57, 95, 0.1);
-  }
-`;
-
-const StickyBtn = styled.button`
-  background: #e8395f;
-  color: #fff;
-  border: none;
-  padding: 0 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background: #c92549;
-  }
-`;
 
 // ─────────────────────────────────────────────────────────────
 // COMPONENT
@@ -567,7 +510,6 @@ export default function BlogBrandSearchWidget({ postSlug }) {
   const inputRef = useRef(null);
   const heroRef = useRef(null);
   const debounceRef = useRef(null);
-  const [stickyQuery, setStickyQuery] = useState('');
 
   // Fetch autocomplete suggestions
   const fetchSuggestions = useCallback(async (q) => {
@@ -589,7 +531,6 @@ export default function BlogBrandSearchWidget({ postSlug }) {
   // Debounced input handler
   const handleInput = (value) => {
     setQuery(value);
-    setStickyQuery(value); // Keep sticky bar in sync
     setActiveIndex(-1);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -607,7 +548,6 @@ export default function BlogBrandSearchWidget({ postSlug }) {
   // Select a brand from autocomplete or search
   const selectBrand = async (brand) => {
     setQuery(brand.name);
-    setStickyQuery(brand.name); // Keep sticky bar in sync
     setShowAutocomplete(false);
     setSelectedBrand(brand);
     setNotFoundQuery(null);
@@ -739,48 +679,6 @@ export default function BlogBrandSearchWidget({ postSlug }) {
     setNotFoundQuery(null);
     setNotifySuccess(false);
     setSuggestions([]);
-  };
-
-  // Handle sticky search bar submit
-  const handleStickySubmit = async (e) => {
-    e.preventDefault();
-    if (!stickyQuery.trim()) return;
-
-    // Copy query to main input
-    setQuery(stickyQuery);
-
-    // Scroll to hero
-    if (heroRef.current) {
-      heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    // Run the search
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/blog/brand-search?q=${encodeURIComponent(stickyQuery)}&mode=json&limit=1`);
-      const data = await res.json();
-
-      if (data.brands?.length > 0) {
-        selectBrand(data.brands[0]);
-      } else {
-        setSelectedBrand(null);
-        setNotFoundQuery(stickyQuery);
-        setNotifySuccess(false);
-
-        if (typeof window !== 'undefined' && window.dataLayer) {
-          window.dataLayer.push({
-            event: 'blog_widget_not_found',
-            source_page: postSlug,
-            query_length: stickyQuery.length,
-            source: 'sticky_mobile',
-          });
-        }
-      }
-    } catch (e) {
-      console.error('Sticky search error:', e);
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -932,21 +830,6 @@ export default function BlogBrandSearchWidget({ postSlug }) {
         </NotFoundCard>
       )}
 
-      {/* MOBILE STICKY SEARCH BAR */}
-      <StickyMobile>
-        <StickyForm onSubmit={handleStickySubmit}>
-          <StickyInput
-            type="text"
-            placeholder="Search any brand…"
-            value={stickyQuery}
-            onChange={(e) => setStickyQuery(e.target.value)}
-            autoComplete="off"
-          />
-          <StickyBtn type="submit" disabled={loading}>
-            {loading ? '...' : 'Search'}
-          </StickyBtn>
-        </StickyForm>
-      </StickyMobile>
     </>
   );
 }
