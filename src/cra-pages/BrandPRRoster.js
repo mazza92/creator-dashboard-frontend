@@ -139,6 +139,7 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
   const [briefOpen, setBriefOpen] = useState(false);
   const closeBrief = useCallback(() => setBriefOpen(false), []);
   const [step, setStep] = useState(1);
+  const [autoConfirmShip, setAutoConfirmShip] = useState(false);
   const [drawerId, setDrawerId] = useState(null);
   const [toast, setToast] = useState('');
   const [logoBroken, setLogoBroken] = useState(false);
@@ -189,7 +190,11 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
       applyPayload(data);
       const wanted = new URLSearchParams(window.location.search).get('step');
       const status = data.campaign?.status;
-      if (wanted === 'ship' && status === 'locked') setStep(2);
+      if (wanted === 'ship' && status === 'locked') {
+        setStep(2);
+        // "I've shipped them" in a ship reminder email: open the mark-all-shipped confirmation once.
+        if (new URLSearchParams(window.location.search).get('confirm') === 'all') setAutoConfirmShip(true);
+      }
       const anyOut = (data.creators || []).some((c) => c.shipped_at || c.status === 'posted');
       if (wanted === 'content' && (status === 'shipped' || anyOut)) setStep(3);
     } catch (err) {
@@ -428,6 +433,18 @@ export default function BrandPRRoster({ token: tokenProp } = {}) {
     const warn = waiting.length ? `${waiting.join(', ')} ${waiting.length === 1 ? 'hasn’t' : 'haven’t'} answered “${variantQ}” yet.\n\n` : '';
     return window.confirm(`${warn}Mark ${who} as shipped? We’ll email ${list.length === 1 ? 'them' : 'each one'} that the box is on its way. You can undo this for 24 hours.`);
   }
+
+  useEffect(() => {
+    if (!autoConfirmShip || step !== 2 || !selectedCreators.length) return;
+    setAutoConfirmShip(false);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('confirm');
+      window.history.replaceState(null, '', url.toString());
+    } catch (_) { /* ignore */ }
+    onMarkShipped();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoConfirmShip, step, selectedCreators.length]);
 
   async function onUnship(c) {
     try {
