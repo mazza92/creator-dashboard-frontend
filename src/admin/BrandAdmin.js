@@ -40,6 +40,20 @@ const REGION_OPTIONS = ['USA', 'UK', 'Canada', 'Australia', 'Europe', 'Worldwide
 // Bulk Edit config — every field here can be set on many selected brands at
 // once (mirrors /api/admin/brands/bulk-update's allowed_fields on the backend)
 // ============================================================================
+// Send gate (backend services/deliverability): 'Fixed' = contact_email swapped for a verified inbox,
+// 'Flagged' = the address is dead and no working one was found. Details are in the brand's notes.
+const emailCheckStatus = (b) => {
+  const adj = b?.email_adjustment || '';
+  if (adj.startsWith('fixed')) return 'Fixed';
+  if (adj.startsWith('flagged')) return 'Flagged';
+  return '';
+};
+
+const lastEmailNote = (notes) => {
+  const lines = String(notes || '').split('\n').filter((l) => l.startsWith('[Email check'));
+  return lines.length ? lines[lines.length - 1] : '';
+};
+
 // Evidence-based AI enrich verdict: Ready = category confirmed (high/medium), Review = low confidence.
 const aiCheckStatus = (b) => {
   if (!b?.ai_checked_at) return 'Not checked';
@@ -920,6 +934,20 @@ const BrandAdmin = () => {
       width: 130,
       cellEditor: 'agSelectCellEditor',
       cellEditorParams: { values: CATEGORY_OPTION_VALUES }
+    },
+    {
+      colId: 'email_check',
+      headerName: 'Email check',
+      width: 130,
+      editable: false,
+      filter: true,
+      valueGetter: (params) => emailCheckStatus(params.data),
+      tooltipValueGetter: (params) => lastEmailNote(params.data?.notes),
+      cellRenderer: (params) => {
+        if (!params.value) return null;
+        const color = params.value === 'Fixed' ? 'blue' : 'red';
+        return <Tag color={color} style={{ fontSize: 10 }}>{params.value === 'Fixed' ? 'Email fixed' : 'Email dead'}</Tag>;
+      }
     },
     {
       colId: 'ai_check',
