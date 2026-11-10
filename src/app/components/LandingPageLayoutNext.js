@@ -387,6 +387,12 @@ const ScrollToTopButton = styled.button`
   box-shadow: ${tokens.shadowCard};
   z-index: 999;
 
+  /* Phones: sit above the sticky signup bar instead of covering its button */
+  @media (max-width: 768px) {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
+  }
+
   &:hover {
     background: ${tokens.actionHover};
     transform: translateY(-2px);

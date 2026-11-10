@@ -493,7 +493,6 @@ export default function BlogPostClient({ post, relatedPosts, canonicalUrl }) {
             text={stickyText}
             button="Start free"
             location="sticky_bar"
-            hideOnPhone={isBlogWidgetEnabled(post.slug)}
           />
           <ExitIntentCard ctx={ctaCtx} />
         </>
