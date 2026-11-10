@@ -49,4 +49,31 @@ describe('CountryCombobox', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(screen.getByTestId('value')).toHaveTextContent('GB|');
   });
+
+  it('keeps a typed country when they click away without picking a row', () => {
+    render(<><Harness /><button type="button">Continue</button></>);
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'France' } });
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByTestId('value')).toHaveTextContent('FR|');
+  });
+
+  it('keeps a typed country when focus leaves the field', () => {
+    render(<Harness />);
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'fra' } });
+    fireEvent.blur(input);
+    expect(screen.getByTestId('value')).toHaveTextContent('FR|');
+    expect(input).toHaveValue('France');
+  });
+
+  it('typing nothing keeps the current value', () => {
+    render(<Harness initial="GB" />);
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+    expect(screen.getByTestId('value')).toHaveTextContent('GB|');
+  });
 });

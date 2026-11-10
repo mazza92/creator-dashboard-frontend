@@ -176,6 +176,7 @@ export default function CountryCombobox({
     if (!open) return undefined;
     const close = (e) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        commitRef.current();
         setOpen(false);
         setQuery('');
       }
@@ -210,6 +211,17 @@ export default function CountryCombobox({
     }
   };
 
+  // Typed but didn't click a row (e.g. typed "France", then hit Continue): take the highlighted match instead of
+  // silently keeping the pre-filled guess. Nov 2026: a creator in France was saved as US this way.
+  const commitTyped = () => {
+    if (!query.trim()) return;
+    const opt = options[active] && options[active].code !== OTHER_COUNTRY ? options[active]
+      : options.find((o) => o.code !== OTHER_COUNTRY);
+    if (opt) onChange(opt.code);
+  };
+  const commitRef = useRef(commitTyped);
+  commitRef.current = commitTyped;
+
   const onKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -237,6 +249,7 @@ export default function CountryCombobox({
         setQuery('');
       }
     } else if (e.key === 'Tab' && open) {
+      commitTyped();
       setOpen(false);
       setQuery('');
     }
@@ -272,6 +285,14 @@ export default function CountryCombobox({
           onFocus={openList}
           onClick={openList}
           onKeyDown={onKeyDown}
+          onBlur={(e) => {
+            // Focus left the picker (keyboard or tap elsewhere): keep what they typed.
+            if (open && !(wrapRef.current && wrapRef.current.contains(e.relatedTarget))) {
+              commitTyped();
+              setOpen(false);
+              setQuery('');
+            }
+          }}
         />
         <Chevron
           type="button"
