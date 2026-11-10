@@ -98,6 +98,9 @@ const DEEP_LINK_CHIPS = {
   draft_followup: { label: 'Draft a follow-up', action: 'generate_pitch', is_followup: true },
   pitch_targets: { label: 'Pitch my saved brands', action: 'pitch_targets' },
   help_reply: { label: 'Help me reply', action: 'chat' },
+  // Renewal note: we can't read their inbox, so the creator tells Polly how outreach is going.
+  a_brand_replied: { label: 'A brand replied to my pitch. Help me answer it', action: 'chat' },
+  tune_outreach: { label: 'No replies yet. What should we change to get more?', action: 'coach_profile' },
   paid_reply: { label: 'Write my reply', action: 'paid_reply' },
   ad_usage: { label: 'Ask them to run it as an ad', action: 'ad_usage' },
   open_board: { label: 'Open my weekly report', action: 'board' },
