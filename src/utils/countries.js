@@ -112,3 +112,11 @@ export function detectCountry(nav = typeof navigator !== 'undefined' ? navigator
   // A time zone outside our countries: don't guess from the language.
   return '';
 }
+
+/** Admin/brand display of a creator's picked country from API fields (country_code, country_name, country_flag,
+ * country_other). '' when they haven't picked one. */
+export const countryLabel = (row) => {
+  if (!row || !row.country_code) return '';
+  if (row.country_code === OTHER_COUNTRY) return `🌐 Not listed${row.country_other ? `: ${row.country_other}` : ''}`;
+  return `${row.country_flag || flagFor(row.country_code) || ''} ${row.country_name || countryName(row.country_code) || row.country_code}`.trim();
+};
