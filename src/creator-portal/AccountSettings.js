@@ -7,6 +7,7 @@ import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings, F
 import api, { getOAuthApiOrigin } from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
+import CountrySettingsSection from './CountrySettingsSection';
 import CancelRetentionModal from './CancelRetentionModal';
 import DeleteAccountFlow from './DeleteAccountFlow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -588,6 +589,8 @@ const AccountSettings = () => {
           </UsageCard>
         </UsageGrid>
       </Section>
+
+      <CountrySettingsSection />
 
       <Section>
         <SectionHeader>

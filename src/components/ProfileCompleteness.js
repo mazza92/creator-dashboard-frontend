@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { apiClient } from '../utils/api';
+import CountryCombobox from './forms/CountryCombobox';
+import { OTHER_COUNTRY, detectCountry } from '../utils/countries';
 
 // ============================================================================
 // PROFILE COMPLETENESS WIDGET - V4 Progressive data collection
@@ -109,7 +111,7 @@ const FIELD_LABELS = {
   profile_photo: 'Add photo',
   bio: 'Write bio',
   audience_age: 'Audience age',
-  regions: 'Regions',
+  country: 'Country',
   name: 'Name',
 };
 
@@ -120,7 +122,7 @@ const FIELD_ICONS = {
   profile_photo: '📸',
   bio: '✍️',
   audience_age: '👥',
-  regions: '🌍',
+  country: '🌍',
   name: '👤',
 };
 
@@ -242,23 +244,12 @@ const AGE_RANGES = [
   { value: '55+', label: '55+' },
 ];
 
-const REGIONS = [
-  { value: 'US', label: 'United States' },
-  { value: 'UK', label: 'United Kingdom' },
-  { value: 'CA', label: 'Canada' },
-  { value: 'AU', label: 'Australia' },
-  { value: 'EU', label: 'Europe' },
-  { value: 'LATAM', label: 'Latin America' },
-  { value: 'ASIA', label: 'Asia' },
-  { value: 'MENA', label: 'Middle East' },
-  { value: 'GLOBAL', label: 'Global' },
-];
-
 export default function ProfileCompleteness({ onUpdate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editingField, setEditingField] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [otherName, setOtherName] = useState('');
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
@@ -279,11 +270,13 @@ export default function ProfileCompleteness({ onUpdate }) {
   const handleItemClick = (field) => {
     if (data?.fields[field]) return; // Already done
     setEditingField(field);
-    setEditValue('');
+    setEditValue(field === 'country' ? detectCountry() : '');
+    setOtherName('');
   };
 
   const handleSave = async () => {
-    if (!editValue.trim() && editingField !== 'regions') return;
+    if (!editValue.trim()) return;
+    if (editingField === 'country' && editValue === OTHER_COUNTRY && !otherName.trim()) return;
 
     setSaving(true);
     try {
@@ -293,8 +286,9 @@ export default function ProfileCompleteness({ onUpdate }) {
         payload.bio = editValue.trim();
       } else if (editingField === 'audience_age') {
         payload.primary_age_range = editValue;
-      } else if (editingField === 'regions') {
-        payload.regions = editValue ? [editValue] : [];
+      } else if (editingField === 'country') {
+        payload.country = editValue;
+        if (editValue === OTHER_COUNTRY) payload.country_other = otherName.trim();
       } else if (editingField === 'name') {
         const [firstName, ...rest] = editValue.trim().split(' ');
         payload.first_name = firstName;
@@ -367,7 +361,7 @@ export default function ProfileCompleteness({ onUpdate }) {
             <ModalTitle>
               {editingField === 'bio' && 'Write your bio'}
               {editingField === 'audience_age' && 'Select your main audience age'}
-              {editingField === 'regions' && 'Select your main region'}
+              {editingField === 'country' && 'Where are you based?'}
               {editingField === 'name' && 'What\'s your name?'}
               {editingField === 'profile_photo' && 'Upload profile photo'}
             </ModalTitle>
@@ -394,17 +388,13 @@ export default function ProfileCompleteness({ onUpdate }) {
               </ModalSelect>
             )}
 
-            {editingField === 'regions' && (
-              <ModalSelect
+            {editingField === 'country' && (
+              <CountryCombobox
                 value={editValue}
-                onChange={e => setEditValue(e.target.value)}
-                autoFocus
-              >
-                <option value="">Select region...</option>
-                {REGIONS.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </ModalSelect>
+                onChange={setEditValue}
+                otherName={otherName}
+                onOtherNameChange={setOtherName}
+              />
             )}
 
             {editingField === 'name' && (

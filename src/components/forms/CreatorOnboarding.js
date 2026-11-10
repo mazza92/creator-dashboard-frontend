@@ -10,6 +10,8 @@ import { SocialVerificationStep } from '../SocialVerification';
 import ProfileScrapingLoader from '../ProfileScrapingLoader';
 import { scrapeHelpFromError } from '../../utils/scrapeHelp';
 import { needsWaitlistGate, WAITLIST_PATH } from '../../utils/creatorApproval';
+import CountryCombobox from './CountryCombobox';
+import { OTHER_COUNTRY, detectCountry } from '../../utils/countries';
 import {
   OnboardingSurveyStep1,
   OnboardingSurveyStep2,
@@ -703,17 +705,6 @@ const AGE_RANGES = [
   { id: '55+',   label: '55+' },
 ];
 
-const REGIONS = [
-  { id: 'US',     label: '🇺🇸 United States' },
-  { id: 'UK',     label: '🇬🇧 United Kingdom' },
-  { id: 'Canada', label: '🇨🇦 Canada' },
-  { id: 'Europe', label: '🇪🇺 Europe' },
-  { id: 'LATAM',  label: '🌎 Latin America' },
-  { id: 'MENA',   label: '🌍 Middle East & Africa' },
-  { id: 'Asia',   label: '🌏 Asia Pacific' },
-  { id: 'Global', label: '🌐 Global' },
-];
-
 // Platforms that support AI scraping + the brand-ready quality bar
 const SCRAPABLE_PLATFORMS = ['instagram', 'tiktok', 'youtube'];
 
@@ -748,7 +739,9 @@ export default function CreatorOnboarding() {
   // Step 2
   const [bio, setBio] = useState('');
   const [ageRange, setAgeRange] = useState('');
-  const [regions, setRegions] = useState([]);
+  // Where they're based (ISO code or OTHER). Pre-filled from the browser's language / time zone.
+  const [country, setCountry] = useState(() => detectCountry());
+  const [countryOther, setCountryOther] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   // Step 3
@@ -1107,11 +1100,6 @@ export default function CreatorOnboarding() {
     setTimeout(() => handleInputRef.current?.focus(), 50);
   };
 
-  const toggleRegion = (id) => {
-    setRegions(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
-    setError('');
-  };
-
   const compressImage = (file, maxSizeBytes = 3 * 1024 * 1024) => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -1163,7 +1151,8 @@ export default function CreatorOnboarding() {
     // Photo upload is optional - profile image is scraped from social during onboarding
     if (!bio.trim()) { setError('Please write a short bio'); return; }
     if (!ageRange) { setError('Please select your audience age range'); return; }
-    if (regions.length === 0) { setError('Please select at least one region'); return; }
+    if (!country) { setError('Please choose your country'); return; }
+    if (country === OTHER_COUNTRY && !countryOther.trim()) { setError('Please tell us which country you\'re in'); return; }
     setLoading(true);
     try {
       // Upload photo first
@@ -1177,7 +1166,8 @@ export default function CreatorOnboarding() {
       await apiClient.post('/api/user/onboarding/step2', {
         bio: bio.trim(),
         primary_age_range: ageRange,
-        regions,
+        country,
+        ...(country === OTHER_COUNTRY && { country_other: countryOther.trim() }),
       });
       setProfileStep(3);
     } catch (err) {
@@ -1611,6 +1601,18 @@ export default function CreatorOnboarding() {
             <Subline>Complete your profile so brands know who they're working with.</Subline>
 
             <FormGroup>
+              <FormLabel htmlFor="onboarding-country">Where are you based?</FormLabel>
+              <CountryCombobox
+                id="onboarding-country"
+                value={country}
+                onChange={(code) => { setCountry(code); setError(''); }}
+                otherName={countryOther}
+                onOtherNameChange={(v) => { setCountryOther(v); setError(''); }}
+                otherMessage="Thanks for telling us. We don't have brands shipping there yet, so your profile goes on our waitlist and we'll email you as soon as brands open up in your country."
+              />
+            </FormGroup>
+
+            <FormGroup>
               <FormLabel>Your bio</FormLabel>
               <Textarea
                 placeholder="e.g. Beauty & skincare creator based in NYC. I help brands connect with women 25–34 who care about clean ingredients."
@@ -1636,26 +1638,11 @@ export default function CreatorOnboarding() {
               </AgeGrid>
             </FormGroup>
 
-            <FormGroup>
-              <FormLabel>Audience region(s)</FormLabel>
-              <AgeGrid>
-                {REGIONS.map(r => (
-                  <AgeChip
-                    key={r.id}
-                    $selected={regions.includes(r.id)}
-                    onClick={() => toggleRegion(r.id)}
-                  >
-                    {r.label}
-                  </AgeChip>
-                ))}
-              </AgeGrid>
-            </FormGroup>
-
             {error && <ErrorMsg>{error}</ErrorMsg>}
 
             <BtnRow>
               <BackBtn onClick={() => setProfileStep(1)} disabled={loading}>← Back</BackBtn>
-              <ContinueBtn onClick={handleStep2} disabled={loading || !bio.trim() || !ageRange || regions.length === 0}>
+              <ContinueBtn onClick={handleStep2} disabled={loading || !bio.trim() || !ageRange || !country || (country === OTHER_COUNTRY && !countryOther.trim())}>
                 {loading ? 'Saving...' : 'Continue →'}
               </ContinueBtn>
             </BtnRow>
