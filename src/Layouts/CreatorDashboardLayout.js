@@ -11,6 +11,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import Logo from '../components/Logo';
 import api from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PaymentIssueBanner from '../components/PaymentIssueBanner';
 import { creatorTokens } from '../theme/creatorTokens';
 import { usePrefetch } from '../components/PrefetchLink';
 
@@ -884,6 +885,7 @@ const CreatorDashboardLayout = () => {
       </TopNav>
 
       <Content $polly={/\/dashboard\/(for-you|polly)(\/|$)/.test(location.pathname)}>
+        <PaymentIssueBanner />
         <Outlet />
       </Content>
 

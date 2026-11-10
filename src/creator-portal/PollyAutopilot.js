@@ -555,12 +555,23 @@ export function useAutopilot(active) {
   return { state, setState, reload };
 }
 
+/** Who sends the pitches: the creator's Gmail, or Newcollab on their behalf (for creators without Gmail). */
+export function senderOf(state) {
+  const gmail = state?.gmail || {};
+  const relay = !gmail.connected && state?.send_via === 'newcollab' && state?.relay?.available;
+  if (relay) {
+    return { connected: true, relay: true, needs_reconnect: false,
+      email: `Newcollab, replies go to ${state.relay.reply_to || 'your email'}` };
+  }
+  return { ...gmail, relay: false };
+}
+
 /** Composer pill: one line that says what Autopilot needs, or null while loading. */
 export function autopilotChip(state) {
   if (!state) return null;
   if (!state.is_pro) return { label: '⚡ Autopilot · Pro', attention: false };
   if (!state.available) return null;
-  if (!state.gmail?.connected) {
+  if (!senderOf(state).connected) {
     return { label: state.gmail?.needs_reconnect ? '⚡ Reconnect Autopilot' : '⚡ Turn on Autopilot', attention: true };
   }
   if (!state.enabled) return { label: '⚡ Autopilot paused', attention: false };
@@ -586,7 +597,7 @@ export function AutopilotCard({
   const failed = items.filter((i) => i.status === 'failed');
   const month = state?.month || {};
   const target = state?.monthly_target || DEFAULT_TARGET;
-  const gmail = state?.gmail || {};
+  const gmail = senderOf(state);
   const pct = Math.min(100, Math.round((100 * (month.sent || 0)) / target));
 
   const run = async (fn) => {
@@ -604,6 +615,13 @@ export function AutopilotCard({
   const connect = () => run(async () => {
     const res = await apiClient.get('/api/polly/autopilot/gmail/connect');
     if (res.data?.url) window.location.href = res.data.url;
+  });
+
+  // No Gmail (Outlook, iCloud, Yahoo...) or rather not connect it: Polly sends as "Name via Newcollab" and brands'
+  // replies land in the creator's own inbox.
+  const useNewcollab = () => run(async () => {
+    const res = await apiClient.post('/api/polly/autopilot/settings', { send_via: 'newcollab', enabled: true });
+    setState(res.data);
   });
 
   const resume = () => run(async () => {
@@ -768,6 +786,16 @@ export function AutopilotCard({
         <p className="muted" style={{ marginTop: 10 }}>
           On Google&apos;s screen, tick <strong>Send email on your behalf</strong>.
         </p>
+        {state?.relay?.available ? (
+          <NoGmail>
+            <b>No Gmail, or rather not connect it?</b>
+            <span>
+              I send your pitches as <strong>you via Newcollab</strong>, and brands reply straight
+              to {state.relay.reply_to ? <strong>{state.relay.reply_to}</strong> : 'your email'}.
+            </span>
+            <button type="button" onClick={useNewcollab} disabled={busy}>Send without Gmail</button>
+          </NoGmail>
+        ) : null}
       </>
     );
   } else if (plan) {
@@ -1101,9 +1129,11 @@ export function AutopilotSettings({ isOpen, state, setState, onClose, onOpenSetu
           <div className="line">
             <div style={{ minWidth: 0 }}>
               <div className="label">Sending from</div>
-              <div className="hint" style={{ overflowWrap: 'anywhere' }}>{state.gmail?.email}</div>
+              <div className="hint" style={{ overflowWrap: 'anywhere' }}>{senderOf(state).email}</div>
             </div>
-            <LinkBtn type="button" onClick={disconnect} disabled={busy}>Disconnect</LinkBtn>
+            {senderOf(state).relay ? null : (
+              <LinkBtn type="button" onClick={disconnect} disabled={busy}>Disconnect</LinkBtn>
+            )}
           </div>
         </Setting>
       </Sheet>
@@ -1111,3 +1141,28 @@ export function AutopilotSettings({ isOpen, state, setState, onClose, onOpenSetu
   );
   return createPortal(sheet, document.body);
 }
+
+const NoGmail = styled.div`
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px dashed #D1D5DB;
+  border-radius: 12px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #374151;
+  b { color: #111827; }
+  button {
+    justify-self: start;
+    margin-top: 4px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #111827;
+    background: #fff;
+    color: #111827;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: wait; }
+`;

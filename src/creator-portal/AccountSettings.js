@@ -8,6 +8,7 @@ import api, { getOAuthApiOrigin } from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import CancelRetentionModal from './CancelRetentionModal';
+import DeleteAccountFlow from './DeleteAccountFlow';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PRO_OFFER } from '../config/proOffer';
 import { CATEGORY_ALIASES } from '../constants/brandCategories';
@@ -66,25 +67,11 @@ const AccountSettings = () => {
   const [lastScan, setLastScan] = useState(null);
   const [accountEmail, setAccountEmail] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  const [deleteEmail, setDeleteEmail] = useState('');
-  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     fetchSubscriptionStatus();
     fetchCreatorProfile();
   }, []);
-
-  useEffect(() => {
-    if (!showDeleteModal) return undefined;
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape' && !deletingAccount) {
-        setShowDeleteModal(false);
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [showDeleteModal, deletingAccount]);
 
   // TikTok Login Kit return: /creator/dashboard/settings?social=success
   useEffect(() => {
@@ -192,30 +179,6 @@ const AccountSettings = () => {
       }
     } catch (error) {
       console.error('Error fetching creator profile:', error);
-    }
-  };
-
-  const canConfirmDelete =
-    deleteConfirmation.trim().toUpperCase() === 'DELETE' &&
-    deleteEmail.trim().toLowerCase() === accountEmail.trim().toLowerCase() &&
-    Boolean(accountEmail);
-
-  const handleDeleteAccount = async () => {
-    if (!canConfirmDelete || deletingAccount) return;
-    setDeletingAccount(true);
-    try {
-      await api.post('/api/account/delete', {
-        confirmation: 'DELETE',
-        email: deleteEmail.trim(),
-      });
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('userData');
-      localStorage.removeItem('authToken');
-      window.location.href = '/login?deleted=1';
-    } catch (error) {
-      message.error(error.response?.data?.error || 'Could not delete your account. Please try again.');
-      setDeletingAccount(false);
     }
   };
 
@@ -683,17 +646,13 @@ const AccountSettings = () => {
             <li>Profile, media kit, pitches, saved brands, and social connections</li>
             <li>Messages, applications, and collaboration history on Newcollab</li>
             {tier !== 'free' && (
-              <li>Your {getPlanName(tier)} subscription will be canceled immediately</li>
+              <li>On {getPlanName(tier)}, you cancel your subscription first, then you can delete</li>
             )}
             <li>You can create a new account later with the same email</li>
           </DangerList>
           <DangerButton
             type="button"
-            onClick={() => {
-              setDeleteConfirmation('');
-              setDeleteEmail('');
-              setShowDeleteModal(true);
-            }}
+            onClick={() => setShowDeleteModal(true)}
           >
             Delete my account
           </DangerButton>
@@ -704,64 +663,11 @@ const AccountSettings = () => {
       </Section>
 
       {showDeleteModal && (
-        <DeleteOverlay
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-account-title"
-          onClick={() => !deletingAccount && setShowDeleteModal(false)}
-        >
-          <DeleteModal onClick={(e) => e.stopPropagation()}>
-            <DangerTitle id="delete-account-title">Delete account permanently?</DangerTitle>
-            <DangerCopy>
-              This will immediately remove your account and personal data from Newcollab. Type{' '}
-              <strong>DELETE</strong> and your email to confirm.
-            </DangerCopy>
-            {accountEmail && (
-              <DangerCopy>
-                Account email: <strong>{accountEmail}</strong>
-              </DangerCopy>
-            )}
-            <DeleteField>
-              <DeleteLabel htmlFor="delete-confirm-phrase">Type DELETE</DeleteLabel>
-              <DeleteInput
-                id="delete-confirm-phrase"
-                value={deleteConfirmation}
-                onChange={(e) => setDeleteConfirmation(e.target.value)}
-                placeholder="DELETE"
-                autoComplete="off"
-                disabled={deletingAccount}
-              />
-            </DeleteField>
-            <DeleteField>
-              <DeleteLabel htmlFor="delete-confirm-email">Type your email</DeleteLabel>
-              <DeleteInput
-                id="delete-confirm-email"
-                type="email"
-                value={deleteEmail}
-                onChange={(e) => setDeleteEmail(e.target.value)}
-                placeholder={accountEmail || 'you@email.com'}
-                autoComplete="off"
-                disabled={deletingAccount}
-              />
-            </DeleteField>
-            <DeleteActions>
-              <DeleteCancel
-                type="button"
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deletingAccount}
-              >
-                Keep my account
-              </DeleteCancel>
-              <DangerButton
-                type="button"
-                onClick={handleDeleteAccount}
-                disabled={!canConfirmDelete || deletingAccount}
-              >
-                {deletingAccount ? 'Deleting…' : 'Permanently delete'}
-              </DangerButton>
-            </DeleteActions>
-          </DeleteModal>
-        </DeleteOverlay>
+        <DeleteAccountFlow
+          accountEmail={accountEmail}
+          onClose={() => setShowDeleteModal(false)}
+          onNeedCancel={() => setShowCancelModal(true)}
+        />
       )}
     </Container>
   );
@@ -1208,75 +1114,12 @@ const DangerButton = styled.button`
   }
 `;
 
-const DeleteOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 80;
-  padding: 16px;
-`;
 
-const DeleteModal = styled.div`
-  width: 100%;
-  max-width: 440px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-`;
 
-const DeleteField = styled.div`
-  margin-bottom: 14px;
-`;
 
-const DeleteLabel = styled.label`
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 6px;
-`;
 
-const DeleteInput = styled.input`
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #E5E7EB;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
 
-  &:focus {
-    outline: none;
-    border-color: #DC2626;
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
-  }
-`;
 
-const DeleteActions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-`;
-
-const DeleteCancel = styled.button`
-  width: 100%;
-  padding: 12px 16px;
-  background: #F3F4F6;
-  color: #111827;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #E5E7EB;
-  }
-`;
 
 export default AccountSettings;
 
