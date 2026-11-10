@@ -46,8 +46,22 @@ const emailCheckStatus = (b) => {
   const adj = b?.email_adjustment || '';
   if (adj.startsWith('fixed')) return 'Fixed';
   if (adj.startsWith('flagged')) return 'Flagged';
+  if (adj === 'manual') return 'Manual';
   return '';
 };
+
+// After saving a new contact email the backend checks it right away and returns email_check.
+const announceEmailCheck = (check) => {
+  if (!check || !check.message) return;
+  if (check.status === 'valid' || check.status === 'catch-all') message.success(check.message, 5);
+  else if (check.status === 'invalid') message.error(check.message, 6);
+  else message.warning(check.message, 6);
+};
+
+const emailCheckFields = (brand) => (brand && brand.email_check
+  ? { email_status: brand.email_status, email_adjustment: brand.email_adjustment, notes: brand.notes,
+      email_adjusted_at: brand.email_adjusted_at }
+  : {});
 
 const lastEmailNote = (notes) => {
   const lines = String(notes || '').split('\n').filter((l) => l.startsWith('[Email check'));
@@ -307,11 +321,16 @@ const BrandAdmin = () => {
     setUnsavedChanges(prev => new Set(prev).add(data.id));
 
     try {
-      await api.patch(
+      const { data: saved } = await api.patch(
         `/api/admin/brands/${data.id}`,
         { [colDef.field]: valueToSave },
         getApiConfig()
       );
+      if (saved?.email_check) {
+        Object.assign(data, emailCheckFields(saved));
+        params.api?.refreshCells({ rowNodes: [params.node], force: true });
+        announceEmailCheck(saved.email_check);
+      }
 
       setUnsavedChanges(prev => {
         const next = new Set(prev);
@@ -736,15 +755,16 @@ const BrandAdmin = () => {
     try {
       const values = await form.validateFields();
 
-      await api.patch(
+      const { data: saved } = await api.patch(
         `/api/admin/brands/${currentBrand.id}`,
         values,
         getApiConfig()
       );
 
       setRowData(prev => prev.map(b =>
-        b.id === currentBrand.id ? { ...b, ...values } : b
+        b.id === currentBrand.id ? { ...b, ...values, ...emailCheckFields(saved) } : b
       ));
+      announceEmailCheck(saved?.email_check);
 
       setDetailDrawerVisible(false);
       message.success('Brand details saved');
@@ -945,8 +965,9 @@ const BrandAdmin = () => {
       tooltipValueGetter: (params) => lastEmailNote(params.data?.notes),
       cellRenderer: (params) => {
         if (!params.value) return null;
-        const color = params.value === 'Fixed' ? 'blue' : 'red';
-        return <Tag color={color} style={{ fontSize: 10 }}>{params.value === 'Fixed' ? 'Email fixed' : 'Email dead'}</Tag>;
+        const map = { Fixed: ['blue', 'Email fixed'], Manual: ['green', 'Manual'], Flagged: ['red', 'Email dead'] };
+        const [color, label] = map[params.value] || ['default', params.value];
+        return <Tag color={color} style={{ fontSize: 10 }}>{label}</Tag>;
       }
     },
     {
