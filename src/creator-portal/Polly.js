@@ -1727,7 +1727,7 @@ export default function Polly() {
     const ap = autopilot.state;
     if (!ap || autopilotAutoOpenedRef.current) return;
     autopilotAutoOpenedRef.current = true;
-    if (ap.is_pro && ap.gmail?.connected && (ap.items || []).some((i) => i.status === 'draft')) {
+    if (ap.is_pro && (ap.gmail?.connected || (ap.send_via === 'newcollab' && ap.relay?.available)) && (ap.items || []).some((i) => i.status === 'draft')) {
       setAutopilotOpen(true);
     }
   }, [autopilot.state]);
