@@ -14,7 +14,7 @@ function useCountry() {
   return country;
 }
 
-const headline = (country) => `Get 5 brands that ship PR to ${countryLabel(country)} every week`;
+const headline = (country) => `Get brands that ship PR to ${countryLabel(country)}, matched to your niche`;
 const BODY =
   'Free account: a weekly shortlist of brands gifting creators where you live, each with its verified PR contact, plus a pitch Polly drafts for you.';
 
