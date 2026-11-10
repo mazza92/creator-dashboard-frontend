@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BrandUnlockClient from './BrandUnlockClient';
 import BrandPageLayout from './BrandPageLayout';
+import BrandPitchCta from './BrandPitchCta';
 import AreYouThisBrand from '../../../components/AreYouThisBrand';
 import { resolveBrandStats } from '../../../utils/brandStats';
 import { jsonLd } from '@/src/lib/jsonLd';
@@ -128,19 +129,25 @@ async function fetchBrand(slug, retries = 2) {
   return null;
 }
 
+// Returns up to 6 brands from the same category plus the category's total, if the API sends one.
 async function fetchRelatedBrands(category, currentSlug) {
-  if (!category) return [];
+  if (!category) return { brands: [], total: 0 };
   try {
     const res = await fetch(`${API_BASE}/api/public/brands?category=${encodeURIComponent(category)}&limit=7`, {
       next: { revalidate },
       signal: AbortSignal.timeout(15000), // Increased from 5s to 15s
     });
-    if (!res.ok) return [];
+    if (!res.ok) return { brands: [], total: 0 };
     const data = await res.json();
-    const brands = data.brands || data || [];
-    return brands.filter(b => b.slug !== currentSlug).slice(0, 6);
+    const brands = Array.isArray(data.brands) ? data.brands : Array.isArray(data) ? data : [];
+    const total = Number(data?.pagination?.total) || 0;
+    return {
+      brands: brands.filter(b => b.slug !== currentSlug).slice(0, 6),
+      // Similar brands = the rest of the category.
+      total: total > 1 ? total - 1 : 0,
+    };
   } catch {
-    return [];
+    return { brands: [], total: 0 };
   }
 }
 
@@ -384,7 +391,7 @@ export default async function BrandPage({ params }) {
 
   if (!brand) notFound();
 
-  const relatedBrands = await fetchRelatedBrands(brand.category, brand.slug);
+  const { brands: relatedBrands, total: similarTotal } = await fetchRelatedBrands(brand.category, brand.slug);
 
   const requirements = brand.requirements || {};
   const stats = brand.stats || {};
@@ -605,7 +612,13 @@ export default async function BrandPage({ params }) {
           transition: color 0.15s;
         }
         .bp-website:hover { color: #0F0F0F; }
-        .bp-header-right { flex-shrink: 0; }
+        .bp-header-right {
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 12px;
+        }
         .bp-status-pill {
           display: inline-flex;
           align-items: center;
@@ -1153,7 +1166,8 @@ export default async function BrandPage({ params }) {
           }
           .bp-logo { width: 60px; height: 60px; border-radius: 12px; }
           .bp-title { font-size: 22px; }
-          .bp-header-right { width: 100%; }
+          .bp-header-right { width: 100%; align-items: stretch; }
+          .bp-header-right .bp-status-pill { align-self: flex-start; }
           .bp-card { padding: 18px; }
           .bp-stats-grid { grid-template-columns: 1fr; }
           .bp-stat-value { font-size: 24px; }
@@ -1224,6 +1238,13 @@ export default async function BrandPage({ params }) {
                   Accepting PR
                 </div>
               ) : null}
+              <BrandPitchCta
+                slug={brand.slug}
+                brandName={brand.name}
+                similarCount={similarTotal}
+                similarHref={brand.category ? categoryDirectoryUrl(brand.category) : '/directory'}
+                categoryLabel={categoryLabel}
+              />
             </div>
           </header>
 
