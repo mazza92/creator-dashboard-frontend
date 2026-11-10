@@ -12,7 +12,8 @@ import {
   Typography,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import { CountryDropdown } from 'react-country-region-selector';
+import CountryCombobox from './CountryCombobox';
+import { OTHER_COUNTRY, detectCountry } from '../../utils/countries';
 import {
   FaInstagram,
   FaTiktok,
@@ -276,7 +277,7 @@ const buttonVariants = {
   hover: { scale: 1.05, transition: { duration: 0.2 } },
 };
 
-// Social platforms, age ranges, regions, and niches (unchanged)
+// Social platforms, age ranges and niches. Country (step 1) replaced the broad regions picker.
 const socialPlatforms = [
   { value: 'Instagram', label: <><FaInstagram style={{ color: '#E1306C', marginRight: '8px' }} /> Instagram</> },
   { value: 'TikTok', label: <><FaTiktok style={{ color: '#000000', marginRight: '8px' }} /> TikTok</> },
@@ -289,14 +290,6 @@ const ageRangeOptions = [
   { value: '35-44', label: '35-44' },
   { value: '45-54', label: '45-54' },
   { value: '55+', label: '55+' },
-];
-
-const regionsOptions = [
-  { value: 'North America', label: 'North America' },
-  { value: 'Europe', label: 'Europe' },
-  { value: 'Asia', label: 'Asia' },
-  { value: 'Africa', label: 'Africa' },
-  { value: 'South America', label: 'South America' },
 ];
 
 const nichesOptions = [
@@ -322,7 +315,8 @@ function CreatorOnboardingForm({ role, onSuccess }) {
     lastName: '',
     email: '',
     phone: '',
-    country: '',
+    country: detectCountry(),
+    countryOther: '',
     password: '',
     confirmPassword: '',
     bio: '',
@@ -331,7 +325,7 @@ function CreatorOnboardingForm({ role, onSuccess }) {
     imageProfile: null,
     termsAccepted: false,
     socialLinks: [{ platform: '', url: '', followersCount: '' }],
-    audience: { primaryAgeRange: '', regions: [], interests: [] },
+    audience: { primaryAgeRange: '', interests: [] },
     metrics: { totalPosts: 0, totalViews: 0, totalLikes: 0, totalComments: 0, totalShares: 0 },
     portfolioLinks: [],
     role: 'creator',
@@ -471,7 +465,7 @@ function CreatorOnboardingForm({ role, onSuccess }) {
       return true;
     }
     if (currentStep === 3) {
-      if (!formData.audience.primaryAgeRange || !formData.audience.regions.length || !formData.audience.interests.length) {
+      if (!formData.audience.primaryAgeRange || !formData.audience.interests.length) {
         message.error('Please complete all audience fields.');
         return false;
       }
@@ -622,10 +616,10 @@ function CreatorOnboardingForm({ role, onSuccess }) {
     formDataToSubmit.append('email', formData.email);
     formDataToSubmit.append('phone', formData.phone);
     formDataToSubmit.append('country', formData.country);
+    if (formData.country === OTHER_COUNTRY) formDataToSubmit.append('country_other', formData.countryOther.trim());
     formDataToSubmit.append('password', formData.password);
     formDataToSubmit.append('bio', formData.bio);
     formDataToSubmit.append('primaryAgeRange', formData.audience.primaryAgeRange);
-    formDataToSubmit.append('regions', JSON.stringify(formData.audience.regions));
     formDataToSubmit.append('interests', JSON.stringify(formData.audience.interests));
     formDataToSubmit.append('socialLinks', JSON.stringify(normalizedSocialLinks));
     formDataToSubmit.append('termsAccepted', formData.termsAccepted);
@@ -800,22 +794,24 @@ function CreatorOnboardingForm({ role, onSuccess }) {
         <Form.Item
           label="Country"
           name="country"
-          rules={[{ required: true, message: 'Please select your country' }]}
+          initialValue={formData.country || undefined}
+          rules={[
+            { required: true, message: 'Please select your country' },
+            {
+              validator: () => (formData.country === OTHER_COUNTRY && !formData.countryOther.trim()
+                ? Promise.reject(new Error("Please tell us which country you're in"))
+                : Promise.resolve()),
+            },
+          ]}
         >
-          <CountryDropdown
+          <CountryCombobox
             value={formData.country}
             onChange={(val) => {
               setFormData({ ...formData, country: val });
               form.setFieldsValue({ country: val });
             }}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              borderRadius: '24px',
-              border: '1px solid #d1d5db',
-              fontSize: '14px',
-            }}
-            classes="ant-input"
+            otherName={formData.countryOther}
+            onOtherNameChange={(val) => setFormData({ ...formData, countryOther: val })}
           />
         </Form.Item>
       </Col>
@@ -1048,24 +1044,6 @@ function CreatorOnboardingForm({ role, onSuccess }) {
                     })}
                     placeholder="Select primary age range"
                     aria-label="Primary Age Range"
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  label="Regions Reached"
-                  name="regions"
-                  rules={[{ required: true, message: 'Please select at least one region' }]}
-                >
-                  <StyledSelect
-                    mode="multiple"
-                    options={regionsOptions}
-                    value={formData.audience.regions}
-                    onChange={(value) => setFormData({
-                      ...formData,
-                      audience: { ...formData.audience, regions: value },
-                    })}
-                    placeholder="Select regions"
-                    aria-label="Regions Reached"
                   />
                 </Form.Item>
 

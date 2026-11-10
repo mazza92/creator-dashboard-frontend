@@ -9,6 +9,9 @@ import { SearchOutlined, LinkOutlined, MailOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
 import ForBrandsCta from '../components/ForBrandsCta';
+import UnlockCard from '../components/seo/UnlockCard';
+import useDashboardSession from '../../hooks/useDashboardSession';
+import { seoSignupHref, signedInHref, trackCtaClick } from '../../lib/seoConversion';
 import { getCategoryColors } from '../../utils/categoryColors';
 import { normalizeCategory, categoryLabel } from '../../constants/brandCategories';
 import { CITATION_LAST_UPDATED, DIRECTORY_FACTS, directoryCountLabel } from '../../lib/citationFacts';
@@ -296,6 +299,17 @@ const Grid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
   margin-top: 24px;
+`;
+
+// Number of brand cards shown before the inline unlock card.
+const UNLOCK_AFTER = 9;
+
+const UnlockRow = styled.div`
+  grid-column: 1 / -1;
+
+  .nc-unlock-card {
+    margin: 8px 0;
+  }
 `;
 
 const Card = styled(Link)`
@@ -859,6 +873,17 @@ export default function DirectoryClient({
   const [contactType, setContactType] = useState(searchParams?.get('contactType') || ''); // 'application', 'email', or '' for all
 
   const limit = 24;
+  const signedIn = useDashboardSession().status === 'in';
+  const pagePath = pathname || '/directory';
+  // Signup (or dashboard, when signed in) with the brand and page this click came from.
+  const contactHref = (brandSlug, location) =>
+    signedIn
+      ? signedInHref(brandSlug)
+      : seoSignupHref({ ref: 'directory', slug: pagePath, brand: brandSlug, intent: brandSlug ? 'brand_specific' : undefined, location });
+  const goContact = (brandSlug, location) => {
+    trackCtaClick({ location, page: pagePath, brand: brandSlug });
+    window.location.href = contactHref(brandSlug, location);
+  };
 
   // Note: Filters are now initialized directly from URL params in useState above,
   // so no separate useEffect needed for URL initialization
@@ -1145,7 +1170,10 @@ export default function DirectoryClient({
                           <div className="category">{brand.category}</div>
                         </OpenPRInfo>
                       </OpenPRCardHeader>
-                      <ApplyButton href="https://app.newcollab.co/register/creator">
+                      <ApplyButton
+                        href={contactHref(brand.slug, 'directory_open_pr')}
+                        onClick={() => trackCtaClick({ location: 'directory_open_pr', page: pagePath, brand: brand.slug })}
+                      >
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
@@ -1171,7 +1199,8 @@ export default function DirectoryClient({
                 </DiscoveryText>
                 <DiscoveryButton
                   as="a"
-                  href="https://app.newcollab.co/register/creator"
+                  href={seoSignupHref({ ref: 'directory', slug: pagePath, location: 'directory_search_miss' })}
+                  onClick={() => trackCtaClick({ location: 'directory_search_miss', page: pagePath })}
                   style={{ textDecoration: 'none' }}
                 >
                   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1196,8 +1225,26 @@ export default function DirectoryClient({
           ) : (
             <>
               <Grid>
-                {brands.map((brand) => (
-                  <Card key={brand.slug || brand.id} href={`/brand/${brand.slug}`}>
+                {brands.map((brand, index) => (
+                  <React.Fragment key={brand.slug || brand.id}>
+                  {/* Content unlock: after the first rows prove the value, one card spanning the grid. */}
+                  {!signedIn && index === UNLOCK_AFTER && brands.length > UNLOCK_AFTER + 2 && (
+                    <UnlockRow>
+                      <UnlockCard
+                        ctx={{ ref: 'directory', slug: pagePath, page: pagePath }}
+                        locked={0}
+                        location="directory_unlock"
+                        fade={false}
+                        title="Unlock every brand's verified PR contact — free"
+                        body={`A free account shows the PR email or application link for ${
+                          (total || initialTotal) >= 100
+                            ? `all ${(total || initialTotal).toLocaleString('en-US')} brands here`
+                            : 'every brand here'
+                        }, lets you save the ones you like and has Polly draft your pitch.`}
+                      />
+                    </UnlockRow>
+                  )}
+                  <Card href={`/brand/${brand.slug}`}>
                     {brand.isFeatured && (
                       <FeaturedBadge>
                         ✦ Featured
@@ -1290,7 +1337,7 @@ export default function DirectoryClient({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        window.location.href = 'https://app.newcollab.co/register/creator';
+                        goContact(brand.slug, 'directory_card');
                       }}
                     >
                       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1299,6 +1346,7 @@ export default function DirectoryClient({
                       Sign up to contact brand
                     </CardCTA>
                   </Card>
+                  </React.Fragment>
                 ))}
               </Grid>
 

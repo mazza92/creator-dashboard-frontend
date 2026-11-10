@@ -539,6 +539,129 @@ export function rewriteMergedPostLinks(html) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// SEO conversion: contextual signup CTAs inside the article (server-rendered, so no layout
+// shift) and signup context on the post's existing register links.
+// ---------------------------------------------------------------------------
+
+const SIGNUP_URL = 'https://app.newcollab.co/register/creator';
+const CTA_CLASS_RE = /class=['"][^'"]*\b(cta-box|cta-section|kit-pitch-cta|portfolio-scroll-stopper|nc-inline-cta)\b/i;
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/** Same params as seoSignupHref() in seoConversion.js, with a fixed origin so SSR and hydration match. */
+export function blogSignupHref(slug, location) {
+  const params = new URLSearchParams({
+    ref: 'blog',
+    slug,
+    source_page: slug,
+    utm_source: 'blog',
+    utm_medium: 'seo_cta',
+    utm_campaign: location,
+    utm_content: slug,
+  });
+  return `${SIGNUP_URL}?${params.toString()}`;
+}
+
+/** A post whose body is mostly a brand list (lots of brand/directory links). */
+export function isBrandListPost(html) {
+  return ((html || '').match(/href=['"]\/(?:directory|brand)\b/gi) || []).length >= 10;
+}
+
+function inlineCtaHtml({ slug, location, kicker, title, body, button, meta }) {
+  return `
+<aside class="nc-inline-cta" data-nc-cta-block="${location}" aria-label="${escapeAttr(kicker)}">
+  <p class="nc-inline-cta__kicker">${kicker}</p>
+  <p class="nc-inline-cta__title">${title}</p>
+  <p class="nc-inline-cta__body">${body}</p>
+  <p class="nc-inline-cta__row"><a class="nc-inline-cta__btn" data-nc-cta="${location}" href="${escapeAttr(blogSignupHref(slug, location))}">${button}</a><span class="nc-inline-cta__meta">${meta}</span></p>
+</aside>`;
+}
+
+function introCta(slug, listPost) {
+  return listPost
+    ? inlineCtaHtml({
+      slug,
+      location: 'inline_intro',
+      kicker: 'Faster than applying one by one',
+      title: 'Let Polly pitch the brands on this list for you',
+      body: 'Polly finds the right PR contact, writes a short pitch in your voice with your portfolio link, and follows up. Made for UGC creators with 1k to 50k followers.',
+      button: 'Try Polly free',
+      meta: 'Free plan · No follower minimum',
+    })
+    : inlineCtaHtml({
+      slug,
+      location: 'inline_intro',
+      kicker: 'For UGC creators',
+      title: 'Find brands that send PR to creators your size',
+      body: 'Newcollab lists 2,000+ brands with open PR programs, the verified contact for each one, and drafts the pitch for you.',
+      button: 'Find my brands, free',
+      meta: 'Free plan · No follower minimum',
+    });
+}
+
+function midCta(slug) {
+  return inlineCtaHtml({
+    slug,
+    location: 'inline_mid',
+    kicker: 'Found a brand you like?',
+    title: 'Get its verified PR contact in one click',
+    body: 'A free account shows PR emails and application links for 2,000+ brands, plus a free UGC portfolio to send with your pitch.',
+    button: 'Unlock contacts free',
+    meta: 'Takes 30 seconds',
+  });
+}
+
+function h2Positions(html) {
+  const out = [];
+  const re = /<h2\b[^>]*>/gi;
+  let m;
+  while ((m = re.exec(html))) {
+    if (!/\bid=['"]faq['"]/i.test(m[0])) out.push(m.index);
+  }
+  return out;
+}
+
+/** Insert an after-intro and a mid-article CTA, skipping spots that already have a CTA nearby. */
+export function injectSeoCtas(html, slug) {
+  if (!html || !slug || html.includes('nc-inline-cta')) return html;
+  const h2s = h2Positions(html);
+  if (h2s.length < 3) return html;
+
+  const inserts = [];
+  const nearCta = (pos, before = 1500) => CTA_CLASS_RE.test(html.slice(Math.max(0, pos - before), pos));
+
+  if (!CTA_CLASS_RE.test(html.slice(0, h2s[0]))) inserts.push({ pos: h2s[0], html: introCta(slug, isBrandListPost(html)) });
+
+  const middle = html.length / 2;
+  const mid = h2s
+    .slice(1)
+    .sort((a, b) => Math.abs(a - middle) - Math.abs(b - middle))
+    .find((pos) => pos > html.length * 0.3 && pos < html.length * 0.75 && !nearCta(pos));
+  if (mid !== undefined) inserts.push({ pos: mid, html: midCta(slug) });
+
+  return inserts
+    .sort((a, b) => b.pos - a.pos)
+    .reduce((acc, ins) => acc.slice(0, ins.pos) + ins.html + acc.slice(ins.pos), html);
+}
+
+const REGISTER_HREF_RE = /(href=['"])((?:https:\/\/app\.newcollab\.co)?\/register\/creator)(\?[^'"]*)?(['"])/gi;
+
+/** Give the post's own signup links the same context (ref, source page) as the new CTAs. */
+export function addSignupContext(html, slug) {
+  if (!html || !slug) return html;
+  return html.replace(REGISTER_HREF_RE, (match, open, path, query, close) => {
+    const raw = (query || '').slice(1).replace(/&amp;/g, '&');
+    const params = new URLSearchParams(raw);
+    if (params.has('ref')) return match;
+    params.set('ref', 'blog');
+    params.set('source_page', slug);
+    return `${open}${SIGNUP_URL}?${params.toString().replace(/&/g, '&amp;')}${close}`;
+  });
+}
+
 export function getPostContentHtml(post, options = {}) {
   let html = rewriteMergedPostLinks(post?.content || '');
 
@@ -555,6 +678,10 @@ export function getPostContentHtml(post, options = {}) {
 
   if (post?.slug) {
     html = injectPortfolioScrollStopper(html, post.slug);
+  }
+
+  if (options.seoCtas && post?.slug) {
+    html = addSignupContext(injectSeoCtas(html, post.slug), post.slug);
   }
 
   return html;
