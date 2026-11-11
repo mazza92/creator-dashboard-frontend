@@ -1,27 +1,27 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import DealDrawer, { TypePill } from './tracker/DealDrawer';
-import GoalSetup from './tracker/GoalSetup';
+import GoalModal from './tracker/GoalModal';
 import { Flame, KindIcon, KIND_LABEL, LineIcon, HOT_COLOR } from './tracker/TrackerIcons';
 import {
   TRACKER_PATH, agendaDays, allCards, calendarWeeks, cardMatches, dayLabel, findCard, localIso, money, monthName,
-  paywallGoal, pct, sortCards, typeLabel,
+  paywallGoal, sortCards, typeLabel,
 } from './tracker/trackerModel';
 
 // Tracker (replaces Timeline): the monthly goal, every brand on one board, the dates that matter.
 // GET /api/tracker; one brand opens in the deal drawer (/tracker/:brandId or ?brand=ID&step=amount).
 
 const VIEWS = [
-  { id: 'board', label: 'Board' },
   { id: 'calendar', label: 'Calendar' },
+  { id: 'board', label: 'Board' },
   { id: 'list', label: 'List' },
 ];
-const VIEW_KEY = 'nc_tracker_view';
+// v2: Calendar became the default (creators plan by date); a new key so the old saved "board" doesn't stick.
+const VIEW_KEY = 'nc_tracker_view_v2';
 const LEGEND = ['hot', 'sched', 'sent', 'fu', 'due', 'ship', 'post', 'pay'];
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const LIST_COLS = [
@@ -35,9 +35,9 @@ const LIST_COLS = [
 function readView() {
   try {
     const v = localStorage.getItem(VIEW_KEY);
-    return VIEWS.some((x) => x.id === v) ? v : 'board';
+    return VIEWS.some((x) => x.id === v) ? v : 'calendar';
   } catch (_) {
-    return 'board';
+    return 'calendar';
   }
 }
 
@@ -82,13 +82,13 @@ export function GoalHeader({ tracker, onEditGoal }) {
     <GoalRow>
       <div className="top">
         <div className="h">
-          <span className="lbl">{goal.set ? `${month} goal` : `Suggested ${month} goal`}</span>
+          <span className="lbl">{goal.set ? `My ${month} goal` : `${month} goal (suggested)`}</span>
           <span className="big">{money(total)} <small>of {money(amount)}</small></span>
         </div>
         <div className="side">
           <Legend>
             <span><i style={{ background: t.accent }} />{money(paid)} paid</span>
-            <span><i style={{ background: '#e0a84a' }} />{money(gifted)} in products</span>
+            <span><i style={{ background: '#e0a84a' }} />{money(gifted)} in free products</span>
             <span>{tracker.days_left} day{tracker.days_left === 1 ? '' : 's'} left</span>
           </Legend>
           <EditGoal type="button" onClick={onEditGoal}>{goal.set ? 'Edit goal' : 'Set my goal'}</EditGoal>
@@ -98,25 +98,32 @@ export function GoalHeader({ tracker, onEditGoal }) {
         <span className="paid" style={{ width: `${paidW}%` }} />
         <span className="gift" style={{ width: `${giftW}%` }} />
       </Bar>
-      {m.pitches ? (
-        <MathLine>
-          <b>~{m.pitches} pitches → ~{m.deals} deal{m.deals === 1 ? '' : 's'}</b> at ~{money(m.avg_deal_cents)} each
-          <span className="src"> · {m.rates_source === 'yours' ? 'your rates' : 'starting rates'}: {pct(m.reply_rate)} reply, {pct(m.deal_rate)} of replies become a deal</span>
-        </MathLine>
-      ) : null}
+      {m.pitches ? <MathLine>{goalPlan(m)}</MathLine> : null}
     </GoalRow>
+  );
+}
+
+// Plain words for aspiring creators: brands per week, "1 in N write back", collabs. No rates or funnels.
+export function goalPlan(m) {
+  const perWeek = Math.max(1, Math.round((m.pitches || 0) / 4.3));
+  const oneIn = (r) => Math.max(1, Math.round(1 / (Number(r) || 1)));
+  return (
+    <>
+      <b>Pitch about {perWeek} brand{perWeek === 1 ? '' : 's'} a week</b> to get there.
+      <span className="src"> {m.rates_source === 'yours' ? 'From your results so far' : 'Usually'}, 1 in {oneIn(m.reply_rate)} brands
+      writes back and 1 in {oneIn(m.deal_rate)} of those becomes a collab (about {money(m.avg_deal_cents)} each).</span>
+    </>
   );
 }
 
 function FunnelStrip({ funnel }) {
   const f = funnel || {};
-  const replyRate = f.pitched ? Math.round((f.replied / f.pitched) * 100) : null;
   return (
     <Funnel>
       <div className="s"><span className="v">{f.pitched || 0}{f.pitches_needed ? <small> / {f.pitches_needed}</small> : null}</span><span className="k">brands pitched</span></div>
-      <div className="s"><span className="v">{f.replied || 0}</span><span className="k">replied{replyRate != null ? <b> ({replyRate}%)</b> : null}</span></div>
-      <div className="s"><span className="v">{f.negotiating || 0}</span><span className="k">in negotiation{f.negotiating_cents ? <>, <b>{money(f.negotiating_cents)}</b></> : null}</span></div>
-      <div className="s"><span className="v">{f.booked_or_paid || 0}</span><span className="k">booked or paid</span></div>
+      <div className="s"><span className="v">{f.replied || 0}</span><span className="k">wrote back</span></div>
+      <div className="s"><span className="v">{f.negotiating || 0}</span><span className="k">talking money{f.negotiating_cents ? <>, <b>{money(f.negotiating_cents)}</b></> : null}</span></div>
+      <div className="s"><span className="v">{f.booked_or_paid || 0}</span><span className="k">collabs confirmed</span></div>
     </Funnel>
   );
 }
@@ -273,27 +280,6 @@ function ListView({ cards, onOpen }) {
   );
 }
 
-function GoalModal({ onClose, onSaved }) {
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-  return createPortal(
-    <ModalBack onClick={onClose}>
-      <ModalCard role="dialog" aria-modal="true" aria-labelledby="goal-modal-title" onClick={(e) => e.stopPropagation()}>
-        <div className="mh">
-          <h2 id="goal-modal-title">Your monthly collab goal</h2>
-          <button type="button" aria-label="Close" onClick={onClose}>×</button>
-        </div>
-        <GoalSetup variant="modal" onSaved={onSaved} onSkip={onClose} skipLabel="Cancel" saveLabel="Save goal"
-          onUnavailable={onClose} />
-      </ModalCard>
-    </ModalBack>,
-    document.body,
-  );
-}
-
 export default function Tracker() {
   const navigate = useNavigate();
   const { brandId: routeBrandId } = useParams();
@@ -425,7 +411,7 @@ export default function Tracker() {
           {!totalCards && filter === 'all' ? (
             <EmptyBox $inline>
               <h2>Polly lines up brands here</h2>
-              <p>Pick brands in Polly and they show up as Lined up, then Pitched, Replied, Booked and Paid.</p>
+              <p>Pick brands in Polly and they show up here: lined up, pitched, wrote back, confirmed, then paid.</p>
               <button type="button" onClick={() => navigate('/creator/dashboard/for-you')}>Find brands with Polly</button>
             </EmptyBox>
           ) : view === 'calendar' ? (
@@ -841,15 +827,16 @@ const Cell = styled.div`
 
 const Ev = styled.button`
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  gap: 6px;
-  align-items: center;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  > span:first-child { margin-top: 1px; }
   width: 100%;
   min-width: 0;
   text-align: left;
   border: 0;
-  border-radius: 7px;
-  padding: 4px 5px;
+  border-radius: 8px;
+  padding: 6px 7px;
   background: ${t.white};
   box-shadow: ${(p) => (p.$hot ? 'inset 0 0 0 1px #f5c09c' : 'none')};
   font: inherit;
@@ -1002,36 +989,3 @@ const Skeleton = styled.div`
   div:last-child { height: 320px; }
 `;
 
-const ModalBack = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  background: rgba(18, 20, 26, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-
-  @media (max-width: 640px) { align-items: flex-end; padding: 0; }
-`;
-
-const ModalCard = styled.div`
-  background: ${t.white};
-  border-radius: 18px;
-  width: min(560px, 100%);
-  max-height: calc(100dvh - 32px);
-  overflow-y: auto;
-  padding: 20px;
-  box-sizing: border-box;
-  font-family: ${t.fontSans};
-
-  .mh { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
-  .mh h2 { margin: 0; font-size: 18px; font-weight: 700; }
-  .mh button { width: 34px; height: 34px; border-radius: 50%; border: 0; background: ${t.subtle}; font-size: 20px; cursor: pointer; }
-
-  @media (max-width: 640px) {
-    border-radius: 18px 18px 0 0;
-    max-height: 92dvh;
-    padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
-  }
-`;

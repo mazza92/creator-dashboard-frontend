@@ -1346,8 +1346,8 @@ export default function CreatorOnboarding() {
                 <ProgressFill $pct={95} />
               </ProgressTrack>
             </ProgressWrap>
-            <Headline>Set a monthly collab goal</Headline>
-            <Subline>Gifted products count at their retail value, paid deals at what the brand pays. Polly works out how many brands to pitch to get there.</Subline>
+            <Headline>How much do you want to make from brands each month?</Headline>
+            <Subline>Paid videos and free products both count. Polly plans how many brands to pitch to get you there.</Subline>
             <GoalSetup
               variant="onboarding"
               saveLabel="Set my goal →"

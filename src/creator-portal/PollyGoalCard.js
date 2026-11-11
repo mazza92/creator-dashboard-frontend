@@ -35,15 +35,15 @@ export default function PollyGoalCard({ avatar, Row, Wrap, onOpenTracker }) {
             <Done>
               <b>Goal set: {money(saved.amount_cents)} a month.</b>
               {saved.math?.pitches ? (
-                <span> That&apos;s about {saved.math.pitches} brands to pitch. I&apos;m lining them up in your Tracker.</span>
+                <span> That&apos;s about {Math.max(1, Math.round(saved.math.pitches / 4.3))} brands a week. I&apos;m lining them up in your Tracker.</span>
               ) : <span> I&apos;m lining up the brands in your Tracker.</span>}
               <div><button type="button" onClick={onOpenTracker}>Open my Tracker</button></div>
             </Done>
           ) : (
             <>
               <Head>
-                <b>What do you want to earn from collabs this month?</b>
-                <span>One goal for gifted products and paid deals together. I&apos;ll work out how many brands it takes.</span>
+                <b>How much do you want to make from brands this month?</b>
+                <span>Paid videos and free products both count. I&apos;ll plan how many brands to pitch.</span>
               </Head>
               <GoalSetup suggestion={data} variant="polly" onSaved={setSaved} onSkip={dismiss} skipLabel="Later" />
             </>
