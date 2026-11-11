@@ -108,6 +108,8 @@ export default function GoalSetup({
       });
       if (res?.success === false) throw new Error(res.error || 'Could not save');
       try { window.dispatchEvent(new Event('nc-tracker-changed')); } catch (_) { /* ignore */ }
+      // Polly posted the week's plan in chat: the layout takes the creator there (see CreatorDashboardLayout).
+      try { window.dispatchEvent(new CustomEvent('nc-goal-saved', { detail: res?.goal || {} })); } catch (_) { /* ignore */ }
       if (onSaved) onSaved(res?.goal || { amount_cents: amountCents, math });
     } catch (err) {
       setError(err?.response?.data?.error === 'amount_required' ? 'Type an amount in dollars.' : 'Could not save your goal. Try again.');

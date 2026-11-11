@@ -15,6 +15,7 @@ import { useTrialOffer } from '../utils/trialOffer';
 import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
 import PollyActivityCard from './PollyActivityCard';
+import PollyGoalPlanCard from './PollyGoalPlanCard';
 import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -1574,6 +1575,22 @@ export default function Polly() {
   }, [creatorId, messages, suggested]);
 
   useEffect(() => {
+    const onPlan = () => {
+      apiClient.get('/api/polly/thread').then((res) => {
+        const msgs = Array.isArray(res.data?.messages) ? res.data.messages : [];
+        if (!res.data?.success || !msgs.length || turnInFlightRef.current) return;
+        setMessages(msgs);
+        setTimeout(() => {
+          const el = threadRef.current;
+          if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+        }, 80);
+      }).catch(() => {});
+    };
+    window.addEventListener('nc-polly-reload', onPlan);
+    return () => window.removeEventListener('nc-polly-reload', onPlan);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     const applyServerThread = (msgs, brands, ownerId) => {
       const usable = usableThreadMessages(msgs);
@@ -2591,7 +2608,7 @@ export default function Polly() {
                   {msg.radar ? (
                     <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} onSettled={settleRadar} />
                   ) : null}
-                  {msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
+                  {!msg.goal_plan && msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).map((s) => (
                         <Chip
@@ -2798,6 +2815,9 @@ export default function Polly() {
                   )}
                   {msg.activity?.items?.length > 0 && (
                     <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
+                  )}
+                  {msg.goal_plan?.days?.length > 0 && (
+                    <PollyGoalPlanCard plan={msg.goal_plan} chips={msg.task_chips || []} onChip={sendStarter} disabled={busy} />
                   )}
                   {msg.pitch_batch?.items?.length > 0 && (
                     <PitchBatchCard

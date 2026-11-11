@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import styled, { keyframes } from 'styled-components';
 import { creatorTokens as t } from '../../theme/creatorTokens';
@@ -121,3 +122,23 @@ const Card = styled.div`
     h2 { font-size: 19px; }
   }
 `;
+
+const POLLY_PATH = '/creator/dashboard/for-you';
+
+// When a saved goal comes with Polly's plan in chat, show it where creators already are: Polly.
+// (The Tracker stays put: it refreshes in place.)
+export function GoalPlanHandoff() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    const onSaved = (e) => {
+      if (!e?.detail?.posted_plan) return;
+      if (location.pathname.startsWith('/creator/dashboard/tracker')) return;
+      if (!location.pathname.startsWith(POLLY_PATH)) navigate(POLLY_PATH);
+      setTimeout(() => { try { window.dispatchEvent(new Event('nc-polly-reload')); } catch (_) { /* ignore */ } }, 400);
+    };
+    window.addEventListener('nc-goal-saved', onSaved);
+    return () => window.removeEventListener('nc-goal-saved', onSaved);
+  }, [navigate, location.pathname]);
+  return null;
+}
