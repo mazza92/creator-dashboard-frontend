@@ -45,9 +45,11 @@ function Check() {
 
 export default function PitchBatchCard({
   batch, available, gmailConnected, sending, disabled, onSend, onConnect, onOpenMail, onCopy, free = false,
+  defaultManual = false,
 }) {
   const [open, setOpen] = useState(null);
-  const [manual, setManual] = useState(false);
+  // "I'll pitch brands myself" (first run) opens straight on Open email / Copy pitch.
+  const [manual, setManual] = useState(Boolean(defaultManual));
   const [handSent, setHandSent] = useState(() => new Set());
   const [copied, setCopied] = useState(null);
   const items = batch?.items || [];

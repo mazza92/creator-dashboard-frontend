@@ -28,7 +28,7 @@ function useTracker() {
   const [state, setState] = useState({ data: null, loading: true, error: false });
   const load = useCallback(() => {
     let live = true;
-    apiClient.get('/api/tracker')
+    apiClient.get('/api/tracker', { params: { seen: 1 } })
       .then(({ data }) => {
         if (!live) return;
         const ok = data && Array.isArray(data.columns);
