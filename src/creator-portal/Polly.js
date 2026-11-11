@@ -9,7 +9,7 @@ import { AutopilotCard, AutopilotSettings, autopilotChip, useAutopilot } from '.
 import PollyProSetup from './PollyProSetup';
 import MondayBoard from './PollyBoard';
 import CreatorHooks from './PollyHooks';
-import { PitchFactsCard, usePitchFacts } from './PollyPitchFacts';
+import { usePitchFacts } from './PollyPitchFacts';
 import PollyWelcome from './PollyWelcome';
 import { useTrialOffer } from '../utils/trialOffer';
 import GiftingRadar from './PollyRadar';
@@ -30,6 +30,7 @@ import {
 } from './pollyStorage';
 import { brandMarkEmoji } from './brandMarkEmoji';
 import PollyGoalBar from './PollyGoalBar';
+import PollyFirstRun from './PollyFirstRun';
 import { TRACKER_PATH, chipHref } from './tracker/trackerModel';
 import { captureUpgradeDeeplink, dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 
@@ -1524,10 +1525,10 @@ export default function Polly() {
   const [autopilotNotice, setAutopilotNotice] = useState('');
   const pitchFacts = usePitchFacts();
   const [welcomeDone, setWelcomeDone] = useState(false);
+  // First run (bootstrap.first_run): the welcome with lined-up brands and two choices, until the creator picks.
+  const [firstRun, setFirstRun] = useState(null);
+  const [batchManual, setBatchManual] = useState(false);
   const pendingTrialRef = useRef(false);
-  const [factsLater, setFactsLater] = useState(() => {
-    try { return sessionStorage.getItem('polly_facts_later') === '1'; } catch (_) { return false; }
-  });
   const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
   const autopilotAutoOpenedRef = useRef(false);
@@ -1626,6 +1627,7 @@ export default function Polly() {
           setStarters(normalizeStarters(res.data.starters));
         }
         if (res.data.brief) setBrief(res.data.brief);
+        setFirstRun(res.data.first_run || null);
         if (res.data.credits) setCredits(res.data.credits);
         const ownerId = res.data.profile?.creator_id || creatorIdRef.current;
         const serverMsgs = Array.isArray(res.data.messages) ? res.data.messages : [];
@@ -1875,6 +1877,9 @@ export default function Polly() {
       sent_summary: reply.sent_summary || null,
     }];
     setMessages(next);
+    if (reply.sent) {
+      try { window.dispatchEvent(new Event('nc-tracker-changed')); } catch (_) { /* ignore */ }
+    }
     if (reply.sent_summary) {
       // Land on the win, not on an older card: after the Gmail redirect the thread may not be at the bottom.
       setTimeout(() => {
@@ -2096,7 +2101,7 @@ export default function Polly() {
 
   const firstVisit = ready && !welcomeDone && messages.length === 0
     && !(creatorId && readPollyLocal(creatorId)?.messages?.length);
-  const welcomeMode = firstVisit && Boolean(pitchFacts.facts?.needs_confirm);
+  const welcomeMode = firstVisit && !firstRun && Boolean(pitchFacts.facts?.needs_confirm);
 
   // Pro setup journey: right after checkout or Gmail, and once a session for Pro creators who haven't finished
   // it (pre-filled, resumes where they left off). Free creators never see it.
@@ -2136,6 +2141,19 @@ export default function Polly() {
     if (messagesRef.current.length) return;
     send('', action);
   }, [autoAction, ready, busy, send, firstVisit, welcomeMode, pitchFacts.loaded]);
+
+  const startFirstRun = (choice, brandIds) => {
+    if (busy) return;
+    setFirstRun(null);
+    setBatchManual(choice === 'manual');
+    apiClient.post('/api/polly/first-run', { choice }).catch(() => {});
+    sendStarter({
+      id: 'pitch_all',
+      action: 'pitch_batch',
+      brand_ids: brandIds,
+      label: choice === 'manual' ? "I'll pitch brands myself" : 'Start contacting brands for me',
+    });
+  };
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -2453,7 +2471,11 @@ export default function Polly() {
   // "Send them myself": the same hand-off as a single pitch, from the batch card.
   const openBatchMail = (item) => {
     if (!item?.mailto) return Promise.resolve(false);
-    const logged = logPitchHandoff(item, 'open_email').then((res) => Boolean(res?.logged_sent));
+    const logged = logPitchHandoff(item, 'open_email').then((res) => {
+      const ok = Boolean(res?.logged_sent);
+      if (ok) { try { window.dispatchEvent(new Event('nc-tracker-changed')); } catch (_) { /* ignore */ } }
+      return ok;
+    });
     window.location.href = cleanMailto(item.mailto);
     return logged;
   };
@@ -2492,11 +2514,19 @@ export default function Polly() {
           <button type="button" aria-label="Dismiss" onClick={() => setLiveToast(null)}>×</button>
         </LiveToast>
       ) : null}
-      {ready && !welcomeMode && !firstVisit && creatorId ? (
-        <PollyGoalBar onOpenTracker={() => navigate(TRACKER_PATH)} />
+      {ready && creatorId && (firstRun || (!welcomeMode && !firstVisit)) ? (
+        <PollyGoalBar onOpenTracker={() => navigate(TRACKER_PATH)} showChecklist={!firstRun} />
       ) : null}
       <Thread ref={threadRef}>
-        {welcomeMode ? (
+        {firstRun ? (
+          <PollyFirstRun
+            data={firstRun}
+            firstName={user?.first_name || ''}
+            avatar={POLLY_AVATAR_URL}
+            busy={busy}
+            onStart={startFirstRun}
+          />
+        ) : welcomeMode ? (
           <PollyWelcome
             facts={pitchFacts.facts}
             firstName={user?.first_name || ''}
@@ -2537,21 +2567,6 @@ export default function Polly() {
             </SuggestGrid>
           </Empty>
         ) : null}
-        {pitchFacts.facts?.needs_confirm && !factsLater && ready && !welcomeMode && !firstVisit && (
-          <Turn>
-            <AssistantRow>
-              <PollyFace src={POLLY_AVATAR_URL} alt="" />
-              <PitchFactsCard
-                facts={pitchFacts.facts}
-                onSaved={(f) => setTimeout(() => pitchFacts.setFacts(f), 2500)}
-                onDismiss={() => {
-                  setFactsLater(true);
-                  try { sessionStorage.setItem('polly_facts_later', '1'); } catch (_) { /* ignore */ }
-                }}
-              />
-            </AssistantRow>
-          </Turn>
-        )}
         {brief && messages.length > 0 && (
           <BriefCard>
             <div className="kicker">Polly brief</div>
@@ -2831,6 +2846,7 @@ export default function Polly() {
                       onOpenMail={openBatchMail}
                       onCopy={copyBatchPitch}
                       free={!credits?.is_unlimited}
+                      defaultManual={batchManual}
                     />
                   )}
                 </div>

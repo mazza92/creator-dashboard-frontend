@@ -15,7 +15,7 @@ function monthName(key) {
   return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long' });
 }
 
-export default function PollyGoalBar({ onOpenTracker }) {
+export default function PollyGoalBar({ onOpenTracker, showChecklist = true }) {
   const [data, setData] = useState(null);
   const [goalOpen, setGoalOpen] = useState(false);
 
@@ -30,6 +30,11 @@ export default function PollyGoalBar({ onOpenTracker }) {
     return () => window.removeEventListener('nc-tracker-changed', load);
   }, [load]);
 
+  const hideChecklist = () => {
+    setData((d) => (d ? { ...d, getting_started: { ...(d.getting_started || {}), show: false } } : d));
+    apiClient.post('/api/tracker/checklist/hide').catch(() => {});
+  };
+
   if (!data) return null;
   const g = data.goal;
   const amount = Number(g.amount_cents) || 0;
@@ -39,9 +44,11 @@ export default function PollyGoalBar({ onOpenTracker }) {
   const paidW = amount ? Math.min(100, (paid / amount) * 100) : 0;
   const giftW = amount ? Math.min(100 - paidW, (gifted / amount) * 100) : 0;
   const moves = Number(data.your_move_count) || 0;
+  const gs = data.getting_started;
   const hot = data.hot && data.hot.brand_name ? data.hot : null;
 
   return (
+    <>
     <Bar aria-label="Your monthly goal">
       <button type="button" className="main" onClick={onOpenTracker}>
         <span className="top">
@@ -67,6 +74,28 @@ export default function PollyGoalBar({ onOpenTracker }) {
         <GoalModal onClose={() => setGoalOpen(false)} onSaved={() => { setGoalOpen(false); load(); }} />
       ) : null}
     </Bar>
+    {showChecklist && gs?.show ? (
+      <Checklist aria-label="Getting started">
+        <div className="h">
+          <b>Getting started</b>
+          <span>{gs.done} of {gs.total}</span>
+          <button type="button" aria-label="Hide getting started" onClick={hideChecklist}>×</button>
+        </div>
+        <span className="bar" aria-hidden="true"><i style={{ width: `${(gs.done / gs.total) * 100}%` }} /></span>
+        <ul>
+          <li className={gs.goal ? 'done' : ''}>
+            <span className="bx">{gs.goal ? '✓' : ''}</span>
+            {gs.goal ? 'Set your goal' : <button type="button" onClick={() => setGoalOpen(true)}>Set your goal</button>}
+          </li>
+          <li className={gs.pitched ? 'done' : ''}><span className="bx">{gs.pitched ? '✓' : ''}</span>Send your first pitches</li>
+          <li className={gs.calendar ? 'done' : ''}>
+            <span className="bx">{gs.calendar ? '✓' : ''}</span>
+            {gs.calendar ? 'See your plan on the calendar' : <button type="button" onClick={onOpenTracker}>See your plan on the calendar</button>}
+          </li>
+        </ul>
+      </Checklist>
+    ) : null}
+    </>
   );
 }
 
@@ -127,4 +156,32 @@ const Bar = styled.div`
     padding: 9px 10px;
     .cta { padding: 6px 10px; font-size: 12.5px; }
   }
+`;
+
+const Checklist = styled.div`
+  margin: 6px 16px 2px;
+  padding: 10px 12px;
+  border: 1px solid ${t.line};
+  border-radius: 14px;
+  background: ${t.white};
+  font-family: ${t.fontSans};
+  display: grid;
+  gap: 7px;
+
+  .h { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .h span { color: ${t.muted}; font-size: 12.5px; }
+  .h button { margin-left: auto; border: 0; background: none; color: ${t.muted}; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+  .bar { height: 4px; border-radius: 999px; background: ${t.subtle}; overflow: hidden; display: block; }
+  .bar i { display: block; height: 100%; background: ${t.accent}; border-radius: 999px; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+  li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: ${t.ink}; }
+  li.done { color: ${t.muted}; text-decoration: line-through; }
+  li button { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: ${t.ink}; text-decoration: underline; cursor: pointer; text-align: left; }
+  .bx {
+    width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid ${t.line}; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 10px; color: ${t.white};
+  }
+  li.done .bx { background: ${t.accent}; border-color: ${t.accent}; }
+
+  @media (max-width: 840px) { margin: 6px 12px 2px; }
 `;
