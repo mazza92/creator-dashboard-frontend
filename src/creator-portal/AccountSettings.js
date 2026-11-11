@@ -8,6 +8,8 @@ import api, { getOAuthApiOrigin } from '../config/api';
 import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import CountrySettingsSection from './CountrySettingsSection';
+import GoalSetup from './tracker/GoalSetup';
+import EmailSettingsSection from './EmailSettingsSection';
 import CancelRetentionModal from './CancelRetentionModal';
 import DeleteAccountFlow from './DeleteAccountFlow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -464,6 +466,10 @@ const AccountSettings = () => {
           )}
         </PlanCard>
       </Section>
+
+      <GoalSection />
+
+      <EmailSettingsSection focus={searchParams.get('section') === 'emails'} />
 
       <PitchFactsSection />
 
@@ -1126,6 +1132,29 @@ const DangerButton = styled.button`
 
 export default AccountSettings;
 
+
+function GoalSection() {
+  const [hidden, setHidden] = useState(false);
+  const [version, setVersion] = useState(0);
+  if (hidden) return null;
+  return (
+    <Section>
+      <SectionHeader>
+        <SectionTitle>Monthly collab goal</SectionTitle>
+        <SectionSubtitle>Paid deals plus gifted products at retail value. Polly lines up the number of brands it takes.</SectionSubtitle>
+      </SectionHeader>
+      <NicheCard>
+        <GoalSetup
+          key={version}
+          variant="settings"
+          saveLabel="Save goal"
+          onSaved={() => { message.success('Goal saved'); setVersion((v) => v + 1); }}
+          onUnavailable={() => setHidden(true)}
+        />
+      </NicheCard>
+    </Section>
+  );
+}
 
 function PitchFactsSection() {
   const { facts, setFacts } = usePitchFacts();

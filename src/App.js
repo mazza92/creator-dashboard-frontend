@@ -94,7 +94,7 @@ import NotFound from './cra-pages/NotFound';
 // These load on-demand when the route is accessed
 const BrandPRHome = lazy(() => import('./cra-pages/BrandPRHome'));
 const Polly = lazy(() => import('./creator-portal/Polly'));
-const Timeline = lazy(() => import('./creator-portal/Timeline'));
+const Tracker = lazy(() => import('./creator-portal/Tracker'));
 const PaidGigs = lazy(() => import('./creator-portal/PaidGigs'));
 const PromoteNewcollab = lazy(() => import('./creator-portal/PromoteNewcollab'));
 const BrandPRRoster = lazy(() => import('./cra-pages/BrandPRRoster'));
@@ -135,6 +135,11 @@ const stripePromise = loadStripe('pk_test_51RWy7PDAK7yV5SICch3oyllPQv3FJqZGx8QUW
 function PublicMediaKitWrapper() {
     const { username } = useParams();
     return <PublicMediaKit username={username} />;
+}
+
+function TimelineRedirect() {
+    const { brandId } = useParams();
+    return <Navigate to={`/creator/dashboard/tracker/${brandId}`} replace />;
 }
 
 // Role-aware onboarding router - brands complete onboarding during registration,
@@ -571,8 +576,11 @@ function AppContent() {
                 <Route path='dashboard/payments' element={<PaymentsPage />} />
                 <Route path='dashboard/for-you' element={<LazyRoute skeleton={<ForYouSkeleton />}><Polly /></LazyRoute>} />
                 <Route path='dashboard/polly' element={<Navigate to="/creator/dashboard/for-you" replace />} />
-                <Route path='dashboard/timeline/:brandId' element={<LazyRoute skeleton={<ForYouSkeleton />}><Timeline /></LazyRoute>} />
-                <Route path='dashboard/timeline' element={<LazyRoute skeleton={<ForYouSkeleton />}><Timeline /></LazyRoute>} />
+                <Route path='dashboard/tracker/:brandId' element={<LazyRoute skeleton={<ForYouSkeleton />}><Tracker /></LazyRoute>} />
+                <Route path='dashboard/tracker' element={<LazyRoute skeleton={<ForYouSkeleton />}><Tracker /></LazyRoute>} />
+                {/* Timeline became the Tracker: old links (emails, bookmarks) keep working. */}
+                <Route path='dashboard/timeline/:brandId' element={<TimelineRedirect />} />
+                <Route path='dashboard/timeline' element={<Navigate to='/creator/dashboard/tracker' replace />} />
                 <Route path='dashboard/pr-ready' element={<PRReady />} />
                 <Route path='dashboard/pool' element={<LazyRoute><Pool /></LazyRoute>} />
                 <Route path='dashboard/media-kit' element={<LazyRoute><MediaKit /></LazyRoute>} />

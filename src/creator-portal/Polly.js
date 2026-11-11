@@ -28,6 +28,8 @@ import {
   writePollyLocal,
 } from './pollyStorage';
 import { brandMarkEmoji } from './brandMarkEmoji';
+import PollyGoalCard from './PollyGoalCard';
+import { TRACKER_PATH, chipHref } from './tracker/trackerModel';
 import { captureUpgradeDeeplink, dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 
 const STARTER_LABELS = {
@@ -108,7 +110,10 @@ const DEEP_LINK_CHIPS = {
   line_up: { label: 'Line up brands for me', action: 'suggest_brands', deal: 'gifted' },
   send_draft: { label: 'Show my pitch', action: 'generate_pitch' },
   pitch_brand: { label: 'Pitch this brand for me', action: 'generate_pitch' },
+  // Paid offer check-in: add what they offered on the Tracker (opens the deal drawer on the amount).
+  open_tracker_deal: { label: 'Add the amount', action: 'link' },
 };
+
 
 function takePitchSamples(brandId) {
   if (!brandId) return [];
@@ -1494,7 +1499,7 @@ export default function Polly() {
   // A deep-linked task waits for the server thread; show Polly working meanwhile.
   const [pendingLinkKind, setPendingLinkKind] = useState(() => {
     const base = DEEP_LINK_CHIPS[searchParams.get('chip')];
-    return base ? workingKind({ action: base.action, brand_id: searchParams.get('brand_id') }, base.label) : null;
+    return base && base.action !== 'link' ? workingKind({ action: base.action, brand_id: searchParams.get('brand_id') }, base.label) : null;
   });
   const turnInFlightRef = useRef(false);
   const [suggested, setSuggested] = useState([]);
@@ -2043,6 +2048,9 @@ export default function Polly() {
         const next = [...history, assistant];
         setMessages(next);
         persistThread(next, suggestedRef.current);
+        // Free credits used up (the 4th send): show the goal-based paywall now, at peak intent.
+        // The written pitch stays in the thread either way.
+        if (status === 402) setShowUpgrade(true);
       } else {
         const timedOut = abort?.signal.aborted || err.code === 'ECONNABORTED';
         const retry = extras.action
@@ -2128,6 +2136,10 @@ export default function Polly() {
       navigate(chip.href || DIRECTORY_PATH);
       return;
     }
+    if (chip.action === 'link' || chip.id === 'open_tracker_deal') {
+      navigate(chipHref(chip));
+      return;
+    }
     if (chip.action === 'autopilot' || chip.id === 'autopilot') {
       openAutopilot();
       return;
@@ -2160,6 +2172,16 @@ export default function Polly() {
   useEffect(() => {
     if (serverReady && !creatorId && userLoading === false) setPendingLinkKind(null);
   }, [serverReady, creatorId, userLoading]);
+
+  // Link chips (?chip=open_tracker_deal&brand_id=…) don't need the thread: go straight there.
+  useEffect(() => {
+    const chipId = searchParams.get('chip');
+    const base = DEEP_LINK_CHIPS[chipId];
+    if (!base || base.action !== 'link' || deepLinkRef.current) return;
+    deepLinkRef.current = true;
+    navigate(chipHref({ ...base, id: chipId, brand_id: Number(searchParams.get('brand_id')) || undefined }), { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     const chipId = searchParams.get('chip');
@@ -2509,6 +2531,10 @@ export default function Polly() {
               />
             </AssistantRow>
           </Turn>
+        )}
+        {ready && !welcomeMode && !firstVisit && creatorId && !(pitchFacts.facts?.needs_confirm && !factsLater) && (
+          <PollyGoalCard avatar={<PollyFace src={POLLY_AVATAR_URL} alt="" />} Row={AssistantRow} Wrap={Turn}
+            onOpenTracker={() => navigate(TRACKER_PATH)} />
         )}
         {brief && messages.length > 0 && (
           <BriefCard>

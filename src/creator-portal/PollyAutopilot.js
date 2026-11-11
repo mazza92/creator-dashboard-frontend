@@ -723,7 +723,7 @@ export function AutopilotCard({
         <span className="n">4</span>
         <div>
           <div className="t">You get {hoursSaved(target)} hours a month back</div>
-          <div className="d">Who I pitched, who replied, what&apos;s next, all in your timeline. You just film.</div>
+          <div className="d">Who I pitched, who replied, what&apos;s next, all in your Tracker. You just film.</div>
         </div>
       </li>
     </Steps>

@@ -131,7 +131,7 @@ function ApplyTransparency({ stats, afterApply = false }) {
       </StatPair>
       {afterApply ? (
         <TransparencyNote>
-          We’ll email you when they pick or pass. Track every step on Timeline.
+          We’ll email you when they pick or pass. Track every step on your Tracker.
           {Number.isFinite(days) && days > 0 ? ` Typical reply window is about ${days} day${days === 1 ? '' : 's'}.` : ''}
         </TransparencyNote>
       ) : (
@@ -1749,8 +1749,8 @@ export default function BrandPRHome() {
           <ApplyTransparency stats={doneBrand.transparency} afterApply />
         )}
         <DoneActions>
-          <Cta type="button" onClick={() => navigate(`/creator/dashboard/timeline/${doneBrand.id}`)}>
-            Track this on Timeline
+          <Cta type="button" onClick={() => navigate(`/creator/dashboard/tracker/${doneBrand.id}`)}>
+            Track this on your Tracker
           </Cta>
         </DoneActions>
         {noCredits && (
