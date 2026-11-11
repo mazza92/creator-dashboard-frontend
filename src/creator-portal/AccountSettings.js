@@ -9,6 +9,7 @@ import { message } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import CountrySettingsSection from './CountrySettingsSection';
 import GoalSetup from './tracker/GoalSetup';
+import EmailSettingsSection from './EmailSettingsSection';
 import CancelRetentionModal from './CancelRetentionModal';
 import DeleteAccountFlow from './DeleteAccountFlow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -467,6 +468,8 @@ const AccountSettings = () => {
       </Section>
 
       <GoalSection />
+
+      <EmailSettingsSection focus={searchParams.get('section') === 'emails'} />
 
       <PitchFactsSection />
 

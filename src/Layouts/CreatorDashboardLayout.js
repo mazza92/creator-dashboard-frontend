@@ -677,6 +677,18 @@ const CreatorDashboardLayout = () => {
     };
   }, [isLoading]);
 
+  // Polly's 7am brief goes out in the creator's local time: send the browser's time zone once a session.
+  useEffect(() => {
+    if (isLoading || !userData?.creator_id) return;
+    try {
+      if (sessionStorage.getItem('nc_brief_tz_sent') === '1') return;
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (!tz) return;
+      sessionStorage.setItem('nc_brief_tz_sent', '1');
+      api.post('/api/brief/preferences', { timezone: tz }).catch(() => {});
+    } catch (_) { /* silent */ }
+  }, [isLoading, userData]);
+
   // Fetch pool badge count (new followers since last visit)
   useEffect(() => {
     const fetchPoolBadge = async () => {
