@@ -1,27 +1,19 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
-import DealDrawer, { TypePill } from './tracker/DealDrawer';
+import DealDrawer from './tracker/DealDrawer';
 import GoalModal from './tracker/GoalModal';
-import { Flame, KindIcon, KIND_LABEL, LineIcon, HOT_COLOR } from './tracker/TrackerIcons';
+import { Flame, KindIcon, KIND_LABEL, HOT_COLOR } from './tracker/TrackerIcons';
 import {
-  TRACKER_PATH, agendaDays, allCards, cardMatches, dayLabel, findCard, localIso, mondayOf, money, monthName, monthWeeks,
-  parseIso, paywallGoal, sortCards, typeLabel, weekGroups, weekTarget,
+  TRACKER_PATH, agendaDays, allCards, cardMatches, dayLabel, findCard, localIso, mondayOf, money, monthName, monthWeeks, parseIso, paywallGoal, weekGroups, weekTarget,
 } from './tracker/trackerModel';
 
-// Tracker (replaces Timeline): the monthly goal, every brand on one board, the dates that matter.
+// Tracker (replaces Timeline): the monthly goal, every brand on one calendar, the dates that matter.
 // GET /api/tracker; one brand opens in the deal drawer (/tracker/:brandId or ?brand=ID&step=amount).
 
-const VIEWS = [
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'board', label: 'Board' },
-  { id: 'list', label: 'List' },
-];
-// v2: Calendar became the default (creators plan by date); a new key so the old saved "board" doesn't stick.
-const VIEW_KEY = 'nc_tracker_view_v2';
 const LEGEND = ['hot', 'sched', 'sent', 'fu', 'due', 'ship', 'post', 'pay'];
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const LIST_COLS = [
@@ -31,15 +23,6 @@ const LIST_COLS = [
   { id: 'value', label: 'Value' },
   { id: 'next', label: 'Next step' },
 ];
-
-function readView() {
-  try {
-    const v = localStorage.getItem(VIEW_KEY);
-    return VIEWS.some((x) => x.id === v) ? v : 'calendar';
-  } catch (_) {
-    return 'calendar';
-  }
-}
 
 function useTracker() {
   const [state, setState] = useState({ data: null, loading: true, error: false });
@@ -125,57 +108,6 @@ function FunnelStrip({ funnel }) {
       <div className="s"><span className="v">{f.negotiating || 0}</span><span className="k">talking money{f.negotiating_cents ? <>, <b>{money(f.negotiating_cents)}</b></> : null}</span></div>
       <div className="s"><span className="v">{f.booked_or_paid || 0}</span><span className="k">collabs confirmed</span></div>
     </Funnel>
-  );
-}
-
-function TrackerCard({ card, selected, onOpen }) {
-  const paid = card.type === 'paid' || card.type === 'gig';
-  return (
-    <CardBtn type="button" $hot={card.hot} $locked={card.locked} $sel={selected} onClick={() => onOpen(card)}
-      aria-label={`${card.brand_name}${card.hot ? ', hot today' : ''}${card.locked ? ', sends on Pro' : ''}: ${card.next?.label || ''}`}>
-      <span className="bn">
-        {card.hot ? <Flame size={14} /> : null}
-        <span className="name">{card.brand_name}</span>
-      </span>
-      <span className="meta">
-        <TypePill $paid={paid}>{typeLabel(card.type)}</TypePill>
-        {card.value_cents ? <span className="val">{money(card.value_cents)}</span> : null}
-      </span>
-      {card.next?.label ? <span className={card.next.your_move ? 'when move' : 'when'}>{card.next.your_move ? 'Your move: ' : ''}{card.next.label}</span> : null}
-      {card.hot && card.hot_reason ? <span className="hotr">{card.hot_reason}</span> : null}
-      {card.kit_views ? <span className="views"><LineIcon name="eye" size={12} /> Opened your kit {card.kit_views}×</span> : null}
-      {card.locked ? <span className="lock"><LineIcon name="lock" size={12} /> Sends on Pro</span> : null}
-    </CardBtn>
-  );
-}
-
-function BoardView({ columns, selectedId, onOpen }) {
-  const scrollRef = useRef(null);
-  const jump = (id) => {
-    const el = scrollRef.current?.querySelector(`[data-col="${id}"]`);
-    if (el && scrollRef.current) scrollRef.current.scrollTo({ left: el.offsetLeft - 16, behavior: 'smooth' });
-  };
-  return (
-    <>
-      <ColJump aria-label="Jump to stage">
-        {columns.map((c) => (
-          <button key={c.id} type="button" onClick={() => jump(c.id)}>{c.label} <b>{c.cards.length}</b></button>
-        ))}
-      </ColJump>
-      <BoardScroll ref={scrollRef} tabIndex={0} aria-label="Board, scroll sideways for every stage">
-        <Board $n={columns.length}>
-          {columns.map((col) => (
-            <Column key={col.id} data-col={col.id} aria-label={`${col.label}, ${col.cards.length}`}>
-              <div className="h"><span>{col.label}</span><span>{col.cards.length}</span></div>
-              {col.cards.map((c) => (
-                <TrackerCard key={c.brand_id} card={c} selected={String(selectedId) === String(c.brand_id)} onOpen={onOpen} />
-              ))}
-              {!col.cards.length ? <span className="empty">Nothing here yet</span> : null}
-            </Column>
-          ))}
-        </Board>
-      </BoardScroll>
-    </>
   );
 }
 
@@ -326,43 +258,36 @@ function CalendarView({ events, onOpen, weekly = 0 }) {
   );
 }
 
-function ListView({ cards, onOpen }) {
-  const [sort, setSort] = useState({ key: 'stage', dir: 'asc' });
-  const rows = useMemo(() => sortCards(cards, sort.key, sort.dir), [cards, sort]);
-  const by = (key) => setSort((s) => ({ key, dir: s.key === key && s.dir === 'asc' ? 'desc' : 'asc' }));
-  const stageLabel = (c) => c.column === 'closed' ? 'Closed' : (c.column_label || c.column || '').replace(/_/g, ' ');
+const MINUTES_PER_PITCH = 12; // same estimate as the Pro renewal note (finding the email, writing, sending)
+
+// Free plan: their plan, paused (Noom / Duolingo framing: it's yours, it's waiting), plus the time Pro saves.
+function PlanStrip({ free, goalCents, onUpgrade }) {
+  const waiting = Number(free.locked) || 0;
+  const left = Number(free.pitches_left) || 0;
+  const hours = Math.max(1, Math.round((waiting * MINUTES_PER_PITCH) / 60));
+  const goal = goalCents ? money(goalCents) : 'your goal';
+  if (!waiting) {
+    return (
+      <FreeStrip>
+        <span className="txt"><b>{left} free pitch{left === 1 ? '' : 'es'} left this month.</b> Replies to brands are always free.</span>
+      </FreeStrip>
+    );
+  }
   return (
-    <>
-      <MobileSort>
-        <label htmlFor="tracker-sort">Sort by</label>
-        <select id="tracker-sort" value={`${sort.key}:${sort.dir}`} onChange={(e) => { const [key, dir] = e.target.value.split(':'); setSort({ key, dir }); }}>
-          <option value="stage:asc">Stage</option>
-          <option value="next:asc">Next date</option>
-          <option value="value:desc">Value, highest first</option>
-          <option value="brand:asc">Brand, A to Z</option>
-          <option value="type:asc">Type</option>
-        </select>
-      </MobileSort>
-      <Rows role="table" aria-label="Brands">
-        <div className="head" role="row">
-          {LIST_COLS.map((c) => (
-            <button key={c.id} type="button" role="columnheader" aria-sort={sort.key === c.id ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'} onClick={() => by(c.id)}>
-              {c.label}{sort.key === c.id ? <span aria-hidden="true">{sort.dir === 'asc' ? ' ↑' : ' ↓'}</span> : null}
-            </button>
-          ))}
-        </div>
-        {rows.map((c) => (
-          <button key={c.brand_id} type="button" role="row" className="r" onClick={() => onOpen(c)} data-locked={c.locked ? '1' : undefined}>
-            <span className="b" role="cell">{c.hot ? <Flame size={13} /> : null}<b>{c.brand_name}</b>{c.locked ? <LineIcon name="lock" size={12} /> : null}</span>
-            <span className="ty" role="cell"><TypePill $paid={c.type !== 'gifted'}>{typeLabel(c.type)}</TypePill></span>
-            <span className="st" role="cell">{stageLabel(c)}</span>
-            <span className="va" role="cell">{c.value_cents ? money(c.value_cents) : '—'}</span>
-            <span className={c.next?.your_move ? 'nx move' : 'nx'} role="cell">{c.locked ? 'Sends on Pro' : c.next?.label || '—'}</span>
-          </button>
-        ))}
-        {!rows.length ? <p className="none">No brands match this filter.</p> : null}
-      </Rows>
-    </>
+    <FreeStrip $paused={!left}>
+      <span className="txt">
+        {left ? (
+          <><b>{left} free pitch{left === 1 ? '' : 'es'} left this month.</b> Pro runs your whole plan: {waiting} more brand{waiting === 1 ? '' : 's'},
+            sent on schedule from your Gmail, with follow-ups.</>
+        ) : (
+          <><b>Your plan is paused.</b> {waiting} brand{waiting === 1 ? ' is' : 's are'} ready to pitch. Pro sends them on
+            schedule from your Gmail and follows up (about {hours} hour{hours === 1 ? '' : 's'} of outreach done for you),
+            so you keep moving toward {goal}.</>
+        )}
+        <small>Replies to brands are always free.</small>
+      </span>
+      <button type="button" onClick={onUpgrade}>{left ? 'Run my plan on Pro' : 'Resume my plan'}</button>
+    </FreeStrip>
   );
 }
 
@@ -371,18 +296,12 @@ export default function Tracker() {
   const { brandId: routeBrandId } = useParams();
   const [searchParams] = useSearchParams();
   const { data, loading, error, reload } = useTracker();
-  const [view, setViewState] = useState(readView);
   const [filter, setFilter] = useState('all');
   const [goalOpen, setGoalOpen] = useState(false);
   const [paywall, setPaywall] = useState(false);
 
   const drawerId = routeBrandId || searchParams.get('brand');
   const startStep = searchParams.get('step');
-
-  const setView = (v) => {
-    setViewState(v);
-    try { localStorage.setItem(VIEW_KEY, v); } catch (_) { /* ignore */ }
-  };
 
   const openCard = useCallback((card) => {
     const full = data ? findCard(data, card.brand_id) : null;
@@ -397,19 +316,6 @@ export default function Tracker() {
 
   const cards = useMemo(() => (data ? allCards(data) : []), [data]);
   const filtered = useMemo(() => cards.filter((c) => cardMatches(c, filter)), [cards, filter]);
-  const columns = useMemo(() => {
-    if (!data) return [];
-    if (filter === 'closed') return [{ id: 'closed', label: 'Closed', cards: filtered }];
-    return (data.columns || []).map((col) => ({
-      id: col.id,
-      label: col.label,
-      cards: (col.cards || []).filter((c) => cardMatches({ ...c, column: col.id }, filter)),
-    }));
-  }, [data, filter, filtered]);
-  const listCards = useMemo(() => {
-    const labels = Object.fromEntries((data?.columns || []).map((c) => [c.id, c.label]));
-    return filtered.map((c) => ({ ...c, column_label: labels[c.column] }));
-  }, [data, filtered]);
   const events = useMemo(() => {
     const ev = data?.calendar || [];
     if (filter === 'all') return ev;
@@ -466,26 +372,10 @@ export default function Tracker() {
         <Top>
           <GoalHeader tracker={data} onEditGoal={() => setGoalOpen(true)} />
           <FunnelStrip funnel={data.funnel} />
-          {free ? (
-            <FreeStrip>
-              <span>
-                <b>{free.pitches_left} of {free.limit}</b> free pitches left in {monthName(data.month)}. Replies to brands are always free.
-              </span>
-              {free.locked ? (
-                <button type="button" onClick={() => setPaywall(true)}>
-                  <LineIcon name="lock" size={12} /> {free.locked} brand{free.locked === 1 ? '' : 's'} waiting · Keep pitching
-                </button>
-              ) : null}
-            </FreeStrip>
-          ) : null}
+          {free ? <PlanStrip free={free} goalCents={data.goal?.amount_cents} onUpgrade={() => setPaywall(true)} /> : null}
         </Top>
 
         <Toolbar>
-          <Seg role="group" aria-label="View">
-            {VIEWS.map((v) => (
-              <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>{v.label}</button>
-            ))}
-          </Seg>
           <Filters role="group" aria-label="Filter">
             {filters.map((f) => (
               <button key={f.id} type="button" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>{f.label}</button>
@@ -500,13 +390,9 @@ export default function Tracker() {
               <p>Pick brands in Polly and they show up here: lined up, pitched, wrote back, confirmed, then paid.</p>
               <button type="button" onClick={() => navigate('/creator/dashboard/for-you')}>Find brands with Polly</button>
             </EmptyBox>
-          ) : view === 'calendar' ? (
+          ) : (
             <CalendarView events={events} onOpen={openCard}
               weekly={data?.goal?.weekly_target || Math.round((data?.goal?.math?.pitches || 0) / 4.3)} />
-          ) : view === 'list' ? (
-            <ListView cards={listCards} onOpen={openCard} />
-          ) : (
-            <BoardView columns={columns} selectedId={drawerId} onOpen={openCard} />
           )}
         </View>
       </App>
@@ -691,29 +577,32 @@ const FreeStrip = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
+  gap: 10px 16px;
   flex-wrap: wrap;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.5;
   color: ${t.inkSoft};
-  background: ${t.paper};
-  border: 1px dashed ${t.borderHover};
-  border-radius: 10px;
-  padding: 8px 12px;
+  background: ${(p) => (p.$paused ? '#fff6f2' : t.paper)};
+  border: 1px solid ${(p) => (p.$paused ? '#f6c7b8' : t.line)};
+  border-radius: 14px;
+  padding: 12px 14px;
 
+  .txt { flex: 1 1 320px; min-width: 0; }
+  .txt b { color: ${t.ink}; }
+  .txt small { display: block; margin-top: 4px; font-size: 12.5px; color: ${t.muted}; }
   button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    flex-shrink: 0;
     border: 0;
     border-radius: 999px;
-    padding: 6px 12px;
-    background: #e8395f;
-    color: #fff;
+    padding: 10px 18px;
+    background: ${t.ink};
+    color: ${t.white};
     font: inherit;
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
   }
+  @media (max-width: 640px) { button { width: 100%; } }
 `;
 
 const Toolbar = styled.div`
@@ -726,27 +615,6 @@ const Toolbar = styled.div`
   border-bottom: 1px solid ${t.line};
   min-width: 0;
   @media (max-width: 640px) { padding: 10px 14px; }
-`;
-
-const Seg = styled.div`
-  display: inline-flex;
-  background: ${t.subtle};
-  border-radius: 999px;
-  padding: 3px;
-  gap: 2px;
-
-  button {
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    border: 0;
-    background: transparent;
-    color: ${t.muted};
-    padding: 6px 14px;
-    border-radius: 999px;
-    cursor: pointer;
-  }
-  button[aria-pressed='true'] { background: ${t.white}; color: ${t.ink}; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 `;
 
 const Filters = styled.div`
@@ -782,107 +650,6 @@ const View = styled.div`
   padding: 16px 20px 20px;
   min-width: 0;
   @media (max-width: 640px) { padding: 12px 14px 16px; }
-`;
-
-const ColJump = styled.div`
-  display: none;
-  @media (max-width: 640px) {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    margin: 0 -14px 10px;
-    padding: 0 14px;
-    &::-webkit-scrollbar { display: none; }
-    button {
-      flex-shrink: 0;
-      font: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      color: ${t.inkSoft};
-      background: ${t.paper};
-      border: 1px solid ${t.line};
-      border-radius: 999px;
-      padding: 4px 10px;
-      white-space: nowrap;
-    }
-    b { color: ${t.muted}; font-weight: 600; margin-left: 2px; }
-  }
-`;
-
-const BoardScroll = styled.div`
-  overflow-x: auto;
-  min-width: 0;
-  padding-bottom: 4px;
-  &:focus-visible { outline: 2px solid ${t.accentBorder}; }
-
-  @media (max-width: 640px) {
-    scroll-snap-type: x mandatory;
-    margin-inline: -14px;
-    padding-inline: 14px;
-    scroll-padding-inline: 14px;
-    scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
-  }
-`;
-
-const Board = styled.div`
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: ${(p) => (p.$n === 1 ? 'minmax(220px, 360px)' : 'minmax(150px, 1fr)')};
-  gap: 10px;
-  align-items: start;
-
-  @media (max-width: 640px) {
-    grid-auto-columns: calc(100vw - 72px);
-  }
-`;
-
-const Column = styled.div`
-  background: ${t.paper};
-  border-radius: 12px;
-  padding: 10px;
-  display: grid;
-  gap: 8px;
-  align-content: start;
-  min-width: 0;
-  scroll-snap-align: start;
-
-  .h { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: ${t.muted}; padding: 2px 2px 4px; }
-  .h span:last-child { font-variant-numeric: tabular-nums; }
-  .empty { font-size: 12px; color: ${t.muted}; padding: 6px 2px; }
-`;
-
-const CardBtn = styled.button`
-  display: grid;
-  gap: 6px;
-  width: 100%;
-  min-width: 0;
-  text-align: left;
-  background: ${t.white};
-  border: 1px ${(p) => (p.$locked ? 'dashed' : 'solid')} ${(p) => (p.$sel ? t.ink : p.$hot ? '#f5c09c' : t.line)};
-  box-shadow: ${(p) => (p.$sel ? `0 0 0 1px ${t.ink}` : 'none')};
-  border-radius: 10px;
-  padding: 10px;
-  font: inherit;
-  font-size: 13px;
-  color: inherit;
-  cursor: pointer;
-  opacity: ${(p) => (p.$locked ? 0.78 : 1)};
-  transition: border-color .15s, box-shadow .15s;
-
-  &:hover { border-color: ${t.borderHover}; box-shadow: ${t.shadowHover}; }
-  &:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
-
-  .bn { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 13.5px; min-width: 0; }
-  .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .meta { display: flex; justify-content: space-between; gap: 6px; align-items: center; flex-wrap: wrap; color: ${t.muted}; font-size: 12px; }
-  .val { font-variant-numeric: tabular-nums; color: ${t.ink}; font-weight: 600; }
-  .when { font-size: 12px; color: ${t.muted}; }
-  .when.move { color: ${t.hot}; font-weight: 600; }
-  .hotr { font-size: 11.5px; color: ${HOT_COLOR}; }
-  .views, .lock { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: ${t.muted}; }
-  .lock { color: ${t.ink}; font-weight: 600; }
 `;
 
 const MonthGrid = styled.div`
@@ -1062,79 +829,6 @@ const CalLegend = styled.div`
   color: ${t.muted};
   margin-top: 12px;
   span { display: inline-flex; align-items: center; gap: 6px; }
-`;
-
-const MobileSort = styled.div`
-  display: none;
-  @media (max-width: 640px) {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: ${t.muted};
-    select { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px; border: 1px solid ${t.line}; background: ${t.white}; color: ${t.ink}; }
-  }
-`;
-
-const Rows = styled.div`
-  display: grid;
-  min-width: 0;
-
-  .head, .r {
-    display: grid;
-    grid-template-columns: minmax(0, 1.6fr) 96px minmax(0, 1fr) 84px minmax(0, 1.8fr);
-    gap: 10px;
-    align-items: center;
-  }
-  .head { border-bottom: 1px solid ${t.line}; }
-  .head button {
-    border: 0;
-    background: none;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    color: ${t.muted};
-    text-align: left;
-    padding: 8px 0;
-    cursor: pointer;
-  }
-  .r {
-    width: 100%;
-    border: 0;
-    border-bottom: 1px solid ${t.line};
-    background: none;
-    font: inherit;
-    font-size: 13px;
-    color: ${t.ink};
-    text-align: left;
-    padding: 10px 0;
-    cursor: pointer;
-  }
-  .r:hover { background: ${t.paper}; }
-  .r[data-locked] { color: ${t.muted}; }
-  .b { display: flex; align-items: center; gap: 5px; min-width: 0; }
-  .b b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-  .st { color: ${t.inkSoft}; }
-  .va { font-variant-numeric: tabular-nums; }
-  .nx { color: ${t.muted}; min-width: 0; }
-  .nx.move { color: ${t.hot}; font-weight: 600; }
-  .none { font-size: 13px; color: ${t.muted}; }
-
-  @media (max-width: 640px) {
-    .head { display: none; }
-    .r {
-      grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-areas: 'b va' 'nx ty' 'st st';
-      gap: 3px 10px;
-      padding: 10px 2px;
-    }
-    .b { grid-area: b; }
-    .va { grid-area: va; text-align: right; font-weight: 600; }
-    .nx { grid-area: nx; font-size: 12.5px; }
-    .ty { grid-area: ty; justify-self: end; }
-    .st { grid-area: st; font-size: 12px; color: ${t.muted}; }
-  }
 `;
 
 const EmptyBox = styled.div`

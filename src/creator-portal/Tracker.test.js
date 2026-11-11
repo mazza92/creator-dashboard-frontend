@@ -80,9 +80,8 @@ test('goal header, funnel, hot brand and a locked card that opens the paywall', 
   expect(screen.getAllByRole('img', { name: 'Hot brand today' }).length).toBeGreaterThan(0);
   expect(screen.getByRole('button', { name: /Your move \(1\)/ })).toBeInTheDocument();
 
-  expect(screen.getByRole('button', { name: 'Calendar' })).toHaveAttribute('aria-pressed', 'true'); // default view
-  fireEvent.click(screen.getByRole('button', { name: 'Board' }));
-  fireEvent.click(screen.getByRole('button', { name: /GlowDrop, sends on Pro/ }));
+  expect(screen.queryByRole('button', { name: 'Board' })).not.toBeInTheDocument(); // Calendar only
+  fireEvent.click(screen.getByRole('button', { name: /my plan/ }));
   expect(screen.getByRole('dialog', { name: 'Upgrade' })).toHaveTextContent('goal-left-17500 lined-2');
 });
 
