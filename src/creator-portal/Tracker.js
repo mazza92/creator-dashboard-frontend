@@ -8,8 +8,8 @@ import DealDrawer, { TypePill } from './tracker/DealDrawer';
 import GoalModal from './tracker/GoalModal';
 import { Flame, KindIcon, KIND_LABEL, LineIcon, HOT_COLOR } from './tracker/TrackerIcons';
 import {
-  TRACKER_PATH, agendaDays, allCards, calendarWeeks, cardMatches, dayLabel, findCard, localIso, money, monthName,
-  paywallGoal, sortCards, typeLabel,
+  TRACKER_PATH, agendaDays, allCards, cardMatches, dayLabel, findCard, localIso, mondayOf, money, monthName, monthWeeks,
+  parseIso, paywallGoal, sortCards, typeLabel, weekGroups, weekTarget,
 } from './tracker/trackerModel';
 
 // Tracker (replaces Timeline): the monthly goal, every brand on one board, the dates that matter.
@@ -190,48 +190,134 @@ function EventChip({ ev, onOpen }) {
   );
 }
 
-function CalendarView({ events, onOpen }) {
+const MAX_PER_CELL = 3;
+const MAX_PER_AGENDA_DAY = 4;
+
+function weekSummary(w) {
+  const bits = [];
+  if (w.pitches) bits.push(`${w.pitches} pitch${w.pitches === 1 ? '' : 'es'} planned`);
+  if (w.sent) bits.push(`${w.sent} sent`);
+  if (w.followups) bits.push(`${w.followups} follow-up${w.followups === 1 ? '' : 's'}`);
+  if (w.deadlines) bits.push(`${w.deadlines} deadline${w.deadlines === 1 ? '' : 's'}`);
+  return bits.join(' · ');
+}
+
+// Week chips (Todoist "Upcoming" / Google Calendar week picker): every week of the plan at a glance, filled
+// against the goal's weekly number, so a creator sees whether the pipeline is full. Tap jumps to that week.
+function WeekStrip({ weeks, weekly, today, selected, onPick }) {
+  return (
+    <Weeks role="tablist" aria-label="Weeks">
+      {weeks.map((w) => {
+        const goal = weekTarget(weekly, w.start, today);
+        const done = w.pitches + w.sent;
+        const pct = goal ? Math.min(100, Math.round((done / goal) * 100)) : 0;
+        return (
+          <WeekChip key={w.start} type="button" role="tab" aria-selected={selected === w.start}
+            $on={selected === w.start} onClick={() => onPick(w)}>
+            <span className="l">{w.label}</span>
+            <span className="r">{w.range}</span>
+            <span className="n">{goal ? <><b>{done}</b> of {goal} brands</> : <><b>{done}</b> brands</>}</span>
+            {goal ? <span className="bar" aria-hidden="true"><i style={{ width: `${pct}%` }} /></span> : null}
+          </WeekChip>
+        );
+      })}
+    </Weeks>
+  );
+}
+
+function CalendarView({ events, onOpen, weekly = 0 }) {
   const today = localIso();
-  const weeks = useMemo(() => calendarWeeks(events, today), [events, today]);
-  const days = useMemo(() => agendaDays(events), [events]);
+  const todayDate = new Date();
   const [showPast, setShowPast] = useState(false);
-  const upcoming = days.filter((d) => d.iso >= today);
-  const past = days.filter((d) => d.iso < today);
+  const weeks = useMemo(() => weekGroups(events, today, { includePast: showPast }), [events, today, showPast]);
+  const pastDays = useMemo(() => agendaDays((events || []).filter((e) => e.date < today)), [events, today]);
+  const [selected, setSelected] = useState(() => mondayOf(today));
+  const [month, setMonth] = useState({ y: todayDate.getFullYear(), m: todayDate.getMonth() });
   const [open, setOpen] = useState({});
+  const grid = useMemo(() => monthWeeks(events, month.y, month.m), [events, month]);
+  const lastWeek = weeks.length ? weeks[weeks.length - 1].end : today;
+  const lastMonth = parseIso(lastWeek);
+  const canNext = month.y < lastMonth.getFullYear() || (month.y === lastMonth.getFullYear() && month.m < lastMonth.getMonth());
+  const canPrev = month.y > todayDate.getFullYear() || (month.y === todayDate.getFullYear() && month.m > todayDate.getMonth() - 1);
+  const shiftMonth = (n) => setMonth(({ y, m }) => { const d = new Date(y, m + n, 1); return { y: d.getFullYear(), m: d.getMonth() }; });
+  const monthTitle = new Date(month.y, month.m, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const pick = (w) => {
+    setSelected(w.start);
+    const d = parseIso(w.start);
+    const thu = new Date(d); thu.setDate(d.getDate() + 3); // the month a week "belongs to" (ISO rule)
+    setMonth({ y: thu.getFullYear(), m: thu.getMonth() });
+  };
+  const selIndex = Math.max(0, weeks.findIndex((w) => w.start === selected));
+  const nextWeek = weeks[selIndex + 1];
+  const prevWeek = weeks[selIndex - 1];
+
   return (
     <>
-      <MonthGrid aria-label="Calendar">
+      <WeekStrip weeks={weeks} weekly={weekly} today={today} selected={selected} onPick={pick} />
+
+      <MonthHead>
+        <h3>{monthTitle}</h3>
+        <div className="nav">
+          <button type="button" onClick={() => { setMonth({ y: todayDate.getFullYear(), m: todayDate.getMonth() }); setSelected(mondayOf(today)); }}>Today</button>
+          <button type="button" aria-label="Previous month" disabled={!canPrev} onClick={() => shiftMonth(-1)}>‹</button>
+          <button type="button" aria-label="Next month" disabled={!canNext} onClick={() => shiftMonth(1)}>›</button>
+        </div>
+      </MonthHead>
+      <MonthGrid aria-label={`Calendar, ${monthTitle}`}>
         {WEEKDAYS.map((d) => <div key={d} className="wd">{d}</div>)}
-        {weeks.flat().map((cell) => {
-          const extra = cell.events.length - 3;
-          const shown = open[cell.iso] ? cell.events : cell.events.slice(0, 3);
-          return (
-            <Cell key={cell.iso} $today={cell.iso === today} $past={cell.iso < today}>
-              <div className="dh">
-                <span>{cell.day === 1 ? new Date(cell.iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : cell.day}</span>
-                {cell.iso === today ? <span className="today">Today</span> : null}
-              </div>
-              {shown.map((ev, i) => <EventChip key={`${ev.kind}-${ev.brand_id}-${i}`} ev={ev} onOpen={onOpen} />)}
-              {extra > 0 && !open[cell.iso] ? (
-                <button type="button" className="more" onClick={() => setOpen((o) => ({ ...o, [cell.iso]: true }))}>+{extra} more</button>
-              ) : null}
-            </Cell>
-          );
+        {grid.map((week) => {
+          const inSel = week[0].iso === selected;
+          return week.map((cell) => {
+            const extra = cell.events.length - MAX_PER_CELL;
+            const shown = open[cell.iso] ? cell.events : cell.events.slice(0, MAX_PER_CELL);
+            return (
+              <Cell key={cell.iso} $today={cell.iso === today} $past={cell.iso < today} $out={cell.month !== month.m} $sel={inSel}>
+                <div className="dh">
+                  <span>{cell.day}</span>
+                  {cell.iso === today ? <span className="today">Today</span> : null}
+                </div>
+                {shown.map((ev, i) => <EventChip key={`${ev.kind}-${ev.brand_id}-${i}`} ev={ev} onOpen={onOpen} />)}
+                {extra > 0 && !open[cell.iso] ? (
+                  <button type="button" className="more" onClick={() => setOpen((o) => ({ ...o, [cell.iso]: true }))}>+{extra} more</button>
+                ) : null}
+              </Cell>
+            );
+          });
         })}
       </MonthGrid>
-      <Agenda aria-label="Agenda">
-        {past.length ? (
-          <button type="button" className="past" onClick={() => setShowPast((v) => !v)}>
-            {showPast ? 'Hide earlier days' : `Show the last ${past.length} day${past.length === 1 ? '' : 's'}`}
-          </button>
+
+      <Agenda aria-label="Plan by week">
+        {pastDays.length && !showPast ? (
+          <button type="button" className="past" onClick={() => setShowPast(true)}>Show earlier weeks</button>
         ) : null}
-        {[...(showPast ? past : []), ...upcoming].map((d) => (
-          <AgendaDay key={d.iso} $today={d.iso === today}>
-            <div className="dh">{dayLabel(d.iso, today)}{d.iso === today || dayLabel(d.iso, today) === 'Tomorrow' ? <span>{new Date(d.iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span> : null}</div>
-            {d.events.map((ev, i) => <EventChip key={`${ev.kind}-${ev.brand_id}-${i}`} ev={ev} onOpen={onOpen} />)}
-          </AgendaDay>
+        {/* Phones: one week at a time (the chips above are the tabs), like Google Calendar's week view. */}
+        {weeks.filter((w) => w.start === selected).map((w) => (
+          <AgendaWeek key={w.start} id={`tracker-wk-${w.start}`} $sel={selected === w.start}>
+            <div className="wh">
+              <span className="l">{w.label}</span>
+              <span className="r">{w.range}</span>
+            </div>
+            <div className="ws">{weekSummary(w) || 'Nothing planned yet. Polly adds brands as the week gets closer.'}</div>
+            {w.days.map((d) => {
+              const extra = d.events.length - MAX_PER_AGENDA_DAY;
+              const shown = open[d.iso] ? d.events : d.events.slice(0, MAX_PER_AGENDA_DAY);
+              return (
+                <AgendaDay key={d.iso} $today={d.iso === today}>
+                  <div className="dh">{dayLabel(d.iso, today)}{d.iso === today || dayLabel(d.iso, today) === 'Tomorrow' ? <span>{new Date(d.iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span> : null}</div>
+                  {shown.map((ev, i) => <EventChip key={`${ev.kind}-${ev.brand_id}-${i}`} ev={ev} onOpen={onOpen} />)}
+                  {extra > 0 && !open[d.iso] ? (
+                    <button type="button" className="more" onClick={() => setOpen((o) => ({ ...o, [d.iso]: true }))}>Show {extra} more</button>
+                  ) : null}
+                </AgendaDay>
+              );
+            })}
+          </AgendaWeek>
         ))}
-        {!upcoming.length ? <p className="none">Nothing scheduled yet. Lined-up pitches, follow-ups and deadlines land here.</p> : null}
+        <WeekPager>
+          {prevWeek ? <button type="button" onClick={() => { pick(prevWeek); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>‹ {prevWeek.label}</button> : <span />}
+          {nextWeek ? <button type="button" className="next" onClick={() => { pick(nextWeek); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>{nextWeek.label} ›</button> : null}
+        </WeekPager>
       </Agenda>
       <CalLegend>
         {LEGEND.map((k) => <span key={k}><KindIcon kind={k} small />{KIND_LABEL[k]}</span>)}
@@ -415,7 +501,8 @@ export default function Tracker() {
               <button type="button" onClick={() => navigate('/creator/dashboard/for-you')}>Find brands with Polly</button>
             </EmptyBox>
           ) : view === 'calendar' ? (
-            <CalendarView events={events} onOpen={openCard} />
+            <CalendarView events={events} onOpen={openCard}
+              weekly={data?.goal?.weekly_target || Math.round((data?.goal?.math?.pitches || 0) / 4.3)} />
           ) : view === 'list' ? (
             <ListView cards={listCards} onOpen={openCard} />
           ) : (
@@ -809,8 +896,8 @@ const MonthGrid = styled.div`
 `;
 
 const Cell = styled.div`
-  background: ${(p) => (p.$today ? '#fff4f1' : t.paper)};
-  border: 1px solid ${(p) => (p.$today ? '#f6c7b8' : 'transparent')};
+  background: ${(p) => (p.$today ? '#fff4f1' : p.$out ? 'transparent' : t.paper)};
+  border: 1px solid ${(p) => (p.$today ? '#f6c7b8' : p.$sel ? t.line : 'transparent')};
   border-radius: 10px;
   padding: 6px;
   min-height: 104px;
@@ -818,7 +905,8 @@ const Cell = styled.div`
   gap: 4px;
   align-content: start;
   min-width: 0;
-  opacity: ${(p) => (p.$past ? 0.72 : 1)};
+  opacity: ${(p) => (p.$past || p.$out ? 0.6 : 1)};
+  box-shadow: ${(p) => (p.$sel && !p.$today ? `inset 0 2px 0 ${t.ink}` : 'none')};
 
   .dh { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: ${t.muted}; padding: 0 2px; }
   .today { color: ${t.hot}; }
@@ -873,6 +961,82 @@ const Agenda = styled.div`
   }
 `;
 
+const Weeks = styled.div`
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 2px 2px 10px;
+  margin: 0 -2px 6px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+`;
+
+const WeekChip = styled.button`
+  flex: 0 0 auto;
+  min-width: 132px;
+  scroll-snap-align: start;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid ${(p) => (p.$on ? t.ink : t.line)};
+  background: ${(p) => (p.$on ? t.ink : t.white)};
+  color: ${(p) => (p.$on ? t.white : t.ink)};
+  font: inherit;
+  cursor: pointer;
+
+  .l { font-size: 13.5px; font-weight: 700; }
+  .r { font-size: 12px; opacity: .7; }
+  .n { font-size: 12.5px; opacity: .85; }
+  .n b { font-weight: 700; }
+  .bar { height: 4px; border-radius: 999px; background: ${(p) => (p.$on ? 'rgba(255,255,255,.25)' : t.subtle)}; overflow: hidden; margin-top: 3px; }
+  .bar i { display: block; height: 100%; border-radius: 999px; background: ${(p) => (p.$on ? t.white : t.accent)}; }
+`;
+
+const MonthHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 10px;
+  h3 { margin: 0; font-size: 17px; font-weight: 700; color: ${t.ink}; }
+  .nav { display: flex; gap: 6px; }
+  .nav button {
+    min-width: 34px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid ${t.line};
+    background: ${t.white}; color: ${t.ink}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .nav button:disabled { opacity: .4; cursor: default; }
+
+  @media (max-width: 640px) { display: none; }
+`;
+
+const AgendaWeek = styled.section`
+  display: grid;
+  gap: 8px;
+  scroll-margin-top: 140px;
+  padding-top: 6px;
+
+  .wh { display: flex; align-items: baseline; gap: 8px; padding: 0 2px; }
+  .wh .l { font-size: 16px; font-weight: 700; color: ${t.ink}; }
+  .wh .r { font-size: 13px; color: ${t.muted}; }
+  .ws { font-size: 13px; color: ${t.muted}; padding: 0 2px 2px; }
+  & + & { border-top: 1px solid ${t.line}; padding-top: 14px; margin-top: 6px; }
+`;
+
+const WeekPager = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+  button {
+    border: 1px solid ${t.line}; background: ${t.white}; color: ${t.ink}; border-radius: 999px;
+    padding: 9px 14px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .next { background: ${t.ink}; color: ${t.white}; border-color: ${t.ink}; }
+`;
+
 const AgendaDay = styled.div`
   background: ${(p) => (p.$today ? '#fff4f1' : t.paper)};
   border-radius: 12px;
@@ -887,6 +1051,7 @@ const AgendaDay = styled.div`
   ${Ev} .txt { display: flex; gap: 6px; align-items: baseline; }
   ${Ev} .txt b { font-size: 13px; flex-shrink: 1; }
   ${Ev} .txt span { flex-shrink: 2; }
+  .more { justify-self: start; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: ${t.muted}; padding: 2px; cursor: pointer; }
 `;
 
 const CalLegend = styled.div`

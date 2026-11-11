@@ -213,6 +213,96 @@ export function calendarWeeks(events, todayIso = localIso()) {
   return weeks;
 }
 
+export function mondayOf(iso) {
+  const d = parseIso(iso);
+  if (!d) return '';
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return localIso(d);
+}
+
+function addDays(iso, n) {
+  const d = parseIso(iso);
+  d.setDate(d.getDate() + n);
+  return localIso(d);
+}
+
+const PITCH_KINDS = ['sched', 'hot'];
+const DEADLINE_KINDS = ['due', 'ship', 'post', 'pay'];
+
+function monDay(iso) {
+  return parseIso(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export function weekLabel(start, todayIso = localIso()) {
+  const thisMon = mondayOf(todayIso);
+  if (start === thisMon) return 'This week';
+  if (start === addDays(thisMon, 7)) return 'Next week';
+  if (start === addDays(thisMon, -7)) return 'Last week';
+  return `Week of ${monDay(start)}`;
+}
+
+// The plan week by week (Mon-Sun): this week and at least ``minWeeks`` ahead, plus any later week with events.
+// Each week: its days (agenda), and what's in it: pitches planned, sent, follow-ups, deadlines.
+export function weekGroups(events, todayIso = localIso(), { minWeeks = 5, includePast = false } = {}) {
+  const thisMon = mondayOf(todayIso);
+  const byWeek = {};
+  (events || []).forEach((e) => {
+    if (!e?.date) return;
+    const w = mondayOf(e.date);
+    (byWeek[w] = byWeek[w] || []).push(e);
+  });
+  const keys = new Set(Object.keys(byWeek).filter((k) => includePast || k >= thisMon));
+  for (let i = 0; i < minWeeks; i += 1) keys.add(addDays(thisMon, 7 * i));
+  return [...keys].sort().map((start) => {
+    const evs = byWeek[start] || [];
+    const end = addDays(start, 6);
+    const count = (kinds) => evs.filter((e) => kinds.includes(e.kind)).length;
+    return {
+      start,
+      end,
+      label: weekLabel(start, todayIso),
+      range: `${monDay(start)} – ${parseIso(end).getMonth() === parseIso(start).getMonth()
+        ? parseIso(end).getDate() : monDay(end)}`,
+      days: agendaDays(evs),
+      pitches: count(PITCH_KINDS),
+      sent: count(['sent']),
+      followups: count(['fu']),
+      deadlines: count(DEADLINE_KINDS),
+      past: end < todayIso,
+    };
+  });
+}
+
+// Weekday slots left in a week (for "12 of 39" on this week's chip: only the days still ahead count).
+export function weekTarget(weekly, start, todayIso = localIso()) {
+  if (!weekly) return 0;
+  const days = [0, 1, 2, 3, 4].map((i) => addDays(start, i)).filter((d) => d >= todayIso).length;
+  return days >= 5 ? weekly : Math.max(days ? 1 : 0, Math.round((weekly * days) / 5));
+}
+
+// Month grid (Mon-first weeks covering the month) for a {year, month} with events per day.
+export function monthWeeks(events, year, month) {
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const start = parseIso(mondayOf(localIso(first)));
+  const end = new Date(last);
+  end.setDate(end.getDate() + (6 - ((end.getDay() + 6) % 7)));
+  const byDate = {};
+  (events || []).forEach((e) => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+  Object.values(byDate).forEach((list) => list.sort((a, b) => Number(Boolean(b.hot)) - Number(Boolean(a.hot))));
+  const weeks = [];
+  for (let d = new Date(start); d <= end;) {
+    const week = [];
+    for (let i = 0; i < 7; i += 1) {
+      const iso = localIso(d);
+      week.push({ iso, day: d.getDate(), month: d.getMonth(), events: byDate[iso] || [] });
+      d.setDate(d.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+  return weeks;
+}
+
 export function agendaDays(events) {
   const byDate = {};
   (events || []).forEach((e) => { (byDate[e.date] = byDate[e.date] || []).push(e); });
