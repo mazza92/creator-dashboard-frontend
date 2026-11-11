@@ -28,7 +28,7 @@ import {
   writePollyLocal,
 } from './pollyStorage';
 import { brandMarkEmoji } from './brandMarkEmoji';
-import PollyGoalCard from './PollyGoalCard';
+import PollyGoalBar from './PollyGoalBar';
 import { TRACKER_PATH, chipHref } from './tracker/trackerModel';
 import { captureUpgradeDeeplink, dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 
@@ -2475,6 +2475,9 @@ export default function Polly() {
           <button type="button" aria-label="Dismiss" onClick={() => setLiveToast(null)}>×</button>
         </LiveToast>
       ) : null}
+      {ready && !welcomeMode && !firstVisit && creatorId ? (
+        <PollyGoalBar onOpenTracker={() => navigate(TRACKER_PATH)} />
+      ) : null}
       <Thread ref={threadRef}>
         {welcomeMode ? (
           <PollyWelcome
@@ -2531,10 +2534,6 @@ export default function Polly() {
               />
             </AssistantRow>
           </Turn>
-        )}
-        {ready && !welcomeMode && !firstVisit && creatorId && !(pitchFacts.facts?.needs_confirm && !factsLater) && (
-          <PollyGoalCard avatar={<PollyFace src={POLLY_AVATAR_URL} alt="" />} Row={AssistantRow} Wrap={Turn}
-            onOpenTracker={() => navigate(TRACKER_PATH)} />
         )}
         {brief && messages.length > 0 && (
           <BriefCard>
