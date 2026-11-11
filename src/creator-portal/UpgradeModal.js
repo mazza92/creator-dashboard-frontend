@@ -124,15 +124,20 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     : feature === 'last_unlock'
       ? 'Last free credit'
       : atCap
-        ? `${total} of ${total} free credits used`
+        ? (goalMode ? `✓ Your ${total} free pitches are out` : `${total} of ${total} free credits used`)
         : null;
 
   const headline = isWinback ? (
     <>Daily pitching<br />is back for <PinkSpan>$12/mo</PinkSpan></>
   ) : goalMode ? (
-    goalInfo.left_cents > 0
-      ? <>You&apos;re <PinkSpan>{money(goalInfo.left_cents)}</PinkSpan> from<br />your {money(goalInfo.amount_cents)} goal</>
-      : <>You hit your <PinkSpan>{money(goalInfo.amount_cents)}</PinkSpan> goal.<br />Keep it going.</>
+    // Plan-ready framing (Noom / Duolingo): never "you're $X away" at $0, which reads as failure.
+    goalInfo.left_cents <= 0
+      ? <>You hit your <PinkSpan>{money(goalInfo.amount_cents)}</PinkSpan> goal.<br />Keep it going.</>
+      : goalInfo.total_cents <= 0
+        ? <>Your <PinkSpan>{money(goalInfo.amount_cents)}</PinkSpan> plan is ready.<br />Let Polly run it.</>
+        : goalInfo.total_cents * 2 >= goalInfo.amount_cents
+          ? <>You&apos;re halfway to<br /><PinkSpan>{money(goalInfo.amount_cents)}</PinkSpan>. Don&apos;t stop now.</>
+          : <>You&apos;re <PinkSpan>{money(goalInfo.total_cents)}</PinkSpan> into your<br />{money(goalInfo.amount_cents)} goal. Keep going.</>
   ) : (
     <>New brands pitched<br /><PinkSpan>for you, every day</PinkSpan></>
   );
@@ -141,8 +146,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     ? 'For your next 3 invoices, then $19. Cancel anytime.'
     : goalMode
       ? (goalInfo.lined_up > 0
-        ? `Pro keeps pitching: ${goalInfo.lined_up} brand${goalInfo.lined_up === 1 ? '' : 's'} lined up. Polly sends them from your Gmail and follows up.`
-        : 'Pro keeps pitching: Polly lines up new brands every weekday, sends from your Gmail and follows up.')
+        ? `${goalInfo.lined_up} brand${goalInfo.lined_up === 1 ? ' is' : 's are'} lined up with pitches written. Pro sends them from your Gmail every weekday and follows up, so you stay consistent without thinking about it.`
+        : 'Pro lines up new brands every weekday, sends from your Gmail and follows up, so you stay consistent without thinking about it.')
       : 'Every weekday Polly picks 3 brands that fit you, pitches them from your Gmail and follows up, so you can just create.';
 
   const ctaLabel = loading
@@ -190,7 +195,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 {goalInfo.brands.map((b) => (
                   <LockedRow key={b.brand_name}>
                     <span><strong>{b.brand_name}</strong>{b.reason ? ` · ${b.reason}` : ''}</span>
-                    <span className="st"><FiLock size={12} /> pitch written</span>
+                    <span className="st"><FiLock size={12} /> ready to send</span>
                   </LockedRow>
                 ))}
               </LockedList>
