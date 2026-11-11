@@ -159,7 +159,7 @@ export default function GoalSetup({
       {error ? <Err role="alert">{error}</Err> : null}
       <Actions>
         <button type="button" className="primary" onClick={save} disabled={saving || !amountCents}>
-          {saving ? 'Saving…' : saveLabel}
+          {saving ? 'Planning your week…' : saveLabel}
         </button>
         {onSkip ? <button type="button" className="ghost" onClick={onSkip} disabled={saving}>{skipLabel}</button> : null}
       </Actions>
