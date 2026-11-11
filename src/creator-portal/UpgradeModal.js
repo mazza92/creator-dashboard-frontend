@@ -9,12 +9,13 @@ import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 import { dismissUpgradeDeeplink, getEmailCampaign, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 import { PRO_OFFER, PRO_COMPARE } from '../config/proOffer';
 import { useTrialDays } from '../utils/trialOffer';
+import { money, paywallGoal } from './tracker/trackerModel';
 
 function sourceFromPath(pathname) {
   const path = String(pathname || '');
   if (path.includes('/for-you') || path.includes('/polly')) return 'polly';
   if (path.includes('/pr-brands') || path.includes('/directory')) return 'directory';
-  if (path.includes('/timeline')) return 'timeline';
+  if (path.includes('/timeline') || path.includes('/tracker')) return 'tracker';
   if (path.includes('/my-kit')) return 'my_kit';
   return 'other';
 }
@@ -39,7 +40,9 @@ const CompareCell = ({ value, pro }) => {
   return <CellText $pro={pro}>{value}</CellText>;
 };
 
-const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining, source }) => {
+// `goal` (from the Tracker): {amount_cents, total_cents, left_cents, lined_up, brands}. When free credits are used up
+// and no goal is passed, the modal reads it from /api/tracker so the paywall speaks in the creator's own goal.
+const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining, source, goal }) => {
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState('monthly');
 
@@ -62,6 +65,19 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     return () => { alive = false; };
   }, [isOpen, isWinback]);
   const matched = waiting ? matchedLine(waiting) : null;
+
+  const [fetchedGoal, setFetchedGoal] = useState(null);
+  const wantsGoal = isOpen && !isWinback && atCap && goal === undefined;
+  useEffect(() => {
+    if (!wantsGoal) return undefined;
+    let alive = true;
+    api.get('/api/tracker')
+      .then(({ data }) => { if (alive) setFetchedGoal(paywallGoal(data)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [wantsGoal]);
+  const goalInfo = !isWinback && atCap ? (goal || fetchedGoal) : null;
+  const goalMode = Boolean(goalInfo && goalInfo.amount_cents);
 
   const showYearly = !isWinback;
   const interval = showYearly ? billingInterval : 'monthly';
@@ -113,13 +129,21 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   const headline = isWinback ? (
     <>Daily pitching<br />is back for <PinkSpan>$12/mo</PinkSpan></>
+  ) : goalMode ? (
+    goalInfo.left_cents > 0
+      ? <>You&apos;re <PinkSpan>{money(goalInfo.left_cents)}</PinkSpan> from<br />your {money(goalInfo.amount_cents)} goal</>
+      : <>You hit your <PinkSpan>{money(goalInfo.amount_cents)}</PinkSpan> goal.<br />Keep it going.</>
   ) : (
     <>New brands pitched<br /><PinkSpan>for you, every day</PinkSpan></>
   );
 
   const subline = isWinback
     ? 'For your next 3 invoices, then $19. Cancel anytime.'
-    : 'Every weekday Polly picks 3 brands that fit you, pitches them from your Gmail and follows up, so you can just create.';
+    : goalMode
+      ? (goalInfo.lined_up > 0
+        ? `Pro keeps pitching: ${goalInfo.lined_up} brand${goalInfo.lined_up === 1 ? '' : 's'} lined up. Polly sends them from your Gmail and follows up.`
+        : 'Pro keeps pitching: Polly lines up new brands every weekday, sends from your Gmail and follows up.')
+      : 'Every weekday Polly picks 3 brands that fit you, pitches them from your Gmail and follows up, so you can just create.';
 
   const ctaLabel = loading
     ? 'Processing...'
@@ -159,8 +183,20 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             <Headline>{headline}</Headline>
             <Subtext>{subline}</Subtext>
 
-            {matched && <MatchedNote>{matched}</MatchedNote>}
+            {matched && !goalMode && <MatchedNote>{matched}</MatchedNote>}
 
+            {goalMode && goalInfo.brands?.length > 0 && (
+              <LockedList aria-label="Brands waiting">
+                {goalInfo.brands.map((b) => (
+                  <LockedRow key={b.brand_name}>
+                    <span><strong>{b.brand_name}</strong>{b.reason ? ` · ${b.reason}` : ''}</span>
+                    <span className="st"><FiLock size={12} /> pitch written</span>
+                  </LockedRow>
+                ))}
+              </LockedList>
+            )}
+
+            {!goalMode && (
             <Compare>
               <ProColumn aria-hidden="true" />
               <CompareRow $head>
@@ -176,6 +212,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </CompareRow>
               ))}
             </Compare>
+            )}
 
             <Plans>
               {isWinback ? (
@@ -230,7 +267,9 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
             >
               {ctaLabel}
             </CtaButton>
-            <TrustLine>Cancel or pause anytime from Settings</TrustLine>
+            <TrustLine>
+              {goalMode ? 'Replies to brands stay free. Cancel or pause anytime from Settings.' : 'Cancel or pause anytime from Settings'}
+            </TrustLine>
           </CtaArea>
         </ModalWrapper>
       </Overlay>
@@ -397,6 +436,28 @@ const MatchedNote = styled.p`
     color: #15161a;
     font-weight: 700;
   }
+`;
+
+const LockedList = styled.div`
+  display: grid;
+  gap: 6px;
+  margin: 0 0 16px;
+`;
+
+const LockedRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 4px 10px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  font-size: 13.5px;
+  color: #2b2d33;
+  text-align: left;
+
+  strong { color: #15161a; font-weight: 700; }
+  .st { display: inline-flex; align-items: center; gap: 5px; color: #6b6f78; font-size: 12.5px; }
 `;
 
 const COLS = '1fr 72px 92px';

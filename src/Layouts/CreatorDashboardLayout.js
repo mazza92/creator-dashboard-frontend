@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Sparkles, Bell, FileText, Calendar, DollarSign } from 'lucide-react';
+import { Search, Sparkles, Bell, FileText, SquareKanban, DollarSign } from 'lucide-react';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
@@ -535,7 +535,7 @@ const navItems = [
   { label: 'Polly', icon: Sparkles, path: '/creator/dashboard/for-you' },
   { label: 'Brands', icon: Search, path: '/creator/dashboard/pr-brands' },
   { label: 'Paid UGC', icon: DollarSign, path: '/creator/dashboard/paid-gigs' },
-  { label: 'Timeline', icon: Calendar, path: '/creator/dashboard/timeline' },
+  { label: 'Tracker', icon: SquareKanban, path: '/creator/dashboard/tracker' },
   { label: 'My Kit', icon: FileText, path: '/creator/dashboard/my-kit' },
 ];
 
@@ -561,6 +561,7 @@ const CreatorDashboardLayout = () => {
   const [poolBadge, setPoolBadge] = useState(0);
   const [credits, setCredits] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [yourMove, setYourMove] = useState(0);
   const isFetching = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -658,6 +659,24 @@ const CreatorDashboardLayout = () => {
     return () => window.removeEventListener('nc-credits-changed', onCredits);
   }, [isLoading, location.pathname]);
 
+  // Tracker "Your move" badge: brands waiting on the creator (replies to answer, dates to set, payments due).
+  useEffect(() => {
+    if (isLoading) return undefined;
+    let live = true;
+    const load = () => {
+      api.get('/api/tracker')
+        .then((res) => { if (live) setYourMove(Number(res.data?.your_move_count) || 0); })
+        .catch(() => {});
+    };
+    load();
+    const onCount = (event) => setYourMove(Number(event.detail) || 0);
+    window.addEventListener('nc-tracker-count', onCount);
+    return () => {
+      live = false;
+      window.removeEventListener('nc-tracker-count', onCount);
+    };
+  }, [isLoading]);
+
   // Fetch pool badge count (new followers since last visit)
   useEffect(() => {
     const fetchPoolBadge = async () => {
@@ -734,14 +753,18 @@ const CreatorDashboardLayout = () => {
               to={path}
               $active={
                 location.pathname === path
-                || (path === '/creator/dashboard/timeline' && location.pathname.startsWith('/creator/dashboard/timeline'))
+                || (path === '/creator/dashboard/tracker' && location.pathname.startsWith('/creator/dashboard/tracker'))
               }
+              aria-label={label === 'Tracker' && yourMove > 0 ? `Tracker, ${yourMove} waiting on you` : undefined}
               onMouseEnter={() => handleNavHover(path)}
             >
               <Icon />
               {label}
               {label === 'Polly' && matchedRemaining > 0 && (
                 <ForYouDesktopBadge>{matchedRemaining}</ForYouDesktopBadge>
+              )}
+              {label === 'Tracker' && yourMove > 0 && (
+                <DesktopCountBadge title="Your move">{yourMove}</DesktopCountBadge>
               )}
             </NavTab>
           ))}

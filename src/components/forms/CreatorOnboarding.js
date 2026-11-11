@@ -11,6 +11,7 @@ import ProfileScrapingLoader from '../ProfileScrapingLoader';
 import { scrapeHelpFromError } from '../../utils/scrapeHelp';
 import { needsWaitlistGate, WAITLIST_PATH } from '../../utils/creatorApproval';
 import CountryCombobox from './CountryCombobox';
+import GoalSetup from '../../creator-portal/tracker/GoalSetup';
 import { OTHER_COUNTRY, detectCountry } from '../../utils/countries';
 import {
   OnboardingSurveyStep1,
@@ -710,7 +711,7 @@ const SCRAPABLE_PLATFORMS = ['instagram', 'tiktok', 'youtube'];
 
 export default function CreatorOnboarding() {
   const [searchParams] = useSearchParams();
-  const [phase, setPhase] = useState('profile'); // profile | survey | celebration
+  const [phase, setPhase] = useState('profile'); // profile | goal | survey | celebration
   const [surveyStep, setSurveyStep] = useState(1);
   const [profileStep, setProfileStep] = useState(1);
   const [surveyDone, setSurveyDone] = useState(false);
@@ -1199,18 +1200,23 @@ export default function CreatorOnboarding() {
         console.log('Social verification check failed, continuing:', verifyErr);
       }
 
-      // Profile data is saved. Survey is skippable, so it comes after.
+      // Profile data is saved. The monthly goal (skippable) comes next, then the skippable survey.
       setOnboardingCompleteRes(res);
-      if (surveyDone) {
-        setPhase('celebration');
-      } else {
-        setSurveyStep(1);
-        setPhase('survey');
-      }
+      setPhase('goal');
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const afterGoal = () => {
+    setError('');
+    if (surveyDone) {
+      setPhase('celebration');
+    } else {
+      setSurveyStep(1);
+      setPhase('survey');
     }
   };
 
@@ -1329,6 +1335,29 @@ export default function CreatorOnboarding() {
           </Logo>
         </TopBar>
 
+        {phase === 'goal' && (
+          <Card>
+            <ProgressWrap>
+              <ProgressTop>
+                <span>Your goal</span>
+                <ProgressPct>Optional</ProgressPct>
+              </ProgressTop>
+              <ProgressTrack>
+                <ProgressFill $pct={95} />
+              </ProgressTrack>
+            </ProgressWrap>
+            <Headline>Set a monthly collab goal</Headline>
+            <Subline>Gifted products count at their retail value, paid deals at what the brand pays. Polly works out how many brands to pitch to get there.</Subline>
+            <GoalSetup
+              variant="onboarding"
+              saveLabel="Set my goal →"
+              onSaved={afterGoal}
+              onSkip={afterGoal}
+              onUnavailable={afterGoal}
+            />
+          </Card>
+        )}
+
         {phase === 'survey' && surveyStep === 1 && (
           <Card>
             <OnboardingSurveyStep1
@@ -1336,7 +1365,7 @@ export default function CreatorOnboarding() {
               setSegment={(v) => { setSegment(v); setError(''); }}
               error={error}
               loading={loading}
-              onBack={() => { setError(''); setPhase('profile'); setProfileStep(3); }}
+              onBack={() => { setError(''); setPhase('goal'); }}
               onContinue={handleSurveyStep1}
               onSkip={() => skipSurvey(1)}
             />
