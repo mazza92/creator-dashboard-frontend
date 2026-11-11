@@ -2,14 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { apiClient } from '../../config/api';
 import { creatorTokens as t } from '../../theme/creatorTokens';
-import { centsFromInput, money, pct, pitchMath } from './trackerModel';
+import { centsFromInput, money, pitchMath } from './trackerModel';
 
 // One monthly collab goal: paid deals + gifted products at retail value. Used in onboarding (after niches),
 // as a Polly card for creators without a goal, in Account Settings and from the Tracker header.
 // GET /api/tracker/goal/suggest -> starter / suggested / stretch; POST /api/tracker/goal.
 
 const GOAL_MIN_CENTS = 5000;
-const OPTION_LABEL = { starter: 'Starter', suggested: 'Suggested', stretch: 'Stretch' };
+const OPTION_LABEL = { starter: 'Easy start', suggested: 'Recommended', stretch: 'Big month' };
 
 function compactFollowers(n) {
   const v = Number(n) || 0;
@@ -44,12 +44,11 @@ export function GoalBasis({ basis }) {
   const bits = [];
   if (basis.followers) bits.push(`${compactFollowers(basis.followers)} followers`);
   if (basis.niches?.length) bits.push(basis.niches.slice(0, 2).map(nicheLabel).join(' and '));
-  if (basis.engagement_pct) bits.push(`${basis.engagement_pct}% engagement`);
   return (
     <Basis>
-      {bits.length ? <>Based on your profile (<b>{bits.join(', ')}</b>), creators </> : 'Creators '}
-      like you typically earn <b>{money(basis.rate_low_cents)}–{money(basis.rate_high_cents)} per UGC video</b>
-      {basis.gifted_avg_cents ? <> and receive products worth about <b>{money(basis.gifted_avg_cents)}</b></> : null}.
+      {bits.length ? <>Creators like you (<b>{bits.join(', ')}</b>) </> : 'Creators like you '}
+      usually get <b>{money(basis.rate_low_cents)}–{money(basis.rate_high_cents)} per paid video</b>
+      {basis.gifted_avg_cents ? <>, plus free products worth about <b>{money(basis.gifted_avg_cents)}</b> each</> : null}.
     </Basis>
   );
 }
@@ -132,12 +131,12 @@ export default function GoalSetup({
           >
             <span className={o.id === data.recommended ? 'tag rec' : 'tag'}>{OPTION_LABEL[o.id] || o.id}</span>
             <span className="v">{money(o.amount_cents)}</span>
-            <span className="k">~{o.math?.deals || o.deals} deal{(o.math?.deals || o.deals) === 1 ? '' : 's'} a month</span>
+            <span className="k">about {o.math?.deals || o.deals} collab{(o.math?.deals || o.deals) === 1 ? '' : 's'}</span>
           </Option>
         ))}
       </Options>
       <Custom>
-        <label htmlFor={`goal-custom-${variant}`}>Or set your own goal: $</label>
+        <label htmlFor={`goal-custom-${variant}`}>Or pick your own: $</label>
         <input
           id={`goal-custom-${variant}`}
           type="text"
@@ -151,12 +150,12 @@ export default function GoalSetup({
       </Custom>
       {math && !tooLow ? (
         <MathLine aria-live="polite">
-          <b>That&apos;s {math.pitches} brands to pitch</b> this month: ~{math.deals} deal{math.deals === 1 ? '' : 's'} at
-          {' '}~{money(math.avg_deal_cents)} each ({pct(math.reply_rate)} of pitches get a reply, {pct(math.deal_rate)} of replies
-          {' '}become a deal). Polly lines them up in your Tracker.
+          <b>Your plan: pitch about {Math.max(1, Math.round(math.pitches / 4.3))} brands a week.</b> Usually 1 in
+          {' '}{Math.max(1, Math.round(1 / (math.reply_rate || 1)))} brands writes back, and 1 in
+          {' '}{Math.max(1, Math.round(1 / (math.deal_rate || 1)))} of those says yes. Polly finds the brands for you.
         </MathLine>
       ) : null}
-      <Note>Gifted products count at their retail value, paid deals at what the brand pays.</Note>
+      <Note>Free products count at their store price. You can change your goal any time.</Note>
       {error ? <Err role="alert">{error}</Err> : null}
       <Actions>
         <button type="button" className="primary" onClick={save} disabled={saving || !amountCents}>
@@ -226,12 +225,15 @@ const Custom = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   font-size: 14px;
   color: ${t.inkSoft};
+  label { white-space: nowrap; }
 
   input {
-    width: 110px;
+    width: 96px;
+    min-width: 0;
+    flex: 0 1 96px;
     padding: 8px 10px;
     border-radius: 10px;
     border: 1px solid ${t.line};
@@ -241,7 +243,7 @@ const Custom = styled.div`
     background: ${t.white};
   }
   input:focus { outline: 2px solid ${t.accentBorder}; border-color: ${t.accent}; }
-  .per { color: ${t.muted}; }
+  .per { color: ${t.muted}; white-space: nowrap; }
 `;
 
 const MathLine = styled.p`

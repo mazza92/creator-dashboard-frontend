@@ -32,8 +32,8 @@ export const HOT_COLOR = '#e8590c';
 
 export const KIND_TONE = {
   sched: { bg: '#e8effc', fg: '#2357c6' },
-  sent: { bg: t.subtle, fg: t.muted },
-  fu: { bg: t.subtle, fg: t.muted },
+  sent: { bg: t.subtle, fg: '#4b5563' },
+  fu: { bg: t.subtle, fg: '#0f766e' },
   due: { bg: '#fbe7ee', fg: '#c2255c' },
   post: { bg: '#f1e9fb', fg: '#7c3aed' },
   ship: { bg: '#fdf1dc', fg: '#9a5b00' },
@@ -50,7 +50,7 @@ export function Flame({ size = 14, title = 'Hot brand today' }) {
   );
 }
 
-export function LineIcon({ name, size = 13 }) {
+export function LineIcon({ name, size = 13, weight = 2 }) {
   if (name === 'hot') {
     return (
       <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="currentColor" stroke="none">
@@ -60,18 +60,19 @@ export function LineIcon({ name, size = 13 }) {
   }
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round">
       {PATHS[name] || PATHS.sched}
     </svg>
   );
 }
 
+// Plain colored line icon, no badge: reads cleaner in dense calendar cells and never clips.
 export function KindIcon({ kind, small = false }) {
   const tone = KIND_TONE[kind] || KIND_TONE.sched;
   return (
-    <IconBox $bg={tone.bg} $fg={tone.fg} $small={small} aria-hidden="true">
-      <LineIcon name={kind} size={small ? 11 : 13} />
-    </IconBox>
+    <IconSlot $fg={tone.fg} $small={small} aria-hidden="true">
+      <LineIcon name={kind} size={small ? 13 : 15} weight={1.75} />
+    </IconSlot>
   );
 }
 
@@ -81,13 +82,12 @@ const FlameSvg = styled.svg`
   vertical-align: -2px;
 `;
 
-const IconBox = styled.span`
-  width: ${(p) => (p.$small ? '18px' : '22px')};
-  height: ${(p) => (p.$small ? '18px' : '22px')};
-  border-radius: ${(p) => (p.$small ? '6px' : '7px')};
+const IconSlot = styled.span`
+  width: ${(p) => (p.$small ? '14px' : '16px')};
+  height: ${(p) => (p.$small ? '14px' : '16px')};
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
-  background: ${(p) => p.$bg};
   color: ${(p) => p.$fg};
+  svg { display: block; overflow: visible; }
 `;

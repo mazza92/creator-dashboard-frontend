@@ -12,6 +12,7 @@ import Logo from '../components/Logo';
 import api from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PaymentIssueBanner from '../components/PaymentIssueBanner';
+import { GoalPrompt } from '../creator-portal/tracker/GoalModal';
 import { creatorTokens } from '../theme/creatorTokens';
 import { usePrefetch } from '../components/PrefetchLink';
 
@@ -921,6 +922,7 @@ const CreatorDashboardLayout = () => {
 
       <Content $polly={/\/dashboard\/(for-you|polly)(\/|$)/.test(location.pathname)}>
         <PaymentIssueBanner />
+        <GoalPrompt pathname={location.pathname} />
         <Outlet />
       </Content>
 

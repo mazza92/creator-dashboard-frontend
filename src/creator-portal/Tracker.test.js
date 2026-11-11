@@ -73,13 +73,15 @@ beforeEach(() => {
 
 test('goal header, funnel, hot brand and a locked card that opens the paywall', async () => {
   renderAt('/creator/dashboard/tracker');
-  expect(await screen.findByText('November goal')).toBeInTheDocument();
+  expect(await screen.findByText(/November goal/)).toBeInTheDocument();
   expect(screen.getByText('$325')).toBeInTheDocument();
-  expect(screen.getByText(/~40 pitches → ~3 deals/)).toBeInTheDocument();
+  expect(screen.getByText(/Pitch about 9 brands a week/)).toBeInTheDocument();
   expect(screen.getByText('19 days left')).toBeInTheDocument();
   expect(screen.getAllByRole('img', { name: 'Hot brand today' }).length).toBeGreaterThan(0);
   expect(screen.getByRole('button', { name: /Your move \(1\)/ })).toBeInTheDocument();
 
+  expect(screen.getByRole('button', { name: 'Calendar' })).toHaveAttribute('aria-pressed', 'true'); // default view
+  fireEvent.click(screen.getByRole('button', { name: 'Board' }));
   fireEvent.click(screen.getByRole('button', { name: /GlowDrop, sends on Pro/ }));
   expect(screen.getByRole('dialog', { name: 'Upgrade' })).toHaveTextContent('goal-left-17500 lined-2');
 });
@@ -130,11 +132,11 @@ test('goal setup: three suggestions, custom amount, pitch count', async () => {
   apiClient.post.mockResolvedValue({ data: { success: true, goal: { amount_cents: 23000 } } });
   render(<GoalSetup suggestion={suggestion} onSaved={onSaved} />);
   expect(screen.getAllByRole('radio')).toHaveLength(3);
-  expect(screen.getByRole('radio', { name: /Suggested/ })).toHaveAttribute('aria-checked', 'true');
-  expect(screen.getByText(/That's 209 brands to pitch/)).toBeInTheDocument();
+  expect(screen.getByRole('radio', { name: /Recommended/ })).toHaveAttribute('aria-checked', 'true');
+  expect(screen.getByText(/pitch about 49 brands a week/)).toBeInTheDocument();
   expect(screen.getByText(/8.3K followers/)).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText(/Or set your own goal/), { target: { value: '230' } });
-  expect(screen.getByText(/That's 84 brands to pitch/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(/Or pick your own/), { target: { value: '230' } });
+  expect(screen.getByText(/pitch about 20 brands a week/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Set my goal' }));
   await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/tracker/goal', { amount_cents: 23000, source: 'custom' }));
   await waitFor(() => expect(onSaved).toHaveBeenCalled());
