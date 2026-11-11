@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { creatorTokens as t } from '../theme/creatorTokens';
+import scrollChatTo from './scrollChatTo';
 import { money } from './tracker/trackerModel';
 
 // A new creator's first visit (GET /api/polly/bootstrap -> first_run): one screen that shows how Newcollab works
@@ -23,7 +24,7 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
   const ref = useRef(null);
   useEffect(() => {
     // The chat scrolls to its bottom; the welcome starts at its top.
-    const id = setTimeout(() => ref.current?.scrollIntoView?.({ block: 'start' }), 60);
+    const id = setTimeout(() => scrollChatTo(ref.current), 60);
     return () => clearTimeout(id);
   }, []);
   if (!data?.brands?.length) return null;

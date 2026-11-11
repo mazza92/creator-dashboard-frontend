@@ -3,6 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { ArrowRight } from 'lucide-react';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
+import scrollChatTo from './scrollChatTo';
 
 // First visit to Polly: one question, one button. The creator confirms what they post about, then the first
 // brand matches load (the server starts ranking them while this card is on screen). Offer type, ship-to and the
@@ -23,7 +24,7 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDa
   const cardRef = useRef(null);
   // The chat scrolls to its bottom; on a phone that hid the greeting. Start the welcome at its top.
   useEffect(() => {
-    const id = setTimeout(() => cardRef.current?.scrollIntoView?.({ block: 'start' }), 50);
+    const id = setTimeout(() => scrollChatTo(cardRef.current), 50);
     return () => clearTimeout(id);
   }, []);
   const options = Array.from(new Set([...(facts?.niches || []), ...(facts?.niche_options || [])]));

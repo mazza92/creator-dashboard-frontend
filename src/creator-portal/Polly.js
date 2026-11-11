@@ -29,7 +29,7 @@ import {
   writePollyLocal,
 } from './pollyStorage';
 import { brandMarkEmoji } from './brandMarkEmoji';
-import PollyGoalBar from './PollyGoalBar';
+import { PollyChecklist } from './PollyChecklist';
 import PollyFirstRun from './PollyFirstRun';
 import { TRACKER_PATH, chipHref } from './tracker/trackerModel';
 import { captureUpgradeDeeplink, dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
@@ -2142,8 +2142,7 @@ export default function Polly() {
     send('', action);
   }, [autoAction, ready, busy, send, firstVisit, welcomeMode, pitchFacts.loaded]);
 
-  const startFirstRun = (choice, brandIds) => {
-    if (busy) return;
+  const writeFirstPitches = (choice, brandIds) => {
     setFirstRun(null);
     setBatchManual(choice === 'manual');
     apiClient.post('/api/polly/first-run', { choice }).catch(() => {});
@@ -2153,6 +2152,17 @@ export default function Polly() {
       brand_ids: brandIds,
       label: choice === 'manual' ? "I'll pitch brands myself" : 'Start contacting brands for me',
     });
+  };
+
+  // "Start contacting brands for me": Gmail first, pitches (and free credits) only once it's connected, so the
+  // creator never sees 0 credits next to a second "Connect Gmail" prompt. "Myself": write them now.
+  const startFirstRun = (choice, brandIds) => {
+    if (busy) return;
+    if (choice === 'gmail' && !autopilot.state?.gmail?.connected) {
+      connectGmailForBatch(`firstrun:${brandIds.join(',')}`);
+      return;
+    }
+    writeFirstPitches(choice, brandIds);
   };
 
   const onSubmit = (e) => {
@@ -2261,7 +2271,10 @@ export default function Polly() {
       if (result === 'gmail_connected') {
         autopilot.reload();
         if (pendingSend && pendingSend.startsWith('brand:')) sendSingle(pendingSend.slice(6));
-        else sendBatch();
+        else if (pendingSend && pendingSend.startsWith('firstrun:')) {
+          const ids = pendingSend.slice(9).split(',').map(Number).filter(Boolean);
+          writeFirstPitches('gmail', ids);
+        } else sendBatch();
       } else {
         setMessages((prev) => [...prev, {
           id: newId(), role: 'assistant', content: `${AUTOPILOT_NOTICES[result] || "Gmail didn't connect."} Your pitches are still here.`,
@@ -2514,9 +2527,6 @@ export default function Polly() {
           <button type="button" aria-label="Dismiss" onClick={() => setLiveToast(null)}>×</button>
         </LiveToast>
       ) : null}
-      {ready && creatorId && (firstRun || (!welcomeMode && !firstVisit)) ? (
-        <PollyGoalBar onOpenTracker={() => navigate(TRACKER_PATH)} showChecklist={!firstRun} />
-      ) : null}
       <Thread ref={threadRef}>
         {firstRun ? (
           <PollyFirstRun
@@ -2526,7 +2536,11 @@ export default function Polly() {
             busy={busy}
             onStart={startFirstRun}
           />
-        ) : welcomeMode ? (
+        ) : null}
+        {!firstRun && ready && creatorId && !welcomeMode ? (
+          <PollyChecklist onOpenTracker={() => navigate(TRACKER_PATH)} />
+        ) : null}
+        {firstRun ? null : welcomeMode ? (
           <PollyWelcome
             facts={pitchFacts.facts}
             firstName={user?.first_name || ''}
@@ -2571,7 +2585,7 @@ export default function Polly() {
           <BriefCard>
             <div className="kicker">Polly brief</div>
             <div className="title">{brief.title}</div>
-            <div className="summary">{brief.summary}</div>
+            <div className="summary"><PollyRichText text={brief.summary} /></div>
             {brief.priority ? <div className="priority">🎯 {brief.priority}</div> : null}
             {brief.watched?.length ? (
               <ul>
