@@ -91,6 +91,7 @@ export function findCard(tracker, brandId) {
 
 export function cardMatches(card, filter) {
   if (filter === 'your_move') return Boolean(card.next?.your_move);
+  if (filter === 'opened') return Number(card.kit_views) > 0 && card.column !== 'closed';
   if (filter === 'paid') return card.type === 'paid' || card.type === 'gig';
   if (filter === 'gifted') return card.type === 'gifted';
   if (filter === 'closed') return card.column === 'closed';
