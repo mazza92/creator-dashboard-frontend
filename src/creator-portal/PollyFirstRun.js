@@ -76,7 +76,7 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
         <button type="button" className="primary" disabled={busy} onClick={() => onStart('gmail', startIds)}>
           <span className="g" aria-hidden="true" />Start contacting brands for me
         </button>
-        <button type="button" className="ghost" disabled={busy} onClick={() => onStart('manual', startIds)}>
+        <button type="button" className="ghost" disabled={busy} onClick={() => onStart('manual', data.brands.map((b) => b.brand_id))}>
           I&apos;ll pitch brands myself
         </button>
         <p>

@@ -1527,7 +1527,6 @@ export default function Polly() {
   const [welcomeDone, setWelcomeDone] = useState(false);
   // First run (bootstrap.first_run): the welcome with lined-up brands and two choices, until the creator picks.
   const [firstRun, setFirstRun] = useState(null);
-  const [batchManual, setBatchManual] = useState(false);
   const pendingTrialRef = useRef(false);
   const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
@@ -2142,20 +2141,21 @@ export default function Polly() {
     send('', action);
   }, [autoAction, ready, busy, send, firstVisit, welcomeMode, pitchFacts.loaded]);
 
+  // Gmail: write the first pitches (free credits spent here, after Gmail is connected).
+  // Myself: show the lined-up brands as cards; each Contact writes one pitch (one free credit), nothing up front.
   const writeFirstPitches = (choice, brandIds) => {
     setFirstRun(null);
-    setBatchManual(choice === 'manual');
     apiClient.post('/api/polly/first-run', { choice }).catch(() => {});
-    sendStarter({
-      id: 'pitch_all',
-      action: 'pitch_batch',
-      brand_ids: brandIds,
-      label: choice === 'manual' ? "I'll pitch brands myself" : 'Start contacting brands for me',
-    });
+    if (choice === 'manual') {
+      sendStarter({ id: 'show_brands', action: 'show_brands', brand_ids: brandIds, label: "I'll pitch brands myself" });
+      return;
+    }
+    sendStarter({ id: 'pitch_all', action: 'pitch_batch', brand_ids: brandIds, label: 'Start contacting brands for me' });
   };
 
+
   // "Start contacting brands for me": Gmail first, pitches (and free credits) only once it's connected, so the
-  // creator never sees 0 credits next to a second "Connect Gmail" prompt. "Myself": write them now.
+  // creator never sees 0 credits next to a second "Connect Gmail" prompt. "Myself": brand cards, pay per Contact.
   const startFirstRun = (choice, brandIds) => {
     if (busy) return;
     if (choice === 'gmail' && !autopilot.state?.gmail?.connected) {
@@ -2860,7 +2860,6 @@ export default function Polly() {
                       onOpenMail={openBatchMail}
                       onCopy={copyBatchPitch}
                       free={!credits?.is_unlimited}
-                      defaultManual={batchManual}
                     />
                   )}
                 </div>
