@@ -6,6 +6,8 @@ import { message } from 'antd';
 import { apiClient } from '../../config/api';
 import { creatorTokens as t } from '../../theme/creatorTokens';
 import { Flame, LineIcon, HOT_COLOR } from './TrackerIcons';
+import HotTag from '../HotTag';
+import { isHotBrand, useHotBrandIds } from '../hotBrands';
 import {
   ACTION_DONE, REPLY_CHOICES, centsFromInput, money, needsReplyFlow, pollyChipHref, shortDate, stageActions, typeLabel,
 } from './trackerModel';
@@ -69,6 +71,7 @@ function Field({ kind, value, onChange, idPrefix }) {
 
 export default function DealDrawer({ brandId, card: boardCard, startStep, onClose, onChanged, onPaywall }) {
   const navigate = useNavigate();
+  const hotIds = useHotBrandIds();
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [choice, setChoice] = useState(null);
@@ -191,7 +194,7 @@ export default function DealDrawer({ brandId, card: boardCard, startStep, onClos
         <Head>
           <Logo>{card.logo ? <img src={card.logo} alt="" /> : (card.brand_name || '?').slice(0, 1)}</Logo>
           <div className="who">
-            <h2>{card.hot ? <><Flame size={16} />{' '}</> : null}{card.brand_name}</h2>
+            <h2>{card.hot ? <><Flame size={16} />{' '}</> : isHotBrand({ id: card.brand_id }, hotIds) ? <HotTag /> : null}{card.brand_name}</h2>
             <div className="meta">
               <TypePill $paid={paidType}>{typeLabel(card.type)}</TypePill>
               {card.value_cents ? <span>{money(card.value_cents)}</span> : null}

@@ -19,6 +19,8 @@ import { CANONICAL_CATEGORIES, categoryEmoji, categoryLabel } from '../constants
 import { SERVED_COUNTRY_GROUPS, normalizeServedCountry } from '../constants/servedCountries';
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
+import HotTag from '../creator-portal/HotTag';
+import { isHotBrand, useHotBrandIds } from '../creator-portal/hotBrands';
 
 /** A post the creator pasted: full TikTok or Instagram post link, cleaned, with a preview still. */
 export function ownPostFromLink(raw) {
@@ -270,6 +272,7 @@ function normalizeBrand(raw, appliedMap) {
     heroProduct: raw.hero_product || raw.heroProduct,
     minFollowers: raw.min_followers ?? raw.minFollowers ?? 0,
     microFriendly: !!(raw.micro_friendly ?? raw.microFriendly),
+    hot: !!(raw.meta_ads || raw.hot),
     regions,
     platforms,
     collaborationType: collabLabel(raw.collaboration_type || raw.collaborationType),
@@ -421,6 +424,8 @@ export default function BrandPRHome() {
   const [dirMicro, setDirMicro] = useState(false);
   const [dirUS, setDirUS] = useState(false);
   const [dirRecruiting, setDirRecruiting] = useState(false);
+  const [dirHot, setDirHot] = useState(false);
+  const hotIds = useHotBrandIds();
   const [dirPage, setDirPage] = useState(1);
   const [suggestions, setSuggestions] = useState([]);
   const [showAc, setShowAc] = useState(false);
@@ -436,6 +441,7 @@ export default function BrandPRHome() {
     dirMicro: false,
     dirUS: false,
     dirRecruiting: false,
+    dirHot: false,
     dirQuery: '',
     userNiches: [],
   });
@@ -444,6 +450,7 @@ export default function BrandPRHome() {
     dirMicro,
     dirUS,
     dirRecruiting,
+    dirHot,
     dirQuery,
     userNiches,
   };
@@ -605,6 +612,7 @@ export default function BrandPRHome() {
       if (f.dirUS) params.region = 'US';
       if (f.dirMicro) params.micro_friendly = '1';
       if (f.dirRecruiting) params.recruiting = '1';
+      if (f.dirHot) params.hot = '1';
       if (f.userNiches.length) params.prefer_niches = f.userNiches.join(',');
       const { data } = await api.get('/api/public/brands', { params });
       if (dirReqRef.current !== req) return;
@@ -670,7 +678,7 @@ export default function BrandPRHome() {
     const delay = dirQuery.trim() ? 280 : 0;
     const t = setTimeout(() => loadDirectory(1, false), delay);
     return () => clearTimeout(t);
-  }, [tab, view, dirCat, dirMicro, dirUS, dirRecruiting, dirQuery, loadDirectory]);
+  }, [tab, view, dirCat, dirMicro, dirUS, dirRecruiting, dirHot, dirQuery, loadDirectory]);
 
   useEffect(() => {
     if (tab !== 'dir') {
@@ -1077,7 +1085,7 @@ export default function BrandPRHome() {
     [dirCards]
   );
   const hasMoreDir = dirCards.length > 0 && dirCards.length < dirTotal;
-  const dirFiltersOn = dirCat !== 'all' || dirMicro || dirUS || dirRecruiting || Boolean(dirQuery.trim());
+  const dirFiltersOn = dirCat !== 'all' || dirMicro || dirUS || dirRecruiting || dirHot || Boolean(dirQuery.trim());
   const filteredDirCategories = useMemo(() => {
     const q = catQuery.trim().toLowerCase();
     if (!q) return dirCategories;
@@ -1117,12 +1125,14 @@ export default function BrandPRHome() {
     const catName = categoryLabel(cat);
     const live = brand.rosterLive && !brand.applied;
     const isRecruiting = brand.rosterSpotlighted && !brand.applied;
+    const hot = isHotBrand(brand, hotIds);
     return (
       <Card key={brand.id} $live={live} $recruit={isRecruiting}>
         {brand.cover && (
           <CardMedia>
             <CardCover src={brand.cover} alt="" />
             <CoverChips>
+              {hot && <HotTag variant="chip" />}
               {catName && (
                 <CatChip>
                   <span aria-hidden="true">{catEmoji}</span> {catName}
@@ -1153,6 +1163,7 @@ export default function BrandPRHome() {
               <h3>{brand.name}</h3>
               {!brand.cover && (
                 <ChipRow>
+                  {hot && <HotTag variant="chip" />}
                   {catName && (
                     <CatChip>
                       <span aria-hidden="true">{catEmoji}</span> {catName}
@@ -1260,7 +1271,7 @@ export default function BrandPRHome() {
                     <LogoFallback style={{ background: logoHue(brand.name) }}>{initials(brand.name)}</LogoFallback>
                   )}
                   <div>
-                    <h3>{brand.name}</h3>
+                    <h3>{isHotBrand(brand, hotIds) && <HotTag />}{brand.name}</h3>
                     <em>{[catName, status.line].filter(Boolean).join(' · ')}</em>
                   </div>
                 </CampaignBrand>
@@ -1327,6 +1338,7 @@ export default function BrandPRHome() {
     setDirMicro(false);
     setDirUS(false);
     setDirRecruiting(false);
+    setDirHot(false);
     setDirQuery('');
     setSuggestions([]);
     setShowAc(false);
@@ -2060,6 +2072,15 @@ export default function BrandPRHome() {
             </SearchTools>
             <FilterRow>
               <FilterToggles role="group" aria-label="Directory filters">
+                <FilterToggle
+                  type="button"
+                  $on={dirHot}
+                  aria-pressed={dirHot}
+                  title="Brands running ads with UGC creators right now"
+                  onClick={() => setDirHot((v) => !v)}
+                >
+                  🔥 Hot brands
+                </FilterToggle>
                 <FilterToggle
                   type="button"
                   $on={dirRecruiting}

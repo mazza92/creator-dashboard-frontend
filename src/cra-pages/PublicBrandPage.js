@@ -16,6 +16,8 @@ import { formatFollowers } from '../utils/format';
 import { resolveBrandStats } from '../utils/brandStats';
 import AreYouThisBrand from '../components/AreYouThisBrand';
 import LandingPageLayout from '../Layouts/LandingPageLayout';
+import HotTag from '../creator-portal/HotTag';
+import { isHotBrand, useHotBrandIds } from '../creator-portal/hotBrands';
 
 // Use shared API config with runtime detection
 const getApiBase = () => {
@@ -29,6 +31,7 @@ const PublicBrandPage = () => {
   const { user } = useContext(UserContext);
 
   const [brand, setBrand] = useState(null);
+  const hotIds = useHotBrandIds();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -318,6 +321,7 @@ const PublicBrandPage = () => {
             <BrandHeaderInfo>
               <BrandName>{brand.brand_name}</BrandName>
               <BrandMeta>
+                {isHotBrand(brand, hotIds) && <HotTag variant="chip" label="Hot brand" />}
                 {brand.isFeatured && <FeaturedBadge>Featured</FeaturedBadge>}
                 {brand.category && <CategoryBadge>{brand.category.replace('_', ' ')}</CategoryBadge>}
                 {brand.website && (
