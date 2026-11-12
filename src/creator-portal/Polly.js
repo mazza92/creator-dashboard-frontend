@@ -16,6 +16,7 @@ import GiftingRadar from './PollyRadar';
 import PitchBatchCard from './PollyPitchBatch';
 import PollyActivityCard from './PollyActivityCard';
 import PollyGoalPlanCard from './PollyGoalPlanCard';
+import PollyHotlistCard from './PollyHotlistCard';
 import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -2637,7 +2638,7 @@ export default function Polly() {
                   {msg.radar ? (
                     <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} onSettled={settleRadar} />
                   ) : null}
-                  {!msg.goal_plan && msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
+                  {!msg.goal_plan && !msg.hotlist && msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).map((s) => (
                         <Chip
@@ -2844,6 +2845,10 @@ export default function Polly() {
                   )}
                   {msg.activity?.items?.length > 0 && (
                     <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
+                  )}
+                  {msg.hotlist?.brands?.length > 0 && (
+                    <PollyHotlistCard hotlist={msg.hotlist} chips={msg.task_chips || []} onChip={sendStarter}
+                      onContact={contactBrand} disabled={busy} />
                   )}
                   {msg.goal_plan?.days?.length > 0 && (
                     <PollyGoalPlanCard plan={msg.goal_plan} chips={msg.task_chips || []} onChip={sendStarter} disabled={busy} />
