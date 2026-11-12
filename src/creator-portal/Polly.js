@@ -1026,19 +1026,6 @@ const ContactBtn = styled.button`
   &:disabled { opacity: 0.55; cursor: wait; }
 `;
 
-const BriefCard = styled.div`
-  background: ${t.white};
-  border: 1px solid ${t.line};
-  border-radius: 16px;
-  padding: 14px 16px;
-  margin: 8px 0 16px;
-  .kicker { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${t.accent}; }
-  .title { font-family: ${t.fontDisplay}; font-size: 22px; margin: 4px 0 8px; }
-  .summary { font-size: 14px; color: ${t.inkSoft}; line-height: 1.5; }
-  .priority { margin-top: 10px; font-size: 13px; color: ${t.ink}; }
-  ul { margin: 8px 0 0; padding-left: 18px; color: ${t.muted}; font-size: 13px; }
-`;
-
 const PitchCard = styled.div`
   background: ${t.white};
   border: 1px solid ${t.line};
@@ -1537,7 +1524,6 @@ export default function Polly() {
   const [starters, setStarters] = useState(STARTERS);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hooksBusy, setHooksBusy] = useState(false);
-  const [brief, setBrief] = useState(null);
   const threadRef = useRef(null);
   const stickToBottomRef = useRef(true);
   const inputRef = useRef(null);
@@ -1626,7 +1612,6 @@ export default function Polly() {
         if (Array.isArray(res.data.starters) && res.data.starters.length) {
           setStarters(normalizeStarters(res.data.starters));
         }
-        if (res.data.brief) setBrief(res.data.brief);
         setFirstRun(res.data.first_run || null);
         if (res.data.credits) setCredits(res.data.credits);
         const ownerId = res.data.profile?.creator_id || creatorIdRef.current;
@@ -2582,34 +2567,6 @@ export default function Polly() {
             </SuggestGrid>
           </Empty>
         ) : null}
-        {brief && messages.length > 0 && (
-          <BriefCard>
-            <div className="kicker">Polly brief</div>
-            <div className="title">{brief.title}</div>
-            <div className="summary"><PollyRichText text={brief.summary} /></div>
-            {brief.priority ? <div className="priority">🎯 {brief.priority}</div> : null}
-            {brief.watched?.length ? (
-              <ul>
-                {brief.watched.map((item, i) => <li key={`${item}-${i}`}>{item}</li>)}
-              </ul>
-            ) : null}
-            {brief.chips?.length ? (
-              <Chips style={{ marginTop: 12 }}>
-                {brief.chips.map((s) => (
-                  <Chip
-                    key={s.id || s.label}
-                    type="button"
-                    $emphasis={isUnlockChip(s)}
-                    onClick={() => sendStarter(s)}
-                    disabled={busy}
-                  >
-                    {s.label}
-                  </Chip>
-                ))}
-              </Chips>
-            ) : null}
-          </BriefCard>
-        )}
         {messages.map((msg, idx) => (
           <Turn key={msg.id || `${idx}-${msg.role}`}>
             {msg.role === 'user' ? (
