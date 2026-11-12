@@ -6,7 +6,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import DealDrawer from './tracker/DealDrawer';
 import GoalModal from './tracker/GoalModal';
-import { Flame, KindIcon, KIND_LABEL, HOT_COLOR } from './tracker/TrackerIcons';
+import { Flame, KindIcon, KIND_LABEL, HOT_COLOR, LineIcon } from './tracker/TrackerIcons';
 import {
   TRACKER_PATH, agendaDays, allCards, cardMatches, dayLabel, findCard, localIso, mondayOf, money, monthName, monthWeeks, parseIso, paywallGoal, weekGroups, weekTarget,
 } from './tracker/trackerModel';
@@ -14,7 +14,7 @@ import {
 // Tracker (replaces Timeline): the monthly goal, every brand on one calendar, the dates that matter.
 // GET /api/tracker; one brand opens in the deal drawer (/tracker/:brandId or ?brand=ID&step=amount).
 
-const LEGEND = ['hot', 'sched', 'sent', 'fu', 'due', 'ship', 'post', 'pay'];
+const LEGEND = ['hot', 'view', 'sched', 'sent', 'fu', 'due', 'ship', 'post', 'pay'];
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const LIST_COLS = [
   { id: 'brand', label: 'Brand' },
@@ -104,10 +104,33 @@ function FunnelStrip({ funnel }) {
   return (
     <Funnel>
       <div className="s"><span className="v">{f.pitched || 0}{f.pitches_needed ? <small> / {f.pitches_needed}</small> : null}</span><span className="k">brands pitched</span></div>
+      <div className="s opened"><span className="v"><LineIcon name="eye" size={16} /> {f.opened || 0}</span><span className="k">opened your kit</span></div>
       <div className="s"><span className="v">{f.replied || 0}</span><span className="k">wrote back</span></div>
       <div className="s"><span className="v">{f.negotiating || 0}</span><span className="k">talking money{f.negotiating_cents ? <>, <b>{money(f.negotiating_cents)}</b></> : null}</span></div>
       <div className="s"><span className="v">{f.booked_or_paid || 0}</span><span className="k">collabs confirmed</span></div>
     </Funnel>
+  );
+}
+
+// Brands that opened the kit in the last 7 days: the "it's working" moment, one tap to follow up in Polly.
+function KitOpens({ views }) {
+  if (!views?.length) return null;
+  return (
+    <Opens aria-label="Brands that opened your kit">
+      <div className="h"><span aria-hidden="true">👀</span> Opened your kit this week</div>
+      <ul>
+        {views.slice(0, 3).map((v) => (
+          <li key={v.brand_id}>
+            <span className="t"><b>{v.brand_name}</b> opened your kit {v.when}{v.count > 1 ? ` · ${v.count}×` : ''}</span>
+            {v.replied ? <span className="ok">They wrote back</span> : (
+              <a className="go" href={`/creator/dashboard/for-you?chip=draft_followup&brand_id=${v.brand_id}&brand_name=${encodeURIComponent(v.brand_name)}`}>
+                Follow up
+              </a>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Opens>
   );
 }
 
@@ -347,11 +370,13 @@ export default function Tracker() {
   const free = data.free;
   const moveCount = Number(data.your_move_count) || 0;
   const closedCount = (data.closed || []).length;
+  const openedCount = cards.filter((c) => Number(c.kit_views) > 0 && c.column !== 'closed').length;
   const drawerCard = drawerId ? findCard(data, drawerId) : null;
   const totalCards = cards.filter((c) => c.column !== 'closed').length;
   const filters = [
     { id: 'all', label: 'All' },
     { id: 'your_move', label: `Your move${moveCount ? ` (${moveCount})` : ''}` },
+    ...(openedCount ? [{ id: 'opened', label: `Opened kit (${openedCount})` }] : []),
     { id: 'paid', label: 'Paid' },
     { id: 'gifted', label: 'Gifted' },
     ...(closedCount ? [{ id: 'closed', label: `Closed (${closedCount})` }] : []),
@@ -372,6 +397,7 @@ export default function Tracker() {
         <Top>
           <GoalHeader tracker={data} onEditGoal={() => setGoalOpen(true)} />
           <FunnelStrip funnel={data.funnel} />
+          <KitOpens views={data.recent_views} />
           {free ? <PlanStrip free={free} goalCents={data.goal?.amount_cents} onUpgrade={() => setPaywall(true)} /> : null}
         </Top>
 
@@ -559,10 +585,32 @@ const MathLine = styled.p`
   .src { color: ${t.muted}; }
 `;
 
+const Opens = styled.section`
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f7f2fe;
+  border: 1px solid #e6d9fb;
+  display: grid;
+  gap: 8px;
+  .h { font-size: 12.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #6d28d9; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .t { font-size: 14px; color: ${t.inkSoft}; min-width: 0; }
+  .t b { color: ${t.ink}; }
+  .go {
+    font-size: 13px; font-weight: 700; color: #fff; background: #7c3aed; border-radius: 999px;
+    padding: 6px 14px; text-decoration: none; white-space: nowrap;
+  }
+  .ok { font-size: 12.5px; font-weight: 700; color: ${t.accentDeep}; }
+`;
+
 const Funnel = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+  .s.opened { background: #f4eefc; }
+  .s.opened .v { color: #6d28d9; display: flex; align-items: center; gap: 6px; }
 
   .s { background: ${t.paper}; border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
   .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -570,7 +618,10 @@ const Funnel = styled.div`
   .k { font-size: 12px; color: ${t.muted}; }
   .k b { color: ${t.ink}; }
 
-  @media (max-width: 640px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    .s:first-child { grid-column: span 2; }
+  }
 `;
 
 const FreeStrip = styled.div`

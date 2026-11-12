@@ -4,6 +4,7 @@ import { creatorTokens as t } from '../../theme/creatorTokens';
 
 // Small line icons for calendar events (kinds from the API: sched, sent, fu, due, ship, post, pay, hot).
 const PATHS = {
+  view: (<><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></>),
   sched: (<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
   sent: (<><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7z" /></>),
   fu: (<><path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></>),
@@ -18,6 +19,7 @@ const PATHS = {
 const FLAME_PATH = 'M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.4 2.2-3.2C17.6 10.6 19 13 19 15.5A7 7 0 0 1 5 15.5c0-3.7 2.6-6 4.2-8C10.5 5.8 11.6 4 12 2z';
 
 export const KIND_LABEL = {
+  view: 'Kit opened',
   hot: 'Hot brand',
   sched: 'Scheduled',
   sent: 'Sent',
@@ -31,6 +33,7 @@ export const KIND_LABEL = {
 export const HOT_COLOR = '#e8590c';
 
 export const KIND_TONE = {
+  view: { bg: '#f1e9fb', fg: '#7c3aed' },
   sched: { bg: '#e8effc', fg: '#2357c6' },
   sent: { bg: t.subtle, fg: '#4b5563' },
   fu: { bg: t.subtle, fg: '#0f766e' },
