@@ -20,6 +20,15 @@ function nicheText(niches) {
   return list.length ? list.join(' and ') : '';
 }
 
+// Logo, or the brand's initials when there's none or it fails to load (some logo URLs are dead or blank).
+function BrandLogo({ brand, color }) {
+  const [failed, setFailed] = React.useState(false);
+  if (brand.logo && !failed) {
+    return <img className="mono" src={brand.logo} alt="" onError={() => setFailed(true)} />;
+  }
+  return <span className="mono" style={{ background: color }}>{initials(brand.brand_name)}</span>;
+}
+
 export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -41,14 +50,12 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
       </Hello>
 
       <Teaser>
-        <div className="kick"><span>Lined up for you</span><span>{data.this_week} this week</span></div>
+        <div className="kick"><span>Lined up for you</span><span>{data.this_week} lined up this week</span></div>
         <Deck>
           {data.brands.map((b, i) => (
             <Brand key={b.brand_id}>
               {b.hot ? <span className="hot">🔥 Hot</span> : null}
-              {b.logo ? <img className="mono" src={b.logo} alt="" /> : (
-                <span className="mono" style={{ background: MONO_COLORS[i % MONO_COLORS.length] }}>{initials(b.brand_name)}</span>
-              )}
+              <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} />
               <span className="nm">{b.brand_name}</span>
               <Tag $paid={b.offer === 'paid'}>{b.offer === 'paid' ? 'Paid ask' : 'Gifted'}</Tag>
               <span className="why">{b.reason}</span>

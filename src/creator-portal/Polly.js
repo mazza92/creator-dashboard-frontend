@@ -1616,6 +1616,15 @@ export default function Polly() {
         if (res.data.credits) setCredits(res.data.credits);
         const ownerId = res.data.profile?.creator_id || creatorIdRef.current;
         const serverMsgs = Array.isArray(res.data.messages) ? res.data.messages : [];
+        if (res.data.first_run && !serverMsgs.length) {
+          // Welcome: the server cleared Polly's earlier auto-notes; drop any cached copy so they don't come back.
+          hydratedRef.current = true;
+          setMessages([]);
+          setSuggested([]);
+          setReady(true);
+          if (ownerId) writePollyLocal(ownerId, [], []);
+          return;
+        }
         const serverSuggested = Array.isArray(res.data.suggested_brands) ? res.data.suggested_brands : [];
         const local = ownerId ? readPollyLocal(ownerId) : null;
         const orphan = readOrphanPollyLocal();
