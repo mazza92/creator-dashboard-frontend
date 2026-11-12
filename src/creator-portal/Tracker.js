@@ -5,6 +5,8 @@ import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import UpgradeModal from './UpgradeModal';
 import DealDrawer from './tracker/DealDrawer';
+import HotTag from './HotTag';
+import { isHotBrand, useHotBrandIds } from './hotBrands';
 import GoalModal from './tracker/GoalModal';
 import { Flame, KindIcon, KIND_LABEL, HOT_COLOR, LineIcon } from './tracker/TrackerIcons';
 import {
@@ -114,6 +116,7 @@ function FunnelStrip({ funnel }) {
 
 // Brands that opened the kit in the last 7 days: the "it's working" moment, one tap to follow up in Polly.
 function KitOpens({ views }) {
+  const hotIds = useHotBrandIds();
   if (!views?.length) return null;
   return (
     <Opens aria-label="Brands that opened your kit">
@@ -121,7 +124,7 @@ function KitOpens({ views }) {
       <ul>
         {views.slice(0, 3).map((v) => (
           <li key={v.brand_id}>
-            <span className="t"><b>{v.brand_name}</b> opened your kit {v.when}{v.count > 1 ? ` · ${v.count}×` : ''}</span>
+            <span className="t">{isHotBrand({ id: v.brand_id }, hotIds) ? <HotTag /> : null}<b>{v.brand_name}</b> opened your kit {v.when}{v.count > 1 ? ` · ${v.count}×` : ''}</span>
             {v.replied ? <span className="ok">They wrote back</span> : (
               <a className="go" href={`/creator/dashboard/for-you?chip=draft_followup&brand_id=${v.brand_id}&brand_name=${encodeURIComponent(v.brand_name)}`}>
                 Follow up
@@ -135,11 +138,15 @@ function KitOpens({ views }) {
 }
 
 function EventChip({ ev, onOpen }) {
+  const hotIds = useHotBrandIds();
   const clickable = Number(ev.brand_id) > 0;
+  // 🔥 brands (running ads with UGC creators) look hot on the calendar, not only today's pick
+  const hot = ev.hot || isHotBrand({ id: ev.brand_id }, hotIds);
   return (
-    <Ev type="button" $hot={ev.hot || ev.kind === 'hot'} disabled={!clickable}
-      onClick={() => clickable && onOpen({ brand_id: ev.brand_id })} title={`${ev.brand_name}: ${ev.label}`}>
-      <KindIcon kind={ev.hot && ev.kind === 'sched' ? 'hot' : ev.kind} small />
+    <Ev type="button" $hot={hot || ev.kind === 'hot'} disabled={!clickable}
+      onClick={() => clickable && onOpen({ brand_id: ev.brand_id })}
+      title={`${ev.brand_name}: ${ev.label}${hot && ev.kind !== 'hot' ? ' · Hot brand: running ads with UGC creators' : ''}`}>
+      <KindIcon kind={hot && ev.kind === 'sched' ? 'hot' : ev.kind} small />
       <span className="txt"><b>{ev.brand_name}</b><span>{ev.label}</span></span>
     </Ev>
   );
