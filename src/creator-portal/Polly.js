@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import HotTag from './HotTag';
 import { POLLY_AVATAR_URL } from '../config/pollyAvatar';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -17,6 +18,7 @@ import PitchBatchCard from './PollyPitchBatch';
 import PollyActivityCard from './PollyActivityCard';
 import PollyGoalPlanCard from './PollyGoalPlanCard';
 import PollyHotlistCard from './PollyHotlistCard';
+import PollyUpsellCard from './PollyUpsellCard';
 import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -2604,7 +2606,7 @@ export default function Polly() {
                   {msg.radar ? (
                     <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} onSettled={settleRadar} />
                   ) : null}
-                  {!msg.goal_plan && !msg.hotlist && msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
+                  {!msg.goal_plan && !msg.hotlist && !msg.upsell && msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
                       {msg.task_chips.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).map((s) => (
                         <Chip
@@ -2672,9 +2674,9 @@ export default function Polly() {
                                 href={`/creator/dashboard/pr-brands?brand=${encodeURIComponent(brand.slug)}`}
                                 onClick={(e) => { e.preventDefault(); navigate(`/creator/dashboard/pr-brands?brand=${encodeURIComponent(brand.slug)}`); }}
                               >
-                                {brand.name} <span aria-hidden="true">›</span>
+                                {brand.meta_ads ? <HotTag /> : null}{brand.name} <span aria-hidden="true">›</span>
                               </a>
-                            ) : <div className="name">{brand.name}</div>}
+                            ) : <div className="name">{brand.meta_ads ? <HotTag /> : null}{brand.name}</div>}
                             <div className="cat">
                               {[brand.category, brand.match_score ? `${brand.match_score}% match` : null,
                                 brand.ships_to_you ? 'Ships to you' : brand.shipping_note || null]
@@ -2812,6 +2814,9 @@ export default function Polly() {
                   {msg.activity?.items?.length > 0 && (
                     <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
                   )}
+                  {msg.upsell ? (
+                    <PollyUpsellCard upsell={msg.upsell} chips={msg.task_chips || []} onChip={sendStarter} disabled={busy} />
+                  ) : null}
                   {msg.hotlist?.brands?.length > 0 && (
                     <PollyHotlistCard hotlist={msg.hotlist} chips={msg.task_chips || []} onChip={sendStarter}
                       onContact={contactBrand} disabled={busy} />

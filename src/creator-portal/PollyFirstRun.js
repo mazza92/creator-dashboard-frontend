@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import HotTag from './HotTag';
 import styled from 'styled-components';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import scrollChatTo from './scrollChatTo';
@@ -56,7 +57,7 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
             <Brand key={b.brand_id}>
               {b.hot ? <span className="hot">🔥 Hot</span> : null}
               <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} />
-              <span className="nm">{b.brand_name}</span>
+              <span className="nm">{b.meta_ads ? <HotTag /> : null}{b.brand_name}</span>
               <Tag $paid={b.offer === 'paid'}>{b.offer === 'paid' ? 'Paid ask' : 'Gifted'}</Tag>
               <span className="why">{b.reason}</span>
               <span className="st"><i />Ready to pitch</span>

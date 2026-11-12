@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import HotTag from './HotTag';
 import styled, { keyframes } from 'styled-components';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
@@ -87,7 +88,7 @@ export default function PitchBatchCard({
           return (
             <Row key={item.brand_id || idx}>
               <RowHead type="button" onClick={() => setOpen(open === idx ? null : idx)} aria-expanded={open === idx}>
-                <span className="name">{item.brand_name || 'Brand'}</span>
+                <span className="name">{item.meta_ads ? <HotTag /> : null}{item.brand_name || 'Brand'}</span>
                 <span className="subject">{item.subject}</span>
                 <span className={`state ${done ? 'sent' : ''}`}>
                   {done ? <><Check /> Sent</>
