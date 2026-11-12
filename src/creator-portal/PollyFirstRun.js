@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import HotTag from './HotTag';
 import styled from 'styled-components';
+import { ArrowRight, Send, Sparkles } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import scrollChatTo from './scrollChatTo';
 import { money } from './tracker/trackerModel';
@@ -81,15 +82,25 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
       </Teaser>
 
       <Actions>
-        <button type="button" className="primary" disabled={busy} onClick={() => onStart('gmail', startIds)}>
-          <span className="g" aria-hidden="true" />Start contacting brands for me
-        </button>
-        <button type="button" className="ghost" disabled={busy} onClick={() => onStart('manual', data.brands.map((b) => b.brand_id))}>
-          I&apos;ll pitch brands myself
-        </button>
+        <Choice type="button" $primary disabled={busy} onClick={() => onStart('gmail', startIds)}>
+          <span className="ic" aria-hidden="true"><Sparkles size={20} strokeWidth={2.2} /></span>
+          <span className="tx">
+            <span className="t">Start contacting brands for me <span className="badge">Recommended</span></span>
+            <span className="s">Polly writes, sends from your Gmail and follows up</span>
+          </span>
+          <ArrowRight className="go" size={20} aria-hidden="true" />
+        </Choice>
+        <Choice type="button" disabled={busy} onClick={() => onStart('manual', data.brands.map((b) => b.brand_id))}>
+          <span className="ic" aria-hidden="true"><Send size={18} strokeWidth={2.2} /></span>
+          <span className="tx">
+            <span className="t">I&apos;ll pitch brands myself</span>
+            <span className="s">Get the pitches, send them your way</span>
+          </span>
+          <ArrowRight className="go" size={20} aria-hidden="true" />
+        </Choice>
         <p>
-          {free != null ? `Your first ${free === 1 ? 'pitch is' : `${free || 3} pitches are`} free. ` : ''}
-          You check each pitch before anything is sent.
+          {free != null ? `Your ${free || 3} free pitch${(free || 3) === 1 ? '' : 'es'} only count when they're sent. ` : ''}
+          You check each pitch first.
         </p>
       </Actions>
     </Wrap>
@@ -203,22 +214,46 @@ const PlanMath = styled.p`
 
 const Actions = styled.div`
   display: grid;
-  gap: 8px;
-  button {
-    border-radius: 999px;
-    padding: 13px 16px;
-    font: inherit;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    gap: 9px;
-    justify-content: center;
-    align-items: center;
+  gap: 10px;
+  p { margin: 2px 0 0; text-align: center; font-size: 12.5px; color: ${t.muted}; }
+`;
+
+// Choice tiles (modern onboarding pattern): icon, title + one-line outcome, arrow. Primary in a creator-app
+// gradient with a soft glow; secondary quiet.
+const Choice = styled.button`
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 20px;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 18px;
+  font: inherit;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+  border: ${(p) => (p.$primary ? '0' : `1px solid ${t.line}`)};
+  color: ${(p) => (p.$primary ? '#fff' : t.ink)};
+  background: ${(p) => (p.$primary ? 'linear-gradient(120deg, #ff4f7b 0%, #c13cff 55%, #7c4dff 100%)' : t.white)};
+  box-shadow: ${(p) => (p.$primary ? '0 10px 26px rgba(193, 60, 255, 0.28)' : 'none')};
+
+  &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: ${(p) => (p.$primary ? '0 14px 30px rgba(193, 60, 255, 0.34)' : '0 4px 14px rgba(18, 20, 26, 0.08)')}; }
+  &:focus-visible { outline: 3px solid ${(p) => (p.$primary ? '#e9c4ff' : t.accentBorder)}; outline-offset: 2px; }
+  &:disabled { opacity: .6; cursor: default; }
+
+  .ic {
+    width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
+    background: ${(p) => (p.$primary ? 'rgba(255,255,255,0.2)' : t.subtle)};
+    color: ${(p) => (p.$primary ? '#fff' : t.ink)};
   }
-  button:disabled { opacity: .6; cursor: default; }
-  .primary { background: ${t.ink}; color: ${t.white}; border: 1px solid ${t.ink}; }
-  .ghost { background: ${t.white}; color: ${t.ink}; border: 1px solid ${t.line}; }
-  .g { width: 16px; height: 16px; border-radius: 4px; background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); }
-  p { margin: 0; text-align: center; font-size: 12.5px; color: ${t.muted}; }
+  .tx { display: grid; gap: 2px; min-width: 0; }
+  .t { font-size: 15.5px; font-weight: 800; letter-spacing: -0.01em; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+  .s { font-size: 13px; line-height: 1.35; opacity: ${(p) => (p.$primary ? 0.9 : 1)}; color: ${(p) => (p.$primary ? '#fff' : t.muted)}; }
+  .badge {
+    font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,0.24); color: #fff;
+  }
+  .go { opacity: ${(p) => (p.$primary ? 0.95 : 0.5)}; }
+
+  @media (prefers-reduced-motion: reduce) { transition: none; &:hover:not(:disabled) { transform: none; } }
 `;
