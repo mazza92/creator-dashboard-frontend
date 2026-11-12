@@ -1,4 +1,5 @@
 import React from 'react';
+import HotTag from './HotTag';
 import styled from 'styled-components';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { money } from './tracker/trackerModel';
@@ -33,7 +34,7 @@ export default function PollyGoalPlanCard({ plan, chips = [], onChip, disabled }
             <span className="brands">
               {d.brands.slice(0, MAX_PER_DAY).map((b) => (
                 <Brand key={b.brand_id} $paid={b.offer === 'paid'}>
-                  {b.brand_name}<i>{b.offer === 'paid' ? 'paid' : 'gifted'}</i>
+                  {b.meta_ads ? <HotTag /> : null}{b.brand_name}<i>{b.offer === 'paid' ? 'paid' : 'gifted'}</i>
                 </Brand>
               ))}
               {d.brands.length > MAX_PER_DAY ? <span className="more">+{d.brands.length - MAX_PER_DAY} more</span> : null}
