@@ -522,7 +522,7 @@ const Rules = styled.div`
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 `;
 const Toast = styled.div`
-  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50; max-width: calc(100% - 32px);
+  position: fixed; left: 50%; bottom: calc(24px + var(--nc-tabbar, 0px)); transform: translateX(-50%); z-index: 50; max-width: calc(100% - 32px);
   background: ${t.ink}; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px;
 `;
 

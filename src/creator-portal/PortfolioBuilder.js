@@ -369,7 +369,7 @@ const PortfolioBuilder = ({ currentUser }) => {
     <Page>
       <DashHeader>
         <div>
-          <DashTitle>My Kit</DashTitle>
+          <DashTitle>Portfolio</DashTitle>
           {kitSettings.kit_published && slug ? (
             <DashUrl>newcollab.co/kit/{slug}</DashUrl>
           ) : (

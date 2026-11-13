@@ -95,7 +95,10 @@ const Meta = styled.div`
     justify-self: start; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
     background: rgba(255, 255, 255, 0.9); color: #12141a;
   }
-  .who { font-size: 12.5px; font-weight: 600; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+  .who {
+    font-size: 12.5px; font-weight: 600; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 `;
 
 /** Hero visual: three fanned phones with earning chips. */
@@ -124,7 +127,9 @@ const Stack = styled.div`
   @media (max-width: 560px) {
     height: 360px;
     .front { width: 176px; }
-    .side { width: 138px; top: 40px; }
+    .side { width: 128px; top: 40px; }
+    .left { left: 10px; }
+    .right { right: 10px; }
   }
 `;
 const Chip = styled.div`

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Sparkles, Bell, FileText, SquareKanban, DollarSign } from 'lucide-react';
+import { Sparkles, Bell, CalendarDays, Activity, Store, Clapperboard, LayoutGrid } from 'lucide-react';
 import UpgradeModal from '../creator-portal/UpgradeModal';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
@@ -20,12 +20,18 @@ import { usePrefetch } from '../components/PrefetchLink';
 // STYLED COMPONENTS
 // ============================================================
 
+// --nc-tabbar: height of the mobile bottom tab bar (0 on desktop). Pages with fixed bottom buttons add it.
 const LayoutContainer = styled.div`
+  --nc-tabbar: 0px;
   min-height: 100vh;
   background: ${creatorTokens.paper};
   font-family: ${creatorTokens.fontSans};
   color: ${creatorTokens.ink};
   overflow-x: clip;
+
+  @media (max-width: 1024px) {
+    --nc-tabbar: calc(62px + env(safe-area-inset-bottom, 0px));
+  }
 `;
 
 const TopNav = styled.nav`
@@ -43,12 +49,11 @@ const TopNav = styled.nav`
   height: 64px;
   min-width: 0;
 
-  @media (max-width: 840px) {
+  @media (max-width: 1024px) {
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 56px 44px;
-    height: auto;
+    height: 56px;
     column-gap: 8px;
-    padding: 0 12px 8px;
+    padding: 0 12px;
   }
 `;
 
@@ -66,7 +71,7 @@ const LogoSlot = styled.div`
     object-position: left center;
   }
 
-  @media (max-width: 840px) {
+  @media (max-width: 1024px) {
     grid-column: 1;
     grid-row: 1;
     img { height: 22px; max-width: 132px; }
@@ -83,14 +88,8 @@ const NavTabs = styled.div`
   border-radius: 100px;
   min-width: 0;
 
-  @media (max-width: 840px) {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: stretch;
-    width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
+  @media (max-width: 1024px) {
+    display: none;
   }
 `;
 
@@ -115,17 +114,72 @@ const NavTab = styled(Link)`
 
   svg { width: 16px; height: 16px; }
 
-  @media (max-width: 840px) {
-    flex: 1;
-    padding: 8px 10px;
-    font-size: 13px;
+  @media (max-width: 1240px) {
+    padding: 8px 12px;
     svg { display: none; }
   }
+`;
 
-  @media (max-width: 420px) {
-    padding: 8px 6px;
-    font-size: 12px;
+// Mobile: a bottom tab bar (Instagram / TikTok pattern). Icon over label, the active tab in ink with a thicker stroke.
+const TabBar = styled.nav`
+  display: none;
+
+  @media (max-width: 1024px) {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    height: var(--nc-tabbar);
+    padding: 6px 4px env(safe-area-inset-bottom, 0px);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-top: 1px solid ${creatorTokens.line};
+    box-sizing: border-box;
   }
+`;
+
+const TabItem = styled(Link)`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  padding-top: 4px;
+  min-width: 0;
+  text-decoration: none;
+  color: ${p => (p.$active ? '#0F0F0F' : '#8A8A8A')};
+  font-size: 10.5px;
+  font-weight: ${p => (p.$active ? 700 : 500)};
+  letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+
+  svg { width: 24px; height: 24px; stroke-width: ${p => (p.$active ? 2.3 : 1.7)}; }
+  span.l { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  &:active svg { transform: scale(0.92); }
+`;
+
+const TabDot = styled.span`
+  position: absolute;
+  top: 0;
+  left: calc(50% + 6px);
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #E11D48;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: center;
+  border: 2px solid #fff;
+  box-sizing: content-box;
 `;
 
 const NewBadge = styled.span`
@@ -147,7 +201,7 @@ const NavRight = styled.div`
   flex-shrink: 0;
   justify-self: end;
 
-  @media (max-width: 840px) {
+  @media (max-width: 1024px) {
     grid-column: 2;
     grid-row: 1;
     gap: 6px;
@@ -172,7 +226,7 @@ const CreditsChip = styled.button`
 
   &:hover { background: ${p => (p.$pro ? creatorTokens.accentSoft : p.$out ? '#FFE4E6' : '#e3f0ea')}; }
 
-  @media (max-width: 840px) {
+  @media (max-width: 1024px) {
     height: 32px;
     padding: 0 10px;
     font-size: 12px;
@@ -191,13 +245,13 @@ const CreditDots = styled.span`
   }
   i.on { background: ${creatorTokens.accent}; }
 
-  @media (max-width: 840px) { display: none; }
+  @media (max-width: 1024px) { display: none; }
 `;
 
 const CreditsCopy = styled.span`
   .mini { display: none; }
 
-  @media (max-width: 840px) {
+  @media (max-width: 1024px) {
     .full { display: none; }
     .mini { display: inline; }
   }
@@ -229,7 +283,7 @@ const IconBtn = styled.button`
 
   svg { width: 17px; height: 17px; }
 
-  @media (max-width: 840px) {
+  @media (max-width: 1024px) {
     width: 32px;
     height: 32px;
   }
@@ -269,7 +323,7 @@ const AvatarPill = styled.button`
     background: #E11D48;
   }
 
-  @media (max-width: 840px) {
+  @media (max-width: 1024px) {
     padding: 0;
     background: transparent;
   }
@@ -280,39 +334,7 @@ const AvatarName = styled.span`
   font-weight: 600;
   color: #0F0F0F;
 
-  @media (max-width: 900px) { display: none; }
-`;
-
-const MobileTabBar = styled.nav`
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid #EBEBEB;
-  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
-  justify-content: space-around;
-  z-index: 100;
-
-  @media (max-width: 640px) { display: flex; }
-`;
-
-const MobileTab = styled(Link)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 10px;
-  color: ${p => (p.$active ? '#0F0F0F' : '#8C8C8C')};
-  font-weight: ${p => (p.$active ? 700 : 500)};
-  text-decoration: none;
-  font-size: 10px;
-  flex: 1;
-  font-family: inherit;
-  position: relative;
-
-  svg { width: 20px; height: 20px; }
+  @media (max-width: 1240px) { display: none; }
 `;
 
 const MobileNewBadge = styled.span`
@@ -327,24 +349,6 @@ const MobileNewBadge = styled.span`
   border-radius: 100px;
   text-transform: uppercase;
   letter-spacing: 0.2px;
-`;
-
-const CountBadge = styled.span`
-  position: absolute;
-  top: 0;
-  right: 6px;
-  min-width: 16px;
-  height: 16px;
-  background: #E11D48;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 0 4px;
-  border-radius: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(225, 29, 72, 0.4);
 `;
 
 const DesktopCountBadge = styled.span`
@@ -373,17 +377,8 @@ const ForYouDesktopBadge = styled(DesktopCountBadge)`
   animation: ${badgePulse} 2s infinite;
 `;
 
-const ForYouMobileBadge = styled(CountBadge)`
-  animation: ${badgePulse} 2s infinite;
-`;
-
 // Violet badge for Pool tab - distinguishes growth activity from brand replies
 const PoolDesktopBadge = styled(DesktopCountBadge)`
-  background: #7C3AED;
-  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.4);
-`;
-
-const PoolMobileBadge = styled(CountBadge)`
   background: #7C3AED;
   box-shadow: 0 1px 3px rgba(124, 58, 237, 0.4);
 `;
@@ -399,9 +394,9 @@ const Content = styled.main`
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    @media (max-width: 840px) {
-      height: calc(100vh - 108px);
-      height: calc(100dvh - 108px); /* visible viewport on phones */
+    @media (max-width: 1024px) {
+      height: calc(100vh - 56px - var(--nc-tabbar));
+      height: calc(100dvh - 56px - var(--nc-tabbar)); /* visible viewport on phones, above the tab bar */
     }
     > * {
       flex: 1;
@@ -413,10 +408,11 @@ const Content = styled.main`
     min-height: calc(100vh - 64px);
     min-height: calc(100dvh - 64px); /* visible viewport on phones */
     padding-top: 8px;
-    @media (max-width: 840px) {
-      min-height: calc(100vh - 108px);
-      min-height: calc(100dvh - 108px); /* visible viewport on phones */
+    @media (max-width: 1024px) {
+      min-height: calc(100vh - 56px - var(--nc-tabbar));
+      min-height: calc(100dvh - 56px - var(--nc-tabbar)); /* visible viewport on phones */
       padding-top: 4px;
+      padding-bottom: var(--nc-tabbar);
     }
   `}
 `;
@@ -534,11 +530,18 @@ const EmptyNotifications = styled.div`
 
 const navItems = [
   { label: 'Polly', icon: Sparkles, path: '/creator/dashboard/for-you' },
-  { label: 'Brands', icon: Search, path: '/creator/dashboard/pr-brands' },
-  { label: 'Paid UGC', icon: DollarSign, path: '/creator/dashboard/paid-gigs' },
-  { label: 'Tracker', icon: SquareKanban, path: '/creator/dashboard/tracker' },
-  { label: 'My Kit', icon: FileText, path: '/creator/dashboard/my-kit' },
+  { label: 'Tracker', icon: CalendarDays, path: '/creator/dashboard/tracker' },
+  { label: 'Pulse', icon: Activity, path: '/creator/dashboard/pulse' },
+  { label: 'Brands', icon: Store, path: '/creator/dashboard/pr-brands' },
+  { label: 'UGC gigs', icon: Clapperboard, path: '/creator/dashboard/paid-gigs' },
+  { label: 'Portfolio', icon: LayoutGrid, path: '/creator/dashboard/my-kit' },
 ];
+
+function navActive(pathname, path) {
+  if (pathname === path || pathname.startsWith(`${path}/`)) return true;
+  // Polly lives at /for-you and /polly
+  return path === '/creator/dashboard/for-you' && /^\/creator\/dashboard\/polly(\/|$)/.test(pathname);
+}
 
 const moreNavItems = [];
 
@@ -764,10 +767,7 @@ const CreatorDashboardLayout = () => {
             <NavTab
               key={path}
               to={path}
-              $active={
-                location.pathname === path
-                || (path === '/creator/dashboard/tracker' && location.pathname.startsWith('/creator/dashboard/tracker'))
-              }
+              $active={navActive(location.pathname, path)}
               aria-label={label === 'Tracker' && yourMove > 0 ? `Tracker, ${yourMove} waiting on you` : undefined}
               onMouseEnter={() => handleNavHover(path)}
             >
@@ -926,6 +926,23 @@ const CreatorDashboardLayout = () => {
         <GoalPlanHandoff />
         <Outlet />
       </Content>
+
+      <TabBar aria-label="Main">
+        {navItems.map(({ label, icon: Icon, path }) => (
+          <TabItem
+            key={path}
+            to={path}
+            $active={navActive(location.pathname, path)}
+            aria-current={navActive(location.pathname, path) ? 'page' : undefined}
+            aria-label={label === 'Tracker' && yourMove > 0 ? `Tracker, ${yourMove} waiting on you` : label}
+          >
+            <Icon aria-hidden="true" />
+            <span className="l">{label}</span>
+            {label === 'Tracker' && yourMove > 0 && <TabDot>{yourMove > 9 ? '9+' : yourMove}</TabDot>}
+            {label === 'Polly' && matchedRemaining > 0 && <TabDot>{matchedRemaining > 9 ? '9+' : matchedRemaining}</TabDot>}
+          </TabItem>
+        ))}
+      </TabBar>
 
       <UpgradeModal
         isOpen={showUpgrade}

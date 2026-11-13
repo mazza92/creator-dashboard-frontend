@@ -141,7 +141,7 @@ const SwipeLabel = styled.div`
 // Undo toast
 const UndoToast = styled(motion.div)`
   position: fixed;
-  bottom: 160px;
+  bottom: calc(160px + var(--nc-tabbar, 0px));
   left: 50%;
   transform: translateX(-50%);
   background: #374151;

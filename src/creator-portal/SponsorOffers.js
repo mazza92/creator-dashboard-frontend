@@ -851,7 +851,7 @@ const ModalBidActions = styled.div`
 // eslint-disable-next-line no-unused-vars
 const HelpButton = styled(Button)`
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + var(--nc-tabbar, 0px));
   right: 24px;
   width: 48px;
   height: 48px;
