@@ -186,19 +186,19 @@ const TabFreshDot = styled.span`
 
 const TabDot = styled.span`
   position: absolute;
-  top: 0;
+  top: 1px;
   left: calc(50% + 6px);
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
   border-radius: 999px;
   background: #E11D48;
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  line-height: 17px;
+  line-height: 14px;
   text-align: center;
-  border: 2px solid #fff;
+  border: 1.5px solid #fff;
   box-sizing: content-box;
 `;
 
