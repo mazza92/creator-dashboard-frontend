@@ -7,7 +7,7 @@ import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { UserContext } from '../contexts/UserContext';
-import { useNotification } from '../contexts/NotificationContext';
+import ActivityBell from '../components/creator/ActivityBell';
 import Logo from '../components/Logo';
 import api from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -164,6 +164,26 @@ const TabItem = styled(Link)`
   &:active svg { transform: scale(0.92); }
 `;
 
+const FreshDot = styled.span`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7C3AED;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.18);
+  margin-left: 2px;
+`;
+
+const TabFreshDot = styled.span`
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 9px);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #7C3AED;
+  border: 2px solid #fff;
+`;
+
 const TabDot = styled.span`
   position: absolute;
   top: 0;
@@ -287,23 +307,6 @@ const IconBtn = styled.button`
     width: 32px;
     height: 32px;
   }
-`;
-
-const NotificationBadge = styled.span`
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: #EF4444;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid white;
 `;
 
 const AvatarPill = styled.button`
@@ -469,61 +472,6 @@ const MenuDivider = styled.div`
   margin: 4px 0;
 `;
 
-// Notification Dropdown
-const NotificationDropdown = styled(motion.div)`
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 12px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: min(320px, calc(100vw - 24px));
-  max-height: 400px;
-  overflow-y: auto;
-  z-index: 1000;
-`;
-
-const NotificationItem = styled.div`
-  padding: 12px 16px;
-  border-bottom: 1px solid #F3F4F6;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #F9FAFB;
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const NotificationTitle = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 4px;
-`;
-
-const NotificationMessage = styled.div`
-  font-size: 13px;
-  color: #6B7280;
-  line-height: 1.4;
-`;
-
-const NotificationTime = styled.div`
-  font-size: 11px;
-  color: #9CA3AF;
-  margin-top: 4px;
-`;
-
-const EmptyNotifications = styled.div`
-  padding: 40px 20px;
-  text-align: center;
-  color: #9CA3AF;
-  font-size: 14px;
-`;
-
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -556,9 +504,11 @@ function creditChipCopy(balance) {
 
 const CreatorDashboardLayout = () => {
   const { handleLogout } = useContext(UserContext);
-  const { notifications, unreadCount, markAsRead } = useNotification();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [pulseDay, setPulseDay] = useState(null);
+  const [pulseSeen, setPulseSeen] = useState(() => {
+    try { return localStorage.getItem('nc_pulse_seen') || ''; } catch (_) { return ''; }
+  });
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [matchedRemaining, setMatchedRemaining] = useState(0);
@@ -727,26 +677,26 @@ const CreatorDashboardLayout = () => {
     }
   };
 
-  const handleNotificationClick = (notification) => {
-    markAsRead(notification.id);
-    setShowNotifications(false);
-    if (notification.data?.action_url) {
-      navigate(notification.data.action_url);
-    }
-  };
-
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest('button')) {
         setShowUserMenu(false);
-        setShowNotifications(false);
       }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const onPulse = useCallback((pulse) => setPulseDay(pulse?.day || null), []);
+  useEffect(() => {
+    const onSeen = (e) => setPulseSeen(e.detail || '');
+    window.addEventListener('nc-pulse-seen', onSeen);
+    return () => window.removeEventListener('nc-pulse-seen', onSeen);
+  }, []);
+  const pulseFresh = Boolean(pulseDay) && pulseDay > pulseSeen
+    && !location.pathname.startsWith('/creator/dashboard/pulse');
 
   if (isLoading) {
     return (
@@ -779,6 +729,7 @@ const CreatorDashboardLayout = () => {
               {label === 'Tracker' && yourMove > 0 && (
                 <DesktopCountBadge title="Your move">{yourMove}</DesktopCountBadge>
               )}
+              {label === 'Pulse' && pulseFresh && <FreshDot aria-label="New today" />}
             </NavTab>
           ))}
         </NavTabs>
@@ -793,7 +744,6 @@ const CreatorDashboardLayout = () => {
             onClick={() => {
               if (credits?.is_unlimited) return;
               setShowUserMenu(false);
-              setShowNotifications(false);
               setShowUpgrade(true);
             }}
           >
@@ -817,10 +767,11 @@ const CreatorDashboardLayout = () => {
               </span>
             </CreditsCopy>
           </CreditsChip>
-          <IconBtn onClick={() => setShowNotifications(!showNotifications)}>
-            <Bell />
-            {unreadCount > 0 && <NotificationBadge>{unreadCount}</NotificationBadge>}
-          </IconBtn>
+          <ActivityBell
+            enabled={Boolean(userData?.creator_id)}
+            onPulse={onPulse}
+            onOpen={() => setShowUserMenu(false)}
+          />
           <AvatarPill onClick={() => setShowUserMenu(!showUserMenu)}>
             <Avatar
               size={28}
@@ -890,34 +841,6 @@ const CreatorDashboardLayout = () => {
             </MenuItem>
           </DropdownMenu>
         )}
-
-        {/* Notification Dropdown */}
-        {showNotifications && (
-          <NotificationDropdown
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-          >
-            {notifications.length === 0 ? (
-              <EmptyNotifications>No notifications</EmptyNotifications>
-            ) : (
-              notifications.slice(0, 5).map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <NotificationTitle>
-                    {notification.event_type?.replace('_', ' ').toLowerCase() || 'Notification'}
-                  </NotificationTitle>
-                  <NotificationMessage>{notification.message}</NotificationMessage>
-                  <NotificationTime>
-                    {new Date(notification.created_at).toLocaleDateString()}
-                  </NotificationTime>
-                </NotificationItem>
-              ))
-            )}
-          </NotificationDropdown>
-        )}
       </TopNav>
 
       <Content $polly={/\/dashboard\/(for-you|polly)(\/|$)/.test(location.pathname)}>
@@ -940,6 +863,7 @@ const CreatorDashboardLayout = () => {
             <span className="l">{label}</span>
             {label === 'Tracker' && yourMove > 0 && <TabDot>{yourMove > 9 ? '9+' : yourMove}</TabDot>}
             {label === 'Polly' && matchedRemaining > 0 && <TabDot>{matchedRemaining > 9 ? '9+' : matchedRemaining}</TabDot>}
+            {label === 'Pulse' && pulseFresh && <TabFreshDot aria-label="New today" />}
           </TabItem>
         ))}
       </TabBar>

@@ -2843,29 +2843,13 @@ const Stats = styled.div`
   b { display: block; font-size: 13px; }
   em { font-style: normal; font-size: 10px; color: ${MUTED}; font-weight: 600; }
 `;
+// Search + filters sit at the top of the directory and scroll away with it (not sticky).
 const StickyDock = styled.div`
-  position: sticky;
-  top: 64px;
-  z-index: 40;
+  position: relative;
+  z-index: 5;
   margin: 0 calc(-1 * var(--page-pad-x));
   padding: 8px var(--page-pad-x) 10px;
-  background: rgba(247, 245, 240, 0.92);
-  -webkit-backdrop-filter: saturate(1.4) blur(16px);
-  backdrop-filter: saturate(1.4) blur(16px);
-  border-bottom: 1px solid ${LINE};
-  box-shadow: 0 8px 24px rgba(18, 20, 26, 0.04);
   overflow: visible;
-
-  @media (max-width: 840px) {
-    top: 108px;
-    padding-top: 6px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: ${BG};
-  }
 `;
 const SearchTools = styled.div`
   display: flex;
