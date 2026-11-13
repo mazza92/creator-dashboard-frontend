@@ -2231,6 +2231,9 @@ export default function Polly() {
     deepLinkRef.current = true;
     setPendingLinkKind(null);
     navigate('/creator/dashboard/for-you', { replace: true });
+    // A new creator's first open belongs to the welcome (lined-up brands + the two choices). Email links like
+    // "Meet Polly" (?chip=line_up) must not send a message over it; the welcome already lines up their brands.
+    if (firstRun) return;
     const base = DEEP_LINK_CHIPS[chipId];
     if (!base) return;
     const brandName = searchParams.get('brand_name') || '';
@@ -2254,7 +2257,7 @@ export default function Polly() {
       sample_posts: samplePosts.length ? samplePosts : undefined,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, ready, serverReady, creatorId]);
+  }, [searchParams, ready, serverReady, creatorId, firstRun]);
 
   useEffect(() => {
     const result = searchParams.get('autopilot');
