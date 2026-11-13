@@ -42,7 +42,7 @@ const ContentCard = styled(Card)`
 
 const TourButton = styled(Button)`
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + var(--nc-tabbar, 0px));
   right: 24px;
   border-radius: 50%;
   width: 48px;

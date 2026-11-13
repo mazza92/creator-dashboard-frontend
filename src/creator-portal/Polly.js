@@ -2243,7 +2243,11 @@ export default function Polly() {
     else if (chipId === 'send_draft' && brandName) label = `Send my ${brandName} pitch`;
     else if (chipId === 'paid_reply' && brandName) label = `Write my reply to ${brandName}`;
     else if (chipId === 'ad_usage' && brandName) label = `Ask ${brandName} to run it as an ad`;
-    else if (chipId === 'pitch_brand' && brandName) label = `Pitch ${brandName} for me`;
+    else if (chipId === 'pitch_brand' && brandName) {
+      const angle = (searchParams.get('angle') || '').trim();
+      // From UGC Pulse: build the pitch around a hook that's working in this brand's own ads.
+      label = angle ? `Pitch ${brandName} for me with this angle: "${angle}"` : `Pitch ${brandName} for me`;
+    }
     const samplePosts = chipId === 'pitch_brand' ? takePitchSamples(brandId) : [];
     sendStarter({
       ...base, id: chipId, label, brand_id: brandId, brand_name: brandName || undefined, task_id: taskId,

@@ -57,7 +57,7 @@ const CardContent = styled.div`
 
 const FAB = styled(Button)`
   position: fixed;
-  bottom: 32px;
+  bottom: calc(32px + var(--nc-tabbar, 0px));
   right: 32px;
   border-radius: 50%;
   width: 56px;

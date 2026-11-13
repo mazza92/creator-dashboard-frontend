@@ -95,6 +95,7 @@ import NotFound from './cra-pages/NotFound';
 const BrandPRHome = lazy(() => import('./cra-pages/BrandPRHome'));
 const Polly = lazy(() => import('./creator-portal/Polly'));
 const Tracker = lazy(() => import('./creator-portal/Tracker'));
+const Pulse = lazy(() => import('./creator-portal/Pulse'));
 const PaidGigs = lazy(() => import('./creator-portal/PaidGigs'));
 const PromoteNewcollab = lazy(() => import('./creator-portal/PromoteNewcollab'));
 const BrandPRRoster = lazy(() => import('./cra-pages/BrandPRRoster'));
@@ -578,6 +579,7 @@ function AppContent() {
                 <Route path='dashboard/polly' element={<Navigate to="/creator/dashboard/for-you" replace />} />
                 <Route path='dashboard/tracker/:brandId' element={<LazyRoute skeleton={<ForYouSkeleton />}><Tracker /></LazyRoute>} />
                 <Route path='dashboard/tracker' element={<LazyRoute skeleton={<ForYouSkeleton />}><Tracker /></LazyRoute>} />
+                <Route path='dashboard/pulse' element={<LazyRoute skeleton={<ForYouSkeleton />}><Pulse /></LazyRoute>} />
                 {/* Timeline became the Tracker: old links (emails, bookmarks) keep working. */}
                 <Route path='dashboard/timeline/:brandId' element={<TimelineRedirect />} />
                 <Route path='dashboard/timeline' element={<Navigate to='/creator/dashboard/tracker' replace />} />
