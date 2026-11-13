@@ -79,6 +79,11 @@ export default function Pulse() {
     try {
       const res = await apiClient.get('/api/pulse', { params: { view, niche: niche || undefined, offset: nextOffset || undefined } });
       setData(res.data);
+      // Seen today's pulse: clears the dot on the Pulse tab.
+      if (res.data?.day) {
+        try { localStorage.setItem('nc_pulse_seen', res.data.day); } catch (_) { /* private mode */ }
+        window.dispatchEvent(new CustomEvent('nc-pulse-seen', { detail: res.data.day }));
+      }
       if (view === 'week') {
         setWeekItems((prev) => (nextOffset ? [...prev, ...(res.data.items || [])] : (res.data.items || [])));
         setOffset(nextOffset);
