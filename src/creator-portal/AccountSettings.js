@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiZap, FiCreditCard, FiCalendar, FiCheck, FiExternalLink, FiSettings, FiEdit2, FiAlertTriangle } from 'react-icons/fi';
 import api, { getOAuthApiOrigin } from '../config/api';
-import { message } from 'antd';
+import { message, Modal } from 'antd';
 import UpgradeModal from './UpgradeModal';
 import CountrySettingsSection from './CountrySettingsSection';
 import GoalSetup from './tracker/GoalSetup';
@@ -296,6 +296,27 @@ const AccountSettings = () => {
   }
 
   const tier = subscriptionInfo?.tier || 'free';
+  // Payment failed: Pro is off but Stripe still retries the card. They can fix the card or cancel for good.
+  const unpaid = tier !== 'pro' && Boolean(subscriptionInfo?.billing?.payment_issue);
+
+  const cancelUnpaid = () => {
+    Modal.confirm({
+      title: 'Cancel your subscription?',
+      content: "We'll stop trying your card and won't charge you again. Your account stays on the free plan.",
+      okText: 'Yes, cancel it',
+      cancelText: 'Keep it',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          const { data } = await api.post('/api/subscription/cancel-flow/confirm', { reason: 'payment_failed' });
+          message.success(data?.message || 'Subscription cancelled.');
+          fetchSubscriptionStatus();
+        } catch (err) {
+          message.error(err.response?.data?.error || 'Could not cancel. Email team@newcollab.co and we will do it.');
+        }
+      },
+    });
+  };
   const pausedNow = subscriptionInfo?.pause?.state === 'active';
   const status = subscriptionInfo?.status || 'inactive';
 
@@ -448,7 +469,25 @@ const AccountSettings = () => {
             <PauseNotice pause={subscriptionInfo.pause} onResumed={fetchSubscriptionStatus} />
           )}
 
-          {tier === 'free' && !subscriptionInfo?.pause && (
+          {unpaid && (
+            <>
+              <Divider />
+              <UnpaidBox role="alert">
+                <strong><FiAlertTriangle /> Your last Pro payment didn't go through</strong>
+                <span>Pro is paused until it's paid. Update your card to get it back, or cancel and we'll stop trying your card.</span>
+                <div className="row">
+                  <a className="pay" href={subscriptionInfo?.billing?.pay_url || '#'}
+                    onClick={(e) => { if (!subscriptionInfo?.billing?.pay_url) { e.preventDefault(); handleManageSubscription(); } }}
+                    target="_blank" rel="noopener noreferrer">
+                    Update card · restore Pro
+                  </a>
+                  <button type="button" className="cancel" onClick={cancelUnpaid}>Cancel subscription</button>
+                </div>
+              </UnpaidBox>
+            </>
+          )}
+
+          {tier === 'free' && !subscriptionInfo?.pause && !unpaid && (
             <>
               <Divider />
               <UpgradeButton
@@ -906,6 +945,26 @@ const UpgradeButton = styled(motion.button)`
   svg {
     width: 18px;
     height: 18px;
+  }
+`;
+
+const UnpaidBox = styled.div`
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  strong { display: flex; align-items: center; gap: 8px; font-size: 15px; color: #9A3412; }
+  span { font-size: 14px; color: #6B4423; line-height: 1.5; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .pay {
+    display: inline-flex; align-items: center; padding: 10px 16px; border-radius: 999px; background: #0F0F0F;
+    color: #fff; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cancel {
+    border: 1px solid #E5E7EB; background: #fff; color: #374151; padding: 10px 16px; border-radius: 999px;
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
   }
 `;
 
