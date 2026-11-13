@@ -167,10 +167,12 @@ const BellBtn = styled.button`
   @media (max-width: 1024px) { width: 32px; height: 32px; }
 `;
 
+// Small count chip on the bell's top-right corner (iOS / Instagram size), never over the bell itself.
 const Badge = styled.span`
-  position: absolute; top: -3px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
-  background: #E11D48; color: #fff; font-size: 10.5px; font-weight: 800; line-height: 18px; text-align: center;
-  border: 2px solid #fffdf8; box-sizing: content-box;
+  position: absolute; top: -1px; right: -3px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 999px;
+  background: #E11D48; color: #fff; font-size: 9px; font-weight: 800; line-height: 14px; text-align: center;
+  border: 1.5px solid #fffdf8; box-sizing: content-box; letter-spacing: -0.02em;
+  @media (max-width: 1024px) { top: -2px; right: -2px; }
 `;
 
 const Panel = styled.div`
