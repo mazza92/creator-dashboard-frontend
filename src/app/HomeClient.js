@@ -50,10 +50,10 @@ export default function HomeClient({ brands = [], stats }) {
           <div className="copy">
             <Pill><span className="dot" /> For aspiring and working UGC creators</Pill>
             <h1><span>Get gifted.</span> <span>Get <em>paid</em>.</span> <span>Get seen.</span></h1>
-            <p className="kw">The all-in-one platform for UGC creators.</p>
+            <p className="kw">Run your UGC business on autopilot.</p>
             <p>
-              Newcollab finds brands that fit your niche, pitches them for you and follows up, so you land gifted
-              collabs and paid UGC work without hours of outreach. No experience or followers needed.
+              Every week, Newcollab finds brands already paying for UGC ads, pitches them for you and chases the
+              follow-ups. You film, we fill your pipeline. No experience or followers needed.
             </p>
             <div className="ctas">
               <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
@@ -76,7 +76,7 @@ export default function HomeClient({ brands = [], stats }) {
         <Section id="problem">
           <Head className="center">
             <Eyebrow>Sound familiar?</Eyebrow>
-            <h2>Brand deals shouldn't feel like guesswork</h2>
+            <h2>Top UGC creators run a system. Most of us run on hope.</h2>
           </Head>
           <Problems>
             <li><b>56%</b><span>don't know which brands to reach out to</span></li>
@@ -91,29 +91,33 @@ export default function HomeClient({ brands = [], stats }) {
           <Split>
             <div className="copy">
               <Eyebrow>How it works</Eyebrow>
-              <h2>Newcollab fixes all three. <em>On autopilot.</em></h2>
+              <h2>Your weekly UGC routine. <em>On autopilot.</em></h2>
               <Flow>
                 <li>
                   <span className="n">1</span>
-                  <div><b>Get matched with brands</b><p>See gift lists, paid gigs and brands that work with creators your size, picked for your niche.</p></div>
+                  <div><b>Every week: fresh brands</b><p>Brands running UGC ads right now, matched to your niche, plus open gift lists and paid gigs.</p></div>
                 </li>
                 <li>
                   <span className="n">2</span>
-                  <div><b>Polly pitches for you</b><p>Your AI agent writes short, personal pitches, sends them from your Gmail and follows up. No more silence.</p></div>
+                  <div><b>Every weekday: pitches go out</b><p>Polly studies each brand&apos;s ads, finds your angle and sends a short pitch from your Gmail.</p></div>
                 </li>
                 <li>
                   <span className="n">3</span>
-                  <div><b>Get gifted and paid</b><p>Your free portfolio shows brands your best work, and Polly drafts your reply with a fair rate when they say yes.</p></div>
+                  <div><b>Day 4: follow-ups</b><p>No more pitches dying in silence. Your pipeline shows who replied and who said yes.</p></div>
+                </li>
+                <li>
+                  <span className="n">4</span>
+                  <div><b>When they say yes: get paid</b><p>Polly drafts your reply with a fair rate, and your free portfolio closes the deal.</p></div>
                 </li>
               </Flow>
               <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
             </div>
             <Chat aria-hidden="true">
               <div className="bar"><span className="av"><Bot size={15} /></span> Polly</div>
-              <p className="me">Find skincare brands that gift small creators</p>
-              <p className="bot">Found 12 that fit you. 4 have open gift lists, so start there. Want me to pitch the rest?</p>
-              <p className="me">Yes, keep it short</p>
-              <p className="bot">On it. 3 go out from your Gmail today, the rest this week. I'll follow up on day 4.</p>
+              <p className="me">What&apos;s on this week?</p>
+              <p className="bot">14 skincare and home brands started running UGC ads since last week. 9 fit you. I&apos;m pitching 3 today and the rest by Thursday.</p>
+              <p className="me">Any replies?</p>
+              <p className="bot">2 brands from last week replied. One wants rates, so I drafted your reply with 30 days of ad usage. Want to see it?</p>
             </Chat>
           </Split>
         </Section>
@@ -242,7 +246,7 @@ export default function HomeClient({ brands = [], stats }) {
               <Ghost href={SIGNUP}>Start free</Ghost>
             </Plan>
             <Plan className="pro">
-              <span className="for">For working UGC creators</span>
+              <span className="for">Your weekly UGC routine, done for you</span>
               <h3>Pro</h3>
               <div className="price">$19<span> / month</span></div>
               <ul>
