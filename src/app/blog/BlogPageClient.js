@@ -113,15 +113,15 @@ export default function BlogPageClient({ initialPosts, categories }) {
             />
 
             <Title level={1} style={{ textAlign: 'center', marginBottom: '24px' }}>
-              Free Link in Bio for Paid Partnerships & Sponsorships for Influencers
+              Brand Deals & PR Packages Guides for Creators
             </Title>
             <Paragraph style={{ textAlign: 'center', fontSize: '18px', maxWidth: '600px', margin: '0 auto 48px' }}>
-              Discover expert strategies for getting free link in bio for paid partnerships and sponsorships for influencers. Learn how to monetize your content and secure brand deals.
+              Brand lists, PR application forms, pitch templates and step-by-step guides to help small creators land PR packages, UGC work and paid brand deals.
             </Paragraph>
 
             <div style={{ maxWidth: '600px', margin: '0 auto 48px' }}>
               <Search
-                placeholder="Search for free link in bio, paid partnerships, sponsorships for influencers..."
+                placeholder="Search guides: PR packages, brand deals, UGC, pitch emails..."
                 allowClear
                 enterButton={<SearchOutlined />}
                 size="large"
