@@ -164,6 +164,7 @@ export default function LandingFooter() {
           <div>
             <FooterColTitle>Guides</FooterColTitle>
             <FooterLinks>
+              <a href="/ugc-starter-guide">Free UGC Starter Guide</a>
               <a href="/blog/ugc-rates-how-much-to-charge-2026">UGC Rates &amp; Rate Card</a>
               <a href="/blog/how-to-make-ugc-videos-brands-pay-for-2026">How to Make UGC Videos</a>
               <a href="/blog/how-to-build-a-ugc-portfolio-brands-want-2026">Build a UGC Portfolio</a>

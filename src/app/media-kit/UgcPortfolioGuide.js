@@ -63,7 +63,7 @@ export default function UgcPortfolioGuide() {
           <li><strong>One clear way to contact you.</strong></li>
         </ul>
         <p style={muted}>
-          Full walkthrough: <Link href="/blog/how-to-build-a-ugc-portfolio-brands-want-2026" style={a}>how to build a UGC portfolio brands hire from</Link>.
+          New to UGC? Read the <Link href="/ugc-starter-guide" style={a}>free UGC Starter Guide</Link>. Full walkthrough: <Link href="/blog/how-to-build-a-ugc-portfolio-brands-want-2026" style={a}>how to build a UGC portfolio brands hire from</Link>.
         </p>
 
         <h2 style={h2}>UGC portfolio examples</h2>

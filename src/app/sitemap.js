@@ -18,6 +18,8 @@ const STATIC_PAGES = [
   { url: '/',                          priority: 1.0, changeFrequency: 'daily'   },
   { url: '/media-kit',                 priority: 1.0, changeFrequency: 'daily'   },
   { url: '/ugc',                       priority: 0.9, changeFrequency: 'weekly'  },
+  { url: '/ugc-starter-guide',         priority: 0.9, changeFrequency: 'monthly' },
+  { url: '/ugc-portfolio-examples',    priority: 0.8, changeFrequency: 'weekly'  },
   { url: '/directory',                 priority: 0.9, changeFrequency: 'daily'   },
   { url: '/pr-list',                   priority: 0.9, changeFrequency: 'daily'   },
   { url: '/directory/skincare',        priority: 0.8, changeFrequency: 'weekly'  },
@@ -222,7 +224,6 @@ async function portfolioHubEntries(now) {
   const data = await fetchHub(null);
   const hubs = (data.hubs || []).filter((h) => h.count >= MIN_INDEXABLE);
   return [
-    sitemapEntry(`${BASE}/ugc-portfolio-examples`, now, 'weekly', 0.8),
     ...hubs.map((h) => sitemapEntry(`${BASE}/ugc-portfolio-examples/${h.slug}`, now, 'weekly', 0.7)),
   ].filter(Boolean);
 }
