@@ -3,10 +3,11 @@
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
 import PublicKitStudio from '../../kit-builder/PublicKitStudio';
 
-export default function MediaKitStudioClient() {
+export default function MediaKitStudioClient({ children }) {
   return (
     <LandingPageLayoutNext hideFooter canonicalUrl="https://newcollab.co/media-kit">
       <PublicKitStudio />
+      {children}
     </LandingPageLayoutNext>
   );
 }

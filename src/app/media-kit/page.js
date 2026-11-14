@@ -1,8 +1,9 @@
 import MediaKitStudioClient from './MediaKitStudioClient';
+import UgcPortfolioGuide, { PORTFOLIO_FAQ } from './UgcPortfolioGuide';
 import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
-  title: 'Free UGC portfolio builder | Publish a UGC portfolio | newcollab',
+  title: 'Free UGC Portfolio Builder & Template (2026) | Newcollab',
   description:
     'Free UGC portfolio builder for creators. Publish a public UGC portfolio with rates, posts, and packages — no Canva, no account. Paste the link in your Instagram bio and TikTok description so brands can open it.',
   keywords: [
@@ -67,32 +68,11 @@ const webAppSchema = {
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'Is the UGC portfolio builder free?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes. Publish a public UGC portfolio at https://newcollab.co/media-kit with no account, no Canva, and no paid template.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Do I need a media kit to pitch brands?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes. Brands ignore pitches without proof. Publish a free UGC portfolio at https://newcollab.co/media-kit and paste that link in your email, Instagram bio, and TikTok description. Signed-in creators can also auto-attach a kit when they pitch from the Newcollab directory.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Is a UGC portfolio the same as a media kit?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'The portfolio is your sample videos. The media kit is rates, niche, and contact. The free builder at https://newcollab.co/media-kit puts both on one public page brands can open.',
-      },
-    },
-  ],
+  mainEntity: PORTFOLIO_FAQ.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
 };
 
 export default function MediaKitPage() {
@@ -100,7 +80,9 @@ export default function MediaKitPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(webAppSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }} />
-      <MediaKitStudioClient />
+      <MediaKitStudioClient>
+        <UgcPortfolioGuide />
+      </MediaKitStudioClient>
     </>
   );
 }

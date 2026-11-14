@@ -2,14 +2,14 @@ import HomeClient from './HomeClient';
 import HomeFaqSchemaScript from './HomeFaqSchemaScript';
 import { jsonLd } from '@/src/lib/jsonLd';
 
-const TITLE = 'Newcollab: PR Packages, Paid UGC & Brand Deals for UGC Creators';
+const TITLE = 'Newcollab: Paid UGC Jobs, Brand Deals & a Free UGC Portfolio for Creators';
 const DESCRIPTION =
-  'Grow your brand deals on autopilot. Newcollab helps aspiring UGC creators get PR packages, find paid UGC gigs and pitch 2,700+ brands with Polly, an AI agent. Free UGC portfolio. No follower minimum.';
+  'Grow your UGC brand deals on autopilot. Newcollab helps UGC creators in the US and Canada find paid UGC gigs, get gifted PR packages and pitch 2,700+ brands with Polly, an AI agent. Free UGC portfolio. No follower minimum.';
 
 export const metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  keywords: 'UGC creator brand deals, PR packages for creators, how to get PR packages, paid UGC jobs, UGC creator jobs, brand deals for small creators, PR forms for brands, brands with open PR forms, gifted collaborations, free UGC portfolio, media kit for creators, micro influencer brand deals, get paid to post on TikTok',
+  keywords: 'UGC creator brand deals, paid UGC jobs, UGC creator jobs, UGC jobs for beginners, UGC portfolio, UGC rates, PR packages for creators, brand deals for small creators, gifted collaborations, free UGC portfolio, media kit for creators, micro influencer brand deals, get paid to post on TikTok',
   openGraph: {
     title: TITLE,
     description: 'Grow your brand deals on autopilot: PR packages, paid UGC gigs and an AI agent that pitches brands for you. No follower minimum.',
@@ -36,7 +36,7 @@ export const revalidate = 3600;
 const STATS = { brands: 2788, gigs: 323, lists: 276, creators: 3690 };
 
 const ABOUT =
-  'Newcollab helps aspiring UGC creators grow their brand deals on autopilot: Polly, an AI agent that finds and pitches brands, brand gift lists for PR packages, a feed of paid UGC gigs, a directory of brands with open PR forms and a free UGC portfolio builder. Brands use Newcollab to run gifted UGC rosters.';
+  'Newcollab helps aspiring UGC creators grow their brand deals on autopilot: Polly, an AI agent that finds and pitches brands, brand gift lists for PR packages, a feed of paid UGC gigs, a brand directory and a free UGC portfolio builder. Built for UGC creators in the US and Canada. Brands use Newcollab to run gifted UGC rosters.';
 
 const websiteSchema = {
   '@context': 'https://schema.org',
@@ -58,7 +58,7 @@ const organizationSchema = {
   url: 'https://newcollab.co',
   logo: 'https://newcollab.co/logo.png',
   description: ABOUT,
-  areaServed: ['US', 'CA', 'GB', 'AU', 'NZ', 'EU'],
+  areaServed: ['US', 'CA'],
   sameAs: [
     'https://www.instagram.com/newcollab.co/',
     'https://www.tiktok.com/@newcollabco',

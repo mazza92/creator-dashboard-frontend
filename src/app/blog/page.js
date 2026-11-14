@@ -3,20 +3,20 @@ import BlogPageClient from './BlogPageClient';
 
 // This page uses Static Site Generation (SSG) for maximum SEO
 export const metadata = {
-  title: 'Brand Deals & PR Packages Guides for Creators | Newcollab Blog',
-  description: 'Brand lists, PR application forms, pitch email templates and guides to help small creators get PR packages, UGC work and paid brand deals in 2026.',
+  title: 'UGC Creator Guides: Rates, Brand Deals & PR Packages | Newcollab Blog',
+  description: 'Guides for UGC creators in the US and Canada: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
   keywords: 'free link in bio for paid partnerships, sponsorships for influencers, brand sponsorships for influencers, paid partnerships, influencer sponsorships, micro-influencer brand deals, creator monetization, brand partnerships, content strategy, influencer marketing',
   openGraph: {
-    title: 'Brand Deals & PR Packages Guides for Creators | Newcollab Blog',
-    description: 'Brand lists, PR application forms, pitch email templates and guides to help small creators get PR packages, UGC work and paid brand deals in 2026.',
+    title: 'UGC Creator Guides: Rates, Brand Deals & PR Packages | Newcollab Blog',
+    description: 'Guides for UGC creators in the US and Canada: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
     type: 'website',
     url: 'https://newcollab.co/blog',
     siteName: 'Newcollab',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Brand Deals & PR Packages Guides for Creators | Newcollab Blog',
-    description: 'Brand lists, PR application forms, pitch email templates and guides to help small creators get PR packages, UGC work and paid brand deals in 2026.',
+    title: 'UGC Creator Guides: Rates, Brand Deals & PR Packages | Newcollab Blog',
+    description: 'Guides for UGC creators in the US and Canada: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
     creator: '@newcollab',
   },
 };

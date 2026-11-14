@@ -164,11 +164,11 @@ export default function LandingFooter() {
           <div>
             <FooterColTitle>Guides</FooterColTitle>
             <FooterLinks>
-              <a href="/blog/ultimate-2026-directory-brands-with-open-pr-application-forms">Open PR Application Forms</a>
+              <a href="/blog/ugc-rates-how-much-to-charge-2026">UGC Rates &amp; Rate Card</a>
+              <a href="/blog/how-to-make-ugc-videos-brands-pay-for-2026">How to Make UGC Videos</a>
+              <a href="/blog/how-to-build-a-ugc-portfolio-brands-want-2026">Build a UGC Portfolio</a>
+              <a href="/blog/brands-that-pay-for-ugc-content-2026">Brands That Pay for UGC</a>
               <a href="/blog/list-of-companies-that-send-pr-packages-2026">Companies That Send PR</a>
-              <a href="/blog/pr-emails-for-brands-2026">PR Email Contacts</a>
-              <a href="/blog/pr-list-for-clothing-brands-micro-influencers-2025">Fashion PR List</a>
-              <a href="/blog/gaming-tech-brands-that-sponsor-small-streamers-2026">Gaming Sponsors</a>
             </FooterLinks>
           </div>
         </FooterTop>

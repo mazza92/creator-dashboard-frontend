@@ -113,15 +113,15 @@ export default function BlogPageClient({ initialPosts, categories }) {
             />
 
             <Title level={1} style={{ textAlign: 'center', marginBottom: '24px' }}>
-              Brand Deals & PR Packages Guides for Creators
+              UGC Creator Guides: Rates, Brand Deals &amp; PR Packages
             </Title>
             <Paragraph style={{ textAlign: 'center', fontSize: '18px', maxWidth: '600px', margin: '0 auto 48px' }}>
-              Brand lists, PR application forms, pitch templates and step-by-step guides to help small creators land PR packages, UGC work and paid brand deals.
+              How to make UGC brands pay for, what to charge, how to build a UGC portfolio, and which brands send PR packages or hire UGC creators in the US and Canada.
             </Paragraph>
 
             <div style={{ maxWidth: '600px', margin: '0 auto 48px' }}>
               <Search
-                placeholder="Search guides: PR packages, brand deals, UGC, pitch emails..."
+                placeholder="Search guides: UGC rates, UGC portfolio, brand deals, PR packages..."
                 allowClear
                 enterButton={<SearchOutlined />}
                 size="large"
@@ -152,14 +152,14 @@ export default function BlogPageClient({ initialPosts, categories }) {
             {filteredPosts.length > 0 && selectedCategory === 'all' && (
               <section style={{ marginBottom: '48px' }}>
                 <h2 style={{ textAlign: 'center', marginBottom: '32px', fontSize: '24px', fontWeight: '600' }}>
-                  Featured: Creator Tools, Sponsorships & Brand Partnerships
+                  Start Here: UGC Creator Essentials
                 </h2>
                 <Row gutter={[32, 32]}>
                   {(() => {
                     const pinnedSlugs = [
-                      'list-of-companies-that-send-pr-packages-2026',
-                      'pr-emails-for-brands-2026',
-                      'free-creator-pr-list-skincare-fashion-beauty-2026'
+                      'ugc-rates-how-much-to-charge-2026',
+                      'how-to-make-ugc-videos-brands-pay-for-2026',
+                      'how-to-build-a-ugc-portfolio-brands-want-2026'
                     ];
                     
                     const featuredPosts = pinnedSlugs
