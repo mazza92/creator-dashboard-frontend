@@ -122,18 +122,7 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-      // SEO: Redirect old 2025 PR packages post to new 2026 pillar post
-      {
-        source: '/blog/list-of-companies-that-send-pr-packages-2025',
-        destination: '/blog/list-of-companies-that-send-pr-packages-2026',
-        permanent: true,
-      },
-      // SEO: Redirect old 2025 PR emails post to new 2026 version
-      {
-        source: '/blog/pr-emails-for-brands-2025',
-        destination: '/blog/pr-emails-for-brands-2026',
-        permanent: true,
-      },
+      // Old 2025 PR packages / PR emails posts now redirect via merged.json.
       // Crawler / mistyped slugs seen in production 404 logs
       {
         source: '/blog/skincare-brands-that-send-pr-to-single-influencers-2026',

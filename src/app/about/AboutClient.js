@@ -1039,7 +1039,7 @@ export default function AboutClient() {
               </Subline>
             </Center>
             <ForGrid>
-              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/companies-with-open-pr-application-forms-influencers-2025'}>
+              <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/ultimate-2026-directory-brands-with-open-pr-application-forms'}>
                 <ForCardTag $yes>Most Popular</ForCardTag>
                 <h3>Brands with Open PR Application Forms</h3>
                 <ul>

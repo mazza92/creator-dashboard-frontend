@@ -2816,7 +2816,7 @@ const LandingPage = () => {
               <div>
                 <FooterColTitle>Guides</FooterColTitle>
                 <FooterLinks>
-                  <a href="/blog/companies-with-open-pr-application-forms-influencers-2025">Open PR Application Forms</a>
+                  <a href="/blog/ultimate-2026-directory-brands-with-open-pr-application-forms">Open PR Application Forms</a>
                   <a href="/blog/list-of-companies-that-send-pr-packages-2026">Companies That Send PR</a>
                   <a href="/blog/pr-emails-for-brands-2026">PR Email Contacts</a>
                   <a href="/blog/pr-list-for-clothing-brands-micro-influencers-2025">Fashion PR List</a>

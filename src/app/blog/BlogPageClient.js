@@ -157,8 +157,8 @@ export default function BlogPageClient({ initialPosts, categories }) {
                 <Row gutter={[32, 32]}>
                   {(() => {
                     const pinnedSlugs = [
-                      'list-of-companies-that-send-pr-packages-2025',
-                      'pr-emails-for-brands-2025',
+                      'list-of-companies-that-send-pr-packages-2026',
+                      'pr-emails-for-brands-2026',
                       'free-creator-pr-list-skincare-fashion-beauty-2026'
                     ];
                     
