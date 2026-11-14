@@ -3,7 +3,7 @@
 // newcollab.co homepage for creators, in the same look as the in-app Promote page: one clear H1, real numbers,
 // autoplaying UGC. Structure: hero, proof, problem (top survey pains), how it works, features, pricing, FAQ, CTA. The hero renders with no fade-in so the H1 paints
 // straight away (LCP). Brand cards come from the server (page.js), so crawlers get real links.
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import styled, { keyframes } from 'styled-components';
 import {
@@ -48,18 +48,18 @@ export default function HomeClient({ brands = [], stats }) {
         {/* 1. Hero: who it's for, the outcome, one action */}
         <Hero>
           <div className="copy">
-            <Pill><span className="dot" /> For new and working UGC creators</Pill>
+            <Pill><span className="dot" /> For aspiring and working UGC creators</Pill>
             <h1><span>Get gifted.</span> <span>Get <em>paid</em>.</span> <span>Get seen.</span></h1>
-            <p className="kw">Grow your brand deals on autopilot.</p>
+            <p className="kw">The all-in-one platform for UGC creators.</p>
             <p>
-              Newcollab finds the brands that fit you, pitches them for you and follows up. You land PR packages and
-              paid UGC without hours of outreach.
+              Newcollab finds brands that fit your niche, pitches them for you and follows up, so you land gifted
+              collabs and paid UGC work without hours of outreach. No experience or followers needed.
             </p>
             <div className="ctas">
               <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
-              <Ghost href="/directory">Browse {s.brands} brands</Ghost>
+              <Ghost href="/media-kit"><LayoutTemplate size={18} /> Build a free UGC portfolio</Ghost>
             </div>
-            <small>Free plan · No card needed · No follower minimum</small>
+            <small>Free plan · No card needed · For creators in the US, Canada and Europe</small>
           </div>
           <HeroVisual />
         </Hero>
@@ -67,7 +67,7 @@ export default function HomeClient({ brands = [], stats }) {
         {/* 2. Proof: real numbers */}
         <Stats aria-label="Newcollab in numbers">
           <div><b>{s.creators}</b><span>creators on Newcollab</span></div>
-          <div><b>{s.brands}</b><span>brands with open PR forms</span></div>
+          <div><b>{s.brands}</b><span>brands that work with creators</span></div>
           <div><b>{s.lists}</b><span>open gift lists</span></div>
           <div><b>{s.gigs}</b><span>live paid UGC gigs</span></div>
         </Stats>
@@ -177,8 +177,8 @@ export default function HomeClient({ brands = [], stats }) {
         <Section id="free-tools">
           <Head className="row">
             <div>
-              <Eyebrow>Free for every creator</Eyebrow>
-              <h2>Free UGC tools and a starter guide</h2>
+              <Eyebrow>Free · No signup</Eyebrow>
+              <h2>Free tools to land your first UGC deal</h2>
             </div>
             <Link href="/tools" className="all">All free tools <ArrowRight size={15} /></Link>
           </Head>
@@ -200,7 +200,7 @@ export default function HomeClient({ brands = [], stats }) {
           <Head className="row">
             <div>
               <Eyebrow>Brand directory</Eyebrow>
-              <h2>Brands sending PR packages to creators</h2>
+              <h2>Brands sending PR packages to UGC creators</h2>
             </div>
             <Link href="/directory" className="all">All {s.brands} brands <ArrowRight size={15} /></Link>
           </Head>
@@ -209,7 +209,7 @@ export default function HomeClient({ brands = [], stats }) {
               {brands.slice(0, 12).map((b) => (
                 <li key={b.slug}>
                   <Link href={`/brand/${b.slug}`}>
-                    <Logo>{b.logo ? <img src={b.logo} alt="" loading="lazy" /> : (b.name || '?').charAt(0)}</Logo>
+                    <BrandLogo name={b.name} src={b.logo} />
                     <span className="nm">{b.name}</span>
                     {b.category && <span className="cat">{b.category}</span>}
                   </Link>
@@ -234,7 +234,8 @@ export default function HomeClient({ brands = [], stats }) {
               <div className="price">$0<span> forever</span></div>
               <ul>
                 <li><Check size={16} /> Gift lists and {s.brands} brands</li>
-                <li><Check size={16} /> Free portfolio and media kit</li>
+                <li><Check size={16} /> Free UGC portfolio and media kit</li>
+                <li><Check size={16} /> Free UGC tools and starter guide</li>
                 <li><Check size={16} /> Polly writes your pitches</li>
                 <li><Check size={16} /> 3 brand applications a month</li>
               </ul>
@@ -276,8 +277,9 @@ export default function HomeClient({ brands = [], stats }) {
         <Final>
           <img src="/apple-touch-icon.png" alt="" className="wm" aria-hidden="true" />
           <h2>Your next brand deal starts today.</h2>
-          <p>Join {s.creators} creators getting gifted, paid and seen.</p>
+          <p>Join {s.creators} UGC creators getting gifted, paid and seen.</p>
           <Primary href={SIGNUP} className="light">Start free <ArrowRight size={18} /></Primary>
+          <Link href="/ugc-starter-guide" className="brands">New to UGC? Read the free starter guide <ArrowRight size={14} /></Link>
           <Link href="/brands/pr-packages" className="brands">Are you a brand? Get UGC from our creators <ArrowRight size={14} /></Link>
         </Final>
       </Page>
@@ -291,6 +293,16 @@ const HERO_UGC = [
   { id: '7698825988888726806', handle: 'ugcbyanna.uk' },
   { id: '7683925529241701654', handle: 'simpleexplorerugc' },
 ];
+
+// Brand logos come from many hosts and some 404: fall back to the initial instead of a broken image.
+function BrandLogo({ name, src }) {
+  const [broken, setBroken] = useState(!src);
+  return (
+    <Logo>
+      {broken ? (name || '?').charAt(0) : <img src={src} alt="" loading="lazy" onError={() => setBroken(true)} />}
+    </Logo>
+  );
+}
 
 function HeroVisual() {
   const [a, b, c] = HERO_UGC;
@@ -489,6 +501,13 @@ const ToolGrid = styled.ul`
   a:hover { border-color: ${t.accent}; transform: translateY(-1px); }
   b { font-size: 17px; }
   span { color: ${t.muted}; font-size: 15px; line-height: 1.5; flex: 1; }
+  @media (max-width: 560px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+    a { padding: 14px; border-radius: 14px; gap: 4px; }
+    b { font-size: 15px; line-height: 1.3; }
+    span { font-size: 13px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    i { font-size: 13px; }
+  }
   i { font-style: normal; color: ${t.accent}; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
 `;
 const Empty = styled.p`margin: 0; color: ${t.muted}; a { color: ${t.ink}; font-weight: 700; }`;
