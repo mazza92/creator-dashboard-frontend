@@ -146,6 +146,7 @@ export default function LandingFooter() {
               <a href="/register/creator">PR Pipeline</a>
               <a href="/register/creator">For You Feed</a>
               <a href="/media-kit">Free UGC portfolio builder</a>
+              <a href="/tools">Free UGC tools</a>
             </FooterLinks>
           </div>
           <div>

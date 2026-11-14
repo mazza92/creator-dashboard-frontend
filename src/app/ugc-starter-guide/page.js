@@ -196,11 +196,14 @@ export default function UgcStarterGuidePage() {
               look like a pro for ten extra minutes of work. Never invent results, and avoid medical or guaranteed-result claims.
             </p>
             <More href="/blog/how-to-make-ugc-videos-brands-pay-for-2026">The 6 UGC formats brands buy, filming setup and delivery specs</More>
+            <p style={s.p}>Want a script for your product right now? Use the free <Link href="/tools/ugc-script-generator" style={s.a}>UGC script generator</Link>.</p>
 
             <h2 id="hooks" style={s.h2}>4. 15 hooks to steal</h2>
             <ol style={{ ...s.p, paddingLeft: 22 }}>
               {HOOKS.map((h) => <li key={h} style={{ marginBottom: 6 }}>{h}</li>)}
             </ol>
+
+            <p style={s.p}>Need more? Generate 10 hooks for your product with the free <Link href="/tools/ugc-hook-generator" style={s.a}>UGC hook generator</Link>.</p>
 
             <h2 id="rates" style={s.h2}>5. What to charge</h2>
             <p style={s.p}>
@@ -221,6 +224,7 @@ export default function UgcStarterGuidePage() {
               pieces, never for paid ad usage.
             </p>
             <More href="/blog/ugc-rates-how-much-to-charge-2026">Full UGC rate card, packages and negotiation scripts</More>
+            <p style={s.p}>Price a specific job with the free <Link href="/tools/ugc-rate-calculator" style={s.a}>UGC rate calculator</Link>.</p>
 
             <h2 id="pitch" style={s.h2}>6. Pitch email templates</h2>
             <p style={s.p}>
