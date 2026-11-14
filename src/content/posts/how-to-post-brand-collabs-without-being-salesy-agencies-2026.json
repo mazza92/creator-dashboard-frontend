@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-06",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing and creator partnerships, helping brands and creators run campaigns that don't feel like ads.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "10 min read",
@@ -34,26 +33,6 @@
     "working with influencer marketing agencies 2026"
   ],
   "metaDescription": "How to post for brand collabs without being salesy or annoying your audience. Content ratio, framing, disclosure, and working with agency briefs.",
-  "testimonials": [
-    {
-      "quote": "I used to script every word for brand posts and my engagement dropped. Now I film the same way I do for non-sponsored content and just hit the key points. My audience says they can't even tell it's an ad.",
-      "author": "Jess T.",
-      "role": "Beauty Creator",
-      "followers": "24K followers"
-    },
-    {
-      "quote": "Once I started saying no to briefs that didn't fit my voice and negotiating 'must-include' points instead of full scripts, my sponsored posts performed as well as my organic ones.",
-      "author": "Marcus L.",
-      "role": "Fitness Creator",
-      "followers": "18K followers"
-    },
-    {
-      "quote": "Understanding that the brand contact was actually an agency changed how I negotiated. I asked for one point of contact and creative freedom, and the next campaign was so much smoother.",
-      "author": "Sofia R.",
-      "role": "Lifestyle Creator",
-      "followers": "31K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What ratio of sponsored to organic content should I post?",
@@ -101,9 +80,8 @@
     "image": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-03-06T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1620287341401-e2945a4b9daa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-05-23",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "8 min read",
@@ -33,26 +32,6 @@
     "brand pitch email template"
   ],
   "metaDescription": "The exact emails that get brands to reply. 5 copy-paste pitch email templates for micro and nano creators, including follow-up sequences. Used by 900+ creators on newcollab.",
-  "testimonials": [
-    {
-      "quote": "I used Template 1 word-for-word and got a reply from Glossier within 3 days. First PR package ever!",
-      "author": "Jenna M.",
-      "role": "Skincare Creator",
-      "followers": "4K followers"
-    },
-    {
-      "quote": "The follow-up template is gold. I got 3 responses from brands that ignored my first email.",
-      "author": "Alex R.",
-      "role": "Lifestyle Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "Switched to newcollab's AI pitch writer after using these templates. Same quality, 10x faster.",
-      "author": "Maya T.",
-      "role": "Fashion Influencer",
-      "followers": "8K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What subject line should I use for a brand pitch email?",

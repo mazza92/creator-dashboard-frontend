@@ -7,10 +7,9 @@
   "date": "2025-11-04",
   "datePublished": "2025-11-04",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Strategy",
   "readTime": "12 min read",
@@ -29,26 +28,6 @@
     "influencer list 2026"
   ],
   "metaDescription": "Stop searching. We've compiled a 2026 list of high-engagement small influencers in beauty, fashion, and tech who are actively seeking PR and brand collaborations.",
-  "testimonials": [
-    {
-      "quote": "As a startup founder, I don't have time to search hashtags. Seeing this list of available creators and their stats in one place is exactly what I need.",
-      "author": "David C.",
-      "role": "Founder, SaaS Startup",
-      "followers": ""
-    },
-    {
-      "quote": "This is so much better than a generic database. These creators are actively looking for collabs, which cuts our outreach time in half. We just registered.",
-      "author": "Emily L.",
-      "role": "Brand Manager, D2C Skincare",
-      "followers": ""
-    },
-    {
-      "quote": "Found three perfect creators for our skincare launch in under 10 minutes. The engagement rates were exactly what we needed, and they were all ready to collaborate.",
-      "author": "Rachel M.",
-      "role": "Marketing Director, Beauty Brand",
-      "followers": ""
-    }
-  ],
   "faq": [
     {
       "question": "Are the creators on Newcollab vetted?",
@@ -106,10 +85,8 @@
     "image": "https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-04T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
-      "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

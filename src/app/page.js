@@ -4,7 +4,7 @@ import { jsonLd } from '@/src/lib/jsonLd';
 
 const TITLE = 'Newcollab: Paid UGC Jobs, Brand Deals & a Free UGC Portfolio for Creators';
 const DESCRIPTION =
-  'Grow your UGC brand deals on autopilot. Newcollab helps UGC creators in the US and Canada find paid UGC gigs, get gifted PR packages and pitch 2,700+ brands with Polly, an AI agent. Free UGC portfolio. No follower minimum.';
+  'Grow your UGC brand deals on autopilot. Newcollab helps UGC creators in the US, Canada and Europe find paid UGC gigs, get gifted PR packages and pitch 2,700+ brands with Polly, an AI agent. Free UGC portfolio. No follower minimum.';
 
 export const metadata = {
   title: TITLE,
@@ -36,7 +36,7 @@ export const revalidate = 3600;
 const STATS = { brands: 2788, gigs: 323, lists: 276, creators: 3690 };
 
 const ABOUT =
-  'Newcollab helps aspiring UGC creators grow their brand deals on autopilot: Polly, an AI agent that finds and pitches brands, brand gift lists for PR packages, a feed of paid UGC gigs, a brand directory and a free UGC portfolio builder. Built for UGC creators in the US and Canada. Brands use Newcollab to run gifted UGC rosters.';
+  'Newcollab helps aspiring UGC creators grow their brand deals on autopilot: Polly, an AI agent that finds and pitches brands, brand gift lists for PR packages, a feed of paid UGC gigs, a brand directory and a free UGC portfolio builder. Built for UGC creators in the US, Canada and Europe. Brands use Newcollab to run gifted UGC rosters.';
 
 const websiteSchema = {
   '@context': 'https://schema.org',
@@ -58,7 +58,7 @@ const organizationSchema = {
   url: 'https://newcollab.co',
   logo: 'https://newcollab.co/logo.png',
   description: ABOUT,
-  areaServed: ['US', 'CA'],
+  areaServed: ['US', 'CA', 'GB', 'IE', 'FR', 'DE', 'NL', 'BE', 'ES', 'IT', 'SE', 'DK'],
   sameAs: [
     'https://www.instagram.com/newcollab.co/',
     'https://www.tiktok.com/@newcollabco',

@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1612817288484-6f916006741a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-06-15",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, specializing in beauty and skincare creator partnerships across APAC and Western markets.",
-    "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "11 min read",
@@ -34,26 +33,6 @@
     "korean brands that send pr to small creators"
   ],
   "metaDescription": "Direct K-Beauty PR application forms and email routes for Beauty of Joseon, Round Lab, Anua, Torriden and 30+ Korean skincare brands sending PR to small creators in 2026.",
-  "testimonials": [
-    {
-      "quote": "I used the application form list to apply to six brands in one evening. Beauty of Joseon and Anua both said yes within two weeks, and I only had 3K followers.",
-      "author": "Maya R.",
-      "role": "Skincare Creator",
-      "followers": "3K followers"
-    },
-    {
-      "quote": "The retailer form tip changed everything. One Stylevana application and I now get monthly boxes with five brands in each.",
-      "author": "Hana L.",
-      "role": "K-Beauty Creator",
-      "followers": "2.3K followers"
-    },
-    {
-      "quote": "I switched to letting brands find me on Newcollab. Round Lab reached out first. Never thought that would happen at my size.",
-      "author": "Elise K.",
-      "role": "Beauty Creator",
-      "followers": "4K followers"
-    }
-  ],
   "faq": [
     {
       "question": "Do Beauty of Joseon and Anua really accept creators under 5,000 followers?",
@@ -98,9 +77,8 @@
     "datePublished": "2026-06-15T00:00:00.000Z",
     "dateModified": "2026-06-15T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

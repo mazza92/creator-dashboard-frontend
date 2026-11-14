@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162616475-46b635cb6868?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-05-18",
   "author": {
-    "name": "Alex Rivera",
-    "role": "Content Strategist",
-    "description": "Creator economy expert helping influencers grow their brand partnership revenue",
-    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Platform Strategy",
   "readTime": "7 min read",
@@ -34,26 +33,6 @@
     "influencer marketing youtube shorts"
   ],
   "metaDescription": "Master how to get brand deals on YouTube Shorts in 2026. This tactical guide helps creators attract lucrative sponsorships and monetize their short-form video content effectively.",
-  "testimonials": [
-    {
-      "quote": "Newcollab's insights helped me refine my Shorts strategy. Now, in 2026, I'm consistently landing relevant brand deals, even with under 50k subs!",
-      "author": "Chloe Lane",
-      "role": "Lifestyle & DIY Creator",
-      "followers": "45k followers"
-    },
-    {
-      "quote": "I thought brand deals were just for big channels. This guide showed me how to get brand deals on YouTube Shorts in 2026 as a gaming micro-influencer. Game-changer!",
-      "author": "Alex 'ShortsPro' Kim",
-      "role": "Gaming Shorts Creator",
-      "followers": "28k followers"
-    },
-    {
-      "quote": "Learning about media kits and direct outreach from Newcollab transformed my approach. I've secured three fantastic partnerships on Shorts this year, proving it's possible in 2026.",
-      "author": "Maya Singh",
-      "role": "Beauty & Fashion Micro-Influencer",
-      "followers": "72k followers"
-    }
-  ],
   "faq": [
     {
       "question": "How do YouTube Shorts brand deals work in 2026?",
@@ -104,9 +83,8 @@
     "description": "Master how to get brand deals on YouTube Shorts in 2026. This tactical guide helps creators attract lucrative sponsorships and monetize their short-form video content effectively.",
     "datePublished": "2026-05-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Rivera",
-      "jobTitle": "Content Strategist",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1516321497487-e288fb19713f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-23",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Australian Creators",
   "readTime": "12 min read",
@@ -35,26 +34,6 @@
     "australian pr packages"
   ],
   "metaDescription": "12 Australian brands sending PR to small creators + 7-step guide to landing your first PR package. Mecca, Go-To, Bondi Sands, Frank Body and more. Updated 2026.",
-  "testimonials": [
-    {
-      "quote": "This list is spot on! I landed my first PR package from Frank Body using these tips. Stoked!",
-      "author": "Liam P.",
-      "role": "Lifestyle Creator (Melbourne)",
-      "followers": "5K followers"
-    },
-    {
-      "quote": "Finding Aussie brands used to take ages. Having this list is a lifesaver. Now focusing on getting brands to bid via Newcollab.",
-      "author": "Isabelle N.",
-      "role": "Travel & Style Creator (Brisbane)",
-      "followers": "15K followers"
-    },
-    {
-      "quote": "I followed the 'How to Get PR Packages in Australia' guide and landed three PR packages in my first month! The step-by-step approach made all the difference.",
-      "author": "Emma T.",
-      "role": "Beauty Creator (Perth)",
-      "followers": "8K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How to get PR packages in Australia?",
@@ -102,9 +81,8 @@
     "image": "https://images.unsplash.com/photo-1574787109917-7423a116f183?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-23T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1513442542250-854d436a73f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-23",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "15 min read",
@@ -32,32 +31,6 @@
     "skincare pr"
   ],
   "metaDescription": "Get our free 2026 skincare PR list. Discover top beauty brands actively sending PR packages to creators. Land your next skincare collaboration with brands like CeraVe, The Ordinary, and Glossier.",
-  "testimonials": [
-    {
-      "quote": "Finally, a list that's broken down by category! This is so much more helpful than a random 100+ list. Found two new clothing brands to pitch.",
-      "author": "Mia K.",
-      "role": "Fashion Creator (TikTok)",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "The food & beverage list is exactly what I was looking for. It's so hard to find brands in this niche that work with smaller creators.",
-      "author": "David L.",
-      "role": "Food Blogger",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "I got PR from Princess Polly, ASOS, and Revolve all in one month through Newcollab! The category-specific approach works.",
-      "author": "Emma L.",
-      "role": "Fashion Influencer",
-      "followers": "15K followers"
-    },
-    {
-      "quote": "As a skincare creator, the beauty brand list helped me land partnerships with CeraVe and The Ordinary.",
-      "author": "Sarah M.",
-      "role": "Beauty Creator",
-      "followers": "9K followers"
-    }
-  ],
   "faq": [
     {
       "question": "Do I need a different media kit for each category?",
@@ -115,10 +88,8 @@
     "image": "https://images.unsplash.com/photo-1513442542250-854d436a73f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-23T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

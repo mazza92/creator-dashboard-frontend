@@ -6,9 +6,9 @@
   "image": "https://picsum.photos/seed/business/800/400",
   "date": "2025-04-25",
   "author": {
-    "name": "Michael Chen",
-    "role": "Business Development Lead",
-    "image": "https://picsum.photos/seed/michael/200/200"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Business Strategy",
   "readTime": "9 min read",
@@ -31,8 +31,9 @@
     "image": "https://picsum.photos/seed/business/800/400",
     "datePublished": "2025-04-25",
     "author": {
-      "@type": "Person",
-      "name": "Michael Chen"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

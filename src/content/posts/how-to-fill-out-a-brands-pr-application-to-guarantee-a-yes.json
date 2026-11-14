@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-18",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "10 min read",
@@ -29,26 +28,6 @@
     "get pr from brands"
   ],
   "metaDescription": "Master the art of filling out brand PR applications in 2026 to boost your approval chances. Get step-by-step tips for small influencers and connect with brands via Newcollab.",
-  "testimonials": [
-    {
-      "quote": "Thanks to Newcollab, I skipped applications and got approved for Glossier and Rare Beauty PR!",
-      "author": "Mia R.",
-      "role": "Beauty Creator",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "Newcollab made PR easy—no forms, just direct offers from Gymshark and Sephora.",
-      "author": "Alex T.",
-      "role": "Fitness Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "I landed PR from 5 brands via Newcollab without filling a single application.",
-      "author": "Sarah K.",
-      "role": "Lifestyle Influencer",
-      "followers": "6K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What should I include in a brand PR application?",
@@ -106,10 +85,8 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

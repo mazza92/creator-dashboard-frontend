@@ -116,7 +116,7 @@ export default function BlogPageClient({ initialPosts, categories }) {
               UGC Creator Guides: Rates, Brand Deals &amp; PR Packages
             </Title>
             <Paragraph style={{ textAlign: 'center', fontSize: '18px', maxWidth: '600px', margin: '0 auto 48px' }}>
-              How to make UGC brands pay for, what to charge, how to build a UGC portfolio, and which brands send PR packages or hire UGC creators in the US and Canada.
+              How to make UGC brands pay for, what to charge, how to build a UGC portfolio, and which brands send PR packages or hire UGC creators in the US, Canada and Europe.
             </Paragraph>
 
             <div style={{ maxWidth: '600px', margin: '0 auto 48px' }}>

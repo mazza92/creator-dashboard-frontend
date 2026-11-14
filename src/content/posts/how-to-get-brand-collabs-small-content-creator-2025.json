@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-08-28",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand collaborations",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Collaborations",
   "readTime": "12 min read",
@@ -30,38 +29,6 @@
     "brand collaboration opportunities"
   ],
   "metaDescription": "Master content creator brand collaborations in 2026. Learn strategies for small creators to secure creative partnerships and leverage Newcollab's ad slot system for lasting brand relationships.",
-  "testimonials": [
-    {
-      "quote": "Newcollab helped me transform my lifestyle content into a $1,200 brand collaboration with a sustainable fashion brand. They loved my storytelling approach!",
-      "author": "Emma L.",
-      "role": "Lifestyle Content Creator",
-      "followers": "15K followers, 8% engagement"
-    },
-    {
-      "quote": "I pitched a 3-month content series concept to a wellness brand and landed a $2,500 collaboration. Newcollab's tools helped me present my vision professionally.",
-      "author": "Marcus K.",
-      "role": "Wellness Content Creator",
-      "followers": "22K followers, 12% engagement"
-    },
-    {
-      "quote": "Newcollab helped me land a 6-month creative collaboration worth $8,000!",
-      "author": "Sarah M.",
-      "role": "Food Content Creator",
-      "followers": "18K followers, 9% engagement"
-    },
-    {
-      "quote": "I transformed my tech reviews into brand collaborations using Newcollab's ad slots.",
-      "author": "David R.",
-      "role": "Tech Content Creator",
-      "followers": "25K followers, 11% engagement"
-    },
-    {
-      "quote": "From $0 to $1,500 monthly through creative brand partnerships!",
-      "author": "Lisa T.",
-      "role": "Fashion Content Creator",
-      "followers": "12K followers, 7% engagement"
-    }
-  ],
   "faq": [
     {
       "question": "How do content creator brand collabs differ from regular sponsorships?",
@@ -120,11 +87,9 @@
     "datePublished": "2025-08-28",
     "dateModified": "2025-08-28",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand collaborations",
-      "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

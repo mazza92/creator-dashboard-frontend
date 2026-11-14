@@ -4,11 +4,11 @@ import BlogPageClient from './BlogPageClient';
 // This page uses Static Site Generation (SSG) for maximum SEO
 export const metadata = {
   title: 'UGC Creator Guides: Rates, Brand Deals & PR Packages | Newcollab Blog',
-  description: 'Guides for UGC creators in the US and Canada: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
+  description: 'Guides for UGC creators in the US, Canada and Europe: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
   keywords: 'free link in bio for paid partnerships, sponsorships for influencers, brand sponsorships for influencers, paid partnerships, influencer sponsorships, micro-influencer brand deals, creator monetization, brand partnerships, content strategy, influencer marketing',
   openGraph: {
     title: 'UGC Creator Guides: Rates, Brand Deals & PR Packages | Newcollab Blog',
-    description: 'Guides for UGC creators in the US and Canada: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
+    description: 'Guides for UGC creators in the US, Canada and Europe: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
     type: 'website',
     url: 'https://newcollab.co/blog',
     siteName: 'Newcollab',
@@ -16,7 +16,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'UGC Creator Guides: Rates, Brand Deals & PR Packages | Newcollab Blog',
-    description: 'Guides for UGC creators in the US and Canada: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
+    description: 'Guides for UGC creators in the US, Canada and Europe: UGC rates, how to make UGC videos brands pay for, building a UGC portfolio, and brands that send PR packages or pay for UGC.',
     creator: '@newcollab',
   },
 };

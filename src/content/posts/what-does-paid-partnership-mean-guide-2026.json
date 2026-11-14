@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-13",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "9 min read",
@@ -28,26 +27,6 @@
     "paid partnership vs gifted"
   ],
   "metaDescription": "What does 'paid partnership' mean on Instagram or TikTok? Our 2026 guide explains the tag, how it differs from gifted PR, and how creators can get more paid brand deals.",
-  "testimonials": [
-    {
-      "quote": "I was stuck getting free PR packages. Newcollab was the first place I found that let me bid on actual paid partnerships. It completely changed my business.",
-      "author": "Sarah K.",
-      "role": "Creator",
-      "followers": "80k Followers"
-    },
-    {
-      "quote": "This article is spot on. 'Paid Partnership' means a real contract. Newcollab helps me find those contracts without all the cold-emailing.",
-      "author": "David L.",
-      "role": "Tech Creator",
-      "followers": "120k Followers"
-    },
-    {
-      "quote": "I went from only getting gifted products to landing $1,200 paid partnerships through Newcollab. Understanding the difference between 'gifted' and 'paid' was the game-changer.",
-      "author": "Emma S.",
-      "role": "Lifestyle Creator",
-      "followers": "45k Followers"
-    }
-  ],
   "faq": [
     {
       "question": "What does 'Paid Partnership' actually mean?",
@@ -105,9 +84,8 @@
     "image": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-13T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-02-25",
   "author": {
-    "name": "Michael Chen",
-    "role": "Partnerships Director",
-    "description": "7+ years in creator partnerships, helping 2,000+ creators secure brand deals",
-    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Monetization",
   "readTime": "11 min read",
@@ -27,26 +26,6 @@
     "content idea sponsorship"
   ],
   "metaDescription": "Get brands to sponsor your content ideas in 2026 with Newcollab's platform. Pitch now and start earning!",
-  "testimonials": [
-    {
-      "quote": "I pitched a campaign idea on Newcollab and got funded in 48 hours for $2,500!",
-      "author": "Noah B.",
-      "role": "Gaming Creator",
-      "followers": "18K followers"
-    },
-    {
-      "quote": "Newcollab helped me secure $8,000 in content idea sponsorships last month!",
-      "author": "Sarah L.",
-      "role": "Lifestyle Influencer",
-      "followers": "25K followers"
-    },
-    {
-      "quote": "From 0 to $3,000 monthly through content idea pitching on Newcollab!",
-      "author": "Alex M.",
-      "role": "Tech Creator",
-      "followers": "12K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How do I get brands to sponsor my content ideas?",
@@ -104,10 +83,8 @@
     "image": "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-02-25T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Michael Chen",
-      "jobTitle": "Partnerships Director",
-      "description": "7+ years in creator partnerships, helping 2,000+ creators secure brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

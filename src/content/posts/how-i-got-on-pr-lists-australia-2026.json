@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-06-15",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping small creators land brand deals across Australia and Western markets.",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "12 min read",
@@ -36,26 +35,6 @@
     "australian pr packages for creators"
   ],
   "metaDescription": "How to get PR packages in Australia in 2026: 40+ Aussie brands, how to email them, and brand deals for small and micro creators. Open applications and pitch routes included.",
-  "testimonials": [
-    {
-      "quote": "I followed the five steps exactly with 2K followers. Alya Skin and Bondi Boost both sent packages in my first month of pitching.",
-      "author": "Tahlia W.",
-      "role": "Lifestyle Creator",
-      "followers": "4K followers"
-    },
-    {
-      "quote": "The timing trick is real. I pitched a swim brand in September and got picked for their summer launch. Never would have thought to time it.",
-      "author": "Chloe D.",
-      "role": "Fashion Creator",
-      "followers": "5K followers"
-    },
-    {
-      "quote": "Letting brands find me on Newcollab saved me the spreadsheet headache. Two Aussie brands reached out in my first fortnight.",
-      "author": "Bree M.",
-      "role": "Wellness Creator",
-      "followers": "3K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How many followers do I need to get PR packages in Australia?",
@@ -100,9 +79,8 @@
     "datePublished": "2026-06-15T00:00:00.000Z",
     "dateModified": "2026-06-15T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

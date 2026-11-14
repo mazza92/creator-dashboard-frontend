@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-06",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, specializing in beauty and skincare creator partnerships across APAC and Western markets.",
-    "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "14 min read",
@@ -37,26 +36,6 @@
     "k-beauty influencer program"
   ],
   "metaDescription": "The definitive 2026 K-Beauty PR list. 30+ Korean skincare brands with open application forms, email contacts, and retailer programs sending PR packages to micro-influencers and small creators.",
-  "testimonials": [
-    {
-      "quote": "I applied to three K-Beauty retailer programs from this list and got accepted by two within a week. I've already received products from COSRX, Beauty of Joseon, and Torriden — all through one retailer relationship.",
-      "author": "Priya M.",
-      "role": "Skincare Creator",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "The retailer backdoor strategy is real. I spent months emailing Korean brands individually with zero replies. Got on Stylevana's program and now I get monthly PR boxes with 4-5 different brands in each one.",
-      "author": "Rachel T.",
-      "role": "K-Beauty Content Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "On Newcollab, a K-Beauty brand reached out to me. I didn't have to pitch at all. That's never happened to me on any other platform with only 5K followers.",
-      "author": "Jade K.",
-      "role": "Beauty & Skincare Creator",
-      "followers": "5K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How many followers do I need to get K-Beauty PR packages?",
@@ -118,9 +97,8 @@
     "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-03-06T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

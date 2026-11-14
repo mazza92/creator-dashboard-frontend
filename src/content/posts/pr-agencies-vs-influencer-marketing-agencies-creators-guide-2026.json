@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-06",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer and brand partnerships, helping creators navigate agencies, contracts, and direct brand deals.",
-    "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "12 min read",
@@ -35,26 +34,6 @@
     "agency pros and cons creators 2026"
   ],
   "metaDescription": "PR agencies, influencer marketing agencies, and talent managers — what they do, how they work with creators, pros and cons, and when to use them. A clear guide for new and aspiring creators.",
-  "testimonials": [
-    {
-      "quote": "I did a few campaigns through an influencer agency. The money was okay but the briefs were rigid. When I started getting direct offers on Newcollab, I could negotiate my own terms and keep 100%.",
-      "author": "Sam K.",
-      "role": "Fashion Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "I thought I needed a manager to be taken seriously. I got on a few PR agency gifting lists and joined Newcollab instead. Now I get more offers than my friend who's with a manager and paying 15%.",
-      "author": "Jordan M.",
-      "role": "Beauty Creator",
-      "followers": "6K followers"
-    },
-    {
-      "quote": "Understanding the difference between PR agencies (they work for the brand) and talent managers (they work for you) changed how I approached everything. I only work with a manager for big campaigns now; the rest I do direct.",
-      "author": "Riley T.",
-      "role": "Lifestyle Creator",
-      "followers": "28K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What is the difference between a PR agency and an influencer marketing agency?",
@@ -101,9 +80,8 @@
     "image": "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-03-06T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

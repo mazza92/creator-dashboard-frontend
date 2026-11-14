@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1557200134-90327ee9fafa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-27",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Strategy",
   "readTime": "8 min read",
@@ -32,20 +31,6 @@
     "influencer seeding outreach"
   ],
   "metaDescription": "Struggling to get influencers to reply? Use our 5 proven, copy-paste email templates for sending PR packages, negotiating rates, and building long-term creator partnerships.",
-  "testimonials": [
-    {
-      "quote": "Template #1 is gold. We saw a 40% increase in replies just by switching to this 'no-strings' approach.",
-      "author": "Jessica M.",
-      "role": "Social Media Manager",
-      "followers": ""
-    },
-    {
-      "quote": "I honestly stopped using email after finding Newcollab. Why chase creators when I can just let them apply to me?",
-      "author": "David K.",
-      "role": "Founder, DTC Brand",
-      "followers": ""
-    }
-  ],
   "faq": [
     {
       "question": "What is a good response rate for influencer outreach emails?",
@@ -84,9 +69,8 @@
     "image": "https://images.unsplash.com/photo-1557200134-90327ee9fafa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-27T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

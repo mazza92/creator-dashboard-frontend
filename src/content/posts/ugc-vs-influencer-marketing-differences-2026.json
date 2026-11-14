@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-31",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "11 min read",
@@ -32,26 +31,6 @@
     "authentic content creation for brands"
   ],
   "metaDescription": "Explore UGC vs influencer marketing differences in 2026. Compare costs, authenticity, ROI, and learn which strategy wins for your brand campaigns.",
-  "testimonials": [
-    {
-      "quote": "Switching between UGC work and influencer partnerships through Newcollab doubled my income. Understanding both strategies is essential for creators in 2026.",
-      "author": "Maya Richardson",
-      "role": "Lifestyle UGC Creator",
-      "followers": "18k followers"
-    },
-    {
-      "quote": "Brands now want both authentic UGC and polished influencer content. I've built a sustainable career by mastering the differences and offering both services.",
-      "author": "Jordan Chen",
-      "role": "Beauty Micro-Influencer",
-      "followers": "42k followers"
-    },
-    {
-      "quote": "The hybrid approach changed everything for me. I create UGC for product launches and influencer content for awareness campaigns—totally different skills and pay structures.",
-      "author": "Aisha Williams",
-      "role": "Fitness Content Creator",
-      "followers": "27k followers"
-    }
-  ],
   "faq": [
     {
       "question": "What is the main difference between UGC and influencer marketing?",
@@ -102,9 +81,8 @@
     "description": "Explore UGC vs influencer marketing differences in 2026. Compare costs, authenticity, ROI, and learn which strategy wins for your brand campaigns.",
     "datePublished": "2026-03-31T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

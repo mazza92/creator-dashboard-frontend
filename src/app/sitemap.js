@@ -1,5 +1,6 @@
 import { getAllPosts } from '../../lib/blog';
 import { brandLetter, BRAND_LETTERS, fetchBrandIndex } from '../lib/brandIndex';
+import { MIN_INDEXABLE, fetchHub } from './ugc-portfolio-examples/_hub';
 
 const BASE = 'https://newcollab.co';
 const BRANDS_API = 'https://api.newcollab.co/api/public/brands';
@@ -217,9 +218,18 @@ function brandEntries(brands, now, { filter }) {
     });
 }
 
+async function portfolioHubEntries(now) {
+  const data = await fetchHub(null);
+  const hubs = (data.hubs || []).filter((h) => h.count >= MIN_INDEXABLE);
+  return [
+    sitemapEntry(`${BASE}/ugc-portfolio-examples`, now, 'weekly', 0.8),
+    ...hubs.map((h) => sitemapEntry(`${BASE}/ugc-portfolio-examples/${h.slug}`, now, 'weekly', 0.7)),
+  ].filter(Boolean);
+}
+
 export default async function sitemap() {
   const now = new Date();
-  const pages = staticEntries(now);
+  const pages = [...staticEntries(now), ...(await portfolioHubEntries(now))];
   const posts = blogEntries(now);
 
   const indexed = await fetchBrandIndex({ revalidate, timeoutMs: FETCH_BUDGET_MS });

@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1611162616475-46b635cb6868?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-08-31",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "12 min read",
@@ -35,26 +34,6 @@
     "free UGC portfolio"
   ],
   "metaDescription": "Step-by-step 2026 tutorial for a UGC portfolio brands hire from. The 8 clips to include, a weekend filming plan, and a free UGC portfolio builder to publish without Canva.",
-  "testimonials": [
-    {
-      "quote": "I sent eight 20-second clips instead of my whole camera roll. First paid brief in 11 days.",
-      "author": "Priya S.",
-      "role": "Skincare UGC Creator",
-      "followers": "900 followers"
-    },
-    {
-      "quote": "The quality checklist caught the watermark I had forgotten. That would have killed the brief.",
-      "author": "Chris D.",
-      "role": "Home UGC Creator",
-      "followers": "3.2K followers"
-    },
-    {
-      "quote": "Weekend plan is realistic. I filmed Saturday, edited Sunday, uploaded Monday.",
-      "author": "Elena V.",
-      "role": "Lifestyle UGC Creator",
-      "followers": "1.4K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How many videos do I need in a UGC portfolio?",

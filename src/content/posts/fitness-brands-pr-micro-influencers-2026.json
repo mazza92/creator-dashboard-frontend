@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-30",
   "author": {
-    "name": "Alex Rivera",
-    "role": "Content Strategist",
-    "description": "Creator economy expert with 6+ years helping fitness influencers grow their brand partnership revenue.",
-    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "PR & Outreach",
   "readTime": "14 min read",
@@ -35,26 +34,6 @@
     "how to get fitness brand sponsorships"
   ],
   "metaDescription": "30+ fitness brands sending PR packages to micro-influencers in 2026 — supplements, activewear, equipment and tech — with follower requirements and application tips.",
-  "testimonials": [
-    {
-      "quote": "I applied to Alani Nu with 4K followers and got accepted within two weeks. Six months later I'm a paid ambassador getting monthly PR drops. The key was having a niche — female fat-loss content — not just 'fitness.'",
-      "author": "Jordan Lee",
-      "role": "Fitness & Wellness Creator",
-      "followers": "18k followers"
-    },
-    {
-      "quote": "Ghost Lifestyle reached out to me after I posted an honest comparison of their pre-workout vs competitors. Brands notice when you create real content, not just ads. Now I earn commission every month on top of free product.",
-      "author": "Marcus Webb",
-      "role": "Gym & Nutrition Creator",
-      "followers": "11k followers"
-    },
-    {
-      "quote": "I landed partnerships with REP Fitness and Gymreapers in the same month using this exact approach — a personalised pitch, specific product mentions, and a link to my home gym tour video. Starting small with accessories brands first was the right move.",
-      "author": "Samira Okonkwo",
-      "role": "Home Gym & Strength Creator",
-      "followers": "9k followers"
-    }
-  ],
   "faq": [
     {
       "question": "Which fitness brands work with micro-influencers in 2026?",
@@ -106,9 +85,8 @@
     "image": "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-03-30T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Rivera",
-      "jobTitle": "Content Strategist",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

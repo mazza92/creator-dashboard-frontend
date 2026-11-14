@@ -7,10 +7,9 @@
   "date": "2025-11-04",
   "datePublished": "2025-11-04",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Strategy",
   "readTime": "12 min read",
@@ -29,26 +28,6 @@
     "influencer engagement rates 2026"
   ],
   "metaDescription": "Stop overpaying for low engagement. Learn why brands are shifting their budgets from macro-influencers (1-2% engagement) to high-ROI micro-influencers (3-6%+ engagement). This guide breaks down the data.",
-  "testimonials": [
-    {
-      "quote": "This data-driven breakdown convinced my leadership to trial a micro-influencer strategy. The authenticity is just so much higher.",
-      "author": "Jessica B.",
-      "role": "Brand Manager, Apparel",
-      "followers": ""
-    },
-    {
-      "quote": "We re-allocated our budget from one macro-influencer to 50 micro-influencers on Newcollab. Our engagement went up 300% for the same price.",
-      "author": "Mark C.",
-      "role": "Founder, D2C Startup",
-      "followers": ""
-    },
-    {
-      "quote": "Switching to micro-influencers was the best decision we made. We're getting 5x more content, higher engagement, and better ROI—all at a fraction of the cost.",
-      "author": "Sarah L.",
-      "role": "CMO, Beauty Brand",
-      "followers": ""
-    }
-  ],
   "faq": [
     {
       "question": "What is the average engagement rate for a micro-influencer?",
@@ -106,10 +85,8 @@
     "image": "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-04T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
-      "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

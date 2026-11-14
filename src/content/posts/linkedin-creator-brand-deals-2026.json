@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1656164631610-f104326810c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-04-02",
   "author": {
-    "name": "Alex Rivera",
-    "role": "Content Strategist",
-    "description": "Creator economy expert helping influencers grow their brand partnership revenue",
-    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Partnerships",
   "readTime": "9 min read",
@@ -34,26 +33,6 @@
     "LinkedIn creator monetization strategies"
   ],
   "metaDescription": "Discover how to land LinkedIn creator brand deals in 2026. Expert strategies for B2B sponsorships, newsletter deals, and influencer marketing opportunities.",
-  "testimonials": [
-    {
-      "quote": "I landed my first $8,000 LinkedIn brand deal in 2026 after pivoting from Instagram. B2B companies actually value my HR expertise here.",
-      "author": "Monica Tran",
-      "role": "HR Tech Creator",
-      "followers": "24k followers"
-    },
-    {
-      "quote": "LinkedIn newsletter sponsorships changed everything. I now earn more from one B2B partnership than a month of Instagram collaborations.",
-      "author": "Derek Simmons",
-      "role": "SaaS Marketing Creator",
-      "followers": "18k followers"
-    },
-    {
-      "quote": "Brands on LinkedIn care about engagement quality, not vanity metrics. My 12k audience outperforms creators with 100k on other platforms.",
-      "author": "Priya Kapoor",
-      "role": "Leadership Coach & Creator",
-      "followers": "12k followers"
-    }
-  ],
   "faq": [
     {
       "question": "How much do LinkedIn creators charge for brand deals in 2026?",
@@ -104,9 +83,8 @@
     "description": "Discover how to land LinkedIn creator brand deals in 2026. Expert strategies for B2B sponsorships, newsletter deals, and influencer marketing opportunities.",
     "datePublished": "2026-04-02T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Rivera",
-      "jobTitle": "Content Strategist",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -6,9 +6,9 @@
   "image": "https://picsum.photos/seed/monetization/800/400",
   "date": "2025-03-30",
   "author": {
-    "name": "David Lee",
-    "role": "Monetization Strategist",
-    "image": "https://picsum.photos/seed/david/200/200"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Monetization",
   "readTime": "10 min read",
@@ -33,8 +33,9 @@
     "image": "https://picsum.photos/seed/monetization/800/400",
     "datePublished": "2025-03-30",
     "author": {
-      "@type": "Person",
-      "name": "David Lee"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

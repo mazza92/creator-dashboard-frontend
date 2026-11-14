@@ -6,9 +6,9 @@
   "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-06-03",
   "author": {
-    "name": "Michael Chen",
-    "role": "Partnerships Director",
-    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Content Creation",
   "readTime": "8 min read",
@@ -31,8 +31,9 @@
     "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-06-03",
     "author": {
-      "@type": "Person",
-      "name": "Michael Chen"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

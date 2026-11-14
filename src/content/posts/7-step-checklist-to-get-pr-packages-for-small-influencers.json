@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-02",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "12 min read",
@@ -28,26 +27,6 @@
     "pr for micro influencers"
   ],
   "metaDescription": "Yes, you can get PR packages with 1,000 followers. This 7-step checklist is your simple, actionable plan to prepare your profile, find brands, and send a pitch that gets replies.",
-  "testimonials": [
-    {
-      "quote": "This checklist is my new bible. I printed it out and I'm going through it step-by-step. It makes the whole process feel so much less overwhelming.",
-      "author": "Marcus T.",
-      "role": "Gaming Creator",
-      "followers": "2.1K followers"
-    },
-    {
-      "quote": "Step 3 (the media kit) was the key. I used the Newcollab template and brands started taking me seriously immediately. It's a game-changer.",
-      "author": "Jenna L.",
-      "role": "Beauty Creator",
-      "followers": "4K followers"
-    },
-    {
-      "quote": "I was so overwhelmed and didn't know where to start. This checklist was my exact to-do list. I just got my first 'yes' from a skincare brand!",
-      "author": "Chloe W.",
-      "role": "Skincare Creator",
-      "followers": "3.2K followers"
-    }
-  ],
   "faq": [
     {
       "question": "Will this checklist work if I have under 1,000 followers?",
@@ -105,10 +84,8 @@
     "image": "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-02T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

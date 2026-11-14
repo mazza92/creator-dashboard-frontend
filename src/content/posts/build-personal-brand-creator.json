@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-07-10",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Personal Branding",
   "readTime": "9 min read",
@@ -26,26 +25,6 @@
     "creator branding tips"
   ],
   "metaDescription": "Build a personal brand as a creator in 2026 to attract opportunities. Join Newcollab to amplify your brand and connect with brands.",
-  "testimonials": [
-    {
-      "quote": "My personal brand on Newcollab landed me a $3,000 deal with a lifestyle brand!",
-      "author": "Zoe T.",
-      "role": "Lifestyle Creator",
-      "followers": "22K followers"
-    },
-    {
-      "quote": "Building my personal brand helped me secure 5 brand partnerships worth $8,000 total!",
-      "author": "Marcus L.",
-      "role": "Fitness Influencer",
-      "followers": "15K followers"
-    },
-    {
-      "quote": "Newcollab's branding tools helped me define my unique voice and attract the right brands!",
-      "author": "Emma K.",
-      "role": "Beauty Creator",
-      "followers": "28K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What is a personal brand for creators?",
@@ -103,10 +82,8 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-07-10T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

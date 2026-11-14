@@ -6,9 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-03-25",
   "author": {
-    "name": "Nina Chen",
-    "role": "Content Marketplace Expert",
-    "image": "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Technology",
   "readTime": "9 min read",
@@ -31,8 +31,9 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-03-25",
     "author": {
-      "@type": "Person",
-      "name": "Nina Chen"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

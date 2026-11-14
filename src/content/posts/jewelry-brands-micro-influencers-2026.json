@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-31",
   "author": {
-    "name": "Maya Johnson",
-    "role": "SEO & Growth Lead",
-    "description": "Specialises in content strategy for creator platforms and influencer marketing",
-    "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "PR & Outreach",
   "readTime": "12 min read",
@@ -34,26 +33,6 @@
     "affordable jewelry influencer programs"
   ],
   "metaDescription": "Discover top jewelry brands partnering with micro-influencers in 2026. Get application tips, contact details, and partnership requirements for collaborations.",
-  "testimonials": [
-    {
-      "quote": "Mejuri reached out after I had just 8k followers. Six months later, I'm a paid brand ambassador creating content I genuinely love.",
-      "author": "Priya Sharma",
-      "role": "Fashion & Lifestyle Creator",
-      "followers": "24k followers"
-    },
-    {
-      "quote": "I applied to 12 jewelry brands using the pitch template approach. Within three weeks, I had partnerships with Ana Luisa and Gorjana sending PR packages monthly.",
-      "author": "Chelsea Monroe",
-      "role": "Minimalist Style Influencer",
-      "followers": "15k followers"
-    },
-    {
-      "quote": "The sustainable jewelry niche is underrated. Brands like Catbird and Brilliant Earth specifically seek micro-influencers who share their ethical values.",
-      "author": "Marcus Chen",
-      "role": "Sustainable Fashion Creator",
-      "followers": "31k followers"
-    }
-  ],
   "faq": [
     {
       "question": "Which jewelry brands work with micro-influencers in 2026?",
@@ -104,9 +83,8 @@
     "description": "Discover top jewelry brands partnering with micro-influencers in 2026. Get application tips, contact details, and partnership requirements for collaborations.",
     "datePublished": "2026-03-31T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Maya Johnson",
-      "jobTitle": "SEO & Growth Lead",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

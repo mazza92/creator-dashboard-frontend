@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-13",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "12 min read",
@@ -34,26 +33,6 @@
     "brands that work with micro influencers australia"
   ],
   "metaDescription": "How to get PR packages in Australia: 20+ Aussie brands sending PR to small creators, 6 agencies, and how to email brands for a deal. Direct contacts and open applications.",
-  "testimonials": [
-    {
-      "quote": "I used to spend all day sending cold emails to the brands on this list. On Newcollab, the paid opportunities just come to me. It's a no-brainer for any serious Aussie creator.",
-      "author": "Chloe W.",
-      "role": "Lifestyle Creator",
-      "followers": "45k Followers"
-    },
-    {
-      "quote": "This is the exact list I was looking for 6 months ago. I pitched 20 brands from lists like this and got 1 'yes'. On Newcollab, I'm 3-for-3 on bids. The difference is real.",
-      "author": "Mitch B.",
-      "role": "Tech & Lifestyle Creator",
-      "followers": "22k Followers"
-    },
-    {
-      "quote": "I got PR packages from Go-To Skincare, Bondi Sands, and Tribe Skincare all through Newcollab in one month! The Aussie brand focus is perfect.",
-      "author": "Emma S.",
-      "role": "Beauty Creator",
-      "followers": "18k Followers"
-    }
-  ],
   "faq": [
     {
       "question": "How do I get on a PR list in Australia?",
@@ -111,9 +90,8 @@
     "image": "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-13T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

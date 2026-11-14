@@ -13,7 +13,7 @@ const GA_MEASUREMENT_ID = 'G-5RET5C6MZ8';
 
 export const metadata = {
   title: 'Newcollab: The Platform for UGC Creators',
-  description: 'Newcollab helps UGC creators in the US and Canada get paid UGC work and gifted brand deals, with a free UGC portfolio brands can open.',
+  description: 'Newcollab helps UGC creators in the US, Canada and Europe get paid UGC work and gifted brand deals, with a free UGC portfolio brands can open.',
 };
 
 export default function RootLayout({ children }) {

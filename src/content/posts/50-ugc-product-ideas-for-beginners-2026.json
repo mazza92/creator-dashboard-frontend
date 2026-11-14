@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-08-31",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "14 min read",
@@ -33,26 +32,6 @@
     "ugc sample video ideas"
   ],
   "metaDescription": "Free 2026 checklist of 50 UGC product ideas you already own. What to film, shot lists, and hooks for skincare, tech, home, health, food, and hair.",
-  "testimonials": [
-    {
-      "quote": "I used products from my bathroom and booked a $150 UGC brief two weeks later.",
-      "author": "Nina P.",
-      "role": "Beginner UGC Creator",
-      "followers": "420 followers"
-    },
-    {
-      "quote": "The shot list column is basically the brief. I stopped guessing what they wanted.",
-      "author": "Jordan L.",
-      "role": "Lifestyle UGC Creator",
-      "followers": "2K followers"
-    },
-    {
-      "quote": "I thought I needed PR boxes first. Drugstore product videos got me in.",
-      "author": "Aisha M.",
-      "role": "Beauty UGC Creator",
-      "followers": "1.1K followers"
-    }
-  ],
   "faq": [
     {
       "question": "Do I need brands to send me products before I can make UGC?",

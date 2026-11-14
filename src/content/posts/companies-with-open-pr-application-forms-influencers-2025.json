@@ -8,10 +8,9 @@
   "image": "https://images.unsplash.com/photo-1556740758-90de374c12ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-23",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "15 min read",
@@ -32,32 +31,6 @@
     "pr application links 2026"
   ],
   "metaDescription": "Access 50+ PR forms for brands and creators—verified application links, no cold emails. Beauty, fashion & tech portals. Apply in minutes today.",
-  "testimonials": [
-    {
-      "quote": "Finding the right application link takes forever. This list is super helpful. But honestly, getting direct bids on Newcollab is way faster than filling out forms.",
-      "author": "Maria L.",
-      "role": "Lifestyle Creator",
-      "followers": "14K followers"
-    },
-    {
-      "quote": "I applied to 5 beauty brands from this list and got accepted by 3! The direct links saved me hours of research.",
-      "author": "Jessica M.",
-      "role": "Beauty Influencer",
-      "followers": "22K followers"
-    },
-    {
-      "quote": "The application types explanation was so helpful! I finally understood the difference between PR and affiliate programs.",
-      "author": "Alex T.",
-      "role": "Tech Creator",
-      "followers": "18K followers"
-    },
-    {
-      "quote": "This list helped me land my first brand partnership with Tower 28 Beauty. The direct application process was so much easier than cold emailing.",
-      "author": "Sarah K.",
-      "role": "Clean Beauty Creator",
-      "followers": "9K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What's the difference between PR, Ambassador, and Affiliate applications?",
@@ -127,10 +100,8 @@
     "image": "https://images.unsplash.com/photo-1556740758-90de374c12ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-23T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

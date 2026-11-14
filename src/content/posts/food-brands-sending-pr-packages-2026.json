@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-31",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "PR & Outreach",
   "readTime": "12 min read",
@@ -34,26 +33,6 @@
     "meal kit brand sponsorships"
   ],
   "metaDescription": "Discover 40+ food brands sending PR packages in 2026. Learn how to get food PR packages, application tips, and top brands partnering with micro-influencers.",
-  "testimonials": [
-    {
-      "quote": "I had 8k followers when a protein bar brand found me through my recipe reels. Now I receive monthly PR packages from three different health food companies.",
-      "author": "Mariana Delgado",
-      "role": "Wellness Food Creator",
-      "followers": "14k followers"
-    },
-    {
-      "quote": "Started documenting my snack reviews as a hobby. Within six months of consistent posting, craft beverage and snack brands began reaching out with PR packages.",
-      "author": "Tyler Okonkwo",
-      "role": "Snack Review Creator",
-      "followers": "22k followers"
-    },
-    {
-      "quote": "Food brands care more about your content quality than follower count. My detailed recipe photography helped me land PR partnerships with five organic food brands in 2026.",
-      "author": "Sophie Brennan",
-      "role": "Recipe Developer & Food Blogger",
-      "followers": "9k followers"
-    }
-  ],
   "faq": [
     {
       "question": "How many followers do I need to get PR packages from food brands in 2026?",
@@ -104,9 +83,8 @@
     "description": "Discover 40+ food brands sending PR packages in 2026. Learn how to get food PR packages, application tips, and top brands partnering with micro-influencers.",
     "datePublished": "2026-03-31T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

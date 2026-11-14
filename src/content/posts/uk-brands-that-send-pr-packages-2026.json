@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-07-03",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "16 min read",
@@ -30,26 +29,6 @@
     "uk creator pr packages 2026"
   ],
   "metaDescription": "The complete list of British brands actively sending PR packages to UK creators in 2026. Updated monthly. Beauty, fashion, food & lifestyle brands accepting small influencers.",
-  "testimonials": [
-    {
-      "quote": "Finally a PR list that focuses on UK brands! Got gifted by Revolution and Pip & Nut within my first month.",
-      "author": "Emma S.",
-      "role": "Beauty Creator",
-      "followers": "4K followers"
-    },
-    {
-      "quote": "Being UK-based used to feel like a disadvantage. This list showed me it's actually an advantage with British brands.",
-      "author": "James L.",
-      "role": "Lifestyle Creator",
-      "followers": "7K followers"
-    },
-    {
-      "quote": "The UK PR agency section was gold. Got onto three agency mailing lists and now get regular gifting opportunities.",
-      "author": "Sophie T.",
-      "role": "Fashion Creator",
-      "followers": "12K followers"
-    }
-  ],
   "faq": [
     {
       "question": "Do UK brands only work with UK-based creators?",
@@ -90,8 +69,9 @@
     "headline": "UK Brands That Send PR Packages in 2026 — The Full British List",
     "description": "The complete list of British brands actively sending PR packages to UK creators in 2026. Updated monthly.",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

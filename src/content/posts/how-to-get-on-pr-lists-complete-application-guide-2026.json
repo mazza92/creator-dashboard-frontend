@@ -8,10 +8,9 @@
   "image": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-01-27",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Getting Started",
   "readTime": "15 min read",
@@ -43,26 +42,6 @@
     "pr forms for small creators"
   ],
   "metaDescription": "Learn how PR forms for brands work, what to include, and where to apply. Step-by-step 2026 guide plus free PR form directory links—start your applications today.",
-  "testimonials": [
-    {
-      "quote": "I got rejected from 3 PR lists before I realized my profile looked unfocused. Once I niched down to just skincare content, I got accepted by the next 2 brands I applied to.",
-      "author": "Chloe D.",
-      "role": "Skincare Creator",
-      "followers": "3.2K followers"
-    },
-    {
-      "quote": "This guide taught me that I was answering PR form questions all wrong. I changed my approach and got on 4 new PR lists in one month.",
-      "author": "Anika S.",
-      "role": "Fashion Creator",
-      "followers": "6K followers"
-    },
-    {
-      "quote": "I love that Newcollab lets me skip all the application stress. Brands just find me and send offers directly. But I still use the PR form directory for big brands that aren't on the platform yet.",
-      "author": "Jake M.",
-      "role": "Fitness Creator",
-      "followers": "8.5K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What is a PR list and how does it work?",
@@ -127,10 +106,8 @@
     "image": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-01-27T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

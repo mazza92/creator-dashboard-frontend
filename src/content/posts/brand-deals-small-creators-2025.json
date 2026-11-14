@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-08-12",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Monetization",
   "readTime": "15 min read",
@@ -30,26 +29,6 @@
     "small influencer brand partnerships"
   ],
   "metaDescription": "Brand deals for small creators and micro influencers in 2026: how to pitch, what to charge, and how to land paid collabs without 100K followers.",
-  "testimonials": [
-    {
-      "quote": "Newcollab helped me build a niche profile and land a $400 deal!",
-      "author": "Mia R.",
-      "role": "Fitness Influencer",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "I got 3 brand deals worth $800 total in my first month on Newcollab!",
-      "author": "Alex T.",
-      "role": "Beauty Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "From $0 to $300 per post with Newcollab's ad slot system!",
-      "author": "Sarah K.",
-      "role": "Lifestyle Creator",
-      "followers": "6K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How much can small creators earn from brand deals?",
@@ -107,10 +86,9 @@
     "image": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-04-01",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

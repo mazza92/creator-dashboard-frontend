@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-10",
   "author": {
-    "name": "Jayden Lee",
-    "role": "Lead, Gaming Partnerships",
-    "description": "Jayden is an ex-Twitch partner who now connects tech & gaming brands with the next generation of streamers. He has personally reviewed over 10,000 sponsorship decks.",
-    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "15 min read",
@@ -34,26 +33,6 @@
     "gaming sponsorship deck"
   ],
   "metaDescription": "Learn how to get gaming sponsorships in 2026, even as a small streamer. Our 5-step guide covers building a sponsorship deck, finding brands, and pitching like a pro.",
-  "testimonials": [
-    {
-      "quote": "I'm a VTuber with ~70 CCV. I thought I was too small. I posted my 'Cozy Desk Setup' idea on Newcollab, and a mechanical keyboard brand and a mic brand both bid on it. It turned into a 3-month paid deal. Don't underestimate your value.",
-      "author": "MochiVT",
-      "role": "Small Streamer",
-      "followers": "70 CCV"
-    },
-    {
-      "quote": "I went from 0 sponsors to 3 active partnerships in 2 months after following this guide. The sponsorship deck template was a game-changer—brands actually started responding to my emails.",
-      "author": "Alex R.",
-      "role": "FPS Streamer",
-      "followers": "120 CCV"
-    },
-    {
-      "quote": "Starting with affiliate programs was the smartest move. I proved I could drive sales, and now I have 2 paid sponsorships worth $800/month. This strategy works.",
-      "author": "Jordan K.",
-      "role": "Cozy Gaming Creator",
-      "followers": "85 CCV"
-    }
-  ],
   "faq": [
     {
       "question": "How many followers or viewers do I need for a gaming sponsorship?",
@@ -115,9 +94,8 @@
     "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-10T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Jayden Lee",
-      "jobTitle": "Lead, Gaming Partnerships",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

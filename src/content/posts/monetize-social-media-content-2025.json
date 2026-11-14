@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-02-18",
   "author": {
-    "name": "Sarah Johnson",
-    "role": "Content Strategy Director",
-    "description": "8+ years in content strategy, helping creators build sustainable revenue streams",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Monetization",
   "readTime": "12 min read",
@@ -27,26 +26,6 @@
     "how to make money on social media"
   ],
   "metaDescription": "Learn proven strategies to monetize social media content in 2026. Discover Newcollab's analytics tools, brand partnerships, and revenue streams for creators.",
-  "testimonials": [
-    {
-      "quote": "Newcollab's analytics tripled my Instagram revenue to $3,000 monthly!",
-      "author": "Sophia M.",
-      "role": "Travel Creator",
-      "followers": "25K followers"
-    },
-    {
-      "quote": "I went from $0 to $2,500 monthly through Newcollab's brand partnerships!",
-      "author": "Marcus L.",
-      "role": "Fitness Influencer",
-      "followers": "18K followers"
-    },
-    {
-      "quote": "The revenue tracking tools on Newcollab helped me optimize my content strategy!",
-      "author": "Emma K.",
-      "role": "Lifestyle Creator",
-      "followers": "32K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How much can I earn from monetizing social media content?",
@@ -104,10 +83,8 @@
     "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-02-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sarah Johnson",
-      "jobTitle": "Content Strategy Director",
-      "description": "8+ years in content strategy, helping creators build sustainable revenue streams",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

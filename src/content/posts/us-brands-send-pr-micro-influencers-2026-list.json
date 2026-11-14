@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1556740714-a8395b3bf30f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-10",
   "author": {
-    "name": "Sarah Jenkins",
-    "role": "Creator Success Lead",
-    "description": "Sarah has helped over 5,000 micro-influencers land their first brand deal. She specializes in pitch strategy and building authentic creator-brand relationships.",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "14 min read",
@@ -40,26 +39,6 @@
     "american brands pr list 2026"
   ],
   "metaDescription": "30+ verified US brands with open PR application forms for micro-influencers. NYC beauty startups, LA fashion labels, DTC brands, Shopify stores, and women-owned businesses. Complete 2026 PR list application guide.",
-  "testimonials": [
-    {
-      "quote": "I spent 6 months cold-pitching US brands with no replies. I posted my 'LA apartment makeover' idea on Newcollab and had three brands, including a major home decor one, bid on it in a week. It's a game-changer.",
-      "author": "Emily R.",
-      "role": "Lifestyle Creator",
-      "followers": "8.5k Followers"
-    },
-    {
-      "quote": "This guide's 3-paragraph pitch template is pure gold. I stopped 'asking for free stuff' and started 'pitching ideas' and my response rate tripled.",
-      "author": "David K.",
-      "role": "Tech Creator",
-      "followers": "12k Followers"
-    },
-    {
-      "quote": "I got PR packages from ColourPop, Glossier, and Anker all through Newcollab in one month! The US brand network is incredible.",
-      "author": "Jessica M.",
-      "role": "Beauty & Tech Creator",
-      "followers": "10K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What clothing brands send PR to small influencers?",
@@ -125,9 +104,8 @@
     "image": "https://images.unsplash.com/photo-1556740714-a8395b3bf30f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-10T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sarah Jenkins",
-      "jobTitle": "Creator Success Lead",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

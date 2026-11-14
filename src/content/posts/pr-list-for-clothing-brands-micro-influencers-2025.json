@@ -10,10 +10,9 @@
   "image": "https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-4.0.3&auto=format&fit=crop&w=1171&q=80",
   "date": "2025-10-23",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Fashion Marketing",
   "readTime": "15 min read",
@@ -40,32 +39,6 @@
     "clothing pr list"
   ],
   "metaDescription": "20+ clothing brands sending PR to small creators in 2026. Direct emails and application forms for fashion micro-influencers. Updated list.",
-  "testimonials": [
-    {
-      "quote": "This clothing list is gold! But the real game-changer was Newcollab. I posted my 'Capsule Wardrobe Challenge' idea, and Everlane actually bid on it!",
-      "author": "Sophie T.",
-      "role": "Fashion Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "I got PR from Princess Polly, ASOS, and Revolve all in one month through Newcollab! The fashion-specific approach works.",
-      "author": "Emma L.",
-      "role": "Style Influencer",
-      "followers": "18K followers"
-    },
-    {
-      "quote": "As a sustainable fashion creator, this list helped me land partnerships with Everlane and Patagonia.",
-      "author": "Maya R.",
-      "role": "Sustainable Fashion Creator",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "The fashion brand categories section was so helpful! I finally understood how to pitch different types of brands.",
-      "author": "Alex K.",
-      "role": "Fashion Blogger",
-      "followers": "15K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What kind of content do clothing brands look for?",
@@ -127,10 +100,8 @@
     "image": "https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-4.0.3&auto=format&fit=crop&w=1171&q=80",
     "datePublished": "2025-10-23T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

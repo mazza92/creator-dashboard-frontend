@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-07-03",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "tags": [
     "tiktok",
@@ -60,8 +59,9 @@
     "headline": "Brands That Pay for TikTok Posts in 2026 | Paid Partnership List",
     "description": "The complete list of brands actively paying creators for TikTok posts in 2026. Real money, not just free products. $100-$10,000+ per video.",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

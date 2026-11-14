@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1683721003111-070bcc053d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-05-18",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Newcollab Strategy",
   "readTime": "10 min read",
@@ -34,26 +33,6 @@
     "how to get noticed by brands 2026"
   ],
   "metaDescription": "Learn how to create content ideas brands bid on Newcollab in 2026. This guide offers proven strategies to attract top brand sponsorships and maximize your creator earnings.",
-  "testimonials": [
-    {
-      "quote": "Before Newcollab, I struggled to connect with brands. Now, my content ideas are getting bids faster than ever, thanks to these tips! Truly game-changing for 2026.",
-      "author": "Anya Sharma",
-      "role": "Lifestyle Vlogger",
-      "followers": "85k followers"
-    },
-    {
-      "quote": "The strategies for how to create content ideas brands bid on Newcollab completely transformed my approach. I'm attracting deals I never thought possible in 2026.",
-      "author": "Leo Chen",
-      "role": "Tech Reviewer",
-      "followers": "120k followers"
-    },
-    {
-      "quote": "Newcollab's guidance on crafting compelling content pitches made all the difference. My Q1 2026 earnings are already up 300%!",
-      "author": "Chloe Davis",
-      "role": "Beauty Influencer",
-      "followers": "60k followers"
-    }
-  ],
   "faq": [
     {
       "question": "What kind of content ideas attract the highest bids on Newcollab in 2026?",
@@ -104,9 +83,8 @@
     "description": "Learn how to create content ideas brands bid on Newcollab in 2026. This guide offers proven strategies to attract top brand sponsorships and maximize your creator earnings.",
     "datePublished": "2026-05-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

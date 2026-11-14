@@ -6,9 +6,9 @@
   "image": "https://picsum.photos/seed/content/800/400",
   "date": "2025-04-20",
   "author": {
-    "name": "Sarah Johnson",
-    "role": "Content Strategy Director",
-    "image": "https://picsum.photos/seed/sarah/200/200"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Content Strategy",
   "readTime": "8 min read",
@@ -32,8 +32,9 @@
     "image": "https://picsum.photos/seed/content/800/400",
     "datePublished": "2025-04-20",
     "author": {
-      "@type": "Person",
-      "name": "Sarah Johnson"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-07-03",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "14 min read",
@@ -30,26 +29,6 @@
     "how to get pr with no followers 2026"
   ],
   "metaDescription": "The complete list of brands that send PR packages to creators with 0 followers in 2026. No minimums required. Perfect for beginners just starting their creator journey.",
-  "testimonials": [
-    {
-      "quote": "Started with literally 47 followers. Got my first PR package from Shein within 2 weeks of applying. Now at 2K and have worked with 8 brands.",
-      "author": "Maya K.",
-      "role": "New Creator",
-      "followers": "Started with 47"
-    },
-    {
-      "quote": "The UGC angle changed everything. Brands don't care about my 300 followers because they're using my content in their ads.",
-      "author": "Tyler R.",
-      "role": "UGC Creator",
-      "followers": "300 followers"
-    },
-    {
-      "quote": "Influenster was my gateway. Got 4 VoxBoxes before I even hit 500 followers. Now I have content to show brands.",
-      "author": "Jess M.",
-      "role": "Beauty Creator",
-      "followers": "Started with 0"
-    }
-  ],
   "faq": [
     {
       "question": "Can I really get PR packages with 0 followers?",
@@ -90,8 +69,9 @@
     "headline": "Brands That Accept Creators with No Followers (2026)",
     "description": "The complete list of brands that send PR packages to creators with 0 followers in 2026.",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen"
+      "@type": "Organization",
+      "name": "Newcollab",
+      "url": "https://newcollab.co"
     },
     "publisher": {
       "@type": "Organization",

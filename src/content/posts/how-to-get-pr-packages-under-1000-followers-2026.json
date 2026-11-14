@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-03-06",
   "author": {
-    "name": "Maya Rodriguez",
-    "role": "Creator Success Lead",
-    "description": "Former talent manager turned creator advocate. 7+ years helping emerging creators land their first brand deals and build sustainable income streams.",
-    "image": "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "16 min read",
@@ -36,26 +35,6 @@
     "how to get free products as a small creator"
   ],
   "metaDescription": "You don't need 10K followers to get PR packages. Here's the proven 2026 strategy for getting free products as a nano-creator — plus 20 brands that accept creators under 1,000 followers.",
-  "testimonials": [
-    {
-      "quote": "I got my first PR package at 430 followers. A small skincare brand found me through Newcollab and sent their full line. I posted a genuine review, they reposted it, and within two months I had three more brands in my inbox. This guide is exactly how it works.",
-      "author": "Lexi R.",
-      "role": "Skincare Creator",
-      "followers": "900 followers"
-    },
-    {
-      "quote": "The Content First method from this guide changed everything for me. I bought a $14 serum, filmed a review, tagged the brand, and emailed them the link. They responded in 2 days with an offer to send me their entire new collection. I had 612 followers.",
-      "author": "Dani M.",
-      "role": "Beauty & Wellness Creator",
-      "followers": "1.2K followers"
-    },
-    {
-      "quote": "I spent 6 months pitching brands with the same generic email and getting nothing. I rewrote my bio, built 12 niche posts, and used the pitch template from this guide. Got my first yes within a week. The niche-down advice is real.",
-      "author": "Cam S.",
-      "role": "Haircare Creator",
-      "followers": "780 followers"
-    }
-  ],
   "faq": [
     {
       "question": "Can I really get PR packages with under 500 followers?",
@@ -121,9 +100,8 @@
     "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-03-06T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Maya Rodriguez",
-      "jobTitle": "Creator Success Lead",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -6,11 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-08-25",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3",
-    "url": "https://newcollab.co"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "9 min read",
@@ -31,26 +29,6 @@
     "small influencer tiktok shop"
   ],
   "metaDescription": "Learn how to be selected for the TikTok Shop Creator Pilot in 2026 with step-by-step tips. Join Newcollab to monetize your TikTok content and land brand deals.",
-  "testimonials": [
-    {
-      "quote": "Newcollab helped me get selected for TikTok Shop Pilot and I earned $2,000 in my first month!",
-      "author": "Zoe K.",
-      "role": "Beauty Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "I got accepted into the pilot program after following Newcollab's engagement tips.",
-      "author": "Alex M.",
-      "role": "Fitness Influencer",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "TikTok Shop + Newcollab ad slots = double the income for small creators!",
-      "author": "Sarah L.",
-      "role": "Lifestyle Creator",
-      "followers": "15K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What are the requirements for TikTok Shop Creator Pilot?",
@@ -108,10 +86,8 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-08-25T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

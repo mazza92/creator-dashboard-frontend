@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-21",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Strategy",
   "readTime": "7 min read",
@@ -28,20 +27,6 @@
     "how to find unique influencers"
   ],
   "metaDescription": "Tired of paying for empty reach? This guide explains why traditional influencer databases are flawed and how a new marketplace model, focused on creative ideas, leads to more authentic and viral campaigns.",
-  "testimonials": [
-    {
-      "quote": "This completely changed how we approach influencer marketing. We now look for the best idea, not the biggest follower count. Our results have been phenomenal.",
-      "author": "Ben Carter",
-      "role": "CEO, Tech Gadget Startup",
-      "followers": ""
-    },
-    {
-      "quote": "As a brand, the hardest part is coming up with fresh ideas. Newcollab's marketplace is like a brainstorming session with hundreds of creative minds. It's brilliant.",
-      "author": "Olivia Chen",
-      "role": "Brand Manager, Food & Beverage",
-      "followers": ""
-    }
-  ],
   "faq": [
     {
       "question": "How is this different from a platform like TikTok's Creator Marketplace?",
@@ -80,9 +65,8 @@
     "image": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-21T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

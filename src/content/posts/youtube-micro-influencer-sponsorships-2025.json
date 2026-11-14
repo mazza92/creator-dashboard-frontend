@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-08-04",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Micro-Influencers",
   "readTime": "12 min read",
@@ -30,26 +29,6 @@
     "micro influencer youtube earnings"
   ],
   "metaDescription": "Discover YouTube micro-influencer sponsorships with brands like Skillshare and Audible in 2026. Join Newcollab to list ad slots and earn $100–$2,000.",
-  "testimonials": [
-    {
-      "quote": "Newcollab landed me a $600 Skillshare sponsorship for my coding tutorial channel!",
-      "author": "Noah R.",
-      "role": "Education Creator",
-      "followers": "8K subscribers"
-    },
-    {
-      "quote": "I got 3 YouTube sponsorships last month through Newcollab, earning $1,200 total.",
-      "author": "Emma T.",
-      "role": "Tech Reviewer",
-      "followers": "15K subscribers"
-    },
-    {
-      "quote": "From Audible to NordVPN, Newcollab connects me with perfect YouTube brand matches.",
-      "author": "David K.",
-      "role": "Lifestyle Creator",
-      "followers": "12K subscribers"
-    }
-  ],
   "faq": [
     {
       "question": "How much should YouTube micro-influencers charge for sponsorships?",
@@ -107,10 +86,8 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-08-04T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

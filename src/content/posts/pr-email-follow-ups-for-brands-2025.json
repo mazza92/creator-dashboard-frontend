@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-18",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "10 min read",
@@ -26,26 +25,6 @@
     "how to follow up on pr pitches"
   ],
   "metaDescription": "Discover ready-to-use PR email follow up templates for small influencers to pitch brands in 2026. Learn tips to craft effective follow ups and connect via Newcollab for direct brand connections.",
-  "testimonials": [
-    {
-      "quote": "I used these email templates and got responses from 3 brands in one week! Newcollab made it even easier.",
-      "author": "Emma R.",
-      "role": "Fitness Creator",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "The follow up templates helped me land a $800 collaboration with Tarte Cosmetics.",
-      "author": "Mia S.",
-      "role": "Beauty Influencer",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "Newcollab eliminated the need for follow ups—brands reach out to me directly now.",
-      "author": "Alex T.",
-      "role": "Lifestyle Creator",
-      "followers": "15K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How many follow up emails should I send to brands?",
@@ -103,10 +82,8 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

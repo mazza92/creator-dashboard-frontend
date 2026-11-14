@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-25",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "12 min read",
@@ -30,26 +29,6 @@
     "influencer pitch email"
   ],
   "metaDescription": "Stop getting ghosted by brands. Get 5 proven, copy-paste PR pitch email templates designed for micro-influencers. Steal our templates, get replies, and land your next brand collaboration in 2026.",
-  "testimonials": [
-    {
-      "quote": "I was so nervous about writing to brands. The 'Genuine Fan' template was perfect and felt really authentic to me. I got added to two PR lists this week!",
-      "author": "Jenna L.",
-      "role": "Beauty Creator",
-      "followers": "4K followers"
-    },
-    {
-      "quote": "Template 5 is genius. I used it after a gifted collab and it turned into a 3-month paid partnership. Cannot recommend this enough.",
-      "author": "Alex T.",
-      "role": "Tech Reviewer",
-      "followers": "12K followers"
-    },
-    {
-      "quote": "I was getting zero replies with my old emails. I used Template 2 (The Specific Idea) and Template 4 (The Follow-Up) and just landed my first-ever brand deal. This works!",
-      "author": "Maya R.",
-      "role": "Lifestyle Creator",
-      "followers": "8K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What's the best subject line to get a reply?",
@@ -97,9 +76,8 @@
     "image": "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-25T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

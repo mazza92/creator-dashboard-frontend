@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-01-28",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Getting Started",
   "readTime": "15 min read",
@@ -34,32 +33,6 @@
     "creator-first PR platform"
   ],
   "metaDescription": "Complete 2026 comparison: Newcollab vs PR list sites vs influencer agencies. Real creator experiences, detailed pros/cons, time investment analysis, and decision framework for getting PR packages at any follower count.",
-  "testimonials": [
-    {
-      "quote": "I use Newcollab's directory to find brands, then apply through their PR forms. The directory saves me 5+ hours a week of research. But the real game-changer was joining the marketplace – brands actually come to me now.",
-      "author": "Chloe M.",
-      "role": "Beauty Creator",
-      "followers": "3.2K followers"
-    },
-    {
-      "quote": "I was with an agency for 6 months. They got me 2 deals total, both at low rates. I left and joined Newcollab. Within a month, I had 5 offers from brands who found me directly. No 15% commission, no waiting for the agency to 'pitch' me.",
-      "author": "Tyler R.",
-      "role": "Lifestyle Creator",
-      "followers": "8K followers"
-    },
-    {
-      "quote": "I posted a skincare routine video idea on Newcollab and got 3 bids within 48 hours. Two were PR-only offers, one was $150 + product. I picked the paid offer. The whole process took 10 minutes, not weeks of emailing back and forth.",
-      "author": "Priya S.",
-      "role": "Skincare Creator",
-      "followers": "1.8K followers"
-    },
-    {
-      "quote": "I don't even have 1K followers yet, but I've gotten 3 PR packages from Newcollab in 2 months. Brands care more about my ideas and engagement than my follower count. No agency would even look at me at this size, but Newcollab treats me the same as creators with 50K followers.",
-      "author": "Noah R.",
-      "role": "Lifestyle Creator",
-      "followers": "890 followers"
-    }
-  ],
   "faq": [
     {
       "question": "What is Newcollab – a PR site, agency, or something else?",
@@ -132,10 +105,8 @@
     "image": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-01-28T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

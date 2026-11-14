@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-08-07",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Partnerships",
   "readTime": "15 min read",
@@ -28,26 +27,6 @@
     "micro influencer earnings"
   ],
   "metaDescription": "Discover brands that work with micro-influencers (1K–10K followers) and learn how to land your first paid deal. Join Newcollab to pitch brands today!",
-  "testimonials": [
-    {
-      "quote": "I landed a $150 deal with Thrive Market at 2K followers through Newcollab. My audience loved the authenticity!",
-      "author": "Jamie T.",
-      "role": "Food Creator",
-      "followers": "2K followers"
-    },
-    {
-      "quote": "Newcollab helped me get my first brand deal with Mejuri worth $200 at just 3K followers!",
-      "author": "Sarah M.",
-      "role": "Fashion Creator",
-      "followers": "3K followers"
-    },
-    {
-      "quote": "From 0 to $300 monthly through brand partnerships on Newcollab!",
-      "author": "Alex K.",
-      "role": "Beauty Creator",
-      "followers": "5K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What are micro-influencers?",
@@ -105,10 +84,8 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-08-07T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

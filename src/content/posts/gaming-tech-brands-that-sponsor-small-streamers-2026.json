@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-02-02",
   "author": {
-    "name": "Jayden Lee",
-    "role": "Lead, Gaming Partnerships",
-    "description": "Jayden is an ex-Twitch partner who connects gaming & tech brands with streamers. He has personally reviewed over 10,000 sponsorship applications.",
-    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "18 min read",
@@ -33,32 +32,6 @@
     "twitch sponsor list 2026"
   ],
   "metaDescription": "Looking for sponsors as a small streamer? This list features 35+ gaming, tech, and lifestyle brands actively sponsoring streamers with under 1,000 viewers. Includes application links.",
-  "testimonials": [
-    {
-      "quote": "I started with Glorious's affiliate program at 40 CCV. After posting consistent content with their keyboard, they upgraded me to a sponsored creator with free products. Start small, prove your value.",
-      "author": "Tyler 'MechKeys' R.",
-      "role": "Variety Streamer",
-      "followers": "85 CCV"
-    },
-    {
-      "quote": "I got my first paid sponsorship from an indie dev whose game I was already playing. They saw my stream, loved my community's reaction, and offered me $200 to play their new game on launch day. At 80 CCV.",
-      "author": "Amanda 'CozyPlays' K.",
-      "role": "Indie Game Streamer",
-      "followers": "80 CCV"
-    },
-    {
-      "quote": "This list helped me realize I was aiming too high. Started with FIFINE mics and G Fuel—both accepted me within a week. Now I have 4 active sponsorships.",
-      "author": "Marcus D.",
-      "role": "FPS Streamer",
-      "followers": "120 CCV"
-    },
-    {
-      "quote": "Posted my 'Ultimate Cozy Setup Tour' idea on Newcollab and got 3 brands bidding on it within 2 weeks. Way easier than filling out 20 application forms.",
-      "author": "Sarah 'LofiGamer' T.",
-      "role": "Cozy Gaming Creator",
-      "followers": "65 CCV"
-    }
-  ],
   "faq": [
     {
       "question": "How many viewers do I need to get gaming sponsorships?",
@@ -120,9 +93,8 @@
     "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2026-02-02T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Jayden Lee",
-      "jobTitle": "Lead, Gaming Partnerships",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

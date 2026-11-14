@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-13",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "12 min read",
@@ -34,26 +33,6 @@
     "brands that send pr packages list"
   ],
   "metaDescription": "Get our free, verified 2026 PR list of 100+ brands. This downloadable PDF has the top skincare, fashion, and beauty brands that send PR packages to creators.",
-  "testimonials": [
-    {
-      "quote": "I downloaded the free PR list and got PR packages from 3 brands in my first month. The verified contacts saved me so much time!",
-      "author": "Jenna M.",
-      "role": "Beauty Creator",
-      "followers": "28k Followers"
-    },
-    {
-      "quote": "This list saved me countless hours. I was just guessing at brand emails before. Having this list and the Newcollab app in one place is a game-changer.",
-      "author": "Marco V.",
-      "role": "Fashion Creator",
-      "followers": "52k Followers"
-    },
-    {
-      "quote": "I downloaded this list and pitched 10 brands, but then I saw a paid deal on the Newcollab marketplace and won it. The list is great, but the platform is how you build a business.",
-      "author": "Sarah K.",
-      "role": "Lifestyle Creator",
-      "followers": "15k Followers"
-    }
-  ],
   "faq": [
     {
       "question": "Is this PR list really free?",
@@ -111,9 +90,8 @@
     "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-13T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1607962837359-5e7e89f86776?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-05-18",
   "author": {
-    "name": "Alex Rivera",
-    "role": "Content Strategist",
-    "description": "Creator economy expert helping influencers grow their brand partnership revenue",
-    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Guides",
   "readTime": "10 min read",
@@ -36,26 +35,6 @@
     "top wellness companies seeking creators 2026"
   ],
   "metaDescription": "Explore the top wellness brands for creator collaborations in 2026. Get insights into partnership opportunities, trends, and how to connect with leading health, fitness, and self-care companies.",
-  "testimonials": [
-    {
-      "quote": "Newcollab's insights into wellness brands helped me land my dream partnership for 2026! Their guidance is truly invaluable for creators.",
-      "author": "Anya Sharma",
-      "role": "Yoga & Mindfulness Creator",
-      "followers": "25k followers"
-    },
-    {
-      "quote": "Finding relevant wellness brands for creator collaborations in 2026 seemed daunting, but Newcollab streamlined the process. Highly recommend!",
-      "author": "Liam Chen",
-      "role": "Fitness & Nutrition Influencer",
-      "followers": "42k followers"
-    },
-    {
-      "quote": "As a micro-influencer, I struggled to find brands that aligned with my niche. Newcollab's guide opened doors to amazing self-care collaborations for 2026.",
-      "author": "Chloe Davis",
-      "role": "Holistic Living Blogger",
-      "followers": "18k followers"
-    }
-  ],
   "faq": [
     {
       "question": "How can creators find wellness brands for collaborations in 2026?",
@@ -106,9 +85,8 @@
     "description": "Explore the top wellness brands for creator collaborations in 2026. Get insights into partnership opportunities, trends, and how to connect with leading health, fitness, and self-care companies.",
     "datePublished": "2026-05-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Rivera",
-      "jobTitle": "Content Strategist",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

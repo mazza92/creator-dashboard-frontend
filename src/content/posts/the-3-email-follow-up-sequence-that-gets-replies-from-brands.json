@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-10-18",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "8 min read",
@@ -28,26 +27,6 @@
     "email pitch follow up"
   ],
   "metaDescription": "Stop getting ghosted. Use our proven 3-email follow-up sequence to get replies from brands, land more paid deals, and turn silence into sponsorships. Templates included for 2026.",
-  "testimonials": [
-    {
-      "quote": "The 'Value-Add' email template got me a reply from a brand that had ignored me for two weeks. Game changer.",
-      "author": "Jenna L.",
-      "role": "Food Blogger",
-      "followers": "25K followers"
-    },
-    {
-      "quote": "I use the break-up email all the time. About 20% of the time, they reply with 'Sorry for the delay, let's talk!'",
-      "author": "Mark P.",
-      "role": "Travel Vlogger",
-      "followers": "40K followers"
-    },
-    {
-      "quote": "This sequence is my go-to for cold outreach. But my best deals still come from brands bidding on my projects on Newcollab.",
-      "author": "Chloe B.",
-      "role": "Fashion Creator",
-      "followers": "18K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How long should I wait before sending the first follow-up email?",
@@ -95,9 +74,8 @@
     "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-10-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-05-18",
   "author": {
-    "name": "Alex Rivera",
-    "role": "Content Strategist",
-    "description": "Creator economy expert helping influencers grow their brand partnership revenue",
-    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Niche Roundups",
   "readTime": "8 min read",
@@ -36,26 +35,6 @@
     "tourism board collaborations 2026"
   ],
   "metaDescription": "Unlock opportunities with travel brands working with micro-influencers in 2026. This guide reveals top companies and strategies for securing your next adventure collaboration.",
-  "testimonials": [
-    {
-      "quote": "Newcollab connected me with a dream eco-tourism brand. My audience loves the authentic content, and the partnership feels truly organic. Highly recommend for 2026 planning!",
-      "author": "Chloe Evans",
-      "role": "Eco-Travel Blogger",
-      "followers": "15k followers"
-    },
-    {
-      "quote": "Before Newcollab, finding brands felt like a shot in the dark. Now, I've landed two amazing hotel stays and planning more for 2026. Game-changer for my nomadic lifestyle!",
-      "author": "Liam Patel",
-      "role": "Digital Nomad Vlogger",
-      "followers": "22k followers"
-    },
-    {
-      "quote": "As a niche adventure creator, it's tough to stand out. Newcollab streamlined my outreach, leading to a fantastic gear sponsorship for my upcoming hiking expedition in 2026!",
-      "author": "Sarah Chen",
-      "role": "Adventure Photographer",
-      "followers": "18k followers"
-    }
-  ],
   "faq": [
     {
       "question": "What defines a micro-influencer in the travel niche for 2026?",
@@ -106,9 +85,8 @@
     "description": "Unlock opportunities with travel brands working with micro-influencers in 2026. This guide reveals top companies and strategies for securing your next adventure collaboration.",
     "datePublished": "2026-05-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Rivera",
-      "jobTitle": "Content Strategist",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

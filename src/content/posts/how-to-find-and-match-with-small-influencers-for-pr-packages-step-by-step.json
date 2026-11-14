@@ -7,10 +7,9 @@
   "date": "2025-11-04",
   "datePublished": "2025-11-04",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Strategy",
   "readTime": "12 min read",
@@ -29,26 +28,6 @@
     "find small creators"
   ],
   "metaDescription": "A step-by-step guide for brands on how to find, vet, and match with the perfect small influencers for your PR packages. Learn the manual way, then see the platform that automates it.",
-  "testimonials": [
-    {
-      "quote": "This guide perfectly explains the manual nightmare we used to live in. We switched to Newcollab to 'match' with ideas, and it cut our campaign launch time from 3 weeks to 3 days.",
-      "author": "Jessica B.",
-      "role": "Brand Manager, Apparel",
-      "followers": ""
-    },
-    {
-      "quote": "Step 3, vetting, is what took all our time. The fact that Newcollab creators are pre-vetted and we can see their ideas upfront is the main reason we joined.",
-      "author": "Mark C.",
-      "role": "Founder, D2C Startup",
-      "followers": ""
-    },
-    {
-      "quote": "We used to spend 20+ hours a week finding creators. With Newcollab's matching system, we find 10 perfect matches in under an hour. Game-changer.",
-      "author": "Emily R.",
-      "role": "Marketing Director, Beauty Brand",
-      "followers": ""
-    }
-  ],
   "faq": [
     {
       "question": "What's the best way to find small influencers for PR?",
@@ -106,10 +85,8 @@
     "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-04T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
-      "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

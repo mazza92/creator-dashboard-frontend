@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1556228578-8c89e6adf883?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-06-15",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, specializing in beauty and skincare creator partnerships.",
-    "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "13 min read",
@@ -33,26 +32,6 @@
     "skincare brands that send pr packages 2026"
   ],
   "metaDescription": "60 skincare brands that send PR packages to small and micro influencers in 2026, sorted by how to apply, with realistic follower floors and a pitch template that works.",
-  "testimonials": [
-    {
-      "quote": "I applied to four budget brands from this list at 1.4K followers and three sent PR within a month. They wanted my acne-focused audience.",
-      "author": "Sara J.",
-      "role": "Skincare Creator",
-      "followers": "1.4K followers"
-    },
-    {
-      "quote": "Picking a lane was the unlock. Once my feed was clearly sensitive-skin content, CeraVe and First Aid Beauty both said yes.",
-      "author": "Mei L.",
-      "role": "Skincare Creator",
-      "followers": "3K followers"
-    },
-    {
-      "quote": "I let brands come to me on Newcollab instead. Two skincare brands sent offers in my first two weeks at 2K followers.",
-      "author": "Daniela R.",
-      "role": "Beauty Creator",
-      "followers": "2K followers"
-    }
-  ],
   "faq": [
     {
       "question": "How many followers do I need for skincare PR?",
@@ -97,9 +76,8 @@
     "datePublished": "2026-06-15T00:00:00.000Z",
     "dateModified": "2026-06-15T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

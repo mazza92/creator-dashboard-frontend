@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-27",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Strategy",
   "readTime": "9 min read",
@@ -33,20 +32,6 @@
     "send pr packages to influencers"
   ],
   "metaDescription": "Don't send a boring brown box. Learn how to design a PR package that creators actually want to unbox and share in 2026. We cover packaging, personalization, and niche examples from Beauty to Tech.",
-  "testimonials": [
-    {
-      "quote": "We revamped our packaging based on this guide and our unboxing rate went from 20% to 65%. The 'personal note' tip is a game changer.",
-      "author": "Sarah J.",
-      "role": "Brand Manager, Indie Beauty",
-      "followers": ""
-    },
-    {
-      "quote": "I used to just send product in a mailer. Switching to a branded box with Newcollab's creator matching helped us launch our best campaign yet.",
-      "author": "Mike T.",
-      "role": "Founder, Tech Accessories",
-      "followers": ""
-    }
-  ],
   "faq": [
     {
       "question": "How much should I spend on PR packaging?",
@@ -81,9 +66,8 @@
     "image": "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-27T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

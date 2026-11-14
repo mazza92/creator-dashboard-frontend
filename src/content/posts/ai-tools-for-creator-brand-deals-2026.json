@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-04-16",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "11 min read",
@@ -34,26 +33,6 @@
     "sponsored content management AI"
   ],
   "metaDescription": "Discover the best AI tools for creator brand deals in 2026. Automate outreach, negotiate better rates, and close more sponsorships with these platforms.",
-  "testimonials": [
-    {
-      "quote": "Using AI brand matching tools tripled my sponsorship income in six months. I went from chasing brands to having them come to me with perfect-fit opportunities.",
-      "author": "Maya Rodriguez",
-      "role": "Lifestyle & Travel Creator",
-      "followers": "47k followers"
-    },
-    {
-      "quote": "The AI contract analyzer saved me from signing a deal with a brutal exclusivity clause. That one feature alone paid for a full year of the tool subscription.",
-      "author": "Jordan Chen",
-      "role": "Tech Review YouTuber",
-      "followers": "82k followers"
-    },
-    {
-      "quote": "As a smaller creator, I never thought I could land premium brand deals. The AI pitch generator helped me craft proposals that actually get responses now.",
-      "author": "Aaliyah Thompson",
-      "role": "Fitness & Wellness Influencer",
-      "followers": "23k followers"
-    }
-  ],
   "faq": [
     {
       "question": "What are the best AI tools for creator brand deals in 2026?",
@@ -104,9 +83,8 @@
     "description": "Discover the best AI tools for creator brand deals in 2026. Automate outreach, negotiate better rates, and close more sponsorships with these platforms.",
     "datePublished": "2026-04-16T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

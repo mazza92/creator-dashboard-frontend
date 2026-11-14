@@ -13,10 +13,9 @@
   "image": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-02",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Tools",
   "readTime": "12 min read",
@@ -37,26 +36,6 @@
     "influencer directory"
   ],
   "metaDescription": "Find 30+ verified PR forms for brands with open influencer applications. Direct links in beauty, fashion, tech & wellness—apply free today, no cold emails.",
-  "testimonials": [
-    {
-      "quote": "This is the post I've been searching for. I just applied to 5 brands in 20 minutes. This is a game-changer, thank you!",
-      "author": "Aisha P.",
-      "role": "Wellness Creator",
-      "followers": "7K followers"
-    },
-    {
-      "quote": "The links alone are incredibly valuable. It's so frustrating trying to find the 'right' page on a brand's site. This should be every creator's starting point.",
-      "author": "Mark V.",
-      "role": "Tech Creator",
-      "followers": "11K followers"
-    },
-    {
-      "quote": "I just spent an hour applying to 5 brands from this list. This is the most useful blog post I have ever found. Thank you!",
-      "author": "Maya R.",
-      "role": "Lifestyle Creator",
-      "followers": "5K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What's the difference between an affiliate, ambassador, and PR program?",
@@ -122,10 +101,8 @@
     "image": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-02T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
-      "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

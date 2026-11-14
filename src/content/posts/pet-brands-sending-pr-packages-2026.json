@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-05-18",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Lists",
   "readTime": "12 min read",
@@ -35,26 +34,6 @@
     "pet creator income 2026"
   ],
   "metaDescription": "Seeking pet brands sending PR packages in 2026? Our updated guide reveals the top 30 companies actively seeking animal influencers for exciting collaborations this year. Find your next partnership!",
-  "testimonials": [
-    {
-      "quote": "This list was a game-changer for my dog's Instagram! I landed two major collaborations within a month of using the 2026 guide.",
-      "author": "Sarah Miller",
-      "role": "Dog Content Creator",
-      "followers": "45k followers"
-    },
-    {
-      "quote": "Finding genuine cat brands to partner with can be tough. Newcollab's 2026 list made it so much easier to identify relevant opportunities for my feline channel.",
-      "author": "David Chen",
-      "role": "Cat Influencer",
-      "followers": "32k followers"
-    },
-    {
-      "quote": "As a micro-influencer focusing on exotic pets, I often feel overlooked. This guide highlighted niche brands sending PR packages in 2026 that perfectly fit my audience!",
-      "author": "Jessica Lee",
-      "role": "Small Animal Reviewer",
-      "followers": "18k followers"
-    }
-  ],
   "faq": [
     {
       "question": "How do I get pet brands to send me PR packages in 2026?",
@@ -105,9 +84,8 @@
     "description": "Seeking pet brands sending PR packages in 2026? Our updated guide reveals the top 30 companies actively seeking animal influencers for exciting collaborations this year. Find your next partnership!",
     "datePublished": "2026-05-18T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

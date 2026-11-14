@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-05-28",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Influencer Marketing",
   "readTime": "10 min read",
@@ -33,26 +32,6 @@
     "canadian brands open to influencer collaborations"
   ],
   "metaDescription": "Get gifted by 30+ Canadian beauty and lifestyle brands. Includes PR manager emails and tips to increase your reply rate.",
-  "testimonials": [
-    {
-      "quote": "I pitched Three Ships with a personalized email mentioning their vitamin C serum. Got a response within 48 hours and my first PR package the next week!",
-      "author": "Megan K.",
-      "role": "Skincare Creator",
-      "followers": "6K followers"
-    },
-    {
-      "quote": "Canadian brands are so much more responsive than US brands. I got replies from Nudestix and Province Apothecary within a week of pitching.",
-      "author": "Lauren T.",
-      "role": "Beauty Creator",
-      "followers": "15K followers"
-    },
-    {
-      "quote": "Being bilingual helped me land deals with Montreal brands like Marcelle and Attitude. My French pitch stood out from the competition.",
-      "author": "Sophie L.",
-      "role": "Lifestyle Creator",
-      "followers": "9K followers"
-    }
-  ],
   "faq": [
     {
       "question": "Do Canadian brands send PR packages to US creators?",

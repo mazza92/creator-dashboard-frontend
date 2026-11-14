@@ -57,7 +57,7 @@ export default function UgcPortfolioGuide() {
           <li><strong>6 to 8 sample videos</strong>, vertical, 15 to 30 seconds, captions on, no watermark. Lead with your best hook.</li>
           <li><strong>Range of formats</strong>: a talking-head testimonial, a problem/solution, a product demo, an unboxing.</li>
           <li><strong>Your niches</strong>, so brands know which products you film well (skincare, home, fitness, food...).</li>
-          <li><strong>A starting rate card</strong> in USD. The builder above suggests a floor for your follower count.</li>
+          <li><strong>A starting rate card</strong> in your currency (USD, CAD, GBP or EUR). The builder above suggests a floor for your follower count.</li>
           <li><strong>A two-line about section</strong>: what you film and how fast you deliver.</li>
           <li><strong>Brands you have worked with</strong> and any results, once you have them.</li>
           <li><strong>One clear way to contact you.</strong></li>

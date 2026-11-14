@@ -6,10 +6,9 @@
   "image": "https://images.unsplash.com/photo-1512909006721-3d6018887383?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2025-11-27",
   "author": {
-    "name": "Alex Miller",
-    "role": "Head of Growth",
-    "description": "10+ years in performance marketing, helping brands scale their acquisition channels efficiently.",
-    "image": "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Brand Strategy",
   "readTime": "8 min read",
@@ -32,20 +31,6 @@
     "influencer gifting strategy"
   ],
   "metaDescription": "Stuck on what to send? We've curated 10 creative, viral-worthy PR package ideas that get micro-influencers posting in 2026. From 'The Survival Kit' to 'The Eco-Swap', steal these ideas for your next campaign.",
-  "testimonials": [
-    {
-      "quote": "The 'Community Giveaway' box idea was brilliant. Every creator we sent to ended up running a contest, which tripled our reach for the cost of just one extra product.",
-      "author": "Elena R.",
-      "role": "Social Media Manager",
-      "followers": ""
-    },
-    {
-      "quote": "Newcollab helped us find the perfect 'Tech Desk' creators for our productivity tool. The combination of the right creators and the right package was magic.",
-      "author": "Tom B.",
-      "role": "Marketing Director, SaaS",
-      "followers": ""
-    }
-  ],
   "faq": [
     {
       "question": "Do I need custom printed boxes for these ideas?",
@@ -84,9 +69,8 @@
     "image": "https://images.unsplash.com/photo-1512909006721-3d6018887383?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
     "datePublished": "2025-11-27T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Alex Miller",
-      "jobTitle": "Head of Growth",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {

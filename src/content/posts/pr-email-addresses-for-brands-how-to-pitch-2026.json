@@ -7,10 +7,9 @@
   "image": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
   "date": "2026-06-15",
   "author": {
-    "name": "Sophia Chen",
-    "role": "Community Manager",
-    "description": "5+ years in influencer marketing, helping 1,000+ creators land brand deals and PR packages.",
-    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3"
+    "name": "Newcollab Editorial Team",
+    "role": "Newcollab",
+    "description": "The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the brands and creators on the platform."
   },
   "category": "Creator Strategy",
   "readTime": "10 min read",
@@ -34,26 +33,6 @@
     "pr email addresses for brands"
   ],
   "metaDescription": "How to find any brand's PR email, the contact patterns that work, and a 50 brand cheat sheet including Clinique, Rituals, Lush and Urban Decay with a pitch angle for each.",
-  "testimonials": [
-    {
-      "quote": "I always gave up at the 'who do I even email' stage. The footer and LinkedIn method got me three real PR contacts in one afternoon.",
-      "author": "Nadia S.",
-      "role": "Beauty Creator",
-      "followers": "3K followers"
-    },
-    {
-      "quote": "Pitching the regional team instead of head office was the fix. Got a reply from a brand I'd emailed twice before with nothing.",
-      "author": "Liam P.",
-      "role": "Grooming Creator",
-      "followers": "6K followers"
-    },
-    {
-      "quote": "Honestly I stopped hunting and just used Newcollab to pitch in one tap. Way less friction than chasing inboxes.",
-      "author": "Priya K.",
-      "role": "Skincare Creator",
-      "followers": "4K followers"
-    }
-  ],
   "faq": [
     {
       "question": "What is the most common PR email format for brands?",
@@ -102,9 +81,8 @@
     "datePublished": "2026-06-15T00:00:00.000Z",
     "dateModified": "2026-06-15T00:00:00.000Z",
     "author": {
-      "@type": "Person",
-      "name": "Sophia Chen",
-      "jobTitle": "Community Manager",
+      "@type": "Organization",
+      "name": "Newcollab",
       "url": "https://newcollab.co"
     },
     "publisher": {
