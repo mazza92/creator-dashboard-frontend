@@ -15,6 +15,15 @@ import { HOME_FAQ } from './homeFaq';
 
 const SIGNUP = '/register/creator';
 
+const FREE_TOOLS = [
+  ['/ugc-starter-guide', 'Free UGC Starter Guide', 'Scripts, rates, pitch templates and a 30-day plan. No email needed.'],
+  ['/tools/ugc-hook-generator', 'UGC Hook Generator', '10 scroll-stopping hooks for any product.'],
+  ['/tools/ugc-script-generator', 'UGC Script Generator', 'A 30-second script with the shot for every line.'],
+  ['/tools/ugc-rate-calculator', 'UGC Rate Calculator', 'What to charge, with usage, hooks and raw footage.'],
+  ['/tools/ugc-pitch-email-generator', 'Pitch Email Generator', 'A short cold pitch built around one video idea.'],
+  ['/ugc-portfolio-examples', 'UGC Portfolio Examples', 'Real portfolios from creators approved this month.'],
+];
+
 
 const t = {
   ink: '#12141a', inkSoft: '#2a2e38', muted: '#5c6470', line: '#e4e2dc', paper: '#f7f5f0', white: '#fff',
@@ -162,6 +171,28 @@ export default function HomeClient({ brands = [], stats }) {
               <Primary href="/media-kit"><LayoutTemplate size={18} /> Build my free portfolio</Primary>
             </div>
           </Split>
+        </Section>
+
+        {/* 6b. Free tools + guide: the SEO magnets, reachable from the homepage */}
+        <Section id="free-tools">
+          <Head className="row">
+            <div>
+              <Eyebrow>Free for every creator</Eyebrow>
+              <h2>Free UGC tools and a starter guide</h2>
+            </div>
+            <Link href="/tools" className="all">All free tools <ArrowRight size={15} /></Link>
+          </Head>
+          <ToolGrid>
+            {FREE_TOOLS.map(([href, name, desc]) => (
+              <li key={href}>
+                <Link href={href}>
+                  <b>{name}</b>
+                  <span>{desc}</span>
+                  <i>Open <ArrowRight size={14} /></i>
+                </Link>
+              </li>
+            ))}
+          </ToolGrid>
         </Section>
 
         {/* 7. Brands: proof of supply + crawlable links */}
@@ -446,6 +477,19 @@ const Logo = styled.span`
   grid-row: 1 / 3; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; display: grid; place-items: center;
   background: ${t.paper}; font-weight: 800; color: ${t.muted};
   img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+`;
+const ToolGrid = styled.ul`
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;
+  a {
+    display: flex; flex-direction: column; gap: 6px; height: 100%; box-sizing: border-box;
+    padding: 18px 20px; border: 1px solid ${t.line}; border-radius: 16px; background: ${t.white};
+    color: ${t.ink}; text-decoration: none; transition: border-color .15s ease, transform .15s ease;
+  }
+  a:hover { border-color: ${t.accent}; transform: translateY(-1px); }
+  b { font-size: 17px; }
+  span { color: ${t.muted}; font-size: 15px; line-height: 1.5; flex: 1; }
+  i { font-style: normal; color: ${t.accent}; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
 `;
 const Empty = styled.p`margin: 0; color: ${t.muted}; a { color: ${t.ink}; font-weight: 700; }`;
 const Split = styled.div`

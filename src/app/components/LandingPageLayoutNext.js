@@ -474,10 +474,11 @@ const SocialIcon = styled.div`
 const NAV = [
   ['Brands', '/directory'],
   ['Paid UGC', '/#paid-ugc'],
+  ['Free tools', '/tools'],
   ['Free portfolio', '/media-kit'],
   ['For brands', '/brands/pr-packages'],
 ];
-const MOBILE_EXTRA = [['Pricing', '/#pricing'], ['Blog', '/blog'], ['About', '/about']];
+const MOBILE_EXTRA = [['Free UGC guide', '/ugc-starter-guide'], ['Pricing', '/#pricing'], ['Blog', '/blog'], ['About', '/about']];
 
 export default function LandingPageLayoutNext({ hideHeader, hideFooter, children, canonicalUrl: customCanonicalUrl }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -650,6 +651,10 @@ export function SiteFooter() {
         <FooterLink href="/directory">Brand directory</FooterLink>
         <FooterLink href="/#paid-ugc">Paid UGC</FooterLink>
         <FooterLink href="/media-kit">Free portfolio</FooterLink>
+        <FooterLink href="/tools">Free UGC tools</FooterLink>
+        <FooterLink href="/ugc-starter-guide">Free UGC guide</FooterLink>
+        <FooterLink href="/ugc-portfolio-examples">UGC portfolio examples</FooterLink>
+        <FooterLink href="/blog/ugc-rates-how-much-to-charge-2026">UGC rates</FooterLink>
         <FooterLink href="/#features">Features</FooterLink>
         <FooterLink href="/#pricing">Pricing</FooterLink>
         <FooterLink href="/brands/pr-packages">For brands</FooterLink>
