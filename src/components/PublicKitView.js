@@ -341,7 +341,7 @@ function PublicKitView({
               ) : <span />}
             </CoverBar>
             <CoverCopy>
-              <Name>{displayName}</Name>
+              <Name as={preview ? 'h2' : undefined}>{displayName}</Name>
               {headline ? <Lead>{headline}</Lead> : null}
               {socials.length ? (
                 <SocialMeta profiles={socials} location={kit.location} />
@@ -363,7 +363,7 @@ function PublicKitView({
           {layout === 'gallery' && (
             <GalleryHead>
               <div>
-                <Name>{displayName}</Name>
+                <Name as={preview ? 'h2' : undefined}>{displayName}</Name>
                 {headline ? <Lead $ink>{headline}</Lead> : null}
                 <SocialMeta profiles={socials} location={kit.location} />
               </div>

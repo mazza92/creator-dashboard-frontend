@@ -1,0 +1,67 @@
+# Tell Bing (and every other IndexNow engine) about new or edited blog posts
+# as soon as Vercel serves them. Without this, new posts waited for the next
+# sitemap crawl and Bing flagged them as "missing in sitemaps".
+name: IndexNow blog posts
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/content/posts/**'
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: 'Space-separated newcollab.co URLs to submit'
+        required: true
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Public by design: IndexNow verifies it against newcollab.co/<key>.txt
+      INDEXNOW_KEY: 5b821f1380424d116b8da378e4ca2f143a13f7236d7dd3db58d09cb3e0aeb736
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Collect URLs
+        id: urls
+        run: |
+          if [ -n "${{ github.event.inputs.urls }}" ]; then
+            urls="${{ github.event.inputs.urls }}"
+          else
+            urls=$(git diff --name-only --diff-filter=AM "${{ github.event.before }}" "${{ github.sha }}" -- 'src/content/posts/*.json' 2>/dev/null \
+              || git diff --name-only --diff-filter=AM HEAD~1 HEAD -- 'src/content/posts/*.json')
+            urls=$(echo "$urls" | grep -v -E '/(posts|merged)\.json$' \
+              | sed -E 's#src/content/posts/(.*)\.json#https://newcollab.co/blog/\1#' | tr '\n' ' ')
+            [ -n "$urls" ] && urls="$urls https://newcollab.co/blog https://newcollab.co/sitemap.xml"
+          fi
+          echo "list=$urls" >> "$GITHUB_OUTPUT"
+          echo "URLs: $urls"
+
+      - name: Wait for the deploy to serve them
+        if: steps.urls.outputs.list != ''
+        run: |
+          for u in ${{ steps.urls.outputs.list }}; do
+            for i in $(seq 1 60); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$u")
+              [ "$code" = "200" ] && break
+              sleep 20
+            done
+            echo "$u -> $code"
+          done
+          # Sitemap is ISR (hourly); give the new deploy a moment to rebuild it.
+          sleep 60
+
+      - name: Submit to IndexNow
+        if: steps.urls.outputs.list != ''
+        run: |
+          list=$(printf '%s\n' ${{ steps.urls.outputs.list }} | grep -v 'sitemap.xml' | jq -R . | jq -s .)
+          body=$(jq -n --arg key "$INDEXNOW_KEY" --argjson urls "$list" \
+            '{host:"newcollab.co", key:$key, keyLocation:("https://newcollab.co/" + $key + ".txt"), urlList:$urls}')
+          code=$(curl -s -o resp.txt -w '%{http_code}' -X POST https://api.indexnow.org/indexnow \
+            -H 'Content-Type: application/json; charset=utf-8' -d "$body")
+          echo "IndexNow HTTP $code"; cat resp.txt
+          case "$code" in 200|202) ;; *) exit 1 ;; esac
