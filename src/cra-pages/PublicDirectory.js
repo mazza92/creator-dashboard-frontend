@@ -111,7 +111,7 @@ const PublicDirectory = () => {
     <>
       <Helmet>
         <title>PR Brand Directory | 3,000+ Brands Accepting Influencer Applications</title>
-        <meta name="description" content="Find and apply to 3,000+ brands seeking influencers for PR packages. Search beauty, fashion, tech, and lifestyle brands accepting creator applications." />
+        <meta name="description" content="Find and apply to 3,000+ brands with open PR programs. Search beauty, fashion, tech, and lifestyle brands accepting creator applications." />
         <meta property="og:title" content="PR Brand Directory - Find Brands Accepting Influencer Applications" />
         <meta property="og:description" content="Browse 3,000+ brands with open PR programs. Get application links, response rates, and follower requirements." />
         <link rel="canonical" href="https://newcollab.co/directory" />
@@ -121,7 +121,7 @@ const PublicDirectory = () => {
         <Hero>
           <HeroContent>
             <h1>Find Brands That Want to Work With You</h1>
-            <p>Browse 3,000+ brands actively seeking influencers for PR packages and paid collaborations</p>
+            <p>Browse 3,000+ brands with open PR programs</p>
           </HeroContent>
         </Hero>
 

@@ -1559,7 +1559,7 @@ const Founding50 = () => {
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
           "name": "Newcollab - PR Packages & Paid Partnerships for Creators",
-          "description": "Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 3,000+ brands sending PR packages to small influencers. Free signup, no credit card required.",
+          "description": "Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get the PR contacts for 3,000+ brands that gift small influencers. Free signup, no credit card required.",
           "url": "https://newcollab.co",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
@@ -1582,7 +1582,7 @@ const Founding50 = () => {
             "logo": "https://newcollab.co/logo.png"
           },
           "featureList": [
-            "Free PR packages from 3,000+ brands",
+            "Pitch 3,000+ Brands That Send PR Packages",
             "Paid brand partnerships",
             "Smart creator matching system",
             "No pitching required",
@@ -1603,7 +1603,7 @@ const Founding50 = () => {
               "name": "How do I get PR packages from brands?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sign up for Newcollab to get matched with 3,000+ brands sending PR packages to small influencers. Our smart matching system connects you with brands based on your niche, engagement rate, and follower count. No pitching required—brands send PR packages directly to you."
+                "text": "Sign up for Newcollab to get the PR contacts for 3,000+ brands that gift small influencers. Our smart matching system connects you with brands based on your niche, engagement rate, and follower count. No pitching required—brands send PR packages directly to you."
               }
             },
             {
@@ -1999,7 +1999,7 @@ const Founding50 = () => {
                     PR packages & sponsorships for all content types
                   </ContentFormatsTitle>
                   <ContentFormatsDescription>
-                    From stories to live streams, receive free PR packages and paid brand sponsorships across all your content types. Join 10,000+ creators getting offers from 3,000+ brands.
+                    From stories to live streams, receive free PR packages and paid brand sponsorships across all your content types. Pitch 3,000+ brands with verified PR contacts.
                   </ContentFormatsDescription>
                     
                     {/* Social Platform Icons */}
@@ -2122,7 +2122,7 @@ const Founding50 = () => {
                       </BenefitIcon>
                       <BenefitContent>
                         <BenefitTitle>Free PR Packages</BenefitTitle>
-                        <BenefitText>Receive free PR packages from 3,000+ brands. No pitching required—brands send offers directly.</BenefitText>
+                        <BenefitText>Reach 3,000+ brands that send PR packages. Polly writes and sends the pitches for you.</BenefitText>
                       </BenefitContent>
                     </BenefitItem>
 
