@@ -335,15 +335,34 @@ function platformLabel(p) {
   return p ? p.charAt(0).toUpperCase() + p.slice(1) : '';
 }
 
-function brandFaqs(brand, { minFollowers, regions, applicationMethod, collab, avgResponseTime }) {
+/**
+ * The direct answer to "Does <brand> send PR packages?": shown under the header and used as the first FAQ answer,
+ * so the visible text and the FAQPage schema match. "Yes" only when gifting is confirmed.
+ */
+function prAnswer(brand, { minFollowers, regions, applicationMethod, collab, updatedLabel }) {
+  const name = brand.name;
+  const parts = [];
+  if (brand.acceptingPr) {
+    parts.push(`Yes. ${name} has been seen gifting creators recently${collab && !collab.startsWith('Gifted') ? ` and runs a ${collab.toLowerCase()} programme` : ''}.`);
+  } else if (applicationMethod === 'form') {
+    parts.push(`${name} takes creator applications through its own PR form, so you can apply for a PR package directly.`);
+  } else if (applicationMethod === 'email') {
+    parts.push(`${name} works with creators through its PR team: the way in is a short email pitch.`);
+  } else {
+    parts.push(`${name} doesn't publish an open creator programme, so the way in is a direct pitch to its team.`);
+  }
+  parts.push(minFollowers > 0
+    ? `They look for around ${formatFollowers(minFollowers)} followers or more, though niche fit matters more than the number.`
+    : 'There is no stated follower minimum, so nano and micro creators can apply.');
+  if (regions?.length) parts.push(`They work with creators in ${regions.join(', ')}.`);
+  if (updatedLabel) parts.push(`Last checked ${updatedLabel}.`);
+  return parts.join(' ');
+}
+
+function brandFaqs(brand, { minFollowers, regions, applicationMethod, collab, avgResponseTime, answer }) {
   const name = brand.name;
   const faqs = [];
-  faqs.push({
-    question: `Does ${name} send PR packages to small influencers?`,
-    answer: minFollowers > 0
-      ? `${name} lists a minimum of around ${formatFollowers(minFollowers)} followers${brand.microFriendly ? ' and is marked micro-creator friendly on Newcollab' : ''}. Engagement and niche fit matter more than raw follower count.`
-      : `${name} has no stated follower minimum, so nano and micro creators can apply.`,
-  });
+  faqs.push({ question: `Does ${name} send PR packages?`, answer });
   if (brand.heroProduct || brand.estimatedValue) {
     faqs.push({
       question: `What does ${name} send in a PR package?`,
@@ -421,7 +440,8 @@ export default async function BrandPage({ params }) {
   const examplePosts = Array.isArray(brand.examplePosts) ? brand.examplePosts : [];
   const socialProfile = brand.socialProfile || null;
   const updatedLabel = formatMonthYear(brand.updatedAt || brand.lastVerifiedAt);
-  const faqs = brandFaqs(brand, { minFollowers, regions, applicationMethod, collab: collabType, avgResponseTime });
+  const answer = prAnswer(brand, { minFollowers, regions, applicationMethod, collab: collabType, updatedLabel });
+  const faqs = brandFaqs(brand, { minFollowers, regions, applicationMethod, collab: collabType, avgResponseTime, answer });
   const hasPackageFacts = Boolean(brand.heroProduct || brand.estimatedValue || brand.pricePoint || collabType);
   const pitchIdeas = [
     brand.heroProduct && `Build your pitch around ${brand.heroProduct}, the product ${brand.name} is best known for.`,
@@ -764,6 +784,16 @@ export default async function BrandPage({ params }) {
           text-decoration: none;
         }
         .bp-posts a:hover { color: #E11D48; }
+        .bp-answer {
+          background: #fff;
+          border: 1px solid #ECE9E1;
+          border-left: 4px solid #0d7a5f;
+          border-radius: 14px;
+          padding: 16px 20px;
+          margin: 0 0 20px;
+        }
+        .bp-answer h2 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: #12141a; }
+        .bp-answer p { margin: 0; font-size: 15.5px; line-height: 1.6; color: #2a2e38; }
         .bp-faq dt {
           font-size: 14px;
           font-weight: 700;
@@ -1247,6 +1277,12 @@ export default async function BrandPage({ params }) {
               />
             </div>
           </header>
+
+          {/* Answer-first: the line search and AI engines quote for "Does <brand> send PR packages?" */}
+          <section className="bp-answer" aria-label={`Does ${brand.name} send PR packages?`}>
+            <h2>Does {brand.name} send PR packages?</h2>
+            <p>{answer}</p>
+          </section>
 
           <div className="bp-grid">
             {/* Main content */}
