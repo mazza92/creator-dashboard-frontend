@@ -186,9 +186,9 @@ export const FEATURES = [
     description:
       'Polly is an AI agent that finds brands that fit your niche, writes a short personal pitch with your portfolio, sends it from your own Gmail and follows up. Built for UGC creators and micro-influencers.',
     eyebrow: 'Polly',
-    h1: 'The AI pitch email writer that also sends and follows up',
+    h1: 'Pitch up to 20 brands a day without writing a single email',
     answer:
-      'Polly is Newcollab’s AI agent for creators. It picks brands that fit your niche, studies each brand’s ads to find your angle, writes a short personal pitch with your portfolio link, sends it from your own Gmail and follows up once. When a brand replies, Polly drafts your answer with a fair rate. Writing pitches is free; Polly pitching 3 brands every weekday is on Pro ($19 a month).',
+      'Polly is Newcollab’s AI agent for creators. It picks brands that fit your niche, studies each brand’s ads to find your angle, writes a short personal pitch with your portfolio link, sends it from your own Gmail and follows up once. When a brand replies, Polly drafts your answer with a fair rate. Writing pitches is free; Polly pitching up to 20 brands every weekday is on Pro ($19 a month).',
     live: null,
     plan: 'Pitch writing free · daily pitching on Pro',
     cards: [
@@ -199,7 +199,7 @@ export const FEATURES = [
     steps: [
       ['Set up in 2 minutes', 'Your niche, a few samples and your rates. Polly learns your voice from one pitch you approve.'],
       ['Polly picks brands', 'Brands that fit your niche and country, with hot brands running UGC ads first.'],
-      ['Pitches go out every weekday', 'Three a day on Pro, each written for that brand, from your Gmail.'],
+      ['Pitches go out every weekday', 'Up to 20 a day on Pro (you choose how many), each written for that brand, from your Gmail. A new Gmail ramps up over its first days.'],
       ['You answer the yeses', 'Polly drafts the reply with your rate; you send it.'],
     ],
     sections: [
@@ -207,7 +207,7 @@ export const FEATURES = [
         h2: 'Why most creator pitch emails get ignored',
         body: [
           'Brand inboxes are full of “I love your brand, I’d love to collaborate” emails with a media kit attached. They get skipped because they ask the brand to do the work of imagining the content. Pitches that get replies name one product, propose one specific video, and show one sample of that kind of video.',
-          'Writing that well takes 15 to 20 minutes per brand, which is why most creators stop after a handful. Polly does the research and the first draft so you can pitch every weekday without it becoming a second job.',
+          'Writing that well takes 15 to 20 minutes per brand, which is why most creators stop after a handful. Twenty a day by hand would be a full-time job. Polly does the research, writes each pitch and sends it, so you can reach up to 20 brands every weekday without it becoming a second job.',
         ],
       },
       {
@@ -218,7 +218,7 @@ export const FEATURES = [
       },
     ],
     faq: [
-      ['Is Polly free?', 'Polly writing your pitches is free, with 3 brand applications a month. Polly finding brands and sending 3 pitches every weekday from your Gmail, with follow-ups, is on Pro ($19 a month).'],
+      ['Is Polly free?', 'Polly writing your pitches is free, with 3 brand applications a month. Polly finding brands and sending up to 20 pitches every weekday from your Gmail (you choose how many), with follow-ups, is on Pro ($19 a month).'],
       ['Does Polly send emails without my approval?', 'You approve the style first, then Polly sends on your schedule. You can pause or edit at any time, and every pitch is in your Tracker.'],
       ['Why send from my own Gmail?', 'Brands reply to people, not platforms. Pitches from your own address land better and replies come straight to you.'],
       ['Who does Polly pitch?', 'Brands from the 3,000+ brand directory that fit your niche and country, with brands currently running UGC ads first.'],

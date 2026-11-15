@@ -17,7 +17,7 @@ const FREE = [
   'Brand deal tracker',
 ];
 const PRO = [
-  'Polly pitches 3 brands every weekday from your Gmail, with follow-ups',
+  'Polly pitches up to 20 brands every weekday from your Gmail, with follow-ups',
   'Every paid UGC gig in the feed',
   'Unlimited applications',
   'Full UGC Pulse: daily hooks brands run in their ads',
@@ -35,7 +35,7 @@ export default function PricingClient() {
           <h1>Start free. Upgrade when you’re ready to grow.</h1>
           <p className="nc-quick-answer">
             Newcollab is free for UGC creators, with no follower minimum. Pro is $19 a month when you want Polly to pitch
-            brands for you every weekday and see every paid UGC gig. No commission on your deals. Cancel anytime.
+            brands for you every weekday (up to 20 a day) and see every paid UGC gig. No commission on your deals. Cancel anytime.
           </p>
         </header>
         <Plans>

@@ -99,7 +99,7 @@ export default function HomeClient({ brands = [], stats }) {
                 </li>
                 <li>
                   <span className="n">2</span>
-                  <div><b>Every weekday: pitches go out</b><p>Polly studies each brand&apos;s ads, finds your angle and sends a short pitch from your Gmail.</p></div>
+                  <div><b>Every weekday: up to 20 pitches go out</b><p>Pitching 20 brands a day by hand is a full-time job. Polly studies each brand&apos;s ads, finds your angle and sends a short, personal pitch from your Gmail.</p></div>
                 </li>
                 <li>
                   <span className="n">3</span>
@@ -250,7 +250,7 @@ export default function HomeClient({ brands = [], stats }) {
               <h3>Pro</h3>
               <div className="price">$19<span> / month</span></div>
               <ul>
-                <li><Check size={16} /> Polly pitches 3 brands every weekday, with follow-ups</li>
+                <li><Check size={16} /> Polly pitches up to 20 brands every weekday, with follow-ups</li>
                 <li><Check size={16} /> Every paid UGC gig</li>
                 <li><Check size={16} /> Unlimited applications</li>
                 <li><Check size={16} /> Reply drafts with a fair rate when brands say yes</li>
