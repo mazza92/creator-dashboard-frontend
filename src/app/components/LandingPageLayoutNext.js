@@ -494,22 +494,20 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
   const canonicalUrl =
     customCanonicalUrl || `https://newcollab.co${pathname === '/' ? '' : pathname}`;
 
-  // Inject canonical link tag for SEO
+  // Canonical fallback for pages without one in their metadata. Never touch a <link rel="canonical"> that
+  // Next.js rendered: removing a React-managed head node makes the next client navigation crash
+  // ("Cannot read properties of null (reading 'removeChild')"), so the first header click silently fails.
   useEffect(() => {
-    if (typeof window === 'undefined' || !document.head) return;
-
-    const existing = document.querySelectorAll('link[rel="canonical"]');
-    existing.forEach((el) => {
-      try { el.remove(); } catch (_) {}
-    });
-
+    if (typeof window === 'undefined' || !document.head) return undefined;
+    const managed = Array.from(document.querySelectorAll('link[rel="canonical"]')).some((el) => !el.dataset.ncCanonical);
+    if (managed) return undefined;
     const link = document.createElement('link');
     link.rel = 'canonical';
     link.href = canonicalUrl;
+    link.dataset.ncCanonical = '1';
     document.head.appendChild(link);
-
     return () => {
-      try { link.remove(); } catch (_) {}
+      if (link.parentNode) link.parentNode.removeChild(link);
     };
   }, [canonicalUrl]);
 
@@ -543,20 +541,42 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
     };
   }, [mobileMenuOpen]);
 
+  // Scroll to #section after loading or navigating (e.g. /#paid-ugc from another page). The target may render
+  // a moment after the route changes, so retry briefly; sections set scroll-margin-top for the fixed header.
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (hash) {
-        const element = document.querySelector(hash);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
+    let timer;
+    const scrollToHash = (tries = 0) => {
+      const id = decodeURIComponent((window.location.hash || '').slice(1));
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: tries === 0 ? 'smooth' : 'auto', block: 'start' });
+      } else if (tries < 20) {
+        timer = setTimeout(() => scrollToHash(tries + 1), 100);
       }
     };
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    timer = setTimeout(() => scrollToHash(0), 60);
+    const onHash = () => scrollToHash(0);
+    window.addEventListener('hashchange', onHash);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('hashchange', onHash);
+    };
+  }, [pathname]);
+
+  // Clicking a hash link for the page you are already on (e.g. "Paid UGC" while on the homepage) does not
+  // change the route, so scroll explicitly.
+  const onNavClick = (href) => (e) => {
+    const [path, hash] = href.split('#');
+    if (hash && (path || '/') === pathname) {
+      const el = document.getElementById(hash);
+      if (el) {
+        e.preventDefault();
+        window.history.replaceState(null, '', `#${hash}`);
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
@@ -583,7 +603,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
             </Link>
             <NavLinks>
               {NAV.map(([label, href]) => (
-                <NavLink key={href} href={href} prefetch={false} $isSignupPage={isTransparentHeader}>{label}</NavLink>
+                <NavLink key={href} href={href} prefetch={false} onClick={onNavClick(href)} $isSignupPage={isTransparentHeader}>{label}</NavLink>
               ))}
             </NavLinks>
             <AuthButtons>
@@ -625,7 +645,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
         </MobileMenuHeader>
         <MobileNavLinks>
           {[...NAV, ...MOBILE_EXTRA].map(([label, href]) => (
-            <MobileNavLink key={href} href={href} prefetch={false} onClick={closeMobileMenu}>{label}</MobileNavLink>
+            <MobileNavLink key={href} href={href} prefetch={false} onClick={(e) => { onNavClick(href)(e); closeMobileMenu(); }}>{label}</MobileNavLink>
           ))}
         </MobileNavLinks>
         <MobileAuthButtons>

@@ -73,3 +73,11 @@ describe('duplicate title behind a CTA', () => {
     expect(out).toBe('<div class="nc-inline-cta"><h2>Find brands</h2></div><p>x</p>');
   });
 });
+
+describe('normalizeHtml', () => {
+  it('closes unclosed tags so following siblings cannot be swallowed', () => {
+    const { normalizeHtml } = require('./blogArticle');
+    expect(normalizeHtml('<div><p>a<ul><li>b</div>')).toBe('<div><p>a</p><ul><li>b</li></ul></div>');
+    expect(normalizeHtml('<p>x</p></div><p>y</p>')).toBe('<p>x</p><p>y</p>');
+  });
+});
