@@ -619,7 +619,7 @@ const EyeIcon = ({ off }) => (
 );
 
 const BENEFITS = [
-  { icon: '🎁', bg: 'rgba(225,29,72,.09)', title: 'Brands that send PR packages', body: '2,000+ brands that gift creators, with the right contact and how to apply.' },
+  { icon: '🎁', bg: 'rgba(225,29,72,.09)', title: 'Brands that send PR packages', body: '3,000+ brands that gift creators, with the right contact and how to apply.' },
   { icon: '💸', bg: 'rgba(5,150,105,.10)', title: 'Paid UGC briefs', body: 'Open briefs from brands paying for UGC videos in your niche.' },
   { icon: '✨', bg: 'rgba(124,58,237,.10)', title: 'Polly pitches for you', pro: true, body: 'Your AI assistant finds brands, writes the pitch and follows up.' },
 ];
@@ -888,7 +888,7 @@ export default function CreatorSignup() {
     <>
       <Helmet>
         <title>Sign Up Free | NewCollab - PR Packages & Paid UGC for Creators</title>
-        <meta name="description" content="Join NewCollab free. Find 2,000+ brands that send PR packages, get paid UGC briefs, and let Polly pitch brands for you." />
+        <meta name="description" content="Join NewCollab free. Find 3,000+ brands that send PR packages, get paid UGC briefs, and let Polly pitch brands for you." />
         <link rel="canonical" href="https://newcollab.co/register/creator" />
       </Helmet>
 

@@ -982,7 +982,7 @@ const FAQ_DATA = [
   },
   {
     q: "Which brands are in your directory?",
-    a: "2,000+ brands across beauty, skincare, fashion, wellness, food, and lifestyle. Rhode, Poppi, Anua, Milk_shake, Ouai, Kosas, and 1,994 more. We update the directory weekly with new additions and remove brands that stop responding."
+    a: "3,000+ brands across beauty, skincare, fashion, wellness, food, and lifestyle. Rhode, Poppi, Anua, Milk_shake, Ouai, Kosas, and 1,994 more. We update the directory weekly with new additions and remove brands that stop responding."
   },
   {
     q: "How is this different from just DMing brands?",
@@ -1271,7 +1271,7 @@ function LandFirstPRPackage() {
             <Feat>
               <FeatEmoji>🎯</FeatEmoji>
               <FeatH3>Verified brand contacts</FeatH3>
-              <FeatP>2,000+ brands with real PR emails. Not scraped. Not guessed. Reviewed and updated weekly.</FeatP>
+              <FeatP>3,000+ brands with real PR emails. Not scraped. Not guessed. Reviewed and updated weekly.</FeatP>
             </Feat>
             <Feat>
               <FeatEmoji>🤖</FeatEmoji>
@@ -1305,7 +1305,7 @@ function LandFirstPRPackage() {
       {/* BRAND WALL */}
       <BrandsSection>
         <Wrap>
-          <BrandsH3>2,000+ brands your manager already knows</BrandsH3>
+          <BrandsH3>3,000+ brands your manager already knows</BrandsH3>
           <BrandWall>
             <BrandItem $variant="serif">rhode</BrandItem>
             <BrandItem $variant="small">Poppi</BrandItem>

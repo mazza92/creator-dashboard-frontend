@@ -1003,7 +1003,7 @@ export default function DirectoryClient({
     <LandingPageLayoutNext canonicalUrl="https://newcollab.co/directory" hideFooter>
       <Page>
         <Hero>
-          <h1>{collectionTitle || '2,000+ PR Forms for Brands: Direct Application Links'}</h1>
+          <h1>{collectionTitle || '3,000+ PR Forms for Brands: Direct Application Links'}</h1>
           <p>
             {collectionDescription ||
               `${directoryCountLabel(total || initialTotal)}. Last checked ${CITATION_LAST_UPDATED}. Method: brands listed with a public application URL. Filter by beauty, skincare, K-beauty, fashion, wellness, and more.`}

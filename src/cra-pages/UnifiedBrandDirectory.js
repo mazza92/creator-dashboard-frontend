@@ -1007,10 +1007,10 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       {/* Only show default Helmet if not in collection mode */}
       {!collectionMode && (
         <Helmet>
-          <title>2,000+ PR Forms for Brands (2026): Direct Application Links | NewCollab</title>
-          <meta name="description" content="Browse 2,000+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free." />
+          <title>3,000+ PR Forms for Brands (2026): Direct Application Links | NewCollab</title>
+          <meta name="description" content="Browse 3,000+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free." />
           <meta name="keywords" content="pr forms for brands, pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, brands that send pr to small influencers, influencer pr list requirements" />
-          <meta property="og:title" content="2,000+ PR Forms for Brands: Direct Application Links" />
+          <meta property="og:title" content="3,000+ PR Forms for Brands: Direct Application Links" />
           <meta property="og:description" content="Verified PR forms for brands with direct application links. 2,000+ beauty, skincare, and lifestyle brands—micro-influencer friendly. Start applying today." />
           <link rel="canonical" href="https://newcollab.co/directory" />
         </Helmet>
@@ -1021,8 +1021,8 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         {!isDashboardView && (
           <Hero>
             <HeroContent>
-              <h1>{collectionTitle || '2,000+ PR Forms for Brands: Direct Application Links'}</h1>
-              <p>{collectionDescription || 'Browse verified PR forms for brands—2,000+ direct application links, PR requirements, and options for small creators in beauty, skincare, K-beauty, tech, and fashion.'}</p>
+              <h1>{collectionTitle || '3,000+ PR Forms for Brands: Direct Application Links'}</h1>
+              <p>{collectionDescription || 'Browse verified PR forms for brands—3,000+ direct application links, PR requirements, and options for small creators in beauty, skincare, K-beauty, tech, and fashion.'}</p>
             </HeroContent>
           </Hero>
         )}

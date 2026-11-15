@@ -41,7 +41,7 @@ export default function UnlockCard({ ctx, locked, location = 'unlock_gate', titl
       <Trust>
         <li>Free plan</li>
         <li>No follower minimum</li>
-        <li>2,000+ brands</li>
+        <li>3,000+ brands</li>
       </Trust>
     </Card>
   );

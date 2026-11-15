@@ -177,7 +177,7 @@ export default function BlogBrandSearch({ postSlug }) {
             <button type="submit">Get PR &rarr;</button>
           </div>
           <ul className="bbs-trust">
-            <li>2,000+ brands</li>
+            <li>3,000+ brands</li>
             <li>Verified contacts</li>
             <li>340 followers welcome</li>
             <li>Free to start</li>

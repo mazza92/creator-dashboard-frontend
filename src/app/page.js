@@ -4,7 +4,7 @@ import { jsonLd } from '@/src/lib/jsonLd';
 
 const TITLE = 'Newcollab: Paid UGC Jobs, Brand Deals & a Free UGC Portfolio for Creators';
 const DESCRIPTION =
-  'Grow your UGC brand deals on autopilot. Newcollab helps UGC creators in the US, Canada and Europe find paid UGC gigs, get gifted PR packages and pitch 2,700+ brands with Polly, an AI agent. Free UGC portfolio. No follower minimum.';
+  'Grow your UGC brand deals on autopilot. Newcollab helps UGC creators in the US, Canada and Europe find paid UGC gigs, get gifted PR packages and pitch 3,000+ brands with Polly, an AI agent. Free UGC portfolio. No follower minimum.';
 
 export const metadata = {
   title: TITLE,
