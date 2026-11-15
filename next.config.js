@@ -108,11 +108,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/features',
-        destination: '/',
-        permanent: true,
-      },
-      {
         source: '/brands/send-pr-packages',
         destination: '/brands/pr-packages',
         permanent: true,

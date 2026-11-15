@@ -11,6 +11,7 @@ import { FaTiktok, FaXTwitter } from 'react-icons/fa6';
 import AuthNavButtons from '../../components/AuthNavButtons';
 import { openCookieSettings } from '../../lib/cookieConsent';
 import { tokens } from '../../theme/tokens';
+import { FEATURES, FOOTER_COLUMNS } from '../features/_data';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -175,6 +176,24 @@ const NavLinks = styled.div`
   }
 `;
 
+const MenuWrap = styled.div`
+  position: relative;
+  .caret { font-size: 11px; margin-left: 2px; opacity: .6; }
+  &:hover > div, &:focus-within > div { opacity: 1; visibility: visible; transform: translateY(0); }
+`;
+
+const MenuPanel = styled.div`
+  position: absolute; top: calc(100% + 6px); left: -12px; width: 340px; padding: 8px;
+  background: #fff; border: 1px solid #ECE9E1; border-radius: 16px; box-shadow: 0 18px 50px rgba(18, 20, 26, .14);
+  opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s;
+  z-index: 1100;
+  &::before { content: ''; position: absolute; top: -8px; left: 0; right: 0; height: 8px; }
+  a { display: grid; gap: 1px; padding: 9px 12px; border-radius: 10px; text-decoration: none; color: #12141a; }
+  a:hover, a:focus { background: #FAF8F3; outline: none; }
+  b { font-size: 14.5px; font-weight: 700; }
+  span { font-size: 12.5px; color: #6B7280; }
+`;
+
 const NavLink = styled(Link)`
   color: ${props => props.$isSignupPage ? '#ffffff' : tokens.textPrimary};
   font-size: 15px;
@@ -306,7 +325,7 @@ const MobileMenu = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.98);
+  background: #fff;
   z-index: 1001;
   padding: 24px;
   transform: translateX(${props => props.$isOpen ? '0' : '100%'});
@@ -424,6 +443,16 @@ const Footer = styled.footer`
     padding: 32px 16px 24px 16px;
   }
 `;
+const FooterCols = styled.nav`
+  max-width: 1120px; margin: 0 auto 32px; text-align: left;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 28px;
+  h3 { margin: 0 0 10px; font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: ${tokens.textPrimary}; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  a { color: ${tokens.textSecondary}; text-decoration: none; font-size: 14px; line-height: 1.35; }
+  a:hover { color: ${tokens.textPrimary}; text-decoration: underline; }
+  @media (max-width: 960px) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 600px) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 16px; }
+`;
 const FooterLinks = styled.div`
   display: flex;
   justify-content: center;
@@ -471,14 +500,19 @@ const SocialIcon = styled.div`
 `;
 
 // Slim header: the four places creators go. Features, pricing and company pages live in the footer.
+// Header: "Features" opens on hover/focus with CSS, so its links are plain <a> tags in the server HTML (crawlable,
+// keyword link text on every page). The rest are direct links.
+const FEATURE_MENU = [
+  ...FEATURES.map((f) => [f.nav, `/features/${f.slug}`, f.navHint]),
+  ['Free UGC portfolio', '/media-kit', 'Publish your portfolio in minutes'],
+];
 const NAV = [
   ['Brands', '/directory'],
-  ['Paid UGC', '/#paid-ugc'],
   ['Free tools', '/tools'],
-  ['Free portfolio', '/media-kit'],
+  ['Pricing', '/pricing'],
   ['For brands', '/brands/pr-packages'],
 ];
-const MOBILE_EXTRA = [['Free UGC guide', '/ugc-starter-guide'], ['Pricing', '/#pricing'], ['Blog', '/blog'], ['About', '/about']];
+const MOBILE_EXTRA = [['Free UGC guide', '/ugc-starter-guide'], ['Blog', '/blog'], ['About', '/about']];
 
 export default function LandingPageLayoutNext({ hideHeader, hideFooter, children, canonicalUrl: customCanonicalUrl }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -602,6 +636,18 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
               </LogoContainer>
             </Link>
             <NavLinks>
+              <MenuWrap>
+                <NavLink href="/features" prefetch={false} $isSignupPage={isTransparentHeader} aria-haspopup="true">
+                  Features <span aria-hidden="true" className="caret">▾</span>
+                </NavLink>
+                <MenuPanel role="menu" aria-label="Features">
+                  {FEATURE_MENU.map(([label, href, hint]) => (
+                    <Link key={href} href={href} prefetch={false} role="menuitem">
+                      <b>{label}</b><span>{hint}</span>
+                    </Link>
+                  ))}
+                </MenuPanel>
+              </MenuWrap>
               {NAV.map(([label, href]) => (
                 <NavLink key={href} href={href} prefetch={false} onClick={onNavClick(href)} $isSignupPage={isTransparentHeader}>{label}</NavLink>
               ))}
@@ -644,7 +690,7 @@ export default function LandingPageLayoutNext({ hideHeader, hideFooter, children
           />
         </MobileMenuHeader>
         <MobileNavLinks>
-          {[...NAV, ...MOBILE_EXTRA].map(([label, href]) => (
+          {[...FEATURE_MENU.map(([label, href]) => [label, href]), ...NAV, ...MOBILE_EXTRA].map(([label, href]) => (
             <MobileNavLink key={href} href={href} prefetch={false} onClick={(e) => { onNavClick(href)(e); closeMobileMenu(); }}>{label}</MobileNavLink>
           ))}
         </MobileNavLinks>
@@ -667,22 +713,19 @@ export function SiteFooter() {
 
   return (
     <Footer>
+      <FooterCols>
+        {FOOTER_COLUMNS.map((col) => (
+          <div key={col.title}>
+            <h3>{col.title}</h3>
+            <ul>
+              {col.links.map(([href, label]) => (
+                <li key={href}><Link href={href} prefetch={false}>{label}</Link></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </FooterCols>
       <FooterLinks>
-        <FooterLink href="/directory">Brand directory</FooterLink>
-        <FooterLink href="/#paid-ugc">Paid UGC</FooterLink>
-        <FooterLink href="/media-kit">Free portfolio</FooterLink>
-        <FooterLink href="/tools">Free UGC tools</FooterLink>
-        <FooterLink href="/ugc-starter-guide">Free UGC guide</FooterLink>
-        <FooterLink href="/ugc-portfolio-examples">UGC portfolio examples</FooterLink>
-        <FooterLink href="/blog/ugc-rates-how-much-to-charge-2026">UGC rates</FooterLink>
-        <FooterLink href="/#features">Features</FooterLink>
-        <FooterLink href="/#pricing">Pricing</FooterLink>
-        <FooterLink href="/brands/pr-packages">For brands</FooterLink>
-        <FooterLink href="/blog">Blog</FooterLink>
-        <FooterLink href="/about">About us</FooterLink>
-        <FooterLink href="/contact">Contact</FooterLink>
-        <FooterLink href="/privacy-policy">Privacy</FooterLink>
-        <FooterLink href="/terms-of-service">Terms</FooterLink>
         <FooterLink href="#cookie-settings" onClick={handleOpenCookieSettings}>Cookie settings</FooterLink>
       </FooterLinks>
       <div style={{ marginBottom: '32px' }}>
