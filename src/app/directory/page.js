@@ -6,16 +6,16 @@ import { CITATION_LAST_UPDATED_ISO, DIRECTORY_FACTS } from '../../lib/citationFa
 import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
-  title: '2,000+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
+  title: '3,000+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
   description:
-    'Browse 2,000+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free.',
+    'Browse 3,000+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free.',
   keywords:
     'pr forms for brands, pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, brands that send pr to small influencers, influencer pr list requirements',
   alternates: {
     canonical: 'https://newcollab.co/directory',
   },
   openGraph: {
-    title: '2,000+ PR Forms for Brands: Direct Application Links',
+    title: '3,000+ PR Forms for Brands: Direct Application Links',
     description:
       'Verified PR forms for brands with direct application links. 2,000+ beauty, skincare, and lifestyle brands—micro-influencer friendly. Start applying today.',
     type: 'website',
@@ -75,7 +75,7 @@ export default async function DirectoryPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(datasetSchema) }}
       />
-      <h1 style={srOnly}>2,000+ PR Forms for Brands: Direct Application Links</h1>
+      <h1 style={srOnly}>3,000+ PR Forms for Brands: Direct Application Links</h1>
       <Suspense fallback={null}>
         <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>

@@ -951,7 +951,7 @@ export default function AboutClient() {
                 <RoadmapDot $status="done">✓</RoadmapDot>
                 <RoadmapContent>
                   <RoadmapLabel $status="done">Shipped</RoadmapLabel>
-                  <RoadmapTitle>Brand directory — 2,000+ PR contacts</RoadmapTitle>
+                  <RoadmapTitle>Brand directory — 3,000+ PR contacts</RoadmapTitle>
                   <RoadmapDesc>
                     Verified brand emails, reply rates, niche filters. Updated weekly.
                   </RoadmapDesc>

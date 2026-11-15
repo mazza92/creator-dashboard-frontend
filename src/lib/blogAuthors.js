@@ -16,7 +16,7 @@ export const BLOG_AUTHORS = {
     name: 'Newcollab Editorial Team',
     role: 'Newcollab',
     image: null,
-    bio: 'The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the 2,700+ brands and the creators on the platform. Every guide is checked against live brand data and updated when programs change.',
+    bio: 'The Newcollab team researches brands, PR programs and UGC rates for creators in the US, Canada and Europe, using data from the 3,000+ brands and the creators on the platform. Every guide is checked against live brand data and updated when programs change.',
     sameAs: [],
     type: 'Organization',
   },

@@ -177,7 +177,7 @@ function getBrandSearchWidgetHtml(postSlug) {
       <button type="submit">Get PR &rarr;</button>
     </div>
     <ul class="bbs-trust">
-      <li>2,000+ brands</li>
+      <li>3,000+ brands</li>
       <li>Verified contacts</li>
       <li>340 followers welcome</li>
       <li>Free to start</li>
@@ -596,7 +596,7 @@ function introCta(slug, listPost) {
       location: 'inline_intro',
       kicker: 'For UGC creators',
       title: 'Find brands that send PR to creators your size',
-      body: 'Newcollab lists 2,000+ brands with open PR programs, the verified contact for each one, and drafts the pitch for you.',
+      body: 'Newcollab lists 3,000+ brands with open PR programs, the verified contact for each one, and drafts the pitch for you.',
       button: 'Find my brands, free',
       meta: 'Free plan · No follower minimum',
     });
@@ -608,7 +608,7 @@ function midCta(slug) {
     location: 'inline_mid',
     kicker: 'Found a brand you like?',
     title: 'Get its verified PR contact in one click',
-    body: 'A free account shows PR emails and application links for 2,000+ brands, plus a free UGC portfolio to send with your pitch.',
+    body: 'A free account shows PR emails and application links for 3,000+ brands, plus a free UGC portfolio to send with your pitch.',
     button: 'Unlock contacts free',
     meta: 'Takes 30 seconds',
   });

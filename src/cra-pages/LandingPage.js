@@ -1855,7 +1855,7 @@ const LandingPage = () => {
     "@type": "WebSite",
     "name": "newcollab",
     "url": "https://newcollab.co",
-    "description": "PR forms directory and brand outreach tool for nano and micro creators — 2,000+ brands with open PR application forms, AI pitch emails, a free UGC portfolio builder, and auto media kit.",
+    "description": "PR forms directory and brand outreach tool for nano and micro creators — 3,000+ brands with open PR application forms, AI pitch emails, a free UGC portfolio builder, and auto media kit.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://newcollab.co/brands?q={search_term_string}",
@@ -1904,7 +1904,7 @@ const LandingPage = () => {
         "name": "Where can I find PR forms for brands?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "newcollab's brand directory lists 2,000+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. You can filter by niche and send a personalised AI pitch in one click — no need to hunt for contact emails or application URLs."
+          "text": "newcollab's brand directory lists 3,000+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. You can filter by niche and send a personalised AI pitch in one click — no need to hunt for contact emails or application URLs."
         }
       },
       {
@@ -1930,7 +1930,7 @@ const LandingPage = () => {
     <>
       <Helmet>
         <title>newcollab | PR Forms for Brands &amp; Brand Outreach Tool for Micro Creators</title>
-        <meta name="description" content="Browse 2,000+ brands with open PR forms and direct application links. Send AI pitch emails, auto-generate your media kit, and track every outreach. The complete PR forms directory and brand deal system for micro creators." />
+        <meta name="description" content="Browse 3,000+ brands with open PR forms and direct application links. Send AI pitch emails, auto-generate your media kit, and track every outreach. The complete PR forms directory and brand deal system for micro creators." />
         <meta name="keywords" content="PR forms for brands, brand PR forms, PR application forms for influencers, brands with open PR forms, how to get brand deals, PR packages for micro creators, brand outreach tool, media kit for content creators, micro influencer brand deals, brand collaboration forms" />
         <meta property="og:title" content="newcollab | 2,000+ Brand PR Forms &amp; Outreach Tool for Micro Creators" />
         <meta property="og:description" content="Browse brands with open PR forms and application links. AI pitch emails, auto media kit, deal tracking — all in one place for nano and micro creators." />
@@ -1970,7 +1970,7 @@ const LandingPage = () => {
                     <em>No guessing.</em>
                   </HeroH1>
                   <HeroSubline>
-                    2,000+ brands with open PR forms. AI pitch emails. Auto media kit. Deal tracking. All in one place.
+                    3,000+ brands with open PR forms. AI pitch emails. Auto media kit. Deal tracking. All in one place.
                   </HeroSubline>
                   <HeroCTARow>
                     <BtnBlack href="/register/creator">Start for free →</BtnBlack>
@@ -2045,7 +2045,7 @@ const LandingPage = () => {
                 <ClarityIcon><FiSearch /></ClarityIcon>
                 <ClarityText>
                   <div className="label">Find brands</div>
-                  <div className="sub">2,000+ PR contacts, your niche</div>
+                  <div className="sub">3,000+ PR contacts, your niche</div>
                 </ClarityText>
               </ClarityItem>
               <ClarityArrow>→</ClarityArrow>
@@ -2132,7 +2132,7 @@ const LandingPage = () => {
                   <span className="step-num">1</span>
                 </div>
                 <div className="step-title">Discover</div>
-                <div className="step-body">2,000+ brand PR contacts filtered to your niche</div>
+                <div className="step-body">3,000+ brand PR contacts filtered to your niche</div>
               </SolutionStep>
               <SolutionStep $iconBg="rgba(124, 58, 237, 0.2)">
                 <div className="step-icon">
@@ -2178,7 +2178,7 @@ const LandingPage = () => {
             <SectionCenter>
               <Eyebrow><EyebrowDot /> PR forms &amp; brand directory</Eyebrow>
               <h2 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 800, color: colors.text, margin: '0 0 8px' }}>
-                2,000+ brands with open PR forms.<br />
+                3,000+ brands with open PR forms.<br />
                 <em style={{ color: colors.rose }}>Apply in one click.</em>
               </h2>
               <p style={{ fontSize: 16, color: colors.text2, margin: '0 0 12px' }}>
@@ -2587,7 +2587,7 @@ const LandingPage = () => {
               <HowStep>
                 <div className="how-num">1</div>
                 <h3>Find your brands</h3>
-                <p>Browse 2,000+ PR contacts by niche and reply speed. Or check your For You feed — matched brands, every week. Save the ones you want to pitch.</p>
+                <p>Browse 3,000+ PR contacts by niche and reply speed. Or check your For You feed — matched brands, every week. Save the ones you want to pitch.</p>
               </HowStep>
               <HowStep>
                 <div className="how-num">2</div>
@@ -2712,7 +2712,7 @@ const LandingPage = () => {
                   <span className="faq-icon">+</span>
                 </FAQSummary>
                 <FAQAnswer>
-                  newcollab's brand directory lists 2,000+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. Filter by niche and send an AI pitch in one click with no hunting for contact emails or application URLs. See the full{' '}
+                  newcollab's brand directory lists 3,000+ brands with open PR forms and direct application links across beauty, fashion, skincare, food, tech, and wellness. Filter by niche and send an AI pitch in one click with no hunting for contact emails or application URLs. See the full{' '}
                   <a href="/directory" style={{ color: colors.rose, textDecoration: 'none', fontWeight: 600 }}>PR forms directory</a>.
                 </FAQAnswer>
               </FAQItem>

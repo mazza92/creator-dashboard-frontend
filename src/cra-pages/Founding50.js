@@ -1551,7 +1551,7 @@ const Founding50 = () => {
     <LandingPageLayout canonicalUrl="https://newcollab.co/">
       <Helmet>
         <title>Get PR Packages & Paid Partnerships from Brands | Free PR Packages for Creators | Newcollab</title>
-        <meta name="description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 1,000+ brands sending PR packages to small influencers. Free signup, no credit card required." />
+        <meta name="description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 3,000+ brands sending PR packages to small influencers. Free signup, no credit card required." />
         <meta name="keywords" content="PR packages for creators, free PR packages, brands sending PR packages, PR packages for small influencers, how to get PR packages, PR packages 2025, micro influencer PR packages, brand PR packages, influencer PR packages, get PR packages from brands, PR package opportunities, free PR packages for influencers, PR packages for content creators, brands that send PR packages, PR package signup" />
         
         {/* Additional SEO Meta Tags */}
@@ -1566,7 +1566,7 @@ const Founding50 = () => {
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://newcollab.co/" />
         <meta property="og:title" content="Get PR Packages & Paid Partnerships from Brands | Free PR Packages for Creators" />
-        <meta property="og:description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 1,000+ brands sending PR packages to small influencers. Free signup, instant access." />
+        <meta property="og:description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 3,000+ brands sending PR packages to small influencers. Free signup, instant access." />
         <meta property="og:image" content="https://newcollab.co/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -1577,7 +1577,7 @@ const Founding50 = () => {
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://newcollab.co/" />
         <meta property="twitter:title" content="Get PR Packages & Paid Partnerships from Brands | Free PR Packages" />
-        <meta property="twitter:description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 1,000+ brands. Free signup." />
+        <meta property="twitter:description" content="Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 3,000+ brands. Free signup." />
         <meta property="twitter:image" content="https://newcollab.co/og-image.png" />
         <meta property="twitter:site" content="@newcollab" />
         <meta property="twitter:creator" content="@newcollab" />
@@ -1602,7 +1602,7 @@ const Founding50 = () => {
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
               "name": "Newcollab - PR Packages & Paid Partnerships for Creators",
-              "description": "Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 1,000+ brands sending PR packages to small influencers. Free signup, no credit card required.",
+              "description": "Join 10,000+ creators receiving free PR packages and paid brand partnerships. Get matched with 3,000+ brands sending PR packages to small influencers. Free signup, no credit card required.",
               "url": "https://newcollab.co/f50",
               "applicationCategory": "BusinessApplication",
               "operatingSystem": "Web",
@@ -1626,7 +1626,7 @@ const Founding50 = () => {
                 "logo": "https://newcollab.co/logo.png"
               },
               "featureList": [
-                "Free PR packages from 1,000+ brands",
+                "Free PR packages from 3,000+ brands",
                 "Paid brand partnerships",
                 "Smart creator matching system",
                 "No pitching required",
@@ -1651,7 +1651,7 @@ const Founding50 = () => {
                   "name": "How do I get PR packages from brands?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Sign up for Newcollab to get matched with 1,000+ brands sending PR packages to small influencers. Our smart matching system connects you with brands based on your niche, engagement rate, and follower count. No pitching required—brands send PR packages directly to you."
+                    "text": "Sign up for Newcollab to get matched with 3,000+ brands sending PR packages to small influencers. Our smart matching system connects you with brands based on your niche, engagement rate, and follower count. No pitching required—brands send PR packages directly to you."
                   }
                 },
                 {
@@ -1771,7 +1771,7 @@ const Founding50 = () => {
               "@type": "WebSite",
               "name": "Newcollab",
               "url": "https://newcollab.co",
-              "description": "Get PR packages and paid partnerships from brands. Join 10,000+ creators receiving free PR packages from 1,000+ brands.",
+              "description": "Get PR packages and paid partnerships from brands. Join 10,000+ creators receiving free PR packages from 3,000+ brands.",
               "potentialAction": {
                 "@type": "SearchAction",
                 "target": {
@@ -1799,7 +1799,7 @@ const Founding50 = () => {
               "@context": "https://schema.org",
               "@type": "Service",
               "name": "PR Packages for Creators",
-              "description": "Get matched with 1,000+ brands sending free PR packages to small influencers. No pitching required—brands send PR packages directly to you.",
+              "description": "Get matched with 3,000+ brands sending free PR packages to small influencers. No pitching required—brands send PR packages directly to you.",
               "provider": {
                 "@type": "Organization",
                 "name": "Newcollab",
@@ -1831,7 +1831,7 @@ const Founding50 = () => {
               "name": "Newcollab",
               "url": "https://newcollab.co",
               "logo": "https://newcollab.co/logo.png",
-              "description": "Newcollab is the leading platform connecting creators with brands for PR packages and paid partnerships. Join 10,000+ creators receiving free PR packages from 1,000+ brands. Our smart matching system connects small influencers with brands, eliminating the need for pitching and enabling real monetization opportunities.",
+              "description": "Newcollab is the leading platform connecting creators with brands for PR packages and paid partnerships. Join 10,000+ creators receiving free PR packages from 3,000+ brands. Our smart matching system connects small influencers with brands, eliminating the need for pitching and enabling real monetization opportunities.",
               "foundingDate": "2024",
               "numberOfEmployees": "25-50",
               "address": {
@@ -1864,7 +1864,7 @@ const Founding50 = () => {
                 {
                   "@type": "ListItem",
                   "position": 1,
-                  "name": "Free PR Packages from 1,000+ Brands",
+                  "name": "Free PR Packages from 3,000+ Brands",
                   "description": "Receive free PR packages from verified brands without any upfront cost"
                 },
                 {
@@ -1952,7 +1952,7 @@ const Founding50 = () => {
                 </h1>
                 <p style={{ margin: 0, padding: 0 }}>
                   <HeroSub>
-                    Join 10,000+ creators receiving free PR packages and paid brand sponsorships. Get your free link in bio, connect with 1,000+ brands, and start monetizing your content today.
+                    Join 10,000+ creators receiving free PR packages and paid brand sponsorships. Get your free link in bio, connect with 3,000+ brands, and start monetizing your content today.
                   </HeroSub>
                 </p>
                 <HeroVideoMobile>
@@ -2326,7 +2326,7 @@ const Founding50 = () => {
                     </ContentFormatsTitle>
                   </h2>
                   <ContentFormatsDescription>
-                    From stories to live streams, receive free PR packages and paid brand sponsorships across all your content types. Join 10,000+ creators getting offers from 1,000+ brands.
+                    From stories to live streams, receive free PR packages and paid brand sponsorships across all your content types. Join 10,000+ creators getting offers from 3,000+ brands.
                   </ContentFormatsDescription>
                     
                     {/* Social Platform Icons */}
@@ -2451,7 +2451,7 @@ const Founding50 = () => {
                       </BenefitIcon>
                       <BenefitContent>
                         <BenefitTitle>Free PR Packages</BenefitTitle>
-                        <BenefitText>Receive free PR packages from 1,000+ brands. No pitching required—brands send offers directly.</BenefitText>
+                        <BenefitText>Receive free PR packages from 3,000+ brands. No pitching required—brands send offers directly.</BenefitText>
                       </BenefitContent>
                     </BenefitItem>
 

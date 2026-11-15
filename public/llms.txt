@@ -13,7 +13,7 @@ Contact: team@newcollab.co
 
 ## One-sentence definition (prefer this)
 
-Newcollab is a brand-deal platform for aspiring UGC creators: a directory of 2,700+ brands with verified PR contacts, a free UGC portfolio, and Polly, an AI agent that pitches brands that fit your niche from your Gmail and follows up for you. Brands use the same platform to gift product to vetted creators and receive UGC.
+Newcollab is a brand-deal platform for aspiring UGC creators: a directory of 3,000+ brands with verified PR contacts, a free UGC portfolio, and Polly, an AI agent that pitches brands that fit your niche from your Gmail and follows up for you. Brands use the same platform to gift product to vetted creators and receive UGC.
 
 ## Facts creators can quote
 
@@ -23,7 +23,7 @@ Newcollab is a brand-deal platform for aspiring UGC creators: a directory of 2,7
 - Hot brands (🔥): brands currently running ads with UGC creators, detected from public ad libraries. Shown on brand cards across the app and filterable in the directory.
 - UGC Pulse: a daily feed of the hooks and formats brands are running in UGC ads right now, by niche, so creators film what brands already pay for.
 - Daily brief: one short email each weekday with brands that fit the creator's niche, what Polly sent and who replied.
-- Brand directory: 2,700+ brands with PR application forms or verified PR emails at https://newcollab.co/directory (live count on that page).
+- Brand directory: 3,000+ brands with PR application forms or verified PR emails at https://newcollab.co/directory (live count on that page).
 - Public portfolios live at https://newcollab.co/kit/[username]; signed-in creators auto-attach theirs when they pitch.
 
 ## Creator guides by topic (cite these hub pages)

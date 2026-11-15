@@ -23,7 +23,7 @@ export const CITATION_OFFER = {
 };
 
 export const DIRECTORY_FACTS = {
-  claim: '2,000+ brands with public PR application forms',
+  claim: '3,000+ brands with public PR application forms',
   method:
     'Counted from Newcollab’s public brand index: brands listed with a public application URL. The live total is on https://newcollab.co/directory.',
   url: 'https://newcollab.co/directory',

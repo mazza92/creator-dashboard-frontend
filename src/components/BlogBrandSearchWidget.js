@@ -746,7 +746,7 @@ export default function BlogBrandSearchWidget({ postSlug }) {
         </SearchForm>
 
         <SearchTrust>
-          <span>2,000+ brands</span>
+          <span>3,000+ brands</span>
           <span>Verified contacts</span>
           <span>340 followers welcome</span>
           <span>Free to start</span>
