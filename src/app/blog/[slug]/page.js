@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation';
 import { getPostBySlug, getAllPostSlugs, getRelatedPosts, getPostCanonicalUrl } from '../../../../lib/blog';
-import { buildBlogPostingSchema, buildBlogBreadcrumbSchema, buildHowToSchema, buildItemListSchema } from '../../../lib/blogStructuredData';
-import BlogFaqSchemaScript from './BlogFaqSchemaScript';
+import { buildBlogPostingSchema, buildBlogBreadcrumbSchema, buildHowToSchema, buildItemListSchema, buildFaqPageSchema } from '../../../lib/blogStructuredData';
+import { getPostContentHtml } from '../../../lib/blogContent';
+import { buildArticle } from '../../../lib/blogArticle';
+import { getAuthor } from '../../../lib/blogAuthors';
+import { getTopic, topicForPost } from '../../../lib/blogTopics';
 import BlogPostClient from './BlogPostClient';
 import { jsonLd } from '@/src/lib/jsonLd';
 
@@ -81,6 +84,13 @@ export default async function BlogPostPage({ params }) {
   const breadcrumbData = buildBlogBreadcrumbSchema(post);
   const howToSchema = buildHowToSchema(post);
   const itemListSchema = buildItemListSchema(post);
+  // FAQPage is rendered with the page (not injected after load): AI crawlers don't run JavaScript.
+  const faqSchema = buildFaqPageSchema(post);
+  // Article HTML is built once on the server: title-duplicate and hand-written TOC removed, h2 ids for the
+  // sticky contents, and the quick answer box.
+  const article = buildArticle(post, getPostContentHtml(post, { seoCtas: true }));
+  const topic = getTopic(topicForPost(post));
+  const author = getAuthor(post.author);
 
   // Strip fields that are unused by the client but bloat the RSC payload and
   // contain nested JSON-LD fragments (post.schema has mainEntity: FAQPage which
@@ -93,7 +103,12 @@ export default async function BlogPostPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(blogPostingSchema) }}
       />
-      <BlogFaqSchemaScript faq={post.faq} slug={post.slug} />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }}
+        />
+      )}
       {howToSchema && (
         <script
           type="application/ld+json"
@@ -111,7 +126,10 @@ export default async function BlogPostPage({ params }) {
         dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }}
       />
       <BlogPostClient
-        post={postForClient}
+        post={{ ...postForClient, content: undefined }}
+        article={article}
+        topic={topic}
+        author={author}
         relatedPosts={relatedPosts}
         canonicalUrl={getPostCanonicalUrl(post)}
       />

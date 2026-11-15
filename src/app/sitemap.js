@@ -2,6 +2,8 @@ import { getAllPosts } from '../../lib/blog';
 import { brandLetter, BRAND_LETTERS, fetchBrandIndex } from '../lib/brandIndex';
 import { MIN_INDEXABLE, fetchHub } from './ugc-portfolio-examples/_hub';
 import { TOOLS, variantsFor } from './tools/_catalog';
+import { BLOG_TOPICS } from '../lib/blogTopics';
+import { BLOG_AUTHORS } from '../lib/blogAuthors';
 
 const BASE = 'https://newcollab.co';
 const BRANDS_API = 'https://api.newcollab.co/api/public/brands';
@@ -137,6 +139,11 @@ function blogEntries(now) {
           0.8,
         );
       })
+      .filter(Boolean)
+      .concat(
+        BLOG_TOPICS.map((t) => sitemapEntry(`${BASE}/blog/topic/${t.slug}`, now, 'weekly', 0.8)),
+        Object.keys(BLOG_AUTHORS).map((a) => sitemapEntry(`${BASE}/blog/author/${a}`, now, 'monthly', 0.5)),
+      )
       .filter(Boolean);
   } catch (err) {
     console.error('[sitemap] Failed to read blog posts:', err);

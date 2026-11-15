@@ -4,6 +4,9 @@
  */
 
 import { getFaqAnswerSchemaText } from './blogContent';
+import { getAuthor } from './blogAuthors';
+import { getTopic, topicForPost } from './blogTopics';
+import { cleanArticleHtml } from './blogArticle';
 
 function faqQuestions(faq, slug) {
   return faq.map((item) => ({
@@ -14,6 +17,21 @@ function faqQuestions(faq, slug) {
       text: getFaqAnswerSchemaText(item.answer, slug),
     },
   }));
+}
+
+export function authorSchema(postAuthor) {
+  const a = getAuthor(postAuthor);
+  const url = `https://newcollab.co/blog/author/${a.slug}`;
+  return {
+    '@type': a.type === 'Organization' ? 'Organization' : 'Person',
+    name: a.name,
+    url,
+    ...(a.type !== 'Organization' && a.role ? { jobTitle: a.role } : {}),
+    ...(a.image ? { image: a.image } : {}),
+    ...(a.bio ? { description: a.bio } : {}),
+    ...(a.sameAs?.length ? { sameAs: a.sameAs } : {}),
+    ...(a.type !== 'Organization' ? { worksFor: { '@type': 'Organization', name: 'Newcollab', url: 'https://newcollab.co' } } : {}),
+  };
 }
 
 export function buildBlogPostingSchema(post) {
@@ -31,14 +49,7 @@ export function buildBlogPostingSchema(post) {
     ],
     datePublished: post.date,
     dateModified: post.dateModified || post.date,
-    author: {
-      '@type': 'Person',
-      name: post.author.name,
-      jobTitle: post.author.role,
-      image: post.author.image,
-      url: 'https://newcollab.co/blog',
-      ...(post.author.description && { description: post.author.description }),
-    },
+    author: authorSchema(post.author),
     publisher: {
       '@type': 'Organization',
       name: 'Newcollab',
@@ -58,9 +69,12 @@ export function buildBlogPostingSchema(post) {
     },
     url: `https://newcollab.co/blog/${post.slug}`,
     wordCount: post.content?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0,
-    articleSection: post.category,
+    articleSection: getTopic(topicForPost(post))?.title || post.category,
+    // The quick answer box and FAQ are the parts written to be read out / quoted.
+    speakable: { '@type': 'SpeakableSpecification', cssSelector: ['.nc-quick-answer', '.nc-faq'] },
     articleBody:
-      post.content?.replace(/<[^>]*>/g, '').substring(0, 500) || post.excerpt,
+      cleanArticleHtml(post.content || '', post.title).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 500)
+      || post.excerpt,
   };
 }
 
@@ -135,6 +149,12 @@ export function buildBlogBreadcrumbSchema(post) {
       {
         '@type': 'ListItem',
         position: 3,
+        name: getTopic(topicForPost(post)).title,
+        item: `https://newcollab.co/blog/topic/${topicForPost(post)}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
         name: post.title,
         item: `https://newcollab.co/blog/${post.slug}`,
       },
