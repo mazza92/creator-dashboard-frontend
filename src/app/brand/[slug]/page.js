@@ -339,6 +339,12 @@ function platformLabel(p) {
  * The direct answer to "Does <brand> send PR packages?": shown under the header and used as the first FAQ answer,
  * so the visible text and the FAQPage schema match. "Yes" only when gifting is confirmed.
  */
+function regionPhrase(regions) {
+  const list = (regions || []).filter(Boolean);
+  if (list.some((r) => /worldwide|global/i.test(r))) return 'worldwide';
+  return list.length ? `in ${list.join(', ')}` : '';
+}
+
 function prAnswer(brand, { minFollowers, regions, applicationMethod, collab, updatedLabel }) {
   const name = brand.name;
   const parts = [];
@@ -354,7 +360,7 @@ function prAnswer(brand, { minFollowers, regions, applicationMethod, collab, upd
   parts.push(minFollowers > 0
     ? `They look for around ${formatFollowers(minFollowers)} followers or more, though niche fit matters more than the number.`
     : 'There is no stated follower minimum, so nano and micro creators can apply.');
-  if (regions?.length) parts.push(`They work with creators in ${regions.join(', ')}.`);
+  if (regionPhrase(regions)) parts.push(`They work with creators ${regionPhrase(regions)}.`);
   if (updatedLabel) parts.push(`Last checked ${updatedLabel}.`);
   return parts.join(' ');
 }
@@ -392,7 +398,7 @@ function brandFaqs(brand, { minFollowers, regions, applicationMethod, collab, av
   if (regions.length > 0) {
     faqs.push({
       question: `Which countries does ${name} work with creators in?`,
-      answer: `${name} works with creators in ${regions.join(', ')}.`,
+      answer: `${name} works with creators ${regionPhrase(regions)}.`,
     });
   }
   if (avgResponseTime) {
