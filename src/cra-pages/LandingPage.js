@@ -2644,7 +2644,7 @@ const LandingPage = () => {
                 <PricingPrice className="gradient"><sup>$</sup>19</PricingPrice>
                 <PricingPriceSub>per month · Cancel anytime</PricingPriceSub>
                 <PricingFeatures>
-                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Polly on autopilot</strong>: 3 new matched brands pitched for you every weekday (up to 150 a month), from your Gmail, with follow-ups and nothing to approve</PricingFeatureItem>
+                  <PricingFeatureItem><span className="pf-check">✓</span> <strong>Polly on autopilot</strong>: up to 20 new matched brands pitched for you every weekday (you choose how many), from your Gmail, with follow-ups and nothing to approve</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Unlimited roster applications</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> Everything in Free</PricingFeatureItem>
                   <PricingFeatureItem><span className="pf-check">✓</span> <strong>Batch pitching</strong> (10 brands at once)</PricingFeatureItem>

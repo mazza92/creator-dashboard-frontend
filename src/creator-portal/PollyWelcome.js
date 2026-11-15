@@ -61,7 +61,7 @@ export default function PollyWelcome({ facts, firstName, avatar, onDone, trialDa
           <span aria-hidden="true">🎁</span>
           <div>
             <b>Your free {trialDays === 7 ? 'week' : `${trialDays} days`} of Pro is ready.</b>
-            <span>Pick your niches, I'll show your first brands, then you can switch it on: I pitch 3 brands a day for you.</span>
+            <span>Pick your niches, I'll show your first brands, then you can switch it on: I pitch up to 20 brands a day for you.</span>
           </div>
         </Gift>
       )}

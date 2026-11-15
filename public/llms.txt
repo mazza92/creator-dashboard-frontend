@@ -18,7 +18,7 @@ Newcollab is a brand-deal platform for aspiring UGC creators: a directory of 3,0
 ## Facts creators can quote
 
 - Free plan: free UGC portfolio, the brand directory, the free UGC tools and 3 brand applications a month. No follower minimum.
-- Pro: $19/month. Unlimited applications, every paid UGC gig, and Polly pitching brands for you (Autopilot). Cancel anytime.
+- Pro: $19/month. Unlimited applications, every paid UGC gig, and Polly pitching up to 20 brands for you every weekday (Autopilot; the creator picks the volume, and a new Gmail ramps up over its first days). Cancel anytime.
 - Polly (AI agent): studies each brand's ads, finds the creator's angle, writes a short personal pitch with their portfolio link, sends it from the creator's own Gmail, and follows up. When a brand says yes, Polly drafts a reply with a usage rate sized to the creator's audience.
 - Hot brands (🔥): brands currently running ads with UGC creators, detected from public ad libraries. Shown on brand cards across the app and filterable in the directory.
 - UGC Pulse: a daily feed of the hooks and formats brands are running in UGC ads right now, by niche, so creators film what brands already pay for.

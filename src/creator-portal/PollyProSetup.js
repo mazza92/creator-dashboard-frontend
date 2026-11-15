@@ -18,7 +18,8 @@ const DEALS = [
   { id: 'auto', label: 'Gifted first, paid when they pay' },
   { id: 'paid', label: 'Paid only' },
 ];
-const TARGETS = [30, 60, 100, 150];
+const TARGETS = [30, 60, 100, 150, 400];
+const TARGET_LABEL = { 60: ' · recommended', 400: ' · up to 20 a day' };
 const MAX_NICHES = 3;
 const MAX_POSTS = 2;
 const NICHE_LABEL = (id) => String(id || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -571,11 +572,15 @@ function BrandsStep({ form, set, data, single }) {
           <Pills role="radiogroup" aria-label="Brands a month">
             {TARGETS.map((n) => (
               <Pill key={n} type="button" role="radio" aria-checked={form.target === n} onClick={() => set({ target: n })}>
-                {n}{n === 60 ? ' · recommended' : ''}
+                {n}{TARGET_LABEL[n] || ''}
               </Pill>
             ))}
           </Pills>
-          <Note>I send every weekday, at the hours brands read email, and never pitch the same brand twice.</Note>
+          <Note>
+            I send every weekday, at the hours brands read email, and never pitch the same brand twice. On 400 a month (up to
+            20 a day) a new Gmail ramps up over its first days so your pitches land in the inbox, and a small niche may run
+            out of new brands sooner.
+          </Note>
         </Box>
       </Grid2>
     </>

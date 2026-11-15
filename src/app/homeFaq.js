@@ -35,7 +35,7 @@ export const HOME_FAQ = [
   {
     question: 'Who is Polly?',
     answer:
-      'Polly is your AI agent on Newcollab. She finds brands that fit your niche, shows you the hooks and formats working for them, and writes your pitches. On Pro she pitches 3 new matched brands for you every weekday from your own Gmail, with follow-ups.',
+      'Polly is your AI agent on Newcollab. She finds brands that fit your niche, shows you the hooks and formats working for them, and writes your pitches. On Pro she pitches up to 20 new matched brands for you every weekday (you choose how many) from your own Gmail, with follow-ups.',
   },
   {
     question: 'Is Newcollab free?',
