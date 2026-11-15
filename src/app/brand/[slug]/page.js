@@ -91,7 +91,7 @@ function hasThinContent(brand) {
 
   // Requirements add unique data
   const platforms = brand.platforms || [];
-  const regions = brand.regions || [];
+  const regions = toList(brand.regions);
   const niches = brand.niches || [];
   if (platforms.length > 0) contentScore += 5;
   if (regions.length > 0) contentScore += 5;
@@ -339,8 +339,16 @@ function platformLabel(p) {
  * The direct answer to "Does <brand> send PR packages?": shown under the header and used as the first FAQ answer,
  * so the visible text and the FAQPage schema match. "Yes" only when gifting is confirmed.
  */
+/** API regions arrive as an array, a comma-separated string or nothing. */
+function toList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).map(String);
+  if (typeof value === 'string') return value.split(/[,;|]/).map((v) => v.trim()).filter(Boolean);
+  if (value && typeof value === 'object') return Object.values(value).flat().filter(Boolean).map(String);
+  return [];
+}
+
 function regionPhrase(regions) {
-  const list = (regions || []).filter(Boolean);
+  const list = toList(regions);
   if (list.some((r) => /worldwide|global/i.test(r))) return 'worldwide';
   return list.length ? `in ${list.join(', ')}` : '';
 }
@@ -421,7 +429,7 @@ export default async function BrandPage({ params }) {
   const requirements = brand.requirements || {};
   const stats = brand.stats || {};
   const platforms = requirements.platforms || brand.platforms || [];
-  const regions = requirements.regions || brand.regions || [];
+  const regions = toList(requirements.regions || brand.regions);
   const niches = brand.niches || [];
   const minFollowers = requirements.minFollowers || brand.minFollowers;
   const maxFollowers = requirements.maxFollowers || brand.maxFollowers;
