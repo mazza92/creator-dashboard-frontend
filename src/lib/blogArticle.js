@@ -1,4 +1,19 @@
 // Article HTML clean-up + table of contents + quick answer, done once on the server for every post.
+import { parseFragment, serialize } from 'parse5';
+
+/**
+ * Re-serialise the article through a real HTML parser. Post HTML is hand-written and some of it leaves tags
+ * unclosed or mis-nested; the browser then "repairs" the server HTML by pulling the elements that follow the
+ * article (CTA cards) inside it, React's hydration no longer matches, and the page re-renders client-side
+ * (React #418), swallowing the first clicks. Parsing it the way the browser will makes the markup well-formed.
+ */
+export function normalizeHtml(html) {
+  try {
+    return serialize(parseFragment(String(html || '')));
+  } catch {
+    return String(html || '');
+  }
+}
 
 function plain(html) {
   return String(html || '')
@@ -144,6 +159,6 @@ export function quickAnswer(post, html) {
 
 export function buildArticle(post, contentHtml) {
   const cleaned = cleanArticleHtml(contentHtml, post?.title);
-  const { html, toc } = withHeadingIds(cleaned);
+  const { html, toc } = withHeadingIds(normalizeHtml(cleaned));
   return { html, toc: toc.length >= 3 ? toc : [], quickAnswer: quickAnswer(post, cleaned) };
 }
