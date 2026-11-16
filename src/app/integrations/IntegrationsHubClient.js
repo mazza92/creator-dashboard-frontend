@@ -13,6 +13,7 @@ import {
   H1,
   HeroSection,
   HeroTag,
+  ListedBadges,
   SecLabel,
   SecSub,
   SecTitle,
@@ -72,7 +73,7 @@ const Meta = styled.p`
   margin: 0;
 `;
 
-export default function IntegrationsHubClient({ assistants, genericMcpUrl }) {
+export default function IntegrationsHubClient({ assistants, genericMcpUrl, listings = [] }) {
   const campaign = 'integrations-hub';
   const brandUrl = trackedUrl('https://app.newcollab.co/for-brands', campaign);
 
@@ -86,7 +87,13 @@ export default function IntegrationsHubClient({ assistants, genericMcpUrl }) {
             Newcollab plugs its vetted UGC creator directory into ChatGPT, Claude, Gemini and any MCP client. Ask for creators
             by niche, platform and country and get a shortlist back in the chat.
           </Sub>
-          <Meta>Last updated {LAST_UPDATED}.</Meta>
+          <ListedBadges listings={listings} campaign={campaign} location="hub_hero" />
+          <Meta>
+            {listings.length
+              ? `Reviewed and listed by ${listings.map((l) => l.vendor).join(' and ')}. `
+              : ''}
+            Last updated {LAST_UPDATED}.
+          </Meta>
         </Wrap>
       </HeroSection>
 
@@ -99,7 +106,7 @@ export default function IntegrationsHubClient({ assistants, genericMcpUrl }) {
             {assistants.map((a) => (
               <CardLink key={a.slug} href={`/integrations/${a.slug}`}>
                 <Card style={{ height: '100%' }}>
-                  <Status>{a.listed ? 'Listed in directory' : a.hubStatus || 'Directory review · link live'}</Status>
+                  <Status>{a.listed ? `✓ Listed in the ${a.directoryName || `${a.name} directory`}` : a.hubStatus || 'Directory review · link live'}</Status>
                   <CardTitle>{a.navTitle}</CardTitle>
                   <CardText>{a.description}</CardText>
                   <More>Open the {a.name} guide →</More>

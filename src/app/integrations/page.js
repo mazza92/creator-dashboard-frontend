@@ -1,10 +1,10 @@
 import IntegrationsHubClient from './IntegrationsHubClient';
-import { API, LAST_UPDATED_ISO, SITE, allAssistants } from './_catalog';
+import { API, LAST_UPDATED_ISO, SITE, allAssistants, officialListings } from './_catalog';
 import { jsonLd } from '@/src/lib/jsonLd';
 
 const TITLE = 'Find UGC Creators in ChatGPT, Claude, Gemini and Any AI Assistant | Newcollab';
 const DESCRIPTION =
-  'Add Newcollab to ChatGPT, Claude, Gemini or any MCP client and search vetted UGC creators by niche, platform and country. Free, read-only, no API key.';
+  'Newcollab is listed in the official ChatGPT app directory and Claude connector directory. Search vetted UGC creators by niche, platform and country from ChatGPT, Claude, Gemini or any MCP client. Free, read-only, no API key.';
 
 export const revalidate = 3600;
 
@@ -51,6 +51,11 @@ export default function IntegrationsHubRoute() {
             name: a.navTitle,
             url: `${SITE}/integrations/${a.slug}`,
           })),
+          mentions: officialListings().map((l) => ({
+            '@type': 'SoftwareApplication',
+            name: `Newcollab in the ${l.directoryName}`,
+            url: l.url,
+          })),
         }}
       />
       <JsonLd
@@ -72,9 +77,11 @@ export default function IntegrationsHubRoute() {
           navTitle: a.navTitle,
           description: a.description,
           listed: a.listed,
+          directoryName: a.directoryName || null,
           hubStatus: a.hubStatus || null,
         }))}
         genericMcpUrl={`${API}/claude/mcp`}
+        listings={officialListings()}
       />
     </>
   );

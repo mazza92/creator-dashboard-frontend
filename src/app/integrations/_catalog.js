@@ -2,8 +2,8 @@ import { CITATION_DEFINITION } from '../../lib/citationFacts';
 
 export const SITE = 'https://newcollab.co';
 export const API = 'https://api.newcollab.co/api/v1/integrations';
-export const LAST_UPDATED = '16 October 2026';
-export const LAST_UPDATED_ISO = '2026-10-16';
+export const LAST_UPDATED = '16 November 2026';
+export const LAST_UPDATED_ISO = '2026-11-16';
 export const RATE_LIMIT = 30;
 
 export function trackedUrl(path, campaign) {
@@ -56,7 +56,7 @@ const ASSISTANTS = {
     navTitle: 'Newcollab in ChatGPT',
     title: 'Find UGC Creators in ChatGPT (Newcollab App + MCP) | Newcollab',
     description:
-      'Search vetted UGC creators and micro-influencers by niche, platform and country right inside ChatGPT. Add the free Newcollab app in one minute, no API key needed.',
+      'Search vetted UGC creators and micro-influencers by niche, platform and country right inside ChatGPT. Add the free Newcollab app from the ChatGPT app directory in one click, no API key needed.',
     keywords: [
       'find UGC creators ChatGPT',
       'ChatGPT influencer search',
@@ -73,15 +73,16 @@ const ASSISTANTS = {
       'Works in ChatGPT on web and desktop, free, no API key',
     ],
     mcpUrl: `${API}/mcp`,
-    listed: false,
-    directoryUrl: null,
+    listed: true,
+    directoryName: 'ChatGPT app directory',
+    directoryUrl: 'https://chatgpt.com/plugins/plugin_asdk_app_6abe79ce38148191847a65e16723d8b3',
     intro:
       'Newcollab is a gifted UGC platform for DTC brands. The Newcollab app for ChatGPT lets you ask for UGC creators in plain English and get a short, vetted list back in the chat, with each creator\u2019s platform, niches, follower band, engagement and gifting preference. When you like what you see, one link opens a free gifted roster on Newcollab with the same filters.',
     steps: [
       {
         name: 'Connect',
         time: 'under a minute',
-        text: 'In ChatGPT, open Settings, then Apps, then Advanced settings, and turn on Developer mode. Choose Create app, paste the Newcollab link below and set authentication to "No authentication".',
+        text: 'Open Newcollab in the ChatGPT app directory and add it to your account in one click. Prefer a manual setup? Turn on Developer mode under Settings, Apps, Advanced settings, choose Create app and paste the Newcollab link below with "No authentication".',
       },
       {
         name: 'Ask',
@@ -95,7 +96,7 @@ const ASSISTANTS = {
       },
     ],
     setupNote:
-      'Developer mode is available on ChatGPT Plus, Pro, Business, Enterprise and Edu. Menu names can shift slightly between ChatGPT releases.',
+      'The directory app follows the ChatGPT plans OpenAI enables for apps. The manual Developer mode link works on ChatGPT Plus, Pro, Business, Enterprise and Edu. Menu names can shift slightly between ChatGPT releases.',
     demo: {
       prompt: 'Find 5 TikTok skincare UGC creators in the US who accept gifted products.',
       reply:
@@ -110,8 +111,8 @@ const ASSISTANTS = {
     compare: {
       columns: ['ChatGPT app directory', 'Developer mode link'],
       rows: [
-        { label: 'Status', a: 'In review with OpenAI', b: 'Live today' },
-        { label: 'Setup', a: 'One click once listed', b: 'Paste the link in Settings' },
+        { label: 'Status', a: 'Listed', b: 'Live' },
+        { label: 'Setup', a: 'One click from the directory', b: 'Paste the link in Settings' },
         { label: 'Sign-in', a: 'None', b: 'None' },
         { label: 'Creator search', a: 'Yes', b: 'Yes' },
         { label: 'Cost', a: 'Free', b: 'Free' },
@@ -133,7 +134,12 @@ const ASSISTANTS = {
       {
         question: 'How do I add Newcollab to ChatGPT?',
         answer:
-          'Open ChatGPT Settings, go to Apps, then Advanced settings, and turn on Developer mode. Choose Create app, name it Newcollab, paste https://api.newcollab.co/api/v1/integrations/mcp as the MCP server URL and pick No authentication. Once the Newcollab app is approved in the ChatGPT app directory you will also be able to add it in one click.',
+          'Open the Newcollab listing in the ChatGPT app directory (chatgpt.com/plugins, search Newcollab) and add it in one click. You can also add it manually: open ChatGPT Settings, go to Apps, then Advanced settings, turn on Developer mode, choose Create app, paste https://api.newcollab.co/api/v1/integrations/mcp as the MCP server URL and pick No authentication.',
+      },
+      {
+        question: 'Is Newcollab an official ChatGPT app?',
+        answer:
+          'Yes. Newcollab is listed in the ChatGPT app directory, OpenAI\u2019s official catalog of apps that work inside ChatGPT, after going through OpenAI\u2019s app review. Newcollab is also listed in the Claude connector directory.',
       },
       {
         question: 'Can ChatGPT find UGC creators on its own?',
@@ -153,7 +159,7 @@ const ASSISTANTS = {
       {
         question: 'Which ChatGPT plans support it?',
         answer:
-          'Custom apps through Developer mode are available on ChatGPT Plus, Pro, Business, Enterprise and Edu. Once listed in the ChatGPT app directory, the app follows the plans OpenAI enables for directory apps.',
+          'The Newcollab app in the ChatGPT app directory follows the plans OpenAI enables for directory apps. Custom apps through Developer mode are available on ChatGPT Plus, Pro, Business, Enterprise and Edu.',
       },
       {
         question: 'Can I use it inside a custom GPT?',
@@ -175,7 +181,7 @@ const ASSISTANTS = {
     navTitle: 'Newcollab in Claude',
     title: 'Find UGC Creators in Claude (Newcollab Connector + MCP) | Newcollab',
     description:
-      'Search vetted UGC creators and micro-influencers by niche, platform and country from Claude. Add the free Newcollab connector in under a minute, no API key needed.',
+      'Search vetted UGC creators and micro-influencers by niche, platform and country from Claude. Add the free Newcollab connector from the Claude directory in one click, no API key needed.',
     keywords: [
       'find UGC creators Claude',
       'Claude connector influencer marketing',
@@ -192,15 +198,16 @@ const ASSISTANTS = {
       'Works in Claude on web, desktop and mobile, plus Claude Code',
     ],
     mcpUrl: `${API}/claude/mcp`,
-    listed: false,
-    directoryUrl: null,
+    listed: true,
+    directoryName: 'Claude connector directory',
+    directoryUrl: 'https://claude.ai/directory/newcollab',
     intro:
       'Newcollab is a gifted UGC platform for DTC brands. The Newcollab connector gives Claude a live, read-only view of our vetted UGC creator directory, so you can shortlist creators for product seeding or paid social without leaving the conversation. Each result shows platform, niches, follower band, engagement and gifting preference, plus a link to open a free gifted roster on Newcollab.',
     steps: [
       {
         name: 'Connect',
         time: 'under a minute',
-        text: 'In Claude, open Settings, then Connectors, and choose Add custom connector. Name it Newcollab and paste the link below. There is nothing to sign in to.',
+        text: 'Open Newcollab in the Claude connector directory and click Connect. There is nothing to sign in to. Prefer a manual setup? In Settings, Connectors, choose Add custom connector and paste the link below.',
       },
       {
         name: 'Ask',
@@ -229,8 +236,8 @@ const ASSISTANTS = {
     compare: {
       columns: ['Claude directory', 'Custom connector link'],
       rows: [
-        { label: 'Status', a: 'In review with Anthropic', b: 'Live today' },
-        { label: 'Setup', a: 'One click once listed', b: 'Paste the link in Settings' },
+        { label: 'Status', a: 'Listed', b: 'Live' },
+        { label: 'Setup', a: 'One click from the directory', b: 'Paste the link in Settings' },
         { label: 'Sign-in', a: 'None', b: 'None' },
         { label: 'Creator search', a: 'Yes', b: 'Yes' },
         { label: 'Claude Code', a: 'Yes, same account', b: 'Yes, via claude mcp add' },
@@ -253,7 +260,12 @@ const ASSISTANTS = {
       {
         question: 'How do I add Newcollab to Claude?',
         answer:
-          'Open Claude Settings, go to Connectors and choose Add custom connector. Name it Newcollab and paste https://api.newcollab.co/api/v1/integrations/claude/mcp. There is no sign-in step. Once the connector is approved in the Claude directory you will also be able to add it in one click.',
+          'Open the Newcollab page in the Claude connector directory (claude.ai/directory/newcollab) and click Connect. There is no sign-in step. You can also add it manually: open Claude Settings, go to Connectors, choose Add custom connector and paste https://api.newcollab.co/api/v1/integrations/claude/mcp.',
+      },
+      {
+        question: 'Is Newcollab an official Claude connector?',
+        answer:
+          'Yes. Newcollab is listed in the Claude connector directory, Anthropic\u2019s official catalog of connectors for Claude, after going through Anthropic\u2019s review. Newcollab is also listed in the ChatGPT app directory.',
       },
       {
         question: 'Can Claude find UGC creators without a connector?',
@@ -273,7 +285,7 @@ const ASSISTANTS = {
       {
         question: 'Does it work in Claude Code?',
         answer:
-          'Yes. Run claude mcp add --transport http newcollab https://api.newcollab.co/api/v1/integrations/claude/mcp, or use the connector from your Claude account once it is listed in the directory.',
+          'Yes. Connect Newcollab from the Claude directory and it is available in Claude Code on the same account, or run claude mcp add --transport http newcollab https://api.newcollab.co/api/v1/integrations/claude/mcp.',
       },
       {
         question: 'Can the connector change anything in my account?',
@@ -411,6 +423,13 @@ const ASSISTANTS = {
   },
 };
 
+/** Official AI platform listings, for trust badges. Only assistants that are actually listed. */
+export function officialListings() {
+  return allAssistants()
+    .filter((a) => a.listed && a.directoryUrl)
+    .map((a) => ({ slug: a.slug, name: a.name, vendor: a.vendor, directoryName: a.directoryName, url: a.directoryUrl }));
+}
+
 export function assistantSlugs() {
   return Object.keys(ASSISTANTS);
 }
@@ -451,6 +470,7 @@ export function buildSchemas(a) {
       url,
       description: a.description,
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      ...(a.listed && a.directoryUrl ? { sameAs: [a.directoryUrl] } : {}),
       publisher: { '@type': 'Organization', name: 'Newcollab', url: SITE, logo: `${SITE}/logo.png` },
     },
     {
