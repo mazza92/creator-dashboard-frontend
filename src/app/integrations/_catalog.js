@@ -170,7 +170,7 @@ const ASSISTANTS = {
       {
         question: 'Can creators use Newcollab in ChatGPT too?',
         answer:
-          'Yes. Ask which brands to pitch in your niche and ChatGPT returns brands with real signals, such as an open paid UGC brief, creator-style ads or confirmed gifting. Ask about one brand, for example "does Glossier send PR packages?", to see its gifting and ad signals and its page on Newcollab. Contact emails stay on Newcollab, where Polly can send the pitches for you.',
+          'Yes. Ask which brands to pitch for UGC in your niche and ChatGPT returns brands with real signals: an open paid UGC brief, creator-style ads, ads seen running this month or confirmed work with creators. Ask about one brand, for example "is Glossier hiring UGC creators?", to see its UGC ads, open briefs and its page on Newcollab. Contact emails stay on Newcollab, where Polly can send the pitches for you.',
       },
       {
         question: 'Why do some creators show without a handle?',
@@ -229,12 +229,12 @@ const ASSISTANTS = {
     setupNote:
       'Custom connectors are available on Claude Free, Pro, Max, Team and Enterprise. On Team and Enterprise, an owner may need to add the connector for the organization first.',
     demo: {
-      prompt: 'Who are some Instagram fitness micro-influencers in the UK I could send PR packages to?',
+      prompt: 'Who are some Instagram fitness micro-influencers in the UK I could send gifted products to?',
       reply:
         'I found 5 fitness creators on Instagram in the UK who accept gifted collabs, most in the 10K–50K range. Two have worked with brands on Newcollab before. I can open a free gifted roster with these filters if you want to shortlist them.',
     },
     prompts: [
-      { label: 'Product seeding', text: 'Who are some Instagram fitness micro-influencers in the UK I could send PR packages to?' },
+      { label: 'Product seeding', text: 'Who are some Instagram fitness micro-influencers in the UK I could send gifted products to?' },
       { label: 'Launch plan', text: 'Plan a 10-creator seeding launch for our new SPF and find the creators to start with.' },
       { label: 'Niche research', text: 'Find TikTok creators in the US who make home and kitchen UGC and accept gifting.' },
       { label: 'Ad creative', text: 'I need UGC for Meta ads for a supplement brand. Find creators with strong engagement.' },
@@ -296,12 +296,12 @@ const ASSISTANTS = {
       {
         question: 'Can the connector change anything in my account?',
         answer:
-          'No. It has three read-only tools: search_ugc_creators for brands, and find_brands_to_pitch and get_brand_pr_info for creators. It cannot send messages, create campaigns, spend money or write data anywhere.',
+          'No. It has three read-only tools: search_ugc_creators for brands, and find_brands_to_pitch and get_brand_ugc_info for creators. It cannot send messages, create campaigns, spend money or write data anywhere.',
       },
       {
         question: 'Can creators use Newcollab in Claude too?',
         answer:
-          'Yes. Ask which brands to pitch in your niche and Claude returns brands with real signals, such as an open paid UGC brief, creator-style ads or confirmed gifting. Ask about one brand, for example "does Glossier send PR packages?", to see its gifting and ad signals and its page on Newcollab. Contact emails stay on Newcollab, where Polly can send the pitches for you.',
+          'Yes. Ask which brands to pitch for UGC in your niche and Claude returns brands with real signals: an open paid UGC brief, creator-style ads, ads seen running this month or confirmed work with creators. Ask about one brand, for example "is Glossier hiring UGC creators?", to see its UGC ads, open briefs and its page on Newcollab. Contact emails stay on Newcollab, where Polly can send the pitches for you.',
       },
       {
         question: 'Why do some creators show without a handle?',
