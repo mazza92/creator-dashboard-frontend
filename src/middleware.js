@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { blockedKitAgent, isKitPath, overKitLimit } from './lib/kitGuard';
 
 // CRA app routes — redirect to app.newcollab.co (CRA deployment)
 const CRA_ROUTES = [
@@ -37,8 +38,27 @@ function isRscRequest(request) {
   return dest === 'empty';
 }
 
+function clientIp(request) {
+  const fwd = request.headers.get('x-forwarded-for') || '';
+  return fwd.split(',')[0].trim() || request.headers.get('x-real-ip') || request.ip || '';
+}
+
+function refuse(status, extra = {}) {
+  return new NextResponse(status === 429 ? 'Too many requests' : 'Not available', {
+    status,
+    headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', ...extra },
+  });
+}
+
 export function middleware(request) {
   const { pathname, search } = request.nextUrl;
+
+  // Creator portfolios: keep scrapers and AI training crawlers off them.
+  if (isKitPath(pathname)) {
+    if (blockedKitAgent(request.headers.get('user-agent'))) return refuse(403);
+    if (overKitLimit(clientIp(request))) return refuse(429, { 'Retry-After': '600' });
+    return NextResponse.next();
+  }
 
   // Only intercept CRA routes
   if (!matchesCraRoute(pathname)) {
