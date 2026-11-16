@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { FaInstagram, FaPlay, FaTiktok, FaYoutube } from 'react-icons/fa';
 import { getProxiedMediaUrl, getRuntimeApiUrl } from '../config/api';
 import { sanitizeExampleUrl } from './themes';
+import TikTokVideo from '../components/TikTokVideo';
+import { tiktokHandleFromUrl, useTikTokMedia } from '../lib/tiktokMedia';
 
 function tiktokPlayerSrc(id, autoplay) {
   const chrome = [
@@ -129,6 +131,8 @@ export default function KitPostEmbed({ url, poster: posterProp }) {
   }, [parsed?.href, parsed?.poster, parsed?.platform, posterProp]);
 
   if (!parsed) return null;
+  // TikTok's embedded player fails ("Player authentication failed"): play our stored copy instead.
+  if (parsed.platform === 'tiktok' && parsed.id) return <TikTokKitPost parsed={parsed} fallbackStill={poster} />;
 
   const isInstagram = parsed.platform === 'instagram';
   const nativePlay = isInstagram && !!parsed.posterPlayer;
@@ -210,6 +214,39 @@ export default function KitPostEmbed({ url, poster: posterProp }) {
               <Badge><PlatformMark platform={parsed.platform} /></Badge>
             </Hit>
           )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+function TikTokKitPost({ parsed, fallbackStill }) {
+  const handle = tiktokHandleFromUrl(parsed.href);
+  const media = useTikTokMedia(parsed.id, handle);
+  const [playing, setPlaying] = useState(false);
+  const [stillFailed, setStillFailed] = useState(false);
+  const hasVideo = !!(media && media.video);
+  const open = () => {
+    if (hasVideo) setPlaying(true);
+    else window.open(parsed.href, '_blank', 'noopener,noreferrer');
+  };
+  return (
+    <Card>
+      {playing && hasVideo ? (
+        <video src={media.video} poster={media.cover || undefined} controls autoPlay playsInline
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', background: '#111' }} />
+      ) : (
+        <>
+          {fallbackStill && !stillFailed && !(media && media.cover) ? (
+            <Still $on src={fallbackStill} alt="" onError={() => setStillFailed(true)} />
+          ) : null}
+          {!fallbackStill || stillFailed ? <Empty><PlatformMark platform="tiktok" /></Empty> : null}
+          <TikTokVideo id={parsed.id} handle={handle} autoPlay={false} />
+          <Hit type="button" onClick={open} aria-label={hasVideo ? 'Play video' : 'Watch on TikTok'}>
+            <Shade />
+            <Play><FaPlay size={14} /></Play>
+            <Badge><PlatformMark platform="tiktok" /></Badge>
+          </Hit>
         </>
       )}
     </Card>

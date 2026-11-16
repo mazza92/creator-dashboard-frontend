@@ -1,9 +1,10 @@
 // Visual pieces for Promote Newcollab: autoplaying example TikToks, the earnings slider and the video wall.
-// Videos play through TikTok's embed player (muted, looping) and only load while on screen, so a page of them
-// stays light on phones.
-import React, { useEffect, useRef, useState } from 'react';
+// Videos play from our own stored copy (components/TikTokVideo: muted, looping, only while on screen), never
+// TikTok's embedded player, which fails with 'Player authentication failed'.
+import React, { useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Play } from 'lucide-react';
+import TikTokVideo from '../components/TikTokVideo';
 
 // UGC-style examples to show the formats that work. Creators post about Newcollab in their own style.
 export const EXAMPLES = [
@@ -15,20 +16,6 @@ export const EXAMPLES = [
   { id: '7649706301546630421', handle: 'ugc.with.tessa' },
 ];
 
-const PLAYER_OPTS = 'autoplay=1&mute=1&loop=1&controls=0&progress_bar=0&play_button=0&volume_control=0'
-  + '&fullscreen_button=0&timestamp=0&music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0';
-
-function useOnScreen(ref, rootMargin = '120px') {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof IntersectionObserver === 'undefined') { setOn(true); return undefined; }
-    const io = new IntersectionObserver(([e]) => setOn(e.isIntersecting), { rootMargin, threshold: 0.25 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [ref, rootMargin]);
-  return on;
-}
 
 /** A 9:16 TikTok that plays muted while visible. Tapping opens it on TikTok. */
 export const BRAND_ICON = '/apple-touch-icon.png';
@@ -43,7 +30,6 @@ const Mark = styled.img`display: inline-block; flex-shrink: 0; object-fit: cover
 
 export function AutoTikTok({ id, handle, tag, radius = 18, className, style, link = true, branded = true }) {
   const ref = useRef(null);
-  const visible = useOnScreen(ref);
   const linkProps = link
     ? { href: `https://www.tiktok.com/@${handle}/video/${id}`, target: '_blank', rel: 'noopener noreferrer',
       'aria-label': `Example video by @${handle} on TikTok` }
@@ -51,10 +37,7 @@ export function AutoTikTok({ id, handle, tag, radius = 18, className, style, lin
   return (
     <Clip ref={ref} className={className} style={style} $r={radius} {...linkProps}>
       <Poster aria-hidden="true"><Play size={22} /></Poster>
-      {visible && (
-        <iframe src={`https://www.tiktok.com/player/v1/${id}?${PLAYER_OPTS}`} title={`@${handle} on TikTok`}
-          allow="autoplay; encrypted-media" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" tabIndex={-1} />
-      )}
+      <TikTokVideo id={id} handle={handle} />
       <Shade aria-hidden="true" />
       {branded && <Sticker aria-hidden="true"><BrandMark size={16} /> newcollab</Sticker>}
       <Meta>
@@ -74,7 +57,7 @@ const Clip = styled.a`
   background: linear-gradient(160deg, #2a2e38, #12141a);
   box-shadow: 0 14px 34px rgba(18, 20, 26, 0.22);
   color: #fff;
-  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+  video, img { pointer-events: none; }
 `;
 const Poster = styled.div`
   position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255, 255, 255, 0.55);

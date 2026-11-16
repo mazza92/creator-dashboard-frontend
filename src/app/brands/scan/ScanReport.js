@@ -1,6 +1,8 @@
 // Brand Scan conversation + report UI, shared by the public /brands/scan page (Next) and the brand
 // workspace (CRA). No framework imports: callers pass their own start/poll functions to useScanTurns.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import TikTokVideo from '../../../components/TikTokVideo';
+import { tiktokHandleFromUrl } from '../../../lib/tiktokMedia';
 import styled, { keyframes } from 'styled-components';
 import {
   ArrowRight, Bookmark, BookmarkCheck, Check, Eye, Film, Lightbulb, Lock, MapPin, Play, Search, Sparkles, Star, Users, TrendingUp,
@@ -668,11 +670,6 @@ function tiktokId(v) {
   return /^\d{8,25}$/.test(id) && /tiktok\.com/.test(String((v && v.url) || '')) ? id : '';
 }
 
-function playerUrl(id) {
-  const opts = 'autoplay=1&mute=1&loop=1&controls=0&progress_bar=0&play_button=0&volume_control=0'
-    + '&fullscreen_button=0&timestamp=0&music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0';
-  return `https://www.tiktok.com/player/v1/${id}?${opts}`;
-}
 
 const canHover = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: hover)').matches;
 
@@ -694,11 +691,11 @@ function usePreview(v) {
   };
 }
 
-function Player({ id, title }) {
+function Player({ id, url }) {
+  // Our stored copy, never TikTok's embedded player (it fails with "Player authentication failed").
   return (
     <PlayerFrame>
-      <iframe src={playerUrl(id)} title={title || 'TikTok preview'} allow="autoplay; encrypted-media"
-        loading="eager" referrerPolicy="strict-origin-when-cross-origin" tabIndex={-1} />
+      <TikTokVideo id={id} handle={tiktokHandleFromUrl(url)} />
     </PlayerFrame>
   );
 }
@@ -707,15 +704,7 @@ const PlayerFrame = styled.div`
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: #000;
   pointer-events: none;
-
-  iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: block;
-  }
 `;
 
 const Float = styled.div`
@@ -750,7 +739,7 @@ function ThumbLink({ v, children, className }) {
   return (
     <a href={v.url} target="_blank" rel="noopener noreferrer" title={v.hook || ''} className={className} {...handlers}>
       {children}
-      {pos && <Float style={pos}><Player id={id} title={v.hook} /></Float>}
+      {pos && <Float style={pos}><Player id={id} url={v.url} /></Float>}
     </a>
   );
 }
@@ -762,7 +751,7 @@ function VideoCard({ v }) {
       <Cover className="cover">
         <div className="play"><Play size={28} fill="currentColor" /></div>
         <Thumb src={v.thumb} alt={v.hook} post={v.url} />
-        {preview.on && <Player id={preview.id} title={v.hook} />}
+        {preview.on && <Player id={preview.id} url={v.url} />}
         {v.type && v.type !== 'organic' && <TypeTag $type={v.type}>{TYPE_LABEL[v.type]}</TypeTag>}
         <span className="views"><Eye size={13} /> {v.views_label}</span>
       </Cover>

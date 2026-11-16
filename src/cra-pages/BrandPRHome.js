@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import TikTokVideo from '../components/TikTokVideo';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import api, { getProxiedMediaUrl } from '../config/api';
@@ -1494,11 +1495,7 @@ export default function BrandPRHome() {
                     if (isTikTok) {
                       return (
                         <Embed key={ex.id}>
-                          <iframe
-                            title={ex.title}
-                            src={`https://www.tiktok.com/player/v1/${ex.id}?music_info=0&description=0`}
-                            allow="fullscreen"
-                          />
+                          <div className="vid"><TikTokVideo id={String(ex.id)} handle={String(ex.handle || '').replace(/^@/, '')} controls /></div>
                           <div className="cap"><b>{ex.title}</b>{ex.handle}</div>
                         </Embed>
                       );
@@ -3305,7 +3302,7 @@ const Embed = styled.div`
   background: #111;
   border-radius: 14px;
   overflow: hidden;
-  iframe { width: 168px; height: 280px; border: 0; display: block; background: #111; }
+  .vid { position: relative; width: 168px; height: 280px; background: #111; }
   .cap { background: #fff; padding: 8px 10px; font-size: 11px; color: ${MUTED}; line-height: 1.3; }
   .cap b { display: block; color: ${INK}; font-size: 12px; margin-bottom: 2px; }
 `;
