@@ -56,6 +56,9 @@ const STATIC_PAGES = [
   { url: '/features/brands-hiring-ugc-creators', priority: 0.9, changeFrequency: 'daily' },
   { url: '/features/ai-pitch-email-writer', priority: 0.8, changeFrequency: 'monthly' },
   { url: '/features/brand-deal-tracker', priority: 0.8, changeFrequency: 'monthly' },
+  { url: '/brands-looking-for-ugc-creators', priority: 0.8, changeFrequency: 'daily' },
+  ...['beauty', 'skincare', 'supplements', 'fashion', 'wellness', 'food', 'haircare', 'home', 'jewelry']
+    .map((c) => ({ url: `/brands-looking-for-ugc-creators/${c}`, priority: 0.8, changeFrequency: 'daily' })),
   { url: '/about',                     priority: 0.7, changeFrequency: 'monthly' },
   { url: '/contact',                   priority: 0.7, changeFrequency: 'monthly' },
   { url: '/privacy-policy',            priority: 0.4, changeFrequency: 'yearly'  },
