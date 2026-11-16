@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getHub as getUgcHub } from '../../brands-looking-for-ugc-creators/_hubs';
 import Link from 'next/link';
 import BrandUnlockClient from './BrandUnlockClient';
 import BrandPageLayout from './BrandPageLayout';
@@ -1397,6 +1398,9 @@ export default async function BrandPage({ params }) {
                 <h3>UGC pitch angle for {brand.name}</h3>
                 <p>{ugc.angle}</p>
                 <p className="bp-ugc-links">
+                  {getUgcHub((brand.category || '').toLowerCase()) ? (
+                    <><a href={`/brands-looking-for-ugc-creators/${(brand.category || '').toLowerCase()}`}>More {getUgcHub((brand.category || '').toLowerCase()).label.toLowerCase()} brands looking for UGC creators</a> · </>
+                  ) : null}
                   <a href="/features/ugc-jobs">Paid UGC jobs</a> · <a href="/features/brands-hiring-ugc-creators">Brands hiring UGC creators</a> · <a href="/features/ugc-ad-examples">UGC ad examples</a>
                 </p>
               </section>

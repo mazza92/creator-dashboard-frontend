@@ -171,6 +171,9 @@ export const FEATURES = [
       ['How many hot brands are there?', 'The live count is shown on this page and in the directory; it changes every day.'],
     ],
     related: [
+      ['/brands-looking-for-ugc-creators', 'Brands looking for UGC creators, by niche'],
+      ['/brands-looking-for-ugc-creators/skincare', 'Skincare brands looking for UGC creators'],
+      ['/brands-looking-for-ugc-creators/beauty', 'Beauty brands looking for UGC creators'],
       ['/directory', 'Brand directory: 3,000+ brands with PR contacts'],
       ['/blog/brands-that-pay-for-ugc-content-2026', 'Brands that pay for UGC content'],
       ['/blog/brand-pitch-email-templates-micro-creators-2026', 'Brand pitch email templates'],
@@ -323,6 +326,7 @@ export const FOOTER_COLUMNS = [
       ['/directory/k-beauty', 'K-beauty PR list'],
       ['/directory/fashion', 'Fashion brands that send PR'],
       ['/directory/us', 'US brands that send PR'],
+      ['/brands-looking-for-ugc-creators', 'UGC brands by niche'],
     ],
   },
   {
