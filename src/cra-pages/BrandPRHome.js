@@ -2076,7 +2076,7 @@ export default function BrandPRHome() {
                   type="button"
                   $on={dirHot}
                   aria-pressed={dirHot}
-                  title="Brands running ads with UGC creators right now"
+                  title="Brands found running ads in the last 30 days"
                   onClick={() => setDirHot((v) => !v)}
                 >
                   🔥 Hot brands

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { HOT_TIP } from './hotTip';
 
-// 🔥 on a hot brand (running ads with UGC creators right now). Hover, focus or tap shows why (below the tag, so
+// 🔥 on a hot brand (found running ads in the last 30 days). Hover, focus or tap shows why (below the tag, so
 // cards with overflow: hidden don't clip it).
 //   <HotTag />               inline 🔥 before a brand name
 //   <HotTag variant="chip" /> "🔥 Hot" pill for card chip rows

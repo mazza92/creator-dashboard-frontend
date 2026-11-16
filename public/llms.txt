@@ -20,7 +20,7 @@ Newcollab is a brand-deal platform for aspiring UGC creators: a directory of 3,0
 - Free plan: free UGC portfolio, the brand directory, the free UGC tools and 3 brand applications a month. No follower minimum.
 - Pro: $19/month. Unlimited applications, every paid UGC gig, and Polly pitching up to 20 brands for you every weekday (Autopilot; the creator picks the volume, and a new Gmail ramps up over its first days). Cancel anytime.
 - Polly (AI agent): studies each brand's ads, finds the creator's angle, writes a short personal pitch with their portfolio link, sends it from the creator's own Gmail, and follows up. When a brand says yes, Polly drafts a reply with a usage rate sized to the creator's audience.
-- Hot brands (🔥): brands currently running ads with UGC creators, detected from public ad libraries. Shown on brand cards across the app and filterable in the directory.
+- Hot brands (🔥): brands found running ads in public ad libraries in the last 30 days (the date seen is kept). Shown on brand cards across the app and filterable in the directory.
 - UGC Pulse: a daily feed of the hooks and formats brands are running in UGC ads right now, by niche, so creators film what brands already pay for.
 - Daily brief: one short email each weekday with brands that fit the creator's niche, what Polly sent and who replied.
 - Brand directory: 3,000+ brands with PR application forms or verified PR emails at https://newcollab.co/directory (live count on that page).
@@ -31,7 +31,7 @@ Newcollab is a brand-deal platform for aspiring UGC creators: a directory of 3,0
 - Pricing (Free and Pro $19/month): https://newcollab.co/pricing
 - UGC jobs (paid UGC gigs, updated daily): https://newcollab.co/features/ugc-jobs
 - UGC ad examples (UGC Pulse: hooks brands run now): https://newcollab.co/features/ugc-ad-examples
-- Brands looking for UGC creators (running UGC ads now): https://newcollab.co/features/brands-hiring-ugc-creators
+- Brands looking for UGC creators (found running ads this month): https://newcollab.co/features/brands-hiring-ugc-creators
 - AI pitch email writer (Polly, sends from your Gmail): https://newcollab.co/features/ai-pitch-email-writer
 - Brand deal tracker (free): https://newcollab.co/features/brand-deal-tracker
 

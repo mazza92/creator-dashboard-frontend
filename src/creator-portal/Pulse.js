@@ -203,7 +203,7 @@ export default function Pulse() {
                 <div className="label">Hook of the day <span>{hero.score > 1 ? `seen in ${hero.score} ads` : 'from a live ad'}</span></div>
                 <blockquote>{hero.text}</blockquote>
                 {hero.pattern && hero.pattern !== 'Other' ? <Tag>{hero.pattern}</Tag> : null}
-                <div className="proof">Running now from</div>
+                <div className="proof">Seen in recent ads from</div>
                 <Brands sources={hero.sources} />
                 {hero.why ? <Why><b>Why it works:</b> {hero.why}</Why> : null}
                 <Actions>
