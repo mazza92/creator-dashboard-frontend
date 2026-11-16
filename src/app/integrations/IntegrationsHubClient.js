@@ -87,7 +87,7 @@ export default function IntegrationsHubClient({ assistants, genericMcpUrl, listi
             Newcollab plugs its vetted UGC creator directory into ChatGPT, Claude, Gemini and any MCP client. Ask for creators
             by niche, platform and country and get a shortlist back in the chat.
           </Sub>
-          <ListedBadges listings={listings} campaign={campaign} location="hub_hero" />
+          {listings.length ? <ListedBadges campaign={campaign} location="hub_hero" /> : null}
           <Meta>
             {listings.length
               ? `Reviewed and listed by ${listings.map((l) => l.vendor).join(' and ')}. `

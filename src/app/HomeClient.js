@@ -10,6 +10,7 @@ import {
   ArrowRight, BadgeDollarSign, Bot, Check, ChevronDown, Eye, Gift, LayoutTemplate, Radar, Sparkles,
 } from 'lucide-react';
 import LandingPageLayoutNext from './components/LandingPageLayoutNext';
+import ListedInBadges from '../components/ListedInBadges';
 import { AutoTikTok, EXAMPLES, VideoWall } from '../creator-portal/PromoteVisuals';
 import { HOME_FAQ } from './homeFaq';
 
@@ -60,6 +61,7 @@ export default function HomeClient({ brands = [], stats }) {
               <Ghost href="/media-kit"><LayoutTemplate size={18} /> Build a free UGC portfolio</Ghost>
             </div>
             <small>Free plan · No card needed · For creators in the US, Canada and Europe</small>
+            <ListedInBadges campaign="home-hero" style={{ marginTop: 22 }} />
           </div>
           <HeroVisual />
         </Hero>

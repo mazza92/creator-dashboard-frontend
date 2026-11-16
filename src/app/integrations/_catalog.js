@@ -1,4 +1,5 @@
 import { CITATION_DEFINITION } from '../../lib/citationFacts';
+import { CHATGPT_DIRECTORY_URL, CLAUDE_DIRECTORY_URL } from '../../config/officialListings';
 
 export const SITE = 'https://newcollab.co';
 export const API = 'https://api.newcollab.co/api/v1/integrations';
@@ -75,7 +76,7 @@ const ASSISTANTS = {
     mcpUrl: `${API}/mcp`,
     listed: true,
     directoryName: 'ChatGPT app directory',
-    directoryUrl: 'https://chatgpt.com/plugins/plugin_asdk_app_6abe79ce38148191847a65e16723d8b3',
+    directoryUrl: CHATGPT_DIRECTORY_URL,
     intro:
       'Newcollab is a gifted UGC platform for DTC brands. The Newcollab app for ChatGPT lets you ask for UGC creators in plain English and get a short, vetted list back in the chat, with each creator\u2019s platform, niches, follower band, engagement and gifting preference. When you like what you see, one link opens a free gifted roster on Newcollab with the same filters.',
     steps: [
@@ -200,7 +201,7 @@ const ASSISTANTS = {
     mcpUrl: `${API}/claude/mcp`,
     listed: true,
     directoryName: 'Claude connector directory',
-    directoryUrl: 'https://claude.ai/directory/newcollab',
+    directoryUrl: CLAUDE_DIRECTORY_URL,
     intro:
       'Newcollab is a gifted UGC platform for DTC brands. The Newcollab connector gives Claude a live, read-only view of our vetted UGC creator directory, so you can shortlist creators for product seeding or paid social without leaving the conversation. Each result shows platform, niches, follower band, engagement and gifting preference, plus a link to open a free gifted roster on Newcollab.',
     steps: [

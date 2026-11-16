@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
 import LandingPageLayoutNext from '../components/LandingPageLayoutNext';
+import ListedInBadges from '../../components/ListedInBadges';
 import {
   LAST_UPDATED,
   RATE_LIMIT,
@@ -118,46 +119,9 @@ export const BtnSecondary = styled(Btn)`
   &:hover { border-color: ${colors.pink}; color: ${colors.ink}; }
 `;
 
-const BadgeRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 0 0 18px;
-`;
-
-const Badge = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  border: 1px solid ${colors.line};
-  background: #fff;
-  color: ${colors.ink};
-  font-size: 13.5px;
-  font-weight: 600;
-  text-decoration: none;
-  line-height: 1.3;
-  &:hover { border-color: ${colors.pink}; }
-  & > b { color: #16a34a; font-size: 14px; }
-  & > small { color: ${colors.muted}; font-weight: 500; font-size: 12px; }
-`;
-
-/** "Listed in the ChatGPT app directory ↗" links to the official listings: proof Newcollab passed each platform's review. */
-export function ListedBadges({ listings, campaign, location }) {
-  if (!listings || !listings.length) return null;
-  return (
-    <BadgeRow aria-label="Official AI platform listings">
-      {listings.map((l) => (
-        <Badge key={l.slug} href={l.url} target="_blank" rel="noopener noreferrer"
-          onClick={() => trackIntegrationClick(campaign, `${location}_listing_${l.slug}`)}>
-          <b aria-hidden="true">✓</b>
-          <span>Listed in the official {l.directoryName}</span>
-          <small aria-hidden="true">↗</small>
-        </Badge>
-      ))}
-    </BadgeRow>
-  );
+/** Official listing badges, shared with the homepage and brand signup. */
+export function ListedBadges({ campaign, location }) {
+  return <ListedInBadges campaign={`${campaign}-${location}`} style={{ margin: '0 0 18px' }} />;
 }
 
 const Meta = styled.p`
@@ -480,9 +444,6 @@ export default function IntegrationClient({ assistant: a, others }) {
   const statusLine = a.listed
     ? `Reviewed by ${a.vendor} and listed in the ${a.directoryName || `${a.name} directory`}. The manual ${a.appTerm} link below works too.`
     : a.status || `Directory listing in review with ${a.vendor}. The custom ${a.appTerm} link works today.`;
-  const listing = a.listed && a.directoryUrl
-    ? [{ slug: a.slug, url: a.directoryUrl, directoryName: a.directoryName || `${a.name} directory` }]
-    : [];
 
   return (
     <LandingPageLayoutNext canonicalUrl={`https://newcollab.co/integrations/${a.slug}`}>
@@ -490,7 +451,7 @@ export default function IntegrationClient({ assistant: a, others }) {
         <Wrap>
           <HeroTag>{a.name} + Newcollab · free {a.appTerm}</HeroTag>
           <H1>{a.h1[0]} <span>{a.h1[1]}</span></H1>
-          <ListedBadges listings={listing} campaign={campaign} location="hero" />
+          {a.listed ? <ListedBadges campaign={campaign} location="hero" /> : null}
           <Bullets>
             {a.heroBullets.map((b) => <li key={b}>{b}</li>)}
           </Bullets>

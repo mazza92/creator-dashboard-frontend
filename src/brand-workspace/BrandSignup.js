@@ -14,6 +14,7 @@ import {
 import CampaignForm, {
   CATEGORIES, Chip, Chips, EMPTY_CAMPAIGN, Field, TextInput, campaignPayload, campaignReady,
 } from './CampaignForm';
+import ListedInBadges from '../components/ListedInBadges';
 
 const STEPS = [['Create account', 'Account'], ['Your brand', 'Brand'], ['First campaign', 'Campaign']];
 
@@ -516,6 +517,7 @@ function AccountStep({ onDone, entry }) {
         </Pill>
       </form>
       <Fine><Check size={14} color="#0f9d58" style={{ verticalAlign: '-2px' }} /> <b>$0 today</b> · first campaign free · cancel anytime</Fine>
+      <ListedInBadges center campaign="for-brands-signup" style={{ marginTop: 22 }} />
       <Fine style={{ marginTop: 22 }}>Already have an account? <a href="/login?returnTo=%2Fbrand%2Fworkspace">Log in</a></Fine>
       <Legal>
         By continuing, you agree to the <a href="https://newcollab.co/terms-of-service">Terms of Service</a> and
