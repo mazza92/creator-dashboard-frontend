@@ -44,7 +44,7 @@ function LiveBlock({ kind, showcase }) {
       <Live aria-labelledby="live-title">
         <div className="head">
           <h2 id="live-title">Today’s top UGC hook by niche</h2>
-          <span>From ads running this week</span>
+          <span>From brands’ recent ads</span>
         </div>
         <ul className="hooks">
           {showcase.hooks.map((h) => (
@@ -62,15 +62,15 @@ function LiveBlock({ kind, showcase }) {
     return (
       <Live aria-labelledby="live-title">
         <div className="head">
-          <h2 id="live-title">🔥 Brands running UGC ads right now</h2>
-          {showcase.counts?.hot_brands ? <span>{showcase.counts.hot_brands} brands flagged</span> : null}
+          <h2 id="live-title">🔥 Brands found running ads this month</h2>
+          {showcase.counts?.hot_brands ? <span>{showcase.counts.hot_brands} found in the last 30 days</span> : null}
         </div>
         <ul className="brands">
           {showcase.hot_brands.map((b) => (
             <li key={b.slug}>
               <Link href={`/brand/${b.slug}`}>
                 <span className="logo" aria-hidden="true">{b.logo ? <img src={b.logo} alt="" loading="lazy" /> : (b.name || '?')[0]}</span>
-                <span className="t"><b>{b.name}</b><small>{cap(b.category) || 'Brand'}</small></span>
+                <span className="t"><b>{b.name}</b><small>{[cap(b.category) || 'Brand', b.seen_on ? `seen ${shortDate(b.seen_on)}` : null].filter(Boolean).join(' · ')}</small></span>
               </Link>
             </li>
           ))}

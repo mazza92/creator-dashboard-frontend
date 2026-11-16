@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../config/api';
 
-// 🔥 brands: found running ads with UGC creators by our Meta Ads Library crawl. One small, cached list of ids
+// 🔥 brands: found or re-seen running ads by our Meta Ads Library crawl in the last 30 days. One small, cached list of ids
 // (GET /api/public/hot-brand-ids) lets every brand card in the app show the tag.
 
 export { HOT_TIP } from './hotTip';

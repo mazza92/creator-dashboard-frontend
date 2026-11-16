@@ -145,7 +145,7 @@ function EventChip({ ev, onOpen }) {
   return (
     <Ev type="button" $hot={hot || ev.kind === 'hot'} disabled={!clickable}
       onClick={() => clickable && onOpen({ brand_id: ev.brand_id })}
-      title={`${ev.brand_name}: ${ev.label}${hot && ev.kind !== 'hot' ? ' · Hot brand: running ads with UGC creators' : ''}`}>
+      title={`${ev.brand_name}: ${ev.label}${hot && ev.kind !== 'hot' ? ' · Hot brand: found running ads in the last 30 days' : ''}`}>
       <KindIcon kind={hot && ev.kind === 'sched' ? 'hot' : ev.kind} small />
       <span className="txt"><b>{ev.brand_name}</b><span>{ev.label}</span></span>
     </Ev>

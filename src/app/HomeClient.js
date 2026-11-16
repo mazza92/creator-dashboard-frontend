@@ -95,7 +95,7 @@ export default function HomeClient({ brands = [], stats }) {
               <Flow>
                 <li>
                   <span className="n">1</span>
-                  <div><b>Every week: fresh brands</b><p>Brands running UGC ads right now, matched to your niche, plus open gift lists and paid gigs.</p></div>
+                  <div><b>Every week: fresh brands</b><p>Brands found running ads this month, matched to your niche, plus open gift lists and paid gigs.</p></div>
                 </li>
                 <li>
                   <span className="n">2</span>
@@ -115,7 +115,7 @@ export default function HomeClient({ brands = [], stats }) {
             <Chat aria-hidden="true">
               <div className="bar"><span className="av"><Bot size={15} /></span> Polly</div>
               <p className="me">What&apos;s on this week?</p>
-              <p className="bot">14 skincare and home brands started running UGC ads since last week. 9 fit you. I&apos;m pitching 3 today and the rest by Thursday.</p>
+              <p className="bot">14 skincare and home brands started running ads since last week. 9 fit you. I&apos;m pitching 3 today and the rest by Thursday.</p>
               <p className="me">Any replies?</p>
               <p className="bot">2 brands from last week replied. One wants rates, so I drafted your reply with 30 days of ad usage. Want to see it?</p>
             </Chat>
