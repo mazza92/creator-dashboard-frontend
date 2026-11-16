@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import TikTokVideo from '../components/TikTokVideo';
+import { tiktokHandleFromUrl } from '../lib/tiktokMedia';
 import styled, { css, keyframes } from 'styled-components';
 import { message } from 'antd';
 import api from '../config/api';
@@ -295,13 +297,9 @@ export default function ContentHub() {
         <ExamplesGrid>
           {EXAMPLES.map((ex) => (
             <Example key={ex.kind}>
-              <ExPlayer
-                src={`https://www.tiktok.com/player/v1/${ex.videoId}?music_info=0&description=0&autoplay=0&progress_bar=1&play_button=1&volume_control=0&fullscreen_button=0&timestamp=0&loop=0&rel=0&native_context_menu=0&closed_caption=0`}
-                title={ex.caption}
-                allow="encrypted-media; fullscreen; accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture"
-                allowFullScreen
-                loading="lazy"
-              />
+              <ExPlayer>
+                <TikTokVideo id={ex.videoId} handle={tiktokHandleFromUrl(ex.url)} controls />
+              </ExPlayer>
               <ExFrame>
                 <ExTop><span className="dot" />{ex.kind}</ExTop>
                 <ExMeta>
@@ -577,9 +575,8 @@ const Example = styled.div`
   background: #111; box-shadow: 0 2px 8px rgba(15,17,20,.06);
   &:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(15,17,20,.1); }
 `;
-const ExPlayer = styled.iframe`
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  border: 0; background: #000;
+const ExPlayer = styled.div`
+  position: absolute; inset: 0; width: 100%; height: 100%; background: #000;
 `;
 const ExFrame = styled.div`
   position: absolute; inset: 0; pointer-events: none;
