@@ -28,6 +28,15 @@ function matchesCraRoute(pathname) {
   return CRA_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 }
 
+// Next strips its own RSC headers and `_rsc` before middleware sees the request (outside edge rendering), so
+// also use the browser's Sec-Fetch-Dest: a page load is "document", a router fetch or prefetch is "empty".
+function isRscRequest(request) {
+  const h = request.headers;
+  if (h.get('rsc') === '1' || h.has('next-router-prefetch') || request.nextUrl.searchParams.has('_rsc')) return true;
+  const dest = h.get('sec-fetch-dest');
+  return dest === 'empty';
+}
+
 export function middleware(request) {
   const { pathname, search } = request.nextUrl;
 
@@ -50,6 +59,13 @@ export function middleware(request) {
       }
     } catch {
       // fall through to redirect
+    }
+    // Client-side navigations and prefetches fetch an RSC payload. A cross-origin redirect makes that fetch
+    // fail on CORS (console error, and a wasted round trip before the click works). Answer with a non-RSC
+    // response instead: Next ignores it for prefetches and falls back to a full page load on click, which
+    // then gets the normal redirect below.
+    if (isRscRequest(request)) {
+      return new NextResponse(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
     }
     return NextResponse.redirect(`${craOrigin}${pathname}${search}`);
   }
