@@ -84,8 +84,9 @@ export default function IntegrationsHubClient({ assistants, genericMcpUrl, listi
           <HeroTag>AI integrations · free · read-only</HeroTag>
           <H1>Find UGC creators from <span>your AI assistant</span></H1>
           <Sub>
-            Newcollab plugs its vetted UGC creator directory into ChatGPT, Claude, Gemini and any MCP client. Ask for creators
-            by niche, platform and country and get a shortlist back in the chat.
+            Newcollab plugs its vetted UGC creator directory into ChatGPT, Claude, Gemini and any MCP client. Brands ask for
+            creators by niche, platform and country. Creators ask which brands to pitch, or whether a brand sends PR
+            packages.
           </Sub>
           {listings.length ? <ListedBadges campaign={campaign} location="hub_hero" /> : null}
           <Meta>
@@ -135,7 +136,7 @@ export default function IntegrationsHubClient({ assistants, genericMcpUrl, listi
                 <tr><td>Server URL</td><td><code>{genericMcpUrl}</code></td></tr>
                 <tr><td>Transport</td><td>Streamable HTTP (POST, JSON responses)</td></tr>
                 <tr><td>Authentication</td><td>None</td></tr>
-                <tr><td>Tool</td><td><code>search_ugc_creators</code> (read-only)</td></tr>
+                <tr><td>Tools</td><td><code>search_ugc_creators</code> (brands), <code>find_brands_to_pitch</code> and <code>get_brand_pr_info</code> (creators). All read-only.</td></tr>
                 <tr><td>Rate limit</td><td>{RATE_LIMIT} calls per minute per IP</td></tr>
               </tbody>
             </Table>
