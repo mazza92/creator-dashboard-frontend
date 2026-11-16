@@ -155,7 +155,7 @@ const ASSISTANTS = {
       {
         question: 'Does the app see my ChatGPT conversation?',
         answer:
-          'No. ChatGPT sends Newcollab only the search filters it chose (niche, platform, country and number of results). We never receive your chat history, your name or your OpenAI account details.',
+          'No. ChatGPT sends Newcollab only the tool name and the filters it chose (niche, platform, country, number of results, or a brand name), plus the calling server\u2019s IP address, which we keep for about a minute for rate limiting and store only as a one-way hash to count usage. We never receive your chat history, your name or your OpenAI account details.',
       },
       {
         question: 'Which ChatGPT plans support it?',
@@ -286,7 +286,7 @@ const ASSISTANTS = {
       {
         question: 'What data does the connector receive?',
         answer:
-          'Only the search filters Claude sends (niche, platform, country and number of results) and the calling server\u2019s IP address for rate limiting, kept for about a minute. We never receive your conversation, your name or your Anthropic account details. Full details are in the Newcollab privacy policy.',
+          'Only the tool name and filters Claude sends (niche, platform, country, number of results, or a brand name) and the calling server\u2019s IP address. The IP address is used for rate limiting and kept for about a minute; to count usage we store each call\u2019s filters with a one-way hash of that IP, never the address itself. We never receive your conversation, your name or your Anthropic account details. Full details are in the Newcollab privacy policy.',
       },
       {
         question: 'Does it work in Claude Code?',
@@ -423,7 +423,7 @@ const ASSISTANTS = {
       {
         question: 'What data does Newcollab receive from Gemini?',
         answer:
-          'Only the search filters Gemini sends (niche, platform, country and number of results) and the calling server\u2019s IP address for rate limiting, kept for about a minute. We never receive your conversation or Google account details.',
+          'Only the tool name and filters Gemini sends (niche, platform, country, number of results, or a brand name) and the calling server\u2019s IP address. The IP address is used for rate limiting and kept for about a minute; to count usage we store each call\u2019s filters with a one-way hash of that IP, never the address itself. We never receive your conversation or Google account details.',
       },
       {
         question: 'Why do some creators show without a handle?',

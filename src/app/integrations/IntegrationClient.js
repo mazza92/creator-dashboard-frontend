@@ -632,9 +632,9 @@ export default function IntegrationClient({ assistant: a, others }) {
             <Card>
               <CardTitle>What Newcollab receives</CardTitle>
               <CardText>
-                Only the search filters {a.name} sends (niche, platform, country, number of results) and the calling
-                server&apos;s IP address, used for rate limiting and kept for about a minute. Never your conversation,
-                name or {a.vendor} account.
+                Only the tool name and filters {a.name} sends (niche, platform, country, number of results, or a brand
+                name) and the calling server&apos;s IP address, kept for about a minute for rate limiting and stored only
+                as a one-way hash to count usage. Never your conversation, name or {a.vendor} account.
               </CardText>
             </Card>
             <Card>

@@ -20,7 +20,7 @@ const Section = styled.section`
   margin-bottom: 40px;
 `;
 
-const LAST_UPDATED = '19 October 2026';
+const LAST_UPDATED = '16 November 2026';
 
 const PrivacyPolicy = () => {
   return (
@@ -103,10 +103,13 @@ const PrivacyPolicy = () => {
               gifting preference, brands from their portfolio, kit link, and the photos already shown on their public kit.
               Creators without a published kit appear only as anonymous stats (niche, follower range, country) with
               no handle, name, contact details, or address. Unpublish your kit or email team@newcollab.co to be removed.
-              When ChatGPT, Claude, Gemini or another AI assistant calls this search, we receive only the search filters (niche, platform, country,
-              number of results) and the calling server&apos;s IP address. We use the IP address for rate limiting and
-              keep it for about a minute; results are cached for up to an hour. We do not receive the chat conversation,
-              the user&apos;s name, or their account details, and we do not share this data with third parties.
+              The same connectors also let creators look up brands (brand name, niche or country). When ChatGPT, Claude,
+              Gemini or another AI assistant calls these tools, we receive only the tool name, the search filters (niche,
+              platform, country, number of results, or a brand name) and the calling server&apos;s IP address. We use
+              the IP address for rate limiting and keep it for about a minute. To count usage, we store each call&apos;s
+              tool name, filters and number of results with a one-way hash of the calling server&apos;s IP address, never
+              the address itself. Results are cached for up to an hour. We do not receive the chat conversation, the
+              user&apos;s name, or their account details, and we do not share this data with third parties.
             </li>
             <li>Processors: Google (Firebase Auth, Gemini for Polly, Analytics), Meta (Instagram Login, ads pixel), TikTok (Login Kit), Stripe, Microsoft Clarity, email delivery, and hosting.</li>
             <li>Law enforcement or a buyer of the business, if we are legally required or transferring the product under the same protections.</li>
