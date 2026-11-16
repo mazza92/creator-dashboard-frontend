@@ -373,10 +373,50 @@ function prAnswer(brand, { minFollowers, regions, applicationMethod, collab, upd
   return parts.join(' ');
 }
 
+const UGC_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+  'November', 'December'];
+function ugcDay(iso) {
+  const d = new Date(iso);
+  return iso && !Number.isNaN(d.getTime()) ? `${UGC_MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}` : '';
+}
+
+/**
+ * "Does <brand> work with UGC creators?" from the strongest real signal we have (backend services/brand_ugc.py):
+ * an open paid brief > creator-style ads > ads seen > confirmed gifting > nothing found. Never a guessed yes.
+ */
+function ugcFacts(brand) {
+  const name = brand.name;
+  const u = brand.ugc || {};
+  const briefs = Array.isArray(u.liveBriefs) ? u.liveBriefs : [];
+  const examples = Array.isArray(u.adExamples) ? u.adExamples : [];
+  const seen = ugcDay(u.seenRunningAdsOn);
+  const paid = briefs.map((b) => b.pay).filter(Boolean);
+  let answer;
+  if (briefs.length) {
+    answer = `Yes. ${name} has ${briefs.length === 1 ? 'a paid UGC brief' : `${briefs.length} paid UGC briefs`} open on Newcollab right now${paid.length ? `, paying ${paid[0]}` : ''}.`;
+  } else if (u.creatorStyleAds && seen) {
+    answer = `Yes, most likely. We saw ${name} running creator-style ads (last seen ${seen}), the kind of videos UGC creators make, though they have no open UGC job on Newcollab right now.`;
+  } else if (seen) {
+    answer = `${name} was seen running ads on ${seen}. Brands that advertise need fresh videos all the time, so a pitch for ad-ready UGC is a good fit, even though they have no public UGC job.`;
+  } else if (brand.acceptingPr) {
+    answer = `${name} works with creators through gifting. Pitch a gifted UGC video first, then offer paid usage once they like the content.`;
+  } else {
+    answer = `We haven't found a public UGC program, open brief or creator ads from ${name}. You can still pitch them a UGC video idea: brands often buy content without advertising it.`;
+  }
+  const rates = `${name} doesn't publish UGC rates${paid.length ? `; their open brief on Newcollab pays ${paid[0]}` : ''}. Beginner UGC creators usually charge $50 to $150 per video for organic use, plus a separate fee when the brand runs the video as an ad.`;
+  const angle = seen
+    ? `${name} runs ads, so offer ad-ready content: one video built around ${brand.heroProduct || 'their best seller'}, plus raw footage and three hook variations their ad team can test.`
+    : `Lead with one specific video idea built around ${brand.heroProduct || 'a product you already use'}, link two sample videos, and keep the email under 120 words.`;
+  return { answer, rates, angle, briefs, examples, seen, hot: Boolean(u.hot) };
+}
+
 function brandFaqs(brand, { minFollowers, regions, applicationMethod, collab, avgResponseTime, answer }) {
   const name = brand.name;
   const faqs = [];
   faqs.push({ question: `Does ${name} send PR packages?`, answer });
+  const ugc = ugcFacts(brand);
+  faqs.push({ question: `Does ${name} work with UGC creators?`, answer: ugc.answer });
+  faqs.push({ question: `How much does ${name} pay UGC creators?`, answer: ugc.rates });
   if (brand.heroProduct || brand.estimatedValue) {
     faqs.push({
       question: `What does ${name} send in a PR package?`,
@@ -455,6 +495,7 @@ export default async function BrandPage({ params }) {
   const socialProfile = brand.socialProfile || null;
   const updatedLabel = formatMonthYear(brand.updatedAt || brand.lastVerifiedAt);
   const answer = prAnswer(brand, { minFollowers, regions, applicationMethod, collab: collabType, updatedLabel });
+  const ugc = ugcFacts(brand);
   const faqs = brandFaqs(brand, { minFollowers, regions, applicationMethod, collab: collabType, avgResponseTime, answer });
   const hasPackageFacts = Boolean(brand.heroProduct || brand.estimatedValue || brand.pricePoint || collabType);
   const pitchIdeas = [
@@ -798,6 +839,17 @@ export default async function BrandPage({ params }) {
           text-decoration: none;
         }
         .bp-posts a:hover { color: #E11D48; }
+        .bp-ugc h3 { margin: 18px 0 6px; font-size: 14.5px; font-weight: 700; color: #0F0F0F; }
+        .bp-ugc p { margin: 0; font-size: 14.5px; line-height: 1.6; color: #333; }
+        .bp-ugc a { color: #0d7a5f; font-weight: 600; text-decoration: none; }
+        .bp-ugc a:hover { text-decoration: underline; }
+        .bp-ugc-answer { font-size: 15px !important; color: #0F0F0F !important; }
+        .bp-ugc-briefs, .bp-ugc-examples { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+        .bp-ugc-briefs li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px; background: #F7F7F5; font-size: 14px; }
+        .bp-ugc-briefs b { color: #0d7a5f; flex: none; }
+        .bp-ugc-examples li { padding: 10px 12px; border-left: 3px solid #0d7a5f; background: #F7F7F5; border-radius: 0 10px 10px 0; font-size: 14.5px; font-weight: 600; }
+        .bp-ugc-note { margin-top: 6px !important; font-size: 12.5px !important; color: #6B7280 !important; }
+        .bp-ugc-links { margin-top: 16px !important; font-size: 13.5px !important; }
         .bp-answer {
           background: #fff;
           border: 1px solid #ECE9E1;
@@ -1317,6 +1369,37 @@ export default async function BrandPage({ params }) {
                   </div>
                 </div>
               )}
+
+              {/* UGC: does this brand work with UGC creators, from real signals only */}
+              <section className="bp-card bp-ugc" aria-labelledby="bp-ugc-title">
+                <h2 id="bp-ugc-title" className="bp-card-title">
+                  Does {brand.name} work with UGC creators?{ugc.hot ? ' 🔥' : ''}
+                </h2>
+                <p className="bp-ugc-answer">{ugc.answer}</p>
+                {ugc.briefs.length > 0 && (
+                  <ul className="bp-ugc-briefs">
+                    {ugc.briefs.map((b) => (
+                      <li key={b.title}><span>{b.title}</span>{b.pay ? <b>{b.pay}</b> : null}</li>
+                    ))}
+                  </ul>
+                )}
+                {ugc.examples.length > 0 && (
+                  <>
+                    <h3>{brand.name} UGC ad examples</h3>
+                    <ul className="bp-ugc-examples">
+                      {ugc.examples.map((e) => <li key={e}><q>{e}</q></li>)}
+                    </ul>
+                    <p className="bp-ugc-note">Opening lines from {brand.name}&apos;s own recent ads{ugc.seen ? ` (seen ${ugc.seen})` : ''}.</p>
+                  </>
+                )}
+                <h3>What to charge {brand.name} for UGC</h3>
+                <p>{ugc.rates} <a href="/tools/ugc-rate-calculator">Work out your rate</a>.</p>
+                <h3>UGC pitch angle for {brand.name}</h3>
+                <p>{ugc.angle}</p>
+                <p className="bp-ugc-links">
+                  <a href="/features/ugc-jobs">Paid UGC jobs</a> · <a href="/features/brands-hiring-ugc-creators">Brands hiring UGC creators</a> · <a href="/features/ugc-ad-examples">UGC ad examples</a>
+                </p>
+              </section>
 
               {/* About section */}
               {brand.description && (
