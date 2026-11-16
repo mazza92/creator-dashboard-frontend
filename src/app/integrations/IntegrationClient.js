@@ -592,7 +592,7 @@ export default function IntegrationClient({ assistant: a, others }) {
                 <tr><td>Server URL</td><td><code>{a.mcpUrl}</code></td></tr>
                 <tr><td>Transport</td><td>Streamable HTTP (POST, JSON responses)</td></tr>
                 <tr><td>Authentication</td><td>None</td></tr>
-                <tr><td>Tools</td><td><code>search_ugc_creators</code> (brands), <code>find_brands_to_pitch</code> and <code>get_brand_pr_info</code> (creators). All read-only.</td></tr>
+                <tr><td>Tools</td><td><code>search_ugc_creators</code> (brands), <code>find_brands_to_pitch</code> and <code>get_brand_ugc_info</code> (creators). All read-only.</td></tr>
                 <tr><td>Rate limit</td><td>{RATE_LIMIT} calls per minute per IP</td></tr>
               </tbody>
             </Table>
