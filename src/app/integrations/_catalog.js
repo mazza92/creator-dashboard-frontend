@@ -168,6 +168,11 @@ const ASSISTANTS = {
           'Yes. In the GPT builder, open Configure, then Actions, and import https://api.newcollab.co/api/v1/integrations/openapi.json. No authentication is needed.',
       },
       {
+        question: 'Can creators use Newcollab in ChatGPT too?',
+        answer:
+          'Yes. Ask which brands to pitch in your niche and ChatGPT returns brands with real signals, such as an open paid UGC brief, creator-style ads or confirmed gifting. Ask about one brand, for example "does Glossier send PR packages?", to see its gifting and ad signals and its page on Newcollab. Contact emails stay on Newcollab, where Polly can send the pitches for you.',
+      },
+      {
         question: 'Why do some creators show without a handle?',
         answer:
           'Handles appear only for creators who published a public UGC portfolio on Newcollab. Everyone else is shown as anonymous stats (niche, follower band, country) to protect their privacy. Brands see full profiles on their private Newcollab roster.',
@@ -291,7 +296,12 @@ const ASSISTANTS = {
       {
         question: 'Can the connector change anything in my account?',
         answer:
-          'No. It has one read-only tool, search_ugc_creators. It cannot send messages, create campaigns, spend money or write data anywhere.',
+          'No. It has three read-only tools: search_ugc_creators for brands, and find_brands_to_pitch and get_brand_pr_info for creators. It cannot send messages, create campaigns, spend money or write data anywhere.',
+      },
+      {
+        question: 'Can creators use Newcollab in Claude too?',
+        answer:
+          'Yes. Ask which brands to pitch in your niche and Claude returns brands with real signals, such as an open paid UGC brief, creator-style ads or confirmed gifting. Ask about one brand, for example "does Glossier send PR packages?", to see its gifting and ad signals and its page on Newcollab. Contact emails stay on Newcollab, where Polly can send the pitches for you.',
       },
       {
         question: 'Why do some creators show without a handle?',
