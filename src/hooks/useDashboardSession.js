@@ -11,6 +11,19 @@ function roleFrom(data, fallback) {
   return data?.user_role || data?.role || fallback || '';
 }
 
+// One /profile request per page load, shared by every component using this hook (the header renders
+// the auth buttons more than once). Logged-out visitors get a single expected 401.
+let profileRequest = null;
+
+function loadProfile() {
+  if (!profileRequest) {
+    profileRequest = fetch(`${apiBase()}/profile`, { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+  }
+  return profileRequest;
+}
+
 export default function useDashboardSession() {
   const [session, setSession] = useState({ status: 'out', role: '', username: '' });
 
@@ -25,8 +38,7 @@ export default function useDashboardSession() {
     }
 
     let cancelled = false;
-    fetch(`${apiBase()}/profile`, { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
+    loadProfile()
       .then((data) => {
         if (cancelled || !data) return;
         const role = roleFrom(data, storedRole);
