@@ -255,7 +255,7 @@ export default function KitStudioEditor({
   const [email, setEmail] = useState(initial.email || '');
   const [headline, setHeadline] = useState(initial.headline || 'Honest product-in-real-life content.');
   const [about, setAbout] = useState(initial.about || 'I make UGC that looks like a friend recommended the product — not an ad. Talking-to-camera, real usage, and stills brands can post the same week. First briefs in 5–7 days.');
-  const [location, setLocation] = useState(initial.location || 'London');
+  const [location, setLocation] = useState(initial.location || '');
   const [offerId, setOfferId] = useState(initial.offerId || 'gifted');
   const [customRates, setCustomRates] = useState(initial.customRates || {
     reel: initial.customReel || '',
@@ -775,7 +775,7 @@ export default function KitStudioEditor({
             </Field>
             <Field>
               <span>Location</span>
-              <input value={location} onChange={(e) => { setLocation(e.target.value); persist({ location: e.target.value }); }} placeholder="Paris" />
+              <input value={location} onChange={(e) => { setLocation(e.target.value); persist({ location: e.target.value }); }} placeholder="City, country" />
             </Field>
           </Row>
           <FieldBlock>

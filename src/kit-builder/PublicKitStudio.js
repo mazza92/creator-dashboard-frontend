@@ -54,7 +54,7 @@ export default function PublicKitStudio() {
     email: draft0.email || saved.email || '',
     headline: draft0.headline || saved.headline || 'Honest product-in-real-life content.',
     about: draft0.about || saved.about || 'I make UGC that looks like a friend recommended the product — not an ad. Talking-to-camera, real usage, and stills brands can post the same week. First briefs in 5–7 days.',
-    location: draft0.location || saved.location || 'London',
+    location: draft0.location || saved.location || '',
     offerId: draft0.offerId || RATE_OFFERS[0].id,
     customRates: draft0.customRates,
     look: draft0.look || saved.look,
