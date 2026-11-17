@@ -1,6 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PitchBatchCard from './PollyPitchBatch';
+import { apiClient } from '../config/api';
+
+jest.mock('../config/api', () => ({ apiClient: { post: jest.fn(() => Promise.resolve({ data: { success: true } })) } }));
 
 const items = [
   { brand_id: 1, brand_name: 'Glow', email: 'pr@glow.com', subject: 'Idea for Glow', body: 'Hi Glow', mailto: 'mailto:pr@glow.com' },
@@ -31,7 +34,13 @@ test('not on Gmail: send them myself opens each in the mail app', async () => {
   expect(screen.queryByRole('button', { name: /Connect Gmail/ })).toBeNull();
   fireEvent.click(screen.getAllByRole('button', { name: 'Open email' })[0]);
   expect(p.onOpenMail).toHaveBeenCalledWith(items[0]);
+  // A mail-app handoff asks before it shows Sent.
+  expect(await screen.findByText('Did it send?')).toBeInTheDocument();
+  expect(screen.queryByText('Sent')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Yes, sent' }));
   await waitFor(() => expect(screen.getAllByText('Sent').length).toBe(1));
+  expect(apiClient.post).toHaveBeenCalledWith('/api/polly/pitch/sent-check',
+    expect.objectContaining({ brand_id: 1, sent: true, method: 'open_email' }));
   fireEvent.click(screen.getByRole('button', { name: 'Copy pitch' }));
   expect(p.onCopy).toHaveBeenCalledWith(items[1]);
   fireEvent.click(screen.getByRole('button', { name: /Back to one-tap sending/ }));

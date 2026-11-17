@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SentCheck from './SentCheck';
 import HotTag from './HotTag';
 import styled, { keyframes } from 'styled-components';
 import { ExternalLink, Loader2 } from 'lucide-react';
@@ -66,12 +67,16 @@ export default function PitchBatchCard({
   if (!gmailConnected) label = n > 1 ? `Connect Gmail & send all ${n}` : 'Connect Gmail & send';
   if (sending) label = 'Sending…';
 
+  // Sent by hand (mail app / copy): the row asks "Did it send?" and only shows Sent on a yes.
+  const [asking, setAsking] = useState({});
+  const ask = (item, method) => setAsking((prev) => ({ ...prev, [String(item.brand_id)]: prev[String(item.brand_id)] || method }));
   const openMail = async (item) => {
     if (!onOpenMail) return;
-    const logged = await onOpenMail(item);
-    if (logged) setHandSent((prev) => new Set(prev).add(String(item.brand_id)));
+    ask(item, 'open_email');
+    await onOpenMail(item);
   };
   const copy = async (item, idx) => {
+    ask(item, 'copy_pitch');
     if (onCopy) await onCopy(item);
     setCopied(idx);
     setTimeout(() => setCopied((c) => (c === idx ? null : c)), 1600);
@@ -116,6 +121,13 @@ export default function PitchBatchCard({
                 </>
               ) : null}
               {itemNote(item) ? <Note>{itemNote(item)}</Note> : null}
+              {!done && asking[String(item.brand_id)] ? (
+                <SentCheck compact brandId={item.brand_id} brandName={item.brand_name}
+                  method={asking[String(item.brand_id)]}
+                  onAnswered={(sent) => {
+                    if (sent) setHandSent((prev) => new Set(prev).add(String(item.brand_id)));
+                  }} />
+              ) : null}
               {byHand && !done && item.mailto && batchItemReady(item) ? (
                 <RowActions>
                   <RowBtn type="button" className="primary" onClick={() => openMail(item)}>Open email</RowBtn>
