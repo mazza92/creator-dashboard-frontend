@@ -34,6 +34,7 @@ import {
 import { brandMarkEmoji } from './brandMarkEmoji';
 import { PollyChecklist } from './PollyChecklist';
 import PollyFirstRun from './PollyFirstRun';
+import SentCheck from './SentCheck';
 import { TRACKER_PATH, chipHref } from './tracker/trackerModel';
 import { captureUpgradeDeeplink, dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 
@@ -1506,7 +1507,9 @@ export default function Polly() {
   const [applyingGigId, setApplyingGigId] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
   const [mailTriedId, setMailTriedId] = useState(null);
-  const [loggedSentId, setLoggedSentId] = useState(null);
+  // Pitch cards whose pitch left Polly by hand (mail app / copy): they get the "Did it send?" check.
+  const [handedOff, setHandedOff] = useState({});
+  const markHandedOff = (msgId, method) => setHandedOff((prev) => (prev[msgId] ? prev : { ...prev, [msgId]: method }));
   const [autoAction, setAutoAction] = useState(null);
   const autoFiredRef = useRef(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -2467,6 +2470,7 @@ export default function Polly() {
     try { await navigator.clipboard.writeText(text); } catch (_) { /* ignore */ }
     flashCopied(`${msgId}:pitch`);
     logPitchHandoff(pitch, 'copy_pitch');
+    if (!pitch.is_reply && !pitch.is_followup) markHandedOff(msgId, 'copy_pitch');
   };
 
   const copyEmail = async (pitch, msgId) => {
@@ -2474,14 +2478,14 @@ export default function Polly() {
     try { await navigator.clipboard.writeText(pitch.email); } catch (_) { /* ignore */ }
     flashCopied(`${msgId}:email`);
     logPitchHandoff(pitch, 'copy_email');
+    if (!pitch.is_reply && !pitch.is_followup) markHandedOff(msgId, 'copy_email');
   };
 
   const openMail = (pitch, msgId) => {
     if (!pitch?.mailto) return;
     setMailTriedId(msgId);
-    logPitchHandoff(pitch, 'open_email').then((res) => {
-      if (res?.logged_sent) setLoggedSentId(msgId);
-    });
+    if (!pitch.is_reply && !pitch.is_followup) markHandedOff(msgId, 'open_email');
+    logPitchHandoff(pitch, 'open_email');
     window.location.href = cleanMailto(pitch.mailto);
   };
 
@@ -2802,16 +2806,14 @@ export default function Polly() {
                           </Ghost>
                         ) : null}
                       </PitchActions>
-                      {msg.pitch.is_reply ? null : mailTriedId === msg.id && loggedSentId === msg.id ? (
-                        <PitchHint>
-                          Marked as sent. I&apos;ll check on day 4 whether {msg.pitch.brand_name || 'they'} replied
-                          and draft the follow-up. Nothing opened? Copy the email and the pitch into Gmail or your mail app.
-                        </PitchHint>
-                      ) : mailTriedId === msg.id ? (
-                        <PitchHint>
-                          Nothing opened? Copy the email and the pitch, paste them into Gmail or your mail app,
-                          then tap &ldquo;I sent it&rdquo; so I can track the follow-up.
-                        </PitchHint>
+                      {!msg.pitch.is_reply && !msg.pitch.is_followup && !msg.pitch.sent_via_gmail && handedOff[msg.id] ? (
+                        <>
+                          {mailTriedId === msg.id ? (
+                            <PitchHint>Nothing opened? Copy the email and the pitch into Gmail or your mail app.</PitchHint>
+                          ) : null}
+                          <SentCheck brandId={msg.pitch.brand_id} brandName={msg.pitch.brand_name}
+                            method={handedOff[msg.id]} />
+                        </>
                       ) : null}
                     </PitchCard>
                   )}
