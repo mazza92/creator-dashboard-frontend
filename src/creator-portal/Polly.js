@@ -1520,6 +1520,9 @@ export default function Polly() {
   const [welcomeDone, setWelcomeDone] = useState(false);
   // First run (bootstrap.first_run): the welcome with lined-up brands and two choices, until the creator picks.
   const [firstRun, setFirstRun] = useState(null);
+  // A brand picked in an email (approval email: ?chip=pitch_brand&brand_id=) while the welcome is up: the welcome
+  // still shows first, with that brand leading the lined-up deck, instead of a pitch posting over it.
+  const [firstRunPick, setFirstRunPick] = useState(null);
   const pendingTrialRef = useRef(false);
   const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
@@ -2236,7 +2239,11 @@ export default function Polly() {
     navigate('/creator/dashboard/for-you', { replace: true });
     // A new creator's first open belongs to the welcome (lined-up brands + the two choices). Email links like
     // "Meet Polly" (?chip=line_up) must not send a message over it; the welcome already lines up their brands.
-    if (firstRun) return;
+    if (firstRun) {
+      const picked = Number(searchParams.get('brand_id')) || null;
+      if (chipId === 'pitch_brand' && picked) setFirstRunPick(picked);
+      return;
+    }
     const base = DEEP_LINK_CHIPS[chipId];
     if (!base) return;
     const brandName = searchParams.get('brand_name') || '';
@@ -2539,6 +2546,7 @@ export default function Polly() {
         {firstRun ? (
           <PollyFirstRun
             data={firstRun}
+            pick={firstRunPick}
             firstName={user?.first_name || ''}
             avatar={POLLY_AVATAR_URL}
             busy={busy}
