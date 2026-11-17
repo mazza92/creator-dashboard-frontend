@@ -39,7 +39,8 @@ test('shows a review tracker, never a queue number or day count', async () => {
   expect(screen.queryByText(/32 days/)).not.toBeInTheDocument();
   expect(screen.getByText(/your last post was 41 days ago/)).toBeInTheDocument();
   expect(screen.getByText('Content brands say yes to')).toBeInTheDocument();
-  expect(screen.getAllByText(/^@/)).toHaveLength(GOOD_UGC.length);
+  // rendered twice (mobile slot + desktop slot), one hidden by CSS per breakpoint
+  expect(screen.getAllByText(/^@/)).toHaveLength(GOOD_UGC.length * 2);
   expect(await screen.findByText('$400')).toBeInTheDocument();
 });
 

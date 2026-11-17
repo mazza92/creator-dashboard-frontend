@@ -75,6 +75,18 @@ function Clip({ item, who = false, className }) {
   );
 }
 
+function Examples() {
+  return (
+    <Dark>
+      <h3>What good UGC looks like</h3>
+      <p>Real creators doing exactly this. Tap one to watch.</p>
+      <Strip>
+        {GOOD_UGC.map((item) => <Clip key={item.id} item={item} who />)}
+      </Strip>
+    </Dark>
+  );
+}
+
 export default function Waitlist() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -239,6 +251,9 @@ export default function Waitlist() {
           </Section>
         )}
 
+        {/* Mobile: the examples come right after the Pro card; desktop keeps them under the checklist. */}
+        <MobileOnly><Examples /></MobileOnly>
+
         <Section>
           <Kicker>What brands look for</Kicker>
           <H2>Content brands say yes to</H2>
@@ -254,13 +269,7 @@ export default function Waitlist() {
             ))}
           </Grid>
 
-          <Dark>
-            <h3>What good UGC looks like</h3>
-            <p>Real creators doing exactly this. Tap one to watch.</p>
-            <Strip>
-              {GOOD_UGC.map((item) => <Clip key={item.id} item={item} who />)}
-            </Strip>
-          </Dark>
+          <DesktopOnly><Examples /></DesktopOnly>
         </Section>
 
         <Footer>
@@ -474,6 +483,13 @@ const Dark = styled.div`
   h3 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.02em; }
   p { margin: 0 0 18px; color: #b6bac4; font-size: 14px; }
   ${mobile} { padding: 20px 16px; border-radius: 22px; }
+`;
+const DesktopOnly = styled.div`
+  ${mobile} { display: none; }
+`;
+const MobileOnly = styled.div`
+  display: none;
+  ${mobile} { display: block; margin-bottom: 8px; }
 `;
 const Strip = styled.div`
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
