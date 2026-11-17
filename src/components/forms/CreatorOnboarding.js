@@ -803,9 +803,28 @@ export default function CreatorOnboarding() {
     setError('');
   };
 
+  // End of onboarding. Creators who go to the waitlist land straight on it (it confirms "Application received");
+  // "You're all set" is only for creators who really get in now (Pro or already approved). Nothing is saved
+  // here: profile and survey are stored before this runs.
+  const finishOnboarding = async () => {
+    setLoading(true);
+    try {
+      const profile = await apiClient.get('/profile', { withCredentials: true });
+      if (needsWaitlistGate(profile.data?.approval_status ?? null)) {
+        await completeOnboarding(onboardingCompleteRes, { welcome: true });
+        return;
+      }
+    } catch (e) {
+      // fall through to the celebration; its button runs the same routing
+    } finally {
+      setLoading(false);
+    }
+    setPhase('celebration');
+  };
+
   const finishSurveyAndCelebrate = () => {
     setSurveyDone(true);
-    setPhase('celebration');
+    finishOnboarding();
   };
 
   const skipSurvey = async (atStep) => {
@@ -1213,14 +1232,14 @@ export default function CreatorOnboarding() {
   const afterGoal = () => {
     setError('');
     if (surveyDone) {
-      setPhase('celebration');
+      finishOnboarding();
     } else {
       setSurveyStep(1);
       setPhase('survey');
     }
   };
 
-  const completeOnboarding = async (res) => {
+  const completeOnboarding = async (res, { welcome = false } = {}) => {
     // Refresh user context so creator_id + approval_status are set before navigating
     // This prevents the incomplete-profile guard from redirecting back to /onboarding
     await refreshUser();
@@ -1240,7 +1259,7 @@ export default function CreatorOnboarding() {
     }
 
     if (needsWaitlistGate(approvalStatus)) {
-      navigate(WAITLIST_PATH, { replace: true });
+      navigate(welcome ? `${WAITLIST_PATH}?welcome=1` : WAITLIST_PATH, { replace: true });
       return;
     }
 

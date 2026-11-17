@@ -406,7 +406,7 @@ export function OnboardingSurveyStep3({
         onBack={onBack}
         onContinue={onContinue}
         onSkip={onSkip}
-        continueLabel="Save & see my brands →"
+        continueLabel="Finish signup →"
         continueDisabled={pain.length === 0}
         loading={loading}
       />
