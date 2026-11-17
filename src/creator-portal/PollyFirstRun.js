@@ -31,7 +31,14 @@ function BrandLogo({ brand, color }) {
   return <span className="mono" style={{ background: color }}>{initials(brand.brand_name)}</span>;
 }
 
-export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }) {
+// The brand the creator tapped in an email leads the deck (and is in the first pitches); others keep their order.
+export function leadWithPick(brands, pick) {
+  const list = brands || [];
+  const i = pick ? list.findIndex((b) => Number(b.brand_id) === Number(pick)) : -1;
+  return i > 0 ? [list[i], ...list.slice(0, i), ...list.slice(i + 1)] : list;
+}
+
+export default function PollyFirstRun({ data, firstName, avatar, onStart, busy, pick = null }) {
   const ref = useRef(null);
   useEffect(() => {
     // The chat scrolls to its bottom; the welcome starts at its top.
@@ -42,7 +49,9 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
   const goal = money(data.goal_cents);
   const niche = nicheText(data.niches);
   const free = data.free_left;
-  const startIds = data.brands.map((b) => b.brand_id).slice(0, free == null ? 3 : Math.max(1, Math.min(3, free)));
+  const brands = leadWithPick(data.brands, pick);
+  const picked = pick && brands[0] && Number(brands[0].brand_id) === Number(pick) ? brands[0].brand_id : null;
+  const startIds = brands.map((b) => b.brand_id).slice(0, free == null ? 3 : Math.max(1, Math.min(3, free)));
   return (
     <Wrap ref={ref} aria-label="Welcome">
       <Hello>
@@ -54,9 +63,9 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
       <Teaser>
         <div className="kick"><span>Lined up for you</span><span>{data.this_week} lined up this week</span></div>
         <Deck>
-          {data.brands.map((b, i) => (
+          {brands.map((b, i) => (
             <Brand key={b.brand_id}>
-              {b.hot ? <span className="hot">🔥 Hot</span> : null}
+              {b.brand_id === picked ? <span className="hot">💌 Your pick</span> : b.hot ? <span className="hot">🔥 Hot</span> : null}
               <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} />
               <span className="nm">{b.meta_ads ? <HotTag /> : null}{b.brand_name}</span>
               <Tag $paid={b.offer === 'paid'}>{b.offer === 'paid' ? 'Paid ask' : 'Gifted'}</Tag>
@@ -90,7 +99,7 @@ export default function PollyFirstRun({ data, firstName, avatar, onStart, busy }
           </span>
           <ArrowRight className="go" size={20} aria-hidden="true" />
         </Choice>
-        <Choice type="button" disabled={busy} onClick={() => onStart('manual', data.brands.map((b) => b.brand_id))}>
+        <Choice type="button" disabled={busy} onClick={() => onStart('manual', brands.map((b) => b.brand_id))}>
           <span className="ic" aria-hidden="true"><Send size={18} strokeWidth={2.2} /></span>
           <span className="tx">
             <span className="t">I&apos;ll pitch brands myself</span>
