@@ -3,6 +3,7 @@ import styled, { css, keyframes } from 'styled-components';
 import { ArrowLeft, Check, Pencil, RefreshCw, X } from 'lucide-react';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
+import { MAX_DAILY_PITCHES } from '../config/proOffer';
 
 // Pro setup: a short, full-screen journey that teaches Autopilot how the creator sounds, what they offer, what
 // brands should see first and who to pitch, then shows a real first pitch and goes live. Every screen saves as
@@ -19,7 +20,8 @@ const DEALS = [
   { id: 'paid', label: 'Paid only' },
 ];
 const TARGETS = [30, 60, 100, 150, 400];
-const TARGET_LABEL = { 60: ' · recommended', 400: ' · up to 20 a day' };
+const MAX_DAILY = MAX_DAILY_PITCHES;
+const TARGET_LABEL = { 60: ' · recommended', 400: ` · up to ${MAX_DAILY} a day` };
 const MAX_NICHES = 3;
 const MAX_POSTS = 2;
 const NICHE_LABEL = (id) => String(id || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -307,13 +309,13 @@ function Welcome({ firstName, trialDays, target }) {
   return (
     <Hero>
       <div>
-        <Badge>★ {trialDays ? `Pro · your free ${trialDays === 7 ? 'week' : `${trialDays} days`} started` : 'Welcome to Pro'}</Badge>
+        <Badge>★ {trialDays ? `Pro · your free ${trialDays === 7 ? 'week' : `${trialDays} days`} started` : 'Pro'}</Badge>
         <h1>
-          {firstName ? `${firstName}, let's` : "Let's"} build your <em>pitch machine</em>.
+          {firstName ? `${firstName}, let's` : "Let's"} set up your <em>autopilot</em>.
         </h1>
         <p>
-          Four quick choices. I&apos;ll learn how you sound and what makes you worth gifting, then pitch {target} brands
-          a month with emails that read like you wrote each one. When you chat with me, I use the same choices.
+          Four quick choices so every pitch sounds like you. Then I pitch up to {MAX_DAILY} matched brands a day from
+          your Gmail, follow up, and draft your replies, while you focus on creating content.
         </p>
         <Plan>
           <li><span className="ic">✍️</span><b>Your voice</b><span>30s</span></li>
@@ -325,11 +327,12 @@ function Welcome({ firstName, trialDays, target }) {
       </div>
       <Month aria-label="What Autopilot does each month">
         <div className="row"><span>Each month on Autopilot</span></div>
-        <b>{target} brands</b>
-        <div className="row"><span>A pitch written for each brand</span><Check size={16} /></div>
+        <b>{target} brands<small>up to {MAX_DAILY} a day</small></b>
+        <div className="row"><span>Pitched from your own Gmail</span><Check size={16} /></div>
         <div className="row"><span>Follow-ups on day 4 and day 10</span><Check size={16} /></div>
-        <div className="row"><span>Sent from your own Gmail</span><Check size={16} /></div>
-        <div className="row"><span>Nothing to approve</span><Check size={16} /></div>
+        <div className="row"><span>Hot brands running UGC ads</span><Check size={16} /></div>
+        <div className="row"><span>Paid UGC gigs in one place</span><Check size={16} /></div>
+        <div className="row"><span>A daily brief on your progress</span><Check size={16} /></div>
       </Month>
     </Hero>
   );
@@ -735,10 +738,10 @@ function LiveStep({ connected, email, returnReason }) {
         <Box>
           <h3>I run it all for you</h3>
           <Checks>
-            <div>New brands every weekday, at the hours brands read email</div>
+            <div>Up to {MAX_DAILY} matched brands pitched every weekday, at the hours brands read email</div>
             <div>Follow-ups on day 4 and day 10, each with a new angle</div>
-            <div>Dead inboxes swapped for verified ones before sending</div>
-            <div>Nothing to approve. Change your style any time in Preferences</div>
+            <div>Hot brands running UGC ads and paid UGC gigs, found for you daily</div>
+            <div>A daily brief: what got done, what&apos;s next, how close you are to your goal</div>
           </Checks>
         </Box>
       </Grid2>
@@ -822,7 +825,7 @@ const Bars = styled.div`
   display: flex;
   gap: 6px;
   i { width: 40px; height: 5px; border-radius: 99px; background: ${t.line}; transition: background 0.2s; }
-  i.on { background: ${t.accent}; }
+  i.on { background: linear-gradient(90deg, #ff3d8b, #ff5a5f); }
   @media (max-width: 640px) { i { width: 22px; } }
 `;
 const Body = styled.div`
@@ -858,14 +861,14 @@ const Btn = styled.button`
   justify-content: center;
   gap: 6px;
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 15px;
   border-radius: 14px;
   padding: 12px 18px;
   min-height: 46px;
   cursor: pointer;
-  border: 1px solid ${(p) => (p.$primary ? t.ink : t.line)};
-  background: ${(p) => (p.$primary ? t.ink : t.white)};
+  border: 1px solid ${(p) => (p.$primary ? 'transparent' : t.line)};
+  background: ${(p) => (p.$primary ? 'linear-gradient(90deg, #ff3d8b, #ff5a5f)' : t.white)};
   color: ${(p) => (p.$primary ? '#fff' : t.ink)};
   &:disabled { opacity: 0.45; cursor: default; }
   &:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
@@ -875,8 +878,8 @@ const QHead = styled.div`
   display: grid;
   gap: 6px;
   margin-bottom: 20px;
-  .k { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: ${t.accent}; }
-  h2 { font-family: ${t.fontDisplay}; font-weight: 400; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.1; }
+  .k { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #ff3d8b; }
+  h2 { font-family: ${t.fontSans}; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(24px, 3vw, 32px); line-height: 1.15; margin: 0; }
   p { margin: 0; color: ${t.muted}; font-size: 15px; }
 `;
 const Hero = styled.div`
@@ -884,8 +887,8 @@ const Hero = styled.div`
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   gap: 28px;
   align-items: center;
-  h1 { font-family: ${t.fontDisplay}; font-weight: 400; font-size: clamp(34px, 4.6vw, 52px); line-height: 1.02; margin: 14px 0 12px; }
-  h1 em { font-style: italic; color: ${t.accent}; }
+  h1 { font-family: ${t.fontSans}; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(28px, 3.8vw, 40px); line-height: 1.12; margin: 14px 0 12px; }
+  h1 em { font-style: normal; background: linear-gradient(90deg, #ff3d8b, #ff5a5f); -webkit-background-clip: text; background-clip: text; color: transparent; }
   p { margin: 0 0 18px; color: ${t.muted}; font-size: 16px; line-height: 1.5; }
   @media (max-width: 760px) { grid-template-columns: 1fr; gap: 20px; }
 `;
@@ -895,9 +898,9 @@ const Badge = styled.span`
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #8a5b0c;
-  background: #fbf1dc;
-  padding: 5px 11px;
+  color: #fff;
+  background: linear-gradient(90deg, #ff3d8b, #ff5a5f);
+  padding: 6px 12px;
   border-radius: 999px;
 `;
 const Plan = styled.ul`
@@ -920,7 +923,8 @@ const Month = styled.div`
   gap: 12px;
   .row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: rgba(255, 255, 255, 0.8); }
   .row svg { color: #7ce0b8; }
-  b { font-family: ${t.fontDisplay}; font-weight: 400; font-size: 44px; line-height: 1; color: #7ce0b8; }
+  b { font-family: ${t.fontSans}; font-weight: 800; letter-spacing: -0.02em; font-size: 40px; line-height: 1; color: #72e1d7; }
+  b small { font-size: 15px; font-weight: 600; color: #c9ced8; letter-spacing: 0; margin-left: 8px; }
   @media (max-width: 760px) { b { font-size: 36px; } }
 `;
 const Seg = styled.div`
@@ -946,9 +950,9 @@ const Opt = styled.button`
   cursor: pointer;
   small { display: block; color: ${t.muted}; font-size: 13px; font-weight: 400; }
   .l { width: 28px; height: 28px; border-radius: 8px; border: 1px solid ${t.line}; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
-  .ck { opacity: 0; color: ${t.accent}; }
-  &[aria-pressed='true'] { border-color: ${t.accent}; background: ${t.accentSoft}; }
-  &[aria-pressed='true'] .l { background: ${t.accent}; color: #fff; border-color: ${t.accent}; }
+  .ck { opacity: 0; color: #ff3d8b; }
+  &[aria-pressed='true'] { border-color: #ff3d8b; background: #fff5f9; }
+  &[aria-pressed='true'] .l { background: linear-gradient(90deg, #ff3d8b, #ff5a5f); color: #fff; border-color: transparent; }
   &[aria-pressed='true'] .ck { opacity: 1; }
   &:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
 `;
@@ -975,7 +979,7 @@ const Tone = styled.button`
   b { font-size: 14.5px; font-weight: 700; }
   i { font-size: 13px; color: ${t.muted}; line-height: 1.4; }
   &:hover { border-color: ${t.accentBorder}; }
-  &[aria-pressed='true'] { background: ${t.accentDeep}; border-color: ${t.accentDeep}; color: #fff; }
+  &[aria-pressed='true'] { background: ${t.ink}; border-color: ${t.ink}; color: #fff; }
   &[aria-pressed='true'] i { color: rgba(255, 255, 255, 0.85); }
   &:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
 `;
@@ -1097,8 +1101,8 @@ const Post = styled.button`
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .ph { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; }
   .v { position: absolute; left: 7px; bottom: 6px; color: #fff; font-size: 12px; font-weight: 800; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
-  em { position: absolute; right: 6px; top: 6px; width: 22px; height: 22px; border-radius: 50%; background: ${t.accent}; color: #fff; display: grid; place-items: center; }
-  &[aria-pressed='true'] { border-color: ${t.accent}; box-shadow: 0 0 0 2px ${t.accent}; }
+  em { position: absolute; right: 6px; top: 6px; width: 22px; height: 22px; border-radius: 50%; background: #ff3d8b; color: #fff; display: grid; place-items: center; }
+  &[aria-pressed='true'] { border-color: #ff3d8b; box-shadow: 0 0 0 2px #ff3d8b; }
   &[aria-pressed='false'] img { opacity: 0.75; }
   &:focus-visible { outline: 2px solid ${t.accent}; outline-offset: 2px; }
 `;
@@ -1196,7 +1200,7 @@ const Done = styled.div`
   gap: 10px;
   padding: 60px 0;
   .ok { width: 76px; height: 76px; border-radius: 50%; background: ${t.accentSoft}; color: ${t.accentDeep}; display: grid; place-items: center; }
-  h2 { font-family: ${t.fontDisplay}; font-weight: 400; font-size: 38px; }
+  h2 { font-family: ${t.fontSans}; font-weight: 800; letter-spacing: -0.02em; font-size: 32px; margin: 0; }
   p { margin: 0; color: ${t.muted}; max-width: 380px; }
 `;
 const Loading = styled.p`

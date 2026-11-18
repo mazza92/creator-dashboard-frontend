@@ -1,16 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { FiCheckCircle, FiArrowRight } from 'react-icons/fi';
+import { ArrowRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { trackProPurchase } from '../utils/subscriptionAnalytics';
+import { MAX_DAILY_PITCHES } from '../config/proOffer';
+import { creatorTokens as t } from '../theme/creatorTokens';
+
+// Right after checkout. Same look and promise as the free flow's Pro card. Gmail is asked for only when it isn't
+// connected yet (creators who sent their free pitches from Gmail go straight on to set up Autopilot).
+
+export const PRO_PERKS = [
+  ['📨', `Up to ${MAX_DAILY_PITCHES} matched brands pitched every weekday, from your Gmail`],
+  ['🔁', 'Follow-ups on day 4 and day 10, sent for you'],
+  ['💬', 'Replies answered: Polly drafts your answer, rates included'],
+  ['🔥', 'Hot brands running UGC ads, added as they appear'],
+  ['💸', 'Paid UGC gigs, gathered in one place'],
+  ['☀️', 'A daily brief: what got done and what’s next'],
+];
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [gmail, setGmail] = useState(null); // null: checking, then true / false
   const [connecting, setConnecting] = useState(false);
 
   const openPolly = () => navigate('/creator/dashboard/for-you?autopilot=pro_started');
@@ -44,7 +56,7 @@ const SubscriptionSuccess = () => {
             content_id: 'pro_subscription',
             content_name: 'NewCollab Pro',
             value: 19,
-            currency: 'USD'
+            currency: 'USD',
           });
           window.sessionStorage.setItem(ttqKey, '1');
         }
@@ -54,192 +66,109 @@ const SubscriptionSuccess = () => {
     const confirmAndFetchStatus = async () => {
       try {
         if (sessionId) {
-          await api.post(
-            '/api/subscription/confirm-checkout',
-            { session_id: sessionId }
-          );
+          await api.post('/api/subscription/confirm-checkout', { session_id: sessionId });
         }
-
-        const response = await api.get('/api/subscription/status');
-        setSubscriptionInfo(response.data);
-
-        setLoading(false);
+        await api.get('/api/subscription/status');
       } catch (error) {
         console.error('Error confirming checkout:', error);
-        setLoading(false);
+      }
+      try {
+        const ap = await api.get('/api/polly/autopilot/status');
+        setGmail(Boolean(ap.data?.gmail?.connected));
+      } catch (_) {
+        setGmail(false);
       }
     };
 
-    setTimeout(confirmAndFetchStatus, 1000);
+    const id = setTimeout(confirmAndFetchStatus, 1000);
+    return () => clearTimeout(id);
   }, [searchParams]);
 
   return (
-    <Container>
-      <SuccessCard
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <IconWrapper>
-          <FiCheckCircle size={80} />
-        </IconWrapper>
+    <Page>
+      <Card>
+        <div className="stripe" aria-hidden="true" />
+        <div className="inner">
+          <span className="badge">★ Pro</span>
+          <h1>You&apos;re Pro. Polly&apos;s on it. <span aria-hidden="true">🚀</span></h1>
+          <p className="sub">From today she runs your brand outreach on autopilot, so you can focus on creating content.</p>
 
-        <Title>Welcome to Pro! 🎉</Title>
+          <ul>
+            {PRO_PERKS.map(([icon, text]) => (
+              <li key={text}><span className="ic" aria-hidden="true">{icon}</span>{text}</li>
+            ))}
+          </ul>
 
-        <Message>
-          Pro is on. Connect Gmail and your first pitches go out within the hour.
-        </Message>
+          {gmail === null ? (
+            <Primary type="button" disabled>One sec…</Primary>
+          ) : gmail ? (
+            <>
+              <Primary type="button" onClick={openPolly}>Set up my autopilot <ArrowRight size={18} aria-hidden="true" /></Primary>
+              <p className="fine">Gmail is connected. Two minutes of setup and your first pitches go out within the hour.</p>
+            </>
+          ) : (
+            <>
+              <p className="step">One step left: connect Gmail so Polly can send.</p>
+              <Primary type="button" onClick={connectGmail} disabled={connecting}>
+                {connecting ? 'Opening Google…' : <>Connect Gmail <ArrowRight size={18} aria-hidden="true" /></>}
+              </Primary>
+              <p className="fine">Send-only access. Polly can&apos;t read your inbox.</p>
+              <button type="button" className="later" onClick={openPolly}>I&apos;ll do it later</button>
+            </>
+          )}
 
-        {!loading && subscriptionInfo && (
-          <Features>
-            <Feature>✅ Every weekday Polly picks 3 brands that fit you</Feature>
-            <Feature>✅ She writes and sends each pitch from your Gmail, with nothing to approve</Feature>
-            <Feature>✅ She follows up on day 4 and day 10 and shows you who opened your kit</Feature>
-            <Feature>✅ When a brand replies, she writes your answer with your rate</Feature>
-            <Feature>✅ Unlimited roster applications</Feature>
-          </Features>
-        )}
-
-        <ButtonGroup>
-          <PrimaryButton
-            onClick={connectGmail}
-            disabled={connecting}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {connecting ? 'Opening Google…' : <>Connect Gmail <FiArrowRight /></>}
-          </PrimaryButton>
-          <Reassure>Send-only access. Polly can&apos;t read your inbox.</Reassure>
-
-          <LaterLink type="button" onClick={openPolly}>
-            I&apos;ll do it later
-          </LaterLink>
-          <Reassure>Nothing can be sent until Gmail is connected.</Reassure>
-        </ButtonGroup>
-
-        <Footer>
-          Brands usually take 2 to 4 weeks to reply, so give Polly a few weeks of daily pitches.
-        </Footer>
-      </SuccessCard>
-    </Container>
+          <p className="note">Brands usually reply in 2–4 weeks, so a quiet first week is normal.</p>
+        </div>
+      </Card>
+    </Page>
   );
 };
 
-const Container = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-`;
-
-const SuccessCard = styled(motion.div)`
-  background: white;
-  border-radius: 24px;
-  padding: 60px 40px;
-  max-width: 600px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 768px) {
-    padding: 40px 24px;
-  }
-`;
-
-const IconWrapper = styled.div`
-  color: #10B981;
-  margin-bottom: 24px;
-
-  svg {
-    filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3));
-  }
-`;
-
-const Title = styled.h1`
-  font-size: 32px;
-  font-weight: 800;
-  color: #111827;
-  margin: 0 0 16px 0;
-
-  @media (max-width: 768px) {
-    font-size: 28px;
-  }
-`;
-
-const Message = styled.p`
-  font-size: 16px;
-  color: #6B7280;
-  line-height: 1.6;
-  margin: 0 0 32px 0;
-`;
-
-const Features = styled.div`
-  background: #F9FAFB;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
-  text-align: left;
-`;
-
-const Feature = styled.div`
-  font-size: 15px;
-  color: #374151;
-  padding: 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
-`;
-
-const PrimaryButton = styled(motion.button)`
-  width: 100%;
-  padding: 16px 32px;
-  background: linear-gradient(135deg, #3B82F6, #EC4899);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-
-  &:hover {
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-  }
-`;
-
-const Reassure = styled.p`
-  font-size: 13px;
-  color: #6B7280;
-  margin: -4px 0 0;
-`;
-
-const LaterLink = styled.button`
-  background: none;
-  border: none;
-  color: #6B7280;
-  font-size: 14px;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 4px;
-`;
-
-const Footer = styled.p`
-  font-size: 13px;
-  color: #9CA3AF;
-  margin: 0;
-`;
-
 export default SubscriptionSuccess;
+
+const Page = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 16px;
+  background: ${t.paper};
+  font-family: ${t.fontSans};
+  box-sizing: border-box;
+`;
+
+const Card = styled.div`
+  width: 100%;
+  max-width: 520px;
+  background: ${t.ink};
+  color: #fff;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(18, 20, 26, 0.2);
+  .stripe { height: 6px; background: linear-gradient(90deg, #72e1d7, #ff3d8b, #ff5a5f); }
+  .inner { padding: 28px 26px 24px; }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 999px; background: linear-gradient(90deg, #ff3d8b, #ff5a5f);
+  }
+  h1 { margin: 16px 0 8px; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; }
+  .sub { margin: 0 0 20px; font-size: 16px; line-height: 1.5; color: #c9ced8; }
+  ul { list-style: none; margin: 0 0 22px; padding: 14px 16px; display: grid; gap: 10px; background: #1f2229; border-radius: 16px; }
+  li { display: flex; align-items: center; gap: 12px; font-size: 14.5px; line-height: 1.4; color: #e6e8ec; }
+  .ic { width: 30px; height: 30px; border-radius: 9px; background: #2a2e37; flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  .step { margin: 0 0 12px; text-align: center; font-weight: 600; font-size: 14.5px; }
+  .fine { margin: 10px 0 0; text-align: center; font-size: 12.5px; color: #8a909c; }
+  .later {
+    display: block; margin: 8px auto 0; border: 0; background: none; cursor: pointer; font: inherit;
+    font-size: 14px; color: #c9ced8; text-decoration: underline; padding: 6px;
+  }
+  .note { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid #2a2e37; text-align: center; font-size: 13px; color: #8a909c; }
+  @media (max-width: 480px) { .inner { padding: 24px 18px 20px; } h1 { font-size: 26px; } }
+`;
+
+const Primary = styled.button`
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  border: 0; border-radius: 14px; padding: 16px; cursor: pointer; font-family: inherit;
+  font-size: 16px; font-weight: 800; color: #fff; background: linear-gradient(90deg, #ff3d8b, #ff5a5f);
+  &:disabled { opacity: 0.7; cursor: default; }
+`;
