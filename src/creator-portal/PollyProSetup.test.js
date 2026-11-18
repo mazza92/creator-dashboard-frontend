@@ -52,7 +52,7 @@ const next = (name = /Continue/) => fireEvent.click(screen.getByRole('button', {
 test('walks the journey, saving each step, and never asks for send days', async () => {
   const onDone = jest.fn();
   render(<PollyProSetup open firstName="Maya" trialDays={7} onClose={jest.fn()} onDone={onDone} />);
-  expect(await screen.findByText(/build your/)).toBeInTheDocument();
+  expect(await screen.findByText(/set up your/)).toBeInTheDocument();
   expect(screen.getByText(/free week started/)).toBeInTheDocument();
   next(/Let's go/);
 
