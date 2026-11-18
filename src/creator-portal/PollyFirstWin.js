@@ -20,10 +20,11 @@ const PRO_UNLOCKS = [
   ['☀️', 'A daily brief: what got done and what’s next'],
 ];
 
-export default function PollyFirstWin({ names, freeLeft = 0, isPro = false, onUpgrade, onWait }) {
+export default function PollyFirstWin({ names, freeLeft = 0, isPro = false, onUpgrade, onWait, showBanner = true }) {
   const n = (names || []).filter(Boolean).length;
   return (
     <Wrap>
+      {showBanner ? (
       <Banner role="status">
         <span className="em" aria-hidden="true">🎉</span>
         <div>
@@ -31,6 +32,7 @@ export default function PollyFirstWin({ names, freeLeft = 0, isPro = false, onUp
           <span>Follow-ups are scheduled for day 4 and day 10. Replies land in your inbox.</span>
         </div>
       </Banner>
+      ) : null}
       {isPro ? null : (
         <Pro>
           <span className="badge">{freeLeft > 0 ? `${freeLeft} free pitch${freeLeft === 1 ? '' : 'es'} left` : '0 free pitches left'}</span>

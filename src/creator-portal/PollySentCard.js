@@ -13,7 +13,7 @@ function day(iso) {
   return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-export default function PollySentCard({ summary, onChip, disabled }) {
+export default function PollySentCard({ summary, onChip, disabled, onOpenTracker = null }) {
   const sent = summary?.sent || [];
   if (!sent.length) return null;
   const [day4, day10] = summary.followups || [];
@@ -73,7 +73,16 @@ export default function PollySentCard({ summary, onChip, disabled }) {
         </More>
       ) : null}
 
-      {summary.pro_offer ? (
+      {onOpenTracker ? (
+        <Pipeline>
+          <b>Your pipeline is running</b>
+          <span>
+            Every pitch, follow-up date and next brand is on your Tracker, scheduled and updated as brands open and
+            reply.
+          </span>
+          <button type="button" onClick={onOpenTracker}>See my Tracker →</button>
+        </Pipeline>
+      ) : summary.pro_offer ? (
         <Pro>
           <b>Want me to keep going?</b>
           <span>I&apos;ll pitch 15 new brands a week for you, follow up and draft your replies. You just answer.</span>
@@ -86,6 +95,21 @@ export default function PollySentCard({ summary, onChip, disabled }) {
     </Card>
   );
 }
+
+const Pipeline = styled.div`
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: ${t.accentSoft};
+  border: 1px solid ${t.accentBorder};
+  b { font-size: 15px; color: ${t.ink}; }
+  span { font-size: 13.5px; line-height: 1.45; color: ${t.accentDeep}; }
+  button {
+    justify-self: start; border: 0; border-radius: 12px; padding: 11px 16px; cursor: pointer;
+    background: ${t.ink}; color: #fff; font-family: inherit; font-size: 14.5px; font-weight: 800;
+  }
+`;
 
 const Card = styled.section`
   box-sizing: border-box;
