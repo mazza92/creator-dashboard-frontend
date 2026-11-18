@@ -33,7 +33,10 @@ import {
 } from './pollyStorage';
 import { brandMarkEmoji } from './brandMarkEmoji';
 import { PollyChecklist } from './PollyChecklist';
-import PollyFirstRun from './PollyFirstRun';
+import PollyFirstRun, { nicheText } from './PollyFirstRun';
+import PollyAtWork from './PollyAtWork';
+import PollyFirstReview from './PollyFirstReview';
+import PollyFirstWin from './PollyFirstWin';
 import SentCheck from './SentCheck';
 import { TRACKER_PATH, chipHref } from './tracker/trackerModel';
 import { captureUpgradeDeeplink, dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
@@ -157,6 +160,23 @@ function csrfToken() {
 }
 
 const BATCH_AFTER_CONNECT_KEY = 'pollySendBatchAfterConnect';
+// "Run it all for me" on the welcome: the first pitches are reviewed in Polly's approval queue until they're sent.
+// Kept across the Gmail connect round trip (Google may hand back to a new tab).
+const FIRST_REVIEW_KEY = 'pollyFirstReview';
+
+function readFirstReview(creatorId) {
+  try {
+    const raw = localStorage.getItem(`${FIRST_REVIEW_KEY}:${creatorId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+}
+
+function writeFirstReview(creatorId, value) {
+  try {
+    if (value) localStorage.setItem(`${FIRST_REVIEW_KEY}:${creatorId}`, JSON.stringify(value));
+    else localStorage.removeItem(`${FIRST_REVIEW_KEY}:${creatorId}`);
+  } catch (_) { /* ignore */ }
+}
 
 // Past this, a turn is treated as stuck: the skeleton gives way to a retry chip.
 const TURN_TIMEOUT_MS = 40000;
@@ -1523,6 +1543,12 @@ export default function Polly() {
   // A brand picked in an email (approval email: ?chip=pitch_brand&brand_id=) while the welcome is up: the welcome
   // still shows first, with that brand leading the lined-up deck, instead of a pitch posting over it.
   const [firstRunPick, setFirstRunPick] = useState(null);
+  // Approval queue for the first pitches ({brands}: the welcome's matches, for Swap), the live "Polly at work" card
+  // while they're written, the pitch being swapped, and "send them myself" chosen from the queue.
+  const [firstReview, setFirstReviewState] = useState(null);
+  const [firstBatchCtx, setFirstBatchCtx] = useState(null);
+  const [swappingId, setSwappingId] = useState(null);
+  const [manualBatch, setManualBatch] = useState(false);
   const pendingTrialRef = useRef(false);
   const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
@@ -1549,6 +1575,20 @@ export default function Polly() {
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { suggestedRef.current = suggested; }, [suggested]);
   useEffect(() => { creatorIdRef.current = creatorId; }, [creatorId]);
+  useEffect(() => { if (creatorId) setFirstReviewState(readFirstReview(creatorId)); }, [creatorId]);
+  const firstReviewRef = useRef(null);
+  useEffect(() => { firstReviewRef.current = firstReview; }, [firstReview]);
+  const creditsRef = useRef(null);
+  useEffect(() => { creditsRef.current = credits; }, [credits]);
+  useEffect(() => {
+    if (busy) return;
+    setFirstBatchCtx(null);
+    setSwappingId(null);
+  }, [busy]);
+  const setFirstReview = useCallback((value) => {
+    setFirstReviewState(value);
+    if (creatorIdRef.current) writeFirstReview(creatorIdRef.current, value);
+  }, []);
 
   useLayoutEffect(() => {
     if (!creatorId) {
@@ -1871,12 +1911,26 @@ export default function Polly() {
       ));
       return { ...m, pitch_batch: { ...m.pitch_batch, items, status: reply.sent ? 'sent' : m.pitch_batch.status } };
     });
+    // First pitches out of the approval queue: the win, then Pro as what keeps it going.
+    let firstWin = null;
+    if (firstReviewRef.current && reply.sent) {
+      const batchItems = batchIdx >= 0 ? patched[batchIdx].pitch_batch.items : [];
+      const names = batchItems.filter((i) => i.status === 'sent' || i.status === 'already_sent').map((i) => i.brand_name);
+      const cr = creditsRef.current || {};
+      firstWin = {
+        names: names.length ? names : batchItems.map((i) => i.brand_name),
+        is_pro: Boolean(cr.is_unlimited),
+        free_left: Math.max(0, Number(cr.remaining || 0) - names.length),
+      };
+      setFirstReview(null);
+    }
     const next = [...patched, {
       id: newId(),
       role: 'assistant',
       content: scrubPollyVoice(reply.message || 'Done.'),
-      task_chips: reply.task_chips || [],
+      task_chips: firstWin ? [] : (reply.task_chips || []),
       sent_summary: reply.sent_summary || null,
+      first_win: firstWin,
     }];
     setMessages(next);
     if (reply.sent) {
@@ -1894,7 +1948,33 @@ export default function Polly() {
       try { window.dispatchEvent(new Event('savedBrandCountChanged')); } catch (_) { /* ignore */ }
     }
     setSendingBatch(false);
-  }, [sendingBatch, connectGmailForBatch, persistThread]);
+  }, [sendingBatch, connectGmailForBatch, persistThread, setFirstReview]);
+
+  // Approval queue (first pitches): inline edits are saved server-side so the send uses the creator's words.
+  const editBatchPitch = useCallback(async (item, body) => {
+    try {
+      await apiClient.post('/api/polly/pitch-batch/edit', { brand_id: item.brand_id, body });
+    } catch (_) { /* the text stays on screen; the send uses the last saved version */ }
+    const next = messagesRef.current.map((m) => (m.pitch_batch?.items?.length ? {
+      ...m,
+      pitch_batch: {
+        ...m.pitch_batch,
+        items: m.pitch_batch.items.map((i) => (String(i.brand_id) === String(item.brand_id) ? { ...i, body } : i)),
+      },
+    } : m));
+    setMessages(next);
+    persistThread(next, suggestedRef.current);
+  }, [persistThread]);
+
+  // Swap brand: only that pitch is rewritten, for the new brand; its free credit comes back first (server).
+  const swapBatchPitch = (item, brand) => {
+    if (busy) return;
+    setSwappingId(item.brand_id);
+    sendStarter({
+      id: 'swap_pitch', action: 'pitch_batch', brand_ids: [brand.brand_id], replace_brand_id: item.brand_id,
+      label: `Swap ${item.brand_name} for ${brand.brand_name}`,
+    });
+  };
 
   // 'Send for me' on a single pitch card: the pitch Polly stored for that brand goes out from their Gmail.
   const [sendingPitchId, setSendingPitchId] = useState(null);
@@ -2103,6 +2183,8 @@ export default function Polly() {
 
   const firstVisit = ready && !welcomeDone && messages.length === 0
     && !(creatorId && readPollyLocal(creatorId)?.messages?.length);
+  let lastBatchId = null;
+  messages.forEach((m) => { if (m.pitch_batch?.items?.length) lastBatchId = m.id; });
   const welcomeMode = firstVisit && !firstRun && Boolean(pitchFacts.facts?.needs_confirm);
 
   // Pro setup journey: right after checkout or Gmail, and once a session for Pro creators who haven't finished
@@ -2153,7 +2235,10 @@ export default function Polly() {
       sendStarter({ id: 'show_brands', action: 'show_brands', brand_ids: brandIds, label: "I'll pitch brands myself" });
       return;
     }
-    sendStarter({ id: 'pitch_all', action: 'pitch_batch', brand_ids: brandIds, label: 'Start contacting brands for me' });
+    sendStarter({
+      id: 'pitch_all', action: 'pitch_batch', brand_ids: brandIds,
+      label: choice === 'autopilot' ? 'Start autopilot with my free pitches' : 'Start contacting brands for me',
+    });
   };
 
 
@@ -2161,6 +2246,20 @@ export default function Polly() {
   // creator never sees 0 credits next to a second "Connect Gmail" prompt. "Myself": brand cards, pay per Contact.
   const startFirstRun = (choice, brandIds) => {
     if (busy) return;
+    if (choice === 'autopilot') {
+      // Pitches first (reviewed in the approval queue), Gmail only when they approve.
+      const brands = firstRun?.brands || [];
+      const picked = brandIds.map((id) => brands.find((b) => Number(b.brand_id) === Number(id))).filter(Boolean);
+      setFirstBatchCtx({
+        niche: nicheText(firstRun?.niches),
+        names: picked.map((b) => b.brand_name),
+        hot: picked.some((b) => b.hot || b.meta_ads),
+      });
+      setManualBatch(false);
+      setFirstReview({ brands });
+      writeFirstPitches('autopilot', brandIds);
+      return;
+    }
     if (choice === 'gmail' && !autopilot.state?.gmail?.connected) {
       connectGmailForBatch(`firstrun:${brandIds.join(',')}`);
       return;
@@ -2200,6 +2299,7 @@ export default function Polly() {
       action: chip.action,
       brand_id: chip.brand_id,
       brand_ids: chip.brand_ids,
+      replace_brand_id: chip.replace_brand_id,
       brand_name: chip.brand_name,
       deal: chip.deal,
       confirm_cold: Boolean(chip.confirm_cold),
@@ -2551,6 +2651,7 @@ export default function Polly() {
             avatar={POLLY_AVATAR_URL}
             busy={busy}
             onStart={startFirstRun}
+            onBrowse={() => navigate(DIRECTORY_PATH)}
           />
         ) : null}
         {!firstRun && ready && creatorId && !welcomeMode ? (
@@ -2828,6 +2929,11 @@ export default function Polly() {
                   {msg.sent_summary?.sent?.length > 0 && (
                     <PollySentCard summary={msg.sent_summary} onChip={sendStarter} disabled={busy} />
                   )}
+                  {msg.first_win?.names?.length > 0 && (
+                    <PollyFirstWin names={msg.first_win.names} freeLeft={msg.first_win.free_left}
+                      isPro={msg.first_win.is_pro} onUpgrade={() => setShowUpgrade(true)}
+                      onWait={() => navigate(TRACKER_PATH)} />
+                  )}
                   {msg.activity?.items?.length > 0 && (
                     <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
                   )}
@@ -2841,8 +2947,25 @@ export default function Polly() {
                   {msg.goal_plan?.days?.length > 0 && (
                     <PollyGoalPlanCard plan={msg.goal_plan} chips={msg.task_chips || []} onChip={sendStarter} disabled={busy} />
                   )}
-                  {msg.pitch_batch?.items?.length > 0 && (
+                  {msg.pitch_batch?.items?.length > 0 && firstReview && !manualBatch && msg.id === lastBatchId
+                    && msg.pitch_batch.items.some((i) => !(i.status === 'sent' || i.status === 'already_sent')) ? (
+                    <PollyFirstReview
+                      batch={msg.pitch_batch}
+                      brandFacts={Object.fromEntries((firstReview.brands || []).map((b) => [String(b.brand_id), b]))}
+                      swapOptions={firstReview.brands || []}
+                      gmailConnected={Boolean(autopilot.state?.gmail?.connected)}
+                      sending={sendingBatch}
+                      disabled={busy}
+                      swappingId={swappingId}
+                      onApprove={autopilot.state?.gmail?.connected ? sendBatch : () => connectGmailForBatch()}
+                      onEdit={editBatchPitch}
+                      onSwap={swapBatchPitch}
+                      onManual={autopilot.state && autopilot.state.available === false ? null : () => setManualBatch(true)}
+                      free={!credits?.is_unlimited}
+                    />
+                  ) : msg.pitch_batch?.items?.length > 0 && (
                     <PitchBatchCard
+                      defaultManual={manualBatch && msg.id === lastBatchId}
                       batch={msg.pitch_batch}
                       available={autopilot.state ? autopilot.state.available !== false : true}
                       gmailConnected={Boolean(autopilot.state?.gmail?.connected)}
@@ -2886,6 +3009,9 @@ export default function Polly() {
                 <AssistantText aria-live="polite">
                   <PollyRichText text={scrubPollyVoice(liveText)} />
                 </AssistantText>
+              ) : busy && firstBatchCtx ? (
+                <PollyAtWork avatar={POLLY_AVATAR_URL} niche={firstBatchCtx.niche} names={firstBatchCtx.names}
+                  hot={firstBatchCtx.hot} />
               ) : (
                 <PollyWorking kind={busy ? busyKind : pendingLinkKind} />
               )}
