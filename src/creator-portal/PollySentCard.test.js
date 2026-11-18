@@ -33,3 +33,11 @@ test('Pro creators get no offer', () => {
   expect(screen.queryByRole('button', { name: /Keep pitching/ })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Add to my kit' })).toBeNull();
 });
+
+test('first send: the Tracker invite replaces the old Pro offer', () => {
+  const onOpenTracker = jest.fn();
+  render(<PollySentCard summary={{ sent: [{ brand_id: 1, brand_name: 'Anua' }], pro_offer: true }} onOpenTracker={onOpenTracker} />);
+  expect(screen.queryByText(/Keep pitching for me/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByText(/See my Tracker/));
+  expect(onOpenTracker).toHaveBeenCalled();
+});

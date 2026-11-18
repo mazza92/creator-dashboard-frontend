@@ -2927,10 +2927,12 @@ export default function Polly() {
                     </PitchCard>
                   )}
                   {msg.sent_summary?.sent?.length > 0 && (
-                    <PollySentCard summary={msg.sent_summary} onChip={sendStarter} disabled={busy} />
+                    <PollySentCard summary={msg.sent_summary} onChip={sendStarter} disabled={busy}
+                      onOpenTracker={msg.first_win ? () => navigate(TRACKER_PATH) : null} />
                   )}
                   {msg.first_win?.names?.length > 0 && (
                     <PollyFirstWin names={msg.first_win.names} freeLeft={msg.first_win.free_left}
+                      showBanner={!(msg.sent_summary?.sent?.length > 0)}
                       isPro={msg.first_win.is_pro} onUpgrade={() => setShowUpgrade(true)}
                       onWait={() => navigate(TRACKER_PATH)} />
                   )}
