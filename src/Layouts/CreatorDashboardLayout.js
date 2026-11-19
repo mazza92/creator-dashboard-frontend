@@ -517,6 +517,7 @@ const CreatorDashboardLayout = () => {
   const { handleLogout } = useContext(UserContext);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [pulseDay, setPulseDay] = useState(null);
+  const [newGigs, setNewGigs] = useState(0);
   const [pulseSeen, setPulseSeen] = useState(() => {
     try { return localStorage.getItem('nc_pulse_seen') || ''; } catch (_) { return ''; }
   });
@@ -706,6 +707,15 @@ const CreatorDashboardLayout = () => {
     window.addEventListener('nc-pulse-seen', onSeen);
     return () => window.removeEventListener('nc-pulse-seen', onSeen);
   }, []);
+  const onGigs = useCallback((n) => setNewGigs(n), []);
+  const onGigsPage = location.pathname.startsWith('/creator/dashboard/paid-gigs');
+  useEffect(() => {
+    // Opening the UGC gigs page clears its badge (server-side, so it stays cleared on every device).
+    if (!onGigsPage || !newGigs) return;
+    setNewGigs(0);
+    api.post('/api/activity/seen', { what: 'gigs' }).catch(() => {});
+  }, [onGigsPage, newGigs]);
+  const gigsBadge = onGigsPage ? 0 : newGigs;
   const pulseFresh = Boolean(pulseDay) && pulseDay > pulseSeen
     && !location.pathname.startsWith('/creator/dashboard/pulse');
 
@@ -743,6 +753,9 @@ const CreatorDashboardLayout = () => {
                 <DesktopCountBadge title="Your move">{yourMove}</DesktopCountBadge>
               )}
               {label === 'Pulse' && pulseFresh && <FreshDot aria-label="New today" />}
+              {label === 'UGC gigs' && gigsBadge > 0 && (
+                <DesktopCountBadge title="New gigs for you">{gigsBadge > 9 ? '9+' : gigsBadge}</DesktopCountBadge>
+              )}
             </NavTab>
           ))}
         </NavTabs>
@@ -783,6 +796,7 @@ const CreatorDashboardLayout = () => {
           <ActivityBell
             enabled={Boolean(userData?.creator_id)}
             onPulse={onPulse}
+            onGigs={onGigs}
             onOpen={() => setShowUserMenu(false)}
           />
           <AvatarPill onClick={() => setShowUserMenu(!showUserMenu)}>
@@ -870,13 +884,15 @@ const CreatorDashboardLayout = () => {
             to={path}
             $active={navActive(location.pathname, path)}
             aria-current={navActive(location.pathname, path) ? 'page' : undefined}
-            aria-label={label === 'Tracker' && yourMove > 0 ? `Tracker, ${yourMove} waiting on you` : label}
+            aria-label={label === 'Tracker' && yourMove > 0 ? `Tracker, ${yourMove} waiting on you`
+              : label === 'UGC gigs' && gigsBadge > 0 ? `UGC gigs, ${gigsBadge} new` : label}
           >
             <Icon aria-hidden="true" />
             <span className="l">{label}</span>
             {label === 'Tracker' && yourMove > 0 && <TabDot>{yourMove > 9 ? '9+' : yourMove}</TabDot>}
             {label === 'Polly' && matchedRemaining > 0 && <TabDot>{matchedRemaining > 9 ? '9+' : matchedRemaining}</TabDot>}
             {label === 'Pulse' && pulseFresh && <TabFreshDot aria-label="New today" />}
+            {label === 'UGC gigs' && gigsBadge > 0 && <TabDot>{gigsBadge > 9 ? '9+' : gigsBadge}</TabDot>}
           </TabItem>
         ))}
       </TabBar>

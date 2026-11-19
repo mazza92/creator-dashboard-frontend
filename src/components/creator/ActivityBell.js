@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Bell, MessageCircle, Eye, Send, Repeat2, Clapperboard, Activity, AlertTriangle } from 'lucide-react';
+import { Bell, MessageCircle, Eye, Send, Repeat2, Clapperboard, Activity, AlertTriangle, Flame, Store } from 'lucide-react';
 import api from '../../config/api';
 
 // The creator's activity feed (Instagram / TikTok creator-tools pattern): replies, kit opens, pitches Polly sent,
 // follow-ups, paid gigs, today's UGC Pulse, payment issues. Badge = new since the bell was last opened; opening it
-// marks everything read. Also reports today's Pulse to the nav (onPulse) for the Pulse tab dot.
+// marks everything read. Also reports today's Pulse to the nav (onPulse) for the Pulse tab dot, and new matching
+// paid gigs (onGigs) for the UGC gigs tab badge.
 
 const POLL_MS = 3 * 60 * 1000;
 
@@ -18,6 +19,8 @@ const ICONS = {
   gig: { Icon: Clapperboard, bg: '#FFF4E5', fg: '#B45309' },
   pulse: { Icon: Activity, bg: '#F3EEFF', fg: '#6D28D9' },
   alert: { Icon: AlertTriangle, bg: '#FFF1F2', fg: '#E11D48' },
+  hot: { Icon: Flame, bg: '#FFF1EC', fg: '#EA580C' },
+  brand: { Icon: Store, bg: '#EEF6FF', fg: '#1D4ED8' },
 };
 
 function ago(iso) {
@@ -32,7 +35,7 @@ function ago(iso) {
   return d < 7 ? `${d}d` : `${Math.round(d / 7)}w`;
 }
 
-export default function ActivityBell({ enabled = true, onPulse, onOpen }) {
+export default function ActivityBell({ enabled = true, onPulse, onGigs, onOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [items, setItems] = useState([]);
@@ -48,12 +51,13 @@ export default function ActivityBell({ enabled = true, onPulse, onOpen }) {
       setItems(data.items || []);
       setUnread(Number(data.unread) || 0);
       if (onPulse) onPulse(data.pulse || null);
+      if (onGigs) onGigs(Number(data.gigs?.new) || 0);
     } catch (_) {
       /* the bell is never worth an error */
     } finally {
       setLoaded(true);
     }
-  }, [onPulse]);
+  }, [onPulse, onGigs]);
 
   useEffect(() => {
     if (!enabled) return undefined;
