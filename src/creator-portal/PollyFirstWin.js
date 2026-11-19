@@ -13,7 +13,7 @@ export function listNames(names) {
 }
 
 const PRO_UNLOCKS = [
-  ['📨', `Up to ${PRO_OFFER?.MAX_DAILY_PITCHES || 20} matched brands pitched every weekday`],
+  ['📨', `Up to ${PRO_OFFER?.MAX_DAILY_PITCHES || 20} brand pitches daily, matched to you`],
   ['🔁', 'Follow-ups on day 4 and day 10, sent for you'],
   ['🔥', 'Hot brands running UGC ads, added as they appear'],
   ['💸', 'Paid UGC gigs, gathered in one place'],

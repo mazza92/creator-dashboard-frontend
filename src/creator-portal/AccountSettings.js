@@ -368,7 +368,7 @@ const AccountSettings = () => {
             {tier === 'pro' && (
               <>
                 <Feature>
-                  <FiCheck /> Polly pitches 3 brands for you every weekday from your Gmail, with follow-ups
+                  <FiCheck /> Up to 20 brand pitches daily from your Gmail, with follow-ups
                 </Feature>
                 <Feature>
                   <FiCheck /> When a brand says yes, Polly writes the paid usage ask

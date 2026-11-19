@@ -2136,7 +2136,7 @@ export default function Polly() {
           } catch (_) { /* ignore */ }
         }
         const rawMessage = data.message
-          || "You're out of free credits this month.\n\nOn Pro I pitch 3 new brands for you every weekday from your Gmail, with follow-ups on day 4 and day 10, and show you who opened your kit. That's daily outreach you couldn't keep up by hand. When a brand replies, I write your answer. Unlimited roster applications too.";
+          || "You're out of free pitches this month.\n\nOn Pro I send up to 20 brand pitches daily from your Gmail, with follow-ups on day 4 and day 10, and show you who opened your kit. That's daily outreach you couldn't keep up by hand. When a brand replies, I write your answer.";
         const assistant = {
           id: newId(),
           role: 'assistant',

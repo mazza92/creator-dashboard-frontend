@@ -19,7 +19,7 @@ test('Gmail already connected (from the free pitches): no second Gmail ask', asy
   jest.useRealTimers();
   expect(await screen.findByText(/Set up my autopilot/)).toBeInTheDocument();
   expect(screen.queryByText(/Connect Gmail/)).not.toBeInTheDocument();
-  expect(screen.getByText(/Up to 20 matched brands pitched every weekday/)).toBeInTheDocument();
+  expect(screen.getByText(/Up to 20 brand pitches daily/)).toBeInTheDocument();
 });
 
 test('Gmail not connected: one Connect Gmail step', async () => {

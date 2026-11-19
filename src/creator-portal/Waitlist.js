@@ -48,7 +48,7 @@ const LOOK_FOR = [
 
 const PRO_POINTS = [
   ['Approved instantly', ', no review wait'],
-  [`Up to ${MAX_DAILY_PITCHES} brands pitched every weekday`, ' from your Gmail'],
+  [`Up to ${MAX_DAILY_PITCHES} brand pitches daily`, ' from your Gmail'],
   ['Automatic follow-ups', ' and who opened your portfolio'],
   ['Paid UGC briefs', ' and unlimited gifting applications'],
 ];
@@ -234,8 +234,8 @@ export default function Waitlist() {
                 <ProBadge>⚡ {rejected ? 'GET IN WITH PRO' : 'SKIP THE REVIEW'}</ProBadge>
                 <ProTitle>Start pitching brands today</ProTitle>
                 <ProSub>
-                  Pro creators are approved instantly. Every weekday Polly picks up to {MAX_DAILY_PITCHES} brands that
-                  fit you, writes each pitch, sends it from your Gmail and follows up.
+                  Pro creators are approved instantly. Polly sends up to {MAX_DAILY_PITCHES} brand pitches daily to brands
+                  that fit you, each one written for that brand, from your Gmail, with follow-ups.
                 </ProSub>
                 <ProList>
                   {PRO_POINTS.map(([b, rest]) => <li key={b}><span><strong>{b}</strong>{rest}</span></li>)}

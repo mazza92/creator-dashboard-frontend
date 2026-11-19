@@ -21,7 +21,7 @@ const SubscriptionCancel = () => {
         <Title>Subscription Cancelled</Title>
 
         <Message>
-          No worries. Come back to Pro anytime and Polly pitches 3 brands for you every weekday again.
+          No worries. Come back to Pro anytime and Polly sends up to 20 brand pitches daily for you again.
         </Message>
 
         <FreeTierInfo>

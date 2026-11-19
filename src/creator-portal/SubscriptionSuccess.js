@@ -11,7 +11,7 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 // connected yet (creators who sent their free pitches from Gmail go straight on to set up Autopilot).
 
 export const PRO_PERKS = [
-  ['📨', `Up to ${MAX_DAILY_PITCHES} matched brands pitched every weekday, from your Gmail`],
+  ['📨', `Up to ${MAX_DAILY_PITCHES} brand pitches daily, matched to you and sent from your Gmail`],
   ['🔁', 'Follow-ups on day 4 and day 10, sent for you'],
   ['💬', 'Replies answered: Polly drafts your answer, rates included'],
   ['🔥', 'Hot brands running UGC ads, added as they appear'],

@@ -738,7 +738,7 @@ function LiveStep({ connected, email, returnReason }) {
         <Box>
           <h3>I run it all for you</h3>
           <Checks>
-            <div>Up to {MAX_DAILY} matched brands pitched every weekday, at the hours brands read email</div>
+            <div>Up to {MAX_DAILY} brand pitches daily, sent at the hours brands read email</div>
             <div>Follow-ups on day 4 and day 10, each with a new angle</div>
             <div>Hot brands running UGC ads and paid UGC gigs, found for you daily</div>
             <div>A daily brief: what got done, what&apos;s next, how close you are to your goal</div>
