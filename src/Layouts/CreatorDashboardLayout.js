@@ -32,6 +32,17 @@ const LayoutContainer = styled.div`
   @media (max-width: 1024px) {
     --nc-tabbar: calc(62px + env(safe-area-inset-bottom, 0px));
   }
+
+  /* Polly: the page itself never scrolls (only the chat thread does). Otherwise min-height: 100vh (the tallest
+     viewport) is taller than the visible screen on phones, the page scrolls, the browser toolbar collapses and
+     the composer jumps, leaving a gap above the tab bar. */
+  ${p => (p.$polly ? `
+    min-height: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  ` : '')}
 `;
 
 const TopNav = styled.nav`
@@ -706,8 +717,10 @@ const CreatorDashboardLayout = () => {
     );
   }
 
+  const onPolly = /\/dashboard\/(for-you|polly)(\/|$)/.test(location.pathname);
+
   return (
-    <LayoutContainer>
+    <LayoutContainer $polly={onPolly}>
       <TopNav>
         <LogoSlot>
           <Logo />
@@ -843,7 +856,7 @@ const CreatorDashboardLayout = () => {
         )}
       </TopNav>
 
-      <Content $polly={/\/dashboard\/(for-you|polly)(\/|$)/.test(location.pathname)}>
+      <Content $polly={onPolly}>
         <PaymentIssueBanner />
         <GoalPrompt pathname={location.pathname} />
         <GoalPlanHandoff />
