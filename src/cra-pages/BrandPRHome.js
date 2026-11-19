@@ -342,12 +342,12 @@ function listFill(brand) {
 }
 
 function creditCopy(quota) {
-  if (!quota) return 'Credits';
-  if (quota.is_unlimited) return 'Pro · unlimited';
+  if (!quota) return 'Free pitches';
+  if (quota.is_unlimited) return 'Pro';
   const n = Number(quota.remaining);
-  if (!Number.isFinite(n)) return 'Credits';
-  if (n <= 0) return 'No credits left';
-  return n === 1 ? '1 credit left' : `${n} credits left`;
+  if (!Number.isFinite(n)) return 'Free pitches';
+  if (n <= 0) return 'No free pitches left';
+  return n === 1 ? '1 free pitch left' : `${n} free pitches left`;
 }
 
 function creditLimit(quota) {

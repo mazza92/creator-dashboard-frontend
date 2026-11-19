@@ -147,8 +147,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
     : goalMode
       ? (goalInfo.lined_up > 0
         ? `${goalInfo.lined_up} brand${goalInfo.lined_up === 1 ? ' is' : 's are'} lined up with pitches written. Pro sends them from your Gmail every weekday and follows up, so you stay consistent without thinking about it.`
-        : 'Pro lines up new brands every weekday, sends from your Gmail and follows up, so you stay consistent without thinking about it.')
-      : 'Every weekday Polly picks 3 brands that fit you, pitches them from your Gmail and follows up, so you can just create.';
+        : 'Pro sends up to 20 brand pitches daily from your Gmail and follows up, so you stay consistent without thinking about it.')
+      : 'Polly sends up to 20 brand pitches daily to brands that fit you, from your Gmail, and follows up, so you can just create.';
 
   const ctaLabel = loading
     ? 'Processing...'

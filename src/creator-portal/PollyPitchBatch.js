@@ -23,6 +23,7 @@ const STATUS_NOTE = {
   no_inbox: 'No PR inbox on file, so this one can’t be sent from here.',
   needs_location: 'Tell Polly your city and country first.',
   failed: 'Didn’t go through. Tap send to retry.',
+  daily_cap: 'Daily limit reached (20 a day keeps your Gmail out of spam). Send it tomorrow.',
 };
 
 function itemNote(item) {
