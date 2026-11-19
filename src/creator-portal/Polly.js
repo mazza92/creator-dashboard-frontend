@@ -1246,6 +1246,7 @@ const RevealIn = styled.div`
 
 const ComposerWrap = styled.div`
   flex-shrink: 0;
+  &[hidden] { display: none; }
   padding: 8px 16px 16px;
   background: linear-gradient(180deg, rgba(247,245,240,0) 0%, ${t.paper} 28%);
 
@@ -3021,7 +3022,8 @@ export default function Polly() {
           </Turn>
         )}
       </Thread>
-      <ComposerWrap>
+      {/* The welcome is one decision: no chat bar until they pick a path. */}
+      <ComposerWrap hidden={Boolean(firstRun) && !busy}>
         {messages.length > 0 && !draft.trim() && (
           <ChipRow $hidden={composerFocused}>
             <Chip type="button" onClick={() => sendStarter(giftedStarter)} disabled={busy || loadingMore}>
