@@ -22,8 +22,8 @@ test('leadWithPick moves the picked brand first and ignores unknown picks', () =
 
 test('intent tags', () => {
   expect(intentTag(data.brands[1])).toBe('🔥 Running UGC ads');
-  expect(intentTag(data.brands[2])).toBe('💰 Paid ask');
-  expect(intentTag(data.brands[0])).toBe('🎁 Gifted');
+  expect(intentTag({ ...data.brands[2], works_with_creators: true })).toBe('🎁 Works with creators');
+  expect(intentTag({ ...data.brands[0], category: 'Skincare' })).toBe('✨ Fits your skincare');
 });
 
 test('two paths: autopilot with the free pitches, or pitch myself / search', () => {
@@ -44,4 +44,9 @@ test('two paths: autopilot with the free pitches, or pitch myself / search', () 
 test('pro creators: plain autopilot copy', () => {
   render(<PollyFirstRun data={{ ...data, is_pro: true, free_left: null }} onStart={() => {}} />);
   expect(screen.getByText('Start autopilot')).toBeInTheDocument();
+});
+
+test('first name falls back to the one the server knows', () => {
+  render(<PollyFirstRun data={{ ...data, first_name: 'Lina' }} onStart={() => {}} />);
+  expect(screen.getByText(/Hi Lina, I'm Polly/)).toBeInTheDocument();
 });

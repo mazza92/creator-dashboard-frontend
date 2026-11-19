@@ -22,12 +22,14 @@ export function nicheText(niches) {
   return list.length ? list.join(' and ') : '';
 }
 
-// What makes a brand worth pitching now, in two or three words.
+// Why this brand, in two or three words, from signals we know are true (never the planned ask: the pitch
+// carries that).
 export function intentTag(brand) {
   if (!brand) return '';
   if (brand.hot || brand.meta_ads) return '🔥 Running UGC ads';
-  if (brand.offer === 'paid') return '💰 Paid ask';
-  return '🎁 Gifted';
+  if (brand.works_with_creators) return '🎁 Works with creators';
+  const cat = String(brand.category || '').trim();
+  return cat ? `✨ Fits your ${cat.toLowerCase()}` : '✨ Fits your content';
 }
 
 // Logo, or the brand's initials when there's none or it fails to load (some logo URLs are dead or blank).
@@ -66,6 +68,7 @@ export default function PollyFirstRun({
   }, []);
   if (!data?.brands?.length) return null;
   const brands = leadWithPick(data.brands, pick);
+  const name = firstName || data.first_name || '';
   const picked = pick && brands[0] && Number(brands[0].brand_id) === Number(pick) ? brands[0].brand_id : null;
   const free = data.free_left;
   const pro = Boolean(data.is_pro) || free == null;
@@ -77,7 +80,7 @@ export default function PollyFirstRun({
     <Wrap ref={ref} aria-label="Welcome">
       <Hello>
         <span className="who">{avatar ? <img src={avatar} alt="" /> : null}Polly · your manager</span>
-        <h2>Hi{firstName ? ` ${firstName}` : ''}, I&apos;m Polly <span aria-hidden="true">👋</span></h2>
+        <h2>Hi{name ? ` ${name}` : ''}, I&apos;m Polly <span aria-hidden="true">👋</span></h2>
         <p>I&apos;m here to land you brand deals. How do you want to work?</p>
       </Hello>
 
@@ -107,7 +110,7 @@ export default function PollyFirstRun({
           {top.map((b, i) => (
             <Brand key={b.brand_id}>
               {b.brand_id === picked ? <span className="pick">💌 Your pick</span> : null}
-              <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} />
+              <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} size={52} />
               <span className="nm">{b.brand_name}</span>
               <span className="why">{intentTag(b)}</span>
             </Brand>
@@ -215,7 +218,10 @@ const Brand = styled.div`
   text-align: center;
   min-width: 0;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  .nm { font-size: 13px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nm {
+    font-size: 13px; font-weight: 700; line-height: 1.25; max-width: 100%; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word;
+  }
   .why { font-size: 11px; font-weight: 600; color: ${t.accent}; }
   .pick {
     position: absolute; top: -9px; left: 50%; transform: translateX(-50%); white-space: nowrap;
@@ -224,12 +230,13 @@ const Brand = styled.div`
 `;
 
 const LogoImg = styled.img`
-  width: ${(p) => p.$size}px; height: ${(p) => p.$size}px; border-radius: 50%; object-fit: contain;
+  width: ${(p) => p.$size}px; height: ${(p) => p.$size}px; border-radius: ${(p) => Math.round(p.$size / 4)}px;
+  object-fit: contain; padding: ${(p) => Math.round(p.$size / 9)}px; box-sizing: border-box;
   background: #fff; border: 1px solid ${t.line}; flex: none;
 `;
 
 const Mono = styled.span`
-  width: ${(p) => p.$size}px; height: ${(p) => p.$size}px; border-radius: 50%; flex: none;
+  width: ${(p) => p.$size}px; height: ${(p) => p.$size}px; border-radius: ${(p) => Math.round(p.$size / 4)}px; flex: none;
   display: inline-flex; align-items: center; justify-content: center;
   color: #fff; font-weight: 800; font-size: ${(p) => Math.round(p.$size / 3.1)}px;
 `;
