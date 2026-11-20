@@ -7,7 +7,8 @@ import UpgradeModal from './UpgradeModal';
 import { CANONICAL_CATEGORIES, categoryEmoji, categoryLabel } from '../constants/brandCategories';
 
 // UGC Pulse: what's working in UGC ads this week for the creator's niche. Hooks are opening lines of real ads
-// (Meta Ad Library), each with the brands running them; plus a trend, an editing tip and UGC news (Hermes).
+// from real creator videos (our TikTok store and YouTube Shorts), each linking the videos it came from; plus a trend,
+// a stop-the-scroll tip and UGC news (Hermes). Older days may still carry ad-sourced hooks with brand chips.
 // Today · This week (Pro) · Saved (the creator's swipe file).
 
 const VIEWS = [
@@ -34,6 +35,40 @@ function dayLabel(iso) {
 
 function plain(text) {
   return String(text || '').replace(/^[“"]|[”"]$/g, '');
+}
+
+// Creator-video sources (TikTok posts, YouTube Shorts): the video a hook came from, with its views.
+export function isVideoSource(s) {
+  return Boolean(s && s.url && (s.platform === 'tiktok' || s.platform === 'youtube'));
+}
+
+function Videos({ sources = [], max = 3 }) {
+  const list = sources.filter(isVideoSource).slice(0, max);
+  if (!list.length) return null;
+  return (
+    <BrandRow>
+      {list.map((s) => (
+        <a key={s.url} className="b vid" href={s.url} target="_blank" rel="noopener noreferrer"
+          title={s.platform === 'youtube' ? 'Watch the Short' : 'Watch the TikTok'}>
+          <i aria-hidden="true" style={{ background: s.platform === 'youtube' ? '#FF0033' : '#111' }}>▶</i>
+          {s.label || (s.handle ? `@${s.handle}` : 'Watch')}
+        </a>
+      ))}
+    </BrandRow>
+  );
+}
+
+function Sources({ sources = [], max = 4 }) {
+  return (sources || []).some(isVideoSource)
+    ? <Videos sources={sources} max={Math.min(max, 3)} />
+    : <Brands sources={sources} max={max} />;
+}
+
+function heroLabel(hero) {
+  const vids = (hero.sources || []).filter(isVideoSource);
+  if (vids.length > 1) return `seen in ${vids.length} creator videos`;
+  if (vids.length === 1) return vids[0].platform === 'youtube' ? 'from a YouTube Short' : 'from a creator video';
+  return hero.score > 1 ? `seen in ${hero.score} ads` : 'from a live ad';
 }
 
 function Brands({ sources = [], max = 4 }) {
@@ -166,7 +201,7 @@ export default function Pulse() {
     <Page>
       <Kicker>UGC Pulse{data?.day ? ` · ${dayLabel(data.day)}` : ''} · updated every morning</Kicker>
       <Title>What's working in <em>{categoryLabel(current) || 'your niche'}</em> UGC</Title>
-      <Sub>Hooks from real ads brands are running right now, the format that keeps coming up, and one editing tip a day.</Sub>
+      <Sub>Hooks from real creator videos that are working right now, the format that keeps coming up, and one stop-the-scroll tip a day.</Sub>
 
       <Bar>
         <Chips role="tablist" aria-label="Niche">
@@ -200,18 +235,18 @@ export default function Pulse() {
           <Grid>
             <section>
               <Hero>
-                <div className="label">Hook of the day <span>{hero.score > 1 ? `seen in ${hero.score} ads` : 'from a live ad'}</span></div>
+                <div className="label">Hook of the day <span>{heroLabel(hero)}</span></div>
                 <blockquote>{hero.text}</blockquote>
                 {hero.pattern && hero.pattern !== 'Other' ? <Tag>{hero.pattern}</Tag> : null}
-                <div className="proof">Seen in recent ads from</div>
-                <Brands sources={hero.sources} />
+                <div className="proof">{(hero.sources || []).some(isVideoSource) ? 'Watch it work' : 'Seen in recent ads from'}</div>
+                <Sources sources={hero.sources} />
                 {hero.why ? <Why><b>Why it works:</b> {hero.why}</Why> : null}
                 <Actions>
                   <button type="button" className={hero.saved ? 'btn saved' : 'btn'} onClick={() => toggleSave(hero)}>
                     {hero.saved ? '★ Saved' : '☆ Save'}
                   </button>
                   <button type="button" className="btn" onClick={() => copy(hero)}>Copy hook</button>
-                  {hero.sources?.[0] ? (
+                  {hero.sources?.[0]?.brand_id ? (
                     <button type="button" className="btn dark" onClick={() => pitchWith(hero)}>
                       Pitch {hero.sources[0].brand_name} with this angle{!isPro ? <small>PRO</small> : null}
                     </button>
@@ -220,7 +255,7 @@ export default function Pulse() {
               </Hero>
 
               {(hooks.length > 0 || locked > 0) && (
-                <SectionHead><h2>More hooks in {categoryLabel(current).toLowerCase()}</h2><span>most-used first</span></SectionHead>
+                <SectionHead><h2>More hooks in {categoryLabel(current).toLowerCase()}</h2><span>best-performing first</span></SectionHead>
               )}
               {hooks.map((h) => (
                 <HookCard key={h.id} item={h} onSave={toggleSave} onCopy={copy} />
@@ -232,7 +267,7 @@ export default function Pulse() {
                   </div>
                   <div className="over">
                     <h3>{locked} more {categoryLabel(current).toLowerCase()} hook{locked === 1 ? '' : 's'} today</h3>
-                    <p>Pro gets every hook, the 90-day archive, and pitches written around each brand's own ads.</p>
+                    <p>Pro gets every hook, the 90-day archive, and Polly pitching up to 20 brands daily for you.</p>
                     <button type="button" className="btn pink" onClick={() => setUpgrade(true)}>Unlock with Pro · $19/mo</button>
                   </div>
                 </Lock>
@@ -250,12 +285,12 @@ export default function Pulse() {
                   <div className="label">📈 Trending now</div>
                   <h3>{data.trend.text}</h3>
                   {data.trend.why ? <p>{data.trend.why}</p> : null}
-                  <Brands sources={data.trend.sources} max={3} />
+                  <Sources sources={data.trend.sources} max={3} />
                 </Card>
               ) : null}
               {data.tip ? (
                 <Card className="tip">
-                  <div className="label">✂️ Editing tip</div>
+                  <div className="label">✂️ Stop-the-scroll tip</div>
                   <p className="big">{data.tip.text}</p>
                 </Card>
               ) : null}
@@ -320,7 +355,7 @@ export default function Pulse() {
         )
       )}
 
-      <Foot>Hooks come from public Meta Ad Library ads. Saved items stay forever; the archive keeps 90 days.</Foot>
+      <Foot>Hooks come from public creator videos on TikTok and YouTube Shorts. Saved items stay forever; the archive keeps 90 days.</Foot>
 
       {toast ? <Toast role="status">{toast}{toast.startsWith('Saved') ? <button type="button" onClick={() => setParam('view', 'saved')}>See Saved</button> : null}</Toast> : null}
       <UpgradeModal isOpen={upgrade} onClose={() => setUpgrade(false)} feature="pulse" />
@@ -340,8 +375,9 @@ function HookCard({ item, onSave, onCopy, showDay }) {
         {item.why && item.kind !== 'hook' ? <div className="why">{item.why}</div> : null}
         <div className="meta">
           {showDay ? <span>{dayLabel(item.day)}</span> : null}
-          {item.kind === 'hook' && item.score > 1 ? <span>{item.score} ads</span> : null}
-          <Brands sources={item.sources} max={3} />
+          {item.kind === 'hook' && item.score > 1 && !(item.sources || []).some(isVideoSource)
+            ? <span>{item.score} ads</span> : null}
+          <Sources sources={item.sources} max={3} />
         </div>
       </div>
       <div className="ic">
