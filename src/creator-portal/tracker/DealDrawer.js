@@ -69,6 +69,18 @@ function Field({ kind, value, onChange, idPrefix }) {
   );
 }
 
+export function planDay(iso) {
+  if (!iso) return '';
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+export function nextMonthFirst(now = new Date()) {
+  const d = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export default function DealDrawer({ brandId, card: boardCard, startStep, onClose, onChanged, onPaywall }) {
   const navigate = useNavigate();
   const hotIds = useHotBrandIds();
@@ -114,6 +126,7 @@ export default function DealDrawer({ brandId, card: boardCard, startStep, onClos
 
   const deal = detail?.deal || null;
   const brand = detail?.brand || {};
+  const plan = detail?.plan || null;
   const card = {
     brand_id: Number(brandId),
     brand_name: boardCard?.brand_name || brand.name || deal?.brand_name || 'Brand',
@@ -220,11 +233,32 @@ export default function DealDrawer({ brandId, card: boardCard, startStep, onClos
             <Signal><LineIcon name="eye" size={13} /> Opened your kit {card.kit_views}×</Signal>
           ) : null}
 
+          {plan ? (
+            <PlanBox>
+              <div className="when">
+                <span className="k">{card.locked ? 'Planned, paused' : 'Planned'}</span>
+                <span className="v">{planDay(plan.planned_for)} · {plan.offer === 'paid' ? 'Paid ask' : 'Gifted ask'}</span>
+              </div>
+              {plan.reasons?.length ? (
+                <>
+                  <span className="q">Why Polly picked {card.brand_name}</span>
+                  <ul>{plan.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
+                </>
+              ) : null}
+              {brand.description ? <p className="about">{brand.description}</p> : null}
+            </PlanBox>
+          ) : null}
+
           {card.locked ? (
             <Locked>
-              <div><LineIcon name="lock" size={14} /> <b>Sends on Pro</b></div>
-              <p>The pitch is written. You&apos;ve used this month&apos;s free pitches, so Pro sends it from your Gmail and follows up.</p>
-              <button type="button" className="primary" onClick={onPaywall}>See Pro</button>
+              <div><LineIcon name="lock" size={14} /> <b>Your plan is paused</b></div>
+              <p>
+                You&apos;ve used this month&apos;s 3 free pitches, so {card.brand_name} is waiting
+                {plan?.planned_for ? ` (planned for ${planDay(plan.planned_for)})` : ''}. On Pro, Polly pitches it from
+                your Gmail, follows up on day 4 and day 10, and keeps your plan going: up to 20 brand pitches daily.
+              </p>
+              <button type="button" className="primary" onClick={onPaywall}>Resume my plan · $19/mo</button>
+              <p className="later">Or wait: your free pitches come back on {nextMonthFirst()}.</p>
             </Locked>
           ) : null}
 
@@ -599,6 +633,21 @@ const Inline = styled.div`
   input[type='date'] { width: 170px; }
 `;
 
+const PlanBox = styled.div`
+  border: 1px solid ${t.border};
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+  .when { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .when .k { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: ${t.muted}; }
+  .when .v { font-size: 14px; font-weight: 700; }
+  .q { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+  li { font-size: 13px; line-height: 1.4; }
+  .about { margin: 2px 0 0; font-size: 12.5px; color: ${t.muted}; line-height: 1.45; }
+`;
+
 const Locked = styled.div`
   border: 1px dashed ${t.borderHover};
   border-radius: 14px;
@@ -619,6 +668,7 @@ const Locked = styled.div`
     color: #fff;
     cursor: pointer;
   }
+  .later { font-size: 12px; }
 `;
 
 const Section = styled.section`

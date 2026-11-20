@@ -147,3 +147,21 @@ test('Polly link chips go to their href; the amount chip opens the Tracker deal'
   expect(chipHref({ id: 'open_tracker_deal', action: 'link', brand_id: 7 })).toBe('/creator/dashboard/tracker?brand=7&step=amount');
   expect(chipHref({ action: 'link', href: 'https://evil.example' })).toBe('/creator/dashboard/tracker');
 });
+
+test('a planned brand on a paused free plan opens its card (why Polly picked it), with Pro to resume the plan', async () => {
+  apiClient.get.mockImplementation((url) => {
+    if (url === '/api/tracker') return Promise.resolve({ data: tracker });
+    if (url.startsWith('/api/tracker/brand/')) {
+      return Promise.resolve({ data: { brand: { name: 'GlowDrop', description: 'Clean skincare.' }, events: [], deal: null,
+        plan: { planned_for: '2026-11-24', offer: 'gifted', reasons: ['🔥 Running creator-style ads right now'] } } });
+    }
+    return Promise.resolve({ data: {} });
+  });
+  renderAt('/creator/dashboard/tracker/2');
+  expect(await screen.findByText(/Why Polly picked GlowDrop/)).toBeInTheDocument();
+  expect(screen.getByText('🔥 Running creator-style ads right now')).toBeInTheDocument();
+  expect(screen.getByText(/so GlowDrop is waiting \(planned for/)).toBeInTheDocument();
+  expect(screen.queryByRole('dialog', { name: 'Upgrade' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /Resume my plan · \$19\/mo/ }));
+  expect(screen.getByRole('dialog', { name: 'Upgrade' })).toBeInTheDocument();
+});

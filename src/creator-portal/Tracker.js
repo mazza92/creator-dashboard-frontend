@@ -333,14 +333,11 @@ export default function Tracker() {
   const drawerId = routeBrandId || searchParams.get('brand');
   const startStep = searchParams.get('step');
 
+  // Every brand opens, planned ones on a paused free plan too: the card shows what Polly lined up and why, and
+  // Pro is offered there, as the way to resume the plan (not a wall in front of the brand).
   const openCard = useCallback((card) => {
-    const full = data ? findCard(data, card.brand_id) : null;
-    if ((full || card).locked) {
-      setPaywall(true);
-      return;
-    }
     navigate(`${TRACKER_PATH}/${card.brand_id}`);
-  }, [data, navigate]);
+  }, [navigate]);
 
   const closeDrawer = useCallback(() => navigate(TRACKER_PATH), [navigate]);
 
