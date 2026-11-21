@@ -1,6 +1,18 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import WaitingRoom from './WaitingRoom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import WaitingRoom, { resetLabel } from './WaitingRoom';
+
+const mockCalls = [];
+let mockServerRoom = null;
+jest.mock('../config/api', () => ({
+  __esModule: true,
+  default: {
+    post: (url, body) => { mockCalls.push([url, body]); return Promise.resolve({ data: { success: true } }); },
+    get: () => Promise.resolve({ data: { waiting_room: mockServerRoom } }),
+  },
+}));
+
+beforeEach(() => { mockCalls.length = 0; mockServerRoom = null; });
 
 const base = {
   momentum: { sent: 3, opened: 1, replied: 0 },
@@ -32,4 +44,29 @@ test('real plan numbers and drafts', () => {
   expect(screen.getByText("I've drafted your next pitch")).toBeTruthy();
   expect(screen.getByText('8 paid UGC gigs match you')).toBeTruthy();
   expect(screen.getByText(/Send these \+ resume my plan/)).toBeTruthy();
+});
+
+test('tracks view, checklist and upgrade with source and follow-up state', () => {
+  const onOpen = jest.fn();
+  render(<WaitingRoom room={{ ...base, followup: null }} source="pill" onOpen={onOpen} onUpgrade={() => {}} />);
+  fireEvent.click(screen.getByText('Set your rates'));
+  fireEvent.click(screen.getByText(/Send these \+ resume my plan/));
+  expect(mockCalls.map((c) => c[1])).toEqual([
+    { action: 'view', source: 'pill', followup_due: false },
+    { action: 'checklist', source: 'pill', followup_due: false, item: 'rates' },
+    { action: 'upgrade', source: 'pill', followup_due: false },
+  ]);
+  expect(onOpen).toHaveBeenCalledWith('/k', 'rates');
+});
+
+test('live card refreshes: a follow-up that became due turns into the main action', async () => {
+  mockServerRoom = { ...base, followup: { brand_id: 9, brand_name: 'Elite Eleven', due: true, day: 4, opened_kit: false } };
+  render(<WaitingRoom live room={{ ...base, followup: { brand_id: 9, brand_name: 'Elite Eleven', due: false, day: 1, opens_on: 'Nov 23' } }} />);
+  expect(screen.getByTestId('followup-wait')).toBeTruthy();
+  await waitFor(() => expect(screen.getByText(/Draft my Elite Eleven follow-up/)).toBeTruthy());
+});
+
+test('reset label from the balance, else the 1st of next month', () => {
+  expect(resetLabel({ reset_at: '2026-12-01T00:00:00Z' })).toBe('Dec 1');
+  expect(resetLabel(null, new Date('2026-12-20T10:00:00Z'))).toBe('Jan 1');
 });

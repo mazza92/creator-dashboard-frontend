@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import api from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
 // Out of free pitches: instead of a dead end, what the 3 pitches are doing, free things to do meanwhile, and the
@@ -18,6 +19,19 @@ const CHECK = {
     sub: 'Briefs with pay attached', cta: 'Browse →',
   }),
 };
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// "Dec 1": when free pitches come back (balance reset_at, else the 1st of next month, UTC).
+export function resetLabel(balance, now = new Date()) {
+  const raw = balance?.reset_at ? new Date(balance.reset_at) : null;
+  const d = raw && !Number.isNaN(raw.getTime()) ? raw : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+}
+
+export function trackWaitingRoom(action, extra = {}) {
+  api.post('/api/polly/waiting-room/event', { action, ...extra }).catch(() => {});
+}
 
 function initials(name) {
   const w = String(name || '').replace(/[^A-Za-z0-9 ]/g, ' ').trim().split(/\s+/);
@@ -52,8 +66,28 @@ export function FollowUp({ followup, onFollowup, disabled }) {
   );
 }
 
-export default function WaitingRoom({ room, trial = false, onUpgrade, onFollowup, onOpen, disabled }) {
+export default function WaitingRoom({ room: initial, trial = false, onUpgrade, onFollowup, onOpen, disabled, source = 'chat', live = false }) {
+  // The card in chat was built when the free pitches ran out; on a later visit its numbers (and whether the
+  // follow-up is due) are refreshed from the server.
+  const [fresh, setFresh] = useState(null);
+  const viewed = useRef(false);
+  useEffect(() => {
+    if (!live) return undefined;
+    let on = true;
+    api.get('/api/polly/waiting-room')
+      .then(({ data }) => { if (on && data?.waiting_room) setFresh(data.waiting_room); })
+      .catch(() => {});
+    return () => { on = false; };
+  }, [live]);
+  const room = fresh || initial;
+  const due = !!room?.followup?.due;
+  useEffect(() => {
+    if (!room || viewed.current) return;
+    viewed.current = true;
+    trackWaitingRoom('view', { source, followup_due: due });
+  }, [room, source, due]);
   if (!room) return null;
+  const meta = { source, followup_due: due };
   const m = room.momentum || {};
   const fu = room.followup;
   const leadIsFollowup = !!(fu && fu.due);
@@ -69,7 +103,7 @@ export default function WaitingRoom({ room, trial = false, onUpgrade, onFollowup
           <div><b>{m.opened || 0}</b><span>opened your kit</span></div>
           <div><b>{m.replied || 0}</b><span>{m.replied ? 'replied' : 'replied yet'}</span></div>
         </div>
-        <FollowUp followup={fu} onFollowup={onFollowup} disabled={disabled} />
+        <FollowUp followup={fu} onFollowup={(f) => { trackWaitingRoom('followup', meta); if (onFollowup) onFollowup(f); }} disabled={disabled} />
       </section>
 
       {items.length ? (
@@ -79,7 +113,7 @@ export default function WaitingRoom({ room, trial = false, onUpgrade, onFollowup
             {items.map((i, n) => (
               <li key={i.id}>
                 <button type="button" className={!leadIsFollowup && n === 0 ? 'row lead' : 'row'}
-                  onClick={() => onOpen && onOpen(i.path, i.id)}>
+                  onClick={() => { trackWaitingRoom('checklist', { ...meta, item: i.id }); if (onOpen) onOpen(i.path, i.id); }}>
                   <span className="ic" aria-hidden="true">{i.done ? '✅' : i.icon}</span>
                   <span className="tx"><b>{i.title}</b><span>{i.sub}</span></span>
                   <span className="go">{i.cta}</span>
@@ -118,7 +152,7 @@ export default function WaitingRoom({ room, trial = false, onUpgrade, onFollowup
         {room.plan_count ? (
           <p className="paused">⏸️ Your plan has <b>{room.plan_count} brand{room.plan_count === 1 ? '' : 's'} lined up{room.reset ? ` before ${room.reset}` : ''}</b>, paused on the free plan. Pro picks up where it stopped.</p>
         ) : null}
-        <button type="button" className={leadIsFollowup ? 'cta soft' : 'cta'} disabled={disabled} onClick={() => onUpgrade && onUpgrade()}>
+        <button type="button" className={leadIsFollowup ? 'cta soft' : 'cta'} disabled={disabled} onClick={() => { trackWaitingRoom('upgrade', meta); if (onUpgrade) onUpgrade(); }}>
           {cta}
         </button>
         <p className="fine">

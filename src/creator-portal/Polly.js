@@ -19,7 +19,7 @@ import PollyActivityCard from './PollyActivityCard';
 import PollyGoalPlanCard from './PollyGoalPlanCard';
 import PollyHotlistCard from './PollyHotlistCard';
 import PollyUpsellCard from './PollyUpsellCard';
-import WaitingRoom from './WaitingRoom';
+import WaitingRoom, { resetLabel } from './WaitingRoom';
 import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -1037,6 +1037,21 @@ const BrandMeta = styled.div`
   }
 `;
 
+const OutOfFreeActions = styled.div`
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  .save {
+    border: 0; background: none; padding: 0; font: inherit; font-size: 12px; font-weight: 600;
+    color: ${t.muted}; cursor: pointer; white-space: nowrap;
+  }
+  .save[aria-pressed="true"] { color: ${t.accentDeep}; }
+  @media (max-width: 480px) {
+    .pro { display: none; }
+    button:first-child { padding: 8px 10px; }
+  }
+`;
+
 const ContactBtn = styled.button`
   background: ${t.action};
   color: #fff;
@@ -1496,6 +1511,7 @@ export default function Polly() {
     "Hey, I'm Polly. I'm your Creator Assistant — I get you on brands' gifted PR lists and write the pitches for the ones worth emailing. When you're ready for paid work, I pull paid UGC offers from across the platforms into one place.\n\nWhat do you want to land first?"
   );
   const [credits, setCredits] = useState(null);
+  const [savedIds, setSavedIds] = useState({});
   const [messages, setMessages] = useState([]);
   const [ready, setReady] = useState(false);
   const [serverReady, setServerReady] = useState(false);
@@ -2507,6 +2523,20 @@ export default function Polly() {
     }
   };
 
+  // Out of free pitches (and not Pro): brand cards say what tapping does ("Pitch ready · Pro": the locked pitch
+  // preview) and offer a free alternative, saving the brand for when free pitches come back. Saved brands also go
+  // out first if they upgrade (Autopilot sends targets first).
+  const outOfFree = !!credits && !credits.is_unlimited && Number.isFinite(Number(credits.remaining))
+    && Number(credits.remaining) <= 0;
+  const saveForReset = (brand) => {
+    if (!brand?.id) return;
+    const on = !savedIds[brand.id];
+    setSavedIds((prev) => ({ ...prev, [brand.id]: on }));
+    apiClient.request({ method: on ? 'post' : 'delete', url: `/api/pr-crm/targets/${brand.id}`, data: { source: 'polly_out_of_free' } })
+      .catch(() => setSavedIds((prev) => ({ ...prev, [brand.id]: !on })));
+  };
+  const lastUpsellMsg = [...messages].reverse().find((m) => m && m.upsell && m.waiting_room);
+
   const contactBrand = (brand) => {
     if (busy || !brand?.id) return;
     setContactingId(brand.id);
@@ -2798,13 +2828,26 @@ export default function Polly() {
                               <div style={{ marginTop: 6 }}><ReplySignalChip signal={brand.reply_signal} /></div>
                             ) : null}
                           </BrandMeta>
-                          <ContactBtn
-                            type="button"
-                            disabled={busy}
-                            onClick={() => contactBrand(brand)}
-                          >
-                            {contactingId === brand.id ? 'Writing…' : 'Contact'}
-                          </ContactBtn>
+                          {outOfFree ? (
+                            <OutOfFreeActions>
+                              <ContactBtn type="button" disabled={busy} onClick={() => contactBrand(brand)}
+                                aria-label={`See the pitch ready for ${brand.name} (Pro)`}>
+                                {contactingId === brand.id ? 'Writing…' : <>Pitch ready<span className="pro"> · Pro</span> 🔒</>}
+                              </ContactBtn>
+                              <button type="button" className="save" aria-pressed={!!savedIds[brand.id]}
+                                onClick={() => saveForReset(brand)}>
+                                {savedIds[brand.id] ? `★ Saved for ${resetLabel(credits)}` : `☆ Save for ${resetLabel(credits)}`}
+                              </button>
+                            </OutOfFreeActions>
+                          ) : (
+                            <ContactBtn
+                              type="button"
+                              disabled={busy}
+                              onClick={() => contactBrand(brand)}
+                            >
+                              {contactingId === brand.id ? 'Writing…' : 'Contact'}
+                            </ContactBtn>
+                          )}
                         </BrandCard>
                       ))}
                     </BrandList>
@@ -2934,6 +2977,7 @@ export default function Polly() {
                   )}
                   {msg.upsell && msg.waiting_room ? (
                     <WaitingRoom room={msg.waiting_room} trial={!!msg.upsell.trial} disabled={busy}
+                      live={msg === lastUpsellMsg && !credits?.is_unlimited}
                       onUpgrade={() => sendStarter((msg.task_chips || []).find((c) => c.action === 'unlock_pro')
                         || { id: 'unlock_pro', action: 'unlock_pro', label: 'Start my free week' })}
                       onFollowup={(f) => sendStarter({ id: 'draft_followup', action: 'generate_pitch', is_followup: true,
@@ -2944,7 +2988,7 @@ export default function Polly() {
                   ) : null}
                   {msg.hotlist?.brands?.length > 0 && (
                     <PollyHotlistCard hotlist={msg.hotlist} chips={msg.task_chips || []} onChip={sendStarter}
-                      onContact={contactBrand} disabled={busy} />
+                      onContact={contactBrand} disabled={busy} outOfFree={outOfFree} />
                   )}
                   {msg.goal_plan?.days?.length > 0 && (
                     <PollyGoalPlanCard plan={msg.goal_plan} chips={msg.task_chips || []} onChip={sendStarter} disabled={busy} />
