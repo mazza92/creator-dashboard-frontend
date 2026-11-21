@@ -23,7 +23,7 @@ export function whenLine(b) {
   return b.ads || b.gifted_your_size ? '' : r;
 }
 
-export default function PollyHotlistCard({ hotlist, chips = [], onChip, onContact, disabled }) {
+export default function PollyHotlistCard({ hotlist, chips = [], onChip, onContact, disabled, outOfFree = false }) {
   const brands = hotlist?.brands || [];
   if (!brands.length) return null;
   const cta = chips[0];
@@ -55,7 +55,7 @@ export default function PollyHotlistCard({ hotlist, chips = [], onChip, onContac
               {b.gifted_your_size ? <span className="pill">Gifted {b.gifted_your_size} creator{b.gifted_your_size === 1 ? '' : 's'} your size</span> : null}
             </div>
             {whenLine(b) ? <p className="why">{whenLine(b)}</p> : null}
-            <button type="button" disabled={disabled} onClick={() => contact(b)}>Contact</button>
+            <button type="button" disabled={disabled} onClick={() => contact(b)}>{outOfFree ? 'Pitch ready · Pro 🔒' : 'Contact'}</button>
           </Brand>
         ))}
       </Grid>

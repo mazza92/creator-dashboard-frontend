@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
-import WaitingRoom from './WaitingRoom';
+import WaitingRoom, { trackWaitingRoom } from './WaitingRoom';
 
 // The "No credits left" header pill opens the same waiting room as the chat (backend GET /api/polly/waiting-room).
 
-export default function WaitingRoomSheet({ data, onClose, onUpgrade, onNavigate }) {
+export default function WaitingRoomSheet({ data, onClose: close, onUpgrade, onNavigate }) {
+  const onClose = React.useCallback(() => { trackWaitingRoom('close', { source: 'pill' }); close(); }, [close]);
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', esc);
@@ -21,6 +22,7 @@ export default function WaitingRoomSheet({ data, onClose, onUpgrade, onNavigate 
         <WaitingRoom
           room={data.waiting_room}
           trial={!!data.trial}
+          source="pill"
           onUpgrade={onUpgrade}
           onFollowup={(f) => onNavigate(`/creator/dashboard/for-you?chip=draft_followup&brand_id=${f.brand_id}&brand_name=${encodeURIComponent(f.brand_name || '')}`)}
           onOpen={(path) => onNavigate(path)}
