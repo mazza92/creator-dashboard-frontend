@@ -1086,12 +1086,6 @@ function pitchEditedLabel(iso) {
   return `Updated ${at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 }
 
-const PitchPrefsLine = styled.div`
-  font-size: 11.5px;
-  color: ${t.muted};
-  margin: 2px 0 6px;
-`;
-
 const PitchSubject = styled.div`
   font-weight: 600;
   font-size: 14px;
@@ -2875,8 +2869,6 @@ export default function Polly() {
                             m.pitch && String(m.pitch.brand_id) === String(msg.pitch.brand_id) && !m.pitch.sent_via_gmail
                               ? { ...m, pitch: { ...m.pitch, email, mailto: mailto || m.pitch.mailto } } : m)))} />
                       ) : null}
-                      {msg.pitch.prefs_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.prefs_line}</PitchPrefsLine> : null}
-                      {msg.pitch.stats_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.stats_line}</PitchPrefsLine> : null}
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>
                       <PitchBodyText body={dropLocationPlaceholder(msg.pitch.body)} />
                       {msg.pitch.sent_via_gmail ? (
