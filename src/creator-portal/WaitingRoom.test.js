@@ -70,3 +70,10 @@ test('reset label from the balance, else the 1st of next month', () => {
   expect(resetLabel({ reset_at: '2026-12-01T00:00:00Z' })).toBe('Dec 1');
   expect(resetLabel(null, new Date('2026-12-20T10:00:00Z'))).toBe('Jan 1');
 });
+
+test('Gmail-sent pitch: Polly follows up by itself, no button, checklist leads', () => {
+  render(<WaitingRoom room={{ ...base, followup: { brand_id: 9, brand_name: 'Elite Eleven', due: false, auto: true, opens_on: 'Nov 23' } }} />);
+  expect(screen.getByTestId('followup-auto').textContent).toContain('Polly follows up with Elite Eleven on Nov 23');
+  expect(screen.queryByText(/Draft my/)).toBeNull();
+  expect(screen.getByText('Set your rates').closest('button').className).toContain('lead');
+});
