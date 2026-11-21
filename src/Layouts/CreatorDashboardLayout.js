@@ -3,6 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, Bell, CalendarDays, Activity, Store, Clapperboard, LayoutGrid } from 'lucide-react';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import WaitingRoomSheet from '../creator-portal/WaitingRoomSheet';
 import { message, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
@@ -527,6 +528,7 @@ const CreatorDashboardLayout = () => {
   const [poolBadge, setPoolBadge] = useState(0);
   const [credits, setCredits] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [waitingRoom, setWaitingRoom] = useState(null);
   const [yourMove, setYourMove] = useState(0);
   const isFetching = useRef(false);
   const navigate = useNavigate();
@@ -770,7 +772,15 @@ const CreatorDashboardLayout = () => {
             onClick={() => {
               if (credits?.is_unlimited) return;
               setShowUserMenu(false);
-              setShowUpgrade(true);
+              if (Number(credits?.remaining) > 0) { setShowUpgrade(true); return; }
+              // Out of free pitches: the waiting room (what's moving, free things to do, drafted pitches). The plain
+              // upgrade modal only when there's nothing sent to show yet.
+              api.get('/api/polly/waiting-room')
+                .then(({ data }) => {
+                  if (data?.waiting_room?.momentum?.sent) setWaitingRoom(data);
+                  else setShowUpgrade(true);
+                })
+                .catch(() => setShowUpgrade(true));
             }}
           >
             {!credits?.is_unlimited && Number.isFinite(Number(credits?.remaining)) && (
@@ -897,6 +907,14 @@ const CreatorDashboardLayout = () => {
         ))}
       </TabBar>
 
+      {waitingRoom ? (
+        <WaitingRoomSheet
+          data={waitingRoom}
+          onClose={() => setWaitingRoom(null)}
+          onUpgrade={() => { setWaitingRoom(null); setShowUpgrade(true); }}
+          onNavigate={(path) => { setWaitingRoom(null); navigate(path); }}
+        />
+      ) : null}
       <UpgradeModal
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}

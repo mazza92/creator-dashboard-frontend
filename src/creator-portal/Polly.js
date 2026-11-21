@@ -19,6 +19,7 @@ import PollyActivityCard from './PollyActivityCard';
 import PollyGoalPlanCard from './PollyGoalPlanCard';
 import PollyHotlistCard from './PollyHotlistCard';
 import PollyUpsellCard from './PollyUpsellCard';
+import WaitingRoom from './WaitingRoom';
 import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -2931,7 +2932,14 @@ export default function Polly() {
                   {msg.activity?.items?.length > 0 && (
                     <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
                   )}
-                  {msg.upsell ? (
+                  {msg.upsell && msg.waiting_room ? (
+                    <WaitingRoom room={msg.waiting_room} trial={!!msg.upsell.trial} disabled={busy}
+                      onUpgrade={() => sendStarter((msg.task_chips || []).find((c) => c.action === 'unlock_pro')
+                        || { id: 'unlock_pro', action: 'unlock_pro', label: 'Start my free week' })}
+                      onFollowup={(f) => sendStarter({ id: 'draft_followup', action: 'generate_pitch', is_followup: true,
+                        brand_id: f.brand_id, brand_name: f.brand_name, label: `Draft my ${f.brand_name} follow-up` })}
+                      onOpen={(path) => navigate(path)} />
+                  ) : msg.upsell ? (
                     <PollyUpsellCard upsell={msg.upsell} chips={msg.task_chips || []} onChip={sendStarter} disabled={busy} />
                   ) : null}
                   {msg.hotlist?.brands?.length > 0 && (
