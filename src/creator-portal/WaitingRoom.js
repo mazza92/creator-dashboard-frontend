@@ -41,6 +41,18 @@ function initials(name) {
 export function FollowUp({ followup, onFollowup, disabled }) {
   if (!followup) return null;
   const name = followup.brand_name;
+  if (followup.auto) {
+    // Sent through Gmail: Polly sends the day-4 follow-up itself (free plan too), so nothing to do here.
+    return (
+      <div className="fu wait" data-testid="followup-auto">
+        <span className="clock" aria-hidden="true">📬</span>
+        <span>
+          Polly follows up with <b>{name}</b> on <b>{followup.opens_on}</b>, from your Gmail, in the same thread.
+          {followup.opened_kit ? ' They already opened your kit.' : ''} Nothing to do.
+        </span>
+      </div>
+    );
+  }
   if (!followup.due) {
     return (
       <div className="fu wait" data-testid="followup-wait">
