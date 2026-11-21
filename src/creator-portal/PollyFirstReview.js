@@ -4,6 +4,7 @@ import { ArrowRight, Loader2, RefreshCw, X } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { batchItemReady } from './PollyPitchBatch';
 import { BrandLogo, MONO_COLORS, intentTag } from './PollyFirstRun';
+import PitchContact from './PitchContact';
 
 // Step 1 of 2 on the first pitches: Polly's approval queue. Every pitch is open and editable, any brand can be
 // swapped for another match (only that pitch is rewritten), and one button approves them all. Gmail is asked
@@ -80,7 +81,9 @@ export default function PollyFirstReview({
               <Swapping><Loader2 size={16} className="spin" aria-hidden="true" /> Writing a new pitch…</Swapping>
             ) : (
               <>
-                {item.email ? <Meta>To: {item.email}</Meta> : <Meta className="warn">No PR inbox on file. Swap this one.</Meta>}
+                {item.email
+                  ? <PitchContact email={item.email} brandId={item.brand_id} brandName={item.brand_name} compact />
+                  : <Meta className="warn">No PR inbox on file. Swap this one.</Meta>}
                 {item.subject ? <Subject>{item.subject}</Subject> : null}
                 <PitchEditor item={item} onSave={onEdit} disabled={disabled || sending} />
               </>
