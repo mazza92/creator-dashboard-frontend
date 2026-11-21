@@ -36,6 +36,7 @@ import { PollyChecklist } from './PollyChecklist';
 import PollyFirstRun, { nicheText } from './PollyFirstRun';
 import PollyAtWork from './PollyAtWork';
 import PollyFirstReview from './PollyFirstReview';
+import PitchContact from './PitchContact';
 import PollyFirstWin from './PollyFirstWin';
 import SentCheck from './SentCheck';
 import { TRACKER_PATH, chipHref } from './tracker/trackerModel';
@@ -1095,13 +1096,6 @@ const PitchSubject = styled.div`
   font-weight: 600;
   font-size: 14px;
   margin-bottom: 8px;
-`;
-
-const PitchTo = styled.div`
-  font-size: 13px;
-  color: ${t.muted};
-  margin-bottom: 4px;
-  word-break: break-all;
 `;
 
 const PitchHint = styled.div`
@@ -2875,7 +2869,12 @@ export default function Polly() {
                         {msg.pitch.brand_name || 'this brand'}
                         {msg.pitch.edited_at ? <PitchEdited>{pitchEditedLabel(msg.pitch.edited_at)}</PitchEdited> : null}
                       </PitchLabel>
-                      {msg.pitch.email ? <PitchTo>To: {msg.pitch.email}</PitchTo> : null}
+                      {msg.pitch.email ? (
+                        <PitchContact email={msg.pitch.email} brandId={msg.pitch.brand_id} brandName={msg.pitch.brand_name}
+                          onChanged={(email, mailto) => setMessages((prev) => prev.map((m) => (
+                            m.pitch && String(m.pitch.brand_id) === String(msg.pitch.brand_id) && !m.pitch.sent_via_gmail
+                              ? { ...m, pitch: { ...m.pitch, email, mailto: mailto || m.pitch.mailto } } : m)))} />
+                      ) : null}
                       {msg.pitch.prefs_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.prefs_line}</PitchPrefsLine> : null}
                       {msg.pitch.stats_line && !msg.pitch.is_reply ? <PitchPrefsLine>{msg.pitch.stats_line}</PitchPrefsLine> : null}
                       <PitchSubject>{msg.pitch.subject}</PitchSubject>

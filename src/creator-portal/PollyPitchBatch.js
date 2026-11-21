@@ -5,6 +5,7 @@ import styled, { keyframes } from 'styled-components';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { openInGmail } from './openInGmail';
+import PitchContact from './PitchContact';
 
 // The pitches Polly wrote, ready to go. One tap sends them all from the creator's Gmail (replies land in their own
 // inbox, Polly follows up). Not on Gmail? "Send them myself" opens each one in their mail app, as before.
@@ -117,7 +118,9 @@ export default function PitchBatchCard({
               ) : null}
               {open === idx ? (
                 <>
-                  {item.email ? <To>To: {item.email}</To> : null}
+                  {item.email && !isSent(item)
+                    ? <PitchContact email={item.email} brandId={item.brand_id} brandName={item.brand_name} compact />
+                    : item.email ? <To>To: {item.email}</To> : null}
                   <Body>{String(item.body || '').replace(/\s+(?:to|in|from|out of)\s+\[\s*city\s*,\s*country\s*\]/gi, '').replace(/\[\s*city\s*,\s*country\s*\]/gi, '')}</Body>
                 </>
               ) : null}
