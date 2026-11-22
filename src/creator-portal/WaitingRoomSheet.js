@@ -27,6 +27,7 @@ export default function WaitingRoomSheet({ data, onClose: close, onUpgrade, onNa
           onFollowup={(f) => onNavigate(`/creator/dashboard/for-you?chip=draft_followup&brand_id=${f.brand_id}&brand_name=${encodeURIComponent(f.brand_name || '')}`)}
           onOpen={(path) => onNavigate(path)}
         />
+        <button type="button" className="later" onClick={onClose}>Not now</button>
       </Sheet>
     </Backdrop>
   );
@@ -35,13 +36,29 @@ export default function WaitingRoomSheet({ data, onClose: close, onUpgrade, onNa
 const Backdrop = styled.div`
   position: fixed; inset: 0; z-index: 1200; background: rgba(18, 20, 26, 0.45);
   display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 16px;
-  @media (max-width: 600px) { padding: 0; align-items: flex-end; }
+  @media (max-width: 600px) { padding: 0; align-items: flex-end; overflow: hidden; }
 `;
 
+// On phones the sheet scrolls inside itself and its top bar (title + ×) stays pinned, so close is always reachable
+// (Nov 2026: the × scrolled out of view). dvh = the visible screen height with the browser bars.
 const Sheet = styled.div`
-  width: 100%; max-width: 592px; background: #fbfaf7; border-radius: 22px; padding: 16px; box-sizing: border-box;
-  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 16px; }
-  .x { border: 0; background: none; font-size: 26px; line-height: 1; cursor: pointer; color: #6b7280; padding: 0 4px; }
-  > div:last-child { margin-top: 12px; max-width: none; }
-  @media (max-width: 600px) { border-radius: 22px 22px 0 0; max-height: 92vh; overflow-y: auto; }
+  width: 100%; max-width: 592px; background: #fbfaf7; border-radius: 22px; padding: 0 16px 16px; box-sizing: border-box;
+  .top {
+    position: sticky; top: 0; z-index: 2; background: #fbfaf7; padding: 16px 0 10px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 16px;
+  }
+  .x {
+    flex: none; width: 40px; height: 40px; border: 0; border-radius: 999px; background: #efece6; color: #374151;
+    font-size: 24px; line-height: 1; cursor: pointer; display: grid; place-items: center;
+  }
+  > div:nth-child(2) { margin-top: 2px; max-width: none; }
+  .later {
+    display: block; width: 100%; margin-top: 10px; border: 0; background: none; padding: 10px;
+    font: inherit; font-size: 14px; font-weight: 600; color: #6b7280; cursor: pointer;
+  }
+  @media (max-width: 600px) {
+    border-radius: 22px 22px 0 0; max-height: 92vh; max-height: 92dvh; overflow-y: auto;
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
 `;

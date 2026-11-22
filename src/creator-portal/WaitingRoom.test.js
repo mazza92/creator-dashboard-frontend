@@ -97,3 +97,8 @@ test('publishOffer only fires for a real offer', () => {
   window.removeEventListener(OFFER_EVENT, on);
   expect(got).toEqual([{ id: 'credits-out-2026-11', upsell: {} }]);
 });
+
+test('a hook that is already quoted is not double-quoted', () => {
+  render(<WaitingRoom room={{ ...base, followup: null, checklist: [{ id: 'pulse', hook: '“Lets face it, RDLs are hard”', path: '/p' }] }} />);
+  expect(screen.getByText('“Lets face it, RDLs are hard”')).toBeTruthy();
+});

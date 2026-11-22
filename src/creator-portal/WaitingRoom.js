@@ -7,12 +7,17 @@ import { creatorTokens as t } from '../theme/creatorTokens';
 // next pitches Polly already drafted (Pro sends them). The follow-up follows Autopilot's timing: it's the main
 // action only from day 4; before that the card says when it opens and shows no button.
 
+// Hooks often arrive already quoted ("“Lets face it…”"): strip their own quotes before adding ours.
+function unquote(text) {
+  return String(text || '').trim().replace(/^["'“”‘’«»\s]+|["'“”‘’«»\s]+$/g, '');
+}
+
 const CHECK = {
   rates: (i) => ({
     icon: '💵', title: i.done ? 'Your rates are set' : 'Set your rates',
     sub: i.band ? `Creators your size: ${i.band}` : 'So brands that pay know your price', cta: i.done ? 'Review →' : '2 min →',
   }),
-  pulse: (i) => ({ icon: '🎬', title: "Film today's hook", sub: `“${i.hook}”`, cta: 'See it →' }),
+  pulse: (i) => ({ icon: '🎬', title: "Film today's hook", sub: `“${unquote(i.hook)}”`, cta: 'See it →' }),
   kit: () => ({ icon: '🖼️', title: 'Make your kit stronger', sub: 'Pin your best videos: brands open it from your pitch', cta: 'Edit →' }),
   gigs: (i) => ({
     icon: '💸', title: `${i.count} paid UGC gig${i.count === 1 ? '' : 's'} match${i.count === 1 ? 'es' : ''} you`,
