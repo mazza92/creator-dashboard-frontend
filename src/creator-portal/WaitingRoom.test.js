@@ -4,10 +4,17 @@ import WaitingRoom, { resetLabel } from './WaitingRoom';
 
 const mockCalls = [];
 let mockServerRoom = null;
+let mockCheckoutUrl = null;
 jest.mock('../config/api', () => ({
   __esModule: true,
   default: {
-    post: (url, body) => { mockCalls.push([url, body]); return Promise.resolve({ data: { success: true } }); },
+    post: (url, body) => {
+      mockCalls.push([url, body]);
+      if (url === '/api/subscription/create-checkout') {
+        return mockCheckoutUrl ? Promise.resolve({ data: { checkout_url: mockCheckoutUrl } }) : Promise.reject(new Error('down'));
+      }
+      return Promise.resolve({ data: { success: true } });
+    },
     get: () => Promise.resolve({ data: { waiting_room: mockServerRoom } }),
   },
 }));
@@ -51,7 +58,7 @@ test('tracks view, checklist and upgrade with source and follow-up state', () =>
   render(<WaitingRoom room={{ ...base, followup: null }} source="pill" onOpen={onOpen} onUpgrade={() => {}} />);
   fireEvent.click(screen.getByText('Set your rates'));
   fireEvent.click(screen.getByText(/Send these \+ resume my plan/));
-  expect(mockCalls.map((c) => c[1])).toEqual([
+  expect(mockCalls.filter((c) => c[0] === '/api/polly/waiting-room/event').map((c) => c[1])).toEqual([
     { action: 'view', source: 'pill', followup_due: false },
     { action: 'checklist', source: 'pill', followup_due: false, item: 'rates' },
     { action: 'upgrade', source: 'pill', followup_due: false },
@@ -101,4 +108,25 @@ test('publishOffer only fires for a real offer', () => {
 test('a hook that is already quoted is not double-quoted', () => {
   render(<WaitingRoom room={{ ...base, followup: null, checklist: [{ id: 'pulse', hook: '“Lets face it, RDLs are hard”', path: '/p' }] }} />);
   expect(screen.getByText('“Lets face it, RDLs are hard”')).toBeTruthy();
+});
+
+test('the upgrade button goes straight to Stripe checkout', async () => {
+  mockCheckoutUrl = 'https://checkout.stripe.com/c/pay/test';
+  const onUpgrade = jest.fn();
+  delete window.location;
+  window.location = { href: '', pathname: '/creator/dashboard/for-you', search: '' };
+  render(<WaitingRoom room={{ ...base, followup: null }} source="pill" onUpgrade={onUpgrade} />);
+  fireEvent.click(screen.getByText(/Send these \+ resume my plan/));
+  await waitFor(() => expect(window.location.href).toBe('https://checkout.stripe.com/c/pay/test'));
+  const checkout = mockCalls.find((c) => c[0] === '/api/subscription/create-checkout');
+  expect(checkout[1]).toMatchObject({ tier: 'pro', interval: 'monthly', source: 'waiting_room_pill' });
+  expect(onUpgrade).not.toHaveBeenCalled();
+  mockCheckoutUrl = null;
+});
+
+test('if checkout fails, the upgrade window opens instead', async () => {
+  const onUpgrade = jest.fn();
+  render(<WaitingRoom room={{ ...base, followup: null }} onUpgrade={onUpgrade} />);
+  fireEvent.click(screen.getByText(/Send these \+ resume my plan/));
+  await waitFor(() => expect(onUpgrade).toHaveBeenCalled());
 });
