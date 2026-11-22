@@ -186,7 +186,10 @@ function loadRedirectUser(auth) {
       })
       .catch((err) => {
         clearRedirectFlag();
-        if (pending) reportGoogleStep('redirect_error', err);
+        // Only a sign-in the creator started can fail. The quiet check every sign-in page runs on load used to
+        // show "Google sign-in didn't finish" when it was slow, before anyone pressed the button.
+        if (!pending) return null;
+        reportGoogleStep('redirect_error', err);
         throw err;
       });
   }

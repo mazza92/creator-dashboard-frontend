@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { message } from 'antd';
 import api from '../config/api';
+import { auth } from '../components/firebase';
+import { signOutGoogle } from '../utils/googleSignOut';
 
 /**
  * Account deletion in steps, like the subscription apps people know (Spotify, Notion, Canva):
@@ -63,6 +65,7 @@ export default function DeleteAccountFlow({ accountEmail, onClose, onNeedCancel 
     setBusy(true);
     try {
       await api.post('/api/account/delete', { confirmation: 'DELETE', email: email.trim(), reason, feedback: feedback.trim() });
+      await signOutGoogle(auth);
       ['userRole', 'userId', 'userData', 'authToken'].forEach((k) => {
         try { localStorage.removeItem(k); } catch (e) { /* storage blocked */ }
       });

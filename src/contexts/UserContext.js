@@ -4,6 +4,8 @@ import { apiClient } from '../config/api';
 import { useNotification } from './NotificationContext'; // Import useNotification
 import { clearPollyLocalThreads } from '../creator-portal/pollyStorage';
 import { onboardingCompleteFromAuth, onboardingCompleteFromProfile } from '../utils/creatorApproval';
+import { auth } from '../components/firebase';
+import { signOutGoogle } from '../utils/googleSignOut';
 
 export const UserContext = createContext(null);
 
@@ -143,6 +145,7 @@ export const UserProvider = ({ children }) => {
             console.error('🔍 Error during server-side logout, proceeding with client-side cleanup:', error);
         } finally {
             // Ensure cleanup happens regardless of server response
+            await signOutGoogle(auth);
             setUser(null);
             cleanupSocket(); // Disconnect the socket on logout
             localStorage.removeItem('userRole');
