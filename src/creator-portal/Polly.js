@@ -19,7 +19,7 @@ import PollyActivityCard from './PollyActivityCard';
 import PollyGoalPlanCard from './PollyGoalPlanCard';
 import PollyHotlistCard from './PollyHotlistCard';
 import PollyUpsellCard from './PollyUpsellCard';
-import WaitingRoom, { resetLabel } from './WaitingRoom';
+import WaitingRoom, { resetLabel, publishOffer, OFFER_EVENT } from './WaitingRoom';
 import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -1512,7 +1512,20 @@ export default function Polly() {
   );
   const [credits, setCredits] = useState(null);
   const [savedIds, setSavedIds] = useState({});
+
   const [messages, setMessages] = useState([]);
+  // The out-of-free-pitches card arrives with the response that used the last free pitch: add it after the reply.
+  useEffect(() => {
+    const onOffer = (e) => {
+      const offer = e.detail;
+      if (!offer || !offer.upsell) return;
+      setTimeout(() => {
+        setMessages((prev) => (prev.some((m) => m && m.id && m.id === offer.id) ? prev : [...prev, offer]));
+      }, 700);
+    };
+    window.addEventListener(OFFER_EVENT, onOffer);
+    return () => window.removeEventListener(OFFER_EVENT, onOffer);
+  }, []);
   const [ready, setReady] = useState(false);
   const [serverReady, setServerReady] = useState(false);
   // A deep-linked task waits for the server thread; show Polly working meanwhile.
@@ -1892,6 +1905,7 @@ export default function Polly() {
     try {
       const res = await apiClient.post('/api/polly/pitch-batch/send', {}, { timeout: 60000 });
       reply = res.data || {};
+      publishOffer(reply);
     } catch (err) {
       const data = err.response?.data || {};
       if (err.response?.status === 409 && data.error === 'gmail_not_connected') {
@@ -1935,7 +1949,7 @@ export default function Polly() {
       role: 'assistant',
       content: scrubPollyVoice(reply.message || 'Done.'),
       task_chips: firstWin ? [] : (reply.task_chips || []),
-      sent_summary: reply.sent_summary || null,
+      sent_summary: reply.sent_summary ? { ...reply.sent_summary, pro_offer: reply.offer_message ? false : reply.sent_summary.pro_offer } : null,
       first_win: firstWin,
     }];
     setMessages(next);
@@ -1991,6 +2005,7 @@ export default function Polly() {
     try {
       const res = await apiClient.post('/api/polly/pitch/send', { brand_id: brandId }, { timeout: 45000 });
       reply = res.data || {};
+      publishOffer(reply);
     } catch (err) {
       const data = err.response?.data || {};
       if (err.response?.status === 409 && data.error === 'gmail_not_connected') {
@@ -2006,7 +2021,7 @@ export default function Polly() {
     ));
     const next = [...current, {
       id: newId(), role: 'assistant', content: scrubPollyVoice(reply.message || 'Done.'),
-      task_chips: reply.task_chips || [], sent_summary: reply.sent_summary || null,
+      task_chips: reply.task_chips || [], sent_summary: reply.sent_summary ? { ...reply.sent_summary, pro_offer: reply.offer_message ? false : reply.sent_summary.pro_offer } : null,
     }];
     setMessages(next);
     persistThread(next, suggestedRef.current);
@@ -2071,6 +2086,7 @@ export default function Polly() {
         });
         result = { status: res.status || 200, data: res.data || {} };
       }
+      publishOffer(result.data);
       if (result.status >= 400) {
         const httpErr = new Error(`Polly chat ${result.status}`);
         httpErr.response = { status: result.status, data: result.data };

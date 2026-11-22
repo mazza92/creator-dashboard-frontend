@@ -85,3 +85,15 @@ test('older card without a room: shows the fallback, then the live room', async 
   await waitFor(() => expect(screen.getByText(/24 brands lined up/)).toBeTruthy());
   expect(screen.queryByText('old card')).toBeNull();
 });
+
+test('publishOffer only fires for a real offer', () => {
+  const { publishOffer, OFFER_EVENT } = require('./WaitingRoom');
+  const got = [];
+  const on = (e) => got.push(e.detail);
+  window.addEventListener(OFFER_EVENT, on);
+  publishOffer({ offer_message: { id: 'credits-out-2026-11', upsell: {} } });
+  publishOffer({ offer_message: null });
+  publishOffer(undefined);
+  window.removeEventListener(OFFER_EVENT, on);
+  expect(got).toEqual([{ id: 'credits-out-2026-11', upsell: {} }]);
+});

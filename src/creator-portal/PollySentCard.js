@@ -85,7 +85,7 @@ export default function PollySentCard({ summary, onChip, disabled, onOpenTracker
       ) : summary.pro_offer ? (
         <Pro>
           <b>Want me to keep going?</b>
-          <span>I&apos;ll pitch 15 new brands a week for you, follow up and draft your replies. You just answer.</span>
+          <span>I&apos;ll pitch up to 20 brands daily for you, follow up and draft your replies. You just answer.</span>
           <button type="button" disabled={disabled}
             onClick={() => onChip && onChip({ id: 'unlock_pro', label: 'Keep pitching for me', action: 'unlock_pro' })}>
             Keep pitching for me · $19/mo
