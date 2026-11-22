@@ -20,6 +20,7 @@ import PollyGoalPlanCard from './PollyGoalPlanCard';
 import PollyHotlistCard from './PollyHotlistCard';
 import PollyUpsellCard from './PollyUpsellCard';
 import WaitingRoom, { resetLabel, publishOffer, OFFER_EVENT } from './WaitingRoom';
+import { startProCheckout } from '../utils/startProCheckout';
 import PollySentCard from './PollySentCard';
 import { UserContext } from '../contexts/UserContext';
 import PollyRichText from './pollyMarkdown';
@@ -2304,10 +2305,24 @@ export default function Polly() {
     send(draft);
   };
 
+  // Pro buttons under a reply that already explains Pro go straight to Stripe ($19; the backend decides the free
+  // week exactly as before). The upgrade window is only the fallback when checkout can't be created.
+  const [checkingOut, setCheckingOut] = useState(false);
+  const goPro = async (source) => {
+    if (checkingOut) return;
+    setCheckingOut(true);
+    try {
+      await startProCheckout(source);
+    } catch (_) {
+      setCheckingOut(false);
+      setShowUpgrade(true);
+    }
+  };
+
   const sendStarter = (chip) => {
     if (busy || loadingMore || !chip) return;
     if (chip.action === 'unlock_pro' || chip.id === 'unlock_pro') {
-      setShowUpgrade(true);
+      goPro('polly_chip');
       return;
     }
     if (chip.action === 'open_directory') {
@@ -2921,8 +2936,8 @@ export default function Polly() {
                           ? 'If you\u2019d like to run the video as an ad, I offer 30 days of paid usage at my rate. Happy to sort that now or once you\u2019ve seen the video.'
                           : 'Here\u2019s why your audience fits and the exact content I\u2019d make for you, plus two recent posts that show it. Happy to send over a quick concept if useful.'}
                       </LockedBlur>
-                      <UnlockBtn type="button" onClick={() => setShowUpgrade(true)}>
-                        {msg.locked_pitch.kind === 'reply' ? 'Finish this reply with Pro' : 'Unlock this pitch with Pro'}
+                      <UnlockBtn type="button" disabled={checkingOut} onClick={() => goPro('polly_locked_pitch')}>
+                        {checkingOut ? 'Opening secure checkout…' : (msg.locked_pitch.kind === 'reply' ? 'Finish this reply with Pro' : 'Unlock this pitch with Pro')}
                       </UnlockBtn>
                     </PitchCard>
                   )}
