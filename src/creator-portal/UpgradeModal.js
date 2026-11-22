@@ -10,6 +10,7 @@ import { dismissUpgradeDeeplink, getEmailCampaign, isWinbackUpgradePending } fro
 import { PRO_OFFER, PRO_COMPARE } from '../config/proOffer';
 import { useTrialDays } from '../utils/trialOffer';
 import { money, paywallGoal } from './tracker/trackerModel';
+import { rememberCheckoutReturn } from '../utils/checkoutReturn';
 
 function sourceFromPath(pathname) {
   const path = String(pathname || '');
@@ -104,6 +105,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
       );
 
       if (isWinback) dismissUpgradeDeeplink();
+      rememberCheckoutReturn();
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);

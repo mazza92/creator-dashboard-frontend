@@ -9,6 +9,7 @@ import UpgradeModal from './UpgradeModal';
 import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
 import { getEmailCampaign } from '../utils/upgradeDeeplink';
 import { beginBrandOutreach, getDuplicateOutreachMessage } from '../utils/outreachSendGuard';
+import { rememberCheckoutReturn } from '../utils/checkoutReturn';
 
 /**
  * PR Package Modal - V2 Single Pitch with Mandatory Edit
@@ -102,6 +103,7 @@ const PRPackageModal = ({
         source: 'pr_package',
         email_campaign: getEmailCampaign() || undefined,
       });
+      rememberCheckoutReturn();
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);
