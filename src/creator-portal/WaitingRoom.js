@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import api from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
+import { startProCheckout } from '../utils/startProCheckout';
 
 // Out of free pitches: instead of a dead end, what the 3 pitches are doing, free things to do meanwhile, and the
 // next pitches Polly already drafted (Pro sends them). The follow-up follows Autopilot's timing: it's the main
@@ -96,6 +97,7 @@ export default function WaitingRoom({ room: initial, trial = false, onUpgrade, o
   // The card in chat was built when the free pitches ran out; on a later visit its numbers (and whether the
   // follow-up is due) are refreshed from the server.
   const [fresh, setFresh] = useState(null);
+  const [checkingOut, setCheckingOut] = useState(false);
   const viewed = useRef(false);
   useEffect(() => {
     if (!live) return undefined;
@@ -115,6 +117,18 @@ export default function WaitingRoom({ room: initial, trial = false, onUpgrade, o
   // No room yet (an older card saved without one, or the fetch failed): show the fallback card meanwhile.
   if (!room) return fallback;
   const meta = { source, followup_due: due };
+  // The card already explains Pro: its button goes straight to Stripe. The upgrade window is only the fallback
+  // when checkout can't be created.
+  const upgrade = async () => {
+    trackWaitingRoom('upgrade', meta);
+    setCheckingOut(true);
+    try {
+      await startProCheckout(`waiting_room_${source}`);
+    } catch (_) {
+      setCheckingOut(false);
+      if (onUpgrade) onUpgrade();
+    }
+  };
   const m = room.momentum || {};
   const fu = room.followup;
   const leadIsFollowup = !!(fu && fu.due);
@@ -179,8 +193,8 @@ export default function WaitingRoom({ room: initial, trial = false, onUpgrade, o
         {room.plan_count ? (
           <p className="paused">⏸️ Your plan has <b>{room.plan_count} brand{room.plan_count === 1 ? '' : 's'} lined up{room.reset ? ` before ${room.reset}` : ''}</b>, paused on the free plan. Pro picks up where it stopped.</p>
         ) : null}
-        <button type="button" className={leadIsFollowup ? 'cta soft' : 'cta'} disabled={disabled} onClick={() => { trackWaitingRoom('upgrade', meta); if (onUpgrade) onUpgrade(); }}>
-          {cta}
+        <button type="button" className={leadIsFollowup ? 'cta soft' : 'cta'} disabled={disabled || checkingOut} onClick={upgrade}>
+          {checkingOut ? 'Opening secure checkout…' : cta}
         </button>
         <p className="fine">
           {trial ? '7 days free, then $19/mo · ' : ''}Up to 20 brand pitches daily, follow-ups included · Cancel anytime
