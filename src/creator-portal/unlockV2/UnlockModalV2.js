@@ -18,6 +18,7 @@ import { ALLOWED_REGION_CODES, PRIORITY_REGION_CODES } from '../../constants/all
 import PitchBodyEditor from '../PitchBodyEditor';
 import { copyPitchRich, pitchPlainForEmail } from '../../utils/pitchBodyFormat';
 import { ColdBrandNote } from '../../components/ReplySignal';
+import { rememberCheckoutReturn } from '../../utils/checkoutReturn';
 
 const LOCATION_PLACEHOLDER = '[CITY, COUNTRY]';
 
@@ -3650,6 +3651,7 @@ const UnlockModalV2 = ({
         source: 'unlock_modal',
         email_campaign: getEmailCampaign() || undefined,
       });
+      rememberCheckoutReturn();
       window.location.href = response.data.checkout_url;
     } catch (error) {
       console.error('Upgrade error:', error);

@@ -535,6 +535,18 @@ const CreatorDashboardLayout = () => {
   const location = useLocation();
   const { prefetch } = usePrefetch();
 
+  // Back from Stripe without paying (SubscriptionCancel sends them here with ?checkout=cancelled): one quiet line,
+  // then the param goes so a reload doesn't repeat it.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('checkout') !== 'cancelled') return;
+    message.info({ content: "No charge made, you're still on the free plan. Pro is here whenever you're ready.", duration: 5 });
+    try { api.post('/api/track-event', { event: 'checkout_cancelled', location: location.pathname }).catch(() => {}); } catch (_) { /* ignore */ }
+    params.delete('checkout');
+    const rest = params.toString();
+    navigate(`${location.pathname}${rest ? `?${rest}` : ''}`, { replace: true });
+  }, [location.pathname, location.search, navigate]);
+
   // Prefetch data on nav hover for instant navigation
   const handleNavHover = useCallback((path) => {
     prefetch(path);
