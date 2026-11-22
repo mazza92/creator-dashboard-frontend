@@ -78,7 +78,7 @@ export function FollowUp({ followup, onFollowup, disabled }) {
   );
 }
 
-export default function WaitingRoom({ room: initial, trial = false, onUpgrade, onFollowup, onOpen, disabled, source = 'chat', live = false }) {
+export default function WaitingRoom({ room: initial, trial = false, onUpgrade, onFollowup, onOpen, disabled, source = 'chat', live = false, fallback = null }) {
   // The card in chat was built when the free pitches ran out; on a later visit its numbers (and whether the
   // follow-up is due) are refreshed from the server.
   const [fresh, setFresh] = useState(null);
@@ -98,7 +98,8 @@ export default function WaitingRoom({ room: initial, trial = false, onUpgrade, o
     viewed.current = true;
     trackWaitingRoom('view', { source, followup_due: due });
   }, [room, source, due]);
-  if (!room) return null;
+  // No room yet (an older card saved without one, or the fetch failed): show the fallback card meanwhile.
+  if (!room) return fallback;
   const meta = { source, followup_due: due };
   const m = room.momentum || {};
   const fu = room.followup;
