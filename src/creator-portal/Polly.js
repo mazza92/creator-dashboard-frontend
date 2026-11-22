@@ -1514,18 +1514,7 @@ export default function Polly() {
   const [savedIds, setSavedIds] = useState({});
 
   const [messages, setMessages] = useState([]);
-  // The out-of-free-pitches card arrives with the response that used the last free pitch: add it after the reply.
-  useEffect(() => {
-    const onOffer = (e) => {
-      const offer = e.detail;
-      if (!offer || !offer.upsell) return;
-      setTimeout(() => {
-        setMessages((prev) => (prev.some((m) => m && m.id && m.id === offer.id) ? prev : [...prev, offer]));
-      }, 700);
-    };
-    window.addEventListener(OFFER_EVENT, onOffer);
-    return () => window.removeEventListener(OFFER_EVENT, onOffer);
-  }, []);
+
   const [ready, setReady] = useState(false);
   const [serverReady, setServerReady] = useState(false);
   // A deep-linked task waits for the server thread; show Polly working meanwhile.
@@ -1840,6 +1829,26 @@ export default function Polly() {
       suggested_brands: nextSuggested,
     }).catch(() => {});
   }, []);
+
+  // The out-of-free-pitches card arrives with the response that used the last free pitch: add it after the reply,
+  // then save the thread with it. The turn's own save (PUT /thread) runs first and would otherwise drop the card the
+  // server had already stored, so it vanished on reload (Nov 22 2026).
+  useEffect(() => {
+    const onOffer = (e) => {
+      const offer = e.detail;
+      if (!offer || !offer.upsell) return;
+      setTimeout(() => {
+        const current = messagesRef.current || [];
+        if (current.some((m) => m && m.id && m.id === offer.id)) return;
+        const next = [...current, offer];
+        messagesRef.current = next;
+        setMessages(next);
+        persistThread(next, suggestedRef.current);
+      }, 700);
+    };
+    window.addEventListener(OFFER_EVENT, onOffer);
+    return () => window.removeEventListener(OFFER_EVENT, onOffer);
+  }, [persistThread]);
 
   const settleRadar = useCallback((radar) => {
     if (!radar?.run_id) return;
