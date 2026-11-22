@@ -2535,7 +2535,8 @@ export default function Polly() {
     apiClient.request({ method: on ? 'post' : 'delete', url: `/api/pr-crm/targets/${brand.id}`, data: { source: 'polly_out_of_free' } })
       .catch(() => setSavedIds((prev) => ({ ...prev, [brand.id]: !on })));
   };
-  const lastUpsellMsg = [...messages].reverse().find((m) => m && m.upsell && m.waiting_room);
+  // Cards posted before Nov 22 were saved without their waiting room: the latest one fetches it live.
+  const lastUpsellMsg = [...messages].reverse().find((m) => m && m.upsell);
 
   const contactBrand = (brand) => {
     if (busy || !brand?.id) return;
@@ -2975,8 +2976,9 @@ export default function Polly() {
                   {msg.activity?.items?.length > 0 && (
                     <PollyActivityCard activity={msg.activity} onChip={sendStarter} disabled={busy} />
                   )}
-                  {msg.upsell && msg.waiting_room ? (
-                    <WaitingRoom room={msg.waiting_room} trial={!!msg.upsell.trial} disabled={busy}
+                  {msg.upsell && (msg.waiting_room || msg === lastUpsellMsg) ? (
+                    <WaitingRoom room={msg.waiting_room || null} trial={!!msg.upsell.trial} disabled={busy}
+                      fallback={<PollyUpsellCard upsell={msg.upsell} chips={msg.task_chips || []} onChip={sendStarter} disabled={busy} />}
                       live={msg === lastUpsellMsg && !credits?.is_unlimited}
                       onUpgrade={() => sendStarter((msg.task_chips || []).find((c) => c.action === 'unlock_pro')
                         || { id: 'unlock_pro', action: 'unlock_pro', label: 'Start my free week' })}

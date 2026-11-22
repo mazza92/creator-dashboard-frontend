@@ -77,3 +77,11 @@ test('Gmail-sent pitch: Polly follows up by itself, no button, checklist leads',
   expect(screen.queryByText(/Draft my/)).toBeNull();
   expect(screen.getByText('Set your rates').closest('button').className).toContain('lead');
 });
+
+test('older card without a room: shows the fallback, then the live room', async () => {
+  mockServerRoom = { ...base, followup: null };
+  render(<WaitingRoom live room={null} fallback={<p>old card</p>} />);
+  expect(screen.getByText('old card')).toBeTruthy();
+  await waitFor(() => expect(screen.getByText(/24 brands lined up/)).toBeTruthy());
+  expect(screen.queryByText('old card')).toBeNull();
+});
