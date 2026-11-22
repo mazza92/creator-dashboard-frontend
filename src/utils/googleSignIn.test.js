@@ -3,6 +3,7 @@ jest.mock('firebase/auth', () => ({
   getRedirectResult: jest.fn(),
   signInWithPopup: jest.fn(),
   signInWithRedirect: jest.fn(),
+  signOut: jest.fn(),
 }));
 jest.mock('./api', () => ({
   __esModule: true,
