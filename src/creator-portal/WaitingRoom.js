@@ -29,6 +29,15 @@ export function resetLabel(balance, now = new Date()) {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
 }
 
+// The backend returns the out-of-free-pitches card (offer_message) with the response that used up the last free
+// pitch (send, "I sent it", or the first ask the free plan can't cover). Polly listens and adds it to the chat.
+export const OFFER_EVENT = 'nc-polly-offer';
+export function publishOffer(data) {
+  const offer = data && data.offer_message;
+  if (!offer || typeof offer !== 'object') return;
+  try { window.dispatchEvent(new CustomEvent(OFFER_EVENT, { detail: offer })); } catch (_) { /* ignore */ }
+}
+
 export function trackWaitingRoom(action, extra = {}) {
   api.post('/api/polly/waiting-room/event', { action, ...extra }).catch(() => {});
 }

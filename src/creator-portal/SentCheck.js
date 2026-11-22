@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { apiClient } from '../config/api';
+import { publishOffer } from './WaitingRoom';
 
 /**
  * "Did it send?" after a pitch left Polly through the mail app or a copy. Yes logs the send (follow-ups on day
@@ -14,9 +15,10 @@ export default function SentCheck({ brandId, brandName, method, onAnswered, comp
     if (state === 'saving') return;
     setState('saving');
     try {
-      await apiClient.post('/api/polly/pitch/sent-check', {
+      const res = await apiClient.post('/api/polly/pitch/sent-check', {
         brand_id: brandId, brand_name: brandName || null, sent, method: method || '',
       });
+      publishOffer(res && res.data);
     } catch (_) {
       // The answer still shows; the day-4 check-in asks again if this didn't save.
     }
