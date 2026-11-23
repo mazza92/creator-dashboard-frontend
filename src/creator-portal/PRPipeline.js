@@ -1667,11 +1667,11 @@ const PRPipeline = () => {
 
 // Styled Components
 const Container = styled.div`
-  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   max-width: 600px;
   margin: 0 auto;
   padding: 32px 20px 100px;
-  background: #f7f5f0;
+  background: #fafafa;
   min-height: 100vh;
 
   @media (max-width: 480px) {
@@ -1792,9 +1792,9 @@ const JourneyEyebrow = styled.div`
 `;
 
 const JourneyGreeting = styled.div`
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: clamp(1.7rem, 3vw, 2.2rem);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin-bottom: 8px;
@@ -1811,7 +1811,7 @@ const JourneySub = styled.div`
   margin-bottom: 20px;
   max-width: 36rem;
   line-height: 1.45;
-  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 `;
 
 const JourneyStats = styled.div`

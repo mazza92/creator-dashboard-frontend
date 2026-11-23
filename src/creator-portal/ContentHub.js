@@ -6,8 +6,8 @@ import { message } from 'antd';
 import api from '../config/api';
 import { trackContentHubEvent } from '../utils/contentHubAnalytics';
 
-const PINK = '#e8395f';
-const PINK_HOVER = '#c92549';
+const PINK = '#0d7a5f';
+const PINK_HOVER = '#095a46';
 
 const CONTENT_TYPES = [
   { id: 'unboxing', label: 'Unboxing', emoji: '📦' },
@@ -542,7 +542,7 @@ const ValueIcon = styled.div`
   width: 64px; height: 64px; border-radius: 16px; flex-shrink: 0;
   background: linear-gradient(135deg, ${PINK} 0%, ${PINK_HOVER} 100%);
   display: flex; align-items: center; justify-content: center; font-size: 32px;
-  box-shadow: 0 8px 20px rgba(232,57,95,.25);
+  box-shadow: 0 8px 20px rgba(13, 122, 95, .25);
 `;
 const ValueContent = styled.div`flex: 1;`;
 const ValueTitle = styled.div`
@@ -557,7 +557,7 @@ const ValueCta = styled.button`
   display: inline-flex; align-items: center; gap: 8px;
   background: ${PINK}; color: #fff; padding: 12px 20px; border-radius: 11px;
   font-weight: 700; font-size: 14.5px; border: none; cursor: pointer;
-  box-shadow: 0 4px 12px rgba(232,57,95,.28);
+  box-shadow: 0 4px 12px rgba(13, 122, 95, .28);
   &:hover { background: ${PINK_HOVER}; }
 `;
 
@@ -647,7 +647,7 @@ const Thumb = styled.div`
     p.$kind === 'grwm' ? 'linear-gradient(135deg,#fde68a,#f59e0b)'
     : p.$kind === 'review' ? 'linear-gradient(135deg,#c4b5fd,#7c3aed)'
     : p.$kind === 'haul' ? 'linear-gradient(135deg,#a7f3d0,#059669)'
-    : 'linear-gradient(135deg,#f4c4b8,#e8395f)'
+    : 'linear-gradient(135deg,#f4c4b8,#0d7a5f)'
   )};
 `;
 const TypePill = styled.span`
@@ -665,8 +665,8 @@ const StatusPill = styled.span`
 `;
 
 const winPulse = keyframes`
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(232,57,95,.28); }
-  50% { transform: scale(1.03); box-shadow: 0 0 0 6px rgba(232,57,95,0); }
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(13, 122, 95, .28); }
+  50% { transform: scale(1.03); box-shadow: 0 0 0 6px rgba(13, 122, 95, 0); }
 `;
 const ResponsePill = styled.span`
   display: inline-flex; align-items: center; gap: 5px;
@@ -674,7 +674,7 @@ const ResponsePill = styled.span`
   letter-spacing: -.01em; white-space: nowrap;
   ${p => p.$tone === 'win' && css`
     background: linear-gradient(135deg, #fff1f4 0%, #fde8ec 100%);
-    color: #c92549;
+    color: #095a46;
     border: 1px solid #f9c5d1;
     animation: ${winPulse} 1.6s ease-in-out 3;
   `}
@@ -729,7 +729,7 @@ const Field = styled.div`
     width: 100%; padding: 11px 14px; font-size: 14px; border: 1.5px solid #e5e7eb;
     background: #fff; border-radius: 10px; outline: none; font-family: inherit; color: #15161a;
     box-sizing: border-box;
-    &:focus { border-color: ${PINK}; box-shadow: 0 0 0 3px rgba(232,57,95,.1); }
+    &:focus { border-color: ${PINK}; box-shadow: 0 0 0 3px rgba(13, 122, 95, .1); }
   }
   textarea { min-height: 70px; resize: vertical; }
 `;
@@ -798,6 +798,6 @@ const GhostBtn = styled.button`
 const PrimaryBtn = styled.button`
   flex: 1; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 14px;
   background: ${PINK}; color: #fff; border: none; cursor: pointer;
-  box-shadow: 0 4px 12px rgba(232,57,95,.24);
+  box-shadow: 0 4px 12px rgba(13, 122, 95, .24);
   &:disabled { opacity: .5; cursor: not-allowed; background: #9ca0a8; box-shadow: none; }
 `;

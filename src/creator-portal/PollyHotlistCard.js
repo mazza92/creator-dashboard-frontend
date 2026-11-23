@@ -93,7 +93,7 @@ const Head = styled.div`
   justify-content: space-between;
   align-items: baseline;
   gap: 8px;
-  .k { font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: ${t.hot}; }
+  .k { font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: ${t.accent}; }
   .w { font-size: 12.5px; color: ${t.muted}; font-weight: 600; }
 `;
 
@@ -174,6 +174,6 @@ const Foot = styled.div`
     cursor: pointer;
   }
   button:disabled { opacity: .6; cursor: default; }
-  .primary { background: #e8395f; color: #fff; border: 0; }
+  .primary { background: ${t.pro}; color: #fff; border: 0; }
   .ghost { background: ${t.white}; color: ${t.ink}; border: 1px solid ${t.line}; }
 `;

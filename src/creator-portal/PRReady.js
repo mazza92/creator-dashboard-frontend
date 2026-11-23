@@ -47,7 +47,7 @@ const Eyebrow = styled.div`
 const Title = styled.h1`
   font-family: ${t.fontDisplay};
   font-size: clamp(28px, 4vw, 40px);
-  font-weight: 400;
+  font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.02em;
   color: ${t.ink};
@@ -855,7 +855,7 @@ const ModalEyebrow = styled.div`
 const ModalTitle = styled.h2`
   font-family: ${t.fontDisplay};
   font-size: 26px;
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.02em;
   margin: 0 0 8px;
   color: ${t.ink};

@@ -272,7 +272,7 @@ export const TOKENS = {
   heroSublineSize: '11.5px',
 
   // Mentor section
-  mentorBg: '#f7f5f0',
+  mentorBg: '#fafafa',
   mentorBorder: '#e4e2dc',
   mentorTextPrimary: '#12141a',
   mentorTextSecondary: '#5c6470',
@@ -282,7 +282,7 @@ export const TOKENS = {
   accRowMinHeight: '56px',
   accRowPadding: '16px 20px',
   accRowBorder: '1px solid #e4e2dc',
-  accRowExpandedBg: '#fffdf8',
+  accRowExpandedBg: '#ffffff',
 
   // Pro row
   proRowBg: 'linear-gradient(90deg, rgba(13,122,95,.06), rgba(9,90,70,.04))',
@@ -292,16 +292,16 @@ export const TOKENS = {
   flashBg: 'linear-gradient(160deg, #095a46 0%, #0d7a5f 100%)',
 
   // Loading (legacy key kept for any remaining refs)
-  lootBg: '#f7f5f0',
+  lootBg: '#fafafa',
   lootCardPopDuration: '400ms',
   lootCardPopEasing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
 
   // Shared rebuild surfaces
-  paper: '#f7f5f0',
+  paper: '#fafafa',
   ink: '#12141a',
   action: '#0f0f0f',
   accent: '#0d7a5f',
   accentDeep: '#095a46',
-  fontSans: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  fontSans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   fontDisplay: "'Instrument Serif', Georgia, 'Times New Roman', serif",
 };

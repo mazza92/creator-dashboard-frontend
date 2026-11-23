@@ -376,7 +376,7 @@ const ModalIcon = styled.div`
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed 0%, #e8395f 100%);
+  background: linear-gradient(135deg, #0d7a5f 0%, #095a46 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,7 +411,7 @@ const Headline = styled.h1`
 `;
 
 const PinkSpan = styled.span`
-  color: #e8395f;
+  color: #0d7a5f;
 `;
 
 const BoltIcon = () => (
@@ -480,7 +480,7 @@ const ProColumn = styled.div`
   bottom: 0;
   right: 0;
   width: 92px;
-  border: 1.5px solid #e8395f;
+  border: 1.5px solid #0d7a5f;
   border-radius: 14px;
   background: linear-gradient(180deg, #fef2f4 0%, #fff 100%);
 `;
@@ -507,7 +507,7 @@ const ProHead = styled.div`
   justify-content: center;
 
   span {
-    background: #e8395f;
+    background: #0d7a5f;
     color: #fff;
     font-size: 11px;
     font-weight: 800;
@@ -540,13 +540,13 @@ const CheckDot = styled.span`
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: ${(p) => (p.$pro ? '#e8395f' : '#15161a')};
+  background: ${(p) => (p.$pro ? '#0d7a5f' : '#15161a')};
 `;
 
 const CellText = styled.span`
   font-size: 13px;
   font-weight: 700;
-  color: ${(p) => (p.$pro ? '#e8395f' : '#2b2d33')};
+  color: ${(p) => (p.$pro ? '#0d7a5f' : '#2b2d33')};
   line-height: 1.2;
   text-align: center;
   padding: 2px 4px;
@@ -568,7 +568,7 @@ const PlanOption = styled.button`
   width: 100%;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1.5px solid ${(p) => (p.$active ? '#e8395f' : '#e5e7eb')};
+  border: 1.5px solid ${(p) => (p.$active ? '#0d7a5f' : '#e5e7eb')};
   background: ${(p) => (p.$active ? '#fef2f4' : '#fff')};
   text-align: left;
   cursor: pointer;
@@ -637,20 +637,20 @@ const CtaButton = styled(motion.button)`
   padding: 16px;
   border: none;
   border-radius: 14px;
-  background: linear-gradient(135deg, #e8395f 0%, #c92549 100%);
+  background: linear-gradient(135deg, #0d7a5f 0%, #095a46 100%);
   color: #fff;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   letter-spacing: -0.01em;
   font-family: inherit;
-  box-shadow: 0 8px 20px rgba(232, 57, 95, 0.28);
+  box-shadow: 0 8px 20px rgba(13, 122, 95, 0.28);
   transition: transform 0.12s, box-shadow 0.12s;
   -webkit-tap-highlight-color: transparent;
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 10px 26px rgba(232, 57, 95, 0.34);
+    box-shadow: 0 10px 26px rgba(13, 122, 95, 0.34);
   }
 
   &:active:not(:disabled) {

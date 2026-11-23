@@ -8,8 +8,8 @@ export const creatorTokens = {
   inkSoft: '#2a2e38',
   muted: '#5c6470',
   line: '#e4e2dc',
-  paper: '#f7f5f0',
-  cream: '#fffdf8',
+  paper: '#fafafa',
+  cream: '#ffffff',
   white: '#ffffff',
 
   // Action / primary CTA (near-black — matches existing action buttons)
@@ -22,6 +22,12 @@ export const creatorTokens = {
   accentSoft: '#eef6f3',
   accentLight: '#eef6f3',
   accentBorder: '#b8d5cb',
+
+  // Pro: the landing page's green, so upgrade buttons stand out from the black everyday actions (Nov 2026 revamp;
+  // replaced the pink #e8395f).
+  pro: '#0d7a5f',
+  proHover: '#095a46',
+  proShadow: 'rgba(13, 122, 95, 0.28)',
 
   // Warm highlight (gift value, send-time)
   hot: '#e85d3b',
@@ -37,14 +43,14 @@ export const creatorTokens = {
   accentViolet: '#7c3aed', // Pool NEW badge only
   proGradient: 'linear-gradient(135deg, #0d7a5f, #095a46)',
 
-  bg: '#f7f5f0',
+  bg: '#fafafa',
   surface: '#ffffff',
   border: '#e4e2dc',
   borderHover: '#cfc9bc',
   textPrimary: '#12141a',
   textSecondary: '#2a2e38',
   textMuted: '#5c6470',
-  subtle: '#f0ebe3',
+  subtle: '#f3f2ef',
 
   radiusCard: '14px',
   radiusBtn: '10px',
@@ -54,8 +60,10 @@ export const creatorTokens = {
   shadowCard: '0 1px 3px rgba(18,20,26,0.04), 0 8px 28px rgba(18,20,26,0.06)',
   shadowHover: '0 10px 32px rgba(18,20,26,0.1)',
 
-  fontSans: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-  fontDisplay: "'Instrument Serif', Georgia, 'Times New Roman', serif",
+  fontSans: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  // Nov 2026 revamp: the dashboard matches newcollab.co (Inter, bold and tight, no serif). Headings set
+  // font-weight 800 and letter-spacing -0.025em next to this.
+  fontDisplay: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 
   // CTA copy — single source of truth
   ctaGetBrandPr: 'Get Brand PR',

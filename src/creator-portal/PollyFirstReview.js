@@ -179,7 +179,7 @@ const Subject = styled.div`margin-top: 4px; font-size: 14px; font-weight: 700;`;
 
 const Body = styled.textarea`
   display: block; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 12px; resize: vertical;
-  border: 1px solid #ece9e2; border-radius: 12px; background: #fbfaf7; color: ${t.ink};
+  border: 1px solid #ece9e2; border-radius: 12px; background: #fafafa; color: ${t.ink};
   font-family: inherit; font-size: 14px; line-height: 1.55;
   &:focus { outline: none; border-color: ${t.accentBorder}; background: #fff; }
 `;
@@ -235,7 +235,7 @@ const DrawerList = styled.ul`
     width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px; border: 0; background: none;
     border-radius: 12px; cursor: pointer; font-family: inherit; text-align: left;
   }
-  button:hover { background: #f7f5f0; }
+  button:hover { background: #fafafa; }
   .nm { flex: 1; font-size: 14.5px; font-weight: 700; color: ${t.ink}; }
   .tag { font-size: 11.5px; font-weight: 600; color: ${t.accentDeep}; white-space: nowrap; }
 `;

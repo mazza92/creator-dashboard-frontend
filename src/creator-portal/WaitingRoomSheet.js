@@ -42,9 +42,9 @@ const Backdrop = styled.div`
 // On phones the sheet scrolls inside itself and its top bar (title + ×) stays pinned, so close is always reachable
 // (Nov 2026: the × scrolled out of view). dvh = the visible screen height with the browser bars.
 const Sheet = styled.div`
-  width: 100%; max-width: 592px; background: #fbfaf7; border-radius: 22px; padding: 0 16px 16px; box-sizing: border-box;
+  width: 100%; max-width: 592px; background: #fafafa; border-radius: 22px; padding: 0 16px 16px; box-sizing: border-box;
   .top {
-    position: sticky; top: 0; z-index: 2; background: #fbfaf7; padding: 16px 0 10px;
+    position: sticky; top: 0; z-index: 2; background: #fafafa; padding: 16px 0 10px;
     display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 16px;
   }
   .x {

@@ -217,7 +217,7 @@ const Head = styled.div`
   h2 {
     margin: 0;
     font-family: ${tokens.fontDisplay};
-    font-weight: 400;
+    font-weight: 800;
     font-size: 26px;
     color: ${tokens.ink};
   }

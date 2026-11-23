@@ -78,7 +78,7 @@ const BrandName = styled.div`
   position: relative;
   font-family: ${t.fontDisplay};
   font-size: clamp(1.45rem, 5vw, 1.85rem);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.15;
   color: ${t.ink};

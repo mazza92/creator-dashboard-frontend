@@ -38,8 +38,8 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: #f7f5f0;
-  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #fafafa;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
   overflow: hidden;
   min-height: min(400px, 65vh);
@@ -82,9 +82,9 @@ const CheckIcon = styled.svg`
 `;
 
 const Title = styled.div`
-  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 1.55rem;
-  font-weight: 400;
+  font-weight: 800;
   color: #12141a;
   letter-spacing: -0.02em;
   margin-bottom: 8px;
