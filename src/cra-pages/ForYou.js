@@ -1881,7 +1881,7 @@ const PageEyebrow = styled.div`
 const PageTitle = styled.h1`
   font-family: ${tokens.fontDisplay};
   font-size: clamp(1.7rem, 3vw, 2.35rem);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin: 0 0 8px;

@@ -487,7 +487,7 @@ const TitleRow = styled.div`
 const Title = styled.h1`
   font-family: ${t.fontDisplay};
   font-size: 32px;
-  font-weight: 400;
+  font-weight: 800;
   margin: 0;
   color: ${t.ink};
   @media (max-width: 640px) { font-size: 28px; }
@@ -597,13 +597,13 @@ const Opens = styled.section`
   border: 1px solid #e6d9fb;
   display: grid;
   gap: 8px;
-  .h { font-size: 12.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #6d28d9; }
+  .h { font-size: 12.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #095a46; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
   li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .t { font-size: 14px; color: ${t.inkSoft}; min-width: 0; }
   .t b { color: ${t.ink}; }
   .go {
-    font-size: 13px; font-weight: 700; color: #fff; background: #7c3aed; border-radius: 999px;
+    font-size: 13px; font-weight: 700; color: #fff; background: #0d7a5f; border-radius: 999px;
     padding: 6px 14px; text-decoration: none; white-space: nowrap;
   }
   .ok { font-size: 12.5px; font-weight: 700; color: ${t.accentDeep}; }
@@ -614,7 +614,7 @@ const Funnel = styled.div`
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   .s.opened { background: #f4eefc; }
-  .s.opened .v { color: #6d28d9; display: flex; align-items: center; gap: 6px; }
+  .s.opened .v { color: #095a46; display: flex; align-items: center; gap: 6px; }
 
   .s { background: ${t.paper}; border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
   .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -890,7 +890,7 @@ const EmptyBox = styled.div`
   text-align: center;
   padding: ${(p) => (p.$inline ? '28px 12px' : '32px 20px')};
   ${(p) => (p.$inline ? '' : `background: ${t.white}; border: 1px solid ${t.line}; border-radius: 16px; margin-top: 12px;`)}
-  h2 { font-family: ${t.fontDisplay}; font-weight: 400; font-size: 24px; margin: 0 0 6px; }
+  h2 { font-family: ${t.fontDisplay}; font-weight: 800; letter-spacing: -0.025em; font-size: 24px; margin: 0 0 6px; }
   p { margin: 0 auto 16px; max-width: 46ch; color: ${t.muted}; font-size: 14px; }
   button { background: ${t.action}; color: #fff; border: 0; border-radius: ${t.radiusBtn}; padding: 10px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 `;

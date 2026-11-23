@@ -122,7 +122,7 @@ const Wrap = styled.div`
   .report:hover { color: ${t.ink}; }
   .confirm {
     margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12.5px; color: ${t.ink};
-    background: #fbfaf7; border: 1px solid ${t.line}; border-radius: 12px; padding: 8px 10px;
+    background: #fafafa; border: 1px solid ${t.line}; border-radius: 12px; padding: 8px 10px;
   }
   .confirm .yes {
     border: 0; border-radius: 999px; padding: 6px 12px; background: ${t.ink}; color: #fff; font: inherit;

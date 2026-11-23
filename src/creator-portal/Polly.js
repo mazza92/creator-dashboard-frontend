@@ -632,7 +632,7 @@ const AvatarMark = styled.img`
 const Title = styled.h1`
   font-family: ${t.fontDisplay};
   font-size: clamp(28px, 4.5vw, 40px);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: -0.03em;
   color: ${t.ink};
   margin: 0 0 8px;
@@ -787,6 +787,8 @@ const BatchCta = styled.div`
   margin-top: 12px;
   display: grid;
   gap: 6px;
+  button.pro { background: ${t.pro}; }
+  button.pro:hover:not(:disabled) { background: ${t.proHover}; }
   button {
     width: 100%;
     min-height: 50px;
@@ -1048,6 +1050,7 @@ const OutOfFreeActions = styled.div`
     color: ${t.muted}; cursor: pointer; white-space: nowrap;
   }
   .save[aria-pressed="true"] { color: ${t.accentDeep}; }
+  > button:first-child { background: ${t.white}; color: ${t.ink}; border: 1px solid ${t.line}; }
   @media (max-width: 480px) {
     .pro { display: none; }
     button:first-child { padding: 8px 10px; }
@@ -1135,7 +1138,7 @@ const LockedBlur = styled.div`
 `;
 
 const UnlockBtn = styled.button`
-  background: ${t.action};
+  background: ${t.pro};
   color: #fff;
   border: none;
   border-radius: ${t.radiusBtn};
@@ -2899,7 +2902,7 @@ export default function Polly() {
                       if (!unlock || (msg.task_chips || []).some((c) => c.action === 'pitch_batch')) return null;
                       return (
                         <BatchCta>
-                          <button type="button" disabled={busy} onClick={() => sendStarter(unlock)}>{unlock.label} →</button>
+                          <button type="button" className="pro" disabled={busy} onClick={() => sendStarter(unlock)}>{unlock.label} →</button>
                         </BatchCta>
                       );
                     })()}

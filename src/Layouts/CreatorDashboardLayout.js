@@ -180,8 +180,8 @@ const FreshDot = styled.span`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #7C3AED;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.18);
+  background: #0d7a5f;
+  box-shadow: 0 0 0 2px rgba(13, 122, 95, 0.18);
   margin-left: 2px;
 `;
 
@@ -192,7 +192,7 @@ const TabFreshDot = styled.span`
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #7C3AED;
+  background: #0d7a5f;
   border: 2px solid #fff;
 `;
 
@@ -204,7 +204,7 @@ const TabDot = styled.span`
   height: 14px;
   padding: 0 3px;
   border-radius: 999px;
-  background: #E11D48;
+  background: #0d7a5f;
   color: #fff;
   font-size: 9px;
   font-weight: 800;
@@ -215,7 +215,7 @@ const TabDot = styled.span`
 `;
 
 const NewBadge = styled.span`
-  background: linear-gradient(135deg, #E11D48, #7C3AED);
+  background: #0d7a5f;
   color: white;
   font-size: 9px;
   font-weight: 700;
@@ -247,16 +247,16 @@ const CreditsChip = styled.button`
   height: 36px;
   padding: 0 12px;
   border-radius: 100px;
-  border: 1px solid ${p => (p.$out ? '#E11D48' : p.$low ? '#FDBA74' : creatorTokens.accentBorder)};
-  background: ${p => (p.$out ? '#FFF1F2' : p.$low ? '#FFF7ED' : creatorTokens.accentSoft)};
-  color: ${p => (p.$out ? '#E11D48' : creatorTokens.accentDeep)};
+  border: 1px solid ${p => (p.$out ? creatorTokens.line : p.$low ? '#FDBA74' : creatorTokens.accentBorder)};
+  background: ${p => (p.$out ? creatorTokens.white : p.$low ? '#FFF7ED' : creatorTokens.accentSoft)};
+  color: ${p => (p.$out ? creatorTokens.ink : creatorTokens.accentDeep)};
   font-size: 12px;
   font-weight: 700;
   font-family: inherit;
   cursor: ${p => (p.$pro ? 'default' : 'pointer')};
   white-space: nowrap;
 
-  &:hover { background: ${p => (p.$pro ? creatorTokens.accentSoft : p.$out ? '#FFE4E6' : '#e3f0ea')}; }
+  &:hover { background: ${p => (p.$pro ? creatorTokens.accentSoft : p.$out ? creatorTokens.subtle : '#e3f0ea')}; }
 
   @media (max-width: 1024px) {
     height: 32px;
@@ -335,7 +335,7 @@ const AvatarPill = styled.button`
   &:hover { background: #EBEBEB; }
 
   .ant-avatar {
-    background: #E11D48;
+    background: #12141a;
   }
 
   @media (max-width: 1024px) {
@@ -356,7 +356,7 @@ const MobileNewBadge = styled.span`
   position: absolute;
   top: 2px;
   right: 8px;
-  background: linear-gradient(135deg, #E11D48, #7C3AED);
+  background: #0d7a5f;
   color: white;
   font-size: 7px;
   font-weight: 700;
@@ -369,7 +369,7 @@ const MobileNewBadge = styled.span`
 const DesktopCountBadge = styled.span`
   min-width: 18px;
   height: 18px;
-  background: #E11D48;
+  background: #0d7a5f;
   color: white;
   font-size: 11px;
   font-weight: 700;
@@ -392,10 +392,10 @@ const ForYouDesktopBadge = styled(DesktopCountBadge)`
   animation: ${badgePulse} 2s infinite;
 `;
 
-// Violet badge for Pool tab - distinguishes growth activity from brand replies
+// Pool tab badge (Nov 2026 revamp: one accent, the landing green)
 const PoolDesktopBadge = styled(DesktopCountBadge)`
-  background: #7C3AED;
-  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.4);
+  background: #0d7a5f;
+  box-shadow: 0 1px 3px rgba(13, 122, 95, 0.4);
 `;
 
 const Content = styled.main`

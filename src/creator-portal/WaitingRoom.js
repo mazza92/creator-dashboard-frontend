@@ -213,7 +213,7 @@ const Card = styled.div`
   section + section { padding-top: 14px; border-top: 1px solid ${t.line}; }
   .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; }
   .hd span { font-size: 12px; color: ${t.muted}; }
-  .hd .pro { font-weight: 800; color: #fff; background: #e8395f; border-radius: 999px; padding: 2px 8px; font-size: 11px; }
+  .hd .pro { font-weight: 800; color: #fff; background: #0d7a5f; border-radius: 999px; padding: 2px 8px; font-size: 11px; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .stats div { background: ${t.paper}; border: 1px solid ${t.line}; border-radius: 12px; padding: 10px; display: grid; gap: 2px; }
   .stats b { font-size: 22px; line-height: 1; }
@@ -254,8 +254,8 @@ const Card = styled.div`
   .tag.hot { background: #fde8ec; color: #b3203f; }
   .paused { margin: 0; font-size: 13.5px; color: ${t.inkSoft}; background: ${t.subtle}; border-radius: 10px; padding: 9px 11px; }
   .cta {
-    border: 0; border-radius: 999px; padding: 14px 16px; background: #e8395f; color: #fff; font: inherit;
-    font-size: 15.5px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgba(232, 57, 95, 0.28);
+    border: 0; border-radius: 999px; padding: 14px 16px; background: #0d7a5f; color: #fff; font: inherit;
+    font-size: 15.5px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgba(13, 122, 95, 0.28);
   }
   .cta.soft { box-shadow: none; }
   .cta:disabled, .main:disabled { opacity: .6; cursor: default; }

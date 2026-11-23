@@ -74,10 +74,10 @@ const getBrandDescription = (brand) => {
 const Container = styled.div`
   width: 100%;
   max-width: 100%;
-  background: #f7f5f0;
+  background: #fafafa;
   padding: 0;
   min-height: 100vh;
-  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 `;
 
 // Floating badge on saved brands

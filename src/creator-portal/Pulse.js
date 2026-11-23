@@ -392,8 +392,8 @@ function HookCard({ item, onSave, onCopy, showDay }) {
   );
 }
 
-const violet = '#6D28D9';
-const violetSoft = '#F3EEFF';
+const violet = '#0d7a5f'; // Nov 2026 revamp: one accent, the landing green
+const violetSoft = '#eef6f3';
 
 const Page = styled.div`
   max-width: 1120px;
@@ -409,8 +409,8 @@ const Page = styled.div`
   }
   .btn:disabled { opacity: .6; cursor: default; }
   .btn.dark { background: ${t.ink}; border-color: ${t.ink}; color: #fff; }
-  .btn.saved { background: ${violetSoft}; border-color: #DCCFFB; color: ${violet}; }
-  .btn.pink { background: #E8395F; border-color: #E8395F; color: #fff; box-shadow: 0 6px 18px rgba(232,57,95,.25); }
+  .btn.saved { background: ${violetSoft}; border-color: #cfe7df; color: ${violet}; }
+  .btn.pink { background: #0d7a5f; border-color: #0d7a5f; color: #fff; box-shadow: 0 6px 18px rgba(13, 122, 95, .25); }
   .btn.wide { width: 100%; justify-content: center; margin-top: 4px; }
   .btn small { font-size: 10.5px; font-weight: 800; background: #FDE8EE; color: #C0264A; border-radius: 999px; padding: 2px 6px; }
 
@@ -422,7 +422,7 @@ const Kicker = styled.div`
 `;
 
 const Title = styled.h1`
-  font-family: ${t.fontDisplay}; font-weight: 400; font-size: clamp(30px, 5vw, 44px); letter-spacing: -.02em;
+  font-family: ${t.fontDisplay}; font-weight: 800; font-size: clamp(30px, 5vw, 44px); letter-spacing: -.02em;
   line-height: 1.1; margin: 6px 0;
   em { color: ${violet}; }
 `;
@@ -484,7 +484,7 @@ const Hero = styled(Card)`
   .label { color: ${violet}; display: flex; justify-content: space-between; gap: 8px; }
   .label span { color: ${t.muted}; letter-spacing: 0; text-transform: none; font-weight: 600; }
   blockquote {
-    font-family: ${t.fontDisplay}; font-size: clamp(22px, 3.2vw, 30px); line-height: 1.25; margin: 12px 0 10px;
+    font-family: ${t.fontDisplay}; font-size: clamp(22px, 3.2vw, 30px); line-height: 1.25; margin: 12px 0 10px; font-weight: 800; letter-spacing: -0.025em;
   }
   .proof { font-size: 13px; color: ${t.muted}; margin: 12px 0 6px; }
   @media (max-width: 860px) { padding: 18px; }
@@ -539,7 +539,7 @@ const Row = styled.article`
     width: 36px; height: 36px; border-radius: 50%; border: 1px solid ${t.line}; background: #fff; display: grid;
     place-items: center; font-size: 15px; cursor: pointer; color: ${t.ink};
   }
-  .icb.on { background: ${violetSoft}; border-color: #DCCFFB; color: ${violet}; }
+  .icb.on { background: ${violetSoft}; border-color: #cfe7df; color: ${violet}; }
   @media (max-width: 860px) { padding: 14px; .t { font-size: 15px; } }
 `;
 
@@ -580,7 +580,7 @@ const Empty = styled.div`
 
 const Skeleton = styled.div`
   display: grid; gap: 12px;
-  div { height: 110px; border-radius: 20px; background: linear-gradient(90deg, #efede7, #f7f5f0, #efede7); }
+  div { height: 110px; border-radius: 20px; background: linear-gradient(90deg, #efede7, #fafafa, #efede7); }
 `;
 
 const Foot = styled.div`

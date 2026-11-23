@@ -214,7 +214,7 @@ const Brand = styled.div`
   border: 1px solid #ece9e2;
   border-radius: 14px;
   padding: 12px 6px 10px;
-  background: #fbfaf7;
+  background: #fafafa;
   text-align: center;
   min-width: 0;
   display: flex; flex-direction: column; align-items: center; gap: 6px;

@@ -1299,8 +1299,8 @@ const PitchCopyBtn = styled.button`
 // ============================================
 const PITCH_TOKENS = {
   // Brand pink palette
-  pinkPrimary: '#e8395f',
-  pinkHover: '#c92549',
+  pinkPrimary: '#0d7a5f',
+  pinkHover: '#095a46',
   pinkSoft: '#fef2f4',
   pinkTint: '#fde8ec',
 
@@ -2084,7 +2084,7 @@ const SendBtn = styled.button`
   gap: 8px;
   letter-spacing: -0.01em;
   transition: background 0.12s, transform 0.1s;
-  box-shadow: 0 4px 12px rgba(232, 57, 95, 0.24);
+  box-shadow: 0 4px 12px rgba(13, 122, 95, 0.24);
 
   &:hover {
     background: ${PITCH_TOKENS.pinkHover};

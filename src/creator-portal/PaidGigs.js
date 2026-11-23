@@ -646,7 +646,7 @@ const Hero = styled.header`
   h1 {
     font-family: ${t.fontDisplay};
     font-size: clamp(28px, 4.4vw, 44px);
-    font-weight: 400;
+    font-weight: 800;
     letter-spacing: -.03em;
     line-height: 1.08;
     margin: 0;

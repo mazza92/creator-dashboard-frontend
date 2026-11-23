@@ -84,9 +84,9 @@ const Card = styled.div`
   h3 b { color: ${t.accentDeep}; }
   .proof { margin: 0; font-size: 13.5px; color: ${t.inkSoft}; }
   .cta {
-    border: 0; border-radius: 999px; padding: 14px 16px; background: #e8395f; color: #fff;
+    border: 0; border-radius: 999px; padding: 14px 16px; background: #0d7a5f; color: #fff;
     font: inherit; font-size: 15.5px; font-weight: 800; cursor: pointer;
-    box-shadow: 0 6px 18px rgba(232, 57, 95, 0.28);
+    box-shadow: 0 6px 18px rgba(13, 122, 95, 0.28);
   }
   .cta:disabled { opacity: .6; cursor: default; }
   .fine { margin: -4px 0 0; text-align: center; font-size: 12.5px; color: ${t.muted}; }

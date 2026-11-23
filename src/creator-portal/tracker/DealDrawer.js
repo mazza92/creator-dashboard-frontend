@@ -664,7 +664,7 @@ const Locked = styled.div`
     font: inherit;
     font-weight: 700;
     font-size: 13px;
-    background: #e8395f;
+    background: #0d7a5f;
     color: #fff;
     cursor: pointer;
   }
