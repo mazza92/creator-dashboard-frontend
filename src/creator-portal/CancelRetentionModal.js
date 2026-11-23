@@ -34,7 +34,7 @@ const OFFERS = {
   outreach_review: { label: 'Have a person review my outreach', note: 'Your kit, pitch facts and brand list, this week.' },
   price_hold: { label: 'Switch me to $12 / month', note: 'The next 3 invoices are $12, then $19.' },
   autopilot_on: { label: 'Turn Autopilot on', note: 'Polly sends every weekday from your Gmail.' },
-  pause: { label: 'Pause for a month instead', note: 'Starts when this period ends. No charge, and Polly stops, until it comes back.' },
+  pause: { label: 'Pause for a month instead', note: 'Starts when this period ends. No charge while paused, your plan and brands stay, and Pro comes back on its own.' },
 };
 
 const STATS = [

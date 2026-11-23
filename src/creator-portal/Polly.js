@@ -67,6 +67,7 @@ const AUTOPILOT_NOTICES = {
   review: "Here's what I lined up. Change brands or target any time in settings.",
   pro_started: "You're on Pro. Set your pitch style, connect Gmail, and your first pitches go out within the hour.",
   connect_gmail: "Connect Gmail and I'll send your waiting pitches on your next send day.",
+  no_gmail: "No Gmail, or rather not connect it? Tap Send without Gmail below: I send as you via Newcollab and brands reply to your own inbox.",
   resume: "Autopilot is paused. Switch it back on and I'll pick up on your next send day.",
   gmail_denied: 'Gmail was not connected. You can try again any time.',
   gmail_failed: "Gmail didn't connect. Try again in a moment.",
