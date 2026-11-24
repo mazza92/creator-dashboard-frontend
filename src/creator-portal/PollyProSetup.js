@@ -157,9 +157,10 @@ export default function PollyProSetup({
     setSaving(true);
     setError('');
     try {
-      await save({ done: true, step: LAST });
+      const saved = await save({ done: true, step: LAST });
       setFinished(true);
-      setTimeout(() => onDone?.(), 1400);
+      // Polly's recap of what happens next (backend services/autopilot_recap.py), shown in the chat.
+      setTimeout(() => onDone?.(saved?.recap || null), 1400);
     } catch (_) {
       setError("I couldn't switch Autopilot on. Try again in a moment.");
     } finally {
