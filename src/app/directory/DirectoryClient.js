@@ -1003,7 +1003,7 @@ export default function DirectoryClient({
     <LandingPageLayoutNext canonicalUrl="https://newcollab.co/directory" hideFooter>
       <Page>
         <Hero>
-          <h1>{collectionTitle || '3,000+ PR Forms for Brands: Direct Application Links'}</h1>
+          <h1>{collectionTitle || 'UGC Brand Directory: 3,000+ Brands to Pitch as a UGC Creator'}</h1>
           <p>
             {collectionDescription ||
               `${directoryCountLabel(total || initialTotal)}. Last checked ${CITATION_LAST_UPDATED}. Method: brands listed with a public application URL. Filter by beauty, skincare, K-beauty, fashion, wellness, and more.`}
@@ -1142,12 +1142,12 @@ export default function DirectoryClient({
             <OpenPRSection>
               <OpenPRHeader>
                 <h2>
-                  <span>🎯</span> Open PR Applications
+                  <span>🎯</span> Brands working with creators now
                 </h2>
                 <span className="badge">Apply Now</span>
               </OpenPRHeader>
               <OpenPRSubtitle>
-                These brands are actively accepting PR applications. Sign up free to access application forms!
+                These brands are working with creators right now. Start free and Polly writes your pitch.
               </OpenPRSubtitle>
               <OpenPRGrid>
                 {openPrBrands.map((brand) => {

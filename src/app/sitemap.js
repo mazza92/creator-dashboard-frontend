@@ -23,6 +23,8 @@ const STATIC_PAGES = [
   { url: '/ugc',                       priority: 0.9, changeFrequency: 'weekly'  },
   { url: '/ugc-starter-guide',         priority: 0.9, changeFrequency: 'monthly' },
   { url: '/ugc-portfolio-examples',    priority: 0.8, changeFrequency: 'weekly'  },
+  { url: '/brands-running-ugc-ads',    priority: 0.9, changeFrequency: 'daily'   },
+  { url: '/brands-replying-to-ugc-creators', priority: 0.9, changeFrequency: 'daily' },
   { url: '/directory',                 priority: 0.9, changeFrequency: 'daily'   },
   { url: '/pr-list',                   priority: 0.9, changeFrequency: 'daily'   },
   { url: '/directory/skincare',        priority: 0.8, changeFrequency: 'weekly'  },
