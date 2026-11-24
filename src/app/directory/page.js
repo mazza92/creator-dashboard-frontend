@@ -6,27 +6,27 @@ import { CITATION_LAST_UPDATED_ISO, DIRECTORY_FACTS } from '../../lib/citationFa
 import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
-  title: '3,000+ PR Forms for Brands (2026): Direct Application Links | Newcollab',
+  title: 'UGC Brand Directory: 3,000+ Brands to Pitch as a UGC Creator (2026)',
   description:
-    'Browse 3,000+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free.',
+    'Browse 3,000+ beauty, skincare, K-beauty and fashion brands to pitch as a UGC creator: who they work with, how to reach them, and a pitch Polly writes for you. Free to start.',
   keywords:
-    'pr forms for brands, pr forms, pr application form, pr list application, skincare pr list, k-beauty pr forms, brands that send pr to small influencers, influencer pr list requirements',
+    'ugc brand directory, brands that work with ugc creators, brands to pitch for ugc, beauty brands ugc, skincare brands ugc creators, k-beauty ugc, ugc collabs, ugc brand deals',
   alternates: {
     canonical: 'https://newcollab.co/directory',
   },
   openGraph: {
-    title: '3,000+ PR Forms for Brands: Direct Application Links',
+    title: 'UGC Brand Directory: 3,000+ Brands to Pitch as a UGC Creator',
     description:
-      'Verified PR forms for brands with direct application links. 2,000+ beauty, skincare, and lifestyle brands—micro-influencer friendly. Start applying today.',
+      'Beauty, skincare and lifestyle brands to pitch as a UGC creator, with who they work with and how to reach them. Polly writes the pitch.',
     type: 'website',
     url: 'https://newcollab.co/directory',
     siteName: 'Newcollab',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Brand PR Directory - Direct PR Application Forms',
+    title: 'UGC Brand Directory: 3,000+ Brands to Pitch',
     description:
-      'Browse brands with PR application forms, requirements, and influencer-friendly programs.',
+      'Brands to pitch as a UGC creator: who they work with, how to reach them, and a pitch written for you.',
     creator: '@newcollab',
   },
 };
@@ -61,7 +61,7 @@ export default async function DirectoryPage() {
   const datasetSchema = {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    name: 'Newcollab public PR application forms',
+    name: 'Newcollab UGC brand directory',
     description: DIRECTORY_FACTS.method,
     url: DIRECTORY_FACTS.url,
     dateModified: CITATION_LAST_UPDATED_ISO,
@@ -75,7 +75,7 @@ export default async function DirectoryPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(datasetSchema) }}
       />
-      <h1 style={srOnly}>3,000+ PR Forms for Brands: Direct Application Links</h1>
+      <h1 style={srOnly}>UGC Brand Directory: 3,000+ Brands to Pitch as a UGC Creator</h1>
       <Suspense fallback={null}>
         <DirectoryClient initialBrands={initialBrands} initialTotal={initialTotal} />
       </Suspense>
