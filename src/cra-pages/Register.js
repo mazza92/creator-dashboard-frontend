@@ -18,6 +18,7 @@ import {
   reportGoogleStep,
 } from '../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
+import { setLastLoginMethod } from '../utils/lastLoginMethod';
 
 // ============================================================================
 // V4 SIGNUP FLOW - Simplified registration (email + password only)
@@ -514,6 +515,7 @@ export default function Register() {
       name: user.displayName,
     });
     const data = response.data;
+    setLastLoginMethod('google');
     persistLoggedInUser(setUser, data);
     const redirectUrl = data.redirect_url || (data.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
     try {

@@ -20,6 +20,7 @@ import {
 import { FaTiktok } from 'react-icons/fa6';
 import { validateSignupField, MIN_PASSWORD } from '../../utils/signupValidation';
 import PollyAutopilotMotion from '../../app/components/PollyAutopilotMotion';
+import { setLastLoginMethod } from '../../utils/lastLoginMethod';
 
 // ============================================================================
 // CREATOR SIGNUP - one promise, Google first, three fields. Everything else
@@ -608,6 +609,7 @@ export default function CreatorSignup() {
         window.ttq.track('CompleteRegistration');
       }
 
+      setLastLoginMethod('email');
       persistLoggedInUser(setUser, {
         user_id: res.data?.user_id,
         user_role: 'creator',
@@ -662,6 +664,7 @@ export default function CreatorSignup() {
       window.ttq.track('CompleteRegistration');
     }
 
+    setLastLoginMethod('google');
     persistLoggedInUser(setUser, response.data);
     const redirectUrl = response.data?.redirect_url ||
       (response.data?.needs_onboarding ? '/onboarding' : '/creator/dashboard/for-you');
