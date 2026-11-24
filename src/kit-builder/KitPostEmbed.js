@@ -209,8 +209,8 @@ export default function KitPostEmbed({ url, poster: posterProp }) {
             <Badge><PlatformMark platform={parsed.platform} /></Badge>
           ) : (
             <Hit type="button" onClick={open} aria-label="Play video">
-              {parsed.platform === 'tiktok' ? null : <Shade />}
-              {parsed.platform === 'tiktok' ? null : <Play><FaPlay size={14} /></Play>}
+              <Shade />
+              <Play><FaPlay size={14} /></Play>
               <Badge><PlatformMark platform={parsed.platform} /></Badge>
             </Hit>
           )}
