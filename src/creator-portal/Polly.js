@@ -1822,11 +1822,23 @@ export default function Polly() {
     reloadAutopilot();
     setAutopilotOpen(true);
   }, [reloadAutopilot]);
-  const finishSetup = useCallback(() => {
+  const finishSetup = useCallback((recap) => {
     setSetup({ open: false, section: null });
     setAutopilotReturn('');
-    setAutopilotNotice("Autopilot is on. Your first pitches go out within the hour, then new ones every weekday.");
     reloadAutopilot();
+    // Setup done: the first-run welcome ("How do you want to work?") is behind them. Polly's recap (already saved
+    // to the thread by the backend) says what goes out today and where the schedule lives, instead of the card.
+    setFirstRun(null);
+    setWelcomeDone(true);
+    if (recap && recap.content) {
+      setAutopilotNotice('');
+      setAutopilotOpen(false);
+      setMessages((prev) => (prev.some((m) => m && m.role === 'assistant' && m.content === recap.content)
+        ? prev
+        : [...prev, { ...recap, id: newId() }]));
+      return;
+    }
+    setAutopilotNotice("Autopilot is on. Your first pitches go out within the hour, then new ones every weekday.");
     setAutopilotOpen(true);
   }, [reloadAutopilot]);
 
