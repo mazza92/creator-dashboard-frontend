@@ -1,19 +1,18 @@
-import api from '../config/api';
-import { trackProBeginCheckout } from './subscriptionAnalytics';
-import { getEmailCampaign } from './upgradeDeeplink';
 import { rememberCheckoutReturn } from './checkoutReturn';
 
-// Straight to Stripe for Pro (monthly), for screens that already explain Pro (the out-of-free-pitches waiting
-// room). The backend decides the free week. Resolves after the redirect starts; throws if checkout can't be
-// created, so the caller can fall back to the upgrade window.
-export async function startProCheckout(source) {
+// Pro (monthly) for screens that already explain Pro (the waiting room, Polly's Pro buttons): opens the on-site
+// checkout page (creator-portal/CheckoutPage), which embeds Stripe Checkout and falls back to the hosted page when
+// embedding isn't set up. The backend decides the free week. In-app navigation, no reload.
+export function checkoutPath(source) {
   const src = String(source || 'direct').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40);
-  trackProBeginCheckout({ tier: 'pro', source: src, interval: 'monthly' });
-  const payload = { tier: 'pro', interval: 'monthly', source: src };
-  const campaign = getEmailCampaign();
-  if (campaign) payload.email_campaign = campaign;
-  const { data } = await api.post('/api/subscription/create-checkout', payload);
-  if (!data || !data.checkout_url) throw new Error('no checkout url');
+  return `/creator/dashboard/checkout?source=${encodeURIComponent(src)}`;
+}
+
+export async function startProCheckout(source) {
   rememberCheckoutReturn();
-  window.location.href = data.checkout_url;
+  const path = checkoutPath(source);
+  if (typeof window === 'undefined') return;
+  window.history.pushState({}, '', path);
+  // react-router's BrowserRouter listens to popstate: this renders the checkout route without a page reload.
+  window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
 }
