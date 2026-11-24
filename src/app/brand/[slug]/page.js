@@ -1770,7 +1770,7 @@ export default async function BrandPage({ params }) {
 
           {/* SEO content — server-rendered so Google can read every word */}
           <section className="bp-seo-footer">
-            <h2>How to get on the {brand.name} PR list</h2>
+            <h2>{ugcOn ? `How to pitch ${brand.name} as a UGC creator` : `How to get on the ${brand.name} PR list`}</h2>
             <p>
               {brand.name} works with creators
               {minFollowers > 0 ? ` from around ${formatFollowers(minFollowers)} followers` : ' of any size'}
@@ -1788,7 +1788,7 @@ export default async function BrandPage({ params }) {
 
             {faqs.length > 0 && (
               <>
-                <h2 style={{ marginTop: '20px' }}>{brand.name} PR FAQ</h2>
+                <h2 style={{ marginTop: '20px' }}>{brand.name} {ugcOn ? 'creator FAQ' : 'PR FAQ'}</h2>
                 <dl className="bp-faq">
                   {faqs.map(f => (
                     <div key={f.question}>
