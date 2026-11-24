@@ -165,18 +165,7 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
             {matched && !goalMode && <MatchedNote>{matched}</MatchedNote>}
 
-            {goalMode && goalInfo.brands?.length > 0 && (
-              <LockedList aria-label="Brands waiting">
-                {goalInfo.brands.map((b) => (
-                  <LockedRow key={b.brand_name}>
-                    <span><strong>{b.brand_name}</strong>{b.reason ? ` · ${b.reason}` : ''}</span>
-                    <span className="st"><FiLock size={12} /> ready to send</span>
-                  </LockedRow>
-                ))}
-              </LockedList>
-            )}
-
-            {!goalMode && (
+            {/* Free vs Pro table in every mode (Nov 2026: replaces the goal mode's 'ready to send' brand rows). */}
             <Compare>
               <ProColumn aria-hidden="true" />
               <CompareRow $head>
@@ -192,7 +181,6 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
                 </CompareRow>
               ))}
             </Compare>
-            )}
 
             <Plans>
               {isWinback ? (
@@ -418,28 +406,6 @@ const MatchedNote = styled.p`
   }
 `;
 
-const LockedList = styled.div`
-  display: grid;
-  gap: 6px;
-  margin: 0 0 16px;
-`;
-
-const LockedRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 4px 10px;
-  flex-wrap: wrap;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: #f3f4f6;
-  font-size: 13.5px;
-  color: #2b2d33;
-  text-align: left;
-
-  strong { color: #15161a; font-weight: 700; }
-  .st { display: inline-flex; align-items: center; gap: 5px; color: #6b6f78; font-size: 12.5px; }
-`;
-
 const COLS = '1fr 72px 92px';
 
 const Compare = styled.div`
@@ -455,7 +421,7 @@ const ProColumn = styled.div`
   width: 92px;
   border: 1.5px solid #0d7a5f;
   border-radius: 14px;
-  background: linear-gradient(180deg, #fef2f4 0%, #fff 100%);
+  background: linear-gradient(180deg, #eef6f3 0%, #fff 100%);
 `;
 
 const CompareRow = styled.div`
@@ -542,7 +508,7 @@ const PlanOption = styled.button`
   padding: 14px 16px;
   border-radius: 14px;
   border: 1.5px solid ${(p) => (p.$active ? '#0d7a5f' : '#e5e7eb')};
-  background: ${(p) => (p.$active ? '#fef2f4' : '#fff')};
+  background: ${(p) => (p.$active ? '#eef6f3' : '#fff')};
   text-align: left;
   cursor: pointer;
   font-family: inherit;
