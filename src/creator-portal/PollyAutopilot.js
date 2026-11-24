@@ -912,9 +912,12 @@ export function AutopilotCard({
         ) : null}
         {fresh ? (
           <p className="say">
-            You&apos;re set up. Starting within the hour I pick brands that match your settings, write their pitches
-            and schedule them, <strong>about {state.per_week || perWeek(target)} a week</strong> until you hit {target}.
-            Nothing for you to do. Want the first ones out sooner? Tap below.
+            You&apos;re set up. I&apos;m picking brands that fit you and writing their pitches now: the first one goes
+            out within the hour.{' '}
+            {state.trial_days_left
+              ? <>Then I keep going every day, weekends included, building up to <strong>20 pitches a day</strong>.</>
+              : <>Then I keep going every weekday, <strong>about {state.per_week || perWeek(target)} a week</strong>.</>}
+            {' '}Nothing for you to do.
           </p>
         ) : (
           <p className="say">
@@ -948,10 +951,9 @@ export function AutopilotCard({
           </p>
         ) : null}
         <Actions>
-          {state.next_batch > 0 && scheduled.length < 2 ? (
-            <Btn $primary={fresh} type="button" onClick={planWeek} disabled={busy}>
-              {fresh ? "Write this week's pitches" : 'Line up next week'}
-            </Btn>
+          {/* Right after setup the cron writes and schedules on its own: no button to press (Nov 2026). */}
+          {!fresh && state.next_batch > 0 && scheduled.length < 2 ? (
+            <Btn type="button" onClick={planWeek} disabled={busy}>Line up next week</Btn>
           ) : null}
           {!state.next_batch && !scheduled.length ? (
             <span className="muted">That&apos;s this month&apos;s {target}. I&apos;ll line up more on the 1st.</span>
