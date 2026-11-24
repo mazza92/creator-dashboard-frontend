@@ -22,6 +22,7 @@ import {
 import { apiClient } from '../config/api';
 import { FaTiktok } from 'react-icons/fa6';
 import { safeInternalPath } from '../utils/upgradeDeeplink';
+import { getLastLoginMethod, setLastLoginMethod } from '../utils/lastLoginMethod';
 
 // V5 design tokens — kept consistent with About / Landing pages
 const colors = {
@@ -257,11 +258,12 @@ const PrimaryButton = styled.button`
 `;
 
 const GoogleButton = styled.button`
+  position: relative;
   width: 100%;
   padding: 12px 22px;
-  background: #fff;
+  background: ${(p) => (p.$highlight ? '#eef6f3' : '#fff')};
   color: ${colors.text};
-  border: 1.5px solid ${colors.border};
+  border: 1.5px solid ${(p) => (p.$highlight ? '#0d7a5f' : colors.border)};
   border-radius: 12px;
   font-size: 14.5px;
   font-weight: 600;
@@ -287,6 +289,26 @@ const GoogleButton = styled.button`
     width: 18px;
     height: 18px;
   }
+`;
+
+// "Last used" pill on the sign-in method this browser used last time.
+const LastUsedBadge = styled.span`
+  position: absolute;
+  top: -9px;
+  right: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #0d7a5f;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  pointer-events: none;
+`;
+
+const BadgeAnchor = styled.div`
+  position: relative;
 `;
 
 const Divider = styled.div`
@@ -523,6 +545,9 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [regionBlocked, setRegionBlocked] = useState(false);
+  // Google sign-ups have no password; the API says so with code google_account and we point them at Google.
+  const [googleHint, setGoogleHint] = useState(false);
+  const [lastMethod] = useState(getLastLoginMethod);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setUser } = useContext(UserContext);
@@ -554,6 +579,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
     const { email, password } = values;
     setLoading(true);
     setError('');
+    setGoogleHint(false);
 
     try {
       console.log('🟢 Attempting login for:', email);
@@ -566,6 +592,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         data.message &&
         (data.message.includes('Login successful') || data.profile_incomplete)
       ) {
+        setLastLoginMethod('email');
         persistLoggedInUser(setUser, data);
 
         if (data.profile_incomplete) {
@@ -598,6 +625,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
       ) {
         setRegionBlocked(true);
       } else {
+        setGoogleHint(err.response?.data?.code === 'google_account');
         setError(errorMessage);
       }
     } finally {
@@ -633,6 +661,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
       name: user.displayName,
     });
     const data = response.data;
+    setLastLoginMethod('google');
     persistLoggedInUser(setUser, data);
     if (onSuccess) {
       onSuccess();
@@ -738,13 +767,16 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0 }}>
-          <PrimaryButton
-            type="submit"
-            disabled={loading || googleLoading}
-            aria-label="Sign in"
-          >
-            {loading ? 'Signing in…' : 'Sign in →'}
-          </PrimaryButton>
+          <BadgeAnchor>
+            <PrimaryButton
+              type="submit"
+              disabled={loading || googleLoading}
+              aria-label="Sign in"
+            >
+              {loading ? 'Signing in…' : 'Sign in →'}
+            </PrimaryButton>
+            {lastMethod === 'email' && !googleHint && <LastUsedBadge>Last used</LastUsedBadge>}
+          </BadgeAnchor>
         </Form.Item>
       </Form>
 
@@ -755,9 +787,13 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
         onClick={handleGoogleSignIn}
         disabled={loading || googleLoading || !googleLoginEnabled}
         aria-label="Sign in with Google"
+        $highlight={googleHint}
       >
         <GoogleIcon />
         {googleLoading ? 'Processing…' : 'Continue with Google'}
+        {(googleHint || lastMethod === 'google') && (
+          <LastUsedBadge>{googleHint ? 'Use this' : 'Last used'}</LastUsedBadge>
+        )}
       </GoogleButton>
 
       {!googleLoginEnabled && (
