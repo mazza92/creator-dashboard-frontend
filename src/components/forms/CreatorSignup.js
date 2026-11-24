@@ -118,7 +118,7 @@ const Shell = styled.main`
 
 const Pitch = styled.section`
   grid-area: pitch;
-  padding-top: 40px;
+  padding-top: 0; /* starts level with the signup card */
 
   @media (max-width: 960px) {
     padding-top: 6px;
