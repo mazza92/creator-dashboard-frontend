@@ -81,8 +81,9 @@ const CheckoutPage = () => {
       <Grid>
         <Main>
           <Eyebrow>Newcollab Pro</Eyebrow>
-          <H1>Put Polly to work for you</H1>
-          <Lede>Polly finds brands that fit you, writes every pitch, sends it and follows up. You answer the yeses.</Lede>
+          {/* Creator count: 4,381 accounts on Nov 24 2026. Keep it a floor we can stand behind. */}
+          <H1>Join <em>4,000+ UGC creators</em> who land brand collabs with Newcollab</H1>
+          <Lede>Pro puts Polly to work: she finds brands that fit you, writes every pitch, sends it and follows up. You answer the yeses.</Lede>
           <Ticks>
             {trustTicks(trialDays).map((line) => (
               <li key={line}><Check size={16} aria-hidden="true" />{line}</li>
@@ -215,9 +216,11 @@ const H1 = styled.h1`
   font-family: ${t.fontDisplay};
   font-weight: 800;
   letter-spacing: -0.025em;
-  font-size: clamp(28px, 4vw, 40px);
+  font-size: clamp(28px, 4vw, 42px);
   line-height: 1.1;
   color: ${t.ink};
+  max-width: 720px;
+  em { font-style: normal; color: ${t.pro}; }
 `;
 
 const Lede = styled.p`
