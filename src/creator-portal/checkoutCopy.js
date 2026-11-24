@@ -7,14 +7,27 @@ export function formatDay(iso) {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
 }
 
-export function checkoutFaq(trialDays, trialEndsOn) {
+// plan: { interval: 'monthly' | 'yearly', offer: '' | 'winback' } (what the upgrade modal sold).
+export function planPrice(plan = {}) {
+  if (plan.offer === 'winback') return { tick: '$12/month for 3 invoices, then $19', unit: 'month', amount: '$12' };
+  if (plan.interval === 'yearly') return { tick: '$152/year, no contract', unit: 'year', amount: '$152' };
+  return { tick: '$19/month, no contract', unit: 'month', amount: '$19' };
+}
+
+export function checkoutFaq(trialDays, trialEndsOn, plan = {}) {
   const day = formatDay(trialEndsOn);
+  const price = planPrice(plan);
+  const charged = plan.offer === 'winback'
+    ? 'Yes, $12 today. You pay $12 a month for 3 invoices, then $19 a month. Cancel anytime and Pro stays on '
+      + 'until the end of the month you paid for.'
+    : `Yes, ${price.amount} today and then every ${price.unit}. Cancel anytime and Pro stays on until the end `
+      + `of the ${price.unit} you paid for.`;
   return [
     {
       q: 'Am I charged today?',
       a: trialDays
-        ? `No. You pay $0 today and $19 on ${day || 'the day your free week ends'}, unless you cancel before then.`
-        : 'Yes, $19 today and then every month. Cancel anytime and Pro stays on until the end of the month you paid for.',
+        ? `No. You pay $0 today and ${price.amount} on ${day || 'the day your free week ends'}, unless you cancel before then.`
+        : charged,
     },
     {
       q: 'How do I cancel?',
@@ -33,9 +46,9 @@ export function checkoutFaq(trialDays, trialEndsOn) {
   ];
 }
 
-export function trustTicks(trialDays) {
+export function trustTicks(trialDays, plan = {}) {
   return [
-    trialDays ? `$0 today, ${trialDays} days free` : '$19/month, no contract',
+    trialDays ? `$0 today, ${trialDays} days free` : planPrice(plan).tick,
     'Cancel anytime from Settings',
     'Polly starts on your pitches right away',
   ];

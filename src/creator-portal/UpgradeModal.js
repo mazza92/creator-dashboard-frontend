@@ -4,13 +4,11 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiLock, FiCheck } from 'react-icons/fi';
 import api from '../config/api';
-import { message } from 'antd';
-import { trackProBeginCheckout } from '../utils/subscriptionAnalytics';
-import { dismissUpgradeDeeplink, getEmailCampaign, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
+import { dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
 import { PRO_OFFER, PRO_COMPARE } from '../config/proOffer';
 import { useTrialDays } from '../utils/trialOffer';
 import { money, paywallGoal } from './tracker/trackerModel';
-import { rememberCheckoutReturn } from '../utils/checkoutReturn';
+import { startProCheckout } from '../utils/startProCheckout';
 
 function sourceFromPath(pathname) {
   const path = String(pathname || '');
@@ -83,40 +81,15 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   const showYearly = !isWinback;
   const interval = showYearly ? billingInterval : 'monthly';
 
+  // On-site checkout page (Nov 2026), same plan and offer as picked here; the page creates the Stripe session.
   const handleUpgrade = async (tier) => {
-    try {
-      setLoading(true);
-      trackProBeginCheckout({
-        tier,
-        source: isWinback ? 'winback' : (feature || 'upgrade_modal'),
-        interval,
-      });
-      const payload = {
-        tier,
-        interval,
-        source: isWinback ? 'winback' : (source || sourceFromPath(window.location.pathname)),
-      };
-      if (isWinback) payload.offer = 'winback';
-      const emailCampaign = getEmailCampaign();
-      if (emailCampaign) payload.email_campaign = emailCampaign;
-      const response = await api.post(
-        '/api/subscription/create-checkout',
-        payload
-      );
-
-      if (isWinback) dismissUpgradeDeeplink();
-      rememberCheckoutReturn();
-      window.location.href = response.data.checkout_url;
-    } catch (error) {
-      console.error('Upgrade error:', error);
-      const errorData = error.response?.data;
-      if (errorData?.code === 'stripe_account_pending') {
-        message.warning('Payment processing is temporarily unavailable. Please try again later or contact support@newcollab.co');
-      } else {
-        message.error('Failed to start checkout. Please try again.');
-      }
-      setLoading(false);
-    }
+    if (tier !== 'pro') return;
+    setLoading(true);
+    if (isWinback) dismissUpgradeDeeplink();
+    const src = isWinback ? 'winback' : (source || sourceFromPath(window.location.pathname));
+    await startProCheckout(src, { interval, offer: isWinback ? 'winback' : '' });
+    setLoading(false);
+    if (onClose) onClose();
   };
 
   if (!isOpen) return null;

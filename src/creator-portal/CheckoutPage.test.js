@@ -26,3 +26,17 @@ describe('on-site checkout copy', () => {
     expect(checkoutPath('Polly Chip!')).toBe('/creator/dashboard/checkout?source=pollychip');
   });
 });
+
+describe('plans from the upgrade modal', () => {
+  it('carries yearly and win-back into the checkout path', () => {
+    expect(checkoutPath('upgrade', { interval: 'yearly' })).toBe('/creator/dashboard/checkout?source=upgrade&interval=yearly');
+    expect(checkoutPath('winback', { offer: 'winback' })).toBe('/creator/dashboard/checkout?source=winback&offer=winback');
+  });
+
+  it('prices each plan honestly', () => {
+    expect(trustTicks(0, { interval: 'yearly' })[0]).toBe('$152/year, no contract');
+    expect(checkoutFaq(0, null, { interval: 'yearly' })[0].a).toContain('$152 today and then every year');
+    expect(trustTicks(0, { offer: 'winback' })[0]).toBe('$12/month for 3 invoices, then $19');
+    expect(checkoutFaq(7, '2026-12-01', { interval: 'yearly' })[0].a).toContain('$152 on December 1');
+  });
+});

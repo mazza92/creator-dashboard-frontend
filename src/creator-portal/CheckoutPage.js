@@ -31,10 +31,15 @@ const CheckoutPage = () => {
   const [state, setState] = useState({ status: 'loading' });
   const [open, setOpen] = useState(0);
 
+  const interval = params.get('interval') === 'yearly' ? 'yearly' : 'monthly';
+  const offer = params.get('offer') === 'winback' ? 'winback' : '';
+  const plan = useMemo(() => ({ interval: offer ? 'monthly' : interval, offer }), [interval, offer]);
+
   const start = useCallback(async () => {
     setState({ status: 'loading' });
-    trackProBeginCheckout({ tier: 'pro', source, interval: 'monthly' });
-    const payload = { tier: 'pro', interval: 'monthly', source, embedded: true };
+    trackProBeginCheckout({ tier: 'pro', source, interval: plan.interval });
+    const payload = { tier: 'pro', interval: plan.interval, source, embedded: true };
+    if (plan.offer) payload.offer = plan.offer;
     const campaign = getEmailCampaign();
     if (campaign) payload.email_campaign = campaign;
     try {
@@ -58,7 +63,7 @@ const CheckoutPage = () => {
       const paused = err?.response?.data?.paused;
       setState({ status: 'error', paused: Boolean(paused) });
     }
-  }, [source]);
+  }, [source, plan]);
 
   useEffect(() => { start(); }, [start]);
 
@@ -68,7 +73,7 @@ const CheckoutPage = () => {
   };
 
   const trialDays = state.trialDays || 0;
-  const faq = useMemo(() => checkoutFaq(trialDays, state.trialEndsOn), [trialDays, state.trialEndsOn]);
+  const faq = useMemo(() => checkoutFaq(trialDays, state.trialEndsOn, plan), [trialDays, state.trialEndsOn, plan]);
   const options = useMemo(() => (state.clientSecret ? { clientSecret: state.clientSecret } : null),
     [state.clientSecret]);
 
@@ -85,7 +90,7 @@ const CheckoutPage = () => {
           <H1>Join <em>4,000+ UGC creators</em> getting brand collabs on autopilot</H1>
           <Lede>Pro puts your assistant Polly to work: she finds brands that fit you, writes every pitch, sends it and schedules follow-ups when necessary. You just focus on creating content.</Lede>
           <Ticks>
-            {trustTicks(trialDays).map((line) => (
+            {trustTicks(trialDays, plan).map((line) => (
               <li key={line}><Check size={16} aria-hidden="true" />{line}</li>
             ))}
           </Ticks>
