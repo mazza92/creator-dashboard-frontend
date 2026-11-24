@@ -7,12 +7,13 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import styled, { keyframes } from 'styled-components';
 import {
-  ArrowRight, BadgeDollarSign, Bot, Check, ChevronDown, Eye, Gift, LayoutTemplate, Radar, Sparkles,
+  ArrowRight, BadgeDollarSign, Check, ChevronDown, Eye, Gift, LayoutTemplate, Radar, Sparkles,
 } from 'lucide-react';
 import LandingPageLayoutNext from './components/LandingPageLayoutNext';
 import ListedInBadges from '../components/ListedInBadges';
 import { AutoTikTok, EXAMPLES, VideoWall } from '../creator-portal/PromoteVisuals';
 import { HOME_FAQ } from './homeFaq';
+import PollyAutopilotMotion from './components/PollyAutopilotMotion';
 
 const SIGNUP = '/register/creator';
 
@@ -114,13 +115,7 @@ export default function HomeClient({ brands = [], stats }) {
               </Flow>
               <Primary href={SIGNUP}>Start free <ArrowRight size={18} /></Primary>
             </div>
-            <Chat aria-hidden="true">
-              <div className="bar"><span className="av"><Bot size={15} /></span> Polly</div>
-              <p className="me">What&apos;s on this week?</p>
-              <p className="bot">14 skincare and home brands started running ads since last week. 9 fit you. I&apos;m pitching 3 today and the rest by Thursday.</p>
-              <p className="me">Any replies?</p>
-              <p className="bot">2 brands from last week replied. One wants rates, so I drafted your reply with 30 days of ad usage. Want to see it?</p>
-            </Chat>
+            <PollyAutopilotMotion />
           </Split>
         </Section>
 
@@ -327,7 +322,6 @@ function HeroVisual() {
 /* ---------- styles ---------- */
 
 const float = keyframes`0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); }`;
-const blink = keyframes`0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; }`;
 
 const Page = styled.div`
   max-width: 1120px; margin: 0 auto; padding: 120px 20px 72px; color: ${t.ink};
@@ -525,18 +519,6 @@ const Split = styled.div`
     grid-template-columns: 1fr; gap: 28px;
     &.flip > :first-child { order: 2; }
   }
-`;
-const Chat = styled.div`
-  background: ${t.white}; border: 1px solid ${t.line}; border-radius: 24px; padding: 18px; display: grid; gap: 10px;
-  box-shadow: 0 24px 50px rgba(18, 20, 26, 0.08); max-width: 440px; width: 100%; justify-self: center;
-  .bar { display: flex; align-items: center; gap: 8px; font-weight: 800; padding-bottom: 6px; border-bottom: 1px solid ${t.line}; }
-  .av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: ${t.accent}; color: #fff; }
-  p { margin: 0; padding: 10px 14px; border-radius: 18px; font-size: 14.5px; line-height: 1.45; max-width: 85%; }
-  .me { justify-self: end; background: ${t.ink}; color: #fff; border-bottom-right-radius: 6px; }
-  .bot { justify-self: start; background: ${t.paper}; border-bottom-left-radius: 6px; }
-  .typing { display: flex; gap: 4px; padding: 14px; }
-  .typing span { width: 7px; height: 7px; border-radius: 50%; background: ${t.muted}; animation: ${blink} 1.2s infinite; }
-  .typing span:nth-child(2) { animation-delay: 0.2s; } .typing span:nth-child(3) { animation-delay: 0.4s; }
 `;
 const Folio = styled.div`
   background: ${t.white}; border: 1px solid ${t.line}; border-radius: 24px; padding: 18px; display: grid; gap: 14px;
