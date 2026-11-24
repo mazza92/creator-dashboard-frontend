@@ -847,7 +847,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
               <BrandLogo
                 src="/newcollab-logo-dark.png"
                 alt="newcollab"
-                width="140"
+                width="112"
                 height="28"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';

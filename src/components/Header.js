@@ -3,7 +3,6 @@ import { Menu, Button, Space, Drawer } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import logo from '../assets/NEWCOLLAB-BRAND.png';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -26,7 +25,7 @@ const HeaderContent = styled.div`
 `;
 
 const Logo = styled.img`
-  height: 40px;
+  height: 32px;
   width: auto;
 `;
 
@@ -116,7 +115,7 @@ const Header = () => {
     <HeaderContainer>
       <HeaderContent>
         <Link to="/">
-          <Logo src={logo} alt="NewCollab" />
+          <Logo src="/newcollab-logo-dark.png" alt="newcollab" />
         </Link>
 
         <DesktopMenu>
