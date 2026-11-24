@@ -65,9 +65,9 @@ function shortDate(iso) {
 export function trialTimeline(trialDays, trialEndsOn) {
   const ends = shortDate(trialEndsOn);
   return [
-    ['Every day', 'Polly scans brands running UGC ads and new gigs, and pitches up to 20 that fit you'],
+    ['Day 1', 'Polly sends your first pitches, then builds up to 20 brands a day, weekends included'],
+    ['Every day', 'She scans brands running UGC ads and new gigs, and pitches the ones that fit you'],
     ['Day 3–5', 'Follow-ups go out, and most brand replies arrive'],
-    [`Day ${Math.max(1, trialDays - 2)}`, 'A recap email of what Polly did, so you decide with real results'],
     [`Day ${trialDays}`, `$19/mo starts${ends ? ` on ${ends}` : ''}, unless you cancel from your settings`],
   ];
 }
