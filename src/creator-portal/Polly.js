@@ -66,6 +66,8 @@ const AUTOPILOT_NOTICES = {
   gmail_connected: "Gmail connected. Your first pitches go out within the hour, then new ones every weekday. Nothing to approve.",
   review: "Here's what I lined up. Change brands or target any time in settings.",
   pro_started: "You're on Pro. Set your pitch style, connect Gmail, and your first pitches go out within the hour.",
+  // Start choice trial (and any 7-day trial): same steps, framed as the free week.
+  trial_started: "Your free week has started. Connect Gmail and I'll pitch the brands that fit you, follow up and brief you every morning. Your first pitches go out within the hour.",
   connect_gmail: "Connect Gmail and I'll send your waiting pitches on your next send day.",
   no_gmail: "No Gmail, or rather not connect it? Tap Send without Gmail below: I send as you via Newcollab and brands reply to your own inbox.",
   resume: "Autopilot is paused. Switch it back on and I'll pick up on your next send day.",
@@ -3083,7 +3085,9 @@ export default function Polly() {
                 state={autopilot.state}
                 setState={autopilot.setState}
                 reload={autopilot.reload}
-                notice={autopilotNotice}
+                notice={autopilotNotice === AUTOPILOT_NOTICES.pro_started && autopilot.state?.trial_days_left
+                  ? AUTOPILOT_NOTICES.trial_started
+                  : autopilotNotice}
                 returnReason={autopilotReturn}
                 onClose={closeAutopilot}
                 onOpenSettings={() => setAutopilotSettingsOpen(true)}

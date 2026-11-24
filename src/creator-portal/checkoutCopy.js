@@ -53,3 +53,21 @@ export function trustTicks(trialDays, plan = {}) {
     'Polly starts on your pitches right away',
   ];
 }
+
+
+function shortDate(iso) {
+  const d = iso ? new Date(`${iso}T12:00:00Z`) : null;
+  if (!d || Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+// The trial week, day by day, beside the card form (start choice test, Nov 2026).
+export function trialTimeline(trialDays, trialEndsOn) {
+  const ends = shortDate(trialEndsOn);
+  return [
+    ['Day 1', 'Polly sends your first pitches, then builds up to 20 brands a day, weekends included'],
+    ['Every day', 'She scans brands running UGC ads and new gigs, and pitches the ones that fit you'],
+    ['Day 3–5', 'Follow-ups go out, and most brand replies arrive'],
+    [`Day ${trialDays}`, `$19/mo starts${ends ? ` on ${ends}` : ''}, unless you cancel from your settings`],
+  ];
+}
