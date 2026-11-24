@@ -21,6 +21,8 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <Script src="/cookie-consent-init.js" strategy="beforeInteractive" />
+        {/* Broken brand logos -> clean initial tile (public/img-fallback.js) */}
+        <Script src="/img-fallback.js" strategy="beforeInteractive" />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           strategy="afterInteractive"
