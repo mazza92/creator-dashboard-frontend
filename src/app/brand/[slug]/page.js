@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { isUgcTest, searchName, ugcDescription, ugcTitle, ugcWording } from './ugcTest';
 import { getHub as getUgcHub } from '../../brands-looking-for-ugc-creators/_hubs';
 import Link from 'next/link';
 import BrandUnlockClient from './BrandUnlockClient';
@@ -177,10 +178,11 @@ export async function generateMetadata({ params }) {
     return { title: 'Brand Not Found | Newcollab' };
   }
 
-  const title = brand?.seo?.title || `${brand.name} PR List & Application | Newcollab`;
-  const description =
+  const ugcOn = isUgcTest(brand.slug);
+  const title = ugcOn ? ugcTitle(brand) : (brand?.seo?.title || `${brand.name} PR List & Application | Newcollab`);
+  const description = ugcOn ? ugcDescription(brand) : (
     brand?.seo?.description ||
-    `Apply to ${brand.name} PR list. ${brand.description ? brand.description.slice(0, 120) : `Get free products and collaborate with ${brand.name}.`}`;
+    `Apply to ${brand.name} PR list. ${brand.description ? brand.description.slice(0, 120) : `Get free products and collaborate with ${brand.name}.`}`);
 
   // The API's `indexable` is the same rule the sitemap uses; the local checks
   // are a fallback for older API responses.
@@ -497,7 +499,17 @@ export default async function BrandPage({ params }) {
   const updatedLabel = formatMonthYear(brand.updatedAt || brand.lastVerifiedAt);
   const answer = prAnswer(brand, { minFollowers, regions, applicationMethod, collab: collabType, updatedLabel });
   const ugc = ugcFacts(brand);
-  const faqs = brandFaqs(brand, { minFollowers, regions, applicationMethod, collab: collabType, avgResponseTime, answer });
+  const ugcOn = isUgcTest(brand.slug);
+  const W = (text) => ugcWording(text, ugcOn);
+  const baseFaqs = brandFaqs(brand, { minFollowers, regions, applicationMethod, collab: collabType, avgResponseTime, answer });
+  // UGC test pages: UGC questions first, PR wording reframed for creators (see ./ugcTest.js).
+  const faqs = !ugcOn ? baseFaqs : [
+    ...baseFaqs.filter((f) => /UGC/.test(f.question)),
+    ...baseFaqs.filter((f) => !/UGC/.test(f.question)),
+  ].map((f) => ({
+    question: /PR list\?$/.test(f.question) ? `How do I pitch ${searchName(brand)} as a UGC creator?` : W(f.question),
+    answer: W(f.answer),
+  }));
   const hasPackageFacts = Boolean(brand.heroProduct || brand.estimatedValue || brand.pricePoint || collabType);
   const pitchIdeas = [
     brand.heroProduct && `Build your pitch around ${brand.heroProduct}, the product ${brand.name} is best known for.`,
@@ -1313,7 +1325,7 @@ export default async function BrandPage({ params }) {
               )}
             </div>
             <div className="bp-header-info">
-              <h1 className="bp-title">{brand.name}</h1>
+              <h1 className="bp-title">{ugcOn ? `${searchName(brand)} UGC creator collabs` : brand.name}</h1>
               <div className="bp-meta">
                 {brand.isFeatured && (
                   <span className="bp-badge bp-badge-featured">Featured</span>
@@ -1332,7 +1344,7 @@ export default async function BrandPage({ params }) {
               {isAcceptingPR ? (
                 <div className="bp-status-pill bp-status-open">
                   <span className="bp-status-dot"></span>
-                  Accepting PR
+                  {W('Accepting PR')}
                 </div>
               ) : null}
               <BrandPitchCta
@@ -1346,9 +1358,9 @@ export default async function BrandPage({ params }) {
           </header>
 
           {/* Answer-first: the line search and AI engines quote for "Does <brand> send PR packages?" */}
-          <section className="bp-answer" aria-label={`Does ${brand.name} send PR packages?`}>
-            <h2>Does {brand.name} send PR packages?</h2>
-            <p>{answer}</p>
+          <section className="bp-answer" aria-label={ugcOn ? `Does ${brand.name} work with UGC creators?` : `Does ${brand.name} send PR packages?`}>
+            <h2>{ugcOn ? `Does ${brand.name} work with UGC creators?` : `Does ${brand.name} send PR packages?`}</h2>
+            <p>{ugcOn ? ugc.answer : answer}</p>
           </section>
 
           <div className="bp-grid">
@@ -1421,7 +1433,7 @@ export default async function BrandPage({ params }) {
                       <div className="bp-fact"><dt>Hero product</dt><dd>{brand.heroProduct}</dd></div>
                     )}
                     {brand.estimatedValue && (
-                      <div className="bp-fact"><dt>Typical PR package value</dt><dd>~${brand.estimatedValue}</dd></div>
+                      <div className="bp-fact"><dt>{W('Typical PR package value')}</dt><dd>~${brand.estimatedValue}</dd></div>
                     )}
                     {brand.pricePoint && (
                       <div className="bp-fact"><dt>Average retail price</dt><dd>~${brand.pricePoint}</dd></div>
@@ -1608,7 +1620,7 @@ export default async function BrandPage({ params }) {
                     </div>
                     <div>
                       <div className="bp-cta-brand-name">Contact {brand.name}</div>
-                      <div className="bp-cta-brand-sub">Direct PR team access</div>
+                      <div className="bp-cta-brand-sub">{W('Direct PR team access')}</div>
                     </div>
                   </div>
 
@@ -1620,7 +1632,7 @@ export default async function BrandPage({ params }) {
                       </svg>
                     </div>
                     <div className="bp-email-wrap">
-                      <div className="bp-email-label">PR Contact Email</div>
+                      <div className="bp-email-label">{W('PR Contact Email')}</div>
                       <div className="bp-email-blurred">pr@{domain || 'brandname'}.com</div>
                     </div>
                     <span className="bp-unlock-badge">Unlock</span>
@@ -1658,7 +1670,7 @@ export default async function BrandPage({ params }) {
                         </svg>
                       </div>
                       <div>
-                        <div className="bp-vp-title">Direct PR team contact</div>
+                        <div className="bp-vp-title">{W('Direct PR team contact')}</div>
                         <div className="bp-vp-sub">Not a generic form — real email access</div>
                       </div>
                     </div>
@@ -1767,8 +1779,8 @@ export default async function BrandPage({ params }) {
               {applicationMethod === 'form'
                 ? `Applications go through ${brand.name}'s own creator form, so have your stats, niche and one content idea ready before you open it.`
                 : applicationMethod === 'email'
-                ? `The best route is an email pitch to their PR team: keep it to five sentences, attach your media kit and lead with one specific content idea.`
-                : `Unlock the contact details above to reach their PR team directly.`}
+                ? W(`The best route is an email pitch to their PR team: keep it to five sentences, attach your media kit and lead with one specific content idea.`)
+                : W(`Unlock the contact details above to reach their PR team directly.`)}
             </p>
 
             <h2 style={{ marginTop: '20px' }}>Pitch ideas for {brand.name}</h2>
@@ -1789,7 +1801,7 @@ export default async function BrandPage({ params }) {
             )}
 
             <p style={{ marginTop: '16px' }}>
-              Discover more {categoryLabel ? categoryLabel.toLowerCase() : ''} brands with open PR applications on the{' '}
+              Discover more {categoryLabel ? categoryLabel.toLowerCase() : ''} brands with {ugcOn ? 'open creator programmes' : 'open PR applications'} on the{' '}
               <a href={categoryDirectoryUrl(brand.category)} style={{ color: '#E11D48', fontWeight: 600, textDecoration: 'none' }}>
                 {categoryLabel || 'brand'} directory
               </a>
