@@ -19,6 +19,7 @@ import {
 } from '../../utils/googleSignIn';
 import { FaTiktok } from 'react-icons/fa6';
 import { validateSignupField, MIN_PASSWORD } from '../../utils/signupValidation';
+import PollyAutopilotMotion from '../../app/components/PollyAutopilotMotion';
 
 // ============================================================================
 // CREATOR SIGNUP - one promise, Google first, three fields. Everything else
@@ -117,7 +118,7 @@ const Shell = styled.main`
 
 const Pitch = styled.section`
   grid-area: pitch;
-  padding-top: 40px;
+  padding-top: 0; /* starts level with the signup card */
 
   @media (max-width: 960px) {
     padding-top: 6px;
@@ -130,8 +131,8 @@ const Eyebrow = styled.div`
   gap: 7px;
   font-size: 12px;
   font-weight: 700;
-  color: ${colors.roseDark};
-  background: rgba(225,29,72,.08);
+  color: #095a46;
+  background: #eef6f3;
   border-radius: 999px;
   padding: 6px 11px;
   margin-bottom: 18px;
@@ -144,18 +145,15 @@ const Eyebrow = styled.div`
 `;
 
 const Headline = styled.h1`
-  font-size: 50px;
+  font-size: 42px;
   font-weight: 800;
   letter-spacing: -1.8px;
   line-height: 1.04;
   margin: 0 0 16px;
   color: ${colors.black};
   em {
-    font-family: 'Instrument Serif', Georgia, serif;
-    font-style: italic;
-    font-weight: 400;
-    letter-spacing: -0.5px;
-    color: ${colors.rose};
+    font-style: normal;
+    color: #0d7a5f;
   }
 
   @media (max-width: 960px) {
@@ -166,69 +164,14 @@ const Headline = styled.h1`
   }
 `;
 
-const Subline = styled.p`
-  font-size: 17px;
-  color: ${colors.text2};
-  line-height: 1.55;
-  margin: 0 0 30px;
-  max-width: 520px;
-
-  @media (max-width: 960px) {
-    font-size: 15px;
-    margin: 0;
-  }
+const DesktopMotion = styled.div`
+  margin-top: 22px;
+  @media (max-width: 960px) { display: none; }
 `;
 
-const Benefits = styled.ul`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 14px;
-  max-width: 520px;
-
-  @media (max-width: 960px) {
-    display: none;
-  }
-`;
-
-const MobileBenefits = styled(Benefits)`
+const MobileMotion = styled.div`
   display: none;
-  @media (max-width: 960px) {
-    display: grid;
-    gap: 12px;
-  }
-`;
-
-const Benefit = styled.li`
-  display: grid;
-  grid-template-columns: 40px 1fr;
-  gap: 14px;
-  align-items: start;
-  strong { display: block; font-size: 15.5px; font-weight: 700; margin-bottom: 2px; color: ${colors.black}; }
-  span { font-size: 14px; color: ${colors.text2}; line-height: 1.5; }
-`;
-
-const BenefitIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  font-size: 19px;
-  background: ${(p) => p.$bg};
-`;
-
-const ProBadge = styled.em`
-  font-style: normal;
-  font-size: 10.5px;
-  font-weight: 800;
-  color: ${colors.violet};
-  background: rgba(124,58,237,.1);
-  border-radius: 6px;
-  padding: 2px 6px;
-  margin-left: 6px;
-  vertical-align: 2px;
+  @media (max-width: 960px) { display: block; }
 `;
 
 const Proof = styled.section`
@@ -241,45 +184,6 @@ const Proof = styled.section`
     display: grid;
     gap: 18px;
   }
-`;
-
-const ProofCard = styled.figure`
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,.06);
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.03);
-`;
-
-const ProofAvatars = styled.div`
-  display: flex;
-  flex-shrink: 0;
-`;
-
-const ProofAv = styled.div`
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  margin-right: -9px;
-  font-size: 11px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  background: ${(props) => props.$bg || colors.rose};
-`;
-
-const ProofText = styled.figcaption`
-  font-size: 13.5px;
-  color: ${colors.text2};
-  line-height: 1.45;
-  margin-left: 8px;
-  b { color: ${colors.black}; font-weight: 700; }
 `;
 
 const Card = styled.form`
@@ -618,26 +522,6 @@ const EyeIcon = ({ off }) => (
   </svg>
 );
 
-const BENEFITS = [
-  { icon: '🎁', bg: 'rgba(225,29,72,.09)', title: 'Brands that send PR packages', body: '3,000+ brands that gift creators, with the right contact and how to apply.' },
-  { icon: '💸', bg: 'rgba(5,150,105,.10)', title: 'Paid UGC briefs', body: 'Open briefs from brands paying for UGC videos in your niche.' },
-  { icon: '✨', bg: 'rgba(124,58,237,.10)', title: 'Polly pitches for you', pro: true, body: 'Your AI assistant finds brands, writes the pitch and follows up.' },
-];
-
-const BenefitList = ({ as: Wrap }) => (
-  <Wrap>
-    {BENEFITS.map((b) => (
-      <Benefit key={b.title}>
-        <BenefitIcon $bg={b.bg} aria-hidden="true">{b.icon}</BenefitIcon>
-        <div>
-          <strong>{b.title}{b.pro && <ProBadge>PRO</ProBadge>}</strong>
-          <span>{b.body}</span>
-        </div>
-      </Benefit>
-    ))}
-  </Wrap>
-);
-
 export default function CreatorSignup() {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
@@ -906,12 +790,10 @@ export default function CreatorSignup() {
           <Pitch>
             <Eyebrow>For UGC creators · Free to join</Eyebrow>
             <Headline>
-              Get PR packages and <em>paid UGC deals.</em>
+              Join 4,000+ UGC creators getting brand collabs <em>on autopilot.</em>
             </Headline>
-            <Subline>
-              Newcollab shows you which brands gift and pay creators like you, and Polly writes the pitches.
-            </Subline>
-            <BenefitList as={Benefits} />
+            {/* Same motion as the homepage "How it works": find, pitch, schedule & track, daily brief. */}
+            <DesktopMotion><PollyAutopilotMotion /></DesktopMotion>
           </Pitch>
 
           <Card onSubmit={handleSubmit} noValidate aria-labelledby="signup-title">
@@ -1004,20 +886,8 @@ export default function CreatorSignup() {
             </Reassure>
           </Card>
 
-          <Proof aria-label="Creators on Newcollab">
-            <BenefitList as={MobileBenefits} />
-            <ProofCard>
-              <ProofAvatars aria-hidden="true">
-                <ProofAv $bg={colors.rose}>C</ProofAv>
-                <ProofAv $bg={colors.violet}>M</ProofAv>
-                <ProofAv $bg={colors.green}>Z</ProofAv>
-                <ProofAv $bg={colors.amber}>A</ProofAv>
-              </ProofAvatars>
-              <ProofText>
-                <b>@carolstyle</b> landed Rhode Skin 3 days after joining.
-                <br />900+ creators are already pitching brands.
-              </ProofText>
-            </ProofCard>
+          <Proof aria-label="How Polly works for you">
+            <MobileMotion><PollyAutopilotMotion /></MobileMotion>
           </Proof>
         </Shell>
       </PageWrapper>
