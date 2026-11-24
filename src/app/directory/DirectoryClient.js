@@ -14,7 +14,11 @@ import useDashboardSession from '../../hooks/useDashboardSession';
 import { seoSignupHref, signedInHref, trackCtaClick } from '../../lib/seoConversion';
 import { getCategoryColors } from '../../utils/categoryColors';
 import { normalizeCategory, categoryLabel } from '../../constants/brandCategories';
-import { CITATION_LAST_UPDATED, DIRECTORY_FACTS, directoryCountLabel } from '../../lib/citationFacts';
+// "3,272 brands" from the live total; the headline's 3,000+ when the total isn't loaded yet.
+function ugcDirectoryCount(liveTotal) {
+  const n = Number(liveTotal) || 0;
+  return n >= 1000 ? `${n.toLocaleString('en-US')} brands` : '3,000+ brands';
+}
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -1006,13 +1010,8 @@ export default function DirectoryClient({
           <h1>{collectionTitle || 'UGC Brand Directory: 3,000+ Brands to Pitch as a UGC Creator'}</h1>
           <p>
             {collectionDescription ||
-              `${directoryCountLabel(total || initialTotal)}. Last checked ${CITATION_LAST_UPDATED}. Method: brands listed with a public application URL. Filter by beauty, skincare, K-beauty, fashion, wellness, and more.`}
+              `${ugcDirectoryCount(total || initialTotal)} to pitch as a UGC creator, with who they work with and how to reach them. Filter by beauty, skincare, K-beauty, fashion, wellness and more.`}
           </p>
-          {!collectionTitle && (
-            <p style={{ marginTop: 12, fontSize: 13, color: '#8A8A8A' }}>
-              {DIRECTORY_FACTS.method}
-            </p>
-          )}
           {/* Only show QuickLinks when there are brands to filter, or when not on a country page */}
           {(!initialCountry || total > 0 || loading) && (
             <QuickLinks>
