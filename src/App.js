@@ -82,6 +82,7 @@ import Marketplace from './cra-pages/Marketplace';
 import SubscriptionSuccess from './creator-portal/SubscriptionSuccess';
 import SubscriptionCancel from './creator-portal/SubscriptionCancel';
 import CheckoutPage from './creator-portal/CheckoutPage';
+import StartChoicePage from './creator-portal/StartChoicePage';
 import AccountSettings from './creator-portal/AccountSettings';
 // Brand pages - Next.js has /app/brand/[slug], but keep CRA route for dev/fallback
 import PublicBrandPage from './cra-pages/PublicBrandPage';
@@ -504,6 +505,10 @@ function AppContent() {
             <Route
                 path='/creator/dashboard/checkout'
                 element={user ? <CheckoutPage /> : <Navigate to={loginUrlWithReturn(location)} replace />}
+            />
+            <Route
+                path='/creator/dashboard/start'
+                element={user ? <StartChoicePage /> : <Navigate to={loginUrlWithReturn(location)} replace />}
             />
 
             {/* PR Hunter - Internal Tool (has its own login) */}

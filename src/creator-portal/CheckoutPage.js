@@ -11,7 +11,7 @@ import { getEmailCampaign } from '../utils/upgradeDeeplink';
 import { DEFAULT_RETURN, rememberCheckoutReturn, takeCheckoutReturn } from '../utils/checkoutReturn';
 import { PRO_PERKS } from './SubscriptionSuccess';
 import { creatorTokens as t } from '../theme/creatorTokens';
-import { checkoutFaq, trustTicks } from './checkoutCopy';
+import { checkoutFaq, trialTimeline, trustTicks } from './checkoutCopy';
 
 // On-site Pro checkout (Nov 2026). Stripe's embedded Checkout, mounted next to what Pro does and the answers people
 // look for before paying. The hosted stripe.com page said only the price, and the direct Pro buttons that sent
@@ -124,6 +124,16 @@ const CheckoutPage = () => {
         </Main>
 
         <Side>
+          {trialDays > 0 && (
+            <Card>
+              <CardTitle>Your free week</CardTitle>
+              <Timeline>
+                {trialTimeline(trialDays, state.trialEndsOn).map(([when, what]) => (
+                  <li key={when}><b>{when}</b><span>{what}</span></li>
+                ))}
+              </Timeline>
+            </Card>
+          )}
           <Card>
             <CardTitle>What Pro does</CardTitle>
             <Perks>
@@ -370,4 +380,16 @@ const FaqItem = styled.div`
   }
   button[aria-expanded='true'] svg { transform: rotate(180deg); }
   p { margin: 0; padding: 0 16px 15px; font-size: 14px; line-height: 1.55; color: ${t.inkSoft || '#4b5563'}; }
+`;
+
+const Timeline = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  li { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; font-size: 14px; line-height: 1.45; }
+  b { color: ${t.ink}; }
+  span { color: ${t.inkSoft}; }
 `;

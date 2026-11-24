@@ -10,6 +10,7 @@ import { UserContext } from '../contexts/UserContext';
 import ActivityBell from '../components/creator/ActivityBell';
 import Logo from '../components/Logo';
 import api from '../config/api';
+import { START_CHOICE_PATH } from '../creator-portal/StartChoicePage';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PaymentIssueBanner from '../components/PaymentIssueBanner';
 import { GoalPrompt, GoalPlanHandoff } from '../creator-portal/tracker/GoalModal';
@@ -506,6 +507,10 @@ const moreNavItems = [];
 
 function creditChipCopy(balance) {
   if (!balance) return 'Credits';
+  if (balance.is_unlimited && balance.trial_days_left) {
+    const n = Number(balance.trial_days_left);
+    return n === 1 ? 'Free trial · last day' : `Free trial · ${n} days left`;
+  }
   if (balance.is_unlimited) return 'Pro · unlimited';
   const n = Number(balance.remaining);
   if (!Number.isFinite(n)) return 'Credits';
@@ -616,6 +621,17 @@ const CreatorDashboardLayout = () => {
     window.addEventListener('savedBrandCountChanged', fetchMatchedCount);
     return () => window.removeEventListener('savedBrandCountChanged', fetchMatchedCount);
   }, [isLoading, location.pathname]);
+
+  // Start choice test: newly approved creators in the test pick a 7-day Autopilot trial or 3 free pitches before
+  // their first dashboard visit (StartChoicePage). The backend answers show: false for everyone else.
+  const startChoiceChecked = useRef(false);
+  useEffect(() => {
+    if (isLoading || startChoiceChecked.current) return;
+    startChoiceChecked.current = true;
+    api.get('/api/subscription/start-choice')
+      .then(({ data }) => { if (data?.show) navigate(START_CHOICE_PATH, { replace: true }); })
+      .catch(() => {});
+  }, [isLoading, navigate]);
 
   useEffect(() => {
     const loadCredits = async () => {
@@ -780,6 +796,11 @@ const CreatorDashboardLayout = () => {
             $low={Number(credits?.remaining) === 1 && !credits?.is_unlimited}
             $pro={!!credits?.is_unlimited}
             onClick={() => {
+              if (credits?.is_unlimited && credits?.trial_days_left) {
+                setShowUserMenu(false);
+                navigate('/creator/dashboard/settings');
+                return;
+              }
               if (credits?.is_unlimited) return;
               setShowUserMenu(false);
               // Always the upgrade modal (Nov 2026: the waiting-room sheet here felt overwhelming; the waiting room
@@ -798,7 +819,7 @@ const CreatorDashboardLayout = () => {
               <span className="full">{creditChipCopy(credits)}</span>
               <span className="mini">
                 {credits?.is_unlimited
-                  ? 'Pro'
+                  ? (credits?.trial_days_left ? `Trial · ${credits.trial_days_left}d` : 'Pro')
                   : Number.isFinite(Number(credits?.remaining))
                     ? Number(credits.remaining) <= 0
                       ? '0 left'
