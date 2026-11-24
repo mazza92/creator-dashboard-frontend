@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { SiteFooter } from '../components/LandingPageLayoutNext';
 import DirectoryBrandLinks from './DirectoryBrandLinks';
 import DirectoryClient from './DirectoryClient';
-import { CITATION_LAST_UPDATED_ISO, DIRECTORY_FACTS } from '../../lib/citationFacts';
+import { DIRECTORY_FACTS } from '../../lib/citationFacts';
 import { jsonLd } from '@/src/lib/jsonLd';
 
 export const metadata = {
@@ -62,9 +62,12 @@ export default async function DirectoryPage() {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: 'Newcollab UGC brand directory',
-    description: DIRECTORY_FACTS.method,
+    description:
+      'Brands UGC creators can pitch, from Newcollab’s live brand index: brands listed with a public creator application or contact. The live total is on https://newcollab.co/directory.',
     url: DIRECTORY_FACTS.url,
-    dateModified: CITATION_LAST_UPDATED_ISO,
+    // The page regenerates hourly from the live index, so the dataset is as fresh as the render.
+    dateModified: new Date().toISOString().slice(0, 10),
+    license: 'https://newcollab.co/terms-of-service',
     creator: { '@type': 'Organization', name: 'Newcollab', url: 'https://newcollab.co' },
     ...(initialTotal ? { variableMeasured: `${initialTotal} brands with a public application URL` } : {}),
   };

@@ -2,6 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Broken brand logos -> clean initial tile, before anything renders -->
+    <script src="/img-fallback.js"></script>
     <script>
       // Swallow Meta Pixel / extension fetch failures before CRA's overlay listens.
       window.addEventListener('unhandledrejection', function (event) {
