@@ -110,23 +110,13 @@ test('a hook that is already quoted is not double-quoted', () => {
   expect(screen.getByText('“Lets face it, RDLs are hard”')).toBeTruthy();
 });
 
-test('the upgrade button goes straight to Stripe checkout', async () => {
-  mockCheckoutUrl = 'https://checkout.stripe.com/c/pay/test';
+test('the upgrade button opens the on-site checkout page', async () => {
   const onUpgrade = jest.fn();
-  delete window.location;
-  window.location = { href: '', pathname: '/creator/dashboard/for-you', search: '' };
+  const push = jest.spyOn(window.history, 'pushState');
   render(<WaitingRoom room={{ ...base, followup: null }} source="pill" onUpgrade={onUpgrade} />);
   fireEvent.click(screen.getByText(/Send these \+ resume my plan/));
-  await waitFor(() => expect(window.location.href).toBe('https://checkout.stripe.com/c/pay/test'));
-  const checkout = mockCalls.find((c) => c[0] === '/api/subscription/create-checkout');
-  expect(checkout[1]).toMatchObject({ tier: 'pro', interval: 'monthly', source: 'waiting_room_pill' });
+  await waitFor(() => expect(push).toHaveBeenCalledWith({}, '', '/creator/dashboard/checkout?source=waiting_room_pill'));
   expect(onUpgrade).not.toHaveBeenCalled();
-  mockCheckoutUrl = null;
+  push.mockRestore();
 });
 
-test('if checkout fails, the upgrade window opens instead', async () => {
-  const onUpgrade = jest.fn();
-  render(<WaitingRoom room={{ ...base, followup: null }} onUpgrade={onUpgrade} />);
-  fireEvent.click(screen.getByText(/Send these \+ resume my plan/));
-  await waitFor(() => expect(onUpgrade).toHaveBeenCalled());
-});

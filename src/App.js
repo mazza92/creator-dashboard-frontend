@@ -81,6 +81,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Marketplace from './cra-pages/Marketplace';
 import SubscriptionSuccess from './creator-portal/SubscriptionSuccess';
 import SubscriptionCancel from './creator-portal/SubscriptionCancel';
+import CheckoutPage from './creator-portal/CheckoutPage';
 import AccountSettings from './creator-portal/AccountSettings';
 // Brand pages - Next.js has /app/brand/[slug], but keep CRA route for dev/fallback
 import PublicBrandPage from './cra-pages/PublicBrandPage';
@@ -500,6 +501,10 @@ function AppContent() {
             <Route path='/test-indexnow' element={<IndexNowTest />} />
             <Route path='/creator/dashboard/subscription/success' element={<SubscriptionSuccess />} />
             <Route path='/creator/dashboard/subscription/cancel' element={<SubscriptionCancel />} />
+            <Route
+                path='/creator/dashboard/checkout'
+                element={user ? <CheckoutPage /> : <Navigate to={loginUrlWithReturn(location)} replace />}
+            />
 
             {/* PR Hunter - Internal Tool (has its own login) */}
             <Route path='/supply' element={<PRHunter />} />
