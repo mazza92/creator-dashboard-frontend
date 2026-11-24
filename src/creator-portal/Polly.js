@@ -2235,7 +2235,10 @@ export default function Polly() {
     && !(creatorId && readPollyLocal(creatorId)?.messages?.length);
   let lastBatchId = null;
   messages.forEach((m) => { if (m.pitch_batch?.items?.length) lastBatchId = m.id; });
-  const welcomeMode = firstVisit && !firstRun && Boolean(pitchFacts.facts?.needs_confirm);
+  // Pro and trial creators set niches and everything else in Autopilot setup, then get Polly's recap: no niche
+  // welcome and no free "3 matched brands, you send them" opener for them (Nov 2026).
+  const paidCreator = Boolean(credits?.is_unlimited || autopilot.state?.is_pro);
+  const welcomeMode = firstVisit && !firstRun && !paidCreator && Boolean(pitchFacts.facts?.needs_confirm);
 
   // Pro setup journey: right after checkout or Gmail, and once a session for Pro creators who haven't finished
   // it (pre-filled, resumes where they left off). Free creators never see it.
@@ -2256,14 +2259,14 @@ export default function Polly() {
   const finishWelcome = useCallback((niches) => {
     setWelcomeDone(true);
     if (pitchFacts.facts) pitchFacts.setFacts({ ...pitchFacts.facts, niches, needs_confirm: false });
-    if (!autoAction && !autoFiredRef.current && !messagesRef.current.length) {
+    if (!paidCreator && !autoAction && !autoFiredRef.current && !messagesRef.current.length) {
       autoFiredRef.current = true;
       // Brands first, in under a second. Pitches (and credits) only when the creator taps "Write all 3 pitches".
       send('', { action: 'suggest_brands', starter: 'first_matches', chip_id: 'first_matches', deal: 'gifted',
         skip_discovery: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoAction, pitchFacts.facts, send]);
+  }, [autoAction, pitchFacts.facts, send, paidCreator]);
 
   useEffect(() => {
     if (!autoAction || !ready || busy || autoFiredRef.current) return;
