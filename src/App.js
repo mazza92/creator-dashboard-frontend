@@ -10,8 +10,8 @@ import IndexNowTest from './components/IndexNowTest';
 import QueryParamRedirect from './components/QueryParamRedirect';
 import CreatorHomeRedirect from './components/CreatorHomeRedirect';
 import { loginUrlWithReturn } from './utils/upgradeDeeplink';
-import { creatorHomePath, creatorNeedsOnboarding, needsWaitlistGate, WAITLIST_PATH } from './utils/creatorApproval';
-import Waitlist from './creator-portal/Waitlist';
+import { creatorHomePath, creatorNeedsOnboarding, directoryGateRedirect, isDirectoryCreator, DIRECTORY_PATH } from './utils/creatorApproval';
+import DirectoryAccess from './creator-portal/DirectoryAccess';
 import BrandOnboardingForm from './components/forms/BrandOnboardingForm';
 // eslint-disable-next-line no-unused-vars
 import CreatorOnboardingForm from './components/forms/CreatorOnboardingForm';
@@ -318,17 +318,13 @@ function AppContent() {
                 console.log('🟢 Redirecting unauthenticated user to /login');
                 navigate(loginUrlWithReturn(location), { replace: true });
             } else if (user) {
-                const onWaitlist = user.role === 'creator' && needsWaitlistGate(user.approval_status);
                 const correctBasePath = user.role === 'creator' || user.role === 'brand'
                     ? creatorHomePath(user)
                     : '/brand/workspace';
                 
                 // A brand user is allowed to visit a creator's profile page.
                 const isViewingCreatorProfileAsBrand = user.role === 'brand' && location.pathname.startsWith('/creator/profile/');
-                const isWaitlistPath = location.pathname.startsWith(WAITLIST_PATH);
-                const isSubscriptionReturn =
-                    location.pathname.startsWith('/creator/dashboard/subscription/success') ||
-                    location.pathname.startsWith('/creator/dashboard/subscription/cancel');
+                const isDirectoryPath = location.pathname.startsWith(DIRECTORY_PATH);
 
                 // Check if we just completed onboarding - if so, skip incomplete profile check
                 // This prevents redirect loop when user context hasn't updated yet
@@ -359,11 +355,11 @@ function AppContent() {
                     return;
                 }
 
-                // Pending/rejected creators can only use waitlist (+ Stripe return URLs)
-                if (onWaitlist && !hasIncompleteProfile && !isWaitlistPath && !isSubscriptionReturn &&
-                    location.pathname.startsWith('/creator')) {
-                    console.log('⏳ Creator pending approval — redirecting to waitlist');
-                    navigate(WAITLIST_PATH, { replace: true });
+                // Pending/rejected creators only get Directory access (+ Stripe return URLs)
+                const directoryRedirect = directoryGateRedirect(user, location.pathname);
+                if (directoryRedirect) {
+                    console.log('Creator not approved, redirecting to Directory access');
+                    navigate(directoryRedirect, { replace: true });
                     return;
                 }
                 
@@ -386,7 +382,7 @@ function AppContent() {
                 const isPublicRouteForUser = location.pathname.startsWith('/blog') || 
                                              publicRoutes.some(route => location.pathname.startsWith(route));
 
-                if (isInvalidPath && !isPublicRouteForUser && location.pathname !== '/payment-success' && !isWaitlistPath) {
+                if (isInvalidPath && !isPublicRouteForUser && location.pathname !== '/payment-success' && !isDirectoryPath) {
                     console.log(`🟢 Redirecting ${user.role} user to ${correctBasePath}`);
                     navigate(correctBasePath, { replace: true });
                 }
@@ -496,9 +492,17 @@ function AppContent() {
             <Route path='/register-new' element={<CreatorSignup />} />
             <Route path='/onboarding' element={<OnboardingRouter />} />
             <Route
-                path='/creator/waitlist'
-                element={user ? <Waitlist /> : <Navigate to={loginUrlWithReturn(location)} replace />}
+                path={DIRECTORY_PATH}
+                element={
+                    !user
+                        ? <Navigate to={loginUrlWithReturn(location)} replace />
+                        : isDirectoryCreator(user)
+                            ? <DirectoryAccess />
+                            : <Navigate to={creatorHomePath(user)} replace />
+                }
             />
+            {/* Old waitlist links (emails, bookmarks): the waitlist is gone, not-approved creators use the Directory. */}
+            <Route path='/creator/waitlist' element={<Navigate to={DIRECTORY_PATH} replace />} />
             <Route path='/test-indexnow' element={<IndexNowTest />} />
             <Route path='/creator/dashboard/subscription/success' element={<SubscriptionSuccess />} />
             <Route path='/creator/dashboard/subscription/cancel' element={<SubscriptionCancel />} />

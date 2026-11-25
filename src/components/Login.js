@@ -3,7 +3,7 @@ import { Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { UserContext, persistLoggedInUser } from '../contexts/UserContext';
-import { creatorPostAuthPath, WAITLIST_PATH } from '../utils/creatorApproval';
+import { creatorPostAuthPath, DIRECTORY_PATH } from '../utils/creatorApproval';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { auth, firebaseConfigured } from './firebase';
@@ -559,7 +559,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
   const postLoginPath = (data) => {
     if (data?.user_role === 'creator') {
       const gated = creatorPostAuthPath(data);
-      if (gated === '/onboarding' || gated === WAITLIST_PATH) {
+      if (gated === '/onboarding' || gated === DIRECTORY_PATH) {
         return gated;
       }
       return (

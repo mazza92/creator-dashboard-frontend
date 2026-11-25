@@ -1,14 +1,22 @@
-/** Creator waitlist / approval helpers */
+/** Creator approval helpers */
 
+// Pending and rejected creators no longer wait on a waitlist: they get the slim Directory access
+// (brand directory, contact unlocks, a pitch they send themselves). Old waitlist links redirect here.
+export const DIRECTORY_PATH = '/creator/directory';
 export const WAITLIST_PATH = '/creator/waitlist';
 
 export function isCreatorApproved(status) {
   return status === 'approved' || status === 'pro_approved';
 }
 
-/** Pending or rejected creators stay out of the product dashboard. */
-export function needsWaitlistGate(status) {
+/** Pending or rejected creators get Directory access only, never the full product dashboard. */
+export function needsDirectoryAccess(status) {
   return status === 'pending' || status === 'rejected';
+}
+
+/** A logged-in creator who is limited to the Directory. */
+export function isDirectoryCreator(user) {
+  return user?.role === 'creator' && needsDirectoryAccess(user?.approval_status);
 }
 
 /**
@@ -24,8 +32,8 @@ export function creatorPostAuthPath({ approval_status, onboarding_complete, prof
   if (!alreadyDecided(approval_status) && (profile_incomplete || needs_onboarding || onboarding_complete === false)) {
     return '/onboarding';
   }
-  if (needsWaitlistGate(approval_status)) {
-    return WAITLIST_PATH;
+  if (needsDirectoryAccess(approval_status)) {
+    return DIRECTORY_PATH;
   }
   return '/creator/dashboard/for-you';
 }
@@ -71,7 +79,26 @@ export function creatorNeedsOnboarding(user) {
 
 export function creatorHomePath(user) {
   if (creatorNeedsOnboarding(user)) return '/onboarding';
-  if (user?.role === 'creator' && needsWaitlistGate(user.approval_status)) return WAITLIST_PATH;
+  if (isDirectoryCreator(user)) return DIRECTORY_PATH;
   if (user?.role === 'brand') return '/brand/workspace';
   return '/creator/dashboard/for-you';
+}
+
+const DIRECTORY_ALLOWED_PREFIXES = [
+  DIRECTORY_PATH,
+  // Stripe returns: Pro for directory creators is checked out on Stripe's hosted page and comes back here.
+  '/creator/dashboard/subscription/success',
+  '/creator/dashboard/subscription/cancel',
+];
+
+/**
+ * Where App.js sends a creator who is limited to the Directory, or null to let the route render.
+ * Every /creator page except the Directory (and the Stripe return pages) is off limits for them.
+ */
+export function directoryGateRedirect(user, pathname) {
+  if (!isDirectoryCreator(user) || !user.creator_id) return null;
+  const path = String(pathname || '');
+  if (!path.startsWith('/creator')) return null;
+  if (DIRECTORY_ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix))) return null;
+  return DIRECTORY_PATH;
 }

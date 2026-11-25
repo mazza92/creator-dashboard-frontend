@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiLock, FiCheck } from 'react-icons/fi';
 import api from '../config/api';
 import { dismissUpgradeDeeplink, isWinbackUpgradePending } from '../utils/upgradeDeeplink';
-import { PRO_OFFER, PRO_COMPARE } from '../config/proOffer';
+import { PRO_OFFER, PRO_COMPARE, DIRECTORY_OFFER, DIRECTORY_COMPARE } from '../config/proOffer';
 import { useTrialDays } from '../utils/trialOffer';
 import { money, paywallGoal } from './tracker/trackerModel';
 import { startProCheckout } from '../utils/startProCheckout';
+import { startDirectoryCheckout } from '../utils/startDirectoryCheckout';
+import useIsDirectoryCreator from '../hooks/useDirectoryAccess';
 
 function sourceFromPath(pathname) {
   const path = String(pathname || '');
@@ -41,32 +43,36 @@ const CompareCell = ({ value, pro }) => {
 
 // `goal` (from the Tracker): {amount_cents, total_cents, left_cents, lined_up, brands}. When free credits are used up
 // and no goal is passed, the modal reads it from /api/tracker so the paywall speaks in the creator's own goal.
-const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining, source, goal }) => {
+// `directory`: the Directory access variant (creators who are not approved). Defaults to the logged-in user's access,
+// so every paywall a directory creator can reach sells directory unlocks, never Polly, Autopilot or a free week.
+const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, pitchLimits, resetAt, unlockRemaining, source, goal, directory }) => {
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState('monthly');
+  const autoDirectory = useIsDirectoryCreator();
+  const isDirectory = directory ?? autoDirectory;
 
   const remainingKnown = unlockRemaining != null && Number.isFinite(Number(unlockRemaining));
   const rawUsed = remainingKnown ? currentCount : (pitchLimits?.used ?? currentCount);
   const used = Number.isFinite(Number(rawUsed)) ? Number(rawUsed) : 0;
   const total = Number(limit || 3) || 3;
   const atCap = remainingKnown ? Number(unlockRemaining) <= 0 : used >= total;
-  const isWinback = feature === 'winback' || isWinbackUpgradePending();
-  const trialDays = useTrialDays(isOpen && !isWinback);
+  const isWinback = !isDirectory && (feature === 'winback' || isWinbackUpgradePending());
+  const trialDays = useTrialDays(isOpen && !isWinback && !isDirectory);
   const hasTrial = trialDays > 0;
   const [waiting, setWaiting] = useState(null);
 
   useEffect(() => {
-    if (!isOpen || isWinback) return undefined;
+    if (!isOpen || isWinback || isDirectory) return undefined;
     let alive = true;
     api.get('/api/polly/paywall-brands')
       .then(({ data }) => { if (alive) setWaiting(data || null); })
       .catch(() => {});
     return () => { alive = false; };
-  }, [isOpen, isWinback]);
+  }, [isOpen, isWinback, isDirectory]);
   const matched = waiting ? matchedLine(waiting) : null;
 
   const [fetchedGoal, setFetchedGoal] = useState(null);
-  const wantsGoal = isOpen && !isWinback && atCap && goal === undefined;
+  const wantsGoal = isOpen && !isWinback && !isDirectory && atCap && goal === undefined;
   useEffect(() => {
     if (!wantsGoal) return undefined;
     let alive = true;
@@ -85,6 +91,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   const handleUpgrade = async (tier) => {
     if (tier !== 'pro') return;
     setLoading(true);
+    if (isDirectory) {
+      const started = await startDirectoryCheckout(source || 'directory_paywall');
+      if (!started) setLoading(false);
+      return;
+    }
     if (isWinback) dismissUpgradeDeeplink();
     const src = isWinback ? 'winback' : (source || sourceFromPath(window.location.pathname));
     await startProCheckout(src, { interval, offer: isWinback ? 'winback' : '' });
@@ -93,6 +104,19 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
   };
 
   if (!isOpen) return null;
+
+  if (isDirectory) {
+    return createPortal(
+      <DirectoryPaywall
+        onClose={onClose}
+        onUpgrade={() => handleUpgrade('pro')}
+        loading={loading}
+        atCap={atCap}
+        lastUnlock={feature === 'last_unlock'}
+      />,
+      document.body,
+    );
+  }
 
   const eyebrow = isWinback
     ? null
@@ -246,6 +270,71 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   return createPortal(modal, document.body);
 };
+
+// Directory access paywall: 500 brand unlocks a month for $19/mo. Monthly only, no free week, and nothing about
+// Polly, Autopilot, the Tracker or getting approved, because directory Pro includes none of that.
+const DirectoryPaywall = ({ onClose, onUpgrade, loading, atCap, lastUnlock }) => (
+  <AnimatePresence>
+    <Overlay initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+      <ModalWrapper
+        initial={{ y: 20, opacity: 0, scale: 0.94 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label="Upgrade to Pro"
+      >
+        <ModalScroll>
+          <CloseButton onClick={onClose} aria-label="Close">
+            <FiX size={16} />
+          </CloseButton>
+          <ModalIcon>
+            <BoltIcon />
+          </ModalIcon>
+          {(atCap || lastUnlock) && (
+            <Eyebrow>{lastUnlock ? 'Last free unlock' : 'Your free unlocks are used up'}</Eyebrow>
+          )}
+          <Headline><PinkSpan>{DIRECTORY_OFFER.headline}</PinkSpan></Headline>
+          <Subtext>{DIRECTORY_OFFER.promise}</Subtext>
+
+          <Compare>
+            <ProColumn aria-hidden="true" />
+            <CompareRow $head>
+              <HeadLabel>What you get</HeadLabel>
+              <HeadLabel $center>Free</HeadLabel>
+              <ProHead><span>Pro</span></ProHead>
+            </CompareRow>
+            {DIRECTORY_COMPARE.map((row) => (
+              <CompareRow key={row.label}>
+                <RowLabel>{row.label}</RowLabel>
+                <Cell><CompareCell value={row.free} /></Cell>
+                <Cell><CompareCell value={row.pro} pro /></Cell>
+              </CompareRow>
+            ))}
+          </Compare>
+
+          <Plans>
+            <PlanOption type="button" $active>
+              <div>
+                <PlanName>Pro, monthly</PlanName>
+                <PlanNote>Cancel anytime</PlanNote>
+              </div>
+              <PlanPrice>$19/mo</PlanPrice>
+            </PlanOption>
+          </Plans>
+        </ModalScroll>
+
+        <CtaArea>
+          <CtaButton onClick={onUpgrade} disabled={loading} whileTap={{ scale: 0.98 }}>
+            {loading ? 'Processing...' : DIRECTORY_OFFER.cta}
+          </CtaButton>
+          <TrustLine>{DIRECTORY_OFFER.trust}</TrustLine>
+        </CtaArea>
+      </ModalWrapper>
+    </Overlay>
+  </AnimatePresence>
+);
 
 // Styled Components
 const Overlay = styled(motion.div)`

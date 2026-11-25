@@ -543,7 +543,7 @@ export default function CreatorApprovalQueue({ getApiConfig, onSnapshot }) {
         destroyOnClose
       >
         <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-          They stay on the waitlist page and see this reason. You can undo for a few seconds after.
+          They keep Directory access only (brand contacts and pitches they send themselves). You can undo for a few seconds after.
         </Text>
         <Radio.Group
           value={rejectReasonId}

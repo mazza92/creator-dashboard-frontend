@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 // Dashboard header lockup: the green "N" app icon + lowercase "newcollab" wordmark in Inter,
-// the same lockup as newcollab.co and the Waitlist header (Nov 2026 revamp).
+// the same lockup as newcollab.co and the Directory access header (Nov 2026 revamp).
 const LogoWrap = styled.a`
   display: inline-flex;
   align-items: center;
@@ -32,9 +32,9 @@ const LogoWrap = styled.a`
   }
 `;
 
-export default function Logo() {
+export default function Logo({ href = '/creator/dashboard/for-you' }) {
   return (
-    <LogoWrap href="/creator/dashboard/for-you" aria-label="newcollab home">
+    <LogoWrap href={href} aria-label="newcollab home">
       <img src="/apple-touch-icon.png" alt="" aria-hidden="true" width={30} height={30} />
       newcollab
     </LogoWrap>

@@ -9,7 +9,7 @@ import { FaInstagram, FaTiktok, FaYoutube } from 'react-icons/fa6';
 import { SocialVerificationStep } from '../SocialVerification';
 import ProfileScrapingLoader from '../ProfileScrapingLoader';
 import { scrapeHelpFromError } from '../../utils/scrapeHelp';
-import { needsWaitlistGate, WAITLIST_PATH } from '../../utils/creatorApproval';
+import { needsDirectoryAccess, DIRECTORY_PATH } from '../../utils/creatorApproval';
 import CountryCombobox from './CountryCombobox';
 import GoalSetup from '../../creator-portal/tracker/GoalSetup';
 import { OTHER_COUNTRY, detectCountry } from '../../utils/countries';
@@ -803,14 +803,14 @@ export default function CreatorOnboarding() {
     setError('');
   };
 
-  // End of onboarding. Creators who go to the waitlist land straight on it (it confirms "Application received");
-  // "You're all set" is only for creators who really get in now (Pro or already approved). Nothing is saved
+  // End of onboarding. Creators who are not approved land straight on the Directory (brand contacts only);
+  // "You're all set" is only for creators who really get in now (already approved). Nothing is saved
   // here: profile and survey are stored before this runs.
   const finishOnboarding = async () => {
     setLoading(true);
     try {
       const profile = await apiClient.get('/profile', { withCredentials: true });
-      if (needsWaitlistGate(profile.data?.approval_status ?? null)) {
+      if (needsDirectoryAccess(profile.data?.approval_status ?? null)) {
         await completeOnboarding(onboardingCompleteRes, { welcome: true });
         return;
       }
@@ -1249,7 +1249,7 @@ export default function CreatorOnboarding() {
       sessionStorage.setItem('foryouForceOpportunities', '1');
     }
 
-    // New creators land on waitlist until admin/Pro approval
+    // Creators who are not approved land on the Directory (approval is an admin decision only)
     let approvalStatus = null;
     try {
       const profile = await apiClient.get('/profile', { withCredentials: true });
@@ -1258,8 +1258,8 @@ export default function CreatorOnboarding() {
       // fall through — App.js gate still catches pending
     }
 
-    if (needsWaitlistGate(approvalStatus)) {
-      navigate(welcome ? `${WAITLIST_PATH}?welcome=1` : WAITLIST_PATH, { replace: true });
+    if (needsDirectoryAccess(approvalStatus)) {
+      navigate(welcome ? `${DIRECTORY_PATH}?welcome=1` : DIRECTORY_PATH, { replace: true });
       return;
     }
 

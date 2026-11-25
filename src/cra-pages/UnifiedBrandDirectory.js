@@ -14,6 +14,7 @@ import LandingPageLayout from '../Layouts/LandingPageLayout';
 import { creatorTokens as tokens } from '../theme/creatorTokens';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PRO_OFFER } from '../config/proOffer';
+import { DIRECTORY_PATH } from '../utils/creatorApproval';
 
 // Feature flag for V2 modal testing
 const USE_UNLOCK_V2 = true;
@@ -65,14 +66,20 @@ const getFaviconUrl = (website) => {
   }
 };
 
-const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDescription }) => {
+// `directoryMode`: the slim Directory access for creators who are not approved (creator-portal/DirectoryAccess).
+// Same directory, unlock and pitch modal, but no links into Polly, the Tracker, the pipeline or other tabs; the
+// page around it owns the header and the unlock counter (`onBalanceChange` gets every balance the API returns).
+const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDescription, directoryMode = false, onBalanceChange }) => {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Detect if we're inside dashboard or public route
-  const isDashboardView = location.pathname.startsWith('/creator/dashboard');
+  const isDashboardView = directoryMode || location.pathname.startsWith('/creator/dashboard');
+  const brandPagePath = (slug) => (directoryMode
+    ? `${DIRECTORY_PATH}?brand=${encodeURIComponent(slug || '')}`
+    : `/creator/dashboard/brand/${slug}`);
 
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -180,12 +187,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   // V4: Check if user just completed onboarding (first login welcome experience)
   useEffect(() => {
     const justCompleted = sessionStorage.getItem('justCompletedOnboarding');
-    if (justCompleted === 'true' && isDashboardView) {
+    if (justCompleted === 'true' && isDashboardView && !directoryMode) {
       setShowWelcomeCard(true);
       // Clear the flag so it only shows once
       sessionStorage.removeItem('justCompletedOnboarding');
     }
-  }, [isDashboardView]);
+  }, [isDashboardView, directoryMode]);
 
   // Handle brand URL param to open specific brand modal (e.g., from better matches redirect)
   useEffect(() => {
@@ -241,6 +248,17 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
   }, [searchParams, user]);
 
+  const applyBalance = (raw) => {
+    if (!raw) return;
+    setUnlockBalance({
+      remaining: raw.remaining ?? FREE_UNLOCK_LIMIT,
+      used: raw.used ?? 0,
+      tier: raw.tier || 'free',
+      reset_at: raw.reset_at
+    });
+    if (onBalanceChange) onBalanceChange(raw);
+  };
+
   const fetchOpenPrBrands = async () => {
     try {
       const { data } = await axios.get(`${API_BASE}/api/admin/brands/open-pr-featured`);
@@ -271,12 +289,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
         // Set unlock balance
         if (data.unlock_balance) {
-          setUnlockBalance({
-            remaining: data.unlock_balance.remaining ?? FREE_UNLOCK_LIMIT,
-            used: data.unlock_balance.used ?? 0,
-            tier: data.unlock_balance.tier || 'free',
-            reset_at: data.unlock_balance.reset_at
-          });
+          applyBalance(data.unlock_balance);
         }
 
         // Set saved/pitched brands
@@ -328,12 +341,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         withCredentials: true
       });
       if (balanceResponse.data) {
-        setUnlockBalance({
-          remaining: balanceResponse.data.remaining ?? FREE_UNLOCK_LIMIT,
-          used: balanceResponse.data.used ?? 0,
-          tier: balanceResponse.data.tier || 'free',
-          reset_at: balanceResponse.data.reset_at
-        });
+        applyBalance(balanceResponse.data);
       }
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -634,12 +642,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         withCredentials: true
       });
       if (response.data) {
-        setUnlockBalance({
-          remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
-          used: response.data.used ?? 0,
-          tier: response.data.tier || 'free',
-          reset_at: response.data.reset_at
-        });
+        applyBalance(response.data);
       }
     } catch (error) {
       console.error('Error tracking PR form application:', error);
@@ -661,6 +664,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
       window.location.href = applyUrl;
     }
 
+    if (directoryMode) return;
     setTimeout(() => {
       navigate(`/creator/dashboard/pr-pipeline?confirmBrand=${brand.id}&method=form`);
     }, 700);
@@ -691,12 +695,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         withCredentials: true
       });
       if (response.data) {
-        setUnlockBalance({
-          remaining: response.data.remaining ?? FREE_UNLOCK_LIMIT,
-          used: response.data.used ?? 0,
-          tier: response.data.tier || 'free',
-          reset_at: response.data.reset_at
-        });
+        applyBalance(response.data);
       }
     } catch (error) {
       setUnlockBalance(prev => ({
@@ -706,7 +705,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
     }
 
     if (contactedBrand) {
-      if (goPipeline) {
+      if (goPipeline && !directoryMode) {
         message.success(
           method === 'form'
             ? 'PR form opened. Confirm your application in Saved so we can track follow-ups.'
@@ -1005,7 +1004,12 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
   const content = (
     <>
       {/* Only show default Helmet if not in collection mode */}
-      {!collectionMode && (
+      {directoryMode && (
+        <Helmet>
+          <title>Brand directory | newcollab</title>
+        </Helmet>
+      )}
+      {!collectionMode && !directoryMode && (
         <Helmet>
           <title>3,000+ PR Forms for Brands (2026): Direct Application Links | NewCollab</title>
           <meta name="description" content="Browse 3,000+ verified PR forms for brands—direct application links, PR list requirements, and micro-influencer friendly options. Filter by beauty, skincare, K-beauty & fashion. Apply free." />
@@ -1028,7 +1032,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
         )}
 
         <ContentWrapper>
-          {isDashboardView && (
+          {isDashboardView && !directoryMode && (
             <DashboardDiscoverHeader>
               <DashboardEyebrow>Discover</DashboardEyebrow>
               <DashboardTitle>
@@ -1062,7 +1066,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           )}
 
           {/* Monthly Quota Tracker - Show for logged-in FREE users */}
-          {user && subscriptionTier === 'free' && isDashboardView && (() => {
+          {user && subscriptionTier === 'free' && isDashboardView && !directoryMode && (() => {
             const remaining = unlockBalance.remaining ?? FREE_UNLOCK_LIMIT;
             const used = unlockBalance.used ?? Math.max(0, FREE_UNLOCK_LIMIT - Math.min(remaining, FREE_UNLOCK_LIMIT));
             return (
@@ -1300,7 +1304,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   isExternal = true;
                 } else {
                   // Logged in + no form, no website: link to brand detail page
-                  applyUrl = isDashboardView ? `/creator/dashboard/brand/${brand.slug}` : `/brand/${brand.slug}`;
+                  applyUrl = isDashboardView ? brandPagePath(brand.slug) : `/brand/${brand.slug}`;
                   buttonText = 'View Details';
                   isExternal = false;
                 }
@@ -1450,7 +1454,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
 
                 // Use dashboard route for logged-in creators in dashboard, public route otherwise
                 const brandUrl = isDashboardView && user
-                  ? `/creator/dashboard/brand/${brand.slug}`
+                  ? brandPagePath(brand.slug)
                   : `/brand/${brand.slug}`;
 
                 const microFriendly = isMicroFriendlyBrand(brand);
@@ -1469,6 +1473,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                   <BrandCard
                     key={brand.slug}
                     to={brandUrl}
+                    onClick={directoryMode && user ? (e) => handlePitchBrand(brand, e) : undefined}
                   >
                     {(brand.isFeatured || isUnlocked) && (
                       <CardTopMeta>
@@ -1555,13 +1560,15 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                             <><Mail size={16} /> {tokens.ctaGetBrandPr}</>
                           )}
                         </PitchButton>
-                        <SaveActionButton
-                          onClick={(e) => handleSaveBrand(brand, e)}
-                          $saved={isSaved}
-                          aria-label={isSaved ? 'Unsave brand' : 'Save brand'}
-                        >
-                          <Heart size={16} fill={isSaved ? 'currentColor' : 'none'} />
-                        </SaveActionButton>
+                        {!directoryMode && (
+                          <SaveActionButton
+                            onClick={(e) => handleSaveBrand(brand, e)}
+                            $saved={isSaved}
+                            aria-label={isSaved ? 'Unsave brand' : 'Save brand'}
+                          >
+                            <Heart size={16} fill={isSaved ? 'currentColor' : 'none'} />
+                          </SaveActionButton>
+                        )}
                       </CardActions>
                     )}
 
@@ -1607,6 +1614,7 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
           feature={unlockBalance.remaining <= 0 ? 'unlock_paywall' : 'pitch'}
           resetAt={unlockBalance.reset_at}
           unlockRemaining={unlockBalance.remaining}
+          directory={directoryMode || undefined}
         />
       )}
 
@@ -1629,13 +1637,14 @@ const UnifiedBrandDirectory = ({ collectionMode, collectionTitle, collectionDesc
                 fetchUnlockedBrands();
               }
             }}
-            onOpenOpportunities={() => {
+            onOpenOpportunities={directoryMode ? undefined : () => {
               sessionStorage.setItem('foryouForceOpportunities', '1');
               sessionStorage.setItem('foryouTabPicked', '1');
               setShowPitchModal(false);
               setSelectedBrandForPitch(null);
               navigate('/creator/dashboard/for-you');
             }}
+            directoryMode={directoryMode || undefined}
             isPro={subscriptionTier === 'pro'}
             onUpgrade={() => {
               setShowPitchModal(false);

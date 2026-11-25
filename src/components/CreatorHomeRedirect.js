@@ -5,7 +5,7 @@ import { creatorHomePath } from '../utils/creatorApproval';
 
 /**
  * Creator `/` and `/dashboard` index redirect.
- * Pending/rejected → waitlist; otherwise Polly (For You home).
+ * Pending/rejected → Directory access; otherwise Polly (For You home).
  */
 export default function CreatorHomeRedirect() {
   const { user } = useContext(UserContext);

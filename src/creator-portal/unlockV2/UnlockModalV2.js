@@ -19,6 +19,8 @@ import PitchBodyEditor from '../PitchBodyEditor';
 import { copyPitchRich, pitchPlainForEmail } from '../../utils/pitchBodyFormat';
 import { ColdBrandNote } from '../../components/ReplySignal';
 import { rememberCheckoutReturn } from '../../utils/checkoutReturn';
+import useIsDirectoryCreator from '../../hooks/useDirectoryAccess';
+import { DIRECTORY_PATH } from '../../utils/creatorApproval';
 
 const LOCATION_PLACEHOLDER = '[CITY, COUNTRY]';
 
@@ -3053,6 +3055,17 @@ const CARD_TIMINGS = {
 
 const GENERIC_INBOX_RE = /^(info|support|help|hello|contact|care|customerservice)@/i;
 
+// Directory pitches go out from the creator's own email and must never mention Newcollab (the backend already
+// strips the kit link; this is the client-side guard). Drops lines that link to or name newcollab.
+export function stripNewcollabMentions(body) {
+  return String(body || '')
+    .split('\n')
+    .filter((line) => !/newcollab/i.test(line))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function resolvePackEmail(packageData) {
   const raw = packageData?.brand_email || packageData?.contact?.email;
   const formUrl = packageData?.application_form_url;
@@ -3091,7 +3104,15 @@ const UnlockModalV2 = ({
   isPro = false,
   onUpgrade,
   onOpenOpportunities,
+  directoryMode,
 }) => {
+  // Directory access (creator not approved): unlock + pitch only. No links into Polly, the pipeline or other tabs,
+  // and nothing Newcollab-branded added to the pitch.
+  const autoDirectory = useIsDirectoryCreator();
+  const isDirectory = directoryMode ?? autoDirectory;
+  const brandLinkPath = (slug) => (isDirectory
+    ? `${DIRECTORY_PATH}?brand=${encodeURIComponent(slug || '')}`
+    : `/creator/dashboard/pr-brands?brand=${encodeURIComponent(slug || '')}`);
   // Check if this is a follow-up (brand already pitched)
   const isFollowup = brand?.isFollowup || false;
 
@@ -3778,7 +3799,8 @@ const UnlockModalV2 = ({
       }
 
       const subject = editedSubject || '';
-      const body = pitchPlainForEmail(editedBody || '');
+      const plainBody = pitchPlainForEmail(editedBody || '');
+      const body = isDirectory ? stripNewcollabMentions(plainBody) : plainBody;
       try {
         await copyToClipboard(body, 'pitch');
       } catch (err) {
@@ -3838,6 +3860,7 @@ const UnlockModalV2 = ({
         currentCount={3}
         limit={3}
         unlockRemaining={0}
+        directory={isDirectory}
       />
     );
   }
@@ -3850,6 +3873,7 @@ const UnlockModalV2 = ({
       currentCount={3}
       limit={3}
       unlockRemaining={0}
+      directory={isDirectory}
     />
   );
 
@@ -3929,7 +3953,7 @@ const UnlockModalV2 = ({
                   pickLabel="Open"
                   onPick={(alt) => {
                     onClose?.();
-                    navigate(`/creator/dashboard/pr-brands?brand=${encodeURIComponent(alt.slug || '')}`);
+                    navigate(brandLinkPath(alt.slug));
                   }}
                 />
                 <ColdGateActions>
@@ -4180,7 +4204,7 @@ const UnlockModalV2 = ({
                                   <BetterMatchCard
                                     key={match.id}
                                     onClick={() => {
-                                      window.location.href = `/creator/dashboard/pr-brands?brand=${match.slug}`;
+                                      window.location.href = brandLinkPath(match.slug);
                                     }}
                                   >
                                     <BetterMatchLogo>
@@ -4238,11 +4262,19 @@ const UnlockModalV2 = ({
                     <SentSubtitle>
                       {packageData?.is_followup
                         ? 'You already sent a follow-up recently. Wait before sending another so it does not look like spam.'
-                        : 'Sending the same pitch twice can look like spam and hurt replies. Follow up from your pipeline after a week if they have not replied.'}
+                        : isDirectory
+                          ? 'Sending the same pitch twice can look like spam and hurt replies. Follow up from your own email after a week if they have not replied.'
+                          : 'Sending the same pitch twice can look like spam and hurt replies. Follow up from your pipeline after a week if they have not replied.'}
                     </SentSubtitle>
-                    <SentSecondaryBtn onClick={() => navigate('/creator/dashboard/pr-pipeline')}>
-                      Open pipeline
-                    </SentSecondaryBtn>
+                    {isDirectory ? (
+                      <SentSecondaryBtn onClick={() => onClose?.()}>
+                        Done
+                      </SentSecondaryBtn>
+                    ) : (
+                      <SentSecondaryBtn onClick={() => navigate('/creator/dashboard/pr-pipeline')}>
+                        Open pipeline
+                      </SentSecondaryBtn>
+                    )}
                   </SentStateContainer>
                 ) : pitchSent ? (
                   <SentStateContainer
@@ -4255,9 +4287,11 @@ const UnlockModalV2 = ({
                     </SentCheckmark>
                     <SentTitle>{packageData?.is_followup ? 'Follow-up sent' : 'Pitch sent'} to {brandName}</SentTitle>
                     <SentSubtitle>
-                      {packageData?.is_followup
-                        ? `Follow-up copied. Confirm you sent it so we can remind you to nudge again.`
-                        : `Email opened. Confirm you sent it so we can remind you to follow up in 7 days.`
+                      {isDirectory
+                        ? 'Your email app opened with the pitch. Send it from there, and follow up yourself in about a week if they have not replied.'
+                        : packageData?.is_followup
+                          ? `Follow-up copied. Confirm you sent it so we can remind you to nudge again.`
+                          : `Email opened. Confirm you sent it so we can remind you to follow up in 7 days.`
                       }
                     </SentSubtitle>
                     <SentSecondaryBtn onClick={() => packageData?.is_followup ? onClose?.() : setPhase(PHASE_MODAL)}>
@@ -4294,7 +4328,9 @@ const UnlockModalV2 = ({
                       <OutreachContent>
                         <FormNote>
                           <strong>You submit this form. We don't.</strong>
-                          Affiliate / UGC portals need your login. We open the link and prep answers from My Kit.
+                          {isDirectory
+                            ? 'Affiliate / UGC portals need your login. We open the link and prep your answers.'
+                            : 'Affiliate / UGC portals need your login. We open the link and prep answers from My Kit.'}
                         </FormNote>
                         <InfoBlock>
                           <InfoLabel>Program signup link</InfoLabel>
@@ -4320,7 +4356,7 @@ const UnlockModalV2 = ({
                                 Copy
                               </button>
                             </li>
-                            {packageData.media_kit_url && (
+                            {packageData.media_kit_url && !isDirectory && (
                               <li>
                                 <span>Media kit URL</span>
                                 <button type="button" onClick={() => copyToClipboard(packageData.media_kit_url, 'pitch')}>
@@ -4560,6 +4596,7 @@ const UnlockModalV2 = ({
                 </NextActionsHero>
 
                 <NextActionsStack>
+                  {!isDirectory && (
                   <NextActionPrimary>
                     <NextActionLabel>{NEXT_ACTIONS.opportunitiesTitle}</NextActionLabel>
                     <NextActionTip>{NEXT_ACTIONS.opportunitiesBody}</NextActionTip>
@@ -4573,6 +4610,7 @@ const UnlockModalV2 = ({
                       {NEXT_ACTIONS.opportunitiesCta}
                     </NextActionBtn>
                   </NextActionPrimary>
+                  )}
 
                   {(packageData.status === 'not_yet' || packageData.status === 'almost') && (
                     <NextActionSecondary>
@@ -4603,6 +4641,7 @@ const UnlockModalV2 = ({
                   </NextActionSecondary>
                 </NextActionsStack>
 
+                {!isDirectory && (
                 <NextActionsFooter>
                   <NextActionsNote>{NEXT_ACTIONS.note}</NextActionsNote>
                   <NextActionLink
@@ -4612,6 +4651,7 @@ const UnlockModalV2 = ({
                     {NEXT_ACTIONS.pipelineCta}
                   </NextActionLink>
                 </NextActionsFooter>
+                )}
               </NextActionsScreen>
             )}
           </ModalBody>

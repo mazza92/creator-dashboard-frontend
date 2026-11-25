@@ -4,7 +4,9 @@ import { ArrowRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { trackProPurchase } from '../utils/subscriptionAnalytics';
-import { MAX_DAILY_PITCHES } from '../config/proOffer';
+import { MAX_DAILY_PITCHES, DIRECTORY_PRO_UNLOCKS } from '../config/proOffer';
+import useIsDirectoryCreator from '../hooks/useDirectoryAccess';
+import { DIRECTORY_PATH } from '../utils/creatorApproval';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
 // Right after checkout. Same look and promise as the free flow's Pro card. Gmail is asked for only when it isn't
@@ -24,6 +26,8 @@ const SubscriptionSuccess = () => {
   const [searchParams] = useSearchParams();
   const [gmail, setGmail] = useState(null); // null: checking, then true / false
   const [connecting, setConnecting] = useState(false);
+  // Directory access creators (not approved): Pro is 500 brand unlocks a month, nothing about Polly or Autopilot.
+  const isDirectory = useIsDirectoryCreator();
 
   const openPolly = () => navigate('/creator/dashboard/for-you?autopilot=pro_started');
 
@@ -72,6 +76,7 @@ const SubscriptionSuccess = () => {
       } catch (error) {
         console.error('Error confirming checkout:', error);
       }
+      if (isDirectory) return;
       try {
         const ap = await api.get('/api/polly/autopilot/status');
         setGmail(Boolean(ap.data?.gmail?.connected));
@@ -82,7 +87,25 @@ const SubscriptionSuccess = () => {
 
     const id = setTimeout(confirmAndFetchStatus, 1000);
     return () => clearTimeout(id);
-  }, [searchParams]);
+  }, [searchParams, isDirectory]);
+
+  if (isDirectory) {
+    return (
+      <Page>
+        <Card>
+          <div className="stripe" aria-hidden="true" />
+          <div className="inner">
+            <span className="badge">★ Pro</span>
+            <h1>You&apos;re on Pro.</h1>
+            <p className="sub">You now get {DIRECTORY_PRO_UNLOCKS} brand unlocks a month. Find brands in the directory, unlock their contact and send the pitch from your own email.</p>
+            <Primary type="button" onClick={() => navigate(DIRECTORY_PATH)}>
+              Back to the directory <ArrowRight size={18} aria-hidden="true" />
+            </Primary>
+          </div>
+        </Card>
+      </Page>
+    );
+  }
 
   return (
     <Page>
