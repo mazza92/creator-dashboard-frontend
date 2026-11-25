@@ -388,6 +388,7 @@ const PortfolioBuilder = ({ currentUser }) => {
 
       <KitStudioEditor
         embedded
+        startInPreview
         initial={initial}
         extras={extras}
         persist={persist}

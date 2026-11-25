@@ -76,6 +76,52 @@ export default function PollyFirstRun({
   const startIds = brands.map((b) => b.brand_id).slice(0, n);
   const top = brands.slice(0, 3);
 
+  // Picked "Do it yourself" on the start choice screen: their matches lead, Autopilot is a small option (Nov 2026).
+  if (data.start_choice === 'free') {
+    return (
+      <Wrap ref={ref} aria-label="Welcome">
+        <Hello>
+          <span className="who">{avatar ? <img src={avatar} alt="" /> : null}Polly · your manager</span>
+          <h2>Hi{name ? ` ${name}` : ''}, your matches are ready <span aria-hidden="true">👋</span></h2>
+          <p>I lined up brands that fit your content. Pick who to pitch first: I write each pitch, you send it.</p>
+        </Hello>
+        <Manual>
+          <span className="tag">Your matches</span>
+          <h3>Brands ready to pitch</h3>
+          <p className="lead">
+            {pro ? 'Pitch as many as you like.' : `You have ${n} free pitch${n === 1 ? '' : 'es'}. Start with your best fit.`}
+          </p>
+          <Deck>
+            {brands.slice(0, 6).map((b, i) => (
+              <Brand key={b.brand_id}>
+                {b.brand_id === picked ? <span className="pick">💌 Your pick</span> : null}
+                <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} size={52} />
+                <span className="nm">{b.brand_name}</span>
+                <span className="why">{intentTag(b)}</span>
+              </Brand>
+            ))}
+          </Deck>
+          <Secondary type="button" disabled={busy} onClick={() => onStart('manual', brands.map((b) => b.brand_id))}>
+            Pitch my matches
+            <ArrowRight size={18} aria-hidden="true" />
+          </Secondary>
+          {onBrowse ? (
+            <Browse type="button" onClick={onBrowse}>
+              <Search size={15} aria-hidden="true" />
+              <span><b>Looking for a specific brand?</b> Search 3,000+ brands</span>
+              <ArrowRight size={15} aria-hidden="true" />
+            </Browse>
+          ) : null}
+        </Manual>
+        <AutoLink type="button" disabled={busy} onClick={() => onStart('autopilot', startIds)}>
+          <span aria-hidden="true">⚡</span>
+          <span><b>Want me to do the full job?</b> I find, pitch and follow up on autopilot.</span>
+          <span className="go">Start autopilot <ArrowRight size={14} aria-hidden="true" /></span>
+        </AutoLink>
+      </Wrap>
+    );
+  }
+
   return (
     <Wrap ref={ref} aria-label="Welcome">
       <Hello>
@@ -247,4 +293,15 @@ const Browse = styled.button`
   font-size: 14px; color: ${t.muted}; text-align: left;
   b { color: ${t.ink}; }
   &:hover b { text-decoration: underline; }
+`;
+
+const AutoLink = styled.button`
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 14px 16px; border: 1px dashed ${t.line}; border-radius: 14px; background: ${t.white};
+  font-family: inherit; font-size: 14px; line-height: 1.4; color: ${t.muted}; text-align: left; cursor: pointer;
+  b { color: ${t.ink}; }
+  .go { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: ${t.accent}; }
+  &:hover:not(:disabled) { border-color: ${t.accent}; }
+  &:disabled { opacity: 0.6; cursor: default; }
+  @media (max-width: 480px) { flex-wrap: wrap; .go { margin-left: 26px; } }
 `;

@@ -239,8 +239,12 @@ export default function KitStudioEditor({
   onSave,
   busy = false,
   busyLabel = 'Publishing portfolio',
+  // Dashboard Portfolio: open on the finished portfolio, edit on demand (Nov 2026). Landing straight on the full
+  // edit panel made creators freeze and never customise it; seeing it first makes the urge to tweak it natural.
+  startInPreview = false,
 }) {
-  const [pane, setPane] = useState('edit');
+  const [pane, setPane] = useState(startInPreview ? 'preview' : 'edit');
+  const viewFirst = startInPreview && pane === 'preview';
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [dockReady, setDockReady] = useState(false);
@@ -511,8 +515,13 @@ export default function KitStudioEditor({
           </BusyCard>
         </Busy>
       ) : null}
-      <Grid $embedded={embedded}>
-        <Form $pane={pane}>
+      <Grid $embedded={embedded} $full={viewFirst}>
+        <Form $pane={pane} $hidden={viewFirst}>
+          {startInPreview ? (
+            <DoneEditing type="button" onClick={() => showPane('preview')}>
+              Done, see my portfolio
+            </DoneEditing>
+          ) : null}
           {formTop}
 
           <Label>Portfolio layout</Label>
@@ -961,7 +970,17 @@ export default function KitStudioEditor({
         </Form>
 
         <Preview $pane={pane}>
-          <PreviewLabel>Live preview · {KIT_LAYOUTS.find((l) => l.id === layout)?.name}</PreviewLabel>
+          {viewFirst ? (
+            <ViewBar>
+              <div>
+                <b>This is your portfolio</b>
+                <span>Polly built it from your profile. Make it yours: your story, your best videos, your look.</span>
+              </div>
+              <EditBtn type="button" onClick={() => showPane('edit')}>Edit portfolio</EditBtn>
+            </ViewBar>
+          ) : (
+            <PreviewLabel>Live preview · {KIT_LAYOUTS.find((l) => l.id === layout)?.name}</PreviewLabel>
+          )}
           <PreviewFrame>
             <PublicKitView kit={kit} username={slug} preview />
           </PreviewFrame>
@@ -1088,7 +1107,7 @@ const Grid = styled.div`
   min-width: 0;
   padding: ${p => p.$embedded ? '8px 0 48px' : '40px 24px 80px'};
   display: grid;
-  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  grid-template-columns: ${p => (p.$full ? 'minmax(0, 1fr)' : 'minmax(0, 400px) minmax(0, 1fr)')};
   gap: 28px;
   @media (max-width: 960px) {
     grid-template-columns: minmax(0, 1fr);
@@ -1103,6 +1122,7 @@ const Grid = styled.div`
 `;
 const Form = styled.div`
   min-width: 0;
+  ${p => (p.$hidden ? 'display: none;' : '')}
   @media (max-width: 960px) {
     display: ${p => p.$pane === 'preview' ? 'none' : 'block'};
   }
@@ -1418,6 +1438,27 @@ const Preview = styled.div`
   @media (max-width: 960px) {
     display: ${p => p.$pane === 'edit' ? 'none' : 'block'};
   }
+`;
+const ViewBar = styled.div`
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-bottom: 14px; padding: 14px 16px; border-radius: 14px;
+  background: #fff; border: 1px solid #e5e7eb;
+  font-family: ${STUDIO_FONT};
+  div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  b { font-size: 15px; color: #0f172a; }
+  span { font-size: 13.5px; line-height: 1.45; color: #64748b; }
+  @media (max-width: 640px) { flex-direction: column; align-items: stretch; }
+`;
+const EditBtn = styled.button`
+  flex: none; border: 0; border-radius: 12px; padding: 12px 18px; min-height: 44px;
+  background: #0f172a; color: #fff; font: 700 14px/1 ${STUDIO_FONT}; cursor: pointer;
+  &:hover { background: #1e293b; }
+`;
+const DoneEditing = styled.button`
+  display: block; width: 100%; margin-bottom: 8px; padding: 11px 14px; min-height: 44px;
+  border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; color: #0f172a;
+  font: 700 14px/1 ${STUDIO_FONT}; cursor: pointer;
+  &:hover { border-color: #94a3b8; }
 `;
 const PreviewLabel = styled.div`
   font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
