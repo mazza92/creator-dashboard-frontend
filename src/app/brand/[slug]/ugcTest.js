@@ -14,6 +14,8 @@ export const UGC_TEST_SLUGS = new Set([
   'drunk-elephant', 'trees-hugs', 'milk-makeup', 'peta-jane-beauty', 'bare-minerals', 'tilt-beauty', 'etude',
   'bubble-skincare', 'lancome', 'bybi-beauty', 'nuda', 'aniise', 'nopalera', 'p-louise-cosmetics', 'torriden',
   'l-oreal', 'fenty-beauty', 'love-lashes-london', 'supergoop',
+  // Added Nov 25 2026 (outside the original 60): the page drew mostly India/Pakistan PR-search traffic.
+  'nivea',
 ]);
 
 export function isUgcTest(slug) {

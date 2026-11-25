@@ -12,8 +12,10 @@ export const EXAMPLES = [
   { id: '7680349889833749790', handle: 'siaslife' },
   { id: '7680383985104489741', handle: 'tiareugc' },
   { id: '7653023572985810178', handle: 'kimberleyug_' },
-  { id: '7663619669303119117', handle: 'ziaayugi' },
-  { id: '7649706301546630421', handle: 'ugc.with.tessa' },
+  // Nov 25 2026: replaced @ziaayugi and @ugc.with.tessa, whose on-screen text TikTok Ads flagged as a misleading
+  // money-making opportunity on our landing page.
+  { id: '7644921298681924894', handle: 'theamberjai' },
+  { id: '7349296418936327456', handle: 'dianacreates_xo' },
 ];
 
 
