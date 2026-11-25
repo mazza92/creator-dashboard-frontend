@@ -50,3 +50,15 @@ test('first name falls back to the one the server knows', () => {
   render(<PollyFirstRun data={{ ...data, first_name: 'Lina' }} onStart={() => {}} />);
   expect(screen.getByText(/Hi Lina, I'm Polly/)).toBeInTheDocument();
 });
+
+test('creators who chose to pitch themselves see their matches first, autopilot as a small option', () => {
+  const onStart = jest.fn();
+  render(<PollyFirstRun data={{ ...data, start_choice: 'free' }} firstName="Ana" onStart={onStart} />);
+  expect(screen.getByText(/your matches are ready/i)).toBeInTheDocument();
+  expect(screen.queryByText('Run it all for me')).not.toBeInTheDocument();
+  expect(screen.getByText('Delta')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /pitch my matches/i }));
+  expect(onStart).toHaveBeenLastCalledWith('manual', [1, 2, 3, 4]);
+  fireEvent.click(screen.getByRole('button', { name: /do the full job/i }));
+  expect(onStart).toHaveBeenLastCalledWith('autopilot', [1, 2, 3]);
+});
