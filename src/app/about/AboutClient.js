@@ -1041,9 +1041,9 @@ export default function AboutClient() {
             <ForGrid>
               <ForCard className="yes" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/blog/ultimate-2026-directory-brands-with-open-pr-application-forms'}>
                 <ForCardTag $yes>Most Popular</ForCardTag>
-                <h3>Brands with Open PR Application Forms</h3>
+                <h3>Brands Accepting UGC Creators</h3>
                 <ul>
-                  <li>Direct application links to brand PR forms</li>
+                  <li>Direct links to brand creator application forms</li>
                   <li>Beauty, fashion, lifestyle & wellness brands</li>
                   <li>Updated for 2026</li>
                 </ul>
