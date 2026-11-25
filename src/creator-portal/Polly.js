@@ -481,6 +481,16 @@ function decodeURIComponentSafe(v) {
   try { return decodeURIComponent(v); } catch (_) { return v; }
 }
 
+// Chips under a message. A pitch card carries its own actions, so 'I sent it' / 'More brands' stay off it
+// (older saved threads still have them); finding more brands is the 'Find brands to contact' quick prompt.
+const PITCH_CARD_HIDDEN_CHIPS = new Set(['i_sent_it', 'more_brands']);
+export function visibleChips(msg) {
+  return (msg?.task_chips || []).filter((c) => (
+    !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))
+    && !(msg.pitch && PITCH_CARD_HIDDEN_CHIPS.has(c.id))
+  ));
+}
+
 function canSendForMe(pitch) {
   return Boolean(pitch?.email && pitch?.brand_id && !pitch?.is_reply && !pitch?.is_followup && !pitch?.sent_via_gmail);
 }
@@ -1115,6 +1125,11 @@ const PitchSubject = styled.div`
   margin-bottom: 8px;
 `;
 
+const HintLink = styled.button`
+  border: 0; background: none; padding: 0; font: inherit; color: ${t.ink}; font-weight: 600;
+  text-decoration: underline; cursor: pointer;
+`;
+
 const PitchHint = styled.div`
   font-size: 12.5px;
   line-height: 1.45;
@@ -1544,6 +1559,8 @@ export default function Polly() {
   const [mailTriedId, setMailTriedId] = useState(null);
   // Pitch cards whose pitch left Polly by hand (mail app / copy): they get the "Did it send?" check.
   const [handedOff, setHandedOff] = useState({});
+  // Each Send email tap logs a send again (after an Undo too), so the card resets to "Logged as sent".
+  const [mailOpens, setMailOpens] = useState({});
   const markHandedOff = (msgId, method) => setHandedOff((prev) => (prev[msgId] ? prev : { ...prev, [msgId]: method }));
   const [autoAction, setAutoAction] = useState(null);
   const autoFiredRef = useRef(false);
@@ -2653,26 +2670,21 @@ export default function Polly() {
     window.setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1800);
   };
 
-  const copyPitch = async (pitch, msgId) => {
+  const copyPitch = async (pitch, msgId, { withTo = false } = {}) => {
     const body = dropLocationPlaceholder(pitch.body || '');
-    const text = pitch.subject ? `Subject: ${pitch.subject}\n\n${body}` : body;
+    const head = [withTo && pitch.email ? `To: ${pitch.email}` : '', pitch.subject ? `Subject: ${pitch.subject}` : '']
+      .filter(Boolean).join('\n');
+    const text = head ? `${head}\n\n${body}` : body;
     try { await navigator.clipboard.writeText(text); } catch (_) { /* ignore */ }
     flashCopied(`${msgId}:pitch`);
     logPitchHandoff(pitch, 'copy_pitch');
     if (!pitch.is_reply && !pitch.is_followup) markHandedOff(msgId, 'copy_pitch');
   };
 
-  const copyEmail = async (pitch, msgId) => {
-    if (!pitch?.email) return;
-    try { await navigator.clipboard.writeText(pitch.email); } catch (_) { /* ignore */ }
-    flashCopied(`${msgId}:email`);
-    logPitchHandoff(pitch, 'copy_email');
-    if (!pitch.is_reply && !pitch.is_followup) markHandedOff(msgId, 'copy_email');
-  };
-
   const openMail = (pitch, msgId) => {
     if (!pitch?.mailto) return;
     setMailTriedId(msgId);
+    setMailOpens((prev) => ({ ...prev, [msgId]: (prev[msgId] || 0) + 1 }));
     if (!pitch.is_reply && !pitch.is_followup) markHandedOff(msgId, 'open_email');
     logPitchHandoff(pitch, 'open_email');
     window.location.href = cleanMailto(pitch.mailto);
@@ -2808,9 +2820,9 @@ export default function Polly() {
                   {msg.radar ? (
                     <GiftingRadar radar={msg.radar} busy={busy} onChip={sendStarter} onSettled={settleRadar} />
                   ) : null}
-                  {!msg.goal_plan && !msg.hotlist && !msg.upsell && msg.task_chips?.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).length > 0 && (
+                  {!msg.goal_plan && !msg.hotlist && !msg.upsell && visibleChips(msg).length > 0 && (
                     <Chips style={{ marginTop: 12 }}>
-                      {msg.task_chips.filter((c) => !(msg.brands?.length && (c.action === 'pitch_batch' || isUnlockChip(c)))).map((s) => (
+                      {visibleChips(msg).map((s) => (
                         <Chip
                           key={s.id || s.label}
                           type="button"
@@ -2981,30 +2993,32 @@ export default function Polly() {
                         <PitchSentNote>✓ Sent from your Gmail. I follow up on day 4 and day 10 if they&apos;re quiet.</PitchSentNote>
                       ) : null}
                       <PitchActions>
-                        {canSendForMe(msg.pitch) && (
+                        {/* Two actions, no more (Nov 2026): Send email opens their mail app and counts as sent
+                            (Undo below); Use autopilot is the upgrade. Gmail-connected creators keep the
+                            in-app send as the primary. */}
+                        {canSendForMe(msg.pitch) && autopilot.state?.gmail?.connected && (
                           <SendForMe
                             type="button"
                             disabled={busy || Boolean(sendingPitchId)}
                             onClick={() => sendSingle(msg.pitch.brand_id)}
                           >
-                            {String(sendingPitchId) === String(msg.pitch.brand_id) ? 'Sending…'
-                              : autopilot.state?.gmail?.connected ? 'Send from my Gmail' : 'Send for me'}
+                            {String(sendingPitchId) === String(msg.pitch.brand_id) ? 'Sending…' : 'Send from my Gmail'}
                           </SendForMe>
                         )}
                         {msg.pitch.mailto && !msg.pitch.sent_via_gmail && (
-                          canSendForMe(msg.pitch) ? (
+                          canSendForMe(msg.pitch) && autopilot.state?.gmail?.connected ? (
                             <Ghost as="a" href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch, msg.id); }}>
-                              Open email
+                              Send email
                             </Ghost>
                           ) : (
                             <Primary href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch, msg.id); }}>
-                              Open email
+                              Send email
                             </Primary>
                           )
                         )}
-                        {msg.pitch.email && (
-                          <Ghost type="button" onClick={() => copyEmail(msg.pitch, msg.id)}>
-                            {copiedKey === `${msg.id}:email` ? 'Copied' : 'Copy email'}
+                        {credits && !credits.is_unlimited && !msg.pitch.is_reply && !msg.pitch.is_followup && !msg.pitch.sent_via_gmail && (
+                          <Ghost type="button" disabled={checkingOut} onClick={() => goPro('pitch_card_autopilot')}>
+                            {checkingOut ? 'Opening…' : 'Use autopilot'}
                           </Ghost>
                         )}
                         {msg.pitch.is_reply || msg.pitch.is_followup || !msg.pitch.email ? (
@@ -3015,11 +3029,19 @@ export default function Polly() {
                       </PitchActions>
                       {!msg.pitch.is_reply && !msg.pitch.is_followup && !msg.pitch.sent_via_gmail && handedOff[msg.id] ? (
                         <>
+                          <SentCheck key={`${msg.id}:${mailOpens[msg.id] || 0}`}
+                            brandId={msg.pitch.brand_id} brandName={msg.pitch.brand_name}
+                            method={handedOff[msg.id]}
+                            logged={handedOff[msg.id] === 'open_email' && Boolean(msg.pitch.brand_id)} />
                           {mailTriedId === msg.id ? (
-                            <PitchHint>Nothing opened? Copy the email and the pitch into Gmail or your mail app.</PitchHint>
+                            <PitchHint>
+                              Nothing opened?{' '}
+                              <HintLink type="button" onClick={() => copyPitch(msg.pitch, msg.id, { withTo: true })}>
+                                {copiedKey === `${msg.id}:pitch` ? 'Copied' : 'Copy the pitch'}
+                              </HintLink>
+                              {' '}and paste it into Gmail{msg.pitch.email ? `, to ${msg.pitch.email}` : ''}.
+                            </PitchHint>
                           ) : null}
-                          <SentCheck brandId={msg.pitch.brand_id} brandName={msg.pitch.brand_name}
-                            method={handedOff[msg.id]} />
                         </>
                       ) : null}
                     </PitchCard>

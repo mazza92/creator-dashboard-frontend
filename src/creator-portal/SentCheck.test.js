@@ -22,3 +22,15 @@ test('not yet keeps it a draft', async () => {
   await waitFor(() => expect(apiClient.post).toHaveBeenLastCalledWith('/api/polly/pitch/sent-check',
     expect.objectContaining({ sent: false })));
 });
+
+test('send email counts as sent straight away, with undo', async () => {
+  apiClient.post.mockClear();
+  render(<SentCheck brandId={7} brandName="HEVA" method="open_email" logged />);
+  expect(screen.getByText(/Logged as sent on Timeline/)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Yes, sent' })).not.toBeInTheDocument();
+  expect(apiClient.post).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(await screen.findByText(/saved here as a draft/)).toBeInTheDocument();
+  expect(apiClient.post).toHaveBeenCalledWith('/api/polly/pitch/sent-check',
+    { brand_id: 7, brand_name: 'HEVA', sent: false, method: 'open_email' });
+});
