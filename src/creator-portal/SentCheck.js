@@ -4,11 +4,13 @@ import { apiClient } from '../config/api';
 import { publishOffer } from './WaitingRoom';
 
 /**
- * "Did it send?" after a pitch left Polly through the mail app or a copy. Yes logs the send (follow-ups on day
- * 4 and 10); Not yet keeps it a draft, so Polly reminds them instead of asking the brand about a reply.
+ * After a pitch left Polly. Send email (`logged`): the backend already counted it as sent, so this shows
+ * "Logged as sent" with Undo — creators rarely came back to confirm (Nov 2026). A copy: "Did it send?" Yes logs
+ * the send (follow-ups on day 4 and 10); Not yet / Undo keeps it a draft, so Polly reminds them instead of
+ * asking the brand about a reply.
  */
-export default function SentCheck({ brandId, brandName, method, onAnswered, compact = false }) {
-  const [state, setState] = useState('ask'); // ask | saving | sent | not_sent
+export default function SentCheck({ brandId, brandName, method, onAnswered, compact = false, logged = false }) {
+  const [state, setState] = useState(logged ? 'sent' : 'ask'); // ask | saving | sent | not_sent
   const name = brandName || 'the brand';
 
   const answer = async (sent) => {
@@ -30,14 +32,15 @@ export default function SentCheck({ brandId, brandName, method, onAnswered, comp
   if (state === 'sent') {
     return (
       <Done $compact={compact} role="status">
-        ✓ Logged as sent. I&apos;ll check on day 4 whether {name} replied.
+        ✓ Logged as sent on Timeline. I&apos;ll check on day 4 whether {name} replied.
+        {' '}<Undo type="button" onClick={() => answer(false)}>Undo</Undo>
       </Done>
     );
   }
   if (state === 'not_sent') {
     return (
       <Done $compact={compact} $muted role="status">
-        No problem, it&apos;s saved here. Open the email again when you&apos;re ready.
+        No problem, it&apos;s saved here as a draft. Tap Send email when you&apos;re ready.
       </Done>
     );
   }
@@ -62,6 +65,10 @@ const Btn = styled.button`
   padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;
   &.yes { background: #111827; border-color: #111827; color: #fff; }
   &:disabled { opacity: 0.6; cursor: default; }
+`;
+const Undo = styled.button`
+  border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: #4b5563;
+  text-decoration: underline; cursor: pointer;
 `;
 const Done = styled.div`
   margin-top: ${(p) => (p.$compact ? '8px' : '12px')};
