@@ -104,7 +104,7 @@ const STARTERS = [
 ];
 
 const DEEP_LINK_CHIPS = {
-  checkin_replied: { label: 'They replied', action: 'task_act' },
+  checkin_replied: { label: 'I heard back', action: 'task_act' },
   checkin_quiet: { label: 'Still quiet', action: 'task_act' },
   checkin_not_sent: { label: 'I never sent it', action: 'task_act' },
   // Email one-tap already logged the bounce and looked for a new inbox; Polly answers with what it found.
@@ -2434,7 +2434,7 @@ export default function Polly() {
     const brandId = Number(searchParams.get('brand_id')) || undefined;
     const taskId = Number(searchParams.get('task_id')) || undefined;
     let label = base.label;
-    if (chipId === 'checkin_replied' && brandName) label = `${brandName} replied`;
+    if (chipId === 'checkin_replied' && brandName) label = `I heard back from ${brandName}`;
     else if (chipId === 'checkin_result' && brandName) label = `My ${brandName} email bounced`;
     else if (chipId === 'draft_followup') label = brandName ? `Draft a follow-up to ${brandName}` : 'Draft a follow-up to the brand that viewed my kit';
     else if (chipId === 'send_draft' && brandName) label = `Send my ${brandName} pitch`;
