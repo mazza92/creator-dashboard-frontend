@@ -21,6 +21,7 @@ import { SERVED_COUNTRY_GROUPS, normalizeServedCountry } from '../constants/serv
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
 import SentCheck from '../creator-portal/SentCheck';
+import DirectPitch, { BrandMini } from '../components/creator/DirectPitch';
 import HotTag from '../creator-portal/HotTag';
 import { isHotBrand, useHotBrandIds } from '../creator-portal/hotBrands';
 
@@ -495,6 +496,8 @@ export default function BrandPRHome() {
   const [pitchSubject, setPitchSubject] = useState('');
   const [pitchBody, setPitchBody] = useState('');
   const [pitchSending, setPitchSending] = useState(false);
+  const [pitchStreaming, setPitchStreaming] = useState(false);
+  const streamRef = useRef(null);
   const [submitError, setSubmitError] = useState('');
   const [doneBrand, setDoneBrand] = useState(null);
   const [relatedRemote, setRelatedRemote] = useState([]);
@@ -908,10 +911,38 @@ export default function BrandPRHome() {
     });
   }
 
-  function setPitch(pitch) {
+  function setPitch(pitch, { stream = false } = {}) {
+    if (streamRef.current) {
+      clearInterval(streamRef.current);
+      streamRef.current = null;
+    }
+    const body = pitch?.body || '';
     setPitchSubject(pitch?.subject || '');
-    setPitchBody(pitch?.body || '');
+    if (!stream || !body) {
+      setPitchBody(body);
+      setPitchStreaming(false);
+      return;
+    }
+    // Stream the pitch in like the Polly chat: word-sized chunks, about a second and a half in total.
+    const words = body.split(/(\s+)/);
+    const perTick = Math.max(1, Math.ceil(words.length / 70));
+    let i = 0;
+    setPitchBody('');
+    setPitchStreaming(true);
+    streamRef.current = setInterval(() => {
+      i += perTick;
+      setPitchBody(words.slice(0, i).join(''));
+      if (i >= words.length) {
+        clearInterval(streamRef.current);
+        streamRef.current = null;
+        setPitchStreaming(false);
+      }
+    }, 22);
   }
+
+  useEffect(() => () => {
+    if (streamRef.current) clearInterval(streamRef.current);
+  }, []);
 
   async function writePitch({ confirmCold = false } = {}) {
     if (!current) return;
@@ -948,7 +979,7 @@ export default function BrandPRHome() {
         return;
       }
       if (data.pitch) {
-        setPitch(data.pitch);
+        setPitch(data.pitch, { stream: true });
         setPitchDraft({ status: 'ready', pitch: data.pitch, gmail: !!data.gmail_connected });
         trackApplyEvent('pitch_written', { source, brand_id: brand.id });
         return;
@@ -1492,6 +1523,11 @@ export default function BrandPRHome() {
           <span style={{ width: 28 }} />
         </ApplyTop>
         <StepLabel>{pitchMode ? 'Pitch this brand in 3 steps' : 'Request PR package in 3 steps'}</StepLabel>
+        {step === 3 && pitchMode ? (
+          <Block style={{ marginTop: 8, padding: '12px 14px' }}>
+            <BrandMini name={current.name} logo={current.logo} handle={current.instagram || current.tiktok} />
+          </Block>
+        ) : (
         <Block style={{ marginTop: 8 }}>
           {step === 1 && current.cover && (
             <Cover src={current.cover} alt="" />
@@ -1510,6 +1546,7 @@ export default function BrandPRHome() {
             loading={mediaLoading && !(current.social?.followers)}
           />
         </Block>
+        )}
 
         {step === 1 && (
           <>
@@ -1653,74 +1690,27 @@ export default function BrandPRHome() {
         )}
 
         {step === 3 && pitchMode && (
-          <>
-            <Block>
-              <h2>Your pitch to {current.name}</h2>
-              {(!pitchDraft || pitchDraft.status === 'writing') && (
-                <EmptyNote role="status">Polly is writing your pitch with your 3 posts…</EmptyNote>
-              )}
-              {pitchDraft?.status === 'ready' && (
-                <>
-                  <Sub>Read it, change anything you like, then send it from your own email.</Sub>
-                  <Lab>To</Lab>
-                  <PitchTo>{pitchDraft.pitch.email || 'No inbox on file for this brand yet'}</PitchTo>
-                  <Lab htmlFor="pitch-subject">Subject</Lab>
-                  <Input id="pitch-subject" value={pitchSubject} onChange={(e) => setPitchSubject(e.target.value)} />
-                  <Lab htmlFor="pitch-body">Message</Lab>
-                  <PitchText
-                    id="pitch-body"
-                    value={pitchBody}
-                    onChange={(e) => setPitchBody(e.target.value)}
-                    rows={14}
-                  />
-                </>
-              )}
-              {['cold', 'note', 'error', 'paywall'].includes(pitchDraft?.status) && (
-                <PitchNote>{(pitchDraft.message || '').replace(/\*\*/g, '')}</PitchNote>
-              )}
-              {pitchDraft?.status === 'cold' && (pitchDraft.alternatives || []).length > 0 && (
-                <Sub>Better bets: {pitchDraft.alternatives.map((b) => b.name).filter(Boolean).join(', ')}.</Sub>
-              )}
-            </Block>
-            <Foot>
-              {pitchDraft?.status === 'ready' && pitchDraft.pitch.email && (
-                pitchDraft.gmail ? (
-                  <>
-                    <Cta type="button" disabled={pitchSending || !pitchBody.trim()} onClick={sendFromGmail}>
-                      {pitchSending ? 'Sending…' : 'Send from my Gmail'}
-                    </Cta>
-                    <Cta as="a" $ghost href={pitchMailto()} onClick={sendByEmailApp} style={{ textAlign: 'center', textDecoration: 'none' }}>
-                      Send email
-                    </Cta>
-                  </>
-                ) : (
-                  <Cta as="a" href={pitchMailto()} onClick={sendByEmailApp} style={{ textAlign: 'center', textDecoration: 'none' }}>
-                    Send email
-                  </Cta>
-                )
-              )}
-              {pitchDraft?.status === 'cold' && (
-                <>
-                  <Cta type="button" $ghost onClick={() => setView('list')}>Pick another brand</Cta>
-                  <Cta type="button" onClick={() => writePitch({ confirmCold: true })}>Write it anyway</Cta>
-                </>
-              )}
-              {pitchDraft?.status === 'paywall' && (
-                <Cta type="button" onClick={() => showPaywall('pitch_draft_retry')}>See Pro</Cta>
-              )}
-              {['note', 'error'].includes(pitchDraft?.status) && (
-                <Cta type="button" onClick={() => writePitch()}>Try again</Cta>
-              )}
-              {submitError && <Note style={{ color: ROSE }}>{submitError}</Note>}
-              {pitchDraft?.status === 'ready' && (
-                <Note>
-                  {pitchDraft.gmail
-                    ? 'Goes out from your Gmail. Polly follows up on day 4 and 10 if they don’t reply.'
-                    : 'Opens your email app with the pitch filled in. We log it on your Tracker and check back on day 4.'}
-                </Note>
-              )}
-            </Foot>
-          </>
+          <Block>
+            <DirectPitch
+              brandName={current.name}
+              draft={pitchDraft}
+              subject={pitchSubject}
+              body={pitchBody}
+              onSubject={setPitchSubject}
+              onBody={setPitchBody}
+              streaming={pitchStreaming}
+              sending={pitchSending}
+              error={submitError}
+              mailtoHref={pitchMailto()}
+              isFree={!quota?.is_unlimited}
+              onSendEmail={sendByEmailApp}
+              onSendGmail={sendFromGmail}
+              onRetry={() => writePitch()}
+              onWriteAnyway={() => writePitch({ confirmCold: true })}
+              onPickAnother={() => setView('list')}
+              onUpgrade={() => showPaywall(pitchDraft?.status === 'paywall' ? 'pitch_draft_retry' : 'pitch_autopilot')}
+            />
+          </Block>
         )}
 
         {step === 3 && !pitchMode && (
@@ -3517,32 +3507,6 @@ const FieldHint = styled.p`
   font-size: 12px;
   color: ${MUTED};
   line-height: 1.35;
-`;
-const PitchTo = styled.div`
-  border: 1px solid ${LINE};
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  background: ${CREAM};
-  word-break: break-all;
-`;
-const PitchText = styled.textarea`
-  width: 100%;
-  border: 1px solid ${LINE};
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 15px;
-  line-height: 1.5;
-  font-family: inherit;
-  background: #fff;
-  box-sizing: border-box;
-  resize: vertical;
-`;
-const PitchNote = styled.p`
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: ${INK};
 `;
 const Input = styled.input`
   width: 100%;
