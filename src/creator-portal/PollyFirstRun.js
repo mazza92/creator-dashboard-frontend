@@ -76,14 +76,23 @@ export default function PollyFirstRun({
   const startIds = brands.map((b) => b.brand_id).slice(0, n);
   const top = brands.slice(0, 3);
 
-  // Picked "Do it yourself" on the start choice screen: their matches lead, Autopilot is a small option (Nov 2026).
-  if (data.start_choice === 'free') {
+  // Matches first (Nov 26 2026, start choice version 2): no plan screen before value. Their matches lead, Polly
+  // writes the pitch for the top one right away, and the choice happens on that pitch (Send email, or Use
+  // autopilot = the 7-day trial). Also the welcome for version 1 creators who picked "Do it yourself".
+  const matchesFirst = data.start_choice === 'matches_first';
+  if (data.start_choice === 'free' || matchesFirst) {
+    const lead = brands[0];
+    const total = Number(data.planned_total) || brands.length;
     return (
       <Wrap ref={ref} aria-label="Welcome">
         <Hello>
           <span className="who">{avatar ? <img src={avatar} alt="" /> : null}Polly · your manager</span>
           <h2>Hi{name ? ` ${name}` : ''}, your matches are ready <span aria-hidden="true">👋</span></h2>
-          <p>I lined up brands that fit your content. Pick who to pitch first: I write each pitch, you send it.</p>
+          <p>
+            {matchesFirst
+              ? `I found ${total} brand${total === 1 ? '' : 's'} that fit your content. Here are your best picks. I'll write your first pitch now, to ${lead.brand_name}.`
+              : 'I lined up brands that fit your content. Pick who to pitch first: I write each pitch, you send it.'}
+          </p>
         </Hello>
         <Manual>
           <span className="tag">Your matches</span>
@@ -101,10 +110,17 @@ export default function PollyFirstRun({
               </Brand>
             ))}
           </Deck>
-          <Secondary type="button" disabled={busy} onClick={() => onStart('manual', brands.map((b) => b.brand_id))}>
-            Pitch my matches
-            <ArrowRight size={18} aria-hidden="true" />
-          </Secondary>
+          {matchesFirst ? (
+            <Secondary type="button" disabled={busy} onClick={() => onStart('first_pitch', [lead.brand_id])}>
+              Write my pitch to {lead.brand_name}
+              <ArrowRight size={18} aria-hidden="true" />
+            </Secondary>
+          ) : (
+            <Secondary type="button" disabled={busy} onClick={() => onStart('manual', brands.map((b) => b.brand_id))}>
+              Pitch my matches
+              <ArrowRight size={18} aria-hidden="true" />
+            </Secondary>
+          )}
           {onBrowse ? (
             <Browse type="button" onClick={onBrowse}>
               <Search size={15} aria-hidden="true" />
@@ -113,10 +129,12 @@ export default function PollyFirstRun({
             </Browse>
           ) : null}
         </Manual>
-        <AutoLink type="button" disabled={busy} onClick={() => onStart('autopilot', startIds)}>
+        <AutoLink type="button" disabled={busy} onClick={() => onStart(matchesFirst ? 'trial' : 'autopilot', startIds)}>
           <span aria-hidden="true">⚡</span>
           <span><b>Want me to do the full job?</b> I find, pitch and follow up on autopilot.</span>
-          <span className="go">Start autopilot <ArrowRight size={14} aria-hidden="true" /></span>
+          <span className="go">
+            {matchesFirst ? 'Start my free week' : 'Start autopilot'} <ArrowRight size={14} aria-hidden="true" />
+          </span>
         </AutoLink>
       </Wrap>
     );

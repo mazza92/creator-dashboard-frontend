@@ -87,7 +87,7 @@ const CheckoutPage = () => {
         <Main>
           <Eyebrow>Newcollab Pro</Eyebrow>
           {/* Creator count: 4,381 accounts on Nov 24 2026. Keep it a floor we can stand behind. */}
-          <H1>Join <em>4,000+ UGC creators</em> getting brand collabs on autopilot</H1>
+          <H1>Join <em>4,000+ UGC creators</em> using Polly to pitch brands</H1>
           <Lede>Pro puts your assistant Polly to work: she finds brands that fit you, writes every pitch, sends it and schedules follow-ups when necessary. You just focus on creating content.</Lede>
           <Ticks>
             {trustTicks(trialDays, plan).map((line) => (

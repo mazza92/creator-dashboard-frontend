@@ -2316,6 +2316,24 @@ export default function Polly() {
   // creator never sees 0 credits next to a second "Connect Gmail" prompt. "Myself": brand cards, pay per Contact.
   const startFirstRun = (choice, brandIds) => {
     if (busy) return;
+    if (choice === 'trial') {
+      // Matches first: "Start my free week" opens the 7-day trial checkout. The welcome stays until they're Pro,
+      // so backing out of checkout leaves their matches where they were.
+      goPro('first_run_trial');
+      return;
+    }
+    if (choice === 'first_pitch') {
+      // Matches first: Polly writes the pitch for their top match right away. The pitch card is where they choose:
+      // Send email (free) or Use autopilot (the free week).
+      const top = (firstRun?.brands || []).find((b) => Number(b.brand_id) === Number(brandIds[0]));
+      setFirstRun(null);
+      apiClient.post('/api/polly/first-run', { choice: 'first_pitch' }).catch(() => {});
+      sendStarter({
+        id: 'first_pitch', action: 'generate_pitch', brand_id: brandIds[0],
+        brand_name: top?.brand_name || '', label: `Write my pitch to ${top?.brand_name || 'my top match'}`,
+      });
+      return;
+    }
     if (choice === 'autopilot') {
       // Pitches first (reviewed in the approval queue), Gmail only when they approve.
       const brands = firstRun?.brands || [];

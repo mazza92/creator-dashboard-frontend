@@ -62,3 +62,16 @@ test('creators who chose to pitch themselves see their matches first, autopilot 
   fireEvent.click(screen.getByRole('button', { name: /do the full job/i }));
   expect(onStart).toHaveBeenLastCalledWith('autopilot', [1, 2, 3]);
 });
+
+test('matches first: real count, the top match gets its pitch written, autopilot opens the free week', () => {
+  const onStart = jest.fn();
+  render(<PollyFirstRun data={{ ...data, start_choice: 'matches_first', planned_total: 24 }} firstName="Ana"
+    onStart={onStart} />);
+  expect(screen.getByText(/I found 24 brands that fit your content/)).toBeInTheDocument();
+  expect(screen.getByText(/to Alpha\./)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /pitch my matches/i })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /write my pitch to alpha/i }));
+  expect(onStart).toHaveBeenLastCalledWith('first_pitch', [1]);
+  fireEvent.click(screen.getByRole('button', { name: /start my free week/i }));
+  expect(onStart).toHaveBeenLastCalledWith('trial', [1, 2, 3]);
+});
