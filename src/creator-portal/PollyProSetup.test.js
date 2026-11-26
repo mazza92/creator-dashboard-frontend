@@ -135,3 +135,23 @@ test('Preferences opens one part and saves it', async () => {
   expect(onSaved).toHaveBeenCalled();
   expect(screen.queryByText(/Step \d of/)).not.toBeInTheDocument();
 });
+
+describe('post previews in Autopilot setup', () => {
+  const { platformLabel, youtubeThumb, tiktokPlayerSrc } = require('./PollyProSetup');
+
+  test('labels and YouTube thumbnails', () => {
+    expect(platformLabel('https://www.tiktok.com/@a/video/1')).toBe('TikTok');
+    expect(platformLabel('https://www.instagram.com/reel/abc/')).toBe('Instagram');
+    expect(youtubeThumb('https://youtube.com/shorts/AbCdEf123')).toBe('https://img.youtube.com/vi/AbCdEf123/hqdefault.jpg');
+    expect(youtubeThumb('https://www.tiktok.com/@a/video/1')).toBe('');
+  });
+
+  test('a TikTok video previews with its quiet player, other links do not', () => {
+    const src = tiktokPlayerSrc('https://www.tiktok.com/@maya/video/7711862467319680295?lang=en');
+    expect(src).toMatch(/^https:\/\/www\.tiktok\.com\/player\/v1\/7711862467319680295\?/);
+    expect(src).toContain('controls=0');
+    expect(src).toContain('autoplay=0');
+    expect(tiktokPlayerSrc('https://www.tiktok.com/@maya')).toBe('');
+    expect(tiktokPlayerSrc('https://www.instagram.com/reel/abc/')).toBe('');
+  });
+});
