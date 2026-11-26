@@ -63,15 +63,30 @@ test('creators who chose to pitch themselves see their matches first, autopilot 
   expect(onStart).toHaveBeenLastCalledWith('autopilot', [1, 2, 3]);
 });
 
-test('matches first: real count, activating Polly is the main action, pitching by hand is the quiet option', () => {
+test('matches first: niche count, signal and reason per brand, more toggle, Polly first, preview the pitch', () => {
   const onStart = jest.fn();
-  render(<PollyFirstRun data={{ ...data, start_choice: 'matches_first', planned_total: 24 }} firstName="Ana"
+  const brands = [
+    { brand_id: 1, brand_name: 'Wander', meta_ads: true, why: 'Their villas fit your travel content' },
+    { brand_id: 2, brand_name: 'Ostrichpillow', match_niche: 'travel', why: 'Fits your travel content' },
+    { brand_id: 3, brand_name: 'Taima', match_niche: 'travel' },
+    { brand_id: 4, brand_name: 'Medjet', match_niche: 'travel' },
+    { brand_id: 5, brand_name: 'GlobalTravel', works_with_creators: true },
+    { brand_id: 6, brand_name: 'Béis', match_niche: 'travel' },
+    { brand_id: 7, brand_name: 'Calpak', match_niche: 'travel' },
+  ];
+  render(<PollyFirstRun data={{ ...data, brands, niches: ['travel'], start_choice: 'matches_first', planned_total: 7 }}
     onStart={onStart} />);
-  expect(screen.getByText(/I found 24 brands that fit your content/)).toBeInTheDocument();
-  expect(screen.getByText('7 days free, then $19/mo. Cancel anytime.')).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /pitch my matches/i })).not.toBeInTheDocument();
+  expect(screen.getByText(/I found 7 brands that fit your travel content/)).toBeInTheDocument();
+  expect(screen.getByText('Running UGC ads')).toBeInTheDocument();
+  expect(screen.getAllByText('Travel niche match').length).toBe(3);
+  expect(screen.getByText('Works with creators')).toBeInTheDocument();
+  expect(screen.getByText('Their villas fit your travel content')).toBeInTheDocument();
+  expect(screen.queryByText('Calpak')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /\+ 2 more matched brands/i }));
+  expect(screen.getByText('Calpak')).toBeInTheDocument();
+  expect(screen.getByText(/Payment method required/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /let polly pitch my brands/i }));
   expect(onStart).toHaveBeenLastCalledWith('trial', [1, 2, 3]);
-  fireEvent.click(screen.getByRole('button', { name: /rather pitch manually: write my pitch to alpha/i }));
+  fireEvent.click(screen.getByRole('button', { name: /preview my first pitch/i }));
   expect(onStart).toHaveBeenLastCalledWith('first_pitch', [1]);
 });
