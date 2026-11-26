@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { apiClient } from '../config/api';
-import { PRO_OFFER } from '../config/proOffer';
+import { MAX_DAILY_PITCHES, PRO_OFFER } from '../config/proOffer';
 import { useTrialDays } from '../utils/trialOffer';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
@@ -691,6 +691,7 @@ export function AutopilotCard({
     },
   }));
 
+  // Pro, Gmail not connected yet: their own plan (monthly target and daily number from their settings).
   const steps = (
     <Steps>
       <li>
@@ -729,14 +730,53 @@ export function AutopilotCard({
     </Steps>
   );
 
+  // The Pro offer (not Pro yet) says what Pro actually is, in the same words as every other paywall: up to
+  // MAX_DAILY_PITCHES a day, brands in their niche, follow-ups. No per-account target or hours claim before they
+  // have chosen one (it read "3 a day, 60 a month" while everything else says up to 20 a day).
+  const offerSteps = (
+    <Steps>
+      <li>
+        <span className="n">1</span>
+        <div>
+          <div className="t">I find brands that fit you</div>
+          <div className="d">Brands in your niche with a working inbox, and new ones every day.</div>
+        </div>
+      </li>
+      <li>
+        <span className="n">2</span>
+        <div>
+          <div className="t">I write every pitch</div>
+          <div className="d">One for each brand, written for that brand, not a template.</div>
+        </div>
+      </li>
+      <li>
+        <span className="n">3</span>
+        <div>
+          <div className="t">I send and follow up</div>
+          <div className="d">
+            Up to {MAX_DAILY_PITCHES} a day from your own Gmail (you choose how many), so brands see you, not a
+            platform. Follow-ups on day 4 and day 10.
+          </div>
+        </div>
+      </li>
+      <li>
+        <span className="n">4</span>
+        <div>
+          <div className="t">You just film</div>
+          <div className="d">Who I pitched, who replied and what&apos;s next, all in your Tracker.</div>
+        </div>
+      </li>
+    </Steps>
+  );
+
   let body;
   if (!state) {
     body = <p className="say">One sec…</p>;
   } else if (!state.is_pro) {
     body = (
       <>
-        <p className="say">On Pro I pitch <strong>{state?.per_day || perWeekday(target)} new brands for you every weekday</strong> ({target} a month). Here&apos;s how it works:</p>
-        {steps}
+        <p className="say">On Pro I pitch <strong>up to {MAX_DAILY_PITCHES} brands a day</strong> that fit you. Here&apos;s how it works:</p>
+        {offerSteps}
         <Actions>
           <Btn $primary type="button" onClick={onUpgrade}>
             {trialDays > 0 ? PRO_OFFER.ctaTrial : 'Put Polly to work · $19/mo'}
