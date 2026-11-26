@@ -1795,6 +1795,10 @@ export default function Polly() {
   // survives approval delays and new devices; the stored ref is a fallback for the first load.
   const trialOffer = useTrialOffer(Boolean(serverReady && creatorId));
   const invitedTrial = Boolean(trialOffer?.invited && trialOffer?.days);
+  // The free week is on offer (same rule as checkout) until they send a pitch themselves: then Use autopilot
+  // leads the pitch card, Send email is the secondary. Sending by hand is the manual path (paid plan from then).
+  const [pitchedByHand, setPitchedByHand] = useState(false);
+  const autopilotTrial = Boolean(trialOffer?.days) && !pitchedByHand;
   useEffect(() => {
     if (!serverReady || !creatorId) return;
     let offer = null;
@@ -2045,6 +2049,7 @@ export default function Polly() {
   const [sendingPitchId, setSendingPitchId] = useState(null);
   const sendSingle = useCallback(async (brandId) => {
     if (!brandId || sendingPitchId) return;
+    setPitchedByHand(true);
     setSendingPitchId(brandId);
     let reply;
     try {
@@ -2701,6 +2706,7 @@ export default function Polly() {
 
   const openMail = (pitch, msgId) => {
     if (!pitch?.mailto) return;
+    if (!pitch.is_reply && !pitch.is_followup) setPitchedByHand(true);
     setMailTriedId(msgId);
     setMailOpens((prev) => ({ ...prev, [msgId]: (prev[msgId] || 0) + 1 }));
     if (!pitch.is_reply && !pitch.is_followup) markHandedOff(msgId, 'open_email');
@@ -3023,8 +3029,16 @@ export default function Polly() {
                             {String(sendingPitchId) === String(msg.pitch.brand_id) ? 'Sending…' : 'Send from my Gmail'}
                           </SendForMe>
                         )}
+                        {autopilotTrial && credits && !credits.is_unlimited && !msg.pitch.is_reply
+                          && !msg.pitch.is_followup && !msg.pitch.sent_via_gmail && (
+                          <SendForMe type="button" disabled={checkingOut} onClick={() => goPro('pitch_card_trial')}>
+                            {checkingOut ? 'Opening…' : `Use autopilot · ${trialOffer.days} days free`}
+                          </SendForMe>
+                        )}
                         {msg.pitch.mailto && !msg.pitch.sent_via_gmail && (
-                          canSendForMe(msg.pitch) && autopilot.state?.gmail?.connected ? (
+                          (canSendForMe(msg.pitch) && autopilot.state?.gmail?.connected)
+                            || (autopilotTrial && credits && !credits.is_unlimited && !msg.pitch.is_reply
+                              && !msg.pitch.is_followup) ? (
                             <Ghost as="a" href={msg.pitch.mailto} onClick={(e) => { e.preventDefault(); openMail(msg.pitch, msg.id); }}>
                               Send email
                             </Ghost>
@@ -3034,7 +3048,7 @@ export default function Polly() {
                             </Primary>
                           )
                         )}
-                        {credits && !credits.is_unlimited && !msg.pitch.is_reply && !msg.pitch.is_followup && !msg.pitch.sent_via_gmail && (
+                        {credits && !credits.is_unlimited && !autopilotTrial && !msg.pitch.is_reply && !msg.pitch.is_followup && !msg.pitch.sent_via_gmail && (
                           <Ghost type="button" disabled={checkingOut} onClick={() => goPro('pitch_card_autopilot')}>
                             {checkingOut ? 'Opening…' : 'Use autopilot'}
                           </Ghost>
