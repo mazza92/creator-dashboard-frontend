@@ -1582,6 +1582,11 @@ export default function Polly() {
   const [swappingId, setSwappingId] = useState(null);
   const [manualBatch, setManualBatch] = useState(false);
   const pendingTrialRef = useRef(false);
+  // Matches-first welcome (start journey v2): the welcome and the pitch card already offer the free week, so the
+  // Autopilot card never opens on its own over them (it raced "Preview my first pitch"). Tapping Autopilot still opens it.
+  const matchesFirstRef = useRef((() => {
+    try { return localStorage.getItem('nc_matches_first') === '1'; } catch (_) { return false; }
+  })());
   const [autopilotReturn, setAutopilotReturn] = useState('');
   const autopilot = useAutopilot(Boolean(creatorId));
   const autopilotAutoOpenedRef = useRef(false);
@@ -1693,6 +1698,10 @@ export default function Polly() {
           setStarters(normalizeStarters(res.data.starters));
         }
         setFirstRun(res.data.first_run || null);
+        if (res.data.first_run?.start_choice === 'matches_first') {
+          matchesFirstRef.current = true;
+          try { localStorage.setItem('nc_matches_first', '1'); } catch (_) { /* storage blocked */ }
+        }
         if (res.data.credits) setCredits(res.data.credits);
         const ownerId = res.data.profile?.creator_id || creatorIdRef.current;
         const serverMsgs = Array.isArray(res.data.messages) ? res.data.messages : [];
@@ -1819,6 +1828,10 @@ export default function Polly() {
   // returning visit. Once per session.
   useEffect(() => {
     if (!pendingTrialRef.current || autopilotOpen || busy) return;
+    if (matchesFirstRef.current) {
+      pendingTrialRef.current = false;
+      return;
+    }
     if (messages.length === 0) return;
     const brandsShown = messages.some((m) => m.role === 'assistant' && (m.brands?.length || m.pitch));
     // New this session (welcome or first matches running): wait for the brands. Returning: show it now.
