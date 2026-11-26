@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import scrollChatTo from './scrollChatTo';
 
@@ -76,43 +76,14 @@ export default function PollyFirstRun({
   const startIds = brands.map((b) => b.brand_id).slice(0, n);
   const top = brands.slice(0, 3);
 
-  // Matches first (Nov 26 2026, start choice version 2), as the outside review proposed: their matches prove the
-  // fit, then activating Polly (the 7-day free week) is THE action; pitching by hand is a quiet text option that
-  // writes their top pitch. Version 1 "Do it yourself" creators keep the manual-led welcome below.
+  // Matches first (Nov 26 2026, start choice version 2): their matches prove the fit, then activating Polly
+  // (the 7-day free week) is THE action; "Preview my first pitch" writes their top pitch (the manual path).
   if (data.start_choice === 'matches_first') {
-    const lead = brands[0];
-    const total = Number(data.planned_total) || brands.length;
     return (
-      <Wrap ref={ref} aria-label="Welcome">
-        <Hello>
-          <span className="who">{avatar ? <img src={avatar} alt="" /> : null}Polly · your manager</span>
-          <h2>Hi{name ? ` ${name}` : ''}, your brand matches are ready <span aria-hidden="true">👋</span></h2>
-          <p>I found {total} brand{total === 1 ? '' : 's'} that fit your content. Here are your best picks.</p>
-        </Hello>
-        <Manual>
-          <span className="tag">Your matches</span>
-          <h3>Let me pitch them for you</h3>
-          <p className="lead">I write each pitch for that brand, send up to 20 a day from your Gmail, follow up, and brief you every morning.</p>
-          <Deck>
-            {brands.slice(0, 6).map((b, i) => (
-              <Brand key={b.brand_id}>
-                {b.brand_id === picked ? <span className="pick">💌 Your pick</span> : null}
-                <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} size={52} />
-                <span className="nm">{b.brand_name}</span>
-                <span className="why">{intentTag(b)}</span>
-              </Brand>
-            ))}
-          </Deck>
-          <Secondary type="button" disabled={busy} onClick={() => onStart('trial', startIds)}>
-            Let Polly pitch my brands
-            <ArrowRight size={18} aria-hidden="true" />
-          </Secondary>
-          <Fine>7 days free, then $19/mo. Cancel anytime.</Fine>
-          <ManualLink type="button" disabled={busy} onClick={() => onStart('first_pitch', [lead.brand_id])}>
-            I&apos;d rather pitch manually: write my pitch to {lead.brand_name}
-          </ManualLink>
-        </Manual>
-      </Wrap>
+      <MatchesFirst
+        wrapRef={ref} data={data} brands={brands} picked={picked} busy={busy}
+        onTrial={() => onStart('trial', startIds)} onPreview={() => onStart('first_pitch', [brands[0].brand_id])}
+      />
     );
   }
 
@@ -216,6 +187,139 @@ export default function PollyFirstRun({
     </Wrap>
   );
 }
+
+const SHOWN = 5;
+
+function capitalize(text) {
+  const s = String(text || '').replace(/_/g, ' ');
+  return s ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
+// The signal under a matched brand: what we know is true about it, else which of their niches it's in.
+export function matchPill(brand) {
+  if (brand?.hot || brand?.meta_ads) return ['🔥', 'Running UGC ads'];
+  if (brand?.works_with_creators) return ['🎁', 'Works with creators'];
+  const niche = brand?.match_niche || brand?.category;
+  return ['✨', niche ? `${capitalize(niche)} niche match` : 'Fits your content'];
+}
+
+function MatchesFirst({ wrapRef, data, brands, picked, busy, onTrial, onPreview }) {
+  const [open, setOpen] = useState(false);
+  const total = Number(data.planned_total) || brands.length;
+  const niche = nicheText(data.niches);
+  const extra = Math.max(0, brands.length - SHOWN);
+  const shown = open ? brands : brands.slice(0, SHOWN);
+  return (
+    <Wrap ref={wrapRef} aria-label="Welcome">
+      <Sheet>
+        <h2>Your brand matches are ready <span aria-hidden="true">👋</span></h2>
+        <p className="sub">
+          I found {total} brand{total === 1 ? '' : 's'} that fit your {niche ? `${niche} ` : ''}content.
+          {' '}Let&apos;s get your next collaboration started.
+        </p>
+        <Matches>
+          {shown.map((b, i) => {
+            const [icon, label] = matchPill(b);
+            return (
+              <Match key={b.brand_id}>
+                {b.brand_id === picked ? <span className="pick">💌 Your pick</span> : null}
+                <BrandLogo brand={b} color={MONO_COLORS[i % MONO_COLORS.length]} size={60} />
+                <span className="nm">{b.brand_name}</span>
+                <span className="pill"><span aria-hidden="true">{icon}</span> {label}</span>
+                {b.why ? <span className="why">{b.why}</span> : null}
+              </Match>
+            );
+          })}
+        </Matches>
+        {extra > 0 ? (
+          <More type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+            {open ? 'Show fewer' : `+ ${extra} more matched brand${extra === 1 ? '' : 's'}`}
+            {open ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
+          </More>
+        ) : null}
+        <Pitch>
+          <h3>You create. I&apos;ll handle the pitching.</h3>
+          <p>I&apos;ll pitch these brands for you, find new opportunities every day and follow up automatically.</p>
+          <ul>
+            {['Up to 20 personalized pitches daily', 'New brand opportunities every day',
+              'Automatic follow-ups and reply tracking'].map((text) => (
+                <li key={text}><span className="ok" aria-hidden="true"><Check size={14} strokeWidth={3} /></span>{text}</li>
+            ))}
+          </ul>
+          <Secondary type="button" disabled={busy} onClick={onTrial}>
+            Let Polly pitch my brands
+            <ArrowRight size={18} aria-hidden="true" />
+          </Secondary>
+          <Fine>7 days free, then $19/mo. Payment method required. Cancel anytime.</Fine>
+          <ManualLink type="button" disabled={busy} onClick={onPreview}>Preview my first pitch</ManualLink>
+        </Pitch>
+      </Sheet>
+    </Wrap>
+  );
+}
+
+const Sheet = styled.div`
+  background: ${t.white};
+  border: 1px solid ${t.line};
+  border-radius: 22px;
+  padding: 24px 22px 20px;
+  h2 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 800; }
+  .sub { margin: 0 0 18px; font-size: 16px; line-height: 1.45; color: ${t.muted}; }
+  @media (min-width: 700px) { h2 { font-size: 32px; } }
+  @media (max-width: 480px) { padding: 20px 16px 18px; h2 { font-size: 25px; } }
+`;
+
+const Matches = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const Match = styled.div`
+  position: relative;
+  flex: 1 1 calc(33.333% - 10px);
+  min-width: 150px;
+  box-sizing: border-box;
+  border: 1px solid #ece9e2;
+  border-radius: 16px;
+  padding: 14px 10px 14px;
+  background: #fff;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  .nm { font-size: 15px; font-weight: 750; line-height: 1.25; word-break: break-word; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; max-width: 100%;
+    background: ${t.accentSoft}; color: ${t.accentDeep}; font-size: 12.5px; font-weight: 650; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box;
+  }
+  .why { font-size: 13px; line-height: 1.35; color: ${t.muted}; }
+  .pick {
+    position: absolute; top: -9px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+    font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: ${t.ink}; color: #fff;
+  }
+  @media (max-width: 480px) { min-width: 130px; padding: 12px 6px; .pill { font-size: 11.5px; padding: 4px 8px; } }
+`;
+
+const More = styled.button`
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  margin-top: 12px; padding: 12px; border: 0; border-radius: 14px; background: ${t.accentSoft};
+  color: ${t.accentDeep}; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+`;
+
+const Pitch = styled.div`
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid ${t.line};
+  h3 { margin: 0 0 6px; font-size: 24px; line-height: 1.2; letter-spacing: -0.015em; font-weight: 800; }
+  p { margin: 0 0 12px; font-size: 15.5px; line-height: 1.45; color: ${t.muted}; }
+  ul { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 10px; }
+  li { display: flex; align-items: center; gap: 10px; font-size: 15.5px; color: ${t.ink}; }
+  .ok {
+    width: 22px; height: 22px; border-radius: 50%; background: ${t.accent}; color: #fff; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  @media (max-width: 480px) { h3 { font-size: 21px; } }
+`;
 
 const Wrap = styled.section`
   display: grid;
@@ -345,7 +449,8 @@ const Fine = styled.p`
 const ManualLink = styled.button`
   display: block; width: 100%; margin-top: 12px; padding: 6px 4px;
   border: 0; background: none; font-family: inherit; font-size: 14px; line-height: 1.4;
-  color: ${t.ink}; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: center;
+  color: ${t.accentDeep}; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+  cursor: pointer; text-align: center;
   &:disabled { opacity: 0.6; cursor: default; }
 `;
 
