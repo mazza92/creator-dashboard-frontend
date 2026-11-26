@@ -463,6 +463,45 @@ function OfferStep({ form, set, options, single }) {
   );
 }
 
+// A post's preview: the stored thumbnail; for a TikTok video, TikTok's own player as a still (its oEmbed no longer
+// returns a thumbnail, so neither our proxy nor the browser can get one, Nov 2026); for YouTube the predictable
+// thumbnail; otherwise the platform name. Pasted links used to show a grey "Link" tile.
+export function platformLabel(url) {
+  const u = String(url || '').toLowerCase();
+  if (u.includes('tiktok.com')) return 'TikTok';
+  if (u.includes('instagram.com')) return 'Instagram';
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YouTube';
+  return 'Post';
+}
+
+export function youtubeThumb(url) {
+  const m = String(url || '').match(/(?:youtu\.be\/|\/shorts\/|[?&]v=)([A-Za-z0-9_-]{6,})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : '';
+}
+
+export function tiktokPlayerSrc(url) {
+  const m = String(url || '').match(/tiktok\.com\/@[^/]+\/video\/(\d{8,})/i);
+  if (!m) return '';
+  const quiet = 'controls=0&progress_bar=0&play_button=0&volume_control=0&fullscreen_button=0&timestamp=0'
+    + '&music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0&autoplay=0&muted=1';
+  return `https://www.tiktok.com/player/v1/${m[1]}?${quiet}`;
+}
+
+function PostThumb({ url, thumbnail }) {
+  const [failed, setFailed] = useState(false);
+  const img = thumbnail || youtubeThumb(url);
+  if (img && !failed) {
+    return <img src={img} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+  }
+  const player = tiktokPlayerSrc(url);
+  if (player) {
+    // The tile itself is the button: the frame never takes the tap.
+    return <iframe className="tt" src={player} title="TikTok post preview" loading="lazy" tabIndex={-1}
+      allow="encrypted-media" />;
+  }
+  return <span className="ph">{platformLabel(url)}</span>;
+}
+
 function WorkStep({ form, set, data, single }) {
   const [link, setLink] = useState('');
   const [linkErr, setLinkErr] = useState('');
@@ -501,7 +540,7 @@ function WorkStep({ form, set, data, single }) {
               return (
                 <Post key={p.post_url} type="button" aria-pressed={on} onClick={() => toggle(p.post_url)}
                   aria-label={`${on ? 'Remove' : 'Use'} post${p.views ? ` with ${fmt(p.views)} views` : ''}`}>
-                  {p.thumbnail_url ? <img src={p.thumbnail_url} alt="" loading="lazy" /> : <span className="ph">Link</span>}
+                  <PostThumb url={p.post_url} thumbnail={p.thumbnail_url} />
                   {on ? <em><Check size={12} /></em> : null}
                   {p.views ? <span className="v">▶ {fmt(p.views)}</span> : null}
                 </Post>
@@ -1100,6 +1139,7 @@ const Post = styled.button`
   background: linear-gradient(160deg, #cfd8d4, #6d7d77);
   font: inherit;
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  iframe.tt { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; background: #000; }
   .ph { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; }
   .v { position: absolute; left: 7px; bottom: 6px; color: #fff; font-size: 12px; font-weight: 800; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
   em { position: absolute; right: 6px; top: 6px; width: 22px; height: 22px; border-radius: 50%; background: #ff3d8b; color: #fff; display: grid; place-items: center; }
