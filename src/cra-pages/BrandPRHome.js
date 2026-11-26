@@ -20,6 +20,7 @@ import { CANONICAL_CATEGORIES, categoryEmoji, categoryLabel } from '../constants
 import { SERVED_COUNTRY_GROUPS, normalizeServedCountry } from '../constants/servedCountries';
 import { consumeUpgradeDeeplink, dismissUpgradeDeeplink, stripUpgradeQuery } from '../utils/upgradeDeeplink';
 import { trackApplyEvent } from '../utils/applyAnalytics';
+import SentCheck from '../creator-portal/SentCheck';
 import HotTag from '../creator-portal/HotTag';
 import { isHotBrand, useHotBrandIds } from '../creator-portal/hotBrands';
 
@@ -489,6 +490,11 @@ export default function BrandPRHome() {
   const [saveShip, setSaveShip] = useState(true);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Direct pitch (brand without a live roster): Polly writes it here, the creator edits and sends it here.
+  const [pitchDraft, setPitchDraft] = useState(null); // { status, pitch, message, paywall, cold, gmail }
+  const [pitchSubject, setPitchSubject] = useState('');
+  const [pitchBody, setPitchBody] = useState('');
+  const [pitchSending, setPitchSending] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [doneBrand, setDoneBrand] = useState(null);
   const [relatedRemote, setRelatedRemote] = useState([]);
@@ -794,6 +800,8 @@ export default function BrandPRHome() {
     setPostLinkError('');
     setAgreed(false);
     setSubmitError('');
+    setPitchDraft(null);
+    setPitch(null);
     setPack(null);
     setPackLoading(true);
     setMediaLoading(true);
@@ -900,39 +908,100 @@ export default function BrandPRHome() {
     });
   }
 
-  async function submitPitch() {
+  function setPitch(pitch) {
+    setPitchSubject(pitch?.subject || '');
+    setPitchBody(pitch?.body || '');
+  }
+
+  async function writePitch({ confirmCold = false } = {}) {
     if (!current) return;
     if (picked.length !== 3) {
       setSubmitError('Select 3 posts to continue.');
       setStep(2);
       return;
     }
-    if (!shipReady(ship)) {
-      setSubmitError('Add a complete shipping address and phone number.');
-      return;
+    const brand = current;
+    const source = applySourceRef.current || defaultApplySource();
+    setStep(3);
+    setSubmitError('');
+    setPitchDraft({ status: 'writing' });
+    scrollPageTop();
+    const samples = picked.map((p) => p.post_url);
+    api.post(`/api/pr-crm/brands/${brand.id}/pitch-prep`, {
+      selected_posts: samples.map((post_url) => ({ post_url })),
+      source,
+    }).catch(() => {});
+    try {
+      const { data } = await api.post('/api/polly/pitch/draft', {
+        brand_id: brand.id,
+        sample_posts: samples,
+        confirm_cold: confirmCold,
+        source,
+      }, { timeout: 60000 });
+      if (data.balance) {
+        setQuota((prev) => ({ ...(prev || {}), ...data.balance }));
+        emitCredits(data.balance);
+      }
+      if (data.paywall) {
+        setPitchDraft({ status: 'paywall', message: data.message || '' });
+        showPaywall('pitch_draft', source);
+        return;
+      }
+      if (data.pitch) {
+        setPitch(data.pitch);
+        setPitchDraft({ status: 'ready', pitch: data.pitch, gmail: !!data.gmail_connected });
+        trackApplyEvent('pitch_written', { source, brand_id: brand.id });
+        return;
+      }
+      setPitchDraft({
+        status: data.cold ? 'cold' : 'note',
+        message: data.message || 'Polly could not write this pitch. Try again.',
+        alternatives: data.alternatives || [],
+      });
+    } catch (err) {
+      setPitchDraft({ status: 'error', message: err.response?.data?.error || 'Could not write the pitch. Try again.' });
     }
-    setSubmitting(true);
+  }
+
+  function pitchMailto() {
+    const to = pitchDraft?.pitch?.email || '';
+    return `mailto:${to}?subject=${encodeURIComponent(pitchSubject)}&body=${encodeURIComponent(pitchBody)}`;
+  }
+
+  function finishPitch(method) {
+    const brand = current;
+    trackApplyEvent('pitch_sent_from_flow', { source: applySourceRef.current || defaultApplySource(), brand_id: brand.id, meta: { method } });
+    const mark = (b) => (b.id === brand.id ? { ...b, pitched: true } : b);
+    setMatched((prev) => prev.map(mark));
+    setDirBrands((prev) => prev.map(mark));
+    setDoneBrand({ ...brand, pitched: true, sentVia: method });
+    setView('done');
+    scrollPageTop();
+    try { window.dispatchEvent(new Event('nc-tracker-changed')); } catch (_) { /* ignore */ }
+  }
+
+  function sendByEmailApp() {
+    if (!current) return;
+    api.post('/api/polly/pitch/handoff', {
+      method: 'open_email', brand_id: current.id, brand_name: current.name || '',
+    }).catch(() => {});
+    finishPitch('email_app');
+  }
+
+  async function sendFromGmail() {
+    if (!current || pitchSending) return;
+    setPitchSending(true);
     setSubmitError('');
     try {
-      const { data } = await api.post(`/api/pr-crm/brands/${current.id}/pitch-prep`, {
-        selected_posts: picked.map((p) => ({ post_url: p.post_url })),
-        shipping: ship,
-        save_shipping: saveShip,
-        source: applySourceRef.current || (tab === 'dir' ? 'directory' : 'foryou'),
-      });
-      try {
-        sessionStorage.setItem(`pollyPitchSamples:${current.id}`, JSON.stringify(data.sample_posts || []));
-      } catch (_) { /* private mode: pitch still works without samples */ }
-      const params = new URLSearchParams({
-        chip: 'pitch_brand',
-        brand_id: String(current.id),
-        brand_name: data.brand_name || current.name || '',
-      });
-      navigate(`/creator/dashboard/for-you?${params.toString()}`);
+      const { data } = await api.post('/api/polly/pitch/send', {
+        brand_id: current.id, subject: pitchSubject, body: pitchBody,
+      }, { timeout: 45000 });
+      if (data && data.success === false) throw new Error(data.error || 'send failed');
+      finishPitch('gmail');
     } catch (err) {
-      setSubmitError(err.response?.data?.error || 'Could not save. Try again.');
+      setSubmitError(err.response?.data?.error || 'Gmail could not send it. Use Send email instead.');
     } finally {
-      setSubmitting(false);
+      setPitchSending(false);
     }
   }
 
@@ -1005,6 +1074,7 @@ export default function BrandPRHome() {
         setPitchMode(true);
         setCurrent((prev) => (prev ? { ...prev, rosterLive: false } : prev));
         setSubmitError('');
+        writePitch();
         return;
       }
       if (status === 409) {
@@ -1570,21 +1640,94 @@ export default function BrandPRHome() {
               </LinkAdd>
             </Block>
             <Foot>
-              <Cta type="button" disabled={picked.length !== 3} onClick={() => setStep(3)}>Continue</Cta>
+              <Cta
+                type="button"
+                disabled={picked.length !== 3}
+                onClick={() => (pitchMode ? writePitch() : setStep(3))}
+              >
+                {pitchMode ? 'Write my pitch' : 'Continue'}
+              </Cta>
               <Note>{picked.length === 3 ? 'Ready — 3 of 3 selected' : `${picked.length} of 3 selected`}</Note>
             </Foot>
           </>
         )}
 
-        {step === 3 && (
+        {step === 3 && pitchMode && (
+          <>
+            <Block>
+              <h2>Your pitch to {current.name}</h2>
+              {(!pitchDraft || pitchDraft.status === 'writing') && (
+                <EmptyNote role="status">Polly is writing your pitch with your 3 posts…</EmptyNote>
+              )}
+              {pitchDraft?.status === 'ready' && (
+                <>
+                  <Sub>Read it, change anything you like, then send it from your own email.</Sub>
+                  <Lab>To</Lab>
+                  <PitchTo>{pitchDraft.pitch.email || 'No inbox on file for this brand yet'}</PitchTo>
+                  <Lab htmlFor="pitch-subject">Subject</Lab>
+                  <Input id="pitch-subject" value={pitchSubject} onChange={(e) => setPitchSubject(e.target.value)} />
+                  <Lab htmlFor="pitch-body">Message</Lab>
+                  <PitchText
+                    id="pitch-body"
+                    value={pitchBody}
+                    onChange={(e) => setPitchBody(e.target.value)}
+                    rows={14}
+                  />
+                </>
+              )}
+              {['cold', 'note', 'error', 'paywall'].includes(pitchDraft?.status) && (
+                <PitchNote>{(pitchDraft.message || '').replace(/\*\*/g, '')}</PitchNote>
+              )}
+              {pitchDraft?.status === 'cold' && (pitchDraft.alternatives || []).length > 0 && (
+                <Sub>Better bets: {pitchDraft.alternatives.map((b) => b.name).filter(Boolean).join(', ')}.</Sub>
+              )}
+            </Block>
+            <Foot>
+              {pitchDraft?.status === 'ready' && pitchDraft.pitch.email && (
+                pitchDraft.gmail ? (
+                  <>
+                    <Cta type="button" disabled={pitchSending || !pitchBody.trim()} onClick={sendFromGmail}>
+                      {pitchSending ? 'Sending…' : 'Send from my Gmail'}
+                    </Cta>
+                    <Cta as="a" $ghost href={pitchMailto()} onClick={sendByEmailApp} style={{ textAlign: 'center', textDecoration: 'none' }}>
+                      Send email
+                    </Cta>
+                  </>
+                ) : (
+                  <Cta as="a" href={pitchMailto()} onClick={sendByEmailApp} style={{ textAlign: 'center', textDecoration: 'none' }}>
+                    Send email
+                  </Cta>
+                )
+              )}
+              {pitchDraft?.status === 'cold' && (
+                <>
+                  <Cta type="button" $ghost onClick={() => setView('list')}>Pick another brand</Cta>
+                  <Cta type="button" onClick={() => writePitch({ confirmCold: true })}>Write it anyway</Cta>
+                </>
+              )}
+              {pitchDraft?.status === 'paywall' && (
+                <Cta type="button" onClick={() => showPaywall('pitch_draft_retry')}>See Pro</Cta>
+              )}
+              {['note', 'error'].includes(pitchDraft?.status) && (
+                <Cta type="button" onClick={() => writePitch()}>Try again</Cta>
+              )}
+              {submitError && <Note style={{ color: ROSE }}>{submitError}</Note>}
+              {pitchDraft?.status === 'ready' && (
+                <Note>
+                  {pitchDraft.gmail
+                    ? 'Goes out from your Gmail. Polly follows up on day 4 and 10 if they don’t reply.'
+                    : 'Opens your email app with the pitch filled in. We log it on your Tracker and check back on day 4.'}
+                </Note>
+              )}
+            </Foot>
+          </>
+        )}
+
+        {step === 3 && !pitchMode && (
           <>
             <Block>
               <h2>Where should the box go?</h2>
-              <Sub>
-                {pitchMode
-                  ? 'Polly only puts your city in the pitch. Your full address stays saved for when they say yes.'
-                  : 'Only used if they pick you. Saved after the first apply.'}
-              </Sub>
+              <Sub>Only used if they pick you. Saved after the first apply.</Sub>
               <Lab htmlFor="ship-name">Full name <Req>*</Req></Lab>
               <Input
                 id="ship-name"
@@ -1699,7 +1842,7 @@ export default function BrandPRHome() {
                 Save for the next apply
               </SaveRow>
             </Block>
-            {!pitchMode && (
+            {(
             <Block>
               <h2>What you’re agreeing to</h2>
               <Agree>
@@ -1714,28 +1857,18 @@ export default function BrandPRHome() {
               </Chk>
             </Block>
             )}
-            {!pitchMode && pack?.transparency && (
+            {pack?.transparency && (
               <Block>
                 <h2>Before you send</h2>
                 <ApplyTransparency stats={pack.transparency} />
               </Block>
             )}
             <Foot>
-              {pitchMode ? (
-                <Cta type="button" disabled={submitting || !shipReady(ship)} onClick={submitPitch}>
-                  {submitting ? 'Opening Polly…' : 'Write my pitch'}
-                </Cta>
-              ) : (
-                <Cta type="button" disabled={submitting || !agreed || !shipReady(ship)} onClick={submitApply}>
-                  {submitting ? 'Applying…' : 'Apply for Brand PR'}
-                </Cta>
-              )}
+              <Cta type="button" disabled={submitting || !agreed || !shipReady(ship)} onClick={submitApply}>
+                {submitting ? 'Applying…' : 'Apply for Brand PR'}
+              </Cta>
               {submitError && <Note style={{ color: ROSE }}>{submitError}</Note>}
-              <Note>
-                {pitchMode
-                  ? 'Polly writes the pitch next. You check it before it goes out.'
-                  : 'We add you to their list. The brand never gets a cold email from you.'}
-              </Note>
+              <Note>We add you to their list. The brand never gets a cold email from you.</Note>
             </Foot>
           </>
         )}
@@ -1749,12 +1882,26 @@ export default function BrandPRHome() {
       <Page $narrow>
         <Done>
           <CheckMark>✓</CheckMark>
-          <h2>You’re in the running</h2>
-          <p>
-            {doneBrand.name} will see your posts and where to ship. If they pick you, the box comes to your address. We’ll email you either way.
-          </p>
+          {doneBrand.pitched ? (
+            <>
+              <h2>Pitch sent to {doneBrand.name}</h2>
+              <p>
+                It’s on your Tracker. Polly checks on day 4 whether they replied and writes the follow-up for you.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2>You’re in the running</h2>
+              <p>
+                {doneBrand.name} will see your posts and where to ship. If they pick you, the box comes to your address. We’ll email you either way.
+              </p>
+            </>
+          )}
         </Done>
-        {doneBrand.transparency && (
+        {doneBrand.pitched && doneBrand.sentVia === 'email_app' && (
+          <SentCheck brandId={doneBrand.id} brandName={doneBrand.name} method="open_email" logged />
+        )}
+        {!doneBrand.pitched && doneBrand.transparency && (
           <ApplyTransparency stats={doneBrand.transparency} afterApply />
         )}
         <DoneActions>
@@ -1768,7 +1915,7 @@ export default function BrandPRHome() {
             <span>{PRO_OFFER.outOfCredits}</span>
           </OutBanner>
         )}
-        <Tracker stage={0} />
+        {!doneBrand.pitched && <Tracker stage={0} />}
         <Related>
           <h3>More brands like this</h3>
           <p className="sub">Same kind of gift. Tap a row to apply.</p>
@@ -3370,6 +3517,32 @@ const FieldHint = styled.p`
   font-size: 12px;
   color: ${MUTED};
   line-height: 1.35;
+`;
+const PitchTo = styled.div`
+  border: 1px solid ${LINE};
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: ${CREAM};
+  word-break: break-all;
+`;
+const PitchText = styled.textarea`
+  width: 100%;
+  border: 1px solid ${LINE};
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  font-family: inherit;
+  background: #fff;
+  box-sizing: border-box;
+  resize: vertical;
+`;
+const PitchNote = styled.p`
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${INK};
 `;
 const Input = styled.input`
   width: 100%;
