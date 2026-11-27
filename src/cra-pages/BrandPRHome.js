@@ -423,6 +423,7 @@ export default function BrandPRHome() {
   const [dirCat, setDirCat] = useState('all');
   const [dirCategories, setDirCategories] = useState(fallbackDirCategories);
   const [catOpen, setCatOpen] = useState(false);
+  const [skipReview, setSkipReview] = useState(false);
   const [catQuery, setCatQuery] = useState('');
   const [dirMicro, setDirMicro] = useState(false);
   const [dirUS, setDirUS] = useState(false);
@@ -1709,6 +1710,7 @@ export default function BrandPRHome() {
               onWriteAnyway={() => writePitch({ confirmCold: true })}
               onPickAnother={() => setView('list')}
               onUpgrade={() => showPaywall(pitchDraft?.status === 'paywall' ? 'pitch_draft_retry' : 'pitch_autopilot')}
+              onSkipReview={() => setSkipReview(true)}
             />
           </Block>
         )}
@@ -1863,6 +1865,7 @@ export default function BrandPRHome() {
           </>
         )}
         <Paywall quota={quota} isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+        <UpgradeModal isOpen={skipReview} onClose={() => setSkipReview(false)} feature="waitlist_skip" />
       </Page>
     );
   }
@@ -1942,6 +1945,7 @@ export default function BrandPRHome() {
           </DirBrowse>
         </Related>
         <Paywall quota={quota} isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+        <UpgradeModal isOpen={skipReview} onClose={() => setSkipReview(false)} feature="waitlist_skip" />
       </Page>
     );
   }
@@ -1954,6 +1958,7 @@ export default function BrandPRHome() {
           onOpenBrand={(raw) => openApply(normalizeBrand(raw, appliedMap), 'feed')}
         />
         <Paywall quota={quota} isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+        <UpgradeModal isOpen={skipReview} onClose={() => setSkipReview(false)} feature="waitlist_skip" />
       </Page>
     );
   }
@@ -2290,6 +2295,7 @@ export default function BrandPRHome() {
       )}
 
       <Paywall quota={quota} isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+      <UpgradeModal isOpen={skipReview} onClose={() => setSkipReview(false)} feature="waitlist_skip" />
     </Page>
   );
 }

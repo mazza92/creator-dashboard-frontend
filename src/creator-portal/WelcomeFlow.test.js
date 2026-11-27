@@ -7,7 +7,13 @@ const mockPosts = [];
 jest.mock('../config/api', () => ({
   __esModule: true,
   apiClient: {
-    get: (url) => (url === '/api/pr-crm/brands/search-suggestions'
+    get: (url) => (url === '/api/creator/verification'
+      ? Promise.resolve({ data: { status: 'checking', checks: [
+        { id: 'posts', label: '12+ public posts', ok: true, detail: 'You have 48' },
+        { id: 'recent', label: 'A post in the last 30 days', ok: false, detail: 'Last post 41 days ago' },
+        { id: 'quality', label: 'Clear, natural videos with your face or hands on camera', ok: null, detail: 'Checked by our team' },
+      ] } })
+      : url === '/api/pr-crm/brands/search-suggestions'
       ? Promise.resolve({ data: { suggestions: [{ id: 99, name: 'Away', logo: null, category: 'travel' }] } })
       : Promise.resolve({ data: { options: [{ math: { reply_rate: 0.08, deal_rate: 0.32 } }], current: { amount_cents: 40000 } } })),
     post: (url, body) => {
@@ -117,4 +123,31 @@ test('autopilot choice opens the free week', async () => {
   fireEvent.click(screen.getByRole('button', { name: /start 7 days free/i }));
   await waitFor(() => expect(onTrial).toHaveBeenCalledWith('welcome_trial'));
   expect(mockPosts).toContainEqual(['/api/subscription/start-choice', { choice: 'trial' }]);
+});
+
+test('profile being verified: explore everything, sending waits, manual opens the verify step', async () => {
+  mockPosts.length = 0;
+  const onTrial = jest.fn();
+  const onClose = jest.fn();
+  render(<WelcomeFlow data={{ ...data, verified: false }} onTrial={onTrial} onClose={onClose} />);
+  fireEvent.click(screen.getByText('Preview my first pitch'));
+  expect(await screen.findByText(/Sending unlocks once your profile is verified/)).toBeInTheDocument();
+  expect(screen.queryByText('Copy pitch')).toBeNull();
+  expect(screen.getByText('Edit pitch')).toBeInTheDocument();
+  snap('v_pitch');
+  fireEvent.click(screen.getByText('Continue'));
+  fireEvent.click(await screen.findByText('Skip for now'));
+  expect(screen.getByText(/Skips the profile review/)).toBeInTheDocument();
+  expect(screen.getByText(/Skip the wait · \$19\/mo/)).toBeInTheDocument();
+  expect(screen.queryByText(/7 days free/)).toBeNull();
+  expect(screen.getByText('Unlocks once your profile is verified.')).toBeInTheDocument();
+  snap('v_choose');
+  fireEvent.click(screen.getByText(/pitch manually/));
+  expect(await screen.findByText('We’re checking your profile')).toBeInTheDocument();
+  expect(await screen.findByText('Last post 41 days ago')).toBeInTheDocument();
+  expect(mockPosts.some(([url]) => url === '/api/subscription/start-choice')).toBe(false);
+  snap('v_verify');
+  fireEvent.click(screen.getByText('Skip the wait · $19/mo'));
+  await waitFor(() => expect(onTrial).toHaveBeenCalledWith('welcome_trial'));
+  expect(mockPosts.some(([url, body]) => url === '/api/subscription/start-choice' && body.choice === 'trial')).toBe(true);
 });

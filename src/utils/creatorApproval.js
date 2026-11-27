@@ -6,9 +6,18 @@ export function isCreatorApproved(status) {
   return status === 'approved' || status === 'pro_approved';
 }
 
-/** Pending or rejected creators stay out of the product dashboard. */
-export function needsWaitlistGate(status) {
+/** Profile still being verified (pending) or not ready yet (rejected). Not on Pro. */
+export function isBeingVerified(status) {
   return status === 'pending' || status === 'rejected';
+}
+
+/**
+ * Nov 2026: verification is separate from activation. Creators being verified use the product right away (their
+ * matched brands, pitches, plan); only outreach waits, and the server enforces that (403 verification_required).
+ * The waitlist page stays as the verification status page, reachable from the banner, but nobody is sent there.
+ */
+export function needsWaitlistGate() {
+  return false;
 }
 
 /**

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Info, Pencil, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Info, Lock, Pencil, ShieldCheck, Zap } from 'lucide-react';
 import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { BrandLogo, MONO_COLORS, matchPill, nicheText } from './PollyFirstRun';
@@ -18,6 +18,10 @@ import { PitchWriting } from '../components/creator/DirectPitch';
  * Manual path, still in the flow:  pick 3 brands -> review & copy each pitch -> track (mark sent) -> upgrade.
  * Choosing manual is recorded (start-choice 'free'): from then on every paywall is the $19 plan, not the free week.
  * Only "I'll keep pitching manually" (or the close button) goes back to Polly's chat.
+ *
+ * Profile still being verified (data.verified === false): same flow, outreach locked. They read and edit their
+ * pitch but can't copy or send it; "I'll pitch manually" opens the verify step (what the review checks) with
+ * "Skip the wait" (Pro at $19/mo: no free week while unverified) or "Explore my brands meanwhile" back to Polly.
  */
 
 const STEPS = ['matches', 'pitch', 'goal', 'choose'];
@@ -75,7 +79,8 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
   const niche = nicheText(data?.niches);
   const total = Number(data?.planned_total) || brands.length;
   const freeLeft = Math.max(1, Math.min(3, Number(data?.free_left) || 3));
-  const resume = data?.start_pick === 'free' ? 'pick' : data?.start_pick === 'trial' ? 'choose' : 'matches';
+  const unverified = data?.verified === false;
+  const resume = data?.start_pick === 'free' && !unverified ? 'pick' : data?.start_pick ? 'choose' : 'matches';
   const [step, setStep] = useState(resume);
   const [more, setMore] = useState(false);
   const [pitches, setPitches] = useState({});
@@ -85,6 +90,7 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
   const [saving, setSaving] = useState(false);
   const [picked, setPicked] = useState(lead ? [lead.brand_id] : []);
   const [at, setAt] = useState(0);
+  const [review, setReview] = useState(null); // GET /api/creator/verification, on the verify step
   const [sent, setSent] = useState({});
   // Manual path: brands they look up in the directory themselves (not in their matches), added inline.
   const [extra, setExtra] = useState([]);
@@ -157,7 +163,15 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
     }
   };
 
+  useEffect(() => {
+    if (step !== 'verify' || review) return;
+    apiClient.get('/api/creator/verification').then(({ data: res }) => setReview(res || {})).catch(() => setReview({}));
+  }, [step, review]);
+
   const choose = async (choice) => {
+    // Being verified: manual pitching waits for verification, so nothing is recorded yet (the free-week offer
+    // stays theirs); the verify step explains and offers the skip.
+    if (choice === 'free' && unverified) { setStep('verify'); return; }
     try { await apiClient.post('/api/subscription/start-choice', { choice }); } catch (_) { /* never block */ }
     if (choice === 'trial') { onTrial('welcome_trial'); return; }
     setStep('pick');
@@ -181,6 +195,7 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
   const manual = MANUAL.includes(step);
   const order = manual ? MANUAL : STEPS;
   const back = () => {
+    if (step === 'verify') { setStep('choose'); return; }
     if (step === 'review' && at > 0) { setAt(at - 1); return; }
     const i = order.indexOf(step);
     if (i > 0) setStep(order[i - 1]);
@@ -217,7 +232,15 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
         <H2>Your personalized pitch</H2>
         <PitchBox pitch={p} brandName={lead?.brand_name} editing={editing}
           onEdit={(patch) => editPitch(lead.brand_id, patch)} onRetry={() => { setPitches((x) => ({ ...x, [lead.brand_id]: null })); pitchFor(lead); }} />
-        {p.status === 'ready' ? (
+        {p.status === 'ready' && unverified ? (
+          <>
+            <Ghost type="button" $wide onClick={() => setEditing((v) => !v)}><Pencil size={16} aria-hidden="true" /> {editing ? 'Done' : 'Edit pitch'}</Ghost>
+            <LockNote role="note">
+              <span className="ic" aria-hidden="true"><Lock size={14} strokeWidth={2.5} /></span>
+              <span><b>Sending unlocks once your profile is verified.</b> Your pitch is saved and ready to go.</span>
+            </LockNote>
+          </>
+        ) : p.status === 'ready' ? (
           <Pair>
             <Ghost type="button" onClick={() => setEditing((v) => !v)}><Pencil size={16} aria-hidden="true" /> {editing ? 'Done' : 'Edit'}</Ghost>
             <Green type="button" onClick={() => copy(lead, false)}><Copy size={16} aria-hidden="true" /> {copied === String(lead.brand_id) ? 'Copied' : 'Copy pitch'}</Green>
@@ -279,15 +302,49 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
         <Rec>
           <span className="badge">Recommended</span>
           <div className="head"><span className="ic" aria-hidden="true"><Zap size={20} /></span><div><b>Let Polly handle the outreach</b><span>Automated pitching, follow-ups and new brand opportunities every day.</span></div></div>
-          <Primary type="button" onClick={() => choose('trial')}>Start 7 days free <ArrowRight size={18} aria-hidden="true" /></Primary>
-          <Fine>$0 today, then $19/month. Cancel anytime.</Fine>
+          <Primary type="button" onClick={() => choose('trial')}>{unverified ? 'Skip the wait · $19/mo' : 'Start 7 days free'} <ArrowRight size={18} aria-hidden="true" /></Primary>
+          <Fine>{unverified ? 'Skips the profile review: Polly starts sending today. $19/month, cancel anytime.' : '$0 today, then $19/month. Cancel anytime.'}</Fine>
         </Rec>
         <Or><span>or</span></Or>
         <ManualRow type="button" onClick={() => choose('free')}>
           <Pencil size={20} aria-hidden="true" />
-          <span><b>I&apos;ll pitch manually</b><span>Get {freeLeft} free pitches and try it yourself.</span></span>
+          <span><b>I&apos;ll pitch manually</b><span>{unverified ? 'Unlocks once your profile is verified.' : `Get ${freeLeft} free pitches and try it yourself.`}</span></span>
           <ChevronRight size={18} aria-hidden="true" />
         </ManualRow>
+      </>
+    );
+  } else if (step === 'verify') {
+    const notReady = review?.status === 'not_ready';
+    body = (
+      <>
+        <Eyebrow>Profile verification</Eyebrow>
+        <H1>{notReady ? 'Your profile isn’t ready for outreach yet' : 'We’re checking your profile'}</H1>
+        <Sub>Brands on Newcollab hear from creators who are ready for collabs, so every profile is checked before its first pitch goes out. Here’s what we look for:</Sub>
+        {!review ? <Muted>Loading…</Muted> : (
+          <Checks>
+            {(review.checks || []).map((c) => (
+              <li key={c.id} className={c.ok === true ? 'ok' : c.ok === false ? 'no' : ''}>
+                <span className="mk" aria-hidden="true">{c.ok === true ? <Check size={14} strokeWidth={3} /> : c.ok === false ? '!' : <ShieldCheck size={14} />}</span>
+                <span><b>{c.label}</b>{c.detail ? <span>{c.detail}</span> : null}</span>
+              </li>
+            ))}
+          </Checks>
+        )}
+        <Steps>
+          <div className="hd"><Info size={18} aria-hidden="true" /> Meanwhile</div>
+          <ol>
+            <li>Explore your {total} matched brands</li>
+            <li>Ask Polly to write your pitches</li>
+            <li>They&apos;re ready to send the moment you&apos;re verified</li>
+          </ol>
+        </Steps>
+      </>
+    );
+    foot = (
+      <>
+        <Green type="button" $wide onClick={() => choose('trial')}>Skip the wait · $19/mo</Green>
+        <Fine>Pro skips the review: Polly starts sending today. Cancel anytime.</Fine>
+        <TextLink type="button" onClick={() => onClose('verify')}>Explore my brands meanwhile</TextLink>
       </>
     );
   } else if (step === 'pick') {
@@ -411,7 +468,7 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
     );
   }
 
-  const idx = order.indexOf(step);
+  const idx = step === 'verify' ? STEPS.length - 1 : order.indexOf(step);
   return (
     <Overlay role="dialog" aria-modal="true" aria-label="Welcome to Newcollab">
       <Bar>
@@ -526,7 +583,7 @@ const btn = `
 `;
 const Primary = styled.button`${btn} width: 100%; border: 0; background: ${t.ink}; color: #fff;`;
 const Green = styled.button`${btn} ${(p) => (p.$wide ? 'width: 100%;' : 'flex: 1;')} border: 0; background: ${t.accent}; color: #fff;`;
-const Ghost = styled.button`${btn} flex: 1; border: 1px solid ${t.line}; background: #fff; color: ${t.ink};`;
+const Ghost = styled.button`${btn} ${(p) => (p.$wide ? 'width: 100%;' : 'flex: 1;')} border: 1px solid ${t.line}; background: #fff; color: ${t.ink};`;
 const Pair = styled.div`display: flex; gap: 10px;`;
 const TextLink = styled.button`
   display: block; width: 100%; padding: 8px; border: 0; background: none; font-family: inherit; font-size: 14.5px; font-weight: 600;
@@ -589,6 +646,24 @@ const Steps = styled.div`
   background: ${t.accentSoft}; border-radius: 14px; padding: 14px 16px;
   .hd { display: flex; align-items: center; gap: 8px; font-weight: 750; color: ${t.accentDeep}; }
   ol { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 6px; font-size: 14px; color: ${t.inkSoft}; }
+`;
+const LockNote = styled.div`
+  display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: ${t.subtle};
+  font-size: 14px; line-height: 1.45; color: ${t.inkSoft};
+  b { color: ${t.ink}; }
+  .ic { flex: none; width: 24px; height: 24px; border-radius: 50%; background: ${t.ink}; color: #fff; display: grid; place-items: center; margin-top: 1px; }
+`;
+const Checks = styled.ul`
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+  li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid ${t.line}; border-radius: 14px; background: #fff; }
+  li > span:last-child { display: grid; gap: 2px; font-size: 14.5px; }
+  li > span:last-child span { font-size: 13px; color: ${t.muted}; }
+  .mk {
+    flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px;
+    background: ${t.subtle}; color: ${t.muted};
+  }
+  li.ok .mk { background: ${t.accent}; color: #fff; }
+  li.no .mk { background: #FEF3C7; color: #B45309; }
 `;
 const Center = styled.div`
   display: grid; gap: 14px; justify-items: center; text-align: center; padding-top: 10px;

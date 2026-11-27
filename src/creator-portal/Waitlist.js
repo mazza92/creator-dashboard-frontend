@@ -8,8 +8,9 @@ import TikTokVideo from '../components/TikTokVideo';
 import { MAX_DAILY_PITCHES, PRO_PRICE } from '../config/proOffer';
 import { BRAND_ICON } from './PromoteVisuals';
 
-// Waitlist = "your profile is in review", not a queue: approvals go by profile quality, and 95% of approved
-// creators are approved within 24 hours (Nov 2026), so there is no place in line or day count to show.
+// Verification status page (Nov 2026: verification is separate from activation). Creators being verified already
+// use the app (their brands, pitches, plan); only sending waits. This page says where the check stands and what it
+// looks for. No promised turnaround: approvals go by profile quality, not a queue.
 
 // Real UGC from creators, self-hosted (tiktok_media), tagged with what each one does well.
 export const GOOD_UGC = [
@@ -47,7 +48,7 @@ const LOOK_FOR = [
 ];
 
 const PRO_POINTS = [
-  ['Approved instantly', ', no review wait'],
+  ['Start sending today', ', no review wait'],
   [`Up to ${MAX_DAILY_PITCHES} brand pitches daily`, ' from your Gmail'],
   ['Automatic follow-ups', ' and who opened your portfolio'],
   ['Paid UGC briefs', ' and unlimited gifting applications'],
@@ -151,38 +152,43 @@ export default function Waitlist() {
       <Wrap>
         <Header>
           <Logo><img src={BRAND_ICON} alt="" width={30} height={30} />newcollab</Logo>
-          <Ghost type="button" onClick={handleLogout}>Sign out</Ghost>
+          <HeadLinks>
+            <BackLink href="/creator/dashboard/for-you">← My brands</BackLink>
+            <Ghost type="button" onClick={handleLogout}>Sign out</Ghost>
+          </HeadLinks>
         </Header>
 
         <Hero>
           <div>
             {rejected ? (
-              <Received $warn><b>!</b> Not approved yet</Received>
+              <Received $warn><b>!</b> Not ready yet</Received>
             ) : (
               <Received><b>✓</b> {welcome ? 'Application received' : `Applied ${appliedLabel(status.applied_at).replace(/^Today, .*/, 'today')}`}</Received>
             )}
             <H1>
               {rejected
-                ? <>We couldn’t approve your profile yet{name ? <>, <span>{name}</span></> : ''}</>
-                : <>We’re reviewing your profile{name ? <>, <span>{name}</span></> : ''}</>}
+                ? <>Your profile isn’t ready for outreach yet{name ? <>, <span>{name}</span></> : ''}</>
+                : <>We’re verifying your profile{name ? <>, <span>{name}</span></> : ''}</>}
             </H1>
             <Lede>
               {rejected ? (
                 status.rejection_reason
-                  || 'Your profile doesn’t meet what brands look for yet. See the checklist below, or skip the review with Pro.'
+                  || 'Brands look for the things below before they reply. Keep exploring your brands and pitches, update your profile, or skip the review with Pro.'
               ) : (
-                <>We review every profile so brands only see creators who are ready to work with them.{' '}
-                  <strong>Most approved creators hear back within 24 hours.</strong> We’ll email you the moment you’re in.</>
+                <>Your matched brands and pitches are already waiting in your dashboard.{' '}
+                  <strong>Sending unlocks once your profile is verified</strong>, so brands only hear from creators
+                  who are ready. We’ll email you the moment it’s done.</>
               )}
             </Lede>
+            <Explore href="/creator/dashboard/for-you">Explore my brands</Explore>
 
             {!rejected && (
               <Status>
                 <StatusTop><span>Your application</span><Pill>In review</Pill></StatusTop>
                 <Steps>
                   <Step $state="done"><Bar><i /></Bar><b>Applied</b><small>{appliedLabel(status.applied_at)}</small></Step>
-                  <Step $state="now"><Bar><i /></Bar><b>Profile review</b><small>In progress</small></Step>
-                  <Step><Bar><i /></Bar><b>Start pitching</b><small>Brands + paid gigs</small></Step>
+                  <Step $state="now"><Bar><i /></Bar><b>Profile check</b><small>In progress</small></Step>
+                  <Step><Bar><i /></Bar><b>Sending unlocks</b><small>Your pitches go out</small></Step>
                 </Steps>
                 <Eta>
                   <span aria-hidden="true">✉️</span>
@@ -231,10 +237,10 @@ export default function Waitlist() {
           <Section id="skip" style={{ paddingTop: 8 }}>
             <Pro>
               <div>
-                <ProBadge>⚡ {rejected ? 'GET IN WITH PRO' : 'SKIP THE REVIEW'}</ProBadge>
+                <ProBadge>⚡ SKIP THE REVIEW</ProBadge>
                 <ProTitle>Start pitching brands today</ProTitle>
                 <ProSub>
-                  Pro creators are approved instantly. Polly sends up to {MAX_DAILY_PITCHES} brand pitches daily to brands
+                  Pro skips the review: Polly starts today and sends up to {MAX_DAILY_PITCHES} brand pitches daily to brands
                   that fit you, each one written for that brand, from your Gmail, with follow-ups.
                 </ProSub>
                 <ProList>
@@ -325,6 +331,16 @@ const Header = styled.header`
 const Logo = styled.div`
   display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; font-size: 18px;
   img { border-radius: 8px; }
+`;
+const HeadLinks = styled.div`display: flex; align-items: center; gap: 18px;`;
+const BackLink = styled.a`
+  font-size: 14px; font-weight: 700; color: ${c.ink}; text-decoration: none;
+  &:hover { text-decoration: underline; }
+`;
+const Explore = styled.a`
+  display: inline-flex; align-items: center; justify-content: center; margin: 0 0 22px; padding: 13px 20px;
+  border-radius: 14px; background: ${c.ink}; color: #fff; font-weight: 800; font-size: 15.5px; text-decoration: none;
+  &:hover { opacity: 0.9; }
 `;
 const Ghost = styled.button`
   background: none; border: 0; cursor: pointer; font-size: 14px; color: ${c.muted}; padding: 6px 0;

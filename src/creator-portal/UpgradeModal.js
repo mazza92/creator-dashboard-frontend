@@ -102,8 +102,11 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
         ? (goalMode ? `✓ Your ${total} free pitches are out` : `${total} of ${total} free credits used`)
         : null;
 
+  const skipReview = feature === 'waitlist_skip' && !isWinback;
   const headline = isWinback ? (
     <>Daily pitching<br />is back for <PinkSpan>$12/mo</PinkSpan></>
+  ) : skipReview ? (
+    <>Skip the wait.<br /><PinkSpan>Start pitching today</PinkSpan></>
   ) : goalMode ? (
     // Plan-ready framing (Noom / Duolingo): never "you're $X away" at $0, which reads as failure.
     goalInfo.left_cents <= 0
@@ -119,6 +122,8 @@ const UpgradeModal = ({ isOpen, onClose, currentCount = 0, limit = 3, feature, p
 
   const subline = isWinback
     ? 'For your next 3 invoices, then $19. Cancel anytime.'
+    : skipReview
+      ? 'Pro skips the profile review: Polly pitches your matched brands from your Gmail every weekday and follows up.'
     : goalMode
       ? (goalInfo.lined_up > 0
         ? `${goalInfo.lined_up} brand${goalInfo.lined_up === 1 ? ' is' : 's are'} lined up with pitches written. Pro sends them from your Gmail every weekday and follows up, so you stay consistent without thinking about it.`

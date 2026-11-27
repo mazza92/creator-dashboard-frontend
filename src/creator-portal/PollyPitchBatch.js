@@ -5,6 +5,7 @@ import styled, { keyframes } from 'styled-components';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { openInGmail } from './openInGmail';
+import VerificationLock from '../components/creator/VerificationLock';
 import PitchContact from './PitchContact';
 
 // The pitches Polly wrote, ready to go. One tap sends them all from the creator's Gmail (replies land in their own
@@ -49,7 +50,7 @@ function Check() {
 
 export default function PitchBatchCard({
   batch, available, gmailConnected, sending, disabled, onSend, onConnect, onOpenMail, onCopy, free = false,
-  defaultManual = false,
+  defaultManual = false, onSkip = null,
 }) {
   const [open, setOpen] = useState(null);
   // "I'll pitch brands myself" (first run) opens straight on Open email / Copy pitch.
@@ -64,6 +65,8 @@ export default function PitchBatchCard({
   const sentCount = items.filter(sentHere).length;
   const n = waiting.length;
   const byHand = manual || !available;
+  // Profile still being verified: they read every pitch, sending waits (services.verification on the server).
+  const locked = items.some((i) => i.locked === 'verification');
 
   let label = n > 1 ? `Send all ${n} from my Gmail` : 'Send it from my Gmail';
   if (!gmailConnected) label = n > 1 ? `Connect Gmail & send all ${n}` : 'Connect Gmail & send';
@@ -143,7 +146,9 @@ export default function PitchBatchCard({
         })}
       </List>
 
-      {n > 0 && !byHand ? (
+      {locked ? <VerificationLock onSkip={onSkip} /> : null}
+
+      {n > 0 && !byHand && !locked ? (
         <>
           <SendBtn type="button" onClick={gmailConnected ? onSend : onConnect} disabled={disabled || sending}>
             {label}
@@ -158,7 +163,7 @@ export default function PitchBatchCard({
         </>
       ) : null}
 
-      {n > 0 && byHand ? (
+      {n > 0 && byHand && !locked ? (
         <>
           <Hint>
             Each one opens in your mail app, ready to send. I&apos;ll log it and remind you to follow up on day 4.
