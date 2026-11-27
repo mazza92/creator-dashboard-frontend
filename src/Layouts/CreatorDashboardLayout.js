@@ -13,6 +13,7 @@ import api from '../config/api';
 import { START_CHOICE_PATH } from '../creator-portal/StartChoicePage';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PaymentIssueBanner from '../components/PaymentIssueBanner';
+import { VerificationBanner } from '../components/creator/VerificationLock';
 import { GoalPrompt, GoalPlanHandoff } from '../creator-portal/tracker/GoalModal';
 import { creatorTokens } from '../theme/creatorTokens';
 import { usePrefetch } from '../components/PrefetchLink';
@@ -532,6 +533,7 @@ const CreatorDashboardLayout = () => {
   const [poolBadge, setPoolBadge] = useState(0);
   const [credits, setCredits] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [skipReview, setSkipReview] = useState(false);
   const [yourMove, setYourMove] = useState(0);
   const isFetching = useRef(false);
   const navigate = useNavigate();
@@ -907,6 +909,7 @@ const CreatorDashboardLayout = () => {
 
       <Content $polly={onPolly}>
         <PaymentIssueBanner />
+        <VerificationBanner onSkip={() => setSkipReview(true)} />
         <GoalPrompt pathname={location.pathname} />
         <GoalPlanHandoff />
         <Outlet />
@@ -932,6 +935,7 @@ const CreatorDashboardLayout = () => {
         ))}
       </TabBar>
 
+      <UpgradeModal isOpen={skipReview} onClose={() => setSkipReview(false)} feature="waitlist_skip" />
       <UpgradeModal
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}

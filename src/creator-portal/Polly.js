@@ -37,6 +37,7 @@ import { brandMarkEmoji } from './brandMarkEmoji';
 import { PollyChecklist } from './PollyChecklist';
 import PollyFirstRun, { nicheText } from './PollyFirstRun';
 import WelcomeFlow from './WelcomeFlow';
+import VerificationLock, { isVerificationLocked } from '../components/creator/VerificationLock';
 import PollyAtWork from './PollyAtWork';
 import PollyFirstReview from './PollyFirstReview';
 import PitchContact from './PitchContact';
@@ -3042,6 +3043,9 @@ export default function Polly() {
                       {msg.pitch.sent_via_gmail ? (
                         <PitchSentNote>✓ Sent from your Gmail. I follow up on day 4 and day 10 if they&apos;re quiet.</PitchSentNote>
                       ) : null}
+                      {isVerificationLocked(msg.pitch) ? (
+                        <VerificationLock busy={checkingOut} onSkip={() => goPro('verification_skip')} />
+                      ) : (
                       <PitchActions>
                         {/* Two actions, no more (Nov 2026): Send email opens their mail app and counts as sent
                             (Undo below); Use autopilot is the upgrade. Gmail-connected creators keep the
@@ -3085,6 +3089,7 @@ export default function Polly() {
                           </Ghost>
                         ) : null}
                       </PitchActions>
+                      )}
                       {!msg.pitch.is_reply && !msg.pitch.is_followup && !msg.pitch.sent_via_gmail && handedOff[msg.id] ? (
                         <>
                           <SentCheck key={`${msg.id}:${mailOpens[msg.id] || 0}`}
@@ -3154,6 +3159,7 @@ export default function Polly() {
                     />
                   ) : msg.pitch_batch?.items?.length > 0 && (
                     <PitchBatchCard
+                      onSkip={() => goPro('verification_skip')}
                       defaultManual={manualBatch && msg.id === lastBatchId}
                       batch={msg.pitch_batch}
                       available={autopilot.state ? autopilot.state.available !== false : true}

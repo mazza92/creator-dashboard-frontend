@@ -29,11 +29,13 @@ function renderPage(status = STATUS) {
 
 test('shows a review tracker, never a queue number or day count', async () => {
   renderPage();
-  expect(await screen.findByText(/reviewing your profile/)).toBeInTheDocument();
+  expect(await screen.findByText(/verifying your profile/)).toBeInTheDocument();
   expect(screen.getByText('Liv')).toBeInTheDocument();
-  expect(screen.getByText(/Most approved creators hear back within 24 hours/)).toBeInTheDocument();
+  expect(screen.getByText(/Sending unlocks once your profile is verified/)).toBeInTheDocument();
+  expect(screen.queryByText(/24 hours/)).not.toBeInTheDocument();
+  expect(screen.getByText('Explore my brands')).toHaveAttribute('href', '/creator/dashboard/for-you');
   expect(screen.getByText('liv***@gmail.com')).toBeInTheDocument();
-  expect(screen.getAllByText('Profile review').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('Profile check').length).toBeGreaterThan(0);
   expect(screen.getByText('In review')).toBeInTheDocument();
   expect(screen.queryByText(/#640/)).not.toBeInTheDocument();
   expect(screen.queryByText(/32 days/)).not.toBeInTheDocument();
@@ -52,8 +54,8 @@ test('skip the line opens checkout', async () => {
 
 test('rejected profiles see the reason and can still get in with Pro', async () => {
   renderPage({ ...STATUS, status: 'rejected', rejection_reason: 'No posts in the last 30 days.', post_nudge: null });
-  expect(await screen.findByText(/couldn’t approve your profile yet/)).toBeInTheDocument();
+  expect(await screen.findByText(/isn’t ready for outreach yet/)).toBeInTheDocument();
   expect(screen.getByText('No posts in the last 30 days.')).toBeInTheDocument();
   expect(screen.queryByText('Your application')).not.toBeInTheDocument();
-  expect(screen.getByText(/GET IN WITH PRO/)).toBeInTheDocument();
+  expect(screen.getByText(/SKIP THE REVIEW/)).toBeInTheDocument();
 });

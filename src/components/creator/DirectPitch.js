@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
+import VerificationLock, { isVerificationLocked } from './VerificationLock';
 import { creatorTokens as t } from '../../theme/creatorTokens';
 
 /**
@@ -85,6 +86,7 @@ export function BrandMini({ name, logo, handle }) {
 export default function DirectPitch({
   brandName, draft, subject, body, onSubject, onBody, streaming = false, sending = false, error = '',
   mailtoHref = '', isFree = false, onSendEmail, onSendGmail, onRetry, onWriteAnyway, onPickAnother, onUpgrade,
+  onSkipReview,
 }) {
   const [editing, setEditing] = useState(false);
   useEffect(() => { if (draft?.status !== 'ready') setEditing(false); }, [draft?.status]);
@@ -119,6 +121,7 @@ export default function DirectPitch({
   }
 
   const pitch = draft.pitch || {};
+  const locked = isVerificationLocked(pitch);
   const canSend = Boolean(pitch.email) && Boolean(String(body || '').trim()) && !streaming;
   return (
     <Reveal>
@@ -129,7 +132,9 @@ export default function DirectPitch({
           <Said>
             {streaming
               ? `Writing your pitch to ${brandName}…`
-              : `Here’s your pitch to ${brandName}. Read it, tweak anything, then send it from your own email.`}
+              : locked
+                ? `Here’s your pitch to ${brandName}. Tweak anything you like: it’s ready to go once your profile is verified.`
+                : `Here’s your pitch to ${brandName}. Read it, tweak anything, then send it from your own email.`}
           </Said>
         </div>
       </PollyRow>
@@ -145,7 +150,7 @@ export default function DirectPitch({
         </CardHead>
         <ToRow>
           <span>To</span>
-          <b>{pitch.email || 'No inbox on file for this brand yet'}</b>
+          <b>{locked ? `${brandName}’s inbox, once you’re verified` : (pitch.email || 'No inbox on file for this brand yet')}</b>
         </ToRow>
         {editing ? (
           <>
@@ -162,6 +167,8 @@ export default function DirectPitch({
         )}
       </Card>
 
+      {locked ? <VerificationLock onSkip={onSkipReview || onUpgrade} /> : (
+      <>
       <Actions>
         {draft.gmail ? (
           <>
@@ -189,6 +196,8 @@ export default function DirectPitch({
           ? 'Goes out from your Gmail. Polly follows up on day 4 and 10 if they don’t reply.'
           : 'Opens your email app with everything filled in. It’s logged on your Tracker, and Polly checks back on day 4.'}
       </Hint>
+      </>
+      )}
     </Reveal>
   );
 }

@@ -1,6 +1,12 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import DirectPitch, { PitchWriting } from './DirectPitch';
+
+jest.mock('../../config/api', () => ({
+  __esModule: true,
+  default: { get: () => Promise.resolve({ data: { trial_days: 7 } }) },
+}));
 
 const noop = () => {};
 const base = {
@@ -57,5 +63,16 @@ describe('DirectPitch', () => {
     expect(screen.getByText('Better bets right now: Phlur.')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Write it anyway'));
     expect(onWriteAnyway).toHaveBeenCalled();
+  });
+
+  it('profile being verified: the pitch reads and edits, sending waits, skip the wait offered', async () => {
+    const onSkipReview = jest.fn();
+    render(<MemoryRouter><DirectPitch {...base} onSkipReview={onSkipReview}
+      draft={{ status: 'ready', pitch: { email: '', mailto: null, locked: 'verification' } }} /></MemoryRouter>);
+    expect(screen.getByText('Sending unlocks once your profile is verified')).toBeInTheDocument();
+    expect(screen.queryByText('Send email')).toBeNull();
+    expect(screen.getByText('Edit')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Skip the wait · $19/mo'));
+    expect(onSkipReview).toHaveBeenCalled();
   });
 });
