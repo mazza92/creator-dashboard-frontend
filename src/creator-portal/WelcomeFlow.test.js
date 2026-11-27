@@ -7,7 +7,9 @@ const mockPosts = [];
 jest.mock('../config/api', () => ({
   __esModule: true,
   apiClient: {
-    get: () => Promise.resolve({ data: { options: [{ math: { reply_rate: 0.08, deal_rate: 0.32 } }], current: { amount_cents: 40000 } } }),
+    get: (url) => (url === '/api/pr-crm/brands/search-suggestions'
+      ? Promise.resolve({ data: { suggestions: [{ id: 99, name: 'Away', logo: null, category: 'travel' }] } })
+      : Promise.resolve({ data: { options: [{ math: { reply_rate: 0.08, deal_rate: 0.32 } }], current: { amount_cents: 40000 } } })),
     post: (url, body) => {
       mockPosts.push([url, body]);
       if (url === '/api/polly/pitch/draft') {
@@ -29,6 +31,8 @@ const brands = [
   { brand_id: 3, brand_name: 'Taima Titanium', match_niche: 'travel', tags: ['Luggage', 'Outdoor'] },
   { brand_id: 4, brand_name: 'Medjet', match_niche: 'travel', tags: ['Travel', 'Safety'] },
   { brand_id: 5, brand_name: 'GlobalTravel', works_with_creators: true, tags: ['Travel'] },
+  { brand_id: 6, brand_name: 'Béis', match_niche: 'travel', tags: ['Travel', 'Fashion'] },
+  { brand_id: 7, brand_name: 'Calpak', match_niche: 'travel', tags: ['Luggage'] },
 ];
 const data = { start_choice: 'matches_first', planned_total: 24, free_left: 3, niches: ['travel'], brands };
 
@@ -49,10 +53,11 @@ test('the whole welcome stays in the flow: matches, pitch, plan, choice, manual 
   Object.assign(navigator, { clipboard: { writeText: jest.fn(() => Promise.resolve()) } });
   render(<WelcomeFlow data={data} onTrial={onTrial} onClose={onClose} />);
 
-  expect(screen.getByText(/I found 24 brands that fit your travel content/)).toBeInTheDocument();
+  expect(screen.getByText(/We found 24 brands that fit your travel content/)).toBeInTheDocument();
   expect(screen.getByText('Travel • Stays')).toBeInTheDocument();
-  expect(screen.queryByText('Medjet')).toBeNull();
-  expect(screen.getByRole('button', { name: /\+ 21 more matched brands/ })).toBeInTheDocument();
+  expect(screen.getByText('Béis')).toBeInTheDocument(); // 6 fill the screen
+  expect(screen.queryByText('Calpak')).toBeNull();
+  expect(screen.getByRole('button', { name: /show \+18 more brands/i })).toBeInTheDocument();
   snap('1_matches');
 
   fireEvent.click(screen.getByRole('button', { name: /preview my first pitch/i }));
@@ -73,7 +78,9 @@ test('the whole welcome stays in the flow: matches, pitch, plan, choice, manual 
   expect(mockPosts).toContainEqual(['/api/subscription/start-choice', { choice: 'free' }]);
   expect(mockPosts.some(([u]) => u === '/api/tracker/goal')).toBe(false); // their signup goal stays as it is
   fireEvent.click(screen.getByText('Ostrichpillow'));
-  fireEvent.click(screen.getByText('Taima Titanium'));
+  // A brand they want that isn't in their matches: looked up inline, in the same step.
+  fireEvent.change(screen.getByLabelText('Looking for a specific brand?'), { target: { value: 'Away' } });
+  fireEvent.click(await screen.findByText('Away'));
   expect(screen.getByText('3 of 3 selected')).toBeInTheDocument();
   snap('5_pick');
 
@@ -91,6 +98,7 @@ test('the whole welcome stays in the flow: matches, pitch, plan, choice, manual 
   await screen.findByText('Your outreach tracker');
   fireEvent.click(screen.getByText('Wander'));
   expect(mockPosts).toContainEqual(['/api/polly/pitch/sent-check', { brand_id: 1, brand_name: 'Wander', sent: true, method: 'copy_pitch' }]);
+  expect(screen.getByText('Away')).toBeInTheDocument(); // the searched brand is pitched and tracked too
   snap('7_track');
 
   fireEvent.click(screen.getByRole('button', { name: /^continue/i }));

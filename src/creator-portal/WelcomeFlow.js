@@ -10,7 +10,7 @@ import { PitchWriting } from '../components/creator/DirectPitch';
  * Welcome flow for newly approved creators (start journey v2, Nov 2026): one full-screen, focused flow, never the
  * Polly chat, until they've chosen how to start.
  *
- *   matches  "I found N brands that fit your travel content"  (list rows: logo, name, signal, tags)
+ *   matches  "We found N brands that fit your travel content"  (list rows: logo, name, signal, tags)
  *   pitch    their personalized pitch to the top match          (Edit, Copy pitch)
  *   goal     their UGC plan (optional): goal, rate per video, the outreach it takes
  *   choose   "Let Polly handle the outreach" (7 days free) or "I'll pitch manually" (3 free pitches)
@@ -22,7 +22,7 @@ import { PitchWriting } from '../components/creator/DirectPitch';
 
 const STEPS = ['matches', 'pitch', 'goal', 'choose'];
 const MANUAL = ['pick', 'review', 'track', 'done'];
-const SHOWN = 3;
+const SHOWN = 6; // fills a phone screen; "Show +N more brands" opens the rest
 // UGC creators sell content production, not reach: goals and the rate per video are plain UGC numbers, never
 // derived from follower count. The creator's own goal (set at signup) is preselected; the step shows the plan
 // that reaches it.
@@ -53,7 +53,7 @@ async function draftPitch(brandId) {
 }
 
 function BrandRow({ brand, index, right = null, onClick }) {
-  const [icon, label] = matchPill(brand);
+  const [icon, label] = brand.searched ? ['🔎', 'Your pick'] : matchPill(brand);
   const tags = (brand.tags || []).join(' • ');
   const Tag = onClick ? RowButton : RowStatic;
   return (
@@ -86,6 +86,12 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
   const [picked, setPicked] = useState(lead ? [lead.brand_id] : []);
   const [at, setAt] = useState(0);
   const [sent, setSent] = useState({});
+  // Manual path: brands they look up in the directory themselves (not in their matches), added inline.
+  const [extra, setExtra] = useState([]);
+  const [q, setQ] = useState('');
+  const [found, setFound] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimer = useRef(null);
   const top = useRef(null);
 
   useEffect(() => { if (top.current) top.current.scrollTop = 0; setEditing(false); }, [step, at]);
@@ -112,7 +118,26 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
     }).catch(() => setGoal({ options: GOAL_TIERS, pick: 't400', initial: null, rate: DEFAULT_RATE, reply: 0.08, deal: 0.35 }));
   }, [step, goal]);
 
-  const selectedBrands = picked.map((id) => brands.find((b) => b.brand_id === id)).filter(Boolean);
+  const allBrands = [...brands, ...extra.filter((e) => !brands.some((b) => b.brand_id === e.brand_id))];
+  const selectedBrands = picked.map((id) => allBrands.find((b) => b.brand_id === id)).filter(Boolean);
+
+  const search = (value) => {
+    setQ(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (value.trim().length < 2) { setFound([]); setSearching(false); return; }
+    setSearching(true);
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const { data: res } = await apiClient.get('/api/pr-crm/brands/search-suggestions', { params: { q: value.trim() } });
+        setFound((res?.suggestions || []).slice(0, 6).map((x) => ({
+          brand_id: Number(x.id), brand_name: x.name, logo: x.logo, category: x.category,
+          tags: x.category ? [String(x.category).replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())] : [],
+          searched: true,
+        })).filter((x) => x.brand_id));
+      } catch (_) { setFound([]); }
+      setSearching(false);
+    }, 200);
+  };
   useEffect(() => {
     if (step !== 'review') return;
     selectedBrands.forEach((b) => pitchFor(b));
@@ -171,12 +196,12 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
     body = (
       <>
         <Eyebrow>Your brand opportunities are ready</Eyebrow>
-        <H1>I found {total} brand{total === 1 ? '' : 's'} that fit your {niche ? `${niche} ` : ''}content <span aria-hidden="true">🎉</span></H1>
+        <H1>We found {total} brand{total === 1 ? '' : 's'} that fit your {niche ? `${niche} ` : ''}content <span aria-hidden="true">🎉</span></H1>
         <Sub>These brands are investing in creator content and match your niche and style.</Sub>
         <List>{list.map((b, i) => <BrandRow key={b.brand_id} brand={b} index={i} right={<ChevronRight size={18} className="chev" aria-hidden="true" />} />)}</List>
         {brands.length > SHOWN ? (
           <More type="button" aria-expanded={more} onClick={() => setMore((v) => !v)}>
-            {more ? 'Show fewer' : `+ ${Math.max(brands.length, total) - SHOWN} more matched brands`}
+            {more ? 'Show fewer' : `Show +${Math.max(brands.length, total) - SHOWN} more brands`}
             {more ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
           </More>
         ) : null}
@@ -271,8 +296,34 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
       <>
         <H1>Pick {freeLeft} brand{freeLeft === 1 ? '' : 's'} to pitch</H1>
         <Sub>You have {freeLeft} free pitch{freeLeft === 1 ? '' : 'es'}. Choose the brands you want to reach out to.</Sub>
+        <Search $top>
+          <Label htmlFor="wf-search">Looking for a specific brand?</Label>
+          <Input id="wf-search" type="search" placeholder="Search 3,000+ brands, e.g. Away" value={q}
+            onChange={(e) => search(e.target.value)} autoComplete="off" />
+          {searching ? <Muted>Searching…</Muted> : null}
+          {!searching && q.trim().length >= 2 && !found.length ? <Muted>No brand found with that name yet.</Muted> : null}
+          {found.length ? (
+            <List>
+              {found.filter((b) => !allBrands.some((x) => x.brand_id === b.brand_id)).map((b, i) => {
+                const on = picked.includes(b.brand_id);
+                return (
+                  <BrandRow key={`s${b.brand_id}`} brand={b} index={i + 3}
+                    onClick={() => {
+                      if (on) { setPicked((p) => p.filter((x) => x !== b.brand_id)); return; }
+                      if (full) return;
+                      setExtra((xs) => (xs.some((x) => x.brand_id === b.brand_id) ? xs : [...xs, b]));
+                      setPicked((p) => [...p, b.brand_id]);
+                      setQ('');
+                      setFound([]);
+                    }}
+                    right={<Box $on={on} aria-hidden="true">{on ? <Check size={15} strokeWidth={3} /> : null}</Box>} />
+                );
+              })}
+            </List>
+          ) : null}
+        </Search>
         <List>
-          {brands.map((b, i) => {
+          {allBrands.map((b, i) => {
             const on = picked.includes(b.brand_id);
             return (
               <BrandRow key={b.brand_id} brand={b} index={i}
@@ -492,6 +543,9 @@ const field = `width: 100%; box-sizing: border-box; border: 1px solid ${t.line};
 const Input = styled.input`${field}`;
 const Area = styled.textarea`${field} line-height: 1.5; resize: vertical;`;
 const Options = styled.div`display: grid; gap: 10px;`;
+const Search = styled.div`
+  display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; background: #fff; border: 1px dashed ${t.line};
+`;
 const Option = styled.button`
   display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border-radius: 14px; cursor: pointer; font-family: inherit; text-align: left;
   border: 1.5px solid ${(p) => (p.$on ? t.accent : t.line)}; background: ${(p) => (p.$on ? t.accentSoft : '#fff')}; color: ${t.ink};
