@@ -120,3 +120,22 @@ test('the upgrade button opens the on-site checkout page', async () => {
   push.mockRestore();
 });
 
+
+describe('WaitingRoom leads with the creator\'s reason to upgrade', () => {
+  it('shows the trigger headline, reason, one CTA and the price', () => {
+    const room = {
+      momentum: { sent: 3, opened: 1, replied: 0 }, checklist: [], drafts: [], plan_count: 0, reset: 'Dec 1',
+      reasons: {
+        headline: 'Glow Recipe just opened your portfolio.',
+        reason: "Brands that look usually reply. I've found 24 more brands that fit your skincare content.",
+        body: "You've used your free pitches. Let me take over your outreach so you can focus on creating.",
+        cta: 'Let Polly take over', price: '7 days free, then $19/mo. Cancel anytime.',
+      },
+    };
+    render(<WaitingRoom room={room} trial />);
+    expect(screen.getByText('Glow Recipe just opened your portfolio.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /let polly take over/i }).length).toBe(1);
+    expect(screen.getByText('7 days free, then $19/mo. Cancel anytime.')).toBeInTheDocument();
+    expect(screen.getByText('Or wait until Dec 1 for 3 more free pitches.')).toBeInTheDocument();
+  });
+});

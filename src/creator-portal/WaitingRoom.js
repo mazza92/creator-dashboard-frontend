@@ -134,9 +134,24 @@ export default function WaitingRoom({ room: initial, trial = false, onUpgrade, o
   const leadIsFollowup = !!(fu && fu.due);
   const items = (room.checklist || []).map((i) => ({ ...i, ...(CHECK[i.id] ? CHECK[i.id](i) : {}) })).filter((i) => i.title);
   const drafts = room.drafts || [];
-  const cta = trial ? 'Start my free week' : `${drafts.length ? 'Send these + resume my plan' : 'Keep pitching for me'} · $19/mo`;
+  // The card leads with the creator's strongest real reason to upgrade (backend services/upgrade_reasons: a brand
+  // replied, a brand opened their portfolio, matched brands running UGC campaigns, or how many brands fit them).
+  const why = room.reasons || null;
+  const cta = why ? why.cta : trial ? 'Start my free week' : `${drafts.length ? 'Send these + resume my plan' : 'Keep pitching for me'} · $19/mo`;
+  const price = why ? why.price : `${trial ? '7 days free, then $19/mo · ' : ''}Up to 20 brand pitches daily, follow-ups included · Cancel anytime`;
   return (
     <Card aria-label="While your pitches are out">
+      {why ? (
+        <section className="lead">
+          <h3>{why.headline}</h3>
+          {why.reason ? <p className="reason">{why.reason}</p> : null}
+          <p className="body">{why.body}</p>
+          <button type="button" className="cta" disabled={disabled || checkingOut} onClick={upgrade}>
+            {checkingOut ? 'Opening secure checkout…' : <>{cta} →</>}
+          </button>
+          <p className="fine">{price}</p>
+        </section>
+      ) : null}
       <section className="momentum">
         <div className="hd"><b>Your pitches so far</b><span>Replies usually take 2–4 weeks</span></div>
         <div className="stats">
@@ -193,13 +208,15 @@ export default function WaitingRoom({ room: initial, trial = false, onUpgrade, o
         {room.plan_count ? (
           <p className="paused">⏸️ Your plan has <b>{room.plan_count} brand{room.plan_count === 1 ? '' : 's'} lined up{room.reset ? ` before ${room.reset}` : ''}</b>, paused on the free plan. Pro picks up where it stopped.</p>
         ) : null}
-        <button type="button" className={leadIsFollowup ? 'cta soft' : 'cta'} disabled={disabled || checkingOut} onClick={upgrade}>
-          {checkingOut ? 'Opening secure checkout…' : cta}
-        </button>
-        <p className="fine">
-          {trial ? '7 days free, then $19/mo · ' : ''}Up to 20 brand pitches daily, follow-ups included · Cancel anytime
-          {room.reset ? ` · Or wait until ${room.reset} for 3 more` : ''}
-        </p>
+        {why ? null : (
+          <>
+            <button type="button" className={leadIsFollowup ? 'cta soft' : 'cta'} disabled={disabled || checkingOut} onClick={upgrade}>
+              {checkingOut ? 'Opening secure checkout…' : cta}
+            </button>
+            <p className="fine">{price}</p>
+          </>
+        )}
+        {room.reset ? <p className="fine">Or wait until {room.reset} for 3 more free pitches.</p> : null}
       </section>
     </Card>
   );
@@ -211,6 +228,10 @@ const Card = styled.div`
   display: grid; gap: 16px; font-family: ${t.fontSans}; color: ${t.ink};
   section { display: grid; gap: 10px; min-width: 0; }
   section + section { padding-top: 14px; border-top: 1px solid ${t.line}; }
+  .lead { gap: 8px; }
+  .lead h3 { margin: 0; font-size: 20px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; }
+  .lead .reason { margin: 0; font-size: 15px; line-height: 1.5; color: ${t.ink}; }
+  .lead .body { margin: 0 0 4px; font-size: 15px; line-height: 1.5; color: ${t.inkSoft}; }
   .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; }
   .hd span { font-size: 12px; color: ${t.muted}; }
   .hd .pro { font-weight: 800; color: #fff; background: #0d7a5f; border-radius: 999px; padding: 2px 8px; font-size: 11px; }
