@@ -26,7 +26,7 @@ export function checkoutFaq(trialDays, trialEndsOn, plan = {}) {
     {
       q: 'Am I charged today?',
       a: trialDays
-        ? `No. You pay $0 today and ${price.amount} on ${day || 'the day your free week ends'}, unless you cancel before then.`
+        ? `No. We place a $1 hold to check your card and release it right away, so you pay $0 today and ${price.amount} on ${day || 'the day your free week ends'}, unless you cancel before then.`
         : charged,
     },
     {
