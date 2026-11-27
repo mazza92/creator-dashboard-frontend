@@ -21,7 +21,10 @@ import { PitchWriting } from '../components/creator/DirectPitch';
  *
  * Profile still being verified (data.verified === false): same flow, outreach locked. They read and edit their
  * pitch but can't copy or send it; "I'll pitch manually" opens the verify step (what the review checks) with
- * "Skip the wait" (Pro at $19/mo: no free week while unverified) or "Explore my brands meanwhile" back to Polly.
+ * "Skip the wait" (Pro at $19/mo: no free week while unverified)
+ *
+ * Back after verification (data.back_verified): they explored while being verified, so they've seen the matches
+ * and their pitch. The flow opens on "You're verified" and goes straight to how to start. or "Explore my brands meanwhile" back to Polly.
  */
 
 const STEPS = ['matches', 'pitch', 'goal', 'choose'];
@@ -80,7 +83,9 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
   const total = Number(data?.planned_total) || brands.length;
   const freeLeft = Math.max(1, Math.min(3, Number(data?.free_left) || 3));
   const unverified = data?.verified === false;
-  const resume = data?.start_pick === 'free' && !unverified ? 'pick' : data?.start_pick ? 'choose' : 'matches';
+  const backVerified = Boolean(data?.back_verified) && !unverified;
+  const resume = backVerified ? 'verified'
+    : data?.start_pick === 'free' && !unverified ? 'pick' : data?.start_pick ? 'choose' : 'matches';
   const [step, setStep] = useState(resume);
   const [more, setMore] = useState(false);
   const [pitches, setPitches] = useState({});
@@ -193,7 +198,7 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
   };
 
   const manual = MANUAL.includes(step);
-  const order = manual ? MANUAL : STEPS;
+  const order = manual ? MANUAL : backVerified ? ['verified', 'choose'] : STEPS;
   const back = () => {
     if (step === 'verify') { setStep('choose'); return; }
     if (step === 'review' && at > 0) { setAt(at - 1); return; }
@@ -201,12 +206,25 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
     if (i > 0) setStep(order[i - 1]);
     else if (manual) setStep('choose');
   };
-  const canBack = step !== 'matches' && step !== 'done';
+  const canBack = step !== 'matches' && step !== 'done' && step !== 'verified';
 
   let body = null;
   let foot = null;
 
-  if (step === 'matches') {
+  if (step === 'verified') {
+    body = (
+      <>
+        <Center>
+          <span className="ok" aria-hidden="true"><ShieldCheck size={34} /></span>
+          <Eyebrow>Profile verified</Eyebrow>
+          <H1 $center>You&apos;re verified <span aria-hidden="true">🎉</span></H1>
+          <Sub $center>Sending is unlocked. Your {total} matched brand{total === 1 ? '' : 's'} and the pitches you prepared are ready to go.</Sub>
+        </Center>
+        <List>{brands.slice(0, 3).map((b, i) => <BrandRow key={b.brand_id} brand={b} index={i} />)}</List>
+      </>
+    );
+    foot = <Primary type="button" onClick={() => setStep('choose')}>Choose how to start <ArrowRight size={18} aria-hidden="true" /></Primary>;
+  } else if (step === 'matches') {
     const list = more ? brands : brands.slice(0, SHOWN);
     body = (
       <>

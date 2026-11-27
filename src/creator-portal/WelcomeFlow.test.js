@@ -151,3 +151,20 @@ test('profile being verified: explore everything, sending waits, manual opens th
   await waitFor(() => expect(onTrial).toHaveBeenCalledWith('welcome_trial'));
   expect(mockPosts.some(([url, body]) => url === '/api/subscription/start-choice' && body.choice === 'trial')).toBe(true);
 });
+
+test('back after verification: opens on "You\'re verified", then how to start, normal offers', async () => {
+  mockPosts.length = 0;
+  const onTrial = jest.fn();
+  render(<WelcomeFlow data={{ ...data, verified: true, back_verified: true }} onTrial={onTrial} onClose={() => {}} />);
+  expect(screen.getByText(/You.re verified/)).toBeInTheDocument();
+  expect(screen.getByText(/Sending is unlocked/)).toBeInTheDocument();
+  expect(screen.getByText('Wander')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Back')).toBeNull();
+  snap('back_verified');
+  fireEvent.click(screen.getByText('Choose how to start'));
+  expect(screen.getByText('How do you want to start?')).toBeInTheDocument();
+  expect(screen.getByText(/Get 3 free pitches/)).toBeInTheDocument();
+  expect(screen.queryByText(/Unlocks once your profile is verified/)).toBeNull();
+  fireEvent.click(screen.getByLabelText('Back'));
+  expect(screen.getByText(/You.re verified/)).toBeInTheDocument();
+});
