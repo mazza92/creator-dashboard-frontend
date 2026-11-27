@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import api, { getProxiedMediaUrl } from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
+import VerificationLock, { useOutreachLocked } from '../components/creator/VerificationLock';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import BrandFeed from '../creator-portal/BrandFeed';
 import SegmentTabs from '../components/creator/SegmentTabs';
@@ -424,6 +425,7 @@ export default function BrandPRHome() {
   const [dirCategories, setDirCategories] = useState(fallbackDirCategories);
   const [catOpen, setCatOpen] = useState(false);
   const [skipReview, setSkipReview] = useState(false);
+  const outreachLocked = useOutreachLocked();
   const [catQuery, setCatQuery] = useState('');
   const [dirMicro, setDirMicro] = useState(false);
   const [dirUS, setDirUS] = useState(false);
@@ -1622,7 +1624,13 @@ export default function BrandPRHome() {
             </Block>
             )}
             <Foot>
-              <Cta type="button" onClick={() => setStep(2)}>{pitchMode ? 'Email brand' : 'Apply for Brand PR'}</Cta>
+              {outreachLocked && !pitchMode ? (
+                <VerificationLock title="Gifting applications unlock once your profile is verified"
+                  note="Brands send product to creators who are ready for collabs. Skip the wait with Pro to apply today, or keep exploring brands while we check your profile."
+                  onSkip={() => setSkipReview(true)} />
+              ) : (
+                <Cta type="button" onClick={() => setStep(2)}>{pitchMode ? 'Email brand' : 'Apply for Brand PR'}</Cta>
+              )}
             </Foot>
           </>
         )}

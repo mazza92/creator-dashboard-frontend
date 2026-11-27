@@ -5,6 +5,7 @@ import { apiClient } from '../config/api';
 import { creatorTokens as t } from '../theme/creatorTokens';
 import { PRO_PRICE_MONTHLY } from '../config/proOffer';
 import UpgradeModal from './UpgradeModal';
+import VerificationLock, { useOutreachLocked } from '../components/creator/VerificationLock';
 import { brandMarkEmoji } from './brandMarkEmoji';
 import { AutoTikTok, BrandMark, EXAMPLES } from './PromoteVisuals';
 
@@ -152,6 +153,7 @@ function ProBanner({ stats, onUpgrade }) {
 }
 
 function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
+  const outreachLocked = useOutreachLocked();
   const [draft, setDraft] = useState(null);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -304,7 +306,7 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
               <h3>{detail.direct_contact ? 'Your pitch' : 'Your application'}</h3>
               <p>Polly wrote this from your kit. Edit anything before you send it.</p>
             </div>
-            {!loading && text && (
+            {!loading && text && !outreachLocked && (
               <GhostBtn type="button" onClick={copy}>
                 {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
               </GhostBtn>
@@ -339,7 +341,12 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
               </div>
             </Done>
           )}
-          {stage === 'ready' && detail.direct_contact && (
+          {stage === 'ready' && outreachLocked && (
+            <VerificationLock title="Applying unlocks once your profile is verified"
+              note="Your application is written. Skip the wait with Pro to apply today, or keep browsing gigs while we check your profile."
+              onSkip={onUpgrade} />
+          )}
+          {stage === 'ready' && !outreachLocked && detail.direct_contact && (
             <>
               <PrimaryBtn type="button" onClick={() => apply('direct')} disabled={busy || loading || !!error}>
                 {busy ? 'Opening…' : <><Mail size={16} /> Email the brand directly</>}
@@ -350,7 +357,7 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
               <FootNote>We found the brand's own inbox. Polly's pitch opens in your email app, addressed to them.</FootNote>
             </>
           )}
-          {stage === 'ready' && !detail.direct_contact && (
+          {stage === 'ready' && !outreachLocked && !detail.direct_contact && (
             <>
               <PrimaryBtn type="button" onClick={() => apply()} disabled={busy || loading || !!error}>
                 {busy ? 'Opening…' : (
