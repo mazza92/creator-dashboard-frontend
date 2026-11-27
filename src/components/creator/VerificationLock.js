@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { Lock, ShieldCheck } from 'lucide-react';
 import api from '../../config/api';
 import { creatorTokens as t } from '../../theme/creatorTokens';
-import { WAITLIST_PATH } from '../../utils/creatorApproval';
+import { UserContext } from '../../contexts/UserContext';
+import { isBeingVerified, WAITLIST_PATH } from '../../utils/creatorApproval';
 
 /**
  * Verification is separate from activation (Nov 2026). Creators whose profile is still being verified explore their
@@ -24,13 +25,20 @@ export function isVerificationLocked(x) {
 // No free week while unverified (checkout_trial_eligible on the server): skipping the review is Pro, $19/mo.
 export const SKIP_LABEL = 'Skip the wait · $19/mo';
 
-/** In place of Send / Copy on a pitch. */
-export default function VerificationLock({ onSkip, busy = false, note = '' }) {
+/** Outreach is locked for this creator: profile still being verified and not on Pro (paying sets pro_approved). */
+export function useOutreachLocked() {
+  const ctx = useContext(UserContext);
+  const user = ctx?.user;
+  return Boolean(user) && isBeingVerified(user.approval_status) && user.subscription_tier !== 'pro';
+}
+
+/** In place of Send / Copy / Apply. */
+export default function VerificationLock({ onSkip, busy = false, note = '', title = LOCK_TITLE }) {
   return (
     <Box role="note">
       <div className="hd">
         <span className="ic" aria-hidden="true"><Lock size={15} strokeWidth={2.5} /></span>
-        <b>{LOCK_TITLE}</b>
+        <b>{title}</b>
       </div>
       <p>{note || 'Your pitch is saved. Skip the wait with Pro and Polly starts sending today, or keep exploring your brands while we check your profile.'}</p>
       <div className="row">
