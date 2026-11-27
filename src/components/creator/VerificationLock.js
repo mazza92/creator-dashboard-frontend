@@ -57,15 +57,12 @@ export function VerificationBanner({ onSkip }) {
   const ready = state.status === 'not_ready';
   return (
     <Bar role="status">
-      <span className="ic" aria-hidden="true"><ShieldCheck size={18} /></span>
+      <span className="ic" aria-hidden="true"><ShieldCheck size={16} /></span>
       <span className="tx">
-        <b>{ready ? 'Your profile isn’t ready for outreach yet' : 'We’re checking your profile'}</b>
-        <span>Explore your brands and pitches now. Sending unlocks once you’re verified.</span>
+        <b>{ready ? 'Profile not ready yet.' : 'Checking your profile.'}</b>{' '}
+        Sending unlocks once verified. <Status to={WAITLIST_PATH}>{ready ? 'What to fix' : 'Status'}</Status>
       </span>
-      <span className="act">
-        <Status to={WAITLIST_PATH}>{ready ? 'See what to fix' : 'See status'}</Status>
-        {onSkip ? <Skip type="button" $small onClick={onSkip}>{SKIP_LABEL}</Skip> : null}
-      </span>
+      {onSkip ? <Skip type="button" $small onClick={onSkip}>Skip · $19/mo</Skip> : null}
     </Bar>
   );
 }
@@ -97,14 +94,18 @@ const Status = styled(Link)`
   white-space: nowrap;
 `;
 
+// A slim strip. && beats the Polly page's container rule (every child stretches to fill the screen).
 const Bar = styled.div`
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin: 0 0 12px; padding: 12px 14px; border-radius: 14px;
-  background: ${t.accentSoft}; border: 1px solid ${t.accentBorder || '#cfe5dc'}; font-family: ${t.fontSans};
+  && {
+    flex: none; display: flex; flex-direction: row; align-items: center; gap: 10px;
+    min-height: 0; margin: 8px 12px 4px; padding: 8px 8px 8px 12px; border-radius: 12px;
+    background: ${t.accentSoft}; border: 1px solid ${t.accentBorder || '#cfe5dc'}; font-family: ${t.fontSans};
+    box-sizing: border-box;
+  }
   .ic { flex: none; color: ${t.accentDeep}; display: inline-flex; }
-  .tx { flex: 1 1 240px; display: grid; gap: 2px; min-width: 0; }
-  .tx b { font-size: 14.5px; color: ${t.ink}; }
-  .tx span { font-size: 13.5px; line-height: 1.4; color: ${t.muted}; }
-  .act { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  @media (max-width: 480px) { .act { width: 100%; justify-content: space-between; } }
+  .tx { flex: 1 1 auto; min-width: 0; font-size: 13px; line-height: 1.35; color: ${t.muted}; }
+  .tx b { color: ${t.ink}; font-weight: 700; }
+  .tx a { font-size: 13px; }
+  button { flex: none; }
+  @media (min-width: 1025px) { && { width: calc(100% - 32px); max-width: 760px; margin: 12px auto 4px; } }
 `;
