@@ -4,13 +4,12 @@ import { message } from 'antd';
 import { FaEye, FaLock } from 'react-icons/fa';
 import { apiClient, getRuntimeApiUrl } from '../config/api';
 import UpgradeModal from './UpgradeModal';
-import KitStudioEditor, { STUDIO_FONT, cleanSocialHandle, primarySocial, seedSocialProfiles, studioPublishError } from '../kit-builder/KitStudioEditor';
+import KitStudioEditor, { STUDIO_FONT, cleanSocialHandle, primarySocial, seedSocialProfiles } from '../kit-builder/KitStudioEditor';
 import { matchOfferId, ratesFromDraft } from '../kit-builder/pricingOffers';
 import { COVER_SAMPLES, normalizeExamples, normalizeKitTheme, resolveCoverUrl } from '../kit-builder/themes';
 import KitLoading from '../kit-builder/KitLoading';
 import { normalizeKitLayout } from '../kit-builder/templates';
 import { clearKitDraft, readKitDraft } from '../kit-builder/draft';
-import PortfolioLiveModal from '../kit-builder/PortfolioLiveModal';
 
 function followerString(user, settings) {
   const n = Number(
@@ -112,9 +111,7 @@ const PortfolioBuilder = ({ currentUser }) => {
   const [kitSettings, setKitSettings] = useState(null);
   const [kitViews, setKitViews] = useState({ views_this_week: 0, recent: [] });
   const [subscriptionTier, setSubscriptionTier] = useState('free');
-  const [publishing, setPublishing] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [shareModal, setShareModal] = useState(null);
   const [studioReady, setStudioReady] = useState(false);
   const saveTimer = useRef(null);
   const latestDraft = useRef(null);
@@ -122,12 +119,6 @@ const PortfolioBuilder = ({ currentUser }) => {
 
   const isPro = subscriptionTier === 'pro' || subscriptionTier === 'elite';
   const kitTheme = normalizeKitTheme(kitSettings?.kit_theme);
-
-  const fetchKitSettings = async () => {
-    const res = await apiClient.get('/api/portfolio/settings');
-    setKitSettings(res.data);
-    return res.data;
-  };
 
   const fetchKitViews = async () => {
     try {
@@ -216,44 +207,6 @@ const PortfolioBuilder = ({ currentUser }) => {
       saveTimer.current = null;
     }
     if (latestDraft.current) await saveDraft(latestDraft.current);
-  };
-
-  const handlePublish = async () => {
-    const draft = latestDraft.current || {};
-    const blocked = studioPublishError({
-      name: draft.name || kitTheme.display_name,
-      handle: draft.handle || kitTheme.social_handle || currentUser?.username,
-      socialPlatform: draft.socialPlatform || kitTheme.social_platform,
-      socialProfiles: draft.socialProfiles || draft.social_profiles || kitTheme.social_profiles,
-      email: draft.email || kitTheme.email,
-      about: draft.about || kitTheme.about,
-      examples: draft.examples || kitTheme.example_posts || kitTheme.examples,
-    });
-    if (blocked) {
-      message.error(blocked);
-      return;
-    }
-    setPublishing(true);
-    try {
-      if (saveTimer.current) {
-        clearTimeout(saveTimer.current);
-        saveTimer.current = null;
-      }
-      const wasPublished = !!kitSettings?.kit_published;
-      const patch = latestDraft.current
-        ? { ...draftToSettingsPatch(latestDraft.current, currentUser), publish: true }
-        : { publish: true };
-      await apiClient.patch('/api/portfolio/settings', patch);
-      const next = await fetchKitSettings();
-      setShareModal({
-        updated: wasPublished,
-        slug: next?.kit_slug || next?.kitSlug || slug,
-      });
-    } catch (e) {
-      message.error(e.response?.data?.error || 'Failed to publish');
-    } finally {
-      setPublishing(false);
-    }
   };
 
   const slug = kitSettings?.kit_slug || currentUser?.username || '';
@@ -368,22 +321,14 @@ const PortfolioBuilder = ({ currentUser }) => {
   return (
     <Page>
       <DashHeader>
+        {/* Portfolios publish automatically (approved creators, on open): no View / Publish row. Edits autosave,
+            Save in the Edit / Preview bar writes them now. The link opens the live page. */}
         <div>
           <DashTitle>Portfolio</DashTitle>
-          {kitSettings.kit_published && slug ? (
-            <DashUrl>newcollab.co/kit/{slug}</DashUrl>
-          ) : (
-            <DashUrl>Free portfolio · publish when you’re ready</DashUrl>
-          )}
+          {slug ? (
+            <DashUrl as="button" type="button" onClick={handleViewPortfolio}>newcollab.co/kit/{slug} ↗</DashUrl>
+          ) : null}
         </div>
-        <DashActions>
-          <GhostBtn type="button" onClick={handleViewPortfolio}>View portfolio</GhostBtn>
-          <PublishBtn type="button" onClick={handlePublish} disabled={publishing}>
-            {publishing
-              ? (kitSettings.kit_published ? 'Updating…' : 'Publishing…')
-              : 'Publish this portfolio'}
-          </PublishBtn>
-        </DashActions>
       </DashHeader>
 
       <KitStudioEditor
@@ -394,8 +339,6 @@ const PortfolioBuilder = ({ currentUser }) => {
         persist={persist}
         onUploadLogo={handleUploadLogo}
         onSave={flushSave}
-        busy={publishing}
-        busyLabel={kitSettings.kit_published ? 'Updating portfolio' : 'Publishing portfolio'}
         formTop={(
           <>
             {isPro && (kitViews.views_this_week > 0 || kitViews.portfolio_clicks > 0) && (
@@ -434,16 +377,6 @@ const PortfolioBuilder = ({ currentUser }) => {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         feature="kit_views"
-      />
-      <PortfolioLiveModal
-        open={!!shareModal}
-        slug={shareModal?.slug || slug}
-        updated={!!shareModal?.updated}
-        onClose={() => setShareModal(null)}
-        onView={() => {
-          setShareModal(null);
-          handleViewPortfolio();
-        }}
       />
     </Page>
   );
@@ -485,37 +418,13 @@ const DashUrl = styled.div`
   font-size: 12px;
   color: #64748b;
   margin-top: 4px;
-`;
-const DashActions = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-  @media (max-width: 640px) {
-    width: 100%;
-    button { flex: 1; }
-  }
-`;
-const GhostBtn = styled.button`
-  min-height: 44px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #0f172a;
-  font: 700 13px/1 ${STUDIO_FONT};
-  cursor: pointer;
-`;
-const PublishBtn = styled.button`
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 12px;
+  padding: 0;
   border: 0;
-  background: #0f172a;
-  color: #fff;
-  font: 700 13px/1 ${STUDIO_FONT};
+  background: none;
+  font-family: inherit;
   cursor: pointer;
-  opacity: ${p => p.disabled ? .6 : 1};
+  text-align: left;
+  &:hover { color: #0f172a; text-decoration: underline; }
 `;
 const StatsCard = styled.div`
   margin-bottom: 16px;
