@@ -36,6 +36,7 @@ import {
 import { brandMarkEmoji } from './brandMarkEmoji';
 import { PollyChecklist } from './PollyChecklist';
 import PollyFirstRun, { nicheText } from './PollyFirstRun';
+import WelcomeFlow from './WelcomeFlow';
 import PollyAtWork from './PollyAtWork';
 import PollyFirstReview from './PollyFirstReview';
 import PitchContact from './PitchContact';
@@ -2774,7 +2775,19 @@ export default function Polly() {
         </LiveToast>
       ) : null}
       <Thread ref={threadRef}>
-        {firstRun ? (
+        {firstRun?.start_choice === 'matches_first' ? (
+          // New creators: the whole welcome (matches, pitch preview, plan, how to start, the manual path) is one
+          // focused full-screen flow; the chat shows only once they leave it.
+          <WelcomeFlow
+            data={firstRun}
+            onTrial={(source) => goPro(source)}
+            onClose={(choice) => {
+              setFirstRun(null);
+              apiClient.post('/api/polly/first-run', { choice: choice || 'manual' }).catch(() => {});
+              if (reloadAutopilot) reloadAutopilot();
+            }}
+          />
+        ) : firstRun ? (
           <PollyFirstRun
             data={firstRun}
             pick={firstRunPick}
