@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { trackProPurchase } from '../utils/subscriptionAnalytics';
+import { startProCheckout } from '../utils/startProCheckout';
 import { MAX_DAILY_PITCHES } from '../config/proOffer';
 import { creatorTokens as t } from '../theme/creatorTokens';
 
@@ -24,6 +25,10 @@ const SubscriptionSuccess = () => {
   const [searchParams] = useSearchParams();
   const [gmail, setGmail] = useState(null); // null: checking, then true / false
   const [connecting, setConnecting] = useState(false);
+  // Free week: the backend places a $1 hold (released at once). A card with nothing on it ends the trial before it
+  // starts, so this page says so and offers another card instead of "You're Pro".
+  const [declined, setDeclined] = useState('');
+  const [retrying, setRetrying] = useState(false);
 
   const openPolly = () => navigate('/creator/dashboard/for-you?autopilot=pro_started');
 
@@ -45,7 +50,8 @@ const SubscriptionSuccess = () => {
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
 
-    if (sessionId) {
+    const trackPurchase = () => {
+      if (!sessionId) return;
       trackProPurchase({ sessionId, tier: 'pro' });
 
       const ttqKey = `ttq_purchase_${sessionId}`;
@@ -61,15 +67,22 @@ const SubscriptionSuccess = () => {
           window.sessionStorage.setItem(ttqKey, '1');
         }
       } catch (_) { /* ignore */ }
-    }
+    };
 
     const confirmAndFetchStatus = async () => {
       try {
         if (sessionId) {
           await api.post('/api/subscription/confirm-checkout', { session_id: sessionId });
         }
+        trackPurchase();
         await api.get('/api/subscription/status');
       } catch (error) {
+        const data = error?.response?.data;
+        if (data?.card_declined) {
+          setDeclined(data.message || "Your card was declined, so your free week didn't start. Nothing was charged.");
+          return;
+        }
+        trackPurchase();
         console.error('Error confirming checkout:', error);
       }
       try {
@@ -83,6 +96,35 @@ const SubscriptionSuccess = () => {
     const id = setTimeout(confirmAndFetchStatus, 1000);
     return () => clearTimeout(id);
   }, [searchParams]);
+
+  const retry = async () => {
+    setRetrying(true);
+    try {
+      await startProCheckout('card_declined_retry');
+    } catch (_) {
+      setRetrying(false);
+      navigate('/creator/dashboard/for-you');
+    }
+  };
+
+  if (declined) {
+    return (
+      <Page>
+        <Card>
+          <div className="stripe" aria-hidden="true" />
+          <div className="inner">
+            <span className="badge">Card check</span>
+            <h1>That card didn&apos;t go through</h1>
+            <p className="sub">{declined}</p>
+            <Primary type="button" onClick={retry} disabled={retrying}>
+              {retrying ? 'Opening checkout…' : 'Try another card'} <ArrowRight size={18} aria-hidden="true" />
+            </Primary>
+            <p className="fine">We place a $1 hold to check the card and release it right away. You&apos;re never charged for it.</p>
+          </div>
+        </Card>
+      </Page>
+    );
+  }
 
   return (
     <Page>

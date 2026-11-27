@@ -506,7 +506,7 @@ export default function KitStudioEditor({
   };
 
   return (
-    <Shell>
+    <Shell $dock={startInPreview}>
       {busy ? (
         <Busy role="status" aria-live="polite">
           <BusyCard>
@@ -970,15 +970,9 @@ export default function KitStudioEditor({
         </Form>
 
         <Preview $pane={pane}>
-          {viewFirst ? (
-            <ViewBar>
-              <div>
-                <b>This is your portfolio</b>
-                <span>Polly built it from your profile. Make it yours: your story, your best videos, your look.</span>
-              </div>
-              <EditBtn type="button" onClick={() => showPane('edit')}>Edit portfolio</EditBtn>
-            </ViewBar>
-          ) : (
+          {/* Opening on the portfolio itself: no "This is your portfolio / Edit portfolio" band, the Edit / Preview
+              switch below does that. */}
+          {viewFirst ? null : (
             <PreviewLabel>Live preview · {KIT_LAYOUTS.find((l) => l.id === layout)?.name}</PreviewLabel>
           )}
           <PreviewFrame>
@@ -1034,7 +1028,7 @@ export default function KitStudioEditor({
         </PickerScrim>
       ) : null}
       {dockReady && !pickerOpen ? createPortal(
-        <Dock $embedded={embedded} role="toolbar" aria-label="Edit or preview this portfolio">
+        <Dock $embedded={embedded} $desktop={startInPreview} role="toolbar" aria-label="Edit or preview this portfolio">
           <Segment>
             <SegBtn type="button" $on={pane === 'edit'} onClick={() => showPane('edit')}>Edit</SegBtn>
             <SegBtn type="button" $on={pane === 'preview'} onClick={() => showPane('preview')}>Preview</SegBtn>
@@ -1059,6 +1053,7 @@ const Shell = styled.div`
   position: relative;
   min-width: 0;
   overflow-x: clip;
+  padding-bottom: ${(p) => (p.$dock ? '88px' : '0')}; /* room for the Edit / Preview / Save bar */
 `;
 const Busy = styled.div`
   position: fixed;
@@ -1439,21 +1434,6 @@ const Preview = styled.div`
     display: ${p => p.$pane === 'edit' ? 'none' : 'block'};
   }
 `;
-const ViewBar = styled.div`
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  margin-bottom: 14px; padding: 14px 16px; border-radius: 14px;
-  background: #fff; border: 1px solid #e5e7eb;
-  font-family: ${STUDIO_FONT};
-  div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  b { font-size: 15px; color: #0f172a; }
-  span { font-size: 13.5px; line-height: 1.45; color: #64748b; }
-  @media (max-width: 640px) { flex-direction: column; align-items: stretch; }
-`;
-const EditBtn = styled.button`
-  flex: none; border: 0; border-radius: 12px; padding: 12px 18px; min-height: 44px;
-  background: #0f172a; color: #fff; font: 700 14px/1 ${STUDIO_FONT}; cursor: pointer;
-  &:hover { background: #1e293b; }
-`;
 const DoneEditing = styled.button`
   display: block; width: 100%; margin-bottom: 8px; padding: 11px 14px; min-height: 44px;
   border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; color: #0f172a;
@@ -1473,13 +1453,35 @@ const PreviewFrame = styled.div`
   }
 `;
 const Dock = styled.div`
-  display: none;
+  /* Desktop: a floating Edit / Preview / Save pill on the Portfolio page (startInPreview: no other way into the
+     editor). Other uses keep form and preview side by side on desktop, so no bar there. */
+  display: ${(p) => (p.$desktop ? 'flex' : 'none')};
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(460px, calc(100% - 48px));
+  z-index: 90;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: rgba(248, 250, 252, .96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #e8edf3;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
   @media (max-width: 960px) {
     display: flex;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
+    transform: none;
+    width: auto;
+    border-radius: 0;
+    border-width: 1px 0 0;
+    box-shadow: none;
     z-index: 90;
     align-items: center;
     gap: 10px;
