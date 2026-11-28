@@ -349,9 +349,12 @@ function AppContent() {
                 const hasIncompleteProfile = (user.role === 'creator' && !user.creator_id);
 
                 // Email signups confirm their inbox with the 6-digit code before anything else.
-                if (user.role === 'creator' && user.email_verified === false &&
-                    !location.pathname.startsWith('/verify-code')) {
-                    navigate('/verify-code', { replace: true });
+                // Nothing else routes them meanwhile: the onboarding rule below used to bounce /verify-code to
+                // /onboarding and this sent it back, a redirect loop.
+                if (user.role === 'creator' && user.email_verified === false) {
+                    if (!location.pathname.startsWith('/verify-code')) {
+                        navigate('/verify-code', { replace: true });
+                    }
                     return;
                 }
                 
@@ -363,6 +366,7 @@ function AppContent() {
                     !location.pathname.startsWith('/register/creator') &&
                     !location.pathname.startsWith('/register/brand') &&
                     !location.pathname.startsWith('/verify-email') &&
+                    !location.pathname.startsWith('/verify-code') &&
                     !location.pathname.startsWith('/resend-verification')) {
                     console.log(`🔄 User has incomplete profile, redirecting to onboarding`);
                     navigate('/onboarding', { replace: true });

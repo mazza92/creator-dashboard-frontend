@@ -59,20 +59,33 @@ async function draftPitch(brandId) {
   return { status: data?.paywall ? 'paywall' : 'error', message: String(data?.message || '').replace(/\*\*/g, '') };
 }
 
-function BrandRow({ brand, index, right = null, onClick }) {
+function BrandRow({ brand, index, right = null, onClick, detail = '', expanded }) {
   const [icon, label] = brand.searched ? ['🔎', 'Your pick'] : matchPill(brand);
   const tags = (brand.tags || []).join(' • ');
   const Tag = onClick ? RowButton : RowStatic;
   return (
-    <Tag type={onClick ? 'button' : undefined} onClick={onClick}>
+    <Tag type={onClick ? 'button' : undefined} onClick={onClick}
+      aria-expanded={expanded === undefined ? undefined : expanded}>
       <BrandLogo brand={brand} color={MONO_COLORS[index % MONO_COLORS.length]} size={52} />
       <span className="tx">
         <b>{brand.brand_name}</b>
         <span className="pill"><span aria-hidden="true">{icon}</span> {label}</span>
         {tags ? <span className="tags">{tags}</span> : null}
+        {detail ? <span className="about">{detail}</span> : null}
       </span>
       {right}
     </Tag>
+  );
+}
+
+// Matches step: a tap opens the brand's quick description (what they sell, why they fit). Rows with nothing more to
+// say get no arrow, so nothing looks tappable that isn't.
+function MatchRow({ brand, index, open, onToggle }) {
+  const about = String(brand.about || brand.why || '').trim();
+  if (!about) return <BrandRow brand={brand} index={index} />;
+  return (
+    <BrandRow brand={brand} index={index} onClick={onToggle} expanded={open} detail={open ? about : ''}
+      right={<ChevronDown size={18} className={open ? 'chev open' : 'chev'} aria-hidden="true" />} />
   );
 }
 
@@ -88,6 +101,7 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
     : data?.start_pick === 'free' && !unverified ? 'pick' : data?.start_pick ? 'choose' : 'matches';
   const [step, setStep] = useState(resume);
   const [more, setMore] = useState(false);
+  const [openBrand, setOpenBrand] = useState(null);
   const [pitches, setPitches] = useState({});
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState('');
@@ -231,7 +245,12 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
         <Eyebrow>Your brand opportunities are ready</Eyebrow>
         <H1>We found {total} brand{total === 1 ? '' : 's'} that fit your {niche ? `${niche} ` : ''}content <span aria-hidden="true">🎉</span></H1>
         <Sub>These brands are investing in creator content and match your niche and style.</Sub>
-        <List>{list.map((b, i) => <BrandRow key={b.brand_id} brand={b} index={i} right={<ChevronRight size={18} className="chev" aria-hidden="true" />} />)}</List>
+        <List>
+          {list.map((b, i) => (
+            <MatchRow key={b.brand_id} brand={b} index={i} open={openBrand === b.brand_id}
+              onToggle={() => setOpenBrand((cur) => (cur === b.brand_id ? null : b.brand_id))} />
+          ))}
+        </List>
         {brands.length > SHOWN ? (
           <More type="button" aria-expanded={more} onClick={() => setMore((v) => !v)}>
             {more ? 'Show fewer' : `Show +${Math.max(brands.length, total) - SHOWN} more brands`}
@@ -577,7 +596,11 @@ const rowCss = `
   .tx b { font-size: 16px; font-weight: 750; }
   .pill { font-size: 13px; font-weight: 650; color: ${t.accentDeep}; }
   .tags { font-size: 13px; color: ${t.muted}; }
-  .chev { color: ${t.muted}; flex: none; }
+  .chev { color: ${t.muted}; flex: none; transition: transform .15s ease; }
+  .chev.open { transform: rotate(180deg); }
+  .about { margin-top: 4px; font-size: 14px; line-height: 1.45; color: ${t.inkSoft}; }
+  &[aria-expanded='true'] { align-items: flex-start; }
+  &[aria-expanded='true'] .chev { margin-top: 16px; }
 `;
 const RowStatic = styled.div`${rowCss}`;
 const RowButton = styled.button`${rowCss} cursor: pointer; &:hover { border-color: #cfd8d4; }`;
