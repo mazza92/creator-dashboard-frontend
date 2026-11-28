@@ -66,6 +66,7 @@ import PRReady from './creator-portal/PRReady';
 import PublicMediaKit from './cra-pages/PublicMediaKit';
 import FirstAdSlotSuccess from './creator-portal/FirstAdSlotSuccess';
 import VerifyEmailPending from './components/VerifyEmailPending';
+import VerifyCode from './components/VerifyCode';
 import VerifyEmail from './components/VerifyEmail';
 import ResendVerification from './components/ResendVerification';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -188,6 +189,7 @@ function AppContent() {
             '/reset-password',
             '/verify-email',
             '/verify-email-pending',
+            '/verify-code',
             '/resend-verification',
             '/stripe',
             '/onboarding',
@@ -260,6 +262,7 @@ function AppContent() {
                 '/onboarding',
                 '/verify-email-pending',
                 '/verify-email',
+                '/verify-code',
                 '/resend-verification',
                 '/stripe/success',
                 '/stripe/reauth',
@@ -344,6 +347,13 @@ function AppContent() {
                 // For brands: they complete onboarding during registration, so don't redirect them
                 // The brand_id might be in session but not in profile response - don't rely on it
                 const hasIncompleteProfile = (user.role === 'creator' && !user.creator_id);
+
+                // Email signups confirm their inbox with the 6-digit code before anything else.
+                if (user.role === 'creator' && user.email_verified === false &&
+                    !location.pathname.startsWith('/verify-code')) {
+                    navigate('/verify-code', { replace: true });
+                    return;
+                }
                 
                 // If user has incomplete profile and is not on onboarding, redirect to onboarding
                 // But skip this if we just completed onboarding (give user context time to update)
@@ -467,6 +477,7 @@ function AppContent() {
             <Route path='/payment-success' element={isPayPalFlow ? <PaymentSuccess /> : <Navigate to='/brand/dashboard/overview' replace />} />
             <Route path='/payment-failed' element={<PaymentFailed />} />
             <Route path='/verify-email-pending' element={<VerifyEmailPending />} />
+            <Route path='/verify-code' element={<VerifyCode />} />
             <Route path='/verify-email' element={<VerifyEmail />} />
             <Route path='/resend-verification' element={<ResendVerification />} />
             <Route path='/stripe/success' element={<StripeSuccess />} />

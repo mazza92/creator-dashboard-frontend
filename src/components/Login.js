@@ -558,6 +558,7 @@ function Login({ onSuccess, showSignupLink, onSignupClick, isModal = false }) {
 
   const postLoginPath = (data) => {
     if (data?.user_role === 'creator') {
+      if (data?.email_verified === false) return '/verify-code';
       const gated = creatorPostAuthPath(data);
       if (gated === '/onboarding' || gated === WAITLIST_PATH) {
         return gated;
