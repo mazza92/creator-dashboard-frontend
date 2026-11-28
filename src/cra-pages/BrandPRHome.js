@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import api, { getProxiedMediaUrl } from '../config/api';
 import UpgradeModal from '../creator-portal/UpgradeModal';
-import VerificationLock, { useOutreachLocked } from '../components/creator/VerificationLock';
+import VerificationLock, { useOutreachLocked, useVerification } from '../components/creator/VerificationLock';
 import OpportunitiesTab from '../creator-portal/OpportunitiesTab';
 import BrandFeed from '../creator-portal/BrandFeed';
 import SegmentTabs from '../components/creator/SegmentTabs';
@@ -426,6 +426,8 @@ export default function BrandPRHome() {
   const [catOpen, setCatOpen] = useState(false);
   const [skipReview, setSkipReview] = useState(false);
   const outreachLocked = useOutreachLocked();
+  // Their one pitch while being verified is used: the lock shows at the button, not after the whole flow.
+  const previewUsed = Boolean(useVerification(outreachLocked)?.preview_used);
   const [catQuery, setCatQuery] = useState('');
   const [dirMicro, setDirMicro] = useState(false);
   const [dirUS, setDirUS] = useState(false);
@@ -975,6 +977,11 @@ export default function BrandPRHome() {
       if (data.balance) {
         setQuota((prev) => ({ ...(prev || {}), ...data.balance }));
         emitCredits(data.balance);
+      }
+      if (data.verification_locked) {
+        // Being verified and the one preview pitch is used: the lock card, never "try again".
+        setPitchDraft({ status: 'locked' });
+        return;
       }
       if (data.paywall) {
         setPitchDraft({ status: 'paywall', message: data.message || '' });
@@ -1627,6 +1634,10 @@ export default function BrandPRHome() {
               {outreachLocked && !pitchMode ? (
                 <VerificationLock title="Gifting applications unlock once your profile is verified"
                   note="Brands send product to creators who are ready for collabs. Skip the wait with Pro to apply today, or keep exploring brands while we check your profile."
+                  onSkip={() => setSkipReview(true)} />
+              ) : outreachLocked && previewUsed ? (
+                <VerificationLock title="More pitches unlock once your profile is verified"
+                  note={`You've seen your first pitch. Skip the wait with Pro and Polly writes and sends your pitch to ${current?.brand_name || 'this brand'} today.`}
                   onSkip={() => setSkipReview(true)} />
               ) : (
                 <Cta type="button" onClick={() => setStep(2)}>{pitchMode ? 'Email brand' : 'Apply for Brand PR'}</Cta>

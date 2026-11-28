@@ -93,6 +93,16 @@ export default function DirectPitch({
 
   if (!draft || draft.status === 'writing') return <PitchWriting brandName={brandName} />;
 
+  if (draft.status === 'locked') {
+    return (
+      <Reveal>
+        <VerificationLock title="More pitches unlock once your profile is verified"
+          note={`You've seen your first pitch. Skip the wait with Pro and Polly writes and sends your pitch to ${brandName} today.`}
+          onSkip={onSkipReview || onUpgrade} />
+      </Reveal>
+    );
+  }
+
   if (draft.status !== 'ready') {
     const message = String(draft.message || '').replace(/\*\*/g, '');
     const alts = (draft.alternatives || []).map((b) => b.name).filter(Boolean);

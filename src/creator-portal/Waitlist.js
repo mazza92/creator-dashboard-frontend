@@ -175,7 +175,7 @@ export default function Waitlist() {
                 status.rejection_reason
                   || 'Brands look for the things below before they reply. Keep exploring your brands and pitches, update your profile, or skip the review with Pro.'
               ) : (
-                <>Your matched brands and pitches are already waiting in your dashboard.{' '}
+                <>Your matched brands and your first pitch are already waiting in your dashboard.{' '}
                   <strong>Sending unlocks once your profile is verified</strong>, so brands only hear from creators
                   who are ready. We’ll email you the moment it’s done.</>
               )}
