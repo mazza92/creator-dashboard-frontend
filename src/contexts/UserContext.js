@@ -21,6 +21,7 @@ export const persistLoggedInUser = (setUser, data) => {
         brand_id: data.brand_id,
         approval_status: data.approval_status ?? null,
         onboarding_complete: onboardingCompleteFromAuth(data),
+        email_verified: data.email_verified !== false,
     });
 };
 
@@ -31,6 +32,7 @@ const userFromProfile = (profileData, sessionData = {}) => ({
     brand_id: profileData.brand_id || sessionData.brand_id,
     approval_status: profileData.approval_status ?? null,
     onboarding_complete: onboardingCompleteFromProfile(profileData),
+    email_verified: profileData.email_verified !== false,
 });
 
 export const UserProvider = ({ children }) => {

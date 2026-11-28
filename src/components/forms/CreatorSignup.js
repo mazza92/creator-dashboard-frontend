@@ -615,8 +615,9 @@ export default function CreatorSignup() {
         user_role: 'creator',
         creator_id: res.data?.creator_id ?? null,
         approval_status: res.data?.approval_status ?? null,
+        email_verified: res.data?.email_verified,
       });
-      doRedirect(res.data?.redirect_url || '/verify-email-pending');
+      doRedirect(res.data?.redirect_url || '/verify-code');
     } catch (err) {
       const msg = err.response?.data?.error || (err.response ? 'Something went wrong. Please try again.' : "We couldn't reach Newcollab. Check your connection and try again.");
       // Check for region restriction (403 with "region" in message)
