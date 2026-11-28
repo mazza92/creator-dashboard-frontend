@@ -33,7 +33,18 @@ export function useOutreachLocked() {
 }
 
 /** In place of Send / Copy / Apply. */
-export default function VerificationLock({ onSkip, busy = false, note = '', title = LOCK_TITLE }) {
+export default function VerificationLock({ onSkip, busy = false, note = '', title = LOCK_TITLE, compact = false }) {
+  if (compact) {
+    // One line when another lock card on screen already carries the call to action (Polly's locked chat).
+    return (
+      <Box role="note" $compact>
+        <div className="hd">
+          <span className="ic" aria-hidden="true"><Lock size={15} strokeWidth={2.5} /></span>
+          <b>{title}</b>
+        </div>
+      </Box>
+    );
+  }
   return (
     <Box role="note">
       <div className="hd">
@@ -49,6 +60,20 @@ export default function VerificationLock({ onSkip, busy = false, note = '', titl
       </div>
     </Box>
   );
+}
+
+/** GET /api/creator/verification: status, checks, preview_used (their one pitch while being verified). */
+export function useVerification(enabled = true) {
+  const [state, setState] = useState(null);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    let live = true;
+    api.get('/api/creator/verification')
+      .then((res) => { if (live) setState(res.data || null); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [enabled]);
+  return enabled ? state : null;
 }
 
 /** Top of every dashboard page while the profile is being verified. */
@@ -68,7 +93,7 @@ export function VerificationBanner({ onSkip }) {
       <span className="ic" aria-hidden="true"><ShieldCheck size={16} /></span>
       <span className="tx">
         <b>{ready ? 'Profile not ready yet.' : 'Checking your profile.'}</b>{' '}
-        Sending unlocks once verified. <Status to={WAITLIST_PATH}>{ready ? 'What to fix' : 'Status'}</Status>
+        Pitching unlocks once verified. <Status to={WAITLIST_PATH}>{ready ? 'What to fix' : 'Status'}</Status>
       </span>
       {onSkip ? <Skip type="button" $small onClick={onSkip}>Skip · $19/mo</Skip> : null}
     </Bar>
@@ -76,7 +101,7 @@ export function VerificationBanner({ onSkip }) {
 }
 
 const Box = styled.div`
-  margin-top: 12px; padding: 14px; border-radius: 14px; border: 1px solid ${t.line}; background: ${t.subtle};
+  margin-top: 12px; padding: ${(p) => (p.$compact ? '10px 12px' : '14px')}; border-radius: 14px; border: 1px solid ${t.line}; background: ${t.subtle};
   font-family: ${t.fontSans};
   .hd { display: flex; align-items: center; gap: 8px; }
   .hd b { font-size: 15px; line-height: 1.3; color: ${t.ink}; }

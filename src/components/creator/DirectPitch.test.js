@@ -75,4 +75,20 @@ describe('DirectPitch', () => {
     fireEvent.click(screen.getByText('Skip the wait · $19/mo'));
     expect(onSkipReview).toHaveBeenCalled();
   });
+
+  it('second brand while being verified: the lock, no pitch, no try again', () => {
+    const onSkipReview = jest.fn();
+    render(<MemoryRouter><DirectPitch {...base} brandName="Calpak" onSkipReview={onSkipReview}
+      draft={{ status: 'locked' }} /></MemoryRouter>);
+    expect(screen.getByText('More pitches unlock once your profile is verified')).toBeInTheDocument();
+    expect(screen.queryByText('Try again')).toBeNull();
+    expect(screen.queryByText('Send email')).toBeNull();
+    fireEvent.click(screen.getByText('Skip the wait · $19/mo'));
+    expect(onSkipReview).toHaveBeenCalled();
+    if (process.env.WF_OUT) {
+      const fs = require('fs'); // eslint-disable-line global-require
+      const css = Array.from(document.querySelectorAll('style')).map((x) => x.outerHTML).join('');
+      fs.writeFileSync(`${process.env.WF_OUT}/directpitch_preview_used.html`, `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">${css}<style>body{margin:0;padding:16px;background:#faf9f6;font-family:Inter,system-ui}</style></head><body>${document.body.innerHTML}</body></html>`);
+    }
+  });
 });

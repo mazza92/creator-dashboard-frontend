@@ -56,6 +56,7 @@ export function outreachPlan(goalCents, rateDollars, replyRate = 0.08, dealRate 
 async function draftPitch(brandId) {
   const { data } = await apiClient.post('/api/polly/pitch/draft', { brand_id: brandId, source: 'welcome' });
   if (data?.pitch) return { status: 'ready', subject: data.pitch.subject || '', body: data.pitch.body || '', email: data.pitch.email || '', mailto: data.pitch.mailto || '' };
+  if (data?.verification_locked) return { status: 'error', message: 'More pitches unlock once your profile is verified.' };
   return { status: data?.paywall ? 'paywall' : 'error', message: String(data?.message || '').replace(/\*\*/g, '') };
 }
 
@@ -371,8 +372,8 @@ export default function WelcomeFlow({ data, onTrial, onClose }) {
           <div className="hd"><Info size={18} aria-hidden="true" /> Meanwhile</div>
           <ol>
             <li>Explore your {total} matched brands</li>
-            <li>Ask Polly to write your pitches</li>
-            <li>They&apos;re ready to send the moment you&apos;re verified</li>
+            <li>Your first pitch is saved and ready</li>
+            <li>Polly writes the rest the moment you&apos;re verified</li>
           </ol>
         </Steps>
       </>

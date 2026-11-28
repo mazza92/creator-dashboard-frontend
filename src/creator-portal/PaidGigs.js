@@ -167,6 +167,8 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
 
   useEffect(() => {
     let alive = true;
+    // Being verified: no application is written yet (the server refuses too); the sheet shows the lock instead.
+    if (outreachLocked) { setLoading(false); return () => { alive = false; }; }
     setLoading(true);
     apiClient.post(`/api/opportunities/${gig.id}/application-draft`, {}, { timeout: 30000 })
       .then((res) => {
@@ -183,7 +185,7 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
       })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [gig.id, onUpgrade]);
+  }, [gig.id, onUpgrade, outreachLocked]);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -312,9 +314,11 @@ function GigSheet({ gig, onClose, onApplied, onUpgrade }) {
               </GhostBtn>
             )}
           </SectionHead>
-          {loading
-            ? <DraftSkeleton><i /><i /><i /><i /></DraftSkeleton>
-            : <Draft value={text} onChange={(e) => setText(e.target.value)} rows={10} spellCheck />}
+          {outreachLocked
+            ? <LockedNote>Polly writes your application for this gig once your profile is verified.</LockedNote>
+            : loading
+              ? <DraftSkeleton><i /><i /><i /><i /></DraftSkeleton>
+              : <Draft value={text} onChange={(e) => setText(e.target.value)} rows={10} spellCheck />}
         </Section>
 
         {error && <ErrorNote>{error}</ErrorNote>}
@@ -1139,6 +1143,10 @@ const Draft = styled.textarea`
   &:focus { outline: 2px solid ${t.accentBorder}; border-color: ${t.accent}; }
 `;
 
+const LockedNote = styled.p`
+  margin: 0; padding: 14px; border-radius: 12px; background: ${t.subtle}; color: ${t.muted};
+  font-size: 14px; line-height: 1.45;
+`;
 const DraftSkeleton = styled.div`
   display: flex;
   flex-direction: column;

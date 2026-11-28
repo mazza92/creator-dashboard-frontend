@@ -1272,6 +1272,10 @@ const RevealIn = styled.div`
   animation: ${fadeUp} .3s ease both;
 `;
 
+const ChatLockWrap = styled.div`
+  flex: none; width: 100%; max-width: 760px; margin: 0 auto; padding: 0 12px 12px; box-sizing: border-box;
+  > div { margin-top: 0; background: #fff; box-shadow: 0 -6px 20px rgba(17, 24, 39, 0.05); }
+`;
 const ComposerWrap = styled.div`
   flex-shrink: 0;
   &[hidden] { display: none; }
@@ -1574,6 +1578,9 @@ export default function Polly() {
   const [welcomeDone, setWelcomeDone] = useState(false);
   // First run (bootstrap.first_run): the welcome with lined-up brands and two choices, until the creator picks.
   const [firstRun, setFirstRun] = useState(null);
+  // Being verified and the one preview pitch is used: Polly's chat waits for verification (the server refuses
+  // turns too), so the composer becomes the lock card.
+  const [chatLocked, setChatLocked] = useState(false);
   // A brand picked in an email (approval email: ?chip=pitch_brand&brand_id=) while the welcome is up: the welcome
   // still shows first, with that brand leading the lined-up deck, instead of a pitch posting over it.
   const [firstRunPick, setFirstRunPick] = useState(null);
@@ -1700,6 +1707,7 @@ export default function Polly() {
           setStarters(normalizeStarters(res.data.starters));
         }
         setFirstRun(res.data.first_run || null);
+        setChatLocked(Boolean(res.data.chat_locked));
         if (res.data.first_run?.start_choice === 'matches_first') {
           matchesFirstRef.current = true;
           try { localStorage.setItem('nc_matches_first', '1'); } catch (_) { /* storage blocked */ }
@@ -2208,12 +2216,20 @@ export default function Polly() {
       setLiveText('');
       setMessages(next);
       persistThread(next, nextSuggested);
+      // Their one preview pitch while being verified: show it, then the chat waits for verification.
+      if (isVerificationLocked(data.pitch) || data.chat_locked) setChatLocked(true);
       if (data.pitch || data.pitch_batch) {
         try { window.dispatchEvent(new Event('savedBrandCountChanged')); } catch (_) { /* ignore */ }
       }
     } catch (err) {
       const status = err.response?.status;
       const data = err.response?.data || {};
+      if (data.chat_locked) {
+        // Nothing was sent to Polly: take their message back out and show the lock where the composer was.
+        setMessages(messagesRef.current.filter((m) => !userMsg || m.id !== userMsg.id));
+        setChatLocked(true);
+        return;
+      }
       if (status === 402 || data.paywall) {
         if (data.credits) {
           setCredits(data.credits);
@@ -3044,7 +3060,7 @@ export default function Polly() {
                         <PitchSentNote>✓ Sent from your Gmail. I follow up on day 4 and day 10 if they&apos;re quiet.</PitchSentNote>
                       ) : null}
                       {isVerificationLocked(msg.pitch) ? (
-                        <VerificationLock busy={checkingOut} onSkip={() => goPro('verification_skip')} />
+                        <VerificationLock busy={checkingOut} compact={chatLocked} onSkip={() => goPro('verification_skip')} />
                       ) : (
                       <PitchActions>
                         {/* Two actions, no more (Nov 2026): Send email opens their mail app and counts as sent
@@ -3217,6 +3233,16 @@ export default function Polly() {
         )}
       </Thread>
       {/* The welcome is one decision: no chat bar until they pick a path. */}
+      {chatLocked && !firstRun ? (
+        <ChatLockWrap>
+          <VerificationLock
+            title="Polly’s chat unlocks once your profile is verified"
+            note="Your first pitch is saved above. Skip the wait with Pro and Polly starts pitching your matched brands today, or explore your brands while we check your profile."
+            busy={checkingOut}
+            onSkip={() => goPro('verification_chat')}
+          />
+        </ChatLockWrap>
+      ) : (
       <ComposerWrap hidden={Boolean(firstRun) && !busy}>
         {messages.length > 0 && !draft.trim() && (
           <ChipRow $hidden={composerFocused}>
@@ -3261,6 +3287,7 @@ export default function Polly() {
           <Send type="submit" disabled={busy || !draft.trim()} aria-label="Send">↑</Send>
         </Composer>
       </ComposerWrap>
+      )}
       <UpgradeModal
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}
