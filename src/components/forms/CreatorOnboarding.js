@@ -923,6 +923,63 @@ export default function CreatorOnboarding() {
     checkRegion();
   }, []);
 
+  // A verified TikTok/Instagram connection: save step 1 and carry on. Runs on the platform's return, or on load
+  // when the connection was verified in another browser (phones often return to TikTok's in-app or the default
+  // browser; the server keeps that proof by user: /api/user/onboarding/oauth-proof).
+  const continueVerified = (handle, oauthPlatform, followersParam, postsParam) => {
+    // OAuth succeeded - set the username and platform, then auto-proceed
+    setUsername(handle);
+    setPlatform(oauthPlatform);
+    setVerificationStatus('verified');
+
+    const followerCount = parseInt(followersParam, 10) || 0;
+    const postCount = parseInt(postsParam, 10) || 0;
+
+    setVerifiedProfile({
+      username: handle,
+      follower_count: followerCount,
+      media_count: postCount,
+    });
+
+    // Save to backend and proceed to step 2
+    const saveAndProceed = async () => {
+      try {
+        await apiClient.post('/api/user/onboarding/step1', {
+          username: handle,
+          platform: oauthPlatform,
+          followers: followerCount,
+        });
+        setProfileStep(2);
+      } catch (err) {
+        const data = err?.response?.data || {};
+        if (err?.response?.status === 409 && data.error === 'handle_taken') {
+          // Not a failed check: they already have an account with this handle. Say so, and offer the way back in.
+          setTakenInfo({ handle, message: data.message, hint: data.account_hint });
+          setVerificationStatus('taken');
+          setError('');
+          return;
+        }
+        console.error('Error saving profile after OAuth:', err);
+        setError('Failed to complete verification. Please try again.');
+        setVerificationStatus('failed');
+      }
+    };
+
+    saveAndProceed();
+  };
+
+  // Connected TikTok/Instagram in another browser (phones): pick the verified connection up here.
+  useEffect(() => {
+    if (searchParams.get('social')) return;
+    let live = true;
+    apiClient.get('/api/user/onboarding/oauth-proof').then(({ data }) => {
+      const proof = data?.proof;
+      if (!live || !proof?.handle || !proof?.platform) return;
+      continueVerified(proof.handle, proof.platform, String(proof.followers || 0), String(proof.posts || 0));
+    }).catch(() => {});
+    return () => { live = false; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handle OAuth callback from Instagram/TikTok
   useEffect(() => {
     const socialStatus = searchParams.get('social');
@@ -933,45 +990,7 @@ export default function CreatorOnboarding() {
     const reason = searchParams.get('reason');
 
     if (socialStatus === 'success' && handle && oauthPlatform) {
-      // OAuth succeeded - set the username and platform, then auto-proceed
-      setUsername(handle);
-      setPlatform(oauthPlatform);
-      setVerificationStatus('verified');
-
-      const followerCount = parseInt(followersParam) || 0;
-      const postCount = parseInt(postsParam) || 0;
-
-      setVerifiedProfile({
-        username: handle,
-        follower_count: followerCount,
-        media_count: postCount,
-      });
-
-      // Save to backend and proceed to step 2
-      const saveAndProceed = async () => {
-        try {
-          await apiClient.post('/api/user/onboarding/step1', {
-            username: handle,
-            platform: oauthPlatform,
-            followers: followerCount,
-          });
-          setProfileStep(2);
-        } catch (err) {
-          const data = err?.response?.data || {};
-          if (err?.response?.status === 409 && data.error === 'handle_taken') {
-            // Not a failed check: they already have an account with this handle. Say so, and offer the way back in.
-            setTakenInfo({ handle, message: data.message, hint: data.account_hint });
-            setVerificationStatus('taken');
-            setError('');
-            return;
-          }
-          console.error('Error saving profile after OAuth:', err);
-          setError('Failed to complete verification. Please try again.');
-          setVerificationStatus('failed');
-        }
-      };
-
-      saveAndProceed();
+      continueVerified(handle, oauthPlatform, followersParam, postsParam);
 
       // Clean up URL params
       window.history.replaceState({}, '', window.location.pathname);

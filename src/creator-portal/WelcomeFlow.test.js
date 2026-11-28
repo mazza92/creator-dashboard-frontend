@@ -32,7 +32,8 @@ jest.mock('../config/api', () => ({
 jest.mock('../components/creator/DirectPitch', () => ({ PitchWriting: () => <div>Polly is writing</div> }));
 
 const brands = [
-  { brand_id: 1, brand_name: 'Wander', meta_ads: true, tags: ['Travel', 'Stays'] },
+  { brand_id: 1, brand_name: 'Wander', meta_ads: true, tags: ['Travel', 'Stays'],
+    about: 'Wander rents design-led cabins near national parks, booked by travelers who want a quiet escape.' },
   { brand_id: 2, brand_name: 'Ostrichpillow', match_niche: 'travel', tags: ['Travel gear', 'Lifestyle'] },
   { brand_id: 3, brand_name: 'Taima Titanium', match_niche: 'travel', tags: ['Luggage', 'Outdoor'] },
   { brand_id: 4, brand_name: 'Medjet', match_niche: 'travel', tags: ['Travel', 'Safety'] },
@@ -168,3 +169,17 @@ test('back after verification: opens on "You\'re verified", then how to start, n
   fireEvent.click(screen.getByLabelText('Back'));
   expect(screen.getByText(/You.re verified/)).toBeInTheDocument();
 });
+
+test('matches: tapping a brand opens its quick description, tapping again closes it', () => {
+  render(<WelcomeFlow data={data} onTrial={() => {}} onClose={() => {}} />);
+  const row = screen.getByRole('button', { name: /Wander/ });
+  expect(row).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.queryByText(/design-led cabins/)).toBeNull();
+  fireEvent.click(row);
+  expect(row).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByText(/design-led cabins/)).toBeInTheDocument();
+  snap('matches_open');
+  fireEvent.click(row);
+  expect(screen.queryByText(/design-led cabins/)).toBeNull();
+});
+
